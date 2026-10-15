@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 class FlextTypesCore:
@@ -27,3 +26,6 @@ class FlextTypesCore:
         str,
         FlextTypingBase.Scalar,
     ]
+
+
+__all__: list[str] = ["FlextTypesCore"]

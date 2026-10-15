@@ -12,22 +12,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Annotated
 
-from flext_core import c, t
-from flext_core._models._container_parts.flextmodelscontainer_part_01 import (
-    FlextModelsContainer as FlextModelsContainerPart01,
-)
-from flext_core._models.base import FlextModelsBase as m
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._runtime._container import FlextRuntimeContainer as FlextRuntime
-from flext_core._utilities import FlextUtilitiesGenerators as ug
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._models._container_parts import flextmodelscontainer_part_01
+from flext_core.constants import c
+from flext_core.typings import t
 
 
-class FlextModelsContainer(FlextModelsContainerPart01):
-    class ResourceRegistration(m.ArbitraryTypesModel):
+class FlextModelsContainer(flextmodelscontainer_part_01.FlextModelsContainer):
+    class ResourceRegistration(
+        flextmodelscontainer_part_01.FlextModelsContainer.RegistrationEnvelope,
+    ):
         """Model for lifecycle-managed resource registrations.
 
         Captures resource factories invoked on every resolve for
@@ -36,38 +32,17 @@ class FlextModelsContainer(FlextModelsContainerPart01):
 
         name: Annotated[
             t.NonEmptyStr,
-            mp.Field(..., description="Resource identifier/name"),
+            FlextModelsPydantic.Field(..., description="Resource identifier/name"),
         ]
         factory: Annotated[
             t.ResourceCallable,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 ...,
                 description="Factory returning the lifecycle-managed resource",
             ),
         ]
-        registration_time: Annotated[
-            datetime,
-            mp.Field(
-                description=(
-                    "Timestamp when resource was registered (configured timezone)"
-                ),
-            ),
-        ] = mp.Field(default_factory=ug.now)
-        metadata: Annotated[
-            m.Metadata | FlextModelsContainers.ConfigMap | None,
-            mp.BeforeValidator(
-                lambda value: FlextRuntime.validate_metadata_model_input(
-                    value,
-                    m.Metadata,
-                ),
-            ),
-            mp.Field(
-                None,
-                description="Additional resource metadata (JSON-serializable)",
-            ),
-        ] = None
 
-    class ContainerConfig(m.FlexibleInternalModel):
+    class ContainerConfig(FlextModelsBase.FlexibleInternalModel):
         """Model for container configuration.
 
         Replaces: m.ConfigMap for container configuration storage.
@@ -76,21 +51,21 @@ class FlextModelsContainer(FlextModelsContainerPart01):
 
         enable_singleton: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=True,
                 description="Enable singleton pattern for factories",
             ),
         ] = True
         enable_factory_caching: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=True,
                 description="Enable caching of factory-created instances",
             ),
         ] = True
         max_services: Annotated[
             t.PositiveInt,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 c.DEFAULT_SIZE,
                 le=c.MAX_ITEMS,
                 description="Maximum number of services allowed in registry",
@@ -98,7 +73,7 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         ] = c.DEFAULT_SIZE
         max_factories: Annotated[
             t.PositiveInt,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 c.DEFAULT_MAX_FACTORIES,
                 le=c.MAX_FACTORIES,
                 description="Maximum number of factories allowed in registry",
@@ -106,21 +81,23 @@ class FlextModelsContainer(FlextModelsContainerPart01):
         ] = c.DEFAULT_MAX_FACTORIES
         enable_auto_registration: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=False,
                 description="Enable automatic service registration from decorators",
             ),
         ] = False
         enable_lifecycle_hooks: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=True,
                 description="Enable lifecycle hooks (on_register, on_get, etc.)",
             ),
         ] = True
         lazy_loading: Annotated[
             bool,
-            mp.Field(default=True, description="Enable lazy loading of services"),
+            FlextModelsPydantic.Field(
+                default=True, description="Enable lazy loading of services"
+            ),
         ] = True
 
 

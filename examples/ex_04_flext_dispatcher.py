@@ -9,20 +9,23 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.models import m
-from examples.shared import ExamplesFlextShared
-from examples.utilities import u
-from flext_core import p, r, t
-from flext_core.dispatcher import FlextDispatcher
+from examples import ExamplesFlextShared, m, p, r, t, u
 
 
-class _CreateUserHandler:
+class ExamplesFlextCreateUserHandler:
+    """Define ``ExamplesFlextCreateUserHandler``."""
+
     message_type = m.Examples.CreateUser
 
     @staticmethod
     def handle(
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
+        """Provide ``handle``.
+
+        Returns:
+            The resulting ``t.JsonPayload | p.ResultView[t.JsonPayload] | None``.
+        """
         if not isinstance(message, m.Examples.CreateUser):
             return r[str].fail("unexpected_message")
         return r[str].ok(f"created:{message.username}")
@@ -67,8 +70,9 @@ class _AutoFallbackHandler:
         return r[str].ok("auto:fallback")
 
 
-class _EventSubscriber:
+class _UserCreatedSubscriber:
     message_type = m.Examples.UserCreated
+    _prefix: str = ""
 
     def __init__(self) -> None:
         self.events: list[str] = []
@@ -79,24 +83,16 @@ class _EventSubscriber:
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
-        self.events.append(message.username)
+        self.events.append(f"{self._prefix}{message.username}")
         return r[bool].ok(value=True)
 
 
-class _AuditSubscriber:
-    message_type = m.Examples.UserCreated
+class _EventSubscriber(_UserCreatedSubscriber):
+    pass
 
-    def __init__(self) -> None:
-        self.events: list[str] = []
 
-    def handle(
-        self,
-        message: p.Routable,
-    ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
-        if not isinstance(message, m.Examples.UserCreated):
-            return r[bool].fail("unexpected_message")
-        self.events.append(f"audit:{message.username}")
-        return r[bool].ok(value=True)
+class _AuditSubscriber(_UserCreatedSubscriber):
+    _prefix = "audit:"
 
 
 class _PingHandler:
@@ -142,7 +138,7 @@ class Ex04DispatchDsl:
 
         """
         dispatcher = u.build_dispatcher()
-        _ = dispatcher.register_handler(_CreateUserHandler())
+        _ = dispatcher.register_handler(ExamplesFlextCreateUserHandler())
         _ = dispatcher.register_handler(_GetUserHandler())
         _ = dispatcher.register_handler(_DeleteUserHandler())
         _ = dispatcher.register_handler(_PingHandler())
@@ -176,7 +172,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self._exercise_error_cases(dispatcher)
         self._exercise_event_publishing(dispatcher)
 
-    def _exercise_register_and_dispatch(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_register_and_dispatch(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("register_and_dispatch")
         self.audit_check(
@@ -185,7 +181,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         )
         self.audit_check(
             "register(Handle).is_success",
-            dispatcher.register_handler(_CreateUserHandler()).success,
+            dispatcher.register_handler(ExamplesFlextCreateUserHandler()).success,
         )
         self.audit_check(
             "register(DispatchMessage).is_success",
@@ -212,7 +208,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self.audit_check("dispatch(callable).is_success", pinged.success)
         self.audit_check("dispatch(callable).value", pinged.unwrap_or(""))
 
-    def _exercise_auto_discovery(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_auto_discovery(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("auto_discovery")
         auto_discovery_registration = dispatcher.register_handler(
@@ -226,7 +222,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         self.audit_check("dispatch(auto_discovery).is_success", auto_discovery.success)
         self.audit_check("dispatch(auto_discovery).value", auto_discovery.unwrap_or(""))
 
-    def _exercise_error_cases(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_error_cases(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("error_cases")
         no_route_registration = dispatcher.register_handler(_no_route_handler)
@@ -251,7 +247,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
             failing_dispatch.failure,
         )
 
-    def _exercise_event_publishing(self, dispatcher: FlextDispatcher) -> None:
+    def _exercise_event_publishing(self, dispatcher: p.Dispatcher) -> None:
         """Exercise one phase of the dispatcher example."""
         self.section("event_publishing")
         subscriber = _EventSubscriber()

@@ -62,9 +62,9 @@ if override_settings.debug is not True:
 import io
 from contextlib import redirect_stdout
 
-from examples.ex_02_flext_settings import Ex02FlextSettings
+from examples.ex_02_flext_settings import ExamplesFlextSettingsUsage
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex02FlextSettings("docs/improvements/pydantic-v2-audit.md").exercise()
+    ExamplesFlextSettingsUsage("docs/improvements/pydantic-v2-audit.md").exercise()
 ```

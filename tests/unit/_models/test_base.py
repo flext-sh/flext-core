@@ -14,9 +14,8 @@ from __future__ import annotations
 from typing import Annotated
 
 import pytest
-from flext_tests import tm
 
-from tests.models import m
+from tests import m, t, tm
 
 
 class TestsFlextCoreBase:
@@ -75,7 +74,7 @@ class TestsFlextCoreBase:
     )
     def test_base_model_rejects_invalid_payloads(
         self,
-        payload: dict[str, object],
+        payload: t.JsonMapping,
     ) -> None:
         with pytest.raises(m.ValidationError):
             self.Sample.model_validate(payload)

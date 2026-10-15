@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, t, u
 
 
 class TestsFlextCoreModelsCqrs:
@@ -226,7 +226,7 @@ class TestsFlextCoreModelsCqrs:
         ],
     )
     def test_flext_message_union_discriminates_on_message_type(
-        payload: dict[str, str | dict[str, str]],
+        payload: t.MappingKV[str, str | t.MappingKV[str, str]],
         expected_cls: type,
     ) -> None:
         """Test flext message union discriminates on message type."""
@@ -235,4 +235,5 @@ class TestsFlextCoreModelsCqrs:
         parsed = adapter.validate_python(payload)
 
         assert isinstance(parsed, expected_cls)
-        assert parsed.message_type == payload["message_type"]
+        message = cast("m.Command | m.Query | m.Event", parsed)
+        assert message.message_type == payload["message_type"]

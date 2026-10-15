@@ -73,3 +73,6 @@ class FlextConstantsStatus:
         UNHEALTHY = "unhealthy"
         UNKNOWN = "unknown"
         ERROR = "error"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsStatus",)

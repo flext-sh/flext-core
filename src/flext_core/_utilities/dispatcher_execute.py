@@ -3,8 +3,8 @@
 Encapsulates the success/failure pipeline that runs a resolved
 ``t.RoutedHandlerCallable`` against a routable message and adapts the
 return value (``r[T]`` or raw payload) to the dispatcher's canonical
-``r[t.JsonPayload]`` contract. Owned exclusively by ``FlextDispatcher``;
-not part of any public surface.
+``r[t.JsonPayload]`` contract. Exposed through the utility facade and consumed
+by ``FlextDispatcher``.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -12,11 +12,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, p, r, t, u
+from typing import TYPE_CHECKING, cast
+
+from flext_core import FlextResult, c, p, t
+from flext_core._utilities import (
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+)
+
+if TYPE_CHECKING:
+    from flext_core import r
 
 
 class FlextUtilitiesDispatcherExecute:
-    """Canonical namespace owner."""
+    """Handler execution helper extracted from FlextDispatcher."""
 
     @staticmethod
     def _adapt_dispatcher_output(
@@ -34,10 +43,10 @@ class FlextUtilitiesDispatcherExecute:
                 result = dispatch_result.from_failure(raw_output)
             else:
                 output_value = raw_output.value
-                if u.container(output_value):
+                if FlextUtilitiesGuardsTypeCore.container_value(output_value):
                     payload: t.JsonPayload = output_value
                     result = dispatch_result.ok(payload)
-                elif u.pydantic_model(output_value):
+                elif FlextUtilitiesGuardsTypeModel.pydantic_model(output_value):
                     model_payload: t.JsonPayload = output_value
                     result = dispatch_result.ok(model_payload)
                 else:
@@ -45,7 +54,9 @@ class FlextUtilitiesDispatcherExecute:
                         "validate handler success payload",
                         c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                     )
-        elif u.container(raw_output) or u.pydantic_model(raw_output):
+        elif FlextUtilitiesGuardsTypeCore.container_value(
+            raw_output
+        ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_output):
             result = dispatch_result.ok(raw_output)
         else:
             result = dispatch_result.fail_op(
@@ -59,8 +70,8 @@ class FlextUtilitiesDispatcherExecute:
         raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
-        if isinstance(raw_candidate, r):
-            return raw_candidate
+        if isinstance(raw_candidate, FlextResult):
+            return cast("p.Result[t.JsonPayload]", raw_candidate)
         if raw_candidate is None:
             return None
         if isinstance(raw_candidate, p.ResultView):
@@ -68,7 +79,9 @@ class FlextUtilitiesDispatcherExecute:
                 raw_candidate,
                 dispatch_result,
             )
-        if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
+        if FlextUtilitiesGuardsTypeCore.container_value(
+            raw_candidate
+        ) or FlextUtilitiesGuardsTypeModel.pydantic_model(raw_candidate):
             return raw_candidate
         return dispatch_result.fail_op(
             "validate handler return payload",
@@ -89,7 +102,9 @@ class FlextUtilitiesDispatcherExecute:
         if view.failure:
             return dispatch_result.from_failure(view)
         success_value = view.value
-        if u.container(success_value) or u.pydantic_model(success_value):
+        if FlextUtilitiesGuardsTypeCore.container_value(
+            success_value
+        ) or FlextUtilitiesGuardsTypeModel.pydantic_model(success_value):
             return dispatch_result.ok(success_value)
         return dispatch_result.fail_op(
             "normalize handler result view",
@@ -117,7 +132,7 @@ class FlextUtilitiesDispatcherExecute:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        dispatch_result = r[t.JsonPayload]
+        dispatch_result = FlextResult[t.JsonPayload]
         try:
             raw_candidate = resolved_handler(message)
             raw_output = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(
@@ -138,7 +153,11 @@ class FlextUtilitiesDispatcherExecute:
             LookupError,
             ArithmeticError,
         ) as exc:
-            logger.exception(c.LOG_HANDLER_EXECUTION_FAILED, route=route_name)
+            logger.exception(
+                c.LOG_HANDLER_EXECUTION_FAILED,
+                exception=exc,
+                route=route_name,
+            )
             return dispatch_result.fail_op("execute resolved handler", exc)
 
 

@@ -6,10 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests._models._mixins.test_data_identity import (
+from tests._models._mixins import (
     TestsFlextModelsTestDataIdentityMixin,
+    TestsFlextModelsTestDataValuesMixin,
 )
-from tests._models._mixins.test_data_values import TestsFlextModelsTestDataValuesMixin
 
 
 class TestsFlextModelsTestDataMixin(

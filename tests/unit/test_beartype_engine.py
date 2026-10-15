@@ -13,11 +13,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests.protocols import p
+from tests import p
 
 
 class TestsFlextCoreBeartypeEngine(
@@ -102,7 +104,13 @@ class TestsFlextCoreBeartypeEngine(
         expected: bool,
     ) -> None:
         """Public names pass unless they are dunder-exempt utility methods."""
-        assert FlextUtilitiesBeartypeEngine.attr_accept_utility(name) is expected
+        assert (
+            FlextUtilitiesBeartypeEngine.attr_accept_utility(
+                FlextUtilitiesBeartypeEngine,
+                name,
+            )
+            is expected
+        )
 
     @staticmethod
     def test_attr_accept_constants_accepts_public_plain_value() -> None:
@@ -145,7 +153,7 @@ class TestsFlextCoreBeartypeEngine(
             return 0
 
         static_value: p.AttributeProbe = staticmethod(_fn)
-        class_value: p.AttributeProbe = classmethod(_cls_fn)
+        class_value = cast("p.AttributeProbe", classmethod(_cls_fn))
         property_value: p.AttributeProbe = property(_fn)
 
         assert (

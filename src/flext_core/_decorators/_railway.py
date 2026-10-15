@@ -11,8 +11,8 @@ from functools import wraps
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, r
-from flext_core._decorators._logging import FlextDecoratorsLogging
-from flext_core._exceptions.exception_types import FlextExceptionsTypes
+from flext_core._decorators import FlextDecoratorsLogging
+from flext_core._exceptions import FlextExceptionsTypes
 from flext_core._protocols import FlextProtocolsLogging, FlextProtocolsResult
 
 if TYPE_CHECKING:
@@ -94,7 +94,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         ) -> Callable[PCallback, TResult]:
             @wraps(func)
             def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
-                logger_carrier: cls._LoggerCarrier | None = None
+                logger_carrier: FlextDecoratorsLogging._LoggerCarrier | None = None
                 if args:
                     first_arg_raw = args[0]
                     if cls._is_logger_carrier(first_arg_raw):

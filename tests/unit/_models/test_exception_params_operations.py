@@ -12,10 +12,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
+from tests import c, m, t, tm
 from tests.unit._models._exception_params_support import (
     TestsFlextModelsExceptionParamsSupport,
 )
@@ -24,8 +22,8 @@ from tests.unit._models._exception_params_support import (
 class TestsFlextCoreExceptionParamsOperations:
     @pytest.mark.parametrize(
         "model_cls",
-        TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_MODELS,
-        ids=TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_IDS,
+        TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
+        ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
     @staticmethod
     def test_no_arg_construction_yields_all_none_fields(
@@ -37,8 +35,8 @@ class TestsFlextCoreExceptionParamsOperations:
 
     @pytest.mark.parametrize(
         "model_cls",
-        TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_MODELS,
-        ids=TestsFlextModelsExceptionParamsSupport._ALL_PARAMS_IDS,
+        TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
+        ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
     @staticmethod
     def test_unknown_field_is_rejected(model_cls: type[m.ParamsModel]) -> None:
@@ -105,7 +103,7 @@ class TestsFlextCoreExceptionParamsOperations:
     @staticmethod
     def test_strict_typing_rejects_wrong_type(
         model_cls: type[m.ParamsModel],
-        payload: dict[str, object],
+        payload: t.MappingKV[str, t.UnconstrainedValue],
     ) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate(payload)
@@ -113,7 +111,7 @@ class TestsFlextCoreExceptionParamsOperations:
     @staticmethod
     def test_assignment_revalidates_field_type() -> None:
         params = m.ValidationErrorParams(field="email")
-        wrong_value: object = 123
+        wrong_value: t.UnconstrainedValue = 123
         tm.rejects_assignment(params, "field", wrong_value, expected=c.ValidationError)
 
     @pytest.mark.parametrize(

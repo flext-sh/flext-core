@@ -9,16 +9,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
-from tests.models import m
-from tests.utilities import u
+from tests import m, r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextResultTraverseResource:
@@ -203,8 +200,8 @@ class TestsFlextResultTraverseResource:
     @staticmethod
     def test_error_data_property() -> None:
         """Test error_data property."""
-        error_payload: dict[str, t.JsonPayload] = {"key": "value"}
-        error_data = m.ConfigMap(root=error_payload)
+        error_payload: t.UserOverridesMapping = {"key": "value"}
+        error_data = m.ConfigMap(root=dict(error_payload))
         result: p.Result[str] = r[str].fail("error", error_data=error_data)
         tm.that(result.error_data, eq=error_payload)
         success = r[str].ok("test")

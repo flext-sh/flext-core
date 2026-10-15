@@ -13,12 +13,14 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
-from flext_core._runtime._base import FlextRuntimeBase
-from flext_core._utilities import FlextUtilitiesGuardsTypeModel
+from flext_core._runtime import FlextRuntimeBase
+from flext_core._utilities import (
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesTypingAdapterJson,
+)
 
 if TYPE_CHECKING:
     from flext_core import m
-    from flext_core._typings.services import FlextTypesServices
 
 
 class FlextRuntimeMetadata(FlextRuntimeBase):
@@ -26,7 +28,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def normalize_to_json_value(
-        value: FlextTypesServices.JsonPayload
+        value: t.JsonPayload
         | t.Scalar
         | Path
         | m.ConfigMap
@@ -41,25 +43,26 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             The resulting ``t.JsonValue``.
 
         """
+        adapter = FlextUtilitiesTypingAdapterJson.json_value_adapter()
         validated_value: t.JsonValue
         if value is None:
-            validated_value = t.json_value_adapter().validate_python(None)
+            validated_value = adapter.validate_python(None)
 
         elif FlextUtilitiesGuardsTypeModel.has_model_dump(value):
-            validated_value = t.json_value_adapter().validate_python(
+            validated_value = adapter.validate_python(
                 value.model_dump(mode="json"),
             )
         elif isinstance(value, FlextModelsPydantic.BaseModel):
-            validated_value = t.json_value_adapter().validate_python(str(value))
+            validated_value = adapter.validate_python(str(value))
         else:
-            validated_value = t.json_value_adapter().validate_python(
+            validated_value = adapter.validate_python(
                 FlextRuntimeMetadata.normalize_to_metadata(value),
             )
         return validated_value
 
     @staticmethod
     def normalize_to_json_mapping(
-        value: t.MappingKV[str, FlextTypesServices.JsonPayload | t.Scalar],
+        value: t.MappingKV[str, t.JsonPayload | t.Scalar],
     ) -> t.JsonMapping:
         """Normalize a mapping to a validated ``JsonMapping``.
 
@@ -73,7 +76,7 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
     @staticmethod
     def _normalize_dict_entries(
-        items: t.SequenceOf[t.Pair[str, FlextTypesServices.JsonPayload]],
+        items: t.SequenceOf[t.Pair[str, t.JsonPayload]],
     ) -> t.JsonDict:
         """Normalize key-value pairs for container dict construction.
 
@@ -82,18 +85,20 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
 
         """
         return dict(
-            t.json_mapping_adapter().validate_python({
-                key: FlextRuntimeMetadata.normalize_to_json_value(item)
-                for key, item in items
-            }),
+            FlextUtilitiesTypingAdapterJson.json_mapping_adapter().validate_python(
+                {
+                    key: FlextRuntimeMetadata.normalize_to_json_value(item)
+                    for key, item in items
+                },
+            ),
         )
 
     @staticmethod
     def normalize_model_input_mapping(
         value: m.BaseModel
         | m.Dict
-        | FlextTypesServices.ConfigModelInput
-        | t.MappingKV[str, FlextTypesServices.JsonPayload]
+        | t.ConfigModelInput
+        | t.MappingKV[str, t.JsonPayload]
         | None,
     ) -> t.JsonMapping | None:
         """Normalize model-like input to a plain mapping.
@@ -113,12 +118,14 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
                 (key, item) for key, item in value.items()
             ])
         return dict(
-            t.json_mapping_adapter().validate_python(value.model_dump(mode="json")),
+            FlextUtilitiesTypingAdapterJson.json_mapping_adapter().validate_python(
+                value.model_dump(mode="json"),
+            ),
         )
 
     @staticmethod
     def normalize_to_metadata(
-        val: FlextTypesServices.JsonPayload
+        val: t.JsonPayload
         | t.Scalar
         | Path
         | m.ConfigMap
@@ -158,9 +165,12 @@ class FlextRuntimeMetadata(FlextRuntimeBase):
             isinstance(val, Sequence) and not isinstance(val, (str, bytes, bytearray))
         ):
             normalized_value = list(
-                t.json_list_adapter().validate_python([
-                    FlextRuntimeMetadata.normalize_to_json_value(item) for item in val
-                ]),
+                FlextUtilitiesTypingAdapterJson.json_list_adapter().validate_python(
+                    [
+                        FlextRuntimeMetadata.normalize_to_json_value(item)
+                        for item in val
+                    ],
+                ),
             )
         elif isinstance(val, (bytes, bytearray)):
             normalized_value = str(val)

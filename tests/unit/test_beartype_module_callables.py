@@ -18,10 +18,10 @@ from typing import TYPE_CHECKING, Never
 
 import pytest
 
-from flext_core import u
+from tests import u
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from tests import p
 
 _OUTSIDE_CONTEXT = "Working outside of application context"
 _PROBE_MODULE = "probe_module_with_proxy"
@@ -70,8 +70,7 @@ class TestsFlextCoreBeartypeModuleCallables:
             """
             raise RuntimeError(_OUTSIDE_CONTEXT)
 
-        @staticmethod
-        def __getattr__(name: str) -> Never:
+        def __getattr__(self, name: str) -> Never:
             """Forward every attribute to an object that is not there.
 
             Raises:

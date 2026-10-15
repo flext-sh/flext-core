@@ -9,17 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from flext_core.container import FlextContainer
-from tests import e
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.utilities import u
+from flext_core import FlextContainer
+from tests import c, e, m, p, tm, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreContainerRegistration:

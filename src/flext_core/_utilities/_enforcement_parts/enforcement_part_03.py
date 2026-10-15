@@ -6,15 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._utilities._enforcement_parts.enforcement_part_02 import (
-    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart02,
-)
-from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine as ub
+from flext_core import c
+from flext_core._models import FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesBeartypeEngine
+from flext_core._utilities._enforcement_parts import enforcement_part_02
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
+class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
     @staticmethod
     def _is_exempt(target: type) -> bool:
         """Return True if the target is exempt from enforcement.
@@ -39,7 +37,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
         return any(seg.startswith(("Tests", "Test")) for seg in segments)
 
     @staticmethod
-    def run(model_type: type[mp.BaseModel]) -> None:
+    def run(model_type: type[FlextModelsPydantic.BaseModel]) -> None:
         """Pydantic ``__pydantic_init_subclass__`` hook.
 
         Function-local classes (Python's ``<locals>`` qualname marker)
@@ -48,7 +46,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
         """
         if c.ENFORCEMENT_MODE is c.EnforcementMode.OFF:
             return
-        if ub.defined_in_function_scope(model_type):
+        if FlextUtilitiesBeartypeEngine.defined_in_function_scope(model_type):
             return
         if FlextUtilitiesEnforcement._is_exempt(model_type):
             return
@@ -63,7 +61,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart02):
         """
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
-        if ub.defined_in_function_scope(target):
+        if FlextUtilitiesBeartypeEngine.defined_in_function_scope(target):
             return
         if FlextUtilitiesEnforcement._is_exempt(target):
             return

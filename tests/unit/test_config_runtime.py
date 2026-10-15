@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_tests import tm
+import pytest
 
 from flext_core import FlextConfig, FlextSettings, config, settings
-from tests import m
+from tests import m, tm
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -38,6 +38,29 @@ class TestsFlextCoreConfigSettingsCanonical:
         """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""
         assert isinstance(settings, FlextSettings)
         assert isinstance(settings.model_dump(), dict)
+
+    @staticmethod
+    def test_settings_config_composition_preserves_public_contract() -> None:
+        """The settings-first diamond retains validation and frozen config state."""
+
+        class ComposedConfig(FlextSettings, FlextConfig):
+            pass
+
+        composed = ComposedConfig.fetch_global()
+        assert isinstance(composed, FlextSettings)
+        assert isinstance(composed, FlextConfig)
+        assert ComposedConfig.fetch_global() is composed
+        assert composed.model_dump()["debug"] == composed.debug
+        tm.rejects_assignment(
+            composed,
+            "debug",
+            not composed.debug,
+            expected=m.ValidationError,
+        )
+        with ComposedConfig.singleton_disabled(), pytest.raises(m.ValidationError):
+            ComposedConfig(debug=False, trace=True)
+        ComposedConfig.reset_for_testing()
+        assert ComposedConfig.fetch_global() is not composed
 
     @staticmethod
     def test_config_subclasses_keep_independent_singletons(

@@ -9,14 +9,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.constants import c
-from examples.ex_08_container_lifecycle import Ex08ContainerLifecycle
-from examples.protocols import p
-from examples.utilities import u
-from flext_core import FlextContainer, r
+from examples import c, p, r, t, u
+from examples.ex_08_container_lifecycle import ExamplesFlextContainerLifecycle
+from flext_core import FlextContainer
 
 
-class Ex08FlextContainer(Ex08ContainerLifecycle):
+class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
     """Exercise FlextContainer public APIs."""
 
     @override
@@ -45,7 +43,7 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
     def _register_fluent_entries(
         self,
         container: p.Container,
-        fluent: dict[str, str],
+        fluent: t.StrMapping,
     ) -> None:
         """Register fluent service/factory/resource entries.
 
@@ -82,7 +80,7 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
     def _verify_fluent_settings(
         self,
         container: p.Container,
-        fluent: dict[str, str],
+        fluent: t.StrMapping,
     ) -> None:
         """Verify applied settings and registered values resolve.
 
@@ -171,4 +169,4 @@ class Ex08FlextContainer(Ex08ContainerLifecycle):
 
 
 if __name__ == "__main__":
-    Ex08FlextContainer(caller_file=Path(__file__)).run()
+    ExamplesFlextContainer(caller_file=Path(__file__)).run()

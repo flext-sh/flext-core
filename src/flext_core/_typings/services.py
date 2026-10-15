@@ -10,7 +10,7 @@ from collections.abc import Callable, MutableMapping, Set as AbstractSet
 from datetime import date, time, tzinfo
 from enum import Enum
 from pathlib import Path
-from types import GenericAlias, ModuleType, UnionType
+from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import TypeAliasType
 
 from flext_core._protocols import (
@@ -23,8 +23,7 @@ from flext_core._protocols import (
     FlextProtocolsResult,
     FlextProtocolsSettings,
 )
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 class FlextTypesServices:
@@ -69,12 +68,27 @@ class FlextTypesServices:
     type ModelClass[T: FlextTypesPydantic.BaseModelType] = type[T]
     type LogArgument = JsonPayload | FlextProtocolsBase.Model
     type LogValue = LogArgument | Exception
+    type LoggingExceptionInfo = tuple[
+        type[BaseException], BaseException, TracebackType | None
+    ]
+    type LoggingEventValue = (
+        LogValue
+        | BaseException
+        | type[BaseException]
+        | TracebackType
+        | LoggingExceptionInfo
+    )
+    type LoggingEvent = MutableMapping[str, LoggingEventValue]
+    type LoggingProcessor = Callable[
+        [FlextProtocolsLogging.OutputLogger, str, LoggingEvent],
+        LoggingEvent | str | bytes,
+    ]
     type LogResult = FlextProtocolsResult.Result[bool]
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType
     type BootstrapInput = FlextTypesPydantic.BaseModelType | FlextTypingBase.JsonMapping
-    type ServiceClass = type[object]
+    type ServiceClass = type
     type ServiceValue = (
         JsonPayload
         | FlextTypesPydantic.BaseModelType
@@ -183,8 +197,8 @@ class FlextTypesServices:
         [FlextTypesPydantic.JsonValue],
         FlextTypesPydantic.JsonValue,
     ]
-    MapperInput = MapperCallable | FlextTypesPydantic.JsonValue
-    StrictValue = (
+    type MapperInput = MapperCallable | FlextTypesPydantic.JsonValue
+    type StrictValue = (
         FlextTypingBase.Scalar
         | ConfigurationMapping
         | FlextTypingBase.JsonList
@@ -231,3 +245,6 @@ class FlextTypesServices:
         | tzinfo
         | UnionType
     )
+
+
+__all__: list[str] = ["FlextTypesServices"]

@@ -6,42 +6,69 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
+from collections.abc import Callable, Mapping, Sequence
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
+    from flext_core import t
     from flext_core.typings import ProtocolGuardInput
-
-
-def _has_len(value: ProtocolGuardInput) -> bool:
-    """Return whether ``value`` exposes ``__len__``.
-
-    Returns:
-        The resulting ``bool``.
-
-    """
-    return hasattr(value, "__len__")
-
-
-def _is_none(value: ProtocolGuardInput) -> bool:
-    """Return whether ``value`` is ``None``.
-
-    Returns:
-        The resulting ``bool``.
-
-    """
-    return value is None
 
 
 class FlextUtilitiesGuardsTypeProtocolStringMixin:
     """String-keyed runtime predicates shared by the protocol guards."""
 
     @staticmethod
-    def _string_predicates() -> Mapping[str, object]:
+    def _has_len(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` exposes ``__len__``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return hasattr(value, "__len__")
+
+    @staticmethod
+    def _is_none(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` is ``None``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return value is None
+
+    @staticmethod
+    def _is_non_empty_mapping(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` is a non-empty mapping.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return isinstance(value, Mapping) and bool(
+            cast("Mapping[str, t.JsonValue]", value),
+        )
+
+    @staticmethod
+    def _is_non_empty_sequence(value: ProtocolGuardInput) -> bool:
+        """Return whether ``value`` is a non-empty non-text sequence.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        return (
+            isinstance(value, Sequence)
+            and not isinstance(value, (str, bytes, bytearray))
+            and bool(cast("Sequence[t.JsonValue]", value))
+        )
+
+    @staticmethod
+    def _string_predicates() -> Mapping[str, Callable[[ProtocolGuardInput], bool]]:
         """Return the canonical ``type_name`` → predicate registry.
 
         Returns:
-            The resulting ``Mapping[str, object]``.
+            The resulting ``Mapping[str, Callable[[ProtocolGuardInput], bool]]``.
 
         """
         return {
@@ -66,29 +93,24 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
                 )
                 and not isinstance(value, (str, bytes))
             ),
-            "sized": _has_len,
+            "sized": FlextUtilitiesGuardsTypeProtocolStringMixin._has_len,
             "callable": callable,
             "bytes": lambda value: isinstance(value, bytes),
             "int": lambda value: isinstance(value, int),
             "float": lambda value: isinstance(value, float),
             "bool": lambda value: isinstance(value, bool),
-            "none": _is_none,
+            "none": FlextUtilitiesGuardsTypeProtocolStringMixin._is_none,
             "string_non_empty": lambda value: (
                 isinstance(value, str)
                 and bool(
                     value.strip(),
                 )
             ),
-            "dict_non_empty": lambda value: (
-                isinstance(value, Mapping)
-                and bool(
-                    len(value),
-                )
+            "dict_non_empty": (
+                FlextUtilitiesGuardsTypeProtocolStringMixin._is_non_empty_mapping
             ),
-            "list_non_empty": lambda value: (
-                isinstance(value, Sequence)
-                and not isinstance(value, (str, bytes, bytearray))
-                and bool(len(value))
+            "list_non_empty": (
+                FlextUtilitiesGuardsTypeProtocolStringMixin._is_non_empty_sequence
             ),
         }
 
@@ -104,7 +126,7 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
         predicate = predicates.get(type_name)
         if predicate is None:
             return False
-        return bool(predicate(value))
+        return predicate(value)
 
 
 __all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolStringMixin"]

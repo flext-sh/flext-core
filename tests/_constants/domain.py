@@ -36,6 +36,4 @@ class TestsFlextConstantsDomain:
     STATUS_INACTIVE: ClassVar[StatusEnum] = StatusEnum.INACTIVE
 
 
-c = TestsFlextConstantsDomain
-
 __all__: list[str] = ["TestsFlextConstantsDomain"]

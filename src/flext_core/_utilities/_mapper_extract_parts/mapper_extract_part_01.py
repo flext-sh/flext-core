@@ -8,32 +8,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from pathlib import Path
-from typing import Annotated
 
-from flext_core import c, m, p, r, t
+from flext_core import FlextResult, FlextRuntime, c, m, p, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
-from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
-from flext_core.runtime import FlextRuntime
+from flext_core._utilities import FlextUtilitiesMapperAccess
 
 
 class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     """Path-based ``extract`` method and its helpers."""
-
-    class ExtractResolvePathPartContext(m.Value):
-        """Validated context envelope for one path-part extraction step."""
-
-        path_context: Annotated[
-            str,
-            m.Field(default="", description="Resolved parent path context"),
-        ]
-        default: Annotated[
-            t.JsonPayload | None,
-            m.Field(default=None, description="Default fallback payload"),
-        ]
-        required: Annotated[
-            bool,
-            m.Field(default=False, description="Whether missing values are fatal"),
-        ]
 
     @staticmethod
     def _extract_fail_or_default(
@@ -49,8 +31,8 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
 
         """
         if not required and default is not None:
-            return r[t.JsonPayload].ok(default)
-        return r[t.JsonPayload].fail_op("extract path", msg)
+            return FlextResult[t.JsonPayload].ok(default)
+        return FlextResult[t.JsonPayload].fail_op("extract path", msg)
 
     @staticmethod
     def _extract_resolve_result(
@@ -68,8 +50,8 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         """
         if result.failure:
             if not required and default is not None:
-                return None, r[t.JsonPayload].ok(default)
-            return None, r[t.JsonPayload].from_failure(result)
+                return None, FlextResult[t.JsonPayload].ok(default)
+            return None, FlextResult[t.JsonPayload].from_failure(result)
         return result.unwrap(), None
 
     @staticmethod
@@ -81,7 +63,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         | None,
         part: str,
         *,
-        context: ExtractResolvePathPartContext,
+        context: m.ExtractResolvePathPartContext,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
         """Resolve one path segment and return its cursor or an early result.
 

@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._enforcement_parts.enforcement_part_03 import (
-    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart03,
-)
+from flext_core._utilities._enforcement_parts import enforcement_part_03
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart03):
+class FlextUtilitiesEnforcement(enforcement_part_03.FlextUtilitiesEnforcement):
     """Runtime enforcement engine; the rule catalog is package data."""
 
 

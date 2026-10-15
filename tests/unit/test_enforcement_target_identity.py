@@ -7,10 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_cli import c
 
 from flext_core import FlextConfig, FlextSettings
-from tests import m, u
+from tests import c, m, u
 
 
 class TestsFlextCoreEnforcementTargetIdentity:

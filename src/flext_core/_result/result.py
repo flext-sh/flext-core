@@ -6,14 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._result.behavior import FlextResultBehavior
-from flext_core._result.composition import FlextResultComposition
-from flext_core._result.construction import FlextResultConstruction
-from flext_core._result.transforms import FlextResultTransforms
-from flext_core._result.unwrap import FlextResultUnwrap
+from flext_core._result import (
+    FlextResultBehavior,
+    FlextResultComposition,
+    FlextResultConstruction,
+    FlextResultTransforms,
+    FlextResultUnwrap,
+)
 
 
-class _FlextResult[T](
+class FlextResultComposed[T](
     FlextResultUnwrap[T],
     FlextResultComposition[T],
     FlextResultTransforms[T],
@@ -23,4 +25,4 @@ class _FlextResult[T](
     """Type-safe result with monadic railway-oriented operations."""
 
 
-__all__: list[str] = ["_FlextResult"]
+__all__: list[str] = ["FlextResultComposed"]

@@ -9,13 +9,12 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
-    FlextConstantsEnforcementEnums,
-)
-from flext_core._typings.base import FlextTypingBase
+from flext_core._constants._enforcement_parts import FlextConstantsEnforcementEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
+
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextConstantsEnforcementRuntime:
@@ -37,7 +36,9 @@ class FlextConstantsEnforcementRuntime:
     bootstrap. Change the value here to flip.
 
     Currently ``off``. The ``pydantic.JsonValue`` forward-ref crash that blocked
-    WARN is fixed in ``beartype_typingext_patch`` (bead mro-31mj.2). WARN is
+    WARN is fixed upstream: beartype >= 0.23 recognises ``typing_extensions``
+    PEP 695 aliases and resolves their forward refs natively (bead mro-31mj.2,
+    flext-r4a0i). WARN is
     still blocked by a second upstream beartype defect: decorating a class whose
     nested ``@beartype``-decorated class defines ``__init__`` shadows the outer
     class's *inherited* ``__init__`` with the nested one, breaking the c/m/p/t/u

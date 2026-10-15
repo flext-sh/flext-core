@@ -17,8 +17,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from flext_core import c, m, p, r
-from flext_core.runtime import FlextRuntime
+from flext_core import FlextResult, FlextRuntime, c, m, p
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -76,7 +75,7 @@ class FlextUtilitiesHandler:
             if isinstance(normalized, (str, int, float, bool, datetime, Path))
             else str(normalized)
         )
-        return r.ok(value=True)
+        return FlextResult.ok(value=True)
 
     @staticmethod
     def push_context(
@@ -92,15 +91,15 @@ class FlextUtilitiesHandler:
         if not isinstance(ctx, Mapping):
             pushed_context = ctx.model_copy()
         else:
-            validated = r.from_validation(ctx, m.ExecutionContext)
+            validated = FlextResult.from_validation(ctx, m.ExecutionContext)
             if validated.failure:
-                return r[p.HandlerRuntimeState].fail_op(
+                return FlextResult[p.HandlerRuntimeState].fail_op(
                     "push handler context",
                     validated.error,
                 )
             execution_context: p.ExecutionContext = validated.unwrap()
             pushed_context = execution_context
-        return r.ok(
+        return FlextResult.ok(
             state.model_copy(
                 update={"context_stack": (*state.context_stack, pushed_context)},
             ),
@@ -118,7 +117,7 @@ class FlextUtilitiesHandler:
         """
         if not state.context_stack:
             empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
-            return r.ok((state, empty_context))
+            return FlextResult.ok((state, empty_context))
         popped = state.context_stack[-1]
         next_state = state.model_copy(
             update={"context_stack": state.context_stack[:-1]},
@@ -129,7 +128,7 @@ class FlextUtilitiesHandler:
                 c.FIELD_HANDLER_MODE: popped.handler_mode,
             },
         )
-        return r.ok((next_state, popped_context))
+        return FlextResult.ok((next_state, popped_context))
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesHandler"]

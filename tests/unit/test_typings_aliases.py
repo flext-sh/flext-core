@@ -19,11 +19,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 import flext_core
-from tests.constants import c
-from tests.typings import t
+from tests import c, p, t, tm
 from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
 
 LEGACY_GENERIC_NAMES: t.VariadicTuple[str] = (
@@ -49,6 +47,33 @@ LEGACY_GENERIC_NAMES: t.VariadicTuple[str] = (
 
 class TestsFlextCoreTypingsAliases:
     """Public contract of the ``t`` typing facade and its type-check tuples."""
+
+    @staticmethod
+    def test_list_alias_preserves_concrete_mutable_api() -> None:
+        """The exact alias supports list-only APIs under the same typed gates."""
+        values: t.ListOf[str] = ["second", "first"]
+        values.append("third")
+        values[0] = "updated"
+        values.sort()
+        copied = values.copy()
+        combined = [*copied, "last"]
+        tm.that(combined, eq=["first", "third", "updated", "last"])
+        copied.clear()
+        tm.that(values, eq=["first", "third", "updated"])
+
+    @staticmethod
+    def test_dict_alias_preserves_concrete_mutable_api() -> None:
+        """The exact alias supports dict-only APIs under the same typed gates."""
+        values: t.DictKV[str, int] = {"first": 1}
+        values["second"] = 2
+        values.update({"third": 3})
+        copied = values.copy()
+        combined = copied | {"last": 4}
+        values |= {"last": 4}
+        tm.that(values, eq=combined)
+        copied.clear()
+        tm.that(values.pop("last"), eq=4)
+        tm.that(values, eq={"first": 1, "second": 2, "third": 3})
 
     @pytest.mark.parametrize("alias_name", PUBLIC_ALIAS_NAMES)
     @staticmethod
@@ -114,7 +139,7 @@ class TestsFlextCoreTypingsAliases:
     )
     @staticmethod
     def test_type_check_tuples_classify_values(
-        value: object,
+        value: p.AttributeProbe,
         *,
         is_primitive: bool,
         is_numeric: bool,
@@ -141,7 +166,7 @@ class TestsFlextCoreTypingsAliases:
     )
     @staticmethod
     def test_container_and_collection_tuple_accepts_every_container_value(
-        value: object,
+        value: p.AttributeProbe,
     ) -> None:
         """Every documented container/collection value is recognised by the tuple."""
         tm.that(isinstance(value, c.CONTAINER_AND_COLLECTION_TYPES), eq=True)

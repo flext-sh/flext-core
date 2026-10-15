@@ -19,13 +19,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated
 
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.services import FlextTypesServices
+from flext_core._models import FlextModelsPydantic
+from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import ItemsView, KeysView, ValuesView
-
-    from flext_core._typings.base import FlextTypingBase
 
 
 class FlextModelsContainers:
@@ -55,7 +53,9 @@ class FlextModelsContainers:
             return self.root(value)
 
     class _MappingRootBase(
-        FlextModelsPydantic.RootModel[dict[str, FlextTypesServices.JsonPayload]],
+        FlextModelsPydantic.RootModel[
+            FlextTypingBase.MutableMappingKV[str, FlextTypesServices.JsonPayload]
+        ],
     ):
         """MRO base providing the explicit mapping API for dict-rooted RootModels.
 
@@ -74,7 +74,7 @@ class FlextModelsContainers:
         def __delitem__(self, key: str) -> None:
             del self.root[key]
 
-        def __contains__(self, key: object) -> bool:
+        def __contains__(self, key: str) -> bool:
             return key in self.root
 
         def __len__(self) -> int:
@@ -129,7 +129,7 @@ class FlextModelsContainers:
         """Runtime dictionary container with explicit mapping API."""
 
         root: Annotated[
-            dict[str, FlextTypesServices.JsonPayload],
+            FlextTypingBase.MutableMappingKV[str, FlextTypesServices.JsonPayload],
             FlextModelsPydantic.Field(
                 description="Validated runtime key-value mapping.",
             ),
@@ -139,7 +139,7 @@ class FlextModelsContainers:
         """Runtime configuration mapping with explicit mapping API."""
 
         root: Annotated[
-            dict[str, FlextTypesServices.JsonPayload],
+            FlextTypingBase.MutableMappingKV[str, FlextTypesServices.JsonPayload],
             FlextModelsPydantic.Field(
                 description="Validated runtime configuration mapping.",
             ),

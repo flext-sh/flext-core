@@ -6,20 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._constants.regex import FlextConstantsRegex as cre
-from flext_core._utilities._enforcement_parts.enforcement_part_04 import (
-    FlextUtilitiesEnforcement as FlextUtilitiesEnforcementPart04,
-)
+from flext_core import c
+from flext_core._utilities._enforcement_parts import enforcement_part_04
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart04):
+class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
     @staticmethod
     def class_name_to_module(class_name: str) -> str:
         """Map a ``Flext<Project><Layer><Concern>`` class to its owning package.
 
         SSOT for the convention: facade-layer classes (one of
-        ``c.NAMESPACE_LAYER_NAMES``) are re-exported from the project's
+        ``FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES``) are re-exported from
+        the project's
         top-level package, so ``FlextCliUtilitiesAuth`` is imported from
         ``flext_cli`` — never from the synthetic ``flext_cli_utilities_auth``
         path produced by a naïve CamelCase-to-snake_case conversion.
@@ -51,11 +49,11 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementPart04):
             idx = tail.find(layer)
             if idx > 0:
                 project = tail[:idx]
-                snake = cre.CAMEL_TO_SNAKE_RE.sub(r"\1_\2", project).lower()
+                snake = c.CAMEL_TO_SNAKE_RE.sub(r"\1_\2", project).lower()
                 return f"flext_{snake}"
         msg = (
             f"class_name_to_module: {class_name!r} contains no facade "
-            f"layer suffix from c.NAMESPACE_LAYER_NAMES "
+            f"layer suffix from FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES "
             f"({tuple(c.NAMESPACE_LAYER_NAMES)})"
         )
         raise ValueError(msg)

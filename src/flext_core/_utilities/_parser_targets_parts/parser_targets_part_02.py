@@ -10,20 +10,21 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, t
 from flext_core._utilities import FlextUtilitiesModel
-from flext_core._utilities._parser_targets_parts.parser_targets_part_01 import (
-    FlextUtilitiesParserTargets as FlextUtilitiesParserTargetsPart01,
-)
+from flext_core._utilities._parser_targets_parts import parser_targets_part_01
 
 if TYPE_CHECKING:
-    from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
+    from collections.abc import Callable, Mapping
+
+    from flext_core import p
+    from flext_core._models import FlextModelsConfig
 
 
-class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
+class FlextUtilitiesParserTargets(parser_targets_part_01.FlextUtilitiesParserTargets):
     @staticmethod
     def _parse_try_primitive[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextUtilitiesParserCoerce.ParseOptions[T] | None = None,
+        options: FlextModelsConfig.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
         """Fall back to primitive type parsing.
@@ -46,7 +47,10 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserTargetsPart01):
             ).unwrap()
             return validated_str
         cls = FlextUtilitiesParserTargets
-        coerce_map = {
+        coerce_map: Mapping[
+            type[T | int | float | bool],
+            Callable[[t.JsonPayload], p.Result[int] | p.Result[float] | p.Result[bool]],
+        ] = {
             int: cls._coerce_to_int,
             float: cls._coerce_to_float,
             bool: cls._coerce_to_bool,

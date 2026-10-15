@@ -11,16 +11,15 @@ from collections.abc import Callable, Iterator
 from enum import EnumType
 from pathlib import Path
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.pydantic import FlextTypesPydantic
+from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 from flext_core._utilities import (
     FlextUtilitiesBeartypeEngine,
+    FlextUtilitiesEnforcementEmit,
     FlextUtilitiesProjectMetadata,
 )
-from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
 
 _ERR_ENFORCEMENT_NAMESPACE_METADATA = (
     "Cannot read project metadata for enforcement namespace resolution"
@@ -233,16 +232,22 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             yield f'Field "{name}"', args
 
     @staticmethod
-    def _attr_filter(layer: str) -> Callable[[str, FlextTypesPydantic.JsonValue], bool]:
-        if layer == FlextConstantsEnforcement.EnforcementLayer.CONSTANTS.lower():
+    def _attr_filter(
+        target: type,
+        layer: str,
+    ) -> Callable[[str, FlextTypesPydantic.JsonValue], bool]:
+        if layer == c.EnforcementLayer.CONSTANTS.lower():
             accept: Callable[[str, FlextTypesPydantic.JsonValue], bool] = (
                 FlextUtilitiesBeartypeEngine.attr_accept_constants
             )
             return accept
-        if layer == FlextConstantsEnforcement.EnforcementLayer.UTILITIES.lower():
+        if layer == c.EnforcementLayer.UTILITIES.lower():
 
             def accept_utility(name: str, _value: FlextTypesPydantic.JsonValue) -> bool:
-                allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_utility(name)
+                allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_utility(
+                    target,
+                    name,
+                )
                 return allowed
 
             return accept_utility
@@ -258,7 +263,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         target: type,
         layer: str,
     ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
-        accept = FlextUtilitiesEnforcementCollect._attr_filter(layer)
+        accept = FlextUtilitiesEnforcementCollect._attr_filter(target, layer)
         qn = target.__qualname__
         for name, value in vars(target).items():
             if accept(name, value):
@@ -271,8 +276,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         project: FlextTypingBase.StrPair,
     ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         skip_roots = (
-            FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_FACADE_ROOTS
-            | FlextConstantsEnforcement.ENFORCEMENT_INFRASTRUCTURE_BASES
+            c.ENFORCEMENT_NAMESPACE_FACADE_ROOTS | c.ENFORCEMENT_INFRASTRUCTURE_BASES
         )
         if "." in qn or target.__name__ in skip_roots:
             return

@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._protocols._container_parts.flextprotocolscontainer_part_03 import (
-    FlextProtocolsContainer as FlextProtocolsContainerPartFinal,
-)
+from flext_core._protocols._container_parts import flextprotocolscontainer_part_03
 
 
-class FlextProtocolsContainer(FlextProtocolsContainerPartFinal):
+class FlextProtocolsContainer(flextprotocolscontainer_part_03.FlextProtocolsContainer):
     """Public facade for FlextProtocolsContainer."""
 
 

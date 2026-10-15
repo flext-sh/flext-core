@@ -1,8 +1,9 @@
-"""Parser coercion primitives + ParseOptions.
+"""Parser coercion primitives.
 
 Pure value-to-primitive coercion (bool/int/float/str + case normalization)
-and the ``ParseOptions`` model. Consumed by the per-target ``_parse_try_*``
-helpers in :mod:`parser_targets` and :mod:`parser` via MRO composition.
+driven by the ``m.ParseOptions`` model. Consumed by the per-target
+``_parse_try_*`` helpers in :mod:`parser_targets` and :mod:`parser` via MRO
+composition.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,43 +14,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, m, r
+from flext_core import FlextResult, c
 
 if TYPE_CHECKING:
     from flext_core import p, t
+    from flext_core._models import FlextModelsConfig
 
 
 class FlextUtilitiesParserCoerce:
     """Primitive coercion + string normalization + default fallback."""
-
-    class ParseOptions[T](m.FlexibleInternalModel):
-        """Options controlling parsing behavior for string-to-type conversion."""
-
-        strict: bool | None = m.Field(
-            None,
-            validate_default=True,
-            description="Reject coercions; fail on type mismatch",
-        )
-        case_insensitive: bool | None = m.Field(
-            None,
-            validate_default=True,
-            description="Normalize case before parsing",
-        )
-        default: T | None = m.Field(
-            None,
-            validate_default=True,
-            description="Fallback value when parsing fails",
-        )
-        default_factory: Callable[[], T] | None = m.Field(
-            None,
-            validate_default=True,
-            description="Factory producing fallback value",
-        )
-        field_name: str | None = m.Field(
-            None,
-            validate_default=True,
-            description="Source field name for error context",
-        )
 
     _CASE_OPS: ClassVar[t.MutableMappingKV[str, Callable[[str], str]]] = {
         c.ParserCase.LOWER.value: str.lower,
@@ -87,11 +60,13 @@ class FlextUtilitiesParserCoerce:
                 case="lower",
             )
             if normalized_val in c.PARSER_BOOLEAN_TRUTHY:
-                return r[bool].ok(value=True)
+                return FlextResult[bool].ok(value=True)
             if normalized_val in c.PARSER_BOOLEAN_FALSY:
-                return r[bool].ok(value=False)
-            return r[bool].fail(c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value))
-        return r[bool].ok(bool(value))
+                return FlextResult[bool].ok(value=False)
+            return FlextResult[bool].fail(
+                c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value)
+            )
+        return FlextResult[bool].ok(bool(value))
 
     @staticmethod
     def _coerce_to_float(value: t.JsonPayload) -> p.Result[float]:
@@ -102,11 +77,11 @@ class FlextUtilitiesParserCoerce:
 
         """
         if isinstance(value, (str, int)):
-            return r[float].create_from_callable(
+            return FlextResult[float].create_from_callable(
                 lambda: float(value),
                 error_code="FLOAT_COERCE_ERROR",
             )
-        return r[float].fail(
+        return FlextResult[float].fail(
             c.ERR_PARSER_COERCE_FLOAT_FAILED.format(type_name=value.__class__.__name__),
             error_code="FLOAT_COERCE_TYPE_ERROR",
         )
@@ -120,18 +95,18 @@ class FlextUtilitiesParserCoerce:
 
         """
         if isinstance(value, (str, float)):
-            return r[int].create_from_callable(
+            return FlextResult[int].create_from_callable(
                 lambda: int(float(value)),
                 error_code="INT_COERCE_ERROR",
             )
-        return r[int].fail(
+        return FlextResult[int].fail(
             c.ERR_PARSER_COERCE_INT_FAILED.format(type_name=value.__class__.__name__),
             error_code="INT_COERCE_TYPE_ERROR",
         )
 
     @staticmethod
     def _parse_with_default[T](
-        options: FlextUtilitiesParserCoerce.ParseOptions[T],
+        options: FlextModelsConfig.ParseOptions[T],
         error_msg: str,
     ) -> p.Result[T]:
         """Return default or error for parse failures.
@@ -141,10 +116,10 @@ class FlextUtilitiesParserCoerce:
 
         """
         if options.default is not None:
-            return r[T].ok(options.default)
+            return FlextResult[T].ok(options.default)
         if options.default_factory is not None:
-            return r[T].ok(options.default_factory())
-        return r[T].fail(error_msg)
+            return FlextResult[T].ok(options.default_factory())
+        return FlextResult[T].fail(error_msg)
 
     @staticmethod
     def norm_str(

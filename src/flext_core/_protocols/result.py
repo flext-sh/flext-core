@@ -13,18 +13,17 @@ if TYPE_CHECKING:
     from types import TracebackType
 
     from flext_core import m
-    from flext_core._typings.base import FlextTypingBase
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
-ResultViewT_co = TypeVar("ResultViewT_co", covariant=True)
+_ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 
 
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
     @runtime_checkable
-    class ResultView(Protocol[ResultViewT_co]):
+    class ResultView(Protocol[_ResultViewT_co]):
         """Covariant read-only result state observed by assertions and reporting."""
 
         @property
@@ -40,7 +39,7 @@ class FlextProtocolsResult:
         @property
         def failure(self) -> bool: ...
         @property
-        def value(self) -> ResultViewT_co: ...
+        def value(self) -> _ResultViewT_co: ...
 
     @runtime_checkable
     class FailureLike(Protocol):
@@ -205,12 +204,6 @@ class FlextProtocolsResult:
         """
 
         @classmethod
-        def reject_banned_result_parameterization(cls) -> None: ...
-
-        @staticmethod
-        def reject_banned_success_payload(value: object) -> None: ...
-
-        @classmethod
         def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
 
         @classmethod
@@ -221,28 +214,27 @@ class FlextProtocolsResult:
             error_code: str | None = None,
             error_data: FlextTypingBase.JsonMapping | None = None,
             exception: BaseException | None = None,
-        ) -> object: ...
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
         @classmethod
-        def ok(cls, value: object) -> object: ...
+        def ok(
+            cls, value: FlextTypingBase.UnconstrainedValue
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
-        def __init__(self, *, value: object, success: bool) -> None: ...
+        @classmethod
+        def create_success[V](cls, value: V) -> FlextProtocolsResult.Result[V]: ...
 
     @runtime_checkable
     class ResultFactory(Protocol):
         """Structural factory contract for the concrete result family."""
 
         @classmethod
-        def reject_banned_result_parameterization(cls) -> None: ...
-
-        @staticmethod
-        def reject_banned_success_payload(value: object) -> None: ...
-
-        @classmethod
         def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
 
         @classmethod
-        def ok(cls, value: object) -> object: ...
+        def ok(
+            cls, value: FlextTypingBase.UnconstrainedValue
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
         @classmethod
         def fail(
@@ -252,21 +244,30 @@ class FlextProtocolsResult:
             error_code: str | None = None,
             error_data: FlextTypingBase.JsonMapping | None = None,
             exception: BaseException | None = None,
-        ) -> object: ...
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
         @classmethod
-        def from_result[V](cls, source: FlextProtocolsResult.Result[V]) -> object: ...
+        def from_result[V](
+            cls, source: FlextProtocolsResult.Result[V]
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
         @classmethod
-        def from_validation(cls, data: object, model: type[object]) -> object: ...
+        def from_validation(
+            cls,
+            data: FlextTypingBase.UnconstrainedValue,
+            model: type[FlextTypingBase.UnconstrainedValue],
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
         @classmethod
-        def failed_result(cls, result: object) -> bool: ...
+        def failed_result(cls, result: FlextTypingBase.UnconstrainedValue) -> bool: ...
 
         @classmethod
-        def successful_result(cls, result: object) -> bool: ...
+        def successful_result(
+            cls, result: FlextTypingBase.UnconstrainedValue
+        ) -> bool: ...
 
-        def __init__(self, *, value: object, success: bool) -> None: ...
+        @classmethod
+        def create_success[V](cls, value: V) -> FlextProtocolsResult.Result[V]: ...
 
 
 __all__: list[str] = ["FlextProtocolsResult"]

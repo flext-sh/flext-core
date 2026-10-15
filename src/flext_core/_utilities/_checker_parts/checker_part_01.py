@@ -12,8 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeIs
 
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.services import FlextTypesServices
+from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable

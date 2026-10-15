@@ -6,17 +6,113 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
-from typing import Annotated, Self
+from typing import Annotated, ClassVar, Self
 
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase
+from typing_extensions import TypeForm
+
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsErrors:
     """Canonical Pydantic models for structured errors and error metrics."""
+
+    class ResultFailureSpec(FlextModelsBase.ArbitraryTypesModel):
+        """Failure-side payload spec for Result construction.
+
+        Bundles the failure constructor knobs so ``r[T].fail`` builds a result
+        through a single typed payload while the success path stays
+        allocation-free.
+        """
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                extra="forbid",
+                strict=True,
+                validate_assignment=True,
+                arbitrary_types_allowed=True,
+            )
+        )
+
+        error: Annotated[
+            str | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Human-readable failure message.",
+            ),
+        ] = None
+        error_code: Annotated[
+            str | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Canonical failure error code.",
+            ),
+        ] = None
+        error_data: Annotated[
+            FlextTypingBase.JsonMapping | FlextTypesServices.ConfigModelInput | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Structured error payload attached to the failure.",
+            ),
+        ] = None
+        exception: Annotated[
+            BaseException | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Underlying exception captured by the failure.",
+            ),
+        ] = None
+
+    class LoggedCallSpec(FlextModelsBase.ArbitraryTypesModel):
+        """Static call context for decorator-driven logging execution."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                extra="forbid",
+                strict=True,
+                validate_assignment=True,
+                arbitrary_types_allowed=True,
+            )
+        )
+
+        func_name: Annotated[
+            str,
+            FlextModelsPydantic.Field(description="Wrapped function name."),
+        ] = ""
+        func_module: Annotated[
+            str,
+            FlextModelsPydantic.Field(
+                description="Wrapped function module qualified name.",
+            ),
+        ] = ""
+        op_name: Annotated[
+            str,
+            FlextModelsPydantic.Field(
+                description="Logical operation name used in log events.",
+            ),
+        ] = ""
+        correlation_id: Annotated[
+            str | None,
+            FlextModelsPydantic.Field(
+                default=None,
+                description="Active correlation identifier.",
+            ),
+        ] = None
+        track_perf: Annotated[
+            bool,
+            FlextModelsPydantic.Field(
+                default=False,
+                description="Track and log the call duration.",
+            ),
+        ] = False
+        start_time: Annotated[
+            float,
+            FlextModelsPydantic.Field(
+                default=0.0,
+                description="Monotonic start time of the call.",
+            ),
+        ] = 0.0
 
     class ExceptionMetricsSnapshot(FlextModelsBase.StrictModel):
         """Validated public snapshot for exception metric exports."""
@@ -33,7 +129,9 @@ class FlextModelsErrors:
                 description="Per-exception occurrence totals keyed by type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: MappingProxyType[str, int]({}),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.IntMapping),
+            ),
         )
         exception_counts_summary: Annotated[
             str,
@@ -79,7 +177,9 @@ class FlextModelsErrors:
                 description="Recorded counts keyed by exception type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: MappingProxyType[str, int]({}),
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.IntMapping),
+            ),
         )
 
         @FlextUtilitiesPydantic.computed_field
@@ -123,10 +223,7 @@ class FlextModelsErrors:
                 A cleared metrics state.
 
             """
-            cleared: Self = self.model_copy(
-                update={"exception_counts": MappingProxyType({})},
-            )
-            return cleared
+            return type(self)()
 
         def snapshot(self) -> FlextModelsErrors.ExceptionMetricsSnapshot:
             """Build the validated public metrics snapshot.
@@ -144,3 +241,6 @@ class FlextModelsErrors:
                 })
             )
             return snapshot
+
+
+__all__ = ["FlextModelsErrors"]

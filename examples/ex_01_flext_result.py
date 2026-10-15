@@ -9,13 +9,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.ex_01_flext_result_helpers import Ex01ResultAdvancedSections
-from examples.models import m
-from examples.shared import ExamplesFlextShared
-from flext_core import r, t
+from examples import ExamplesFlextShared, m, r, t
+from examples.ex_01_flext_result_helpers import ExamplesFlextResultAdvancedSections
 
 
-class Ex01r(Ex01ResultAdvancedSections):
+class ExamplesFlextResult(ExamplesFlextResultAdvancedSections):
     """Golden-file tests for ``r`` / ``r`` public API."""
 
     def __init__(self) -> None:
@@ -165,7 +163,7 @@ class Ex01r(Ex01ResultAdvancedSections):
 
 def main() -> None:
     """Entry point."""
-    Ex01r().run()
+    ExamplesFlextResult().run()
 
 
 if __name__ == "__main__":

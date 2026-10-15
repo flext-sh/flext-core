@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
 
-from examples.shared import ExamplesFlextShared
-from flext_core import p, r
+from examples import ExamplesFlextShared, p, r
 
 
-class Ex01ResultAdvancedSections(ExamplesFlextShared):
+class ExamplesFlextResultAdvancedSections(ExamplesFlextShared):
     """Advanced ``r`` sections shared by the executable example."""
 
     def collections_and_resource(self) -> None:

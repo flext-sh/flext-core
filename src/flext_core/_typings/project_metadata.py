@@ -16,3 +16,6 @@ from __future__ import annotations
 
 class FlextTypingProjectMetadata:
     """PEP 695 aliases for project-metadata SSOT (flat on ``t.*``)."""
+
+
+__all__: list[str] = ["FlextTypingProjectMetadata"]

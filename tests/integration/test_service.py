@@ -14,15 +14,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
+from tests import tm, u
 from tests.integration.service_lifecycle_cases import (
     TestsFlextFlextServiceLifecycleCases,
 )
-from tests.utilities import u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 _FETCH_CALL_COUNT = 2
 

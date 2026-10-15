@@ -14,11 +14,14 @@ from typing import Annotated
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t, u
 from tests.unit._enforcement_support import messages
-from tests.utilities import u
+
+# Deliberate broad-annotation fixtures: the enforcement engine under test must
+# detect these exact runtime types, so they are exposed as type aliases usable
+# inside annotations.
+type _ANY_TYPE = t.UnconstrainedValue
+type _BARE_DICT_TYPE = t.MappingKV[str, str]
 
 
 class TestsFlextEnforcementModels:
@@ -29,7 +32,7 @@ class TestsFlextEnforcementModels:
         """Test any field detected."""
 
         class _M(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         assert messages(u.check(_M), fragment="Any")
 
@@ -47,9 +50,9 @@ class TestsFlextEnforcementModels:
         """Test bare dict detected."""
 
         class _M(m.ArbitraryTypesModel):
-            data: dict[str, str] = m.Field(default_factory=dict, description="d")
+            data: _BARE_DICT_TYPE = m.Field(default_factory=dict, description="d")
 
-        assert messages(u.check(_M), fragment="bare ")
+        assert messages(u.check(_M), fragment="no_raw_collections_field_default")
 
     @staticmethod
     def test_bare_list_detected() -> None:
@@ -58,7 +61,7 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             items: list[str] = m.Field(default_factory=list, description="d")
 
-        assert messages(u.check(_M), fragment="bare ")
+        assert messages(u.check(_M), fragment="no_raw_collections_field_default")
 
     @staticmethod
     def test_mapping_passes() -> None:
@@ -68,22 +71,20 @@ class TestsFlextEnforcementModels:
             data: Annotated[
                 t.StrMapping,
                 m.Field(
-                    default_factory=lambda: MappingProxyType[str, str]({}),
                     description="d",
                 ),
-            ]
+            ] = m.Field(default_factory=lambda: MappingProxyType[str, str]({}))
 
-        assert not messages(u.check(_M), fragment="bare ")
+        assert not messages(u.check(_M), fragment="no_raw_collections_field_default")
 
     @staticmethod
     def test_mutable_sequence_list_factory_passes() -> None:
         """Test mutable sequence list factory passes."""
 
         class _M(m.ArbitraryTypesModel):
-            items: Annotated[
-                MutableSequence[str],
-                m.Field(default_factory=list, description="d"),
-            ]
+            items: Annotated[MutableSequence[str], m.Field(description="d")] = m.Field(
+                default_factory=list
+            )
 
         assert not messages(u.check(_M), fragment="read-only field contract")
 
@@ -103,6 +104,26 @@ class TestsFlextEnforcementModels:
         assert not messages(u.check(_M), fragment="read-only field contract")
 
     @staticmethod
+    def test_mutable_mapping_kv_forward_ref_dict_factory_passes() -> None:
+        """Test mutable mapping KV alias forward ref dict factory passes.
+
+        A ``t.MutableMappingKV`` annotation behind a forward reference (e.g. a
+        self-referential model class) must still be recognised as a mutable
+        mapping contract, not flagged as a raw ``dict`` default.
+        """
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: t.MutableMappingKV[str, _M.Value] = m.Field(
+                default_factory=dict,
+                description="Mutable mapping KV contract.",
+            )
+
+        assert not messages(u.check(_M), fragment="read-only field contract")
+
+    @staticmethod
     def test_mutable_json_mapping_alias_dict_factory_passes() -> None:
         """Test mutable json mapping alias dict factory passes."""
 
@@ -110,10 +131,9 @@ class TestsFlextEnforcementModels:
             items: Annotated[
                 t.MutableJsonMapping,
                 m.Field(
-                    default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
                     description="Mutable JSON mapping contract.",
                 ),
-            ]
+            ] = m.Field(default_factory=dict)
 
         assert not messages(u.check(_M), fragment="read-only field contract")
 
@@ -122,10 +142,9 @@ class TestsFlextEnforcementModels:
         """Test sequence list factory detected."""
 
         class _M(m.ArbitraryTypesModel):
-            items: Annotated[
-                t.StrSequence,
-                m.Field(default_factory=list, description="d"),
-            ]
+            items: Annotated[t.StrSequence, m.Field(description="d")] = m.Field(
+                default_factory=list
+            )
 
         assert messages(u.check(_M), fragment="read-only field contract")
 

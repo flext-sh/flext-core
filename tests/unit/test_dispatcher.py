@@ -18,12 +18,8 @@ from contextlib import redirect_stdout
 from typing import override
 
 import pytest
-from flext_tests import r
 
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import m, p, r, t, u
 
 
 class TestsFlextCoreDispatcher:
@@ -119,6 +115,26 @@ class TestsFlextCoreDispatcher:
         assert result.value == {"route": "routed_cmd"}
         assert result.error is None
         assert handler.received == [command]
+
+    @staticmethod
+    @pytest.mark.parametrize("wrapped", [False, True])
+    def test_public_execution_preserves_model_payload(*, wrapped: bool) -> None:
+        """The public helper accepts raw and result-wrapped Pydantic payloads."""
+        message = RouteMessage(command_type="model_payload")
+        payload = RouteMessage(query_type="model_response")
+
+        def handle(_message: p.Routable) -> t.JsonPayload | p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok(payload) if wrapped else payload
+
+        result = u.execute_dispatcher_handler(
+            resolved_handler=handle,
+            message=message,
+            route_name="model_payload",
+            logger=u.fetch_logger(__name__),
+        )
+
+        assert result.success
+        assert result.value is payload
 
     @staticmethod
     def test_dispatch_without_matching_handler_fails(

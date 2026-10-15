@@ -10,22 +10,22 @@ from typing import TYPE_CHECKING, Self, cast
 
 from pydantic import BaseModel, ValidationError
 
-from flext_core import c
+from flext_core import c, p
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._result.base import FlextResultBase
-from flext_core._result.behavior import FlextResultBehavior
+from flext_core._result import FlextResultBase, FlextResultBehavior
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import p, t
+    from flext_core import t
 
 
 class FlextResultConstruction[T](FlextResultBehavior[T]):
     """Factory methods for the concrete result facade.
 
     Contracts are typed as ``p.Result`` (abstract). Instances are built only via
-    ``cls(...)`` — never by importing the public ``FlextResult`` facade.
+    ``create_success``/``create_failure`` — never by importing the public
+    ``FlextResult`` facade.
     """
 
     @staticmethod
@@ -179,7 +179,6 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         error_data: t.JsonMapping | t.ConfigModelInput | None = None,
         exception: BaseException | None = None,
     ) -> p.Result[T]:
-        cls.reject_banned_result_parameterization()
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
@@ -192,12 +191,11 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             resolved_error_data = cls._extract_exception_error_data(exception)
         return cast(
             "p.Result[T]",
-            cls(
-                error_code=resolved_error_code,
-                error_data=cls.validate_error_data(resolved_error_data),
-                error=error_msg,
-                success=False,
-                exception=exception,
+            cls.create_failure(
+                error_msg,
+                resolved_error_code,
+                resolved_error_data,
+                exception,
             ),
         )
 
@@ -227,7 +225,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             return cast("p.Result[ModelT]", cls.fail(str(exc), exception=exc))
 
     @staticmethod
-    def successful_result(obj: object) -> bool:
+    def successful_result(obj: p.AttributeProbe) -> bool:
         """Check whether an object is a successful result instance.
 
         Returns:
@@ -237,7 +235,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
-    def failed_result(obj: object) -> bool:
+    def failed_result(obj: p.AttributeProbe) -> bool:
         """Check whether an object is a failed result instance.
 
         Returns:
@@ -257,9 +255,7 @@ def ok_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](
         The resulting ``p.Result[V]``.
 
     """
-    cls.reject_banned_result_parameterization()
-    cls.reject_banned_success_payload(value)
-    return cast("p.Result[V]", cls(value=value, success=True))
+    return cls.create_success(value)
 
 
 def copy_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](

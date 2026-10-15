@@ -57,6 +57,7 @@ class FlextConstantsLogging:
     # Internal logging machinery path fragments — used to skip the logging stack
     LOGGING_INTERNAL_PATH_FRAGMENTS: ClassVar[frozenset[str]] = frozenset({
         "flext_core/loggings.py",
+        "flext_core/_bound_logger.py",
         "flext_core/_utilities/logging.py",
         "flext_core/_utilities/logging_context.py",
         "flext_core/_utilities/_logging_context_parts/",
@@ -94,3 +95,6 @@ class FlextConstantsLogging:
     LOG_CONTEXT_REMOVAL_FAILED: ClassVar[str] = (
         "Failed to validate context after removal"
     )
+
+
+__all__: tuple[str, ...] = ("FlextConstantsLogging",)

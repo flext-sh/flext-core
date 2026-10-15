@@ -6,21 +6,43 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 import warnings
 
 import pytest
 
-from flext_core import c, m, u
-from tests.fixtures.type_aliases import TestsTypeAliasDeclarations
+from tests import c, m, u
+from tests.fixtures import type_aliases
+from tests.fixtures.type_aliases import TestsFlextTypeAliasDeclarations
 
 
-class TestsTypeAliasResolution:
+class TestsFlextTypeAliasResolution:
     """Tests for ``TypeAliasResolution``."""
+
+    @staticmethod
+    def test_source_inspection_keeps_parser_and_alias_contracts_distinct() -> None:
+        """Source inspection and universal parsing coexist on the public facade."""
+        parsed = u.parse("42", int)
+        assert parsed.success
+        assert parsed.value == 42
+        tree = u.parse_module(type_aliases)
+        assert isinstance(tree, ast.Module)
+        assert any(
+            isinstance(node, ast.ClassDef)
+            and node.name == TestsFlextTypeAliasDeclarations.__name__
+            for node in tree.body
+        )
+        owner = TestsFlextTypeAliasDeclarations.LegalTypes
+        deferred = u.deferred_alias(owner.Deferred, owner=owner)
+        assert deferred is not None
+        assert deferred.unavailable_imports == ("DeferredPath",)
+        assert u.deferred_alias(owner.Resolved, owner=owner) is None
+        assert u.deferred(owner.Deferred, owner=owner) == (deferred,)
 
     @staticmethod
     def test_resolved_alias_keeps_its_runtime_value() -> None:
         """Test resolved alias keeps its runtime value."""
-        alias = TestsTypeAliasDeclarations.LegalTypes.Resolved
+        alias = TestsFlextTypeAliasDeclarations.LegalTypes.Resolved
 
         assert u.resolve_type_alias_value(alias) is alias.__value__
         assert not u.alias_contains_any(alias)
@@ -28,13 +50,13 @@ class TestsTypeAliasResolution:
     @staticmethod
     def test_declared_static_only_alias_stays_lazy() -> None:
         """Test declared static only alias stays lazy."""
-        alias = TestsTypeAliasDeclarations.LegalTypes.Deferred
+        alias = TestsFlextTypeAliasDeclarations.LegalTypes.Deferred
 
         with pytest.raises(NameError) as raised:
             _ = alias.__value__
 
         assert raised.value.name == "DeferredPath"
-        owner = TestsTypeAliasDeclarations.LegalTypes
+        owner = TestsFlextTypeAliasDeclarations.LegalTypes
         assert u.resolve_type_alias_value(alias, owner=owner) is None
         assert not u.alias_contains_any(alias, owner=owner)
         assert u.unwrap_type_alias(alias, owner=owner) is alias
@@ -42,7 +64,7 @@ class TestsTypeAliasResolution:
     @staticmethod
     def test_report_accounts_for_each_deferred_alias_rule() -> None:
         """Test report accounts for each deferred alias rule."""
-        target = TestsTypeAliasDeclarations.LegalTypes
+        target = TestsFlextTypeAliasDeclarations.LegalTypes
         report = u.check(target, layer=c.EnforcementLayer.TYPES.lower())
 
         assert not report.complete
@@ -64,7 +86,7 @@ class TestsTypeAliasResolution:
     def test_deferred_report_is_not_emitted_as_a_runtime_violation() -> None:
         """Test deferred report is not emitted as a runtime violation."""
         report = u.check(
-            TestsTypeAliasDeclarations.LegalTypes,
+            TestsFlextTypeAliasDeclarations.LegalTypes,
             layer=c.EnforcementLayer.TYPES.lower(),
         )
         deferred = m.Report(deferred=report.deferred)
@@ -81,7 +103,7 @@ class TestsTypeAliasResolution:
     @staticmethod
     def test_local_alias_does_not_inherit_a_name_based_exemption() -> None:
         """Test local alias does not inherit a name based exemption."""
-        alias = TestsTypeAliasDeclarations.unbound()
+        alias = TestsFlextTypeAliasDeclarations.unbound()
 
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(alias)
@@ -91,7 +113,7 @@ class TestsTypeAliasResolution:
     @staticmethod
     def test_alias_without_owner_context_propagates_its_original_error() -> None:
         """Test alias without owner context propagates its original error."""
-        alias = TestsTypeAliasDeclarations.LegalTypes.Deferred
+        alias = TestsFlextTypeAliasDeclarations.LegalTypes.Deferred
 
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(alias)
@@ -101,12 +123,12 @@ class TestsTypeAliasResolution:
     @staticmethod
     def test_unrelated_owner_context_cannot_prove_a_deferral() -> None:
         """Test unrelated owner context cannot prove a deferral."""
-        alias = TestsTypeAliasDeclarations.LegalTypes.Deferred
+        alias = TestsFlextTypeAliasDeclarations.LegalTypes.Deferred
 
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(
                 alias,
-                owner=TestsTypeAliasDeclarations.InvalidTypes,
+                owner=TestsFlextTypeAliasDeclarations.InvalidTypes,
             )
 
         assert raised.value.name == "DeferredPath"
@@ -115,7 +137,7 @@ class TestsTypeAliasResolution:
     def test_guarded_import_in_other_scope_does_not_hide_missing_name() -> None:
         """Test guarded import in other scope does not hide missing name."""
         with pytest.raises(NameError) as raised:
-            u.alias_contains_any(TestsTypeAliasDeclarations.InvalidTypes.Invalid)
+            u.alias_contains_any(TestsFlextTypeAliasDeclarations.InvalidTypes.Invalid)
 
         assert raised.value.name == "Absent"
 
@@ -124,7 +146,7 @@ class TestsTypeAliasResolution:
         """Test unexpected alias attribute error escapes the consumer."""
         with pytest.raises(AttributeError) as raised:
             u.alias_contains_any(
-                TestsTypeAliasDeclarations.InvalidAttributeTypes.Invalid,
+                TestsFlextTypeAliasDeclarations.InvalidAttributeTypes.Invalid,
             )
 
         assert raised.value.name == "Value"
@@ -134,7 +156,7 @@ class TestsTypeAliasResolution:
         """Test check does not turn an invalid alias into an empty report."""
         with pytest.raises(NameError) as raised:
             u.check(
-                TestsTypeAliasDeclarations.InvalidTypes,
+                TestsFlextTypeAliasDeclarations.InvalidTypes,
                 layer=c.EnforcementLayer.TYPES.lower(),
             )
 
@@ -149,7 +171,7 @@ class TestsTypeAliasResolution:
     def test_deferred_report_validates_and_round_trips_through_public_models() -> None:
         """Test deferred report validates and round trips through public models."""
         report = u.check(
-            TestsTypeAliasDeclarations.LegalTypes,
+            TestsFlextTypeAliasDeclarations.LegalTypes,
             layer=c.EnforcementLayer.TYPES.lower(),
         )
         assert report.deferred

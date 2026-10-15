@@ -1,4 +1,4 @@
-"""PEP 562 lazy export helpers.
+"""PEP 562 bootstrap helpers independent of generated child initializers.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,84 +11,66 @@ import inspect
 import sys
 from collections.abc import Callable, Mapping, Sequence
 from importlib.util import resolve_name
+from types import ModuleType
 from typing import TYPE_CHECKING
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    PrivateAttr,
-    TypeAdapter,
-    ValidationError,
-    computed_field,
-)
-
-from flext_core._typings.base import FlextTypingBase
+from pydantic import RootModel, ValidationError
 
 if TYPE_CHECKING:
-    from types import FrameType, ModuleType
+    from types import FrameType
 
-type StrPair = tuple[str, str]
-type LazyImportEntry = str | StrPair
-type LazyImportMap = Mapping[str, LazyImportEntry]
-type LazyImportDict = dict[str, LazyImportEntry]
-type MutableLazyImportMap = dict[str, LazyImportEntry]
-type LazyImportAliasGroups = Mapping[str, Sequence[StrPair]]
+    from flext_core import t
 
 
-class FlextLazyPart01(BaseModel):
-    """Canonical lazy API as a container with runtime reuse caches."""
+class FlextLazyPart01:
+    """Canonical lazy API as a container with runtime reuse caches.
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    This bootstrap loader sits below the generated typing and model packages it
+    installs, so it cannot import their facade: it is a behavior container, not
+    a validated data contract, and stays a plain class exactly like its
+    ``FlextLazyMember``/``FlextLazyAttribute`` siblings.
+    """
+
+    __slots__ = (
+        "_activating_core_beartype",
+        "_import_module",
+        "child_lazy_cache",
+        "child_merge_cache",
+        "install_cache",
+        "module_cache",
+        "normalized_map_cache",
+    )
 
     err_relative_path_requires_module: str = (
         "relative lazy-import paths require a parent module name"
     )
 
-    module_cache: dict[str, ModuleType] = Field(default_factory=dict)
+    def __init__(self) -> None:
+        """Initialize the empty reuse caches and the default module importer."""
+        self.module_cache: t.MutableMappingKV[str, ModuleType] = {}
+        self.child_lazy_cache: t.MutableMappingKV[
+            str, t.MutableMappingKV[str, str | tuple[str, str]]
+        ] = {}
+        self.child_merge_cache: t.MutableMappingKV[
+            tuple[str, ...],
+            t.MutableMappingKV[str, str | tuple[str, str]],
+        ] = {}
+        # The entry keeps its source map alive: an ``id()`` key alone is reused
+        # once a transient map is freed, and would serve another map's
+        # normalization.
+        self.normalized_map_cache: t.MutableMappingKV[
+            tuple[str, int],
+            tuple[
+                Mapping[str, str | tuple[str, str]] | None,
+                t.MutableMappingKV[str, str | tuple[str, str]],
+            ],
+        ] = {}
+        self.install_cache: t.MutableMappingKV[str, tuple[int, int, int, bool]] = {}
+        self._import_module: Callable[[str], ModuleType] = importlib.import_module
+        self._activating_core_beartype = False
 
-    child_lazy_cache: dict[str, LazyImportDict] = Field(default_factory=dict)
-
-    child_merge_cache: dict[FlextTypingBase.VariadicTuple[str], LazyImportDict] = Field(
-        default_factory=dict,
-    )
-
-    # The entry keeps its source map alive: an ``id()`` key alone is reused once a
-    # transient map is freed, and would serve another map's normalization.
-    normalized_map_cache: dict[
-        tuple[str, int],
-        tuple[LazyImportMap | None, LazyImportDict],
-    ] = Field(default_factory=dict)
-
-    install_cache: dict[str, tuple[int, int, int, bool]] = Field(
-        default_factory=dict,
-    )
-
-    _import_module: Callable[[str], ModuleType] = PrivateAttr(
-        default_factory=lambda: importlib.import_module,
-    )
-
-    _map_adapter: TypeAdapter[LazyImportDict] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(LazyImportDict),
-    )
-
-    _alias_adapter: TypeAdapter[StrPair] = PrivateAttr(
-        default_factory=lambda: TypeAdapter(StrPair),
-    )
-
-    _activate_core_beartype: Callable[[], None] = PrivateAttr(
-        default_factory=lambda: (
-            importlib.import_module(
-                "flext_core._beartype_bootstrap",
-            ).FlextCoreBeartypeBootstrap.activate_package_beartype
-        ),
-    )
-
-    _activating_core_beartype: bool = PrivateAttr(default=False)
-
-    @computed_field
     @property
-    def cache_stats(self) -> dict[str, int]:
+    def cache_stats(self) -> Mapping[str, int]:
         """Expose cache sizes for diagnostics/observability."""
         return {
             "module_cache": len(self.module_cache),
@@ -101,28 +83,38 @@ class FlextLazyPart01(BaseModel):
     @staticmethod
     def _norm_cache_key(
         module_path: str,
-        raw: LazyImportMap | None,
+        raw: Mapping[str, str | tuple[str, str]] | None,
     ) -> tuple[str, int]:
         return (module_path, id(raw))
 
-    def _norm_map(self, module_path: str, raw: LazyImportMap | None) -> LazyImportDict:
+    def _norm_map(
+        self,
+        module_path: str,
+        raw: Mapping[str, str | tuple[str, str]] | None,
+    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
         cache_key = self._norm_cache_key(module_path, raw)
         cached = self.normalized_map_cache.get(cache_key)
         if cached is not None and cached[0] is raw:
             return cached[1]
 
+        # The entry shape is validated with pydantic's typed containers. This
+        # bootstrap precedes the models facade it installs, so it binds only
+        # ``RootModel``/``ValidationError`` here (never a model base that would
+        # cross the facade boundary) and lets the native validator parse once.
         try:
-            validated = self._map_adapter.validate_python(raw)
+            validated = (
+                RootModel[dict[str, str | tuple[str, str]]].model_validate(raw).root
+            )
         except ValidationError as exc:
             msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
             raise TypeError(msg) from exc
 
-        out: LazyImportDict = {}
+        out: t.MutableMappingKV[str, str | tuple[str, str]] = {}
         for name, entry in validated.items():
             if isinstance(entry, str):
                 out[name] = self._child_path(entry, module_path)
                 continue
-            target, attr = self._alias_adapter.validate_python(entry)
+            target, attr = entry
             resolved = self._child_path(target, module_path)
             out[name] = (resolved, attr)
 
@@ -148,8 +140,8 @@ class FlextLazyPart01(BaseModel):
     def normalize_map(
         self,
         module_path: str,
-        raw: LazyImportMap | None,
-    ) -> LazyImportDict:
+        raw: Mapping[str, str | tuple[str, str]] | None,
+    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
         """Return normalized lazy-import entries for runtime metadata readers.
 
         Returns:
@@ -211,14 +203,21 @@ class FlextLazyPart01(BaseModel):
             self.module_cache[module_path] = mod
         return mod
 
-    def _child_map(self, module_path: str) -> LazyImportDict:
+    def _activate_core_beartype(self) -> None:
+        """Resolve the bootstrap only after the root installs its public bindings."""
+        bootstrap = self._import_module("flext_core._beartype_bootstrap")
+        bootstrap.FlextCoreBeartypeBootstrap.activate_package_beartype()
+
+    def _child_map(
+        self, module_path: str
+    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
         cached = self.child_lazy_cache.get(module_path)
         if cached is not None:
             return cached
         child = self._load(module_path)
         raw_lazy_imports = vars(child).get("_LAZY_IMPORTS")
         if raw_lazy_imports is None:
-            normalized: LazyImportDict = {}
+            normalized: t.MutableMappingKV[str, str | tuple[str, str]] = {}
             self.child_lazy_cache[module_path] = normalized
             return normalized
         normalized = self._norm_map(child.__name__, raw_lazy_imports)
@@ -244,16 +243,16 @@ class FlextLazyPart01(BaseModel):
     def build_map(
         module_groups: Mapping[str, Sequence[str]] | None = None,
         *,
-        alias_groups: LazyImportAliasGroups | None = None,
+        alias_groups: Mapping[str, Sequence[tuple[str, str]]] | None = None,
         sort_keys: bool = True,
-    ) -> LazyImportDict:
+    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
         """Build one flat lazy-import map.
 
         Returns:
             The resulting ``LazyImportDict``.
 
         """
-        out: LazyImportDict = {
+        out: t.MutableMappingKV[str, str | tuple[str, str]] = {
             name: module
             for module, names in (module_groups or {}).items()
             for name in names
@@ -264,12 +263,4 @@ class FlextLazyPart01(BaseModel):
         return {name: out[name] for name in sorted(out)} if sort_keys else out
 
 
-__all__: list[str] = [
-    "FlextLazyPart01",
-    "LazyImportAliasGroups",
-    "LazyImportDict",
-    "LazyImportEntry",
-    "LazyImportMap",
-    "MutableLazyImportMap",
-    "StrPair",
-]
+__all__: list[str] = ["FlextLazyPart01"]

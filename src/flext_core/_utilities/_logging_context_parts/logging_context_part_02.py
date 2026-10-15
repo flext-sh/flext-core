@@ -15,12 +15,12 @@ import sys
 import types
 
 from flext_core import c
-from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
-    FlextUtilitiesLoggingContext as FlextUtilitiesLoggingContextPart01,
-)
+from flext_core._utilities._logging_context_parts import logging_context_part_01
 
 
-class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart01):
+class FlextUtilitiesLoggingContext(
+    logging_context_part_01.FlextUtilitiesLoggingContext
+):
     @staticmethod
     def _caller_source_path() -> str | None:
         """Get source file path with line, class and method context.

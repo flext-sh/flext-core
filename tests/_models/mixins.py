@@ -6,20 +6,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests._models._mixins.container import TestsFlextModelsContainerMixin
-from tests._models._mixins.core import TestsFlextModelsCoreMixin
-from tests._models._mixins.domain import TestsFlextModelsDomainMixin
-from tests._models._mixins.fixtures import TestsFlextModelsFixtureDictsMixin
-from tests._models._mixins.guards_mapper import TestsFlextModelsGuardsMapperMixin
-from tests._models._mixins.service_cases import TestsFlextModelsServiceCasesMixin
-from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
+from tests._models._mixins import (
+    TestsFlextModelsContainerMixin,
+    TestsFlextModelsCoreMixin,
+    TestsFlextModelsDomainMixin,
+    TestsFlextModelsFixtureDictsMixin,
+    TestsFlextModelsGuardsMapperMixin,
+    TestsFlextModelsServiceCasesMixin,
+    TestsFlextModelsTestDataMixin,
+)
 
 
 class TestsFlextModelsNamespace:
-    """Canonical namespace owner."""
+    """Namespace of the flext-core test model mixins."""
 
     class TestsFlextModelsMixins:
-        """Canonical namespace owner."""
+        """Composition of the flext-core test model mixins."""
 
         class TestsFlextModelsMixins(
             TestsFlextModelsContainerMixin,
@@ -33,7 +35,7 @@ class TestsFlextModelsNamespace:
             """flext-core test models namespace."""
 
     @staticmethod
-    def _populate_container_scenarios() -> None:
+    def populate_container_scenarios() -> None:
         """Attach the scenario tables to their canonical containers.
 
         The scenario values need the fully defined namespace classes, so the
@@ -83,7 +85,7 @@ class TestsFlextModelsNamespace:
         ]
 
 
-TestsFlextModelsNamespace._populate_container_scenarios()
+TestsFlextModelsNamespace.populate_container_scenarios()
 
 m = TestsFlextModelsNamespace.TestsFlextModelsMixins
 

@@ -8,23 +8,29 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.constants import c
-from examples.ex_12_registry_flow import Ex12RegistryFlow
+from examples import c, m, r, t
+from examples.ex_12_registry_flow import ExamplesFlextRegistryFlow
 from examples.ex_12_registry_support import ProtocolHandler, as_registry_handler
-from examples.models import m
-from examples.utilities import u
-from flext_core import r
 
 if TYPE_CHECKING:
-    from examples.protocols import p
+    from pathlib import Path
+
+    from examples import p
 
 
-class Ex12RegistryPlugins(Ex12RegistryFlow):
+class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
     """Plugin and service registration checks for the registry example."""
 
-    _handler_a: ProtocolHandler | None = u.PrivateAttr(default=None)
-    _handler_b: ProtocolHandler | None = u.PrivateAttr(default=None)
-    _plugin_inputs: dict[str, str] = u.PrivateAttr(default_factory=dict)
+    _handler_a: ProtocolHandler | None
+    _handler_b: ProtocolHandler | None
+    _plugin_inputs: t.StrDict
+
+    def __init__(self, caller_file: str | Path) -> None:
+        """Create independent plugin state for this example invocation."""
+        super().__init__(caller_file)
+        self._handler_a = None
+        self._handler_b = None
+        self._plugin_inputs: t.StrDict = {}
 
     def _exercise_bindings_and_plugin_apis(
         self,
@@ -55,15 +61,20 @@ class Ex12RegistryPlugins(Ex12RegistryFlow):
             "class_missing_name": self.rand_str(6),
             "class_unreg_missing_name": self.rand_str(6),
         }
-        self._exercise_instance_plugins(registry)
+        self._exercise_instance_plugins(registry, handler_a, handler_b)
         self._exercise_class_plugins(registry)
 
-    def _exercise_instance_plugins(self, registry: p.Registry) -> None:
+    def _exercise_instance_plugins(
+        self,
+        registry: p.Registry,
+        handler_a: ProtocolHandler,
+        handler_b: ProtocolHandler,
+    ) -> None:
         """Register, fetch, and unregister namespace-scoped instance plugins."""
         q = self._plugin_inputs
         bindings_result = registry.register_bindings({
-            m.Examples.CommandA: as_registry_handler(self._handler_a),
-            q["custom_binding_name"]: as_registry_handler(self._handler_b),
+            m.Examples.CommandA: as_registry_handler(handler_a),
+            q["custom_binding_name"]: as_registry_handler(handler_b),
         })
         self.audit_check("register_bindings.success", bindings_result.success)
         self.audit_check(

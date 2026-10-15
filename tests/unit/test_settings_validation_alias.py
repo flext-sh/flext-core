@@ -22,7 +22,8 @@ from typing import Annotated
 
 import pytest
 
-from flext_core import FlextSettings, m, t
+from flext_core import FlextSettings
+from tests import m, t
 
 
 class TestsFlextCoreSettingsValidationAlias:

@@ -18,10 +18,8 @@ from enum import StrEnum, unique
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 import pytest
-from flext_tests import tm
 
-from tests.models import m
-from tests.utilities import u
+from tests import m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

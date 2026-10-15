@@ -48,16 +48,16 @@ from __future__ import annotations
 from flext_core import p, r
 
 
-def validate_payload(payload: dict[str, str]) -> p.Result[dict[str, str]]:
+def validate_payload(payload: t.StrDict) -> p.Result[t.StrDict]:
     """Require the email key before accepting a payload.
 
     Returns:
-        The resulting ``p.Result[dict[str, str]]``.
+        The resulting ``p.Result[t.StrDict]``.
 
     """
     if "email" not in payload:
-        return r[dict[str, str]].fail("missing_email")
-    return r[dict[str, str]].ok(payload)
+        return r[t.StrDict].fail("missing_email")
+    return r[t.StrDict].ok(payload)
 
 
 valid_payload = validate_payload({"email": "a@b.com"})
@@ -107,12 +107,12 @@ if service.value != expected_service:
 import io
 from contextlib import redirect_stdout
 
-from examples.ex_03_flext_logger import Ex03FlextLogger
+from examples.ex_03_flext_logger import ExamplesFlextLogger
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex03FlextLogger().run()
+    ExamplesFlextLogger().run()
 result = Ex04DispatchDsl.run()
 expected_value = "pong:dispatcher-example"
 if not result.success:

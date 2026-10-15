@@ -1,0 +1,6 @@
+rules:
+  - id: expose-strict-yaml-merge-primitive
+    description: Expose the existing ordered mapping and list merge for typed consumers.
+    include: [src/flext_core/config_sources.py]
+    find: '\b_deep_merge_lists\b'
+    replace: merge_values

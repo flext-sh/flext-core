@@ -77,8 +77,8 @@ initialize_registrations.list_services_empty: 0
 core_services.settings_internal: True
 core_services.logger_internal: True
 core_services.command_bus_internal: True
-create_module_logger.explicit.type: 'FlextUtilitiesLogging'
-create_module_logger.explicit_custom.type: 'FlextUtilitiesLogging'
+create_module_logger.explicit.type: 'FlextBoundLogger'
+create_module_logger.explicit_custom.type: 'FlextBoundLogger'
 unregister.existing.success: True
 unregister.missing.failure: True
 clear_all.count: 0

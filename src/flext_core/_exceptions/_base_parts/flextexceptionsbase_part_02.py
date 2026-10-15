@@ -11,18 +11,13 @@ import uuid
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, m
-from flext_core._exceptions._base_parts.flextexceptionsbase_part_01 import (
-    FlextBaseErrorMetadataMixin,
-)
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as FlextRuntime,
-)
+from flext_core._exceptions._base_parts import FlextBaseErrorMetadataMixin
+from flext_core._runtime import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._typings.base import FlextTypingBase as tb
-    from flext_core._typings.services import FlextTypesServices as ts
+    from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
 class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
@@ -32,7 +27,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
     metadata: m.Metadata
     timestamp: float
     auto_log: bool
-    args: tb.VariadicTuple[str]
+    args: FlextTypingBase.VariadicTuple[str]
 
     _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
         c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
@@ -82,19 +77,23 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         *,
         error_code: str,
         options: m.ExceptionInitOptions,
-        extra_kwargs: tb.MappingKV[str, ts.JsonPayload | None],
+        extra_kwargs: FlextTypingBase.MappingKV[
+            str, FlextTypesServices.JsonPayload | None
+        ],
     ) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
         self.args = (message,)
         self.message = message
         self.error_code = error_code
-        final_kwargs_dict: tb.JsonDict = {}
+        final_kwargs_dict: FlextTypingBase.JsonDict = {}
         for source_value in (options.merged_kwargs, options.context, extra_kwargs):
             if source_value is None:
                 continue
             try:
-                source_dict = FlextRuntime.normalize_metadata_input_mapping(
-                    source_value,
+                source_dict = (
+                    FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
+                        source_value,
+                    )
                 )
             except c.EXC_PYDANTIC_TYPE_VALUE:
                 continue
@@ -102,7 +101,9 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
                 continue
             for key, value in source_dict.items():
                 if value is not None:
-                    final_kwargs_dict[key] = FlextRuntime.normalize_to_metadata(value)
+                    final_kwargs_dict[key] = (
+                        FlextRuntimeMetadataValidation.normalize_to_metadata(value)
+                    )
         final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"

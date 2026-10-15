@@ -7,8 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
+from typing import cast
 
 from flext_core import c, p, r, t, u
+from flext_core._utilities import FlextUtilitiesDispatcherExecute
 
 
 class FlextDispatcher:
@@ -71,7 +73,7 @@ class FlextDispatcher:
 
         """
         if isinstance(event, Sequence):
-            for evt in event:
+            for evt in cast("t.SequenceOf[p.Routable]", event):
                 _ = self.publish(evt)
             return r[bool].ok(value=True)
         route_name = u.resolve_message_route(event)
@@ -211,81 +213,12 @@ class FlextDispatcher:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        dispatch_result = r[t.JsonPayload]
-        try:
-            raw_candidate = resolved_handler(message)
-            raw_output = self._normalize_dispatcher_output(
-                raw_candidate,
-                dispatch_result,
-            )
-            return self._adapt_dispatcher_output(raw_output, dispatch_result)
-        except c.EXC_BROAD_RUNTIME as exc:
-            self.logger.exception(
-                c.LOG_HANDLER_EXECUTION_FAILED,
-                exception=exc,
-                route=route_name,
-            )
-            return dispatch_result.fail_op("execute resolved handler", exc)
-
-    @staticmethod
-    def _normalize_dispatcher_output(
-        raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
-        dispatch_result: type[r[t.JsonPayload]],
-    ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
-        """Normalize raw handler output to Result or payload candidate.
-
-        Returns:
-            The resulting ``t.JsonPayload | p.ResultView[t.JsonPayload] | None``.
-
-        """
-        if isinstance(raw_candidate, p.ResultView):
-            return raw_candidate
-        if raw_candidate is None:
-            return None
-        if u.container(raw_candidate) or u.pydantic_model(raw_candidate):
-            return raw_candidate
-        return dispatch_result.fail_op(
-            "validate handler return payload",
-            c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+        return FlextUtilitiesDispatcherExecute.execute_dispatcher_handler(
+            resolved_handler=resolved_handler,
+            message=message,
+            route_name=route_name,
+            logger=self.logger,
         )
-
-    @staticmethod
-    def _adapt_dispatcher_output(
-        raw_output: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
-        dispatch_result: type[r[t.JsonPayload]],
-    ) -> p.Result[t.JsonPayload]:
-        """Adapt normalized output to the canonical ``r[t.JsonPayload]`` contract.
-
-        Returns:
-            The resulting ``p.Result[t.JsonPayload]``.
-
-        """
-        result: p.Result[t.JsonPayload]
-        if raw_output is None:
-            result = dispatch_result.fail_op(
-                "validate handler return payload",
-                c.ERR_HANDLER_RETURNED_NONE,
-            )
-        elif isinstance(raw_output, p.ResultView):
-            if raw_output.failure:
-                result = dispatch_result.from_failure(raw_output)
-            else:
-                output_value = raw_output.value
-                if u.container(output_value) or u.pydantic_model(output_value):
-                    result = dispatch_result.ok(output_value)
-                else:
-                    result = dispatch_result.fail_op(
-                        "validate handler success payload",
-                        c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
-                    )
-        elif u.container(raw_output) or u.pydantic_model(raw_output):
-            result = dispatch_result.ok(raw_output)
-        else:
-            result = dispatch_result.fail_op(
-                "validate handler return payload",
-                c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
-            )
-        return result
 
 
 # Why: the generated package facade exports a root module's explicit public

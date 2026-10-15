@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from flext_core._models._context._export import FlextModelsContextExport
     from flext_core._models._context._metadata import FlextModelsContextMetadata
     from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._scope_ops import FlextContextScopeOps
     from flext_core._models._context._tokens import FlextModelsContextTokens
     from flext_core._models._enforcement._base import (
         FlextModelsEnforcementBase,
@@ -43,18 +44,6 @@ if TYPE_CHECKING:
         FlextModelsEnforcementResolution,
     )
     from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-        FlextModelsProjectMetadataContract,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
-        FlextModelsProjectMetadataFields,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-        FlextModelsProjectMetadataAggregates,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-        FlextModelsProjectMetadataDocument,
-    )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
         FlextModelsPyprojectIngressContract,
     )
@@ -75,6 +64,7 @@ if TYPE_CHECKING:
     from flext_core._models.flext_mixins import FlextMixins
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.namespace import FlextModelsNamespace
+    from flext_core._models.options import FlextModelsOptions
     from flext_core._models.project_metadata import FlextModelsProjectMetadata
     from flext_core._models.pydantic import FlextModelsPydantic
     from flext_core._models.registry import FlextModelsRegistry
@@ -84,6 +74,7 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "FlextContext",
+    "FlextContextScopeOps",
     "FlextMixins",
     "FlextModelsBase",
     "FlextModelsBuilder",
@@ -113,11 +104,8 @@ __all__: tuple[str, ...] = (
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsNamespace",
+    "FlextModelsOptions",
     "FlextModelsProjectMetadata",
-    "FlextModelsProjectMetadataAggregates",
-    "FlextModelsProjectMetadataContract",
-    "FlextModelsProjectMetadataDocument",
-    "FlextModelsProjectMetadataFields",
     "FlextModelsPydantic",
     "FlextModelsPyprojectIngressContract",
     "FlextModelsRegistry",
@@ -137,6 +125,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextContext": ".flext_context",
+        "FlextContextScopeOps": "._context._scope_ops",
         "FlextMixins": ".flext_mixins",
         "FlextModelsBase": ".base",
         "FlextModelsBuilder": ".builder",
@@ -168,19 +157,8 @@ install_lazy_exports(
         "FlextModelsExceptionParams": ".exception_params",
         "FlextModelsHandler": ".handler",
         "FlextModelsNamespace": ".namespace",
+        "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
-        "FlextModelsProjectMetadataAggregates": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
-        ),
-        "FlextModelsProjectMetadataContract": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_01"
-        ),
-        "FlextModelsProjectMetadataDocument": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
-        ),
-        "FlextModelsProjectMetadataFields": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_02"
-        ),
         "FlextModelsPydantic": ".pydantic",
         "FlextModelsPyprojectIngressContract": (
             "._project_metadata_parts.flextmodelsprojectmetadata_part_05"

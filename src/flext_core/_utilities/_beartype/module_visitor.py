@@ -9,11 +9,12 @@ from __future__ import annotations
 import ast
 import inspect
 from pathlib import Path
+from types import ModuleType
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import (
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeModuleSource,
 )
@@ -26,7 +27,7 @@ _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
 })
 
 
-def _is_synthetic_parametrized_type(value: object) -> bool:
+def _is_synthetic_parametrized_type(value: FlextTypingBase.UnconstrainedValue) -> bool:
     """Return True for synthetic ``Foo[int]`` specializations.
 
     Pydantic generic BaseModel subclasses leak parameterized specializations
@@ -41,7 +42,9 @@ def _is_synthetic_parametrized_type(value: object) -> bool:
     return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
 
 
-def _is_module_alias_candidate(name: str, value: object) -> bool:
+def _is_module_alias_candidate(
+    name: str, value: FlextTypingBase.UnconstrainedValue
+) -> bool:
     """Return True when a module-level symbol looks like a compat alias.
 
     Returns:
@@ -64,6 +67,27 @@ class FlextUtilitiesBeartypeModuleVisitor:
     """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
 
     @staticmethod
+    def _loc_cap_module(
+        params: FlextModelsEnforcement.LocCapParams,
+        target: type,
+    ) -> tuple[ModuleType, str] | None:
+        """Return the defining module and file name when LOC_CAP applies.
+
+        Returns:
+            The resulting ``tuple[ModuleType, str] | None``.
+
+        """
+        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
+        if module is None or not params.max_top_level_classes:
+            return None
+        src_file = inspect.getsourcefile(module) or ""
+        filename = Path(src_file).name
+        package = module.__name__.split(".")[0]
+        if not package.startswith("flext_") or filename.startswith("_"):
+            return None
+        return module, filename
+
+    @staticmethod
     def v_loc_cap(
         params: FlextModelsEnforcement.LocCapParams,
         target: type,
@@ -79,18 +103,12 @@ class FlextUtilitiesBeartypeModuleVisitor:
             The resulting ``t.StrMapping | None``.
 
         """
-        module = FlextUtilitiesBeartypeHelpers.runtime_module_for(target)
-        if module is None:
+        context = FlextUtilitiesBeartypeModuleVisitor._loc_cap_module(params, target)
+        if context is None:
             return _NO_VIOLATION
-        src_file = inspect.getsourcefile(module) or ""
-        filename = Path(src_file).name
-        if not params.max_top_level_classes:
-            return _NO_VIOLATION
-        package = module.__name__.split(".")[0]
-        if not package.startswith("flext_") or filename.startswith("_"):
-            return _NO_VIOLATION
+        module, filename = context
         try:
-            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+            tree = FlextUtilitiesBeartypeModuleSource.parse_module(module)
         except (OSError, TypeError, SyntaxError):
             return _NO_VIOLATION
         top_level_class_count = sum(
@@ -133,7 +151,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if (
             not package.startswith("flext_")
             or filename.startswith("_")
-            or filename in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_FILES
+            or filename in c.ENFORCEMENT_CANONICAL_FILES
             or filename in _MODULE_EXEMPT_FILES
         ):
             return _NO_VIOLATION
@@ -145,7 +163,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if not candidates:
             return _NO_VIOLATION
         try:
-            tree = FlextUtilitiesBeartypeModuleSource.parse(module)
+            tree = FlextUtilitiesBeartypeModuleSource.parse_module(module)
         except (OSError, TypeError, SyntaxError):
             tree = None
         return next(
@@ -176,3 +194,6 @@ class FlextUtilitiesBeartypeModuleVisitor:
 
         """
         return _NO_VIOLATION
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesBeartypeModuleVisitor",)

@@ -11,20 +11,28 @@ from typing import Annotated, Self
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
-from flext_core._constants import FlextConstantsRegex
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-    FlextModelsProjectMetadataContract,
+from flext_core import c
+from flext_core._models._project_metadata_parts import (
+    flextmodelsprojectmetadata_part_01,
+    flextmodelsprojectmetadata_part_05,
 )
-from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
-    FlextModelsPyprojectIngressContract,
+from flext_core._typings import FlextTypingBase
+
+FlextModelsProjectMetadataContract = (
+    flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
 )
-from flext_core._typings.base import FlextTypingBase
+
+FlextModelsPyprojectIngressContract = (
+    flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
+)
 
 
 class FlextModelsProjectMetadataFields:
     """Leaf field contracts shared by the aggregate model layers."""
 
-    class ProjectAuthor(FlextModelsPyprojectIngressContract):
+    class ProjectAuthor(
+        flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
+    ):
         """One PEP 621 project author."""
 
         name: Annotated[str, Field(default="", description="Author display name")] = ""
@@ -32,7 +40,9 @@ class FlextModelsProjectMetadataFields:
             ""
         )
 
-    class ProjectUrls(FlextModelsPyprojectIngressContract):
+    class ProjectUrls(
+        flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
+    ):
         """Canonical project URL fields from the PEP 621 URL table."""
 
         homepage: Annotated[
@@ -60,7 +70,9 @@ class FlextModelsProjectMetadataFields:
             ),
         ] = ""
 
-    class ProjectToolFlextProject(FlextModelsProjectMetadataContract):
+    class ProjectToolFlextProject(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.project]`` contract."""
 
         class_stem_override: Annotated[
@@ -94,13 +106,15 @@ class FlextModelsProjectMetadataFields:
             ),
         ] = None
 
-    class ProjectToolFlextReadmeSection(FlextModelsProjectMetadataContract):
+    class ProjectToolFlextReadmeSection(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """One ordered project README section declaration."""
 
         id: Annotated[
             str,
             Field(
-                pattern=FlextConstantsRegex.PATTERN_IDENTIFIER_LOWERCASE,
+                pattern=c.PATTERN_IDENTIFIER_LOWERCASE,
                 description="Stable project README section identifier",
             ),
         ]
@@ -122,22 +136,51 @@ class FlextModelsProjectMetadataFields:
 
         @field_validator("include", mode="before")
         @classmethod
-        def _validate_include_path(cls, value: object) -> object:
+        def _validate_include_path(
+            cls, value: FlextTypingBase.UnconstrainedValue
+        ) -> FlextTypingBase.UnconstrainedValue:
             if value is None or not isinstance(value, (str, PurePosixPath)):
                 return value
             rendered = str(value)
             path = PurePosixPath(rendered)
             windows_path = PureWindowsPath(rendered)
-            if (
-                not rendered
-                or "\\\\" in rendered
-                or path.is_absolute()
-                or bool(windows_path.drive)
-                or any(part in {"", ".", ".."} for part in rendered.split("/"))
-            ):
+            if cls._has_windows_include_artifacts(
+                rendered,
+                windows_path,
+            ) or cls._has_unsafe_include_segments(rendered, path):
                 msg = "README include path must be a portable repository-relative path"
                 raise ValueError(msg)
             return path
+
+        @staticmethod
+        def _has_windows_include_artifacts(
+            rendered: str,
+            windows_path: PureWindowsPath,
+        ) -> bool:
+            """Return True when the include path carries Windows-only artifacts.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
+            return "\\\\" in rendered or bool(windows_path.drive)
+
+        @staticmethod
+        def _has_unsafe_include_segments(
+            rendered: str,
+            path: PurePosixPath,
+        ) -> bool:
+            """Return True when the include path is absolute or has unsafe segments.
+
+            Returns:
+                The resulting ``bool``.
+
+            """
+            return (
+                not rendered
+                or path.is_absolute()
+                or any(part in {"", ".", ".."} for part in rendered.split("/"))
+            )
 
         @model_validator(mode="after")
         def _validate_content_source(self) -> Self:
@@ -146,7 +189,9 @@ class FlextModelsProjectMetadataFields:
                 raise ValueError(msg)
             return self
 
-    class ProjectToolFlextDocs(FlextModelsProjectMetadataContract):
+    class ProjectToolFlextDocs(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.docs]`` contract."""
 
         package_name: Annotated[
@@ -178,7 +223,9 @@ class FlextModelsProjectMetadataFields:
                 raise ValueError(msg)
             return self
 
-    class ProjectToolFlextWorkspace(FlextModelsProjectMetadataContract):
+    class ProjectToolFlextWorkspace(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.workspace]`` contract."""
 
         attached: Annotated[
@@ -186,7 +233,9 @@ class FlextModelsProjectMetadataFields:
             Field(default=False, description="Attach project to its parent workspace"),
         ] = False
 
-    class ProjectToolFlextNamespace(FlextModelsProjectMetadataContract):
+    class ProjectToolFlextNamespace(
+        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
+    ):
         """``[tool.flext.namespace]`` contract."""
 
         enabled: Annotated[

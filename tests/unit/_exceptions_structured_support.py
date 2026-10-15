@@ -9,17 +9,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from flext_tests import e
-
-from tests.constants import c
+from tests import c, e
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 type ErrorFactory = Callable[[], e.BaseError]
 
 STRUCTURED_ERRORS: t.SequenceOf[
-    tuple[str, ErrorFactory, str, str, dict[str, str | int | None]]
+    tuple[str, ErrorFactory, str, str, t.MappingKV[str, str | int | None]]
 ] = [
     (
         "validation",

@@ -14,12 +14,12 @@ from __future__ import annotations
 
 import inspect
 import sys
-import threading
 from collections.abc import Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
 from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
+from flext_core._container_parts import FlextContainerTestingOps
 from flext_core._models import FlextContext
 
 # NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
@@ -27,16 +27,6 @@ from flext_core._models import FlextContext
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
     from types import FrameType, ModuleType
-
-
-class FlextContainerTestingOps:
-    """Testing-only singleton reset operations for the shared container."""
-
-    @classmethod
-    def reset_for_testing(cls) -> None:
-        """Reset singleton instance for testing purposes."""
-        with cls._global_lock:
-            cls._global_instance = None
 
 
 class FlextContainer(FlextContainerTestingOps, p.Container):
@@ -48,10 +38,6 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     ``scope`` inherit the public registrations and bind their own core
     services to their own settings and context.
     """
-
-    _global_instance: Self | None = None
-
-    _global_lock: threading.RLock = threading.RLock()
 
     _settings_type: ClassVar[p.SettingsType] = FlextSettings
 

@@ -16,13 +16,12 @@ import inspect
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from flext_core.container import FlextContainer
-from tests.utilities import u
+from flext_core import FlextContainer
+from tests import tm, u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p, t
 
 
 class TestsFlextCoreContainer:
@@ -163,7 +162,7 @@ class TestsFlextCoreContainer:
     )
     @staticmethod
     def test_apply_returns_self_for_fluent_chaining(
-        overrides: dict[str, str] | None,
+        overrides: t.UserOverridesMapping | None,
         clean_container: p.Container,
     ) -> None:
         """Apply returns the same container so callers can chain fluently."""

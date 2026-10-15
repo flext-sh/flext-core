@@ -13,8 +13,8 @@ import inspect
 import sys
 from typing import TYPE_CHECKING, ClassVar, Self, cast, override
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _registry_parts/part_01..04 (one
-# FlextRegistry class split across a numbered MRO chain) into this single facade module.
+from typing_extensions import TypeForm
+
 from flext_core import c, e, h, m, p, r, s, t, u
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ class FlextRegistry(s[bool]):
     for actual handler registration and execution.
     """
 
-    _state: m.RegistryState = u.PrivateAttr(default_factory=m.RegistryState)
+    _state: m.RegistryState = m.PrivateAttr(default_factory=m.RegistryState)
 
     _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
 
@@ -133,7 +133,7 @@ class FlextRegistry(s[bool]):
             narrowed = str(value)
         else:
             normalized = u.normalize_to_metadata(value)
-            narrowed = t.json_value_adapter().validate_python(normalized)
+            narrowed = u.type_adapter(TypeForm(t.JsonValue)).validate_python(normalized)
         return narrowed
 
     @staticmethod

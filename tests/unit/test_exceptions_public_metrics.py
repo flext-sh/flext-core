@@ -14,9 +14,8 @@ from __future__ import annotations
 from collections.abc import Iterator, Sequence
 
 import pytest
-from flext_tests import e
 
-from tests.models import m
+from tests import e, m
 
 
 class TestsFlextCoreExceptionsPublicMetrics:

@@ -9,9 +9,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set as AbstractSet
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypeGuard
+from typing import TYPE_CHECKING, Literal, TypeGuard, cast
 
 from pydantic import BaseModel
+from typing_extensions import TypeForm
 
 from flext_core import c
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
@@ -21,14 +22,13 @@ from flext_core._protocols import (
     FlextProtocolsLogging,
     FlextProtocolsSettings,
 )
-from flext_core._runtime._metadata_validation import FlextRuntimeMetadataValidation
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.typeadapters import FlextTypesTypeAdapters
-from flext_core._utilities import FlextUtilitiesGuardsTypeCore
+from flext_core._runtime import FlextRuntimeMetadataValidation
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesGuardsTypeCore
 
 if TYPE_CHECKING:
     from flext_core._protocols import FlextProtocolsBase
-    from flext_core._typings.services import FlextTypesServices
+    from flext_core._typings import FlextTypesServices
 
 
 class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
@@ -78,14 +78,18 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             case Path():
                 normalized_item = str(item)
             case tuple():
-                normalized_item = FlextRuntimeContainer.normalize_to_metadata(item)
-            case dict():
-                normalized_item = (
-                    FlextTypesTypeAdapters.json_dict_adapter().validate_python(item)
+                normalized_item = FlextRuntimeContainer.normalize_to_metadata(
+                    cast("FlextTypesServices.JsonPayload", item),
                 )
+            case dict():
+                normalized_item = FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonDict)
+                ).validate_python(item)
             case list():
                 normalized_item = list(
-                    FlextTypesTypeAdapters.json_list_adapter().validate_python(item),
+                    FlextUtilitiesBase.type_adapter(
+                        TypeForm(FlextTypingBase.JsonList)
+                    ).validate_python(item),
                 )
             case (
                 bool()
@@ -125,23 +129,31 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
         """
         if isinstance(value, Mapping):
+            mapping_value = cast(
+                "dict[str, FlextTypesServices.JsonPayload]",
+                value,
+            )
             return FlextModelsContainers.ConfigMap(
                 root={
                     key_s: FlextRuntimeContainer._normalize_payload_item(
                         item,
                         container_kind="mapping",
                     )
-                    for key_s, item in value.items()
+                    for key_s, item in mapping_value.items()
                 },
             )
         if isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
+            sequence_value = cast(
+                "FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]",
+                value,
+            )
             return FlextModelsContainers.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
                         item,
                         container_kind="sequence",
                     )
-                    for item in value
+                    for item in sequence_value
                 ],
             )
         if (
@@ -200,7 +212,9 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, FlextModelsContainers.ObjectList):
             normalized_data = list(
-                FlextTypesTypeAdapters.json_list_adapter().validate_python([
+                FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonList)
+                ).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
                 ]),
             )
@@ -216,7 +230,9 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, Sequence) and not isinstance(val, c.STR_BYTES_TYPES):
             normalized_data = list(
-                FlextTypesTypeAdapters.json_list_adapter().validate_python([
+                FlextUtilitiesBase.type_adapter(
+                    TypeForm(FlextTypingBase.JsonList)
+                ).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(item_raw)
                     for item_raw in val
                 ]),

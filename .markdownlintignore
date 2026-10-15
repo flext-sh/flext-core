@@ -36,11 +36,9 @@ target/**
 .gemini/**
 .beads/**
 docs/knowledge-index.md
-docs/architecture/communities/README.md
+docs/architecture/communities/index.md
 docs/architecture/crg-reports/**
 docs/api-reference/generated/**
-docs/architecture/standardization-phase1-drift-report.md
-docs/plans/2026-09-11-conformance-sweep-handoff.md
 docs/plans/2026-09-14-stabilization-handoff/previous-handoff-source.md
 docs/plans/2026-09-22-pipeline-integracao-continua-plano.md
 docs/plans/2026-09-22-rope-generator-stabilization/02-achados-codegen.md

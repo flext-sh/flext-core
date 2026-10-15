@@ -10,13 +10,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_tests import tm
-
-from flext_core import u
-from tests.models import m
+from tests import m, tm, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreUtilitiesTypeGuards:
@@ -41,7 +38,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         normalized_retry_window = u.normalize_to_metadata(None)
         normalized_modes = u.normalize_to_metadata({"delta", "full"})
 
-        metadata: dict[str, t.JsonValue] = {
+        metadata: t.JsonDict = {
             "payload": normalized_payload,
             "repository_root": normalized_repository_root,
             "retry_window": normalized_retry_window,
@@ -79,7 +76,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
     @staticmethod
     def test_public_guard_returns_normalized_values_defaults_and_failures() -> None:
         """Test public guard returns normalized values defaults and failures."""
-        payload: dict[str, t.JsonValue] = {
+        payload: t.JsonDict = {
             "command_name": "sync-users",
             "attempt_count": 2,
         }
@@ -110,7 +107,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         )
         failed_guard = failed_guard_result
 
-        tm.that(cast("dict[str, t.JsonValue]", guarded_payload), eq=payload)
+        tm.that(cast("t.JsonDict", guarded_payload), eq=payload)
         tm.that(cast("list[str]", fallback_tags), eq=["cli"])
         tm.that(cast("int", guarded_attempt), eq=2)
         tm.fail(failed_guard)

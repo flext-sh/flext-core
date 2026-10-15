@@ -15,10 +15,8 @@ from collections.abc import Callable
 from typing import NoReturn
 
 import pytest
-from flext_tests import d, e, r, tm
 
-from tests.models import m
-from tests.protocols import p
+from tests import c, d, e, m, p, r, tm, u
 
 _COMBINED_SUM = 6
 _FLAT_MAP_VALUE = 20
@@ -37,6 +35,18 @@ def _triple(value: int) -> int:
 
 class TestsFlextCoreDocumentedPatterns:
     """Public-contract behavior of the documented result/exception/decorator DSL."""
+
+    @staticmethod
+    def test_railway_pipelines_preserve_public_user_payload() -> None:
+        """Both railway helpers return the model exposed by the model facade."""
+        case = m.Tests.RailwayTestCase(user_ids=c.Tests.USER_IDS_SUCCESS[:1])
+        expected = u.Tests.GetUserService(user_id=case.user_ids[0]).execute()
+        first = u.Tests.execute_v1_pipeline(case)
+        second = u.Tests.execute_v2_pipeline(case)
+
+        tm.that(first.success, eq=True)
+        tm.that(first.value, eq=expected.value)
+        tm.that(second, eq=expected.value)
 
     @pytest.mark.parametrize(
         ("seed", "transform", "expected"),

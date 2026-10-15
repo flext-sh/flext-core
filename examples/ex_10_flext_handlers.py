@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples.protocols import p
-from flext_core import r
+from examples import p, r
 
 
 def run() -> p.Result[str]:
@@ -20,7 +19,7 @@ def run() -> p.Result[str]:
     return r[str].ok("handler-example")
 
 
-class Ex10FlextHandlers:
+class ExamplesFlextHandlers:
     """Compatibility wrapper expected by examples package exports."""
 
     @staticmethod

@@ -13,21 +13,46 @@ from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from flext_tests import FlextTestsUtilities, h, r
+from flext_tests import FlextTestsUtilities
 
+from tests import c, h, m, p, r, t
 from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin
+from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
+from tests._utilities.case_service_factories import (
+    TestsFlextUtilitiesCaseServiceFactoriesMixin,
+)
 from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
 from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
 from tests._utilities.parser_reliability import (
     TestsFlextUtilitiesParserReliabilityMixin,
 )
+from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenariosMixin
 from tests._utilities.railway import TestsFlextUtilitiesRailwayMixin
+from tests._utilities.railway_cases import TestsFlextUtilitiesRailwayCasesMixin
+from tests._utilities.railway_pipelines import TestsFlextUtilitiesRailwayPipelinesMixin
+from tests._utilities.railway_services import TestsFlextUtilitiesRailwayServicesMixin
+from tests._utilities.reliability_scenarios import (
+    TestsFlextUtilitiesReliabilityScenariosMixin,
+)
 from tests._utilities.service_factories import TestsFlextUtilitiesServiceFactoriesMixin
 from tests._utilities.services import TestsFlextUtilitiesServicesMixin
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
+from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
+from tests._utilities.validation_factories import (
+    TestsFlextUtilitiesValidationFactoriesMixin,
+)
+from tests._utilities.validation_network import (
+    TestsFlextUtilitiesValidationNetworkScenarios,
+)
+from tests._utilities.validation_numeric import (
+    TestsFlextUtilitiesValidationNumericScenarios,
+)
+from tests._utilities.validation_pattern import (
+    TestsFlextUtilitiesValidationPatternScenarios,
+)
+from tests._utilities.validation_string import (
+    TestsFlextUtilitiesValidationStringScenarios,
+)
+from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
 
 
 class TestsFlextUtilities(FlextTestsUtilities):
@@ -177,7 +202,14 @@ class TestsFlextUtilities(FlextTestsUtilities):
         class HandlerTypeScenario(m.Value):
             """Scenario for handler types."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+            # Why use_enum_values=False: the fields contract the ``c.HandlerType``
+            # members themselves (consumers feed them into typed params models
+            # that validate ``is_instance_of``); the carrier must not downcast
+            # them to plain strings the way the shared ``m.Value`` default does.
+            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+                frozen=True,
+                use_enum_values=False,
+            )
             name: Annotated[str, m.Field(description="Handler type scenario name")]
             handler_type: Annotated[c.HandlerType, m.Field(description="Type")]
             handler_mode: Annotated[c.HandlerType, m.Field(description="Mode")]
@@ -328,7 +360,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 operation=DecoratorOperationType.RAILWAY_EXCEPTION,
             ),
         ]
-        RETRY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
+        DECORATOR_RETRY_SCENARIOS: ClassVar[Sequence[DecoratorTestCase]] = [
             DecoratorTestCase(
                 name="retry_success_first_attempt",
                 operation=DecoratorOperationType.RETRY_SUCCESS_FIRST,
@@ -391,13 +423,31 @@ class TestsFlextUtilities(FlextTestsUtilities):
             )
 
     class Tests(
+        TestsFlextBeartypeEngine,
         TestsFlextUtilitiesCaseFactoriesMixin,
-        TestsFlextUtilitiesContractsMixin,
-        TestsFlextUtilitiesParserReliabilityMixin,
+        TestsFlextUtilitiesCaseGeneratorsMixin,
+        TestsFlextUtilitiesCaseServiceFactoriesMixin,
         TestsFlextUtilitiesServiceFactoriesMixin,
+        TestsFlextUtilitiesValidationFactoriesMixin,
         TestsFlextUtilitiesServicesMixin,
-        TestsFlextUtilitiesRailwayMixin,
+        TestsFlextUtilitiesUserFactoriesMixin,
+        TestsFlextUtilitiesContractsMixin,
+        TestsFlextDecoratorsLegacy,
         TestsFlextUtilitiesDispatchMixin,
+        TestsFlextFlextHandlers,
+        TestsFlextUtilitiesParserReliabilityMixin,
+        TestsFlextUtilitiesParserScenariosMixin,
+        TestsFlextUtilitiesReliabilityScenariosMixin,
+        TestsFlextUtilitiesRailwayMixin,
+        TestsFlextUtilitiesRailwayPipelinesMixin,
+        TestsFlextUtilitiesRailwayServicesMixin,
+        TestsFlextUtilitiesRailwayCasesMixin,
+        TestsFlextResultExceptionCarrying,
+        TestsFlextUtilitiesValidationNetworkScenarios,
+        TestsFlextUtilitiesValidationNumericScenarios,
+        TestsFlextUtilitiesValidationPatternScenarios,
+        TestsFlextUtilitiesValidationStringScenarios,
+        TestsFlextUtilitiesValidationUriScenarios,
         FlextTestsUtilities.Tests,
     ):
         """flext-core test utilities namespace."""
@@ -405,4 +455,4 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
 u = TestsFlextUtilities
 
-__all__: list[str] = ["TestsFlextUtilities"]
+__all__: list[str] = ["TestsFlextUtilities", "u"]

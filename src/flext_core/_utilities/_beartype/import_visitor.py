@@ -11,13 +11,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import (
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeAliasVisitor,
+    FlextUtilitiesBeartypeImportBlacklistVisitor,
     FlextUtilitiesBeartypeLibraryVisitor,
-)
-from flext_core._utilities._beartype._import_blacklist_visitor import (
-    _ImportBlacklistVisitor,
 )
 
 
@@ -35,7 +33,9 @@ class FlextUtilitiesBeartypeImportVisitor:
             The resulting ``t.StrMapping | None``.
 
         """
-        return _ImportBlacklistVisitor.v_import_blacklist(params, target)
+        return FlextUtilitiesBeartypeImportBlacklistVisitor.implementation(
+            params, target
+        )
 
     @staticmethod
     def v_alias_rebind(

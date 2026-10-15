@@ -16,8 +16,4 @@ from __future__ import annotations
 from flext_core import t
 from flext_core._models import FlextContext
 
-# NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
-# under TYPE_CHECKING keeps the public runtime facade graph lazy.
-
-
 __all__: t.StrSequence = ("FlextContext",)

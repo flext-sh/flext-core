@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._protocols._context_parts.flextprotocolscontext_part_03 import (
-    FlextProtocolsContext as FlextProtocolsContextPartFinal,
-)
+from flext_core._protocols._context_parts import flextprotocolscontext_part_03
 
 
-class FlextProtocolsContext(FlextProtocolsContextPartFinal):
+class FlextProtocolsContext(flextprotocolscontext_part_03.FlextProtocolsContext):
     """Public facade for FlextProtocolsContext."""
 
 

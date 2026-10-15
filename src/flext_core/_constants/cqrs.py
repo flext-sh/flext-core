@@ -123,3 +123,6 @@ class FlextConstantsCqrs:
 
         VALIDATION = "validation"
         SERIALIZATION = "serialization"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsCqrs",)

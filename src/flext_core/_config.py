@@ -2,7 +2,7 @@
 
 A thin layer over ``pydantic_settings.BaseSettings`` that depends on **nothing**
 but stdlib + pydantic-settings. Declarative execution parametrization is loaded
-from the project's local ``config/`` dir: every ``config/*.yaml`` file is
+from the declaring package's ``config/`` resource: every ``config/*.yaml`` file is
 auto-discovered and deep-merged (YAML is the authoring format so rules stay
 organized across multiple files). Frozen and static, like constants; a per-class
 singleton exposed at the root as ``config``.
@@ -24,23 +24,21 @@ from __future__ import annotations
 
 import inspect
 import os
+from importlib.resources import files
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, ClassVar, Self, override
+from typing import ClassVar, Self, override
 
-from pydantic import JsonValue
+from pydantic import JsonValue, ValidationError
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
 
-from flext_core._constants import FlextConstantsConfig
+from flext_core._constants.config import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
-from flext_core.config_sources import StrictYamlConfigSource
-
-if TYPE_CHECKING:
-    from flext_core import t
+from flext_core.config_sources import FlextStrictYamlConfigSource
 
 
 class FlextConfig(BaseSettings):
@@ -53,7 +51,7 @@ class FlextConfig(BaseSettings):
 
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
-    CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
+    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
@@ -62,7 +60,7 @@ class FlextConfig(BaseSettings):
     )
 
     _lock: ClassVar[RLock] = RLock()
-    _instance: ClassVar[FlextConfig | None] = None
+    _instance: ClassVar[Self | None] = None
 
     @classmethod
     def _package_namespace(cls) -> str:
@@ -80,19 +78,11 @@ class FlextConfig(BaseSettings):
     def _config_dir(cls) -> Path:
         """Resolve the packaged ``config/`` root, independent of the caller's CWD.
 
-        ``CONFIG_DIR`` may be an absolute path (explicit override, used verbatim)
-        or a relative name (default ``"config"``). When relative it is resolved
-        against the concrete subclass's own module layout, trying in order:
-
-        1. ``<pkg>/config`` — the packaged copy shipped via hatch force-include,
-           present after ``pip install`` (``site-packages/<pkg>/config``).
-        2. ``<project-root>/config`` — the editable/workspace source tree, where
-           ``config/`` sits beside ``src/`` (``<root>/src/<pkg>/_config.py`` →
-           ``parents[2]`` is the project root).
-
-        An operator may relocate the root entirely with
-        ``<PACKAGE>_CONFIG_DIR``. Library code must never depend on the process
-        CWD, so the legacy CWD-relative lookup is gone.
+        The concrete class's import package owns the resource in editable and
+        wheel installs, regardless of declaration depth or inherited loader.
+        Repository overlays are separate explicit consumer inputs, never a
+        replacement for a missing packaged default. ``<PACKAGE>_CONFIG_DIR``
+        remains the explicit operator relocation.
 
         Returns:
             The resulting ``Path``.
@@ -101,14 +91,8 @@ class FlextConfig(BaseSettings):
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
         if override:
             return Path(override)
-        config_dir = Path(FlextConstantsConfig.CONFIG_DIR_NAME)
-        if config_dir.is_absolute():
-            return config_dir
-        module_path = Path(inspect.getfile(cls)).resolve()
-        packaged = module_path.parent / config_dir
-        if packaged.is_dir():
-            return packaged
-        return module_path.parents[2] / config_dir
+        package = cls.__module__.partition(".")[0]
+        return Path(str(files(package) / FlextConstantsConfig.CONFIG_DIR_NAME))
 
     @classmethod
     def _user_config_dir(cls) -> Path:
@@ -166,7 +150,10 @@ class FlextConfig(BaseSettings):
         return cls._yaml_files_in(config_dir) + user_files
 
     @classmethod
-    def _transform_loaded_yaml(cls, data: dict[str, JsonValue]) -> dict[str, JsonValue]:
+    def _transform_loaded_yaml(
+        cls,
+        data: dict[str, JsonValue],
+    ) -> dict[str, JsonValue]:
         """Hook for subclasses to transform merged YAML before validation.
 
         Default is identity (no transformation). Override to apply env
@@ -187,11 +174,11 @@ class FlextConfig(BaseSettings):
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> t.VariadicTuple[PydanticBaseSettingsSource]:
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources.
 
         Returns:
-            The resulting ``t.VariadicTuple[PydanticBaseSettingsSource]``.
+            The resulting ``tuple[PydanticBaseSettingsSource, ...]``.
         """
         _ = (dotenv_settings, file_secret_settings)
         return (
@@ -199,7 +186,7 @@ class FlextConfig(BaseSettings):
             env_settings,
             # NOTE (multi-agent): one canonical loader rejects duplicate keys
             # before settings construction; consumers never add local parsers.
-            StrictYamlConfigSource(
+            FlextStrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_files(),
                 yaml_config_section=FlextConstantsConfig.YAML_CONFIG_SECTION,
@@ -210,7 +197,14 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def fetch_global(cls) -> Self:
-        """Return the shared frozen singleton (lazy; built on first access)."""
+        """Return the shared frozen singleton (lazy; built on first access).
+
+        Returns:
+            The shared frozen singleton instance of the config.
+
+        Raises:
+            ValidationError: If the configuration is invalid.
+        """
         instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):
             return instance
@@ -218,7 +212,14 @@ class FlextConfig(BaseSettings):
             instance = cls.__dict__.get("_instance")
             if isinstance(instance, cls):
                 return instance
-            created = cls()
+            try:
+                created = cls()
+            except ValidationError as error:
+                sources = ", ".join(str(path) for path in cls._config_files())
+                error.add_note(
+                    f"Configuration owner: {inspect.getfile(cls)}; sources: {sources}"
+                )
+                raise
             cls._instance = created
             return created
 

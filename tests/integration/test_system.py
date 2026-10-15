@@ -14,19 +14,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import e, r, tm
 
-from flext_core import FlextContainer, p
-from tests.constants import c
-from tests.utilities import u
-
-if TYPE_CHECKING:
-    from tests.protocols import p
-
-_UUID_TEXT_LENGTH = 36
+from flext_core import FlextContainer
+from tests import c, e, p, r, t, tm, u
 
 
 class TestsFlextCoreSystem:
@@ -234,11 +226,10 @@ class TestsFlextCoreSystem:
 
     @staticmethod
     def test_generate_returns_a_parseable_uuid_string() -> None:
-        """Generate returns a 36-char string that round-trips as a UUID."""
+        """Generate returns a canonical string that round-trips as a UUID."""
         generated = u.generate()
 
         tm.that(generated, is_=str)
-        tm.that(len(generated), eq=_UUID_TEXT_LENGTH)
         tm.that(str(uuid.UUID(generated)), eq=generated)
 
     @staticmethod
@@ -294,29 +285,29 @@ class TestsFlextCoreSystem:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def _process_user_data(data: dict[str, str]) -> p.Result[dict[str, str]]:
+    def _process_user_data(data: t.StrMapping) -> p.Result[t.StrMapping]:
         if not data:
-            return r[dict[str, str]].fail(
-                "Dados não fornecidos",
+            return r[t.StrMapping].fail(
+                "No data supplied",
                 error_code=c.ErrorCode.VALIDATION_ERROR,
             )
-        processed: dict[str, str] = {}
+        processed: t.MutableStrMapping = {}
         for key, value in data.items():
             if not u.string_non_empty(value):
-                return r[dict[str, str]].fail(
-                    f"Campo '{key}' não pode estar vazio",
+                return r[t.StrMapping].fail(
+                    f"Field '{key}' must not be empty",
                     error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
-            processed[key] = f"processado_{value}"
-        return r[dict[str, str]].ok(processed)
+            processed[key] = f"processed_{value}"
+        return r[t.StrMapping].ok(processed)
 
     def test_workflow_transforms_every_field_on_success(self) -> None:
         """A valid record yields a success whose fields are all transformed."""
         result = self._process_user_data({"nome": "João", "email": "joao@exemplo.com"})
 
         tm.that(result.success, eq=True)
-        tm.that(result.value["nome"], eq="processado_João")
-        tm.that(result.value["email"], eq="processado_joao@exemplo.com")
+        tm.that(result.value["nome"], eq="processed_João")
+        tm.that(result.value["email"], eq="processed_joao@exemplo.com")
 
     def test_workflow_fails_with_field_error_on_empty_value(self) -> None:
         """An empty field aborts the workflow with a descriptive validation error."""
@@ -324,5 +315,5 @@ class TestsFlextCoreSystem:
 
         tm.that(result.success, eq=False)
         tm.that(result.error, none=False)
-        tm.that(tm.not_none(result.error), has="não pode estar vazio")
+        tm.that(tm.not_none(result.error), has="must not be empty")
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)

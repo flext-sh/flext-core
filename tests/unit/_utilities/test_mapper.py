@@ -15,9 +15,8 @@ import operator
 
 import pytest
 
-from flext_core.typings import t
-from flext_core.utilities import FlextUtilitiesMapper
-from tests.utilities import u
+from flext_core import m, t
+from tests import u
 
 
 class TestsFlextCoreMapper:
@@ -147,7 +146,7 @@ class TestsFlextCoreMapper:
     def test_transform_strip_none_removes_none_values() -> None:
         result = u.transform(
             {"a": 1, "b": None},
-            options=FlextUtilitiesMapper.TransformOptions(strip_none=True),
+            options=m.TransformOptions(strip_none=True),
         )
 
         assert result.success
@@ -157,7 +156,7 @@ class TestsFlextCoreMapper:
     def test_transform_strip_empty_removes_empty_values() -> None:
         result = u.transform(
             {"a": "", "b": 2},
-            options=FlextUtilitiesMapper.TransformOptions(strip_empty=True),
+            options=m.TransformOptions(strip_empty=True),
         )
 
         assert result.success
@@ -167,7 +166,7 @@ class TestsFlextCoreMapper:
     def test_transform_map_keys_renames_keys() -> None:
         result = u.transform(
             {"a": 1},
-            options=FlextUtilitiesMapper.TransformOptions(map_keys={"a": "renamed"}),
+            options=m.TransformOptions(map_keys={"a": "renamed"}),
         )
 
         assert result.success
@@ -191,7 +190,7 @@ class TestsFlextCoreMapper:
     def test_transform_pipeline_composes_rename_then_exclude() -> None:
         result = u.transform(
             {"alpha": {"beta": 1}, "drop": None},
-            options=FlextUtilitiesMapper.TransformOptions(
+            options=m.TransformOptions(
                 normalize=True,
                 map_keys={"alpha": "renamed"},
             ),

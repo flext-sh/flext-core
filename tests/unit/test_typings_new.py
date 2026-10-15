@@ -1,6 +1,6 @@
-"""Behavioral tests for the FlextTypes cached TypeAdapter factory contract.
+"""Behavioral tests for the FlextUtilities cached TypeAdapter factory contract.
 
-Exercises the public ``t.*`` surface only: adapter factories validate/reject
+Exercises the public ``u.*`` surface only: adapter factories validate/reject
 runtime data, memoize per-class, honor strict-vs-lax coercion, and preserve the
 documented tiered ``Primitives subset Scalar subset Container`` invariant.
 
@@ -13,10 +13,8 @@ from __future__ import annotations
 from enum import StrEnum
 
 import pytest
-from flext_tests import tm
 
-from tests.constants import c
-from tests.typings import t
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreTypingsNew:
@@ -29,83 +27,83 @@ class TestsFlextCoreTypingsNew:
     def test_json_value_adapter_accepts_nested_json() -> None:
         """json_value_adapter validates arbitrarily nested JSON payloads."""
         payload: t.JsonValue = {"k": [1, 2, "x", True, None]}
-        result = t.json_value_adapter().validate_python(payload)
+        result = u.json_value_adapter().validate_python(payload)
         tm.that(result, eq=payload)
 
     @staticmethod
     def test_adapter_factory_is_memoized() -> None:
         """Repeated factory calls return the identical cached adapter."""
-        tm.that(t.json_value_adapter() is t.json_value_adapter(), eq=True)
+        tm.that(u.json_value_adapter() is u.json_value_adapter(), eq=True)
 
     @staticmethod
     def test_primitives_adapter_accepts_scalar_value() -> None:
         """primitives_adapter accepts a bare primitive value."""
-        tm.that(t.primitives_adapter().validate_python(5), eq=5)
+        tm.that(u.primitives_adapter().validate_python(5), eq=5)
 
     @staticmethod
     def test_primitives_adapter_rejects_collection() -> None:
         """primitives_adapter rejects a non-primitive collection."""
         with pytest.raises(c.ValidationError):
-            t.primitives_adapter().validate_python([1])
+            u.primitives_adapter().validate_python([1])
 
     @pytest.mark.parametrize(("valid", "invalid"), [(7, "7"), (0, 1.5)])
     @staticmethod
-    def test_int_adapter_is_strict(valid: int, invalid: object) -> None:
+    def test_int_adapter_is_strict(valid: int, invalid: t.Scalar) -> None:
         """int_adapter accepts real ints and rejects coercible non-ints."""
-        tm.that(t.int_adapter().validate_python(valid), eq=valid)
+        tm.that(u.int_adapter().validate_python(valid), eq=valid)
         with pytest.raises(c.ValidationError):
-            t.int_adapter().validate_python(invalid)
+            u.int_adapter().validate_python(invalid)
 
     @pytest.mark.parametrize("bad", [5, b"bytes"])
     @staticmethod
-    def test_str_adapter_rejects_non_str(bad: object) -> None:
+    def test_str_adapter_rejects_non_str(bad: t.Scalar) -> None:
         """str_adapter is strict: non-string inputs are rejected."""
-        tm.that(t.str_adapter().validate_python("hi"), eq="hi")
+        tm.that(u.str_adapter().validate_python("hi"), eq="hi")
         with pytest.raises(c.ValidationError):
-            t.str_adapter().validate_python(bad)
+            u.str_adapter().validate_python(bad)
 
     @staticmethod
     def test_binary_content_adapter_accepts_bytes() -> None:
         """binary_content_adapter validates raw bytes payloads."""
-        tm.that(t.binary_content_adapter().validate_python(b"abc"), eq=b"abc")
+        tm.that(u.binary_content_adapter().validate_python(b"abc"), eq=b"abc")
 
     @staticmethod
     def test_string_set_adapter_deduplicates() -> None:
         """string_set_adapter produces a de-duplicated set of strings."""
-        tm.that(t.string_set_adapter().validate_python(["a", "a", "b"]), eq={"a", "b"})
+        tm.that(u.string_set_adapter().validate_python(["a", "a", "b"]), eq={"a", "b"})
 
     @staticmethod
     def test_scalar_mapping_adapter_accepts_mixed_scalars() -> None:
         """scalar_mapping_adapter validates str-keyed scalar mappings."""
         data = {"a": 1, "b": "x"}
-        tm.that(t.scalar_mapping_adapter().validate_python(data), eq=data)
+        tm.that(u.scalar_mapping_adapter().validate_python(data), eq=data)
 
     @staticmethod
     def test_json_list_adapter_accepts_heterogeneous_items() -> None:
         """json_list_adapter validates lists of heterogeneous JSON values."""
         data: t.JsonList = [1, "a", None]
-        tm.that(t.json_list_adapter().validate_python(data), eq=data)
+        tm.that(u.json_list_adapter().validate_python(data), eq=data)
 
     @pytest.mark.parametrize(("valid", "invalid"), [(1, 0), (8080, 70000)])
     @staticmethod
     def test_port_number_adapter_enforces_range(valid: int, invalid: int) -> None:
         """port_number_adapter accepts in-range ports and rejects out-of-range."""
-        tm.that(t.port_number_adapter().validate_python(valid), eq=valid)
+        tm.that(u.port_number_adapter().validate_python(valid), eq=valid)
         with pytest.raises(c.ValidationError):
-            t.port_number_adapter().validate_python(invalid)
+            u.port_number_adapter().validate_python(invalid)
 
     @staticmethod
     def test_hostname_str_adapter_rejects_empty() -> None:
         """hostname_str_adapter accepts a hostname and rejects the empty string."""
-        tm.that(t.hostname_str_adapter().validate_python("localhost"), eq="localhost")
+        tm.that(u.hostname_str_adapter().validate_python("localhost"), eq="localhost")
         with pytest.raises(c.ValidationError):
-            t.hostname_str_adapter().validate_python("")
+            u.hostname_str_adapter().validate_python("")
 
     @staticmethod
     def test_enum_type_adapter_accepts_strenum_class() -> None:
         """enum_type_adapter validates StrEnum subclasses as type values."""
         tm.that(
-            t.enum_type_adapter().validate_python(TestsFlextCoreTypingsNew._Color)
+            u.enum_type_adapter().validate_python(TestsFlextCoreTypingsNew._Color)
             is TestsFlextCoreTypingsNew._Color,
             eq=True,
         )
@@ -113,13 +111,17 @@ class TestsFlextCoreTypingsNew:
     @staticmethod
     def test_str_sequence_adapter_preserves_order() -> None:
         """str_sequence_adapter validates ordered string sequences."""
-        tm.that(t.str_sequence_adapter().validate_python(["a", "b"]), eq=["a", "b"])
+        adapter = u.str_sequence_adapter()
+        tm.that(adapter.validate_python(["a", "b"]), eq=["a", "b"])
+        tm.that(adapter is u.str_sequence_adapter(), eq=True)
+        with pytest.raises(c.ValidationError):
+            adapter.validate_python(["a", 1])
 
     @staticmethod
     def test_bool_adapter_accepts_bool() -> None:
         """bool_adapter validates boolean values."""
         flag = True
-        tm.that(t.bool_adapter().validate_python(flag), eq=True)
+        tm.that(u.bool_adapter().validate_python(flag), eq=True)
 
     @staticmethod
     def test_tiered_scalar_hierarchy_is_a_subset_chain() -> None:

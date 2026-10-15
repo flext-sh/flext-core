@@ -11,9 +11,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from typing import ClassVar, Final
+from typing import TYPE_CHECKING, ClassVar, Final
 
-from flext_core._typings.base import FlextTypingBase
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextConstantsRegex:
@@ -97,3 +98,6 @@ class FlextConstantsRegex:
     PATTERN_EXAMPLE_RESULT_LINE_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
         PATTERN_EXAMPLE_RESULT_LINE,
     )
+
+
+__all__: tuple[str, ...] = ("FlextConstantsRegex",)

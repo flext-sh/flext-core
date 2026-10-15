@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import ClassVar, Literal
 
-from flext_core._models._enforcement._base import FlextModelsEnforcementModelBase
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._models import FlextModelsPydantic
+from flext_core._models._enforcement import FlextModelsEnforcementModelBase
 from flext_core._protocols import FlextProtocolsBase
 
 
@@ -36,3 +36,6 @@ class FlextModelsEnforcementResolution:
         file_path: str
         line_number: int
         unavailable_imports: tuple[str, ...]
+
+
+__all__ = ["FlextModelsEnforcementResolution"]

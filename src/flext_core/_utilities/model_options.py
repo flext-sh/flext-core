@@ -10,8 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 from flext_core import m, p
-from flext_core._utilities.model import FlextUtilitiesModel
+from flext_core._utilities import FlextUtilitiesModel
 
 
 class FlextUtilitiesModelOptions(FlextUtilitiesModel):
@@ -42,28 +44,32 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                 return m.RuntimeBootstrapOptions()
             case m.RuntimeBootstrapOptions():
                 return source
-            case p.MixinsInfrastructure():
+            case _:
+                candidate = cast(
+                    "m.RuntimeBootstrapOptions | p.MixinsInfrastructure",
+                    source,
+                )
+                if not isinstance(candidate, p.MixinsInfrastructure):
+                    msg = f"unknown runtime bootstrap source: {candidate!r}"
+                    raise TypeError(msg)
                 declared = (
                     m.RuntimeBootstrapOptions.model_validate(
-                        source.runtime_bootstrap_options(),
+                        candidate.runtime_bootstrap_options(),
                         from_attributes=True,
                     )
-                    if isinstance(source, p.RuntimeBootstrapProvider)
+                    if isinstance(candidate, p.RuntimeBootstrapProvider)
                     else m.RuntimeBootstrapOptions()
                 )
                 seeds = m.RuntimeBootstrapOptions(
-                    settings=source.runtime_settings,
-                    settings_type=source.settings_type,
-                    settings_overrides=source.settings_overrides,
-                    context=source.initial_context,
+                    settings=candidate.runtime_settings,
+                    settings_type=candidate.settings_type,
+                    settings_overrides=candidate.settings_overrides,
+                    context=candidate.initial_context,
                 )
                 return m.RuntimeBootstrapOptions.model_validate({
                     **dict(declared),
                     **{name: value for name, value in seeds if value is not None},
                 })
-            case _:
-                msg = f"unknown runtime bootstrap source: {source!r}"
-                raise TypeError(msg)
 
 
 __all__: list[str] = ["FlextUtilitiesModelOptions"]

@@ -14,14 +14,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self, override
 
 import pytest
-from flext_tests import r, tm
 
-from tests.base import s
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, p, r, s, t, tm, u
 
 if TYPE_CHECKING:
     from flext_core import FlextSettings
@@ -226,13 +220,7 @@ class TestsFlextCoreServiceOperations:
     class UndocumentedService(s[bool]):
         """Operation without a docstring."""
 
-        def status(self) -> p.Result[bool]:
-            """Provide ``status``.
-
-            Returns:
-                The resulting ``p.Result[bool]``.
-
-            """
+        def status(self) -> p.Result[bool]:  # ruff: ignore[undocumented-public-method] -- the scenario under test is discovery WITHOUT a docstring
             return r[bool].ok(True)
 
     class PlainReturnService(s[bool]):

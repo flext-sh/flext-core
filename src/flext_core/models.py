@@ -12,51 +12,51 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models import (
-    FlextModelsBase,
-    FlextModelsBuilder,
-    FlextModelsCollections,
-    FlextModelsConfig,
-    FlextModelsContainer,
-    FlextModelsContainers,
-    FlextModelsContext,
-    FlextModelsCqrs,
-    FlextModelsDomainEvent,
-    FlextModelsEnforcement,
-    FlextModelsEntity,
-    FlextModelsErrors,
-    FlextModelsExceptionParams,
-    FlextModelsHandler,
-    FlextModelsNamespace,
-    FlextModelsProjectMetadata,
-    FlextModelsPydantic,
-    FlextModelsRegistry,
-    FlextModelsService,
-    FlextModelsSettings,
-)
+from flext_core._models.base import FlextModelsBase
+from flext_core._models.builder import FlextModelsBuilder
+from flext_core._models.collection_models import FlextModelsCollections
+from flext_core._models.config import FlextModelsConfig
+from flext_core._models.container import FlextModelsContainer
+from flext_core._models.containers import FlextModelsContainers
+from flext_core._models.context import FlextModelsContext
+from flext_core._models.cqrs import FlextModelsCqrs
+from flext_core._models.domain_event import FlextModelsDomainEvent
+from flext_core._models.enforcement import FlextModelsEnforcement
+from flext_core._models.entity import FlextModelsEntity
+from flext_core._models.errors import FlextModelsErrors
+from flext_core._models.exception_params import FlextModelsExceptionParams
+from flext_core._models.handler import FlextModelsHandler
+from flext_core._models.namespace import FlextModelsNamespace
+from flext_core._models.options import FlextModelsOptions
+from flext_core._models.project_metadata import FlextModelsProjectMetadata
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._models.registry import FlextModelsRegistry
+from flext_core._models.service import FlextModelsService
+from flext_core._models.settings import FlextModelsSettings
 
 
 class FlextModels(
     FlextModelsBase,
     FlextModelsBuilder,
     FlextModelsCollections,
-    FlextModelsContainers,
     FlextModelsConfig,
     FlextModelsContainer,
+    FlextModelsContainers,
     FlextModelsContext,
     FlextModelsCqrs,
     FlextModelsDomainEvent,
     FlextModelsEnforcement,
     FlextModelsEntity,
     FlextModelsErrors,
+    FlextModelsExceptionParams,
     FlextModelsHandler,
+    FlextModelsNamespace,
+    FlextModelsOptions,
     FlextModelsProjectMetadata,
+    FlextModelsPydantic,
     FlextModelsRegistry,
     FlextModelsService,
     FlextModelsSettings,
-    FlextModelsExceptionParams,
-    FlextModelsNamespace,
-    FlextModelsPydantic,
 ):
     """Facade that groups DDD building blocks for CQRS-ready domains.
 

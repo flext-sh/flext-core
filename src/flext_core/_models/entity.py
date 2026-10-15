@@ -13,13 +13,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Hashable, MutableSequence
-from typing import override
+from typing import Annotated, override
 
 from pydantic import Field
+from typing_extensions import TypeForm
 
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.domain_event import FlextModelsDomainEvent
-from flext_core._typings.base import FlextTypingBase
+from flext_core._models import (
+    FlextModelsBase,
+    FlextModelsDomainEvent,
+    FlextModelsPydantic,
+)
+from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities import FlextUtilitiesDomain, FlextUtilitiesGenerators
 
 
@@ -58,7 +62,9 @@ class FlextModelsEntity:
         # class variable; a specifier inside ``Annotated`` metadata synthesizes
         # a REQUIRED ``__init__`` parameter (verified against plain pydantic).
         domain_events: MutableSequence[FlextModelsDomainEvent.DomainEvent] = Field(
-            default_factory=list[FlextModelsDomainEvent.DomainEvent],
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(MutableSequence[FlextModelsDomainEvent.DomainEvent]),
+            ),
             description="List of uncommitted domain events for event sourcing",
         )
 
@@ -98,6 +104,41 @@ class FlextModelsEntity:
 
     class AggregateRoot(Entity):
         """Aggregate-root marker class (DDD consistency boundary)."""
+
+    class TransformOptions(Value):
+        """Validated option envelope for the ``transform`` value pipeline."""
+
+        normalize: Annotated[
+            bool,
+            FlextModelsPydantic.Field(description="Normalize values to metadata form"),
+        ] = False
+        strip_none: Annotated[
+            bool, FlextModelsPydantic.Field(description="Strip ``None`` values")
+        ] = False
+        strip_empty: Annotated[
+            bool, FlextModelsPydantic.Field(description="Strip empty values")
+        ] = False
+        map_keys: Annotated[
+            FlextTypingBase.StrMapping | None,
+            FlextModelsPydantic.Field(
+                description="Optional old-key to new-key mapping"
+            ),
+        ] = None
+
+    class ExtractResolvePathPartContext(Value):
+        """Validated context envelope for one path-part extraction step."""
+
+        path_context: Annotated[
+            str, FlextModelsPydantic.Field(description="Resolved parent path context")
+        ] = ""
+        default: Annotated[
+            FlextTypesServices.JsonPayload | None,
+            FlextModelsPydantic.Field(description="Default fallback payload"),
+        ] = None
+        required: Annotated[
+            bool,
+            FlextModelsPydantic.Field(description="Whether missing values are fatal"),
+        ] = False
 
 
 __all__: list[str] = ["FlextModelsEntity"]

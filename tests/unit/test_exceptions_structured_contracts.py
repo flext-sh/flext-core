@@ -14,10 +14,8 @@ from __future__ import annotations
 import operator
 
 import pytest
-from flext_tests import e, tm
 
-from tests.constants import c
-from tests.protocols import p
+from tests import c, e, p, t, tm
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
 
@@ -35,7 +33,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        expected_payload: dict[str, str | int | None],
+        expected_payload: t.MappingKV[str, str | int | None],
     ) -> None:
         # Arrange / Act
         """Test structured errors expose public contract."""
@@ -63,7 +61,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        _expected_payload: dict[str, str | int | None],
+        _expected_payload: t.MappingKV[str, str | int | None],
     ) -> None:
         # Act / Assert: the error is a real exception that callers can catch,
         # and its structured contract survives raise/except unchanged.
@@ -141,7 +139,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,
-        expected_data: dict[str, str | int | None],
+        expected_data: t.MappingKV[str, str | int | None],
     ) -> None:
         # Arrange / Act
         """Test failure factories return public result contract."""
@@ -168,7 +166,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: FailureFactory,
         _expected_fragment: str,
         expected_code: str,
-        _expected_data: dict[str, str | int | None],
+        _expected_data: t.MappingKV[str, str | int | None],
     ) -> None:
         # Arrange
         """Test failure results honor combinator contract."""

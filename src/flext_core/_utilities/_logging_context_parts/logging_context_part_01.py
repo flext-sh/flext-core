@@ -14,13 +14,15 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, e, p, r, t
+from typing_extensions import TypeForm
+
+from flext_core import FlextExceptions, FlextResult, FlextRuntime, c, p, t
 from flext_core._utilities import (
+    FlextUtilitiesBase,
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesLoggingConfig,
 )
-from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
-from flext_core.runtime import FlextRuntime
 
 if TYPE_CHECKING:
     import types
@@ -60,9 +62,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             cls._scoped_contexts[scope] = cls._merge_scoped_context(scope, context)
             cls.structlog().contextvars.bind_contextvars(**context)
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc)
+            return FlextExceptions.fail_operation(
+                f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc
+            )
 
     @classmethod
     def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
@@ -75,9 +79,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             normalized_context = cls.to_container_context(context)
             cls.structlog().contextvars.bind_contextvars(**normalized_context)
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
+            return FlextExceptions.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
 
     @classmethod
     def clear_global_context(cls) -> p.Result[bool]:
@@ -91,9 +95,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls.structlog().contextvars.clear_contextvars()
             cls._scoped_contexts.clear()
             cls._level_contexts.clear()
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
+            return FlextExceptions.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
 
     @classmethod
     def clear_scope(cls, scope: str) -> p.Result[bool]:
@@ -109,9 +113,11 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 if keys:
                     cls.structlog().contextvars.unbind_contextvars(*keys)
                 cls._scoped_contexts[scope].clear()
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc)
+            return FlextExceptions.fail_operation(
+                f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc
+            )
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
@@ -124,9 +130,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             unbind_keys: t.StrSequence = list(keys)
             cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
-            return r[bool].ok(value=True)
+            return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return e.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
+            return FlextExceptions.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
 
     @staticmethod
     def _to_container_value(
@@ -141,11 +147,15 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         if isinstance(value, Exception):
             return str(value)
         if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
-            dumped_value: t.JsonValue = t.json_value_adapter().validate_python(
+            dumped_value: t.JsonValue = FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(
                 value.model_dump(mode="json"),
             )
             return dumped_value
-        normalized_value: t.JsonValue = t.json_value_adapter().validate_python(
+        normalized_value: t.JsonValue = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonValue)
+        ).validate_python(
             FlextRuntime.normalize_to_json_value(value),
         )
         return normalized_value
@@ -170,7 +180,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         cls,
         context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
     ) -> t.JsonMapping:
-        validated: t.JsonMapping = t.json_mapping_adapter().validate_python({
+        validated: t.JsonMapping = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python({
             key: cls._to_container_value(value) for key, value in context.items()
         })
         return validated

@@ -7,60 +7,58 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import contextvars
-from types import MappingProxyType
 from typing import Annotated, Self
 
+from typing_extensions import TypeForm
+
 from flext_core import c, t
-from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
-    FlextModelsContextScope as FlextModelsContextScopePart01,
+from flext_core._models import (
+    FlextModelsBase,
+    FlextModelsContainers,
+    FlextModelsPydantic,
 )
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.containers import FlextModelsContainers
-from flext_core._models.pydantic import FlextModelsPydantic as mp
+from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_01
+from flext_core._utilities import FlextUtilitiesBase
 
 
-class FlextModelsContextScope(FlextModelsContextScopePart01):
+class FlextModelsContextScope(flextmodelscontextscope_part_01.FlextModelsContextScope):
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized mutable runtime state for `FlextContext`."""
 
         metadata: Annotated[
             FlextModelsBase.Metadata,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default_factory=FlextModelsBase.Metadata,
                 description="Normalized metadata bound to the active context",
             ),
-        ] = mp.Field(default_factory=FlextModelsBase.Metadata)
+        ] = FlextModelsPydantic.Field(default_factory=FlextModelsBase.Metadata)
         hooks: Annotated[
             t.ContextHookMap,
-            mp.Field(
-                default_factory=lambda: MappingProxyType(
-                    dict[str, t.SequenceOf[t.ContextHookCallable]](),
-                ),
-                description="Lifecycle hooks keyed by event name",
+            FlextModelsPydantic.Field(
+                description="Lifecycle hooks keyed by event name"
             ),
-        ] = mp.Field(
-            default_factory=lambda: MappingProxyType[
-                str,
-                t.SequenceOf[t.ContextHookCallable],
-            ]({}),
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(TypeForm(t.ContextHookMap))
         )
         statistics: Annotated[
-            FlextModelsContextScopePart01.ContextStatistics,
-            mp.Field(
-                default_factory=FlextModelsContextScopePart01.ContextStatistics,
+            flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics,
+            FlextModelsPydantic.Field(
+                default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics,
                 description="Operation counters for this context instance",
             ),
-        ] = mp.Field(default_factory=FlextModelsContextScopePart01.ContextStatistics)
+        ] = FlextModelsPydantic.Field(
+            default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics
+        )
         active: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=True,
                 description="Whether the context accepts operations",
             ),
         ] = True
         suspended: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=False,
                 description="Whether the context is temporarily suspended",
             ),
@@ -70,20 +68,18 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
                 str,
                 contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ],
-            mp.Field(
-                default_factory=lambda: MappingProxyType(
-                    dict[
+            FlextModelsPydantic.Field(
+                description="ContextVar registry keyed by scope name"
+            ),
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(
+                    t.MappingKV[
                         str,
                         contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
-                    ](),
+                    ],
                 ),
-                description="ContextVar registry keyed by scope name",
             ),
-        ] = mp.Field(
-            default_factory=lambda: MappingProxyType[
-                str,
-                contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
-            ]({}),
         )
 
         @classmethod
@@ -140,7 +136,7 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
             scope_var: contextvars.ContextVar[
                 FlextModelsContainers.ConfigMap | None
             ] = contextvars.ContextVar(f"flext_{scope}_context", default=None)
-            updated_scope_vars: dict[
+            updated_scope_vars: t.MutableMappingKV[
                 str,
                 contextvars.ContextVar[FlextModelsContainers.ConfigMap | None],
             ] = dict(self.scope_vars)
@@ -158,25 +154,25 @@ class FlextModelsContextScope(FlextModelsContextScopePart01):
 
             """
             counter_attr = f"{operation}s"
-            statistics_updates: dict[str, t.JsonPayload] = {}
+            statistics_updates: t.MutableMappingKV[str, t.JsonPayload] = {}
             current_statistics = self.statistics
             if counter_attr in type(current_statistics).model_fields:
                 current_counter = getattr(current_statistics, counter_attr)
                 if isinstance(current_counter, int):
                     statistics_updates[counter_attr] = current_counter + 1
-            operations: dict[str, t.Scalar] = {
+            operations: t.MappingKV[str, t.Scalar] = {
                 key: value
                 for key, value in current_statistics.operations.items()
                 if isinstance(value, c.PRIMITIVES_TYPES)
             }
             current_operation_value = operations.get(operation)
             if isinstance(current_operation_value, int):
-                statistics_updates["operations"] = (
-                    t.json_mapping_adapter().validate_python({
-                        **operations,
-                        operation: current_operation_value + 1,
-                    })
-                )
+                statistics_updates["operations"] = FlextUtilitiesBase.type_adapter(
+                    TypeForm(t.JsonMapping)
+                ).validate_python({
+                    **operations,
+                    operation: current_operation_value + 1,
+                })
             if not statistics_updates:
                 return self
             updated_statistics = current_statistics.model_copy(

@@ -6,7 +6,6 @@
 !.beads/identity.toml
 
 # mise native dependency graphs
-/.mise-lock-transaction.lock
 !/.mise/
 /.mise/*
 !/.mise/locks/
@@ -286,10 +285,6 @@ legado/
 .bin/
 !/bin/
 /bin/*
-!/bin/mise
-!/bin/mise.cmd
-!/bin/mise-lock-transaction.py
-!/bin/mise-lock-converge.py
 .tools/
 __pycache__/
 base.mk
@@ -328,7 +323,6 @@ _tmp_*/
 build/
 dist/
 node_modules/
-protos/
 site/
 target/
 .pyrefly_cache/
@@ -344,11 +338,7 @@ CLAUDE.local.md
 # Tracked managed artifacts
 !.github/ci-template/
 !.github/ci-template/ci.yml
-!.github/copilot-instructions.md
 !.github/dependabot.yml
-!.github/prompts/
-!.github/prompts/flext-aggressive-scale-refactor.prompt.md
-!.github/prompts/flext-strict-jsonvalue-session-continuation.prompt.md
 !.github/scripts/
 !.github/scripts/check-beads-policy.sh
 !.github/scripts/check-cqrs-compliance.sh
@@ -373,4 +363,6 @@ CLAUDE.local.md
 !.vscode/settings.json
 !config/
 !config/gitleaks-release.toml
-!bin/
+
+# RUNTIME: local projections (derived)
+/.vscode/settings.json

@@ -36,3 +36,6 @@ class FlextUtilitiesConsole:
         sys.stderr.write(f"{message}{end}")
         if flush:
             sys.stderr.flush()
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesConsole",)

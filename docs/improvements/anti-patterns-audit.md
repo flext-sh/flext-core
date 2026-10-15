@@ -48,9 +48,9 @@ if not empty_value.failure:
 import io
 from contextlib import redirect_stdout
 
-from examples.ex_03_flext_logger import Ex03FlextLogger
+from examples.ex_03_flext_logger import ExamplesFlextLogger
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex03FlextLogger().run()
+    ExamplesFlextLogger().run()
 ```

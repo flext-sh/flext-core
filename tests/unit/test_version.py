@@ -15,10 +15,30 @@ from importlib.metadata import PackageMetadata, PathDistribution
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
 from flext_core.__version__ import FlextVersion, __version__, __version_info__
-from tests.constants import c
+from tests import c, tm
+
+
+def _write_version_metadata(tmp_path: Path, version: str) -> Path:
+    """Write the ``flext-version-contract`` dist-info METADATA for ``version``.
+
+    Returns:
+        The created dist-info directory path.
+
+    """
+    distribution_path = tmp_path / "flext_version_contract.dist-info"
+    distribution_path.mkdir()
+    (distribution_path / "METADATA").write_text(
+        "\n".join((
+            "Metadata-Version: 2.4",
+            "Name: flext-version-contract",
+            f"Version: {version}",
+            "",
+        )),
+        encoding="utf-8",
+    )
+    return distribution_path
 
 
 class TestsFlextCoreVersion:
@@ -65,17 +85,7 @@ class TestsFlextCoreVersion:
         tmp_path: Path,
     ) -> None:
         """Every supported qualifier preserves the integer release triple."""
-        distribution_path = tmp_path / "flext_version_contract.dist-info"
-        distribution_path.mkdir()
-        (distribution_path / "METADATA").write_text(
-            "\n".join((
-                "Metadata-Version: 2.4",
-                "Name: flext-version-contract",
-                f"Version: {version}",
-                "",
-            )),
-            encoding="utf-8",
-        )
+        distribution_path = _write_version_metadata(tmp_path, version)
         package_metadata = PathDistribution(distribution_path).metadata
 
         class VersionContract(FlextVersion):
@@ -91,17 +101,7 @@ class TestsFlextCoreVersion:
         tmp_path: Path,
     ) -> None:
         """Metadata without major, minor, and patch components fails loudly."""
-        distribution_path = tmp_path / "flext_version_contract.dist-info"
-        distribution_path.mkdir()
-        (distribution_path / "METADATA").write_text(
-            "\n".join((
-                "Metadata-Version: 2.4",
-                "Name: flext-version-contract",
-                f"Version: {version}",
-                "",
-            )),
-            encoding="utf-8",
-        )
+        distribution_path = _write_version_metadata(tmp_path, version)
         package_metadata = PathDistribution(distribution_path).metadata
 
         with pytest.raises(ValueError, match="three-part semantic version"):

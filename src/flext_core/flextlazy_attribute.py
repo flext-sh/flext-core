@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from flext_core._lazy_parts.flextlazy_part_01 import LazyImportMap
-
 if TYPE_CHECKING:
-    from flext_core._lazy_parts.flextlazy_part_02 import FlextLazy
+    from collections.abc import Mapping
+
+    from flext_core.flextlazy_part_02 import FlextLazy
     from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
@@ -28,10 +28,11 @@ class FlextLazyAttribute[T]:
         self,
         lazy: FlextLazy,
         name: str,
-        lazy_imports: LazyImportMap,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
         module_globals: ModuleGlobals,
         module_name: str,
     ) -> None:
+        """Bind the symbol and module context used for deferred resolution."""
         self._lazy = lazy
         self._name = name
         self._lazy_imports = lazy_imports

@@ -17,11 +17,8 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from flext_tests import tm
 
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import p, t, tm, u
 
 
 class TestsFlextBeartypeEngineNamespaceHooks(

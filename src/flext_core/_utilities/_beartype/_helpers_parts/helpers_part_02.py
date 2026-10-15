@@ -11,22 +11,19 @@ import inspect
 import types as _types_mod
 from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get_origin
 
-from flext_core._constants.enforcement import FlextConstantsEnforcement as c
-from flext_core._utilities._beartype._helpers_parts.helpers_part_01 import (
-    FlextUtilitiesBeartypeHelpers as FlextUtilitiesBeartypeHelpersPart01,
-)
+from flext_core import c
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype._helpers_parts import helpers_part_01
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
 
-    from flext_core._typings.base import FlextTypingBase as t
 
-
-class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
+class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelpers):
     @staticmethod
     def unwrap_annotated(
-        hint: t.TypeHintSpecifier | None,
-    ) -> t.TypeHintSpecifier | None:
+        hint: FlextTypingBase.TypeFormSpecifier | None,
+    ) -> FlextTypingBase.TypeFormSpecifier | None:
         h = FlextUtilitiesBeartypeHelpers
         current = hint
         while current is not None:
@@ -72,10 +69,33 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
                 return annotation_text[:index].strip()
         return annotation_text.strip()
 
-    _RUNTIME_MODULE_CACHE: ClassVar[dict[type, _types_mod.ModuleType]] = {}
+    _RUNTIME_MODULE_CACHE: ClassVar[
+        FlextTypingBase.MutableMappingKV[type, _types_mod.ModuleType]
+    ] = {}
 
     @staticmethod
-    def runtime_module_for(target: type) -> _types_mod.ModuleType | None:
+    def _runtime_module_candidate(target: type) -> _types_mod.ModuleType | None:
+        """Return the defining module of a top-level class if it is workspace-owned.
+
+        Returns:
+            The resulting ``_types_mod.ModuleType | None``.
+
+        """
+        module = inspect.getmodule(target)
+        if module is None or getattr(module, target.__name__, None) is not target:
+            return None
+        src_file = getattr(module, "__file__", None)
+        if not isinstance(src_file, str) or any(
+            marker in src_file for marker in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS
+        ):
+            return None
+        return module
+
+    @classmethod
+    def runtime_module_for(
+        cls,
+        target: type,
+    ) -> _types_mod.ModuleType | None:
         """Resolve the defining module once the class is bound to it.
 
         Misses are NOT cached: during ``__init_subclass__`` the class is not
@@ -86,20 +106,12 @@ class FlextUtilitiesBeartypeHelpers(FlextUtilitiesBeartypeHelpersPart01):
             The resulting ``_types_mod.ModuleType | None``.
 
         """
-        cached = FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE.get(target)
-        if cached is not None:
+        cached = cls._RUNTIME_MODULE_CACHE.get(target)
+        if cached is not None or "." in target.__qualname__:
             return cached
-        if "." in target.__qualname__:
-            return None
-        module = inspect.getmodule(target)
-        if module is None or getattr(module, target.__name__, None) is not target:
-            return None
-        src_file = getattr(module, "__file__", None)
-        if not isinstance(src_file, str):
-            return None
-        if any(m in src_file for m in c.ENFORCE_NON_WORKSPACE_PATH_MARKERS):
-            return None
-        FlextUtilitiesBeartypeHelpers._RUNTIME_MODULE_CACHE[target] = module
+        module = cls._runtime_module_candidate(target)
+        if module is not None:
+            cls._RUNTIME_MODULE_CACHE[target] = module
         return module
 
     @staticmethod

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self, TypeIs, override
 
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._result.base import FlextResultBase
+from flext_core._result import FlextResultBase
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -17,8 +17,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
-    "reject_banned_result_parameterization",
-    "reject_banned_success_payload",
+    "create_success",
     "require_error",
     "fail",
     "from_result",
@@ -29,7 +28,7 @@ _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
 
 
 def _is_result_factory(
-    cls: type[object],
+    cls: type,
 ) -> TypeIs[type[FlextProtocolsResult.ResultFactory]]:
     """Narrow a class to the result factory contract after member validation.
 
@@ -72,7 +71,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
             TypeError: If ``not _is_result_factory(factory_cls)``.
 
         """
-        factory_cls: type[object] = cls
+        factory_cls: type = cls
         if not _is_result_factory(factory_cls):
             msg = f"{cls.__name__} does not implement the result factory contract"
             raise TypeError(msg)

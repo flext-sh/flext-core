@@ -11,18 +11,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import operator
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
-from tests.utilities import u
+from tests import r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests.protocols import p
+    from tests import p
+
+
+def _floor_divide(dividend: int, divisor: int) -> int:
+    """Divide two integers, raising ``ZeroDivisionError`` when the divisor is zero.
+
+    Returns:
+        The resulting ``int``.
+    """
+    return dividend // divisor
 
 
 class TestsFlextResultTransforms:
@@ -31,7 +38,7 @@ class TestsFlextResultTransforms:
     @staticmethod
     def test_safe_wraps_successful_call_as_success() -> None:
         """Safe returns a success carrying the wrapped function's return value."""
-        result: p.Result[int] = r.safe(operator.floordiv)(10, 2)
+        result: p.Result[int] = r.safe(_floor_divide)(10, 2)
 
         _ = u.Tests.assert_success(result)
         tm.that(result.value, eq=5)
@@ -39,7 +46,7 @@ class TestsFlextResultTransforms:
     @staticmethod
     def test_safe_captures_raised_exception_as_failure() -> None:
         """Safe converts a raised exception into a failure preserving its message."""
-        result: p.Result[int] = r.safe(operator.floordiv)(10, 0)
+        result: p.Result[int] = r.safe(_floor_divide)(10, 0)
 
         tm.fail(result)
         tm.that(result.error, eq="integer division or modulo by zero")

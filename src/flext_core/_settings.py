@@ -31,12 +31,20 @@ import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Annotated, ClassVar, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Self
 
 from pydantic import BaseModel, Field, computed_field, model_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
-from flext_core._constants import FlextConstantsEnvironment, FlextConstantsSettings
+from flext_core._constants import FlextConstantsEnvironment
+
+if TYPE_CHECKING:
+    from flext_core import t
+from flext_core._constants.settings import FlextConstantsSettings
 
 ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
 """Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
@@ -69,25 +77,54 @@ def _resolve_env_file(namespace: str | None = None) -> str:
     return FlextConstantsSettings.ENV_FILE_DEFAULT
 
 
+def _platform_root(
+    apple_leaf: str,
+    windows_env_var: str,
+    windows_default: Path,
+    xdg_env_var: str,
+    xdg_default: Path,
+) -> Path:
+    """Return the OS-native user directory root for one platform convention.
+
+    Linux/BSD honour the XDG environment variable (falling back to the XDG
+    default under ``Path.home()``); macOS uses ``~/Library/<apple_leaf>``;
+    Windows uses the Windows environment variable (falling back to the
+    Windows default under ``Path.home()``). Module-level + stdlib-only so it
+    can seed field defaults without importing the facades (layer-0 purity).
+
+    Returns:
+        The resulting ``Path``.
+    """
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / apple_leaf
+    if sys.platform == "win32":
+        windows_override = os.environ.get(windows_env_var)
+        return (
+            Path(windows_override)
+            if windows_override
+            else Path.home() / windows_default
+        )
+    xdg_override = os.environ.get(xdg_env_var)
+    return Path(xdg_override) if xdg_override else Path.home() / xdg_default
+
+
 def _platform_cache_root() -> Path:
     """Return the OS-native user cache root for scratch/work directories.
 
     Linux/BSD honour ``XDG_CACHE_HOME`` (default ``~/.cache``); macOS uses
     ``~/Library/Caches``; Windows uses ``%LOCALAPPDATA%`` (default
-    ``~/AppData/Local``). Module-level + stdlib-only so it can seed a field
-    default without importing the facades (layer-0 purity).
+    ``~/AppData/Local``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Caches"
-    if sys.platform == "win32":
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        return (
-            Path(local_app_data)
-            if local_app_data
-            else Path.home() / "AppData" / "Local"
-        )
-    xdg_cache_home = os.environ.get("XDG_CACHE_HOME")
-    return Path(xdg_cache_home) if xdg_cache_home else Path.home() / ".cache"
+    return _platform_root(
+        "Caches",
+        "LOCALAPPDATA",
+        Path("AppData") / "Local",
+        "XDG_CACHE_HOME",
+        Path(".cache"),
+    )
 
 
 def _platform_data_root() -> Path:
@@ -95,19 +132,18 @@ def _platform_data_root() -> Path:
 
     Linux/BSD honour ``XDG_DATA_HOME`` (default ``~/.local/share``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
-    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    ``~/AppData/Local``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support"
-    if sys.platform == "win32":
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        return (
-            Path(local_app_data)
-            if local_app_data
-            else Path.home() / "AppData" / "Local"
-        )
-    xdg_data_home = os.environ.get("XDG_DATA_HOME")
-    return Path(xdg_data_home) if xdg_data_home else Path.home() / ".local" / "share"
+    return _platform_root(
+        "Application Support",
+        "LOCALAPPDATA",
+        Path("AppData") / "Local",
+        "XDG_DATA_HOME",
+        Path(".local") / "share",
+    )
 
 
 def platform_config_root() -> Path:
@@ -115,15 +151,18 @@ def platform_config_root() -> Path:
 
     Linux/BSD honour ``XDG_CONFIG_HOME`` (default ``~/.config``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%APPDATA%`` (default
-    ``~/AppData/Roaming``). Module-level + stdlib-only for layer-0 purity.
+    ``~/AppData/Roaming``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support"
-    if sys.platform == "win32":
-        app_data = os.environ.get("APPDATA")
-        return Path(app_data) if app_data else Path.home() / "AppData" / "Roaming"
-    xdg_config_home = os.environ.get("XDG_CONFIG_HOME")
-    return Path(xdg_config_home) if xdg_config_home else Path.home() / ".config"
+    return _platform_root(
+        "Application Support",
+        "APPDATA",
+        Path("AppData") / "Roaming",
+        "XDG_CONFIG_HOME",
+        Path(".config"),
+    )
 
 
 def _platform_state_root() -> Path:
@@ -131,19 +170,18 @@ def _platform_state_root() -> Path:
 
     Linux/BSD honour ``XDG_STATE_HOME`` (default ``~/.local/state``); macOS uses
     ``~/Library/Application Support``; Windows uses ``%LOCALAPPDATA%`` (default
-    ``~/AppData/Local``). Module-level + stdlib-only for layer-0 purity.
+    ``~/AppData/Local``).
+
+    Returns:
+        The resulting ``Path``.
     """
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support"
-    if sys.platform == "win32":
-        local_app_data = os.environ.get("LOCALAPPDATA")
-        return (
-            Path(local_app_data)
-            if local_app_data
-            else Path.home() / "AppData" / "Local"
-        )
-    xdg_state_home = os.environ.get("XDG_STATE_HOME")
-    return Path(xdg_state_home) if xdg_state_home else Path.home() / ".local" / "state"
+    return _platform_root(
+        "Application Support",
+        "LOCALAPPDATA",
+        Path("AppData") / "Local",
+        "XDG_STATE_HOME",
+        Path(".local") / "state",
+    )
 
 
 def app_env_prefix(namespace: str) -> str:
@@ -221,16 +259,16 @@ class FlextSettings(BaseSettings):
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _singleton_enabled: ClassVar[bool] = True
-    _instance: ClassVar[FlextSettings | None] = None
+    _instance: ClassVar[Self | None] = None
     _app_namespace: ClassVar[str | None] = None
 
-    def __init_subclass__(cls, **kwargs: object) -> None:
+    def __init_subclass__(cls, **kwargs: t.SettingsOverride | None) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
         _ = kwargs
         super().__init_subclass__()
         cls._instance = None
 
-    def __new__(cls, **kwargs: object) -> Self:
+    def __new__(cls, **kwargs: t.SettingsOverride | None) -> Self:
         """Singleton factory; unknown kwargs are ignored by consumer factories.
 
         Raises:
@@ -274,7 +312,7 @@ class FlextSettings(BaseSettings):
                 cls._singleton_enabled = original
 
     @classmethod
-    def fetch_global(cls, *, overrides: Mapping[str, object] | None = None) -> Self:
+    def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
         """Return the shared per-class singleton (lazy, thread-safe).
 
         With ``overrides`` return an isolated clone; the singleton is not
@@ -298,14 +336,16 @@ class FlextSettings(BaseSettings):
             return created
 
     @classmethod
-    def _merge_overrides(cls, current: Self, **overrides: object) -> dict[str, object]:
+    def _merge_overrides(
+        cls, current: Self, **overrides: t.SettingsOverride | None
+    ) -> t.MutableMappingKV[str, t.SettingsOverride | None]:
         """Merge partial nested-model overrides onto the current state.
 
         Returns:
-            The resulting ``dict[str, object]``.
+            The resulting mapping of the merged override values.
         """
         cls._validate_overrides(**overrides)
-        merged: dict[str, object] = {}
+        merged: t.MutableMappingKV[str, t.SettingsOverride | None] = {}
         for field_name, override_value in overrides.items():
             current_value = getattr(current, field_name, None)
             if isinstance(current_value, BaseModel) and isinstance(
@@ -322,7 +362,7 @@ class FlextSettings(BaseSettings):
             merged[field_name] = override_value
         return merged
 
-    def clone(self, **overrides: object) -> Self:
+    def clone(self, **overrides: t.SettingsOverride | None) -> Self:
         """Deep copy with optional field overrides + re-validation.
 
         Returns:
@@ -339,7 +379,7 @@ class FlextSettings(BaseSettings):
             return type(copied).model_validate(copied, from_attributes=True)
 
     @classmethod
-    def update_global(cls, **overrides: object) -> Self:
+    def update_global(cls, **overrides: t.SettingsOverride | None) -> Self:
         """Replace the singleton via ``model_copy(update=…)`` + revalidate.
 
         Returns:
@@ -357,7 +397,7 @@ class FlextSettings(BaseSettings):
         return validated
 
     @classmethod
-    def _validate_overrides(cls, **overrides: object) -> None:
+    def _validate_overrides(cls, **overrides: t.SettingsOverride | None) -> None:
         """Reject override keys that are not declared model fields.
 
         Raises:
@@ -377,7 +417,7 @@ class FlextSettings(BaseSettings):
             cls._instance = None
 
     @classmethod
-    def set_app_namespace(cls, namespace: str) -> None:
+    def apply_app_namespace(cls, namespace: str) -> None:
         """Set the outer application identity once for the current process."""
         candidate = _validate_app_namespace(namespace)
         with FlextSettings._lock:
@@ -396,7 +436,7 @@ class FlextSettings(BaseSettings):
 
         This is the default identity when no application registered one, so a
         standalone project (e.g. ``ai-hub``) transparently owns its own
-        directories without being forced to call ``set_app_namespace``.
+        directories without being forced to call ``apply_app_namespace``.
         """
         env_prefix = (
             cls.model_config.get("env_prefix") or FlextConstantsEnvironment.ENV_PREFIX
@@ -408,7 +448,7 @@ class FlextSettings(BaseSettings):
         """Return the effective namespace.
 
         Precedence: an explicitly registered application identity
-        (``set_app_namespace``) wins so every library shares it; then the
+        (``apply_app_namespace``) wins so every library shares it; then the
         ``FLEXT_APP_NAMESPACE`` environment override; otherwise the owning
         project's own namespace prevails as the default (registration is never
         mandatory).
@@ -500,4 +540,8 @@ class FlextSettings(BaseSettings):
 settings: FlextSettings = FlextSettings.fetch_global()
 """Pre-instantiated root settings singleton — ``from flext_core import settings``."""
 
-__all__: list[str] = ["FlextSettings", "settings"]
+__all__: list[str] = [
+    "FlextSettings",
+    "PydanticBaseSettingsSource",
+    "settings",
+]

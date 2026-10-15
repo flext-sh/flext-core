@@ -11,13 +11,10 @@ import warnings
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_core._constants import (
-    FlextConstantsEnforcement,
-    FlextMroViolation,
-    _enforcement_data,
-)
+from flext_core import c
+from flext_core._constants import FlextMroViolation, _enforcement_data
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 
 class FlextUtilitiesEnforcementEmit:
@@ -45,10 +42,10 @@ class FlextUtilitiesEnforcementEmit:
             catalog = FlextModelsEnforcement.EnforcementCatalog.model_validate_json(
                 importlib.resources
                 .files(_enforcement_data)
-                .joinpath(FlextConstantsEnforcement.ENFORCEMENT_CATALOG_RESOURCE)
+                .joinpath(c.ENFORCEMENT_CATALOG_RESOURCE)
                 .read_text(encoding="utf-8"),
             )
-            fix_actions = FlextConstantsEnforcement.ENFORCEMENT_FIX_ACTIONS
+            fix_actions = c.ENFORCEMENT_FIX_ACTIONS
             fix_action_type = FlextModelsEnforcement.EnforcementFixAction
             cls._canonical_catalog = catalog.model_copy(
                 update={
@@ -103,12 +100,12 @@ class FlextUtilitiesEnforcementEmit:
         location: str,
         qualname: str,
         detail: FlextTypingBase.StrMapping | None = None,
-        category: FlextConstantsEnforcement.EnforcementCategory | None = None,
+        category: c.EnforcementCategory | None = None,
     ) -> FlextModelsEnforcement.Violation:
         # Look up problem/fix templates from the canonical text mapping
-        problem, fix = FlextConstantsEnforcement.ENFORCEMENT_RULES_TEXT[tag]
+        problem, fix = c.ENFORCEMENT_RULES_TEXT[tag]
         subs = detail or {}
-        message = FlextConstantsEnforcement.ENFORCEMENT_MSG_VIOLATION.format(
+        message = c.ENFORCEMENT_MSG_VIOLATION.format(
             location=location,
             problem=problem.format(**subs) if subs else problem,
             fix=fix.format(**subs) if subs else fix,
@@ -119,18 +116,18 @@ class FlextUtilitiesEnforcementEmit:
         message = f"{message} [{rule_id}]" if rule_id else f"{message} [{tag}]"
 
         layer = "Model"
-        if category is FlextConstantsEnforcement.EnforcementCategory.ATTR:
-            layer = FlextConstantsEnforcement.ENFORCEMENT_TAG_LAYER.get(
+        if category is c.EnforcementCategory.ATTR:
+            layer = c.ENFORCEMENT_TAG_LAYER.get(
                 tag,
                 "Attributes",
             )
-        elif category is FlextConstantsEnforcement.EnforcementCategory.NAMESPACE:
+        elif category is c.EnforcementCategory.NAMESPACE:
             layer = "Namespace"
-        elif category is FlextConstantsEnforcement.EnforcementCategory.PROTOCOL_TREE:
+        elif category is c.EnforcementCategory.PROTOCOL_TREE:
             layer = "Protocols"
         elif (
-            category is FlextConstantsEnforcement.EnforcementCategory.MODEL_CLASS
-            or category is FlextConstantsEnforcement.EnforcementCategory.FIELD
+            category is c.EnforcementCategory.MODEL_CLASS
+            or category is c.EnforcementCategory.FIELD
         ):
             layer = "Model"
 
@@ -147,7 +144,7 @@ class FlextUtilitiesEnforcementEmit:
     def emit(
         report: FlextModelsEnforcement.Report,
         *,
-        mode: FlextConstantsEnforcement.EnforcementMode | None = None,
+        mode: c.EnforcementMode | None = None,
     ) -> None:
         """Emit violations as warnings (or raise TypeError in STRICT mode).
 
@@ -161,8 +158,8 @@ class FlextUtilitiesEnforcementEmit:
         """
         if report.empty:
             return
-        active = mode or FlextConstantsEnforcement.ENFORCEMENT_MODE
-        if active is FlextConstantsEnforcement.EnforcementMode.OFF:
+        active = mode or c.ENFORCEMENT_MODE
+        if active is c.EnforcementMode.OFF:
             return
         for v in report.violations:
             if v.rule_id and v.agents_md_anchor:
@@ -182,16 +179,16 @@ class FlextUtilitiesEnforcementEmit:
             )
             rules_by_tag = FlextUtilitiesEnforcementEmit.rules_by_tag()
             category = (
-                FlextConstantsEnforcement.FlextSmellViolation
+                c.FlextSmellViolation
                 if any(
                     rule.id == v.rule_id
                     for tag, rule in rules_by_tag.items()
-                    if tag in FlextConstantsEnforcement.ENFORCEMENT_SMELL_TAGS
+                    if tag in c.ENFORCEMENT_SMELL_TAGS
                 )
                 else FlextMroViolation
             )
             warnings.warn(msg, category, stacklevel=4)
-            if active is FlextConstantsEnforcement.EnforcementMode.STRICT:
+            if active is c.EnforcementMode.STRICT:
                 raise TypeError(msg)
 
     @staticmethod
@@ -212,7 +209,7 @@ class FlextUtilitiesEnforcementEmit:
 
         """
         name = target.__name__.partition("[")[0]
-        for suffix, layer in FlextConstantsEnforcement.ENFORCEMENT_NAMESPACE_LAYER_MAP:
+        for suffix, layer in c.ENFORCEMENT_NAMESPACE_LAYER_MAP:
             idx = name.find(suffix)
             if idx == -1:
                 continue

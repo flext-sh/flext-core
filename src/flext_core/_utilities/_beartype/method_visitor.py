@@ -10,7 +10,7 @@ import inspect
 import types as _types_mod
 
 from flext_core._models import FlextModelsEnforcement
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 _NO_VIOLATION: FlextTypingBase.StrMapping | None = None
 _BARE_VIOLATION: FlextTypingBase.StrMapping = {}
@@ -59,3 +59,6 @@ class FlextUtilitiesBeartypeMethodVisitor:
             case _:
                 pass
         return violation
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesBeartypeMethodVisitor",)

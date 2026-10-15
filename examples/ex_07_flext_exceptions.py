@@ -9,9 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.ex_07_flext_exceptions_helpers import Ex07FlextExceptionSubclasses
-from examples.models import m
-from flext_core import c, e, r
+from examples import c, e, m, r
+from examples.ex_07_flext_exceptions_helpers import ExamplesFlextExceptionSubclasses
 
 
 def _raise_value_error() -> None:
@@ -24,7 +23,7 @@ def _raise_value_error() -> None:
     raise ValueError(m.Examples.ErrorMessages.BOOM)
 
 
-class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
+class ExamplesFlextExceptions(ExamplesFlextExceptionSubclasses):
     """Exercise e API with deterministic output checks."""
 
     @override
@@ -46,12 +45,14 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
         self.section("base_error")
         base = e.BaseError(
             "base boom",
-            error_code="E_BASE",
-            context=m.ConfigMap(root={"scope": "demo"}),
-            metadata=m.Metadata(attributes={"channel": "example"}),
-            correlation_id="corr-base-1",
-            auto_correlation=False,
-            auto_log=False,
+            options=m.ExceptionInitOptions(
+                error_code="E_BASE",
+                context=m.ConfigMap(root={"scope": "demo"}),
+                metadata=m.Metadata(attributes={"channel": "example"}),
+                correlation_id="corr-base-1",
+                auto_correlation=False,
+                auto_log=False,
+            ),
             operation="create",
         )
         self.audit_check("base.class", type(base).__name__)
@@ -141,4 +142,4 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
 
 
 if __name__ == "__main__":
-    Ex07FlextExceptions(caller_file=Path(__file__)).run()
+    ExamplesFlextExceptions(caller_file=Path(__file__)).run()

@@ -32,9 +32,9 @@ if not isinstance(snapshot, dict):
 import io
 from contextlib import redirect_stdout
 
-from examples.ex_02_flext_settings import Ex02FlextSettings
+from examples.ex_02_flext_settings import ExamplesFlextSettingsUsage
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex02FlextSettings("docs/standards/documentation.md").exercise()
+    ExamplesFlextSettingsUsage("docs/standards/documentation.md").exercise()
 ```

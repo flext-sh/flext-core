@@ -13,11 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import d
 
-import flext_core._models.flext_context
-from flext_core.container import FlextContainer
-from tests.models import m
+from flext_core import FlextContainer, FlextContext
+from tests import d, m
 from tests.unit._decorators_support import capture_stdout
 
 
@@ -155,7 +153,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
         @d.with_correlation()
         def inside() -> str:
-            return flext_core._models.flext_context.FlextContext.ensure_correlation_id()
+            return FlextContext.ensure_correlation_id()
 
         assert inside()
 

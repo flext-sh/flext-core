@@ -6,19 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping, MutableSequence
 from typing import TYPE_CHECKING, Annotated, ClassVar, override
 
-from flext_tests import r
+from typing_extensions import TypeForm
 
-from tests.base import s
-from tests.models import m
-from tests.utilities import u
+from tests import m, r, s, u
 
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping, MutableSequence
-
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextUserServiceEntity(m.BaseModel):
@@ -34,7 +30,9 @@ class TestsFlextUserQueryService(s[bool]):
     """Real user query service using ``s``."""
 
     _users: MutableMapping[str, TestsFlextUserServiceEntity] = u.PrivateAttr(
-        default_factory=dict[str, TestsFlextUserServiceEntity],
+        default_factory=u.empty(
+            TypeForm(MutableMapping[str, TestsFlextUserServiceEntity]),
+        ),
     )
     _should_fail: bool = u.PrivateAttr(default_factory=lambda: False)
     _call_count: int = u.PrivateAttr(default_factory=lambda: 0)
@@ -88,7 +86,9 @@ class TestsFlextUserQueryService(s[bool]):
 class TestsFlextNotificationService(s[str]):
     """Real notification service using ``s``."""
 
-    _sent_notifications: MutableSequence[str] = u.PrivateAttr(default_factory=list[str])
+    _sent_notifications: MutableSequence[str] = u.PrivateAttr(
+        default_factory=u.empty(TypeForm(MutableSequence[str])),
+    )
     _call_count: int = u.PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = u.PrivateAttr(default_factory=lambda: False)
 

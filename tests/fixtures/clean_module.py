@@ -8,15 +8,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
-from typing import Annotated, ClassVar, Final, Protocol, runtime_checkable
+from typing import Annotated, ClassVar, Final
 
-from flext_tests import r
+from typing_extensions import TypeForm
 
-from tests.models import m
-from tests.protocols import p
-from tests.typings import t
-from tests.utilities import u
+from tests import m, p, r, t, u
 
 
 class TestsFlextCleanModels:
@@ -36,15 +32,12 @@ class TestsFlextCleanModels:
                 name: Annotated[str, u.Field(description="Entity display name.")] = ""
                 tags: Annotated[
                     t.StrSequence,
-                    u.Field(default_factory=tuple, description="Tag collection."),
-                ]
+                    u.Field(description="Tag collection."),
+                ] = u.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
                 metadata: Annotated[
                     t.StrMapping,
-                    u.Field(
-                        default_factory=lambda: MappingProxyType[str, str]({}),
-                        description="Attribute map.",
-                    ),
-                ]
+                    u.Field(description="Attribute map."),
+                ] = u.Field(default_factory=u.empty(TypeForm(t.StrMapping)))
                 aliased_value: Annotated[
                     t.Core.Tests.CentralizedUnion,
                     u.Field(description="Value declared through a t.* alias."),
@@ -81,17 +74,8 @@ class TestsFlextCleanProtocols:
     class Core:
         """Core protocols namespace."""
 
-        class Tests:
+        class Tests(p.Tests):
             """Clean protocol declarations used by enforcement probes."""
-
-            @runtime_checkable
-            class GoodProtocol(Protocol):
-                """Runtime-checkable protocol."""
-
-                @staticmethod
-                def run() -> None:
-                    """Execute the clean protocol behavior."""
-                    ...
 
 
 class TestsFlextCleanServiceBase:

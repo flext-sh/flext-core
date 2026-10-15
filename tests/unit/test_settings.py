@@ -30,12 +30,12 @@ class TestsFlextCoreSettings:
         @staticmethod
         def setup_method() -> None:
             """Provide ``setup_method``."""
-            FlextSettings.reapply_app_namespace()
+            FlextSettings.reset_app_namespace()
 
         @staticmethod
         def teardown_method() -> None:
             """Provide ``teardown_method``."""
-            FlextSettings.reapply_app_namespace()
+            FlextSettings.reset_app_namespace()
 
         @staticmethod
         def test_base_default_derives_flext_namespace() -> None:

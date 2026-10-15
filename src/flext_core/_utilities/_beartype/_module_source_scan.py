@@ -1,0 +1,139 @@
+"""Source-AST utilities shared by module-source provenance and deferral.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import ast
+import inspect
+from collections.abc import Iterator
+from types import ModuleType
+
+
+def parse_module(module: ModuleType) -> ast.Module:
+    """Read the defining source of one module as an AST.
+
+    Returns:
+        The resulting ``ast.Module``.
+
+    """
+    return ast.parse(inspect.getsource(module), filename=inspect.getfile(module))
+
+
+def bound_names(node: ast.AST) -> tuple[str, ...]:
+    """Return the names one AST statement binds.
+
+    Returns:
+        The resulting ``tuple[str, ...]``.
+
+    """
+    if isinstance(node, (ast.Import, ast.ImportFrom)):
+        return tuple(
+            item.asname
+            or (item.name.split(".")[0] if isinstance(node, ast.Import) else item.name)
+            for item in node.names
+        )
+    if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
+        return (node.id,)
+    if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
+        return (node.name,)
+    return ()
+
+
+def scope_nodes(node: ast.AST) -> Iterator[ast.AST]:
+    """Yield the descendant nodes reachable without entering a nested scope.
+
+    Yields:
+        Each ``ast.AST``.
+
+    """
+    for child in ast.iter_child_nodes(node):
+        yield child
+        if not isinstance(
+            child,
+            (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda),
+        ):
+            yield from scope_nodes(child)
+
+
+def declarations(
+    node: ast.AST,
+    scopes: tuple[ast.Module | ast.ClassDef, ...] = (),
+    path: tuple[str, ...] = (),
+) -> Iterator[
+    tuple[tuple[str, ...], ast.TypeAlias, tuple[ast.Module | ast.ClassDef, ...]]
+]:
+    """Yield every type-alias declaration with its scope chain and class path.
+
+    Yields:
+        Each ``(path, declaration, scopes)`` triple.
+
+    """
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+        return
+    if isinstance(node, (ast.Module, ast.ClassDef)):
+        scopes = (*scopes, node)
+    if isinstance(node, ast.ClassDef):
+        path = (*path, node.name)
+    if isinstance(node, ast.TypeAlias):
+        yield (*path, node.name.id), node, scopes
+        return
+    for child in ast.iter_child_nodes(node):
+        yield from declarations(child, scopes, path)
+
+
+def export_names(tree: ast.Module) -> frozenset[str]:
+    """Collect names a module publishes through ``__all__`` assignments.
+
+    Returns:
+        The resulting ``frozenset[str]``.
+
+    """
+    exported: set[str] = set()
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            targets: tuple[ast.expr, ...] = tuple(node.targets)
+        elif isinstance(node, ast.AugAssign):
+            targets = (node.target,)
+        else:
+            continue
+        if not any(
+            isinstance(target, ast.Name) and target.id == "__all__"
+            for target in targets
+        ):
+            continue
+        if not isinstance(value := node.value, (ast.List, ast.Tuple)):
+            continue
+        exported.update(
+            item.value
+            for item in value.elts
+            if isinstance(item, ast.Constant) and isinstance(item.value, str)
+        )
+    return frozenset(exported)
+
+
+def loads(tree: ast.Module, name: str) -> bool:
+    """Prove ``name`` is consumed anywhere in the tree (Load context).
+
+    Returns:
+        The resulting ``bool``.
+
+    """
+    return any(
+        isinstance(node, ast.Name)
+        and node.id == name
+        and isinstance(node.ctx, ast.Load)
+        for node in ast.walk(tree)
+    )
+
+
+__all__: list[str] = [
+    "bound_names",
+    "declarations",
+    "export_names",
+    "loads",
+    "parse_module",
+    "scope_nodes",
+]

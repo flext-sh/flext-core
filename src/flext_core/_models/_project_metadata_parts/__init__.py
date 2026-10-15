@@ -13,39 +13,17 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
-        FlextModelsProjectMetadataContract,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_02 import (
-        FlextModelsProjectMetadataFields,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-        FlextModelsProjectMetadataAggregates,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-        FlextModelsProjectMetadataDocument,
-    )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
         FlextModelsPyprojectIngressContract,
     )
 
 
-__all__: tuple[str, ...] = (
-    "FlextModelsProjectMetadataAggregates",
-    "FlextModelsProjectMetadataContract",
-    "FlextModelsProjectMetadataDocument",
-    "FlextModelsProjectMetadataFields",
-    "FlextModelsPyprojectIngressContract",
-)
+__all__: tuple[str, ...] = ("FlextModelsPyprojectIngressContract",)
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextModelsProjectMetadataAggregates": ".flextmodelsprojectmetadata_part_03",
-        "FlextModelsProjectMetadataContract": ".flextmodelsprojectmetadata_part_01",
-        "FlextModelsProjectMetadataDocument": ".flextmodelsprojectmetadata_part_04",
-        "FlextModelsProjectMetadataFields": ".flextmodelsprojectmetadata_part_02",
         "FlextModelsPyprojectIngressContract": ".flextmodelsprojectmetadata_part_05",
     }),
     public_exports=__all__,

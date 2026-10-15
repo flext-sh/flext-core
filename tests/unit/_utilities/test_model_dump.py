@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.models import m
-from tests.utilities import u
+from flext_core import m
+from tests import u
 
 
 class TestsFlextCoreModelDump:

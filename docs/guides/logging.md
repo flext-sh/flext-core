@@ -7,6 +7,7 @@
 - [Scoped Context](#scoped-context)
 - [Context Binding](#context-binding)
 - [Request Handler Pattern](#request-handler-pattern)
+- [Typed Processing Stages](#typed-processing-stages)
 - [Best Practices](#best-practices)
 
 <!-- TOC END -->
@@ -172,6 +173,24 @@ def handle_request(request_id: str, user_id: str) -> None:
 
 handle_request("req-99", "u-10")
 ```
+
+## Typed Processing Stages
+
+Register custom event transformations with `m.StructlogOptions.processing_stages`
+and pass those options to `u.configure_structlog`. Each stage implements
+`p.LoggingStage`: it receives the output logger, method name, and
+`t.LoggingEvent`, and returns a typed event mapping. Stages execute in registration
+order after the built-in event processors and before the final renderer. Nested
+JSON context and exception information remain available in the event.
+
+Explicit options reconfigure subsequently created loggers, including after
+default logging initialization. Bound loggers already cached retain their
+processor chain; create a fresh public logger after changing registration.
+Calling `u.configure_structlog()` without options initializes defaults only once.
+Invalid noncallable registrations fail model validation. A stage failure stops
+processing and its original exception propagates through public logging methods,
+including `exception` and `trace`. Successful emissions retain the public
+`r[bool]` result contract. Invalid trace formatting also raises its native error.
 
 ## Best Practices
 

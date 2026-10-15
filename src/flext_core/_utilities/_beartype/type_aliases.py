@@ -11,7 +11,8 @@ from typing import Annotated, TypeAliasType, get_args, get_origin
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._utilities import FlextUtilitiesBeartypeModuleSource
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeModuleSource
 
 
 class FlextUtilitiesBeartypeTypeAliases:
@@ -24,7 +25,9 @@ class FlextUtilitiesBeartypeTypeAliases:
         owner: ModuleType | type | None = None,
     ) -> FlextModelsEnforcement.ResolvedAlias | FlextModelsEnforcement.DeferredAlias:
         if owner is not None:
-            deferred = FlextUtilitiesBeartypeModuleSource.deferred(alias, owner=owner)
+            deferred = FlextUtilitiesBeartypeModuleSource.deferred_alias(
+                alias, owner=owner
+            )
             if deferred is not None:
                 return deferred
         return FlextModelsEnforcement.ResolvedAlias(value=alias.__value__)
@@ -32,7 +35,9 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def deferred(
         cls,
-        hint: FlextProtocolsBase.AttributeProbe,
+        hint: FlextTypingBase.TypeFormSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
         *,
         recursive: bool = False,
         owner: ModuleType | type | None = None,
@@ -48,7 +53,9 @@ class FlextUtilitiesBeartypeTypeAliases:
     @classmethod
     def deferred_annotated(
         cls,
-        hint: FlextProtocolsBase.AttributeProbe,
+        hint: FlextTypingBase.TypeFormSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
         *,
         owner: ModuleType | type | None = None,
     ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
@@ -61,9 +68,65 @@ class FlextUtilitiesBeartypeTypeAliases:
         return cls._deferred_scan(hint, (False, True, True), owner)
 
     @classmethod
+    def _deferred_step(
+        cls,
+        node: FlextTypingBase.TypeFormSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
+        state: tuple[bool, bool, bool],
+        owner: ModuleType | type | None,
+    ) -> tuple[
+        FlextModelsEnforcement.DeferredAlias | None,
+        list[
+            tuple[
+                FlextTypingBase.TypeFormSpecifier
+                | FlextProtocolsBase.AttributeProbe
+                | None,
+                tuple[bool, bool, bool],
+            ]
+        ],
+    ]:
+        """Classify one worklist node into a deferred hit or its successors.
+
+        ``state`` carries ``(recursive, unwrap_annotated, inspect_origin)``.
+
+        Returns:
+            The resulting ``(deferred | None, successors)`` pair.
+
+        """
+        recurse, unwrap, inspect_o = state
+        if isinstance(node, TypeAliasType):
+            resolution = cls.resolve(node, owner=owner)
+            return (
+                (resolution, [])
+                if isinstance(resolution, FlextModelsEnforcement.DeferredAlias)
+                else (None, [(resolution.value, state)])
+            )
+        origin = get_origin(node)
+        if node is type or origin is type:
+            return None, []
+        successors: list[
+            tuple[
+                FlextTypingBase.TypeFormSpecifier
+                | FlextProtocolsBase.AttributeProbe
+                | None,
+                tuple[bool, bool, bool],
+            ]
+        ] = []
+        if unwrap and origin is Annotated and get_args(node):
+            successors = [(get_args(node)[0], (False, True, inspect_o))]
+        elif inspect_o and isinstance(origin, TypeAliasType):
+            successors = [(origin, (False, False, False))]
+        elif recurse:
+            successors = [(child, (True, False, False)) for child in get_args(node)]
+        return None, successors
+
+    @classmethod
     def _deferred_scan(
         cls,
-        hint: FlextProtocolsBase.AttributeProbe,
+        hint: FlextTypingBase.TypeFormSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
         scan: tuple[bool, bool, bool],
         owner: ModuleType | type | None,
     ) -> tuple[FlextModelsEnforcement.DeferredAlias, ...]:
@@ -77,35 +140,26 @@ class FlextUtilitiesBeartypeTypeAliases:
             The resulting ``tuple[me.DeferredAlias, ...]``.
 
         """
-        recursive, unwrap_annotated, inspect_origin = scan
         visited: set[int] = set()
-        pending: list[tuple[FlextProtocolsBase.AttributeProbe, bool, bool, bool]] = [
-            (hint, recursive, unwrap_annotated, inspect_origin),
-        ]
+        pending: list[
+            tuple[
+                FlextTypingBase.TypeFormSpecifier
+                | FlextProtocolsBase.AttributeProbe
+                | None,
+                tuple[bool, bool, bool],
+            ]
+        ] = [(hint, scan)]
         deferred_aliases: list[FlextModelsEnforcement.DeferredAlias] = []
         while pending:
-            node, recurse, unwrap, inspect_o = pending.pop(0)
+            node, state = pending.pop(0)
             if id(node) in visited:
                 continue
             visited.add(id(node))
-            if isinstance(node, TypeAliasType):
-                resolution = cls.resolve(node, owner=owner)
-                if isinstance(resolution, FlextModelsEnforcement.DeferredAlias):
-                    deferred_aliases.append(resolution)
-                    continue
-                pending.insert(0, (resolution.value, recurse, unwrap, inspect_o))
-                continue
-            origin = get_origin(node)
-            if node is type or origin is type:
-                continue
-            args = get_args(node)
-            if unwrap and origin is Annotated and args:
-                pending.insert(0, (args[0], False, True, inspect_o))
-                continue
-            if inspect_o and isinstance(origin, TypeAliasType):
-                pending.insert(0, (origin, False, False, False))
-                continue
-            if not recurse:
-                continue
-            pending[:0] = [(child, True, False, False) for child in args]
+            resolution, successors = cls._deferred_step(node, state, owner)
+            if resolution is not None:
+                deferred_aliases.append(resolution)
+            pending[:0] = successors
         return tuple(deferred_aliases)
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesBeartypeTypeAliases",)

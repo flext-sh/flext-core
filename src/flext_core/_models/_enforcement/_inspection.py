@@ -6,8 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._enforcement._base import FlextModelsEnforcementModelBase
-from flext_core._models._enforcement._resolution import FlextModelsEnforcementResolution
+from flext_core._models._enforcement import (
+    FlextModelsEnforcementModelBase,
+    FlextModelsEnforcementResolution,
+)
 
 
 class FlextModelsEnforcementInspection(FlextModelsEnforcementResolution):
@@ -19,3 +21,6 @@ class FlextModelsEnforcementInspection(FlextModelsEnforcementResolution):
         tag: str
         location: str
         alias: FlextModelsEnforcementResolution.DeferredAlias
+
+
+__all__ = ["FlextModelsEnforcementInspection"]

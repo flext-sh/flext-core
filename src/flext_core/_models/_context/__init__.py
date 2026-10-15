@@ -21,10 +21,12 @@ if TYPE_CHECKING:
     from flext_core._models._context._export import FlextModelsContextExport
     from flext_core._models._context._metadata import FlextModelsContextMetadata
     from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
+    from flext_core._models._context._scope_ops import FlextContextScopeOps
     from flext_core._models._context._tokens import FlextModelsContextTokens
 
 
 __all__: tuple[str, ...] = (
+    "FlextContextScopeOps",
     "FlextModelsContextData",
     "FlextModelsContextExport",
     "FlextModelsContextMetadata",
@@ -38,6 +40,7 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "FlextContextScopeOps": "._scope_ops",
         "FlextModelsContextData": "._data",
         "FlextModelsContextExport": "._export",
         "FlextModelsContextMetadata": "._metadata",

@@ -13,15 +13,13 @@ from typing import TYPE_CHECKING
 
 import pytest
 import structlog
-from flext_tests import tm
 
-from tests.constants import c
-from tests.utilities import u
+from tests import c, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests.protocols import p
+    from tests import p, t
 
 
 class TestsFlextCoreLoggingThreshold:
@@ -99,7 +97,7 @@ class TestsFlextCoreLoggingThreshold:
     ) -> None:
         """Test debug and trace resolve through the runtime owner."""
         u.apply_log_level(log_level=c.LogLevel.ERROR, debug=debug, trace=trace)
-        event = {"level": event_level, "event": "probe"}
+        event: t.LoggingEvent = {"level": event_level, "event": "probe"}
 
         if dropped:
             with pytest.raises(structlog.DropEvent):
