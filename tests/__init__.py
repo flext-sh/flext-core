@@ -14,7 +14,6 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_tests import api, td, tf, tk, tm
-    from flext_tests import api, td, tf, tk, tm
 
     from flext_core import d, e, h, r, x
     from tests.base import TestsFlextServiceBase, s

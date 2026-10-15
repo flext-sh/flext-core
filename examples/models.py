@@ -25,7 +25,6 @@ from examples._models.handle import ExamplesFlextSharedHandle
 from examples._models.output import ExamplesFlextModelsOutput
 from examples._models.person import ExamplesFlextSharedPerson
 from flext_core import FlextModels
-from examples._models.handle import ExamplesFlextSharedHandle
 
 if TYPE_CHECKING:
     from examples import t
