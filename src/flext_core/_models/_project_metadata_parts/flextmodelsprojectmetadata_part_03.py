@@ -105,3 +105,6 @@ class FlextModelsProjectMetadataAggregates(
         ] = Field(
             default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
         )
+
+
+__all__: list[str] = ["FlextModelsProjectMetadataAggregates"]

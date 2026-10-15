@@ -54,3 +54,6 @@ class FlextModelsProjectMetadataDocument(
             flextmodelsprojectmetadata_part_03.FlextModelsProjectMetadataAggregates.ProjectToolFlext,
             Field(description="Exact validated tool.flext object"),
         ]
+
+
+__all__: list[str] = ["FlextModelsProjectMetadataDocument"]
