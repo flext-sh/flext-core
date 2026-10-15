@@ -754,4 +754,3 @@ ignore-property-decorators = true
 [tool.radon]
 cc_min = "B"
 mi_min = "B"
-
