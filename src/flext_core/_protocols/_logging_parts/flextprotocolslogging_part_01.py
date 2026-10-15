@@ -15,6 +15,15 @@ if TYPE_CHECKING:
 class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
+    class AsyncLogJob(Protocol):
+        """Immutable work submitted to the native asynchronous stream."""
+
+        @property
+        def text(self) -> str | None: ...
+
+        @property
+        def completion(self) -> t.LoggingWriteCompletion: ...
+
     @runtime_checkable
     class Logger(Protocol):
         """Protocol for structlog logger with all logging methods.
@@ -146,6 +155,48 @@ class FlextProtocolsLogging:
         ) -> t.LoggingEvent:
             """Return the next event; stage exceptions propagate unchanged."""
             ...
+
+    @runtime_checkable
+    class OutputLoggerFactory(Protocol):
+        """Construct an output logger from native positional logger names."""
+
+        def __call__(
+            self, *args: str
+        ) -> FlextProtocolsLogging.OutputLogger: ...
+
+    @runtime_checkable
+    class NativeLoggingWrapper(Protocol):
+        """Native construction, context binding, and level emission."""
+
+        def __init__(
+            self,
+            logger: FlextProtocolsLogging.OutputLogger,
+            processors: t.SequenceOf[t.LoggingProcessor],
+            context: t.LoggingContext,
+        ) -> None: ...
+
+        @property
+        def _context(self) -> t.LoggingContext: ...
+
+        def bind(self, **new_values: t.LoggingEventValue) -> Self: ...
+
+        def new(self, **new_values: t.LoggingEventValue) -> Self: ...
+
+        def unbind(self, *keys: str) -> Self: ...
+
+        def try_unbind(self, *keys: str) -> Self: ...
+
+        def critical(self, event: str, **context: t.LoggingEventValue) -> None: ...
+
+        def debug(self, event: str, **context: t.LoggingEventValue) -> None: ...
+
+        def error(self, event: str, **context: t.LoggingEventValue) -> None: ...
+
+        def exception(self, event: str, **context: t.LoggingEventValue) -> None: ...
+
+        def info(self, event: str, **context: t.LoggingEventValue) -> None: ...
+
+        def warning(self, event: str, **context: t.LoggingEventValue) -> None: ...
 
     @runtime_checkable
     class StructlogOptions(Protocol):

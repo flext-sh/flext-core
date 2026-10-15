@@ -1,7 +1,7 @@
 """Structlog processor chain assembly and level-based context filtering.
 
-Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
-the 200-line cap (AGENTS.md §3.1). Handles processor construction,
+Extracted from FlextUtilitiesLogging as an MRO mixin under the configured
+source-size budget. Handles processor construction,
 structlog parameter resolution, and async writer lifecycle.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -19,12 +19,10 @@ from structlog.stdlib import add_log_level
 
 from flext_core import c, p, t
 from flext_core._models.config import FlextModelsConfig
-from flext_core._utilities._logging_config_parts.logging_config_part_01 import (
-    FlextUtilitiesLoggingConfig as FlextUtilitiesLoggingConfigPart01,
-)
+from flext_core._utilities._logging_config_parts import logging_config_part_01
 
 
-class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
+class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingConfig):
     @staticmethod
     def level_based_context_filter(
         logger: p.OutputLogger | None,
@@ -84,12 +82,12 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
             The resulting typed event mapping.
 
         Raises:
-            DropEvent: If ``level < FlextUtilitiesLoggingConfigPart01.log_threshold()``.
+            DropEvent: If the event level is below the active logging threshold.
 
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
-        if level < FlextUtilitiesLoggingConfigPart01.log_threshold():
+        if level < logging_config_part_01.FlextUtilitiesLoggingConfig.log_threshold():
             raise structlog.DropEvent
         return event_dict
 
@@ -166,10 +164,13 @@ class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingConfigPart01):
             The resulting ``t.LoggerFactory | None``.
 
         """
+        if not async_logging and cls._async_writer is not None:
+            cls._async_writer.shutdown()
+            cls._async_writer = None
         if logger_factory is not None:
             return logger_factory
         if not async_logging:
-            return None
+            return structlog.PrintLoggerFactory()
         if cls._async_writer is None:
             cls._async_writer = cls._AsyncLogWriter(sys.stdout)
         return structlog.PrintLoggerFactory(file=cls._async_writer)

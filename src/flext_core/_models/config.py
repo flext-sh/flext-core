@@ -24,6 +24,23 @@ from flext_core._typings.services import FlextTypesServices
 class FlextModelsConfig:
     """Container for declarative config record models (ADR-005)."""
 
+    class AsyncLogJob(FlextModelsBase.ArbitraryTypesModel):
+        """Immutable queued write or native flush barrier.
+
+        A missing text value requests a flush without writing any characters.
+        The completion belongs to the caller awaiting the native stream result.
+        """
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(
+                frozen=True,
+                extra="forbid",
+                arbitrary_types_allowed=True,
+            )
+        )
+        text: str | None
+        completion: FlextTypesServices.LoggingWriteCompletion
+
     class StructlogOptions(FlextModelsBase.ArbitraryTypesModel):
         """Knob options for the structlog runtime configuration."""
 

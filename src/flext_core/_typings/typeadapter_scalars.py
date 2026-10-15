@@ -61,6 +61,18 @@ class FlextTypesTypeAdapterScalars:
 
     @classmethod
     @cache
+    def str_tuple_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.VariadicTuple[str]]:
+        """Validate native text-stream newline metadata without coercion.
+
+        Returns:
+            The cached strict adapter for a tuple of native newline strings.
+        """
+        return TypeAdapter(tuple[str, ...], config=ConfigDict(strict=True))
+
+    @classmethod
+    @cache
     def binary_content_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictBytes]:

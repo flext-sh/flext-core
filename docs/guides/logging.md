@@ -192,6 +192,33 @@ processing and its original exception propagates through public logging methods,
 including `exception` and `trace`. Successful emissions retain the public
 `r[bool]` result contract. Invalid trace formatting also raises its native error.
 
+`wrapper_class_factory` is a zero-argument registration factory returning a
+native wrapper class. That class accepts the output logger, processor sequence,
+and context mapping and implements native binding and level emission through
+`p.NativeLoggingWrapper`; it is separate from the public FLEXT logger adapter.
+Output factories accept positional logger names through `p.OutputLoggerFactory`.
+
+Explicit `async_logging=False` selects synchronous output for fresh loggers,
+including after an asynchronous or custom factory was configured. The managed
+writer is drained before that transition succeeds; its original failure or configured
+shutdown timeout propagates from `u.configure_structlog`. Ownership of the
+managed writer is cleared only after successful teardown. Already cached
+asynchronous loggers retain their old chain and reference the stopped writer.
+Queued output uses a real text-stream contract: metadata and operations belong to the
+underlying stream, and no replacement binary buffer is fabricated. Admission
+errors propagate immediately. A public emission flush waits for its queued
+writes and propagates the original stream failure. Later writes preserve that
+first failure instead of retrying the stream. Shutdown drains admitted work,
+and a worker that exceeds the configured shutdown deadline raises a timeout.
+Explicit flushes are native stream operations queued after admitted writes.
+Waiting for a flush or worker shutdown never holds the admission lock.
+Closing the adapter finishes its worker without closing the caller's stream.
+Failed teardown keeps the writer open and owned so admitted work can recover.
+Native printing performs separate text, newline, and flush calls; a concurrent
+shutdown preserves admitted work but rejects subsequent calls with their native
+`ValueError("I/O operation on stopped async log writer")`. A whole emission is
+not an atomic shutdown boundary.
+
 ## Best Practices
 
 - Use global context for stable metadata (service, environment, version).
