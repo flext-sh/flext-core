@@ -61,6 +61,8 @@ Documentation = "https://github.com/flext-sh/flext-core/blob/main/README.md"
 Homepage = "https://github.com/flext-sh/flext-core"
 Repository = "https://github.com/flext-sh/flext-core"
 
+[project.optional-dependencies]
+
 [dependency-groups]
 dev = [
   "actionlint-py>=1.7.12.24",

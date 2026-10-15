@@ -1703,7 +1703,7 @@ test:
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test to execute it.'
 
 test-full:
-	@printf '  %-16s %s\n' 'test-full' 'Run every test once, including slow, external and CI-excluded markers, locally only, without testmon and without any time limit.'
+	@printf '  %-16s %s\n' 'test-full' 'Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-full to execute it.'
 
 test-file:
@@ -1912,7 +1912,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'test' 'Run incremental tests through the persistent testmon cache.';
 
-	@printf '  %-16s %s\n' 'test-full' 'Run every test once, including slow, external and CI-excluded markers, locally only, without testmon and without any time limit.';
+	@printf '  %-16s %s\n' 'test-full' 'Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.';
 
 	@printf '  %-16s %s\n' 'test-file' 'Run one declared test file incremental then complete, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).';
 
