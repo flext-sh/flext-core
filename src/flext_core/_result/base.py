@@ -11,9 +11,8 @@ from typing import Self
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core import c
-from flext_core._runtime._metadata import FlextRuntimeMetadata
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.services import FlextTypesServices
+from flext_core._runtime import FlextRuntimeMetadata
+from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core.typings import JsonDict
 
 
