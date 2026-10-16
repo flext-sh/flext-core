@@ -38,16 +38,16 @@ from __future__ import annotations
 from flext_core import p, r
 
 
-def create_user(command: dict[str, str]) -> p.Result[dict[str, str]]:
+def create_user(command: t.StrDict) -> p.Result[t.StrDict]:
     """Create a user payload when the required email is present.
 
     Returns:
-        The resulting ``p.Result[dict[str, str]]``.
+        The resulting ``p.Result[t.StrDict]``.
 
     """
     if "email" not in command:
-        return r[dict[str, str]].fail("missing_email")
-    return r[dict[str, str]].ok({"status": "created", "email": command["email"]})
+        return r[t.StrDict].fail("missing_email")
+    return r[t.StrDict].ok({"status": "created", "email": command["email"]})
 
 
 ok = create_user({"email": "user@example.com"})

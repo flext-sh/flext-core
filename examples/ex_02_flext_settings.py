@@ -43,7 +43,7 @@ class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):
         """Remove ``FLEXT_``-prefixed vars so field defaults are deterministic.
 
         Returns:
-            The resulting ``dict[str, str]``.
+            The resulting ``t.StrDict``.
 
         """
         saved = {k: v for k, v in os.environ.items() if k.startswith("FLEXT_")}

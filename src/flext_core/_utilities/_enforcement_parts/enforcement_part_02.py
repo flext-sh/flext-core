@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from enum import EnumType
-from typing import ClassVar
+from typing import ClassVar, cast
 
 from pydantic_settings import BaseSettings
 
@@ -108,7 +108,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         if "[" in target.__name__:
             return
         yield from FlextUtilitiesEnforcement._category_items(
-            target,
+            cast(
+                "type[FlextModelsPydantic.BaseModel | BaseSettings]",
+                target,
+            ),
             tag,
             category,
             effective_layer,

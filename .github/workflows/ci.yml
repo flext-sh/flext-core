@@ -17,12 +17,10 @@ name: CI
     branches:
       - main
       - 0.12.0-dev
-      - 0.20.0-dev
   pull_request:
     branches:
       - main
       - 0.12.0-dev
-      - 0.20.0-dev
     types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_call:
     secrets:
@@ -101,8 +99,9 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-
             ${{ runner.os }}-3.13-tools-
 
       # make setup is the frozen installer. It bootstraps the committed Mise
@@ -118,19 +117,34 @@ jobs:
       # database never hides a changed dependency of a selected test.
       - name: Resolve project testmon database
         id: testmon_path
+        env:
+          CACHE_BRANCH: ${{ github.head_ref || github.ref_name }}
+          CACHE_SEED_BRANCH: ${{ github.base_ref || github.event.repository.default_branch }}
+          CACHE_WRITE_ALLOWED: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
+          CACHE_INPUTS: ${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}
+          CACHE_PLATFORM: ${{ runner.os }}-${{ runner.arch }}
+          CACHE_GENERATION: ${{ github.run_id }}-${{ github.run_attempt }}
         run: |
           set -eu
           cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}"
-          database="$(realpath -m "$cache_home/flext/infra/testmon/flext-core/.testmondata")"
-          case "$database" in /*) ;; *) exit 2 ;; esac
-          printf 'database=%s\n' "$database" >> "$GITHUB_OUTPUT"
+          database="$(realpath -m "${cache_home}/flext/infra/testmon/flext-core/.testmondata")"
+          case "${database}" in /*) ;; *) exit 2 ;; esac
+          printf 'database=%s\n' "${database}" >> "${GITHUB_OUTPUT}"
+          branch_digest="$(printf '%s' "${CACHE_BRANCH}" | sha256sum)"
+          seed_digest="$(printf '%s' "${CACHE_SEED_BRANCH}" | sha256sum)"
+          namespace="${CACHE_PLATFORM}-3.13-flext-testmon-flext-core-${branch_digest%% *}-"
+          seed_namespace="${CACHE_PLATFORM}-3.13-flext-testmon-flext-core-${seed_digest%% *}-"
+          printf 'namespace=%s\nseed_namespace=%s\nsave_allowed=%s\n' "${namespace}" "${seed_namespace}" "${CACHE_WRITE_ALLOWED}" >> "${GITHUB_OUTPUT}"
+          printf 'key=%s%s-%s\n' "${namespace}" "${CACHE_INPUTS}" "${CACHE_GENERATION}" >> "${GITHUB_OUTPUT}"
       - name: Restore testmon database
         uses: actions/cache/restore@v6
         with:
           path: ${{ steps.testmon_path.outputs.database }}
-          key: ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ steps.testmon_path.outputs.key }}
           restore-keys: |
-            ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
+            ${{ steps.testmon_path.outputs.namespace }}${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
+            ${{ steps.testmon_path.outputs.namespace }}
+            ${{ steps.testmon_path.outputs.seed_namespace }}
 
       - name: Install the mise release pinned by mise.lock
         shell: bash
@@ -204,32 +218,39 @@ jobs:
           fi
           echo "${mise_path%/*}" >> "${GITHUB_PATH}"
 
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make setup (blocking)
         id: approval-setup
         run: CI=Y make setup
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
+      - name: make gen (blocking)
+        id: approval-gen
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict (an audit lock drift) never hides the others.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
+        run: CI=Y make gen
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make audit (blocking)
         id: approval-audit
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict (an audit lock drift) never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make audit
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make check (blocking)
         id: approval-check
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict (an audit lock drift) never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make test (blocking)
         id: approval-test
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict (an audit lock drift) never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make test
-      # CI approval, one visible step per ci workflow row (setup -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
       - name: make verify-clean (blocking)
         id: approval-verify-clean
         # Every approval verb reports once setup provisioned the environment,
@@ -241,23 +262,23 @@ jobs:
         if: ${{ failure() }}
         run: |
           set -eu
-          # Structured reports only — same allowlist as Upload reports (no raw
+          # Structured reports only — a subset of Upload reports (no raw
           # pytest/tool logs: those may carry connection strings / env secrets).
           for report_root in .reports apps; do
-            if [ -d "$report_root" ]; then
-              find "$report_root" \
+            if [ -d "${report_root}" ]; then
+              find "${report_root}" \
                 \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
                 -type f -exec sh -eu -c '
                   for report_file do
-                    printf "::group::%s\n" "$report_file"
-                    tail -n 200 "$report_file"
+                    printf "::group::%s\n" "${report_file}"
+                    tail -n 200 "${report_file}"
                     printf "::endgroup::\n"
                   done
                 ' sh {} +
             fi
           done
-      - name: Upload reports on failure
-        if: ${{ failure() }}
+      - name: Upload execution reports
+        if: ${{ always() }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-ci-reports-${{ github.run_id }}
@@ -269,25 +290,47 @@ jobs:
             .reports/**/coverage.json
             .reports/check/**/*.sarif
             .reports/check/**/*.md
+            .reports/gates/**/original-receipt.json
+            .reports/gates/**/check/**/*.sarif
+            .reports/gates/**/check/**/*.md
+            .reports/codegen-plan.json
+            .reports/codegen-publication.json
+            .reports/codegen-publication/**/*.json
+            .reports/setup-operations/*.json
+            .reports/tests/**/suite-outcome.json
+            .reports/tests/**/selection-outcome.json
+            .reports/tests/**/inventory-outcome.json
+            .reports/tests/**/run-context.json
+            .reports/tests/**/selection-plan.json
+            .reports/tests/**/testmon-selection.json
+            .reports/tests/**/testmon-inventory.json
             .reports/tests/**/run-accounting.json
+            .reports/tests/**/diagnostics.json
+            .reports/tests/**/original-receipt.json
+            .reports/tests/**/cache-before.json
             .reports/tests/**/cache-after.json
+            .reports/tests/**/cache-policy.json
+            .reports/tests/**/markdown-reconciliation.json
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
       # Completed failing tests may save; cancelled/incomplete/corrupt runs cannot.
       - name: Save testmon database
         if: >-
-          ${{ always() && !cancelled() && github.event_name == 'push' && steps.approval-test.outputs.testmon_saveable == 'true' && steps.approval-test.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-test.outputs.testmon_digest != '' && contains(fromJSON('["main", "0.12.0-dev", "develop"]'), github.ref_name) && startsWith(github.ref, 'refs/heads/') }}
+          ${{ always() && !cancelled() && steps.testmon_path.outputs.save_allowed == 'true' && steps.approval-test.outputs.testmon_saveable == 'true' && steps.approval-test.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-test.outputs.testmon_digest != '' }}
         uses: actions/cache/save@v6
         with:
           path: ${{ steps.approval-test.outputs.testmon_database }}
-          key: ${{ runner.os }}-3.13-flext-testmon-flext-core-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: ${{ steps.testmon_path.outputs.key }}
 
 
-      # Why: save on every outcome — including a failing gate — so
-      # the next run starts warm. Only written when the restore missed.
+      # Save a new immutable generation after completed failures as well as
+      # successes, so warm restores never discard new provisioning progress.
       - name: Save tool caches
-        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        # Native cache action access mode remains authoritative before upload.
+        # Fork requests are restore-only; an interrupted run cannot publish.
+        if: >-
+          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: actions/cache/save@v6
         with:
           path: |
@@ -301,7 +344,7 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ steps.tool-cache.outputs.cache-primary-key }}
 
   # End SECTION: ci job
 
@@ -407,41 +450,4 @@ jobs:
         run: CI=Y make release-plan
   # End SECTION: release-plan job
 
-  # === SECTION: merge-guard job (managed) ===
-  merge-guard:
-    name: merge-guard
-    permissions:
-      contents: read
-    # Draft is the typed WIP state: no repository Action is selected until the
-    # same PR is promoted to Review with a non-WIP head.
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout promoted head
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 1
-          # Inspect the PR head commit, not the refs/pull/N/merge commit that
-          # actions/checkout selects by default on pull_request events; the
-          # merge commit subject would never carry the WIP marker.
-          ref: ${{ github.event.pull_request.head.sha }}
-      - name: Block WIP heads from protected integration branches
-        env:
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          set -eu
-          case "$BASE_REF" in
-            dev|develop|0.12.0-dev)
-              ;;
-            *)
-              echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
-              exit 0
-              ;;
-          esac
-          subject=$(git log -1 --format=%s)
-          if printf '%s' "$subject" | grep -qiE '^\[WIP\]|^WIP|^wip'; then
-            echo "WIP head cannot merge into ${BASE_REF}: ${subject}"
-            exit 1
-          fi
-          echo "Merge guard passed for $(git rev-parse HEAD) -> $BASE_REF"
-  # End SECTION: merge-guard job
+

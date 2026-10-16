@@ -6,12 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import FunctionType
+from typing import TYPE_CHECKING, cast
+
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
 )
+
+if TYPE_CHECKING:
+    from flext_core.typings import ModuleGlobalValue
 
 
 def redundant_inner_violation(
@@ -59,10 +65,15 @@ def self_ref_violation(
 
     module = maybe_module
     src_file = str(getattr(module, "__file__", "") or "")
-    normalized_values = (
-        value.__func__ if isinstance(value, (classmethod, staticmethod)) else value
-        for value in vars(target).values()
-    )
+    normalized_values: list[FunctionType] = []
+    members = cast("dict[str, ModuleGlobalValue]", vars(target))
+    # Snapshot the values: reading a member can execute a lazy facade whose
+    # module import binds more class attributes, mutating this very mapping
+    # mid-iteration (RuntimeError: dictionary changed size during iteration).
+    for value in tuple(members.values()):
+        function = getattr(value, "__func__", value)
+        if type(function) is FunctionType:
+            normalized_values.append(function)
     first_name = getattr(target.__bases__[0], "__name__", "")
     base_count = len(target.__bases__)
     min_multi_parent = 2
@@ -75,11 +86,6 @@ def self_ref_violation(
             base_count >= min_multi_parent,
             first_name == "u",
         ))
-        and any(
-            (code := getattr(value, "__code__", None)) is not None
-            and "u" in code.co_names
-            for value in normalized_values
-            if callable(value)
-        )
+        and any("u" in value.__code__.co_names for value in normalized_values)
         else NO_VIOLATION
     )

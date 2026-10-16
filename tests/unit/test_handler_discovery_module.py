@@ -151,7 +151,7 @@ class TestsFlextHandlerDiscoveryModule:
             attr_name: str,
             priority: int,
             payload: str,
-        ) -> tuple[str, Callable[..., object]]:
+        ) -> tuple[str, Callable[..., t.UnconstrainedValue]]:
             @h.handler(
                 command=TestsFlextHandlerDiscoveryModule._CreateCommand,
                 priority=priority,

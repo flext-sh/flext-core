@@ -14,6 +14,7 @@ import textwrap
 from types import ModuleType
 from typing import TypeAliasType
 
+from flext_core import t
 from flext_core._models import FlextModelsEnforcement
 from flext_core._utilities._beartype import (
     bound_names,
@@ -25,7 +26,7 @@ from flext_core._utilities._beartype import (
 
 def _flag_guarded(
     condition: ast.expr,
-    flag_imports: dict[str, ast.ImportFrom],
+    flag_imports: t.MappingKV[str, ast.ImportFrom],
     stable: frozenset[str],
 ) -> bool:
     """Prove one ``if`` guards a ``TYPE_CHECKING`` flag import.
@@ -43,7 +44,7 @@ def _flag_guarded(
 
 def _module_guarded(
     condition: ast.expr,
-    module_imports: dict[str, ast.Import],
+    module_imports: t.MappingKV[str, ast.Import],
     stable: frozenset[str],
 ) -> bool:
     """Prove one ``if`` guards a ``typing`` module ``TYPE_CHECKING`` block.
@@ -67,21 +68,21 @@ def guarded_imports(scopes: tuple[ast.Module | ast.ClassDef, ...]) -> set[str]:
 
     """
     nodes = tuple(node for scope in scopes for node in scope_nodes(scope))
-    flag_imports: dict[str, ast.ImportFrom] = {
+    flag_imports: t.MutableMappingKV[str, ast.ImportFrom] = {
         item.asname or item.name: node
         for node in nodes
         if isinstance(node, ast.ImportFrom) and node.module == "typing"
         for item in node.names
         if item.name == "TYPE_CHECKING"
     }
-    module_imports: dict[str, ast.Import] = {
+    module_imports: t.MutableMappingKV[str, ast.Import] = {
         item.asname or item.name: node
         for node in nodes
         if isinstance(node, ast.Import)
         for item in node.names
         if item.name == "typing"
     }
-    markers = flag_imports | module_imports
+    markers = {**flag_imports, **module_imports}
     stable = frozenset(
         name
         for name, declaration in markers.items()

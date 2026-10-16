@@ -50,7 +50,7 @@ class TestsFlextTypeAliasDeclarations:
 
     @staticmethod
     def unbound() -> TypeAliasType:
-        """A local alias has no module-bound declaration that proves deferral.
+        """Build a local alias that has no module-bound declaration proving deferral.
 
         Returns:
             The resulting ``TypeAliasType``.

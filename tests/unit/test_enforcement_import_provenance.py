@@ -6,12 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
 import importlib
+import inspect
 import sys
 from pathlib import Path
 
 import pytest
 
+from flext_core import FlextStrictYamlConfigSource
 from tests import tm, u
 
 
@@ -42,6 +45,16 @@ class TestsFlextEnforcementImportProvenance:
             ("from pydantic_core import ValidationError", "ENFORCE-070", True),
             ("import pydantic_core as dependency", "ENFORCE-070", True),
             ("dependency = __import__('pydantic_core')", "ENFORCE-070", True),
+            ("from pydantic import TypeAdapter", "ENFORCE-045", True),
+            ("from pydantic import TypeAdapter as Adapter", "ENFORCE-045", True),
+            ("import pydantic as dependency", "ENFORCE-045", True),
+            ("from pydantic import JsonValue", "ENFORCE-045", True),
+            ("dependency = __import__('pydantic')", "ENFORCE-045", True),
+            (
+                "from flext_core import m\nAdapter = m.TypeAdapter",
+                "ENFORCE-045",
+                False,
+            ),
             (
                 (
                     "from .base import FlextProbeBase as Dependency\n"
@@ -81,11 +94,13 @@ class TestsFlextEnforcementImportProvenance:
             ),
         ],
     )
+    @pytest.mark.parametrize("module_name", ["consumer", "_consumer"])
     @staticmethod
     def test_real_consumer_import_contract(
         tmp_path: Path,
         binding: str,
         rule: str,
+        module_name: str,
         *,
         rejected: bool,
     ) -> None:
@@ -101,13 +116,13 @@ class TestsFlextEnforcementImportProvenance:
             "class FlextProbeBase:\n    pass\n",
             encoding="utf-8",
         )
-        (package / "consumer.py").write_text(
+        (package / f"{module_name}.py").write_text(
             f"{binding}\n\nclass FlextProbeConsumer:\n    pass\n",
             encoding="utf-8",
         )
         sys.path.insert(0, str(tmp_path))
         try:
-            module = importlib.import_module("flext_probe.consumer")
+            module = importlib.import_module(f"flext_probe.{module_name}")
             report = u.check(module.FlextProbeConsumer)
             tm.that(
                 any(item.rule_id == rule for item in report.violations),
@@ -115,5 +130,27 @@ class TestsFlextEnforcementImportProvenance:
             )
         finally:
             sys.path.remove(str(tmp_path))
-            for name in ("flext_probe.consumer", "flext_probe.base", "flext_probe"):
+            for name in (
+                f"flext_probe.{module_name}",
+                "flext_probe.base",
+                "flext_probe",
+            ):
                 sys.modules.pop(name, None)
+
+    @staticmethod
+    def test_native_config_source_obeys_owner_and_layer_zero_boundary() -> None:
+        """Core owns its native adapter; config ingress never imports its own tiers."""
+        report = u.check(FlextStrictYamlConfigSource)
+        assert not any(item.rule_id == "ENFORCE-045" for item in report.violations)
+        assert not any(item.rule_id == "ENFORCE-070" for item in report.violations)
+        module = importlib.import_module(FlextStrictYamlConfigSource.__module__)
+        namespace = FlextStrictYamlConfigSource.__module__.split(".")[0]
+        tree = ast.parse(inspect.getsource(module))
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                assert node.level == 0
+                assert (node.module or "").split(".")[0] != namespace
+            elif isinstance(node, ast.Import):
+                assert all(
+                    alias.name.split(".")[0] != namespace for alias in node.names
+                )

@@ -33,6 +33,20 @@ if TYPE_CHECKING:
     from tests import t
 
 
+def _register_alpha_child(child_package_name: str, alpha_module_name: str) -> None:
+    """Register a child package and its alpha module carrying a relative lazy map."""
+    child_package = ModuleType(child_package_name)
+    child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
+    alpha_module = ModuleType(alpha_module_name)
+
+    class Alpha:
+        pass
+
+    alpha_module.__dict__["Alpha"] = Alpha
+    sys.modules[child_package_name] = child_package
+    sys.modules[alpha_module_name] = alpha_module
+
+
 class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
 
@@ -79,16 +93,7 @@ class TestsFlextCoreLazyExportsMerge:
         child_package_name = "test_lazy_pkg_merge.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
-        child_package = ModuleType(child_package_name)
-        child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
-        alpha_module = ModuleType(alpha_module_name)
-
-        class Alpha:
-            pass
-
-        alpha_module.__dict__["Alpha"] = Alpha
-        sys.modules[child_package_name] = child_package
-        sys.modules[alpha_module_name] = alpha_module
+        _register_alpha_child(child_package_name, alpha_module_name)
         try:
             merged = merge_lazy_imports((child_package_name,), {})
 
@@ -104,16 +109,7 @@ class TestsFlextCoreLazyExportsMerge:
         child_package_name = f"{parent_package_name}.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
-        child_package = ModuleType(child_package_name)
-        child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
-        alpha_module = ModuleType(alpha_module_name)
-
-        class Alpha:
-            pass
-
-        alpha_module.__dict__["Alpha"] = Alpha
-        sys.modules[child_package_name] = child_package
-        sys.modules[alpha_module_name] = alpha_module
+        _register_alpha_child(child_package_name, alpha_module_name)
         try:
             merged = merge_lazy_imports(
                 (".child",),

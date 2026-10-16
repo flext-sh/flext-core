@@ -19,15 +19,22 @@ class ExamplesFlextModelsEx04:
 
         command_type: Annotated[
             t.NonEmptyStr,
-            m.Field(description="Command type identifier for the ex04 operation"),
+            m.Field(
+                default=...,
+                description="Command type identifier for the ex04 operation",
+            ),
         ] = "ex04_command"
         query_type: Annotated[
             str,
-            m.Field(description="Query type placeholder for the ex04 operation"),
+            m.Field(
+                default=..., description="Query type placeholder for the ex04 operation"
+            ),
         ] = ""
         event_type: Annotated[
             str,
-            m.Field(description="Event type placeholder for the ex04 operation"),
+            m.Field(
+                default=..., description="Event type placeholder for the ex04 operation"
+            ),
         ] = ""
 
     class _QueryEnvelope(m.Query):
@@ -35,15 +42,22 @@ class ExamplesFlextModelsEx04:
 
         command_type: Annotated[
             str,
-            m.Field(description="Command type placeholder for the ex04 operation"),
+            m.Field(
+                default=...,
+                description="Command type placeholder for the ex04 operation",
+            ),
         ] = ""
         query_type: Annotated[
             str | None,
-            m.Field(description="Query type identifier for the ex04 operation"),
+            m.Field(
+                default=..., description="Query type identifier for the ex04 operation"
+            ),
         ] = "ex04_query"
         event_type: Annotated[
             str,
-            m.Field(description="Event type placeholder for the ex04 operation"),
+            m.Field(
+                default=..., description="Event type placeholder for the ex04 operation"
+            ),
         ] = ""
 
     class _EventEnvelope(m.Event):
@@ -51,19 +65,26 @@ class ExamplesFlextModelsEx04:
 
         command_type: Annotated[
             str,
-            m.Field(description="Command type placeholder for the ex04 operation"),
+            m.Field(
+                default=...,
+                description="Command type placeholder for the ex04 operation",
+            ),
         ] = ""
         query_type: Annotated[
             str,
-            m.Field(description="Query type placeholder for the ex04 operation"),
+            m.Field(
+                default=..., description="Query type placeholder for the ex04 operation"
+            ),
         ] = ""
         event_type: Annotated[
             str,
-            m.Field(description="Event type identifier for the ex04 operation"),
+            m.Field(
+                default=..., description="Event type identifier for the ex04 operation"
+            ),
         ] = "ex04_event"
-        aggregate_id: Annotated[str, m.Field(description="Aggregate ID for events")] = (
-            "events"
-        )
+        aggregate_id: Annotated[
+            str, m.Field(default=..., description="Aggregate ID for events")
+        ] = "events"
 
     class CreateUser(_CommandEnvelope):
         """Command to create a new user in example 04."""
@@ -110,8 +131,7 @@ class ExamplesFlextModelsEx04:
             description="Failing-delete event identifier",
         )
         username: Annotated[
-            str,
-            m.Field(description="Username for the failing delete operation"),
+            str, m.Field(description="Username for the failing delete operation")
         ]
 
     class AutoCommand(_CommandEnvelope):
@@ -126,8 +146,7 @@ class ExamplesFlextModelsEx04:
             description="Auto-discovered event identifier",
         )
         payload: Annotated[
-            str,
-            m.Field(description="Payload data for the auto command"),
+            str, m.Field(description="Payload data for the auto command")
         ]
 
     class Ping(_CommandEnvelope):
@@ -152,8 +171,7 @@ class ExamplesFlextModelsEx04:
             description="Unregistered-query event identifier",
         )
         payload: Annotated[
-            str,
-            m.Field(description="Payload data for the unknown query"),
+            str, m.Field(description="Payload data for the unknown query")
         ]
 
     class UserCreated(_EventEnvelope):
@@ -166,8 +184,7 @@ class ExamplesFlextModelsEx04:
             default="users", description="User aggregate identifier"
         )
         username: Annotated[
-            str,
-            m.Field(description="Username of the user that was created"),
+            str, m.Field(description="Username of the user that was created")
         ]
 
     class NoSubscriberEvent(_EventEnvelope):

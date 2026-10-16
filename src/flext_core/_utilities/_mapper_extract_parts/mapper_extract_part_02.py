@@ -9,12 +9,10 @@ from __future__ import annotations
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
 from flext_core._models import FlextModelsExceptionParams
 from flext_core._utilities import FlextUtilitiesGuards
-from flext_core._utilities._mapper_extract_parts.mapper_extract_part_01 import (
-    FlextUtilitiesMapperExtract as FlextUtilitiesMapperExtractPart01,
-)
+from flext_core._utilities._mapper_extract_parts import mapper_extract_part_01
 
 
-class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart01):
+class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExtract):
     @staticmethod
     def _extract_path_parts(
         data: p.AccessibleData,

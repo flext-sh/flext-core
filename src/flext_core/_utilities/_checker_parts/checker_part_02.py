@@ -14,59 +14,57 @@ import inspect
 from typing import TYPE_CHECKING, get_origin, get_type_hints
 
 from flext_core import FlextResult, c, p
-from flext_core._typings import FlextTypesServices as ts, FlextTypingBase as tb
-from flext_core._utilities._checker_parts.checker_part_01 import (
-    FlextUtilitiesChecker as FlextUtilitiesCheckerPart01,
-)
+from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core._utilities._checker_parts import checker_part_01
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
+class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
     @classmethod
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: tb.MappingKV[str, tb.TypeHintSpecifier | None],
+        type_hints: FlextTypingBase.MappingKV[
+            str, FlextTypingBase.TypeHintSpecifier | None
+        ],
         param_name: str,
-    ) -> p.Result[tb.TypeHintSpecifier]:
+    ) -> p.Result[FlextTypingBase.TypeHintSpecifier]:
         """Extract message type from parameter hints or signature annotation.
 
         Returns:
-            The resulting ``p.Result[tb.TypeHintSpecifier]``.
+            The resulting ``p.Result[FlextTypingBase.TypeHintSpecifier]``.
 
         """
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
-                return FlextResult[tb.TypeHintSpecifier].fail(
+                return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
                     c.ERR_CHECKER_TYPE_HINT_NONE
                 )
-            return FlextResult[tb.TypeHintSpecifier].ok(
+            return FlextResult[FlextTypingBase.TypeHintSpecifier].ok(
                 hint if isinstance(hint, (str, type)) else str(hint),
             )
         annotation = parameter.annotation
         if annotation is inspect.Signature.empty:
-            return FlextResult[tb.TypeHintSpecifier].fail(
+            return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
             )
-        return FlextResult[tb.TypeHintSpecifier].ok(
+        return FlextResult[FlextTypingBase.TypeHintSpecifier].ok(
             annotation if isinstance(annotation, (str, type)) else str(annotation),
         )
 
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: Callable[..., ts.ModuleExport],
+        handle_method: Callable[..., FlextTypesServices.ModuleExport],
     ) -> p.Result[inspect.Signature]:
         """Extract signature from handle method, wrapping errors in Result.
 
         Returns:
             The resulting ``p.Result[inspect.Signature]``.
 
-        from flext_core._protocols.result import FlextProtocolsResult as p
-        from flext_core._typings.services import FlextTypesServices as ts
         """
         try:
             return FlextResult[inspect.Signature].ok(inspect.signature(handle_method))
@@ -78,18 +76,18 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: Callable[..., ts.ModuleExport],
+        handle_method: Callable[..., FlextTypesServices.ModuleExport],
         handler_class: type,
-    ) -> tb.MappingKV[str, tb.TypeHintSpecifier | None]:
+    ) -> FlextTypingBase.MappingKV[str, FlextTypingBase.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error.
 
         Returns:
-            The resulting ``tb.MappingKV[str, tb.TypeHintSpecifier | None]``.
-        from flext_core._typings.services import FlextTypesServices as ts
-        from flext_core._typings.base import FlextTypingBase as tb
+            The resulting mapping of type-hint specifiers, ``None`` for absent.
 
         """
-        hints: tb.MappingKV[str, tb.TypeHintSpecifier | None] = {}
+        hints: FlextTypingBase.MappingKV[
+            str, FlextTypingBase.TypeHintSpecifier | None
+        ] = {}
         try:
             hints = get_type_hints(
                 handle_method,
@@ -103,14 +101,13 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
     @classmethod
     def _handle_instance_check(
         cls,
-        message_type: tb.TypeHintSpecifier,
-        origin_type: tb.TypeHintSpecifier,
+        message_type: FlextTypingBase.TypeHintSpecifier,
+        origin_type: FlextTypingBase.TypeHintSpecifier,
     ) -> bool:
         """Instance check for non-type objects; returns True on TypeError.
 
         Returns:
             The resulting ``bool``.
-        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         try:
@@ -129,16 +126,15 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
     @classmethod
     def _handle_type_or_origin_check(
         cls,
-        expected_type: tb.TypeHintSpecifier,
-        message_type: tb.TypeHintSpecifier,
-        origin_type: tb.TypeHintSpecifier,
-        message_origin: tb.TypeHintSpecifier,
+        expected_type: FlextTypingBase.TypeHintSpecifier,
+        message_type: FlextTypingBase.TypeHintSpecifier,
+        origin_type: FlextTypingBase.TypeHintSpecifier,
+        message_origin: FlextTypingBase.TypeHintSpecifier,
     ) -> bool:
         """Type checking for types or objects with __origin__.
 
         Returns:
             The resulting ``bool``.
-        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         try:
@@ -156,16 +152,15 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
     @classmethod
     def _match_type_or_origin(
         cls,
-        expected_type: tb.TypeHintSpecifier,
-        message_type: tb.TypeHintSpecifier,
-        origin_type: tb.TypeHintSpecifier,
-        message_origin: tb.TypeHintSpecifier,
+        expected_type: FlextTypingBase.TypeHintSpecifier,
+        message_type: FlextTypingBase.TypeHintSpecifier,
+        origin_type: FlextTypingBase.TypeHintSpecifier,
+        message_origin: FlextTypingBase.TypeHintSpecifier,
     ) -> bool:
         """Resolve the origin/type match without guarding against TypeError.
 
         Returns:
             The resulting ``bool``.
-        from flext_core._typings.base import FlextTypingBase as tb
 
         """
         if hasattr(message_type, "__origin__"):
@@ -177,8 +172,8 @@ class FlextUtilitiesChecker(FlextUtilitiesCheckerPart01):
     @classmethod
     def _evaluate_type_compatibility(
         cls,
-        expected_type: tb.TypeHintSpecifier,
-        message_type: ts.MessageTypeSpecifier,
+        expected_type: FlextTypingBase.TypeHintSpecifier,
+        message_type: FlextTypesServices.MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types.
 

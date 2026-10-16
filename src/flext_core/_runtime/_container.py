@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence, Set as AbstractSet
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, TypeGuard
+from typing import TYPE_CHECKING, Literal, TypeGuard, cast
 
 from pydantic import BaseModel
 from typing_extensions import TypeForm
@@ -78,7 +78,9 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             case Path():
                 normalized_item = str(item)
             case tuple():
-                normalized_item = FlextRuntimeContainer.normalize_to_metadata(item)
+                normalized_item = FlextRuntimeContainer.normalize_to_metadata(
+                    cast("FlextTypesServices.JsonPayload", item),
+                )
             case dict():
                 normalized_item = FlextUtilitiesBase.type_adapter(
                     TypeForm(FlextTypingBase.JsonDict)
@@ -127,23 +129,31 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
         """
         if isinstance(value, Mapping):
+            mapping_value = cast(
+                "dict[str, FlextTypesServices.JsonPayload]",
+                value,
+            )
             return FlextModelsContainers.ConfigMap(
                 root={
                     key_s: FlextRuntimeContainer._normalize_payload_item(
                         item,
                         container_kind="mapping",
                     )
-                    for key_s, item in value.items()
+                    for key_s, item in mapping_value.items()
                 },
             )
         if isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
+            sequence_value = cast(
+                "FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]",
+                value,
+            )
             return FlextModelsContainers.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
                         item,
                         container_kind="sequence",
                     )
-                    for item in value
+                    for item in sequence_value
                 ],
             )
         if (

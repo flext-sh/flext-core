@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextResult, c, p, t
 from flext_core._utilities import (
@@ -71,7 +71,7 @@ class FlextUtilitiesDispatcherExecute:
         dispatch_result: type[r[t.JsonPayload]],
     ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
         if isinstance(raw_candidate, FlextResult):
-            return raw_candidate
+            return cast("p.Result[t.JsonPayload]", raw_candidate)
         if raw_candidate is None:
             return None
         if isinstance(raw_candidate, p.ResultView):

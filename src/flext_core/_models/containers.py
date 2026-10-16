@@ -84,12 +84,15 @@ class FlextModelsContainers:
             return bool(self.root)
 
         def keys(self) -> KeysView[str]:
+            """Return a view over the mapping's string keys."""
             return self.root.keys()
 
         def values(self) -> ValuesView[FlextTypesServices.JsonPayload]:
+            """Return a view over the stored JSON payloads."""
             return self.root.values()
 
         def items(self) -> ItemsView[str, FlextTypesServices.JsonPayload]:
+            """Return a view over the key-payload pairs."""
             return self.root.items()
 
         def get(
@@ -97,15 +100,32 @@ class FlextModelsContainers:
             key: str,
             default: FlextTypesServices.JsonPayload | None = None,
         ) -> FlextTypesServices.JsonPayload | None:
+            """Return the payload stored under ``key``.
+
+            Args:
+                key: The string key to look up.
+                default: The value returned when the key is absent.
+
+            Returns:
+                The stored payload, or ``default`` when the key is absent.
+
+            """
             return self.root.get(key, default)
 
         def update(
             self,
             other: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload],
         ) -> None:
+            """Merge ``other`` into the mapping, overwriting existing keys.
+
+            Args:
+                other: The key-payload mapping merged into this container.
+
+            """
             self.root.update(other)
 
         def clear(self) -> None:
+            """Remove every key-payload pair from the mapping."""
             self.root.clear()
 
         def pop(
@@ -113,9 +133,26 @@ class FlextModelsContainers:
             key: str,
             *args: FlextTypesServices.JsonPayload,
         ) -> FlextTypesServices.JsonPayload:
+            """Remove ``key`` and return its payload.
+
+            Args:
+                key: The string key to remove.
+                *args: Optional single default returned when the key is
+                    absent; without it a missing key raises ``KeyError``.
+
+            Returns:
+                The removed payload, or the supplied default.
+
+            """
             return self.root.pop(key, *args)
 
         def popitem(self) -> tuple[str, FlextTypesServices.JsonPayload]:
+            """Remove the most recently inserted key-payload pair.
+
+            Returns:
+                The removed ``(key, payload)`` tuple.
+
+            """
             return self.root.popitem()
 
         def setdefault(
@@ -123,6 +160,17 @@ class FlextModelsContainers:
             key: str,
             default: FlextTypesServices.JsonPayload,
         ) -> FlextTypesServices.JsonPayload:
+            """Return the payload under ``key``, storing ``default`` if absent.
+
+            Args:
+                key: The string key to look up.
+                default: The payload stored (and returned) when the key is
+                    absent.
+
+            Returns:
+                The stored payload after the call.
+
+            """
             return self.root.setdefault(key, default)
 
     class Dict(_MappingRootBase):

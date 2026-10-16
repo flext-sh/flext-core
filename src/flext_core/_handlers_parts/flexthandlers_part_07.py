@@ -24,6 +24,18 @@ class FlextHandlers[MessageT_contra, ResultT](
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 
+    def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
+        """Initialize the facade, forwarding configuration to the base.
+
+        Declared on the public facade so pyright's pydantic model synthesis for
+        this class keeps exposing the base ``settings`` keyword to consumers.
+
+        Args:
+            settings: Optional handler configuration model.
+
+        """
+        super().__init__(settings=settings)
+
     class Discovery:
         """Auto-discovery mechanism for handler decorators.
 

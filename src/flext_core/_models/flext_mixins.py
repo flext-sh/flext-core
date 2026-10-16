@@ -29,32 +29,32 @@ class FlextMixins(m.ArbitraryTypesModel):
     """Composable behaviors for dispatcher-driven services and handlers."""
 
     settings_type: t.SkipJsonSchema[t.SettingsClass | None] = m.Field(
-        default=None,
+        None,
         validate_default=True,
         exclude=True,
         description="FlextSettings class used to initialize the service runtime.",
     )
 
     runtime_settings: t.Port[p.Settings | None] = m.Field(
-        default=None,
+        None,
         exclude=True,
         description="Pre-built settings instance used directly for the runtime.",
     )
 
     settings_overrides: t.SkipJsonSchema[t.ScalarMapping | None] = m.Field(
-        default=None,
+        None,
         validate_default=True,
         exclude=True,
         description="Settings overrides applied at instantiation.",
     )
 
     initial_context: t.Port[p.Context | None] = m.Field(
-        default=None,
+        None,
         exclude=True,
         description="Initial context for the service scope.",
     )
 
-    _runtime: m.ServiceRuntime | None = u.PrivateAttr(default=None)
+    _runtime: m.ServiceRuntime | None = u.PrivateAttr(None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
         default_factory=u.empty(TypeForm(MutableMapping[str, m.ConfigMap])),

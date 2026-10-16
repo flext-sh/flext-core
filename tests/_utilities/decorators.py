@@ -1,4 +1,9 @@
-"""Declaration owner for decorator test support."""
+"""Declaration owner for decorator test support.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+tests/_utilities/decorators
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

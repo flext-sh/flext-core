@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, TypeGuard, TypeIs
+from typing import TYPE_CHECKING, TypeGuard, TypeIs, cast
 
 from flext_core import c, t
 
@@ -89,7 +89,9 @@ class FlextUtilitiesGuardsTypeCore:
             The resulting ``bool``.
 
         """
-        return bool(isinstance(value, Mapping) and value)
+        return bool(
+            isinstance(value, Mapping) and cast("dict[str, t.JsonPayload]", value)
+        )
 
     @staticmethod
     def empty_value(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> bool:

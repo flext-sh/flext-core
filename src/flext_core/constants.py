@@ -50,7 +50,12 @@ class FlextConstants(
     FlextConstantsProjectMetadata,
     FlextConstantsPydantic,
 ):
-    """SSOT facade: all constants flat on c.* via MRO composition."""
+    """SSOT facade: all constants flat on c.* via MRO composition.
+
+    The ``c`` letter alias binds to this class; domain-specific constant
+    groups (timeouts, environment, logging, status, errors, ...) each live in
+    their own module and flatten onto this single namespace at import time.
+    """
 
 
 c = FlextConstants

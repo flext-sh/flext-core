@@ -36,7 +36,12 @@ class FlextProtocols(
     FlextProtocolsPydantic,
     FlextProtocolsRegistry,
 ):
-    """Runtime-checkable structural typing protocols for FLEXT framework."""
+    """Runtime-checkable structural typing protocols for FLEXT framework.
+
+    The ``p`` letter alias binds to this class; protocols compose via MRO so
+    consumers can reference any contract as ``p.<Protocol>`` while
+    implementations are checked structurally rather than by inheritance.
+    """
 
 
 p = FlextProtocols

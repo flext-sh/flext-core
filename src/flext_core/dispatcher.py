@@ -7,16 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
+from typing import cast
 
 from flext_core import c, p, r, t, u
-from flext_core._utilities import FlextUtilitiesDispatcherExecute as dxe
+from flext_core._utilities import FlextUtilitiesDispatcherExecute
 
 
 class FlextDispatcher:
     """Application-level dispatcher that satisfies the command bus protocol."""
 
     def __init__(self) -> None:
-        """Initialize dispatcher."""
+        """Initialize the dispatcher with an empty handler registry."""
         super().__init__()
         self.logger = u.fetch_logger(__name__)
         handlers: t.RegistryDict[
@@ -72,7 +73,7 @@ class FlextDispatcher:
 
         """
         if isinstance(event, Sequence):
-            for evt in event:
+            for evt in cast("t.SequenceOf[p.Routable]", event):
                 _ = self.publish(evt)
             return r[bool].ok(value=True)
         route_name = u.resolve_message_route(event)
@@ -212,7 +213,7 @@ class FlextDispatcher:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        return dxe.execute_dispatcher_handler(
+        return FlextUtilitiesDispatcherExecute.execute_dispatcher_handler(
             resolved_handler=resolved_handler,
             message=message,
             route_name=route_name,

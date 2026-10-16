@@ -10,12 +10,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Protocol, overload, runtime_checkable
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, Literal, Protocol, overload, runtime_checkable
 
 import pydantic
+from pydantic_core import PydanticUndefinedType
 
 from flext_core._protocols import FlextProtocolsBase
+
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsPydantic:
@@ -29,6 +33,31 @@ class FlextProtocolsPydantic:
     type ModelWrapValidatorHandler[T] = pydantic.ModelWrapValidatorHandler[T]
     type ValidationInfo = pydantic.ValidationInfo
     type ValidatorFunctionWrapHandler = pydantic.ValidatorFunctionWrapHandler
+
+    class ModelField(Protocol):
+        """Declared field annotation consumed by schema and protocol generators."""
+
+        @property
+        def annotation(self) -> FlextTypingBase.TypeFormSpecifier | None: ...
+
+        @property
+        def frozen(self) -> bool | None: ...
+
+    class ModelType(FlextProtocolsBase.ModuleOwned, Protocol):
+        """Native class metadata; instance operations remain on Model."""
+
+        __name__: str
+        __qualname__: str
+
+        @property
+        def model_fields(self) -> Mapping[str, FlextProtocolsPydantic.ModelField]:
+            """Read the class-level field descriptor without requiring storage."""
+            ...
+
+        @property
+        def model_config(self) -> pydantic.ConfigDict:
+            """Read the model owner's native configuration."""
+            ...
 
     @runtime_checkable
     class FunctionDecorator(Protocol):
@@ -58,6 +87,61 @@ class FlextProtocolsPydantic:
             func: CallT,
             /,
         ) -> CallT: ...
+
+    @runtime_checkable
+    class FieldFactory(Protocol):
+        """Receiver-free native field metadata factory for model declarations.
+
+        Declares the polymorphic call contract ``pydantic.Field`` exposes so a
+        checker resolves each ``m.Field(...)`` call site without a first-class
+        reference to the overloaded native function.
+        """
+
+        @overload
+        def __call__[DefaultT](
+            self,
+            default: DefaultT,
+            *,
+            default_factory: Callable[[], DefaultT]
+            | Callable[[Mapping[str, FlextProtocolsBase.AttributeProbe]], DefaultT]
+            | PydanticUndefinedType
+            | None = ...,
+            alias: str | PydanticUndefinedType | None = ...,
+            **kwargs: FlextProtocolsBase.AttributeProbe,
+        ) -> DefaultT: ...
+
+        @overload
+        def __call__(
+            self,
+            *,
+            default_factory: Callable[..., FlextProtocolsBase.AttributeProbe]
+            | PydanticUndefinedType
+            | None = ...,
+            alias: str | PydanticUndefinedType | None = ...,
+            **kwargs: FlextProtocolsBase.AttributeProbe,
+        ) -> FlextTypingBase.UnconstrainedValue: ...
+
+    @runtime_checkable
+    class PrivateAttrFactory(Protocol):
+        """Receiver-free native private attribute metadata factory."""
+
+        @overload
+        def __call__[PrivateT](
+            self,
+            default: PrivateT,
+            *,
+            default_factory: Callable[..., PrivateT] | None = ...,
+            init: Literal[False] = ...,
+        ) -> PrivateT: ...
+
+        @overload
+        def __call__(
+            self,
+            *,
+            default_factory: Callable[..., FlextProtocolsBase.AttributeProbe]
+            | None = ...,
+            init: Literal[False] = ...,
+        ) -> FlextTypingBase.UnconstrainedValue: ...
 
 
 __all__: tuple[str, ...] = ("FlextProtocolsPydantic",)

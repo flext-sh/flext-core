@@ -148,12 +148,13 @@ class FlextLazy(FlextLazyPart01):
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
         children = self.child_merge_cache.get(key)
         if children is None:
-            children = {}
+            new_children: MutableMapping[str, str | tuple[str, str]] = {}
             for path in key:
                 for name, entry in self._child_map(path).items():
-                    if name not in children or name.lower() != name:
-                        children[name] = entry
-            self.child_merge_cache[key] = children
+                    if name not in new_children or name.lower() != name:
+                        new_children[name] = entry
+            self.child_merge_cache[key] = new_children
+            children = new_children
 
         merged = dict(children)
         merged.update(local_lazy_imports)

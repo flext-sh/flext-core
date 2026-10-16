@@ -14,8 +14,6 @@ from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 
     NO_VIOLATION,
 )
 
-me = FlextModelsEnforcement
-
 
 def _arg_context(
     args: tuple[type | str, ...],
@@ -39,7 +37,7 @@ def _arg_context(
 
 
 def _loose_symbol_payload(
-    params: me.LooseSymbolParams,
+    params: FlextModelsEnforcement.LooseSymbolParams,
     context: tuple[type, bool, str],
 ) -> FlextTypingBase.StrMapping | None:
     """Compute the LOOSE_SYMBOL violation payload for one parsed target.
@@ -102,7 +100,7 @@ class FlextUtilitiesBeartypeClassVisitor(
 ):
     @staticmethod
     def v_loose_symbol(
-        params: me.LooseSymbolParams,
+        params: FlextModelsEnforcement.LooseSymbolParams,
         *args: type | str,
     ) -> FlextTypingBase.StrMapping | None:
         """LOOSE_SYMBOL — top-level class/function naming + settings inheritance.
@@ -112,6 +110,7 @@ class FlextUtilitiesBeartypeClassVisitor(
 
         from flext_core._models.enforcement import FlextModelsEnforcement as me
         from flext_core._typings.base import FlextTypingBase as t
+
         """
         context = _arg_context(args)
         if context is None:

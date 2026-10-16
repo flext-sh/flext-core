@@ -7,10 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from flext_core.typings import ModuleGlobalValue
+    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
 class FlextLazyMember:
@@ -88,14 +88,20 @@ class FlextLazyMember:
             raise TypeError(msg)
         target = f"{self._module}.{self._owner}"
         try:
-            source = getattr(importlib.import_module(self._module), self._owner)
+            source = cast(
+                "type",
+                getattr(importlib.import_module(self._module), self._owner),
+            )
         except AttributeError as exc:
             msg = f"lazy member {self._member!r} cannot load {target!r}"
             raise ImportError(msg, name=self._module) from exc
         for klass in source.__mro__:
-            namespace = vars(klass)
+            namespace = cast("ModuleGlobals", vars(klass))
             if self._member in namespace:
-                raw: ModuleGlobalValue = namespace[self._member]
+                raw: ModuleGlobalValue = cast(
+                    "ModuleGlobalValue",
+                    namespace[self._member],
+                )
                 setattr(host, self._member, raw)
                 return raw
         msg = f"{target!r} declares no member {self._member!r}"

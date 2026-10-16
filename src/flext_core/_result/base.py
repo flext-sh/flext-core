@@ -11,9 +11,8 @@ from typing import Self
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core import c
-from flext_core._runtime._metadata import FlextRuntimeMetadata
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.services import FlextTypesServices
+from flext_core._runtime import FlextRuntimeMetadata
+from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core.typings import JsonDict
 
 
@@ -43,6 +42,9 @@ class FlextResultBase[T](BaseModel):
     def create_success(cls, value: T) -> Self:
         """Build a successful result carrying ``value``.
 
+        Args:
+            value: The success payload to bind.
+
         Returns:
             The validated success instance.
 
@@ -63,6 +65,12 @@ class FlextResultBase[T](BaseModel):
     ) -> Self:
         """Build a failed result from already-normalized failure state.
 
+        Args:
+            error: The human-readable error message.
+            error_code: Optional machine-readable error code.
+            error_data: Optional structured error payload.
+            exception: Optional exception bound to the failure.
+
         Returns:
             The validated failure instance.
 
@@ -82,8 +90,8 @@ class FlextResultBase[T](BaseModel):
         """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations.
 
         Raises:
-            ValueError: If ``arg0 is None or arg0 is type(None)``; or if ``arg0 is
-                object``.
+            ValueError: If the first type argument is ``None``/``NoneType`` or
+                ``object``.
 
         """
         args = cls.__pydantic_generic_metadata__["args"]
@@ -100,7 +108,7 @@ class FlextResultBase[T](BaseModel):
         """Reject ``None`` and bare ``object()`` as success payloads.
 
         Raises:
-            ValueError: If ``value is None``; or if ``type(value) is object``.
+            ValueError: If ``value`` is ``None`` or its exact type is ``object``.
 
         """
         if value is None:
@@ -114,6 +122,16 @@ class FlextResultBase[T](BaseModel):
         | FlextTypesServices.ConfigModelInput
         | None,
     ) -> JsonDict | None:
+        """Validate and normalize error data into a plain JSON mapping.
+
+        Args:
+            error_data: The model, mapping, or config input to normalize.
+
+        Returns:
+            The resulting ``JsonDict``, or ``None`` when ``error_data``
+            normalizes to ``None``.
+
+        """
         normalized = FlextRuntimeMetadata.normalize_model_input_mapping(error_data)
         if normalized is None:
             return None

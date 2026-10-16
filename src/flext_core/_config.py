@@ -2,7 +2,7 @@
 
 A thin layer over ``pydantic_settings.BaseSettings`` that depends on **nothing**
 but stdlib + pydantic-settings. Declarative execution parametrization is loaded
-from the project's local ``config/`` dir: every ``config/*.yaml`` file is
+from the declaring package's ``config/`` resource: every ``config/*.yaml`` file is
 auto-discovered and deep-merged (YAML is the authoring format so rules stay
 organized across multiple files). Frozen and static, like constants; a per-class
 singleton exposed at the root as ``config``.
@@ -24,11 +24,12 @@ from __future__ import annotations
 
 import inspect
 import os
+from importlib.resources import files
 from pathlib import Path
 from threading import RLock
-from typing import TYPE_CHECKING, ClassVar, Self, override
+from typing import ClassVar, Self, override
 
-from pydantic import ValidationError
+from pydantic import JsonValue, ValidationError
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
@@ -38,9 +39,6 @@ from pydantic_settings import (
 from flext_core._constants.config import FlextConstantsConfig
 from flext_core._settings import app_env_prefix, platform_config_root
 from flext_core.config_sources import FlextStrictYamlConfigSource
-
-if TYPE_CHECKING:
-    from flext_core import t
 
 
 class FlextConfig(BaseSettings):
@@ -53,7 +51,7 @@ class FlextConfig(BaseSettings):
 
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
-    CONFIG_FILENAMES: ClassVar[t.VariadicTuple[str]] = ()
+    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
@@ -80,35 +78,22 @@ class FlextConfig(BaseSettings):
     def _config_dir(cls) -> Path:
         """Resolve the packaged ``config/`` root, independent of the caller's CWD.
 
-        ``CONFIG_DIR`` may be an absolute path (explicit override, used verbatim)
-        or a relative name (default ``"config"``). When relative it is resolved
-        against the concrete subclass's own module layout, trying in order:
-
-        1. ``<pkg>/config`` — the packaged copy shipped via hatch force-include,
-           present after ``pip install`` (``site-packages/<pkg>/config``).
-        2. ``<project-root>/config`` — the editable/workspace source tree, where
-           ``config/`` sits beside ``src/`` (``<root>/src/<pkg>/_config.py`` →
-           ``parents[2]`` is the project root).
-
-        An operator may relocate the root entirely with
-        ``<PACKAGE>_CONFIG_DIR``. Library code must never depend on the process
-        CWD, so the legacy CWD-relative lookup is gone.
+        The concrete class's import package owns the resource in editable and
+        wheel installs, regardless of declaration depth or inherited loader.
+        Repository overlays are separate explicit consumer inputs, never a
+        replacement for a missing packaged default. ``<PACKAGE>_CONFIG_DIR``
+        remains the explicit operator relocation.
 
         Returns:
             The resulting ``Path``.
+
         """
         namespace = cls._package_namespace()
         override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
         if override:
             return Path(override)
-        config_dir = Path(FlextConstantsConfig.CONFIG_DIR_NAME)
-        if config_dir.is_absolute():
-            return config_dir
-        module_path = Path(inspect.getfile(cls)).resolve()
-        packaged = module_path.parent / config_dir
-        if packaged.is_dir():
-            return packaged
-        return module_path.parents[2] / config_dir
+        package = cls.__module__.partition(".")[0]
+        return Path(str(files(package) / FlextConstantsConfig.CONFIG_DIR_NAME))
 
     @classmethod
     def _user_config_dir(cls) -> Path:
@@ -127,7 +112,7 @@ class FlextConfig(BaseSettings):
 
     @classmethod
     def _config_files(cls) -> list[Path]:
-        """Packaged ``config/*.yaml`` first, then the operator's overlay files.
+        """Collect packaged ``config/*.yaml`` first, then the operator's overlay files.
 
         Later files win on key collision, so operator preferences override the
         packaged defaults while every undeclared key keeps shipping its default.
@@ -136,9 +121,11 @@ class FlextConfig(BaseSettings):
             The resulting ``list[Path]``.
 
         Raises:
-            FileNotFoundError: If declared config directory does not exist; or if
-                ``missing``.
-            ValueError: If ``invalid``.
+            FileNotFoundError: If a declared config directory or declared config
+                file does not exist.
+            ValueError: If a declared config filename is not a bare ``.yaml`` or
+                ``.yml`` name.
+
         """
         config_dir = cls._config_dir()
         user_files = cls._yaml_files_in(cls._user_config_dir())
@@ -168,9 +155,9 @@ class FlextConfig(BaseSettings):
     @classmethod
     def _transform_loaded_yaml(
         cls,
-        data: t.JsonDict,
-    ) -> t.JsonDict:
-        """Hook for subclasses to transform merged YAML before validation.
+        data: dict[str, JsonValue],
+    ) -> dict[str, JsonValue]:
+        """Transform merged YAML before validation on subclass override.
 
         Default is identity (no transformation). Override to apply env
         expansion, section filtering, or any data reshaping without
@@ -178,6 +165,7 @@ class FlextConfig(BaseSettings):
 
         Returns:
             The resulting ``dict[str, JsonValue]``.
+
         """
         return data
 
@@ -190,11 +178,12 @@ class FlextConfig(BaseSettings):
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
-    ) -> t.VariadicTuple[PydanticBaseSettingsSource]:
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
         """Env + every ``config/*.yaml`` deep-merged; no dotenv/secret sources.
 
         Returns:
-            The resulting ``t.VariadicTuple[PydanticBaseSettingsSource]``.
+            The resulting ``tuple[PydanticBaseSettingsSource, ...]``.
+
         """
         _ = (dotenv_settings, file_secret_settings)
         return (
@@ -220,6 +209,7 @@ class FlextConfig(BaseSettings):
 
         Raises:
             ValidationError: If the configuration is invalid.
+
         """
         instance = cls.__dict__.get("_instance")
         if isinstance(instance, cls):

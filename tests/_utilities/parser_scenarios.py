@@ -6,12 +6,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from tests import c, m
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+
+def _case_insensitive_options() -> m.ParseOptions[bool]:
+    """Build case-insensitive parse options for the public parser scenario.
+
+    Returns:
+        The resulting ``m.ParseOptions[bool]``.
+
+    """
+    return cast("m.ParseOptions[bool]", m.ParseOptions(case_insensitive=True))
+
+
+def _field_name_options() -> m.ParseOptions[bool]:
+    """Build field-name parse options for the public parser context scenario.
+
+    Returns:
+        The resulting ``m.ParseOptions[bool]``.
+
+    """
+    return cast("m.ParseOptions[bool]", m.ParseOptions(field_name="flag"))
 
 
 class TestsFlextUtilitiesParserScenariosMixin:
@@ -82,7 +102,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
             name="enum-case-insensitive",
             input_value="INACTIVE",
             target=c.Tests.STATUS_ENUM,
-            options=m.ParseOptions(case_insensitive=True),
+            options=_case_insensitive_options(),
             should_succeed=True,
             expected_value=c.Tests.STATUS_INACTIVE,
             description="Public parse resolves StrEnum values case-insensitively",
@@ -120,7 +140,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
             name="invalid-bool-field-context",
             input_value="maybe",
             target=bool,
-            options=m.ParseOptions(field_name="flag"),
+            options=_field_name_options(),
             should_succeed=False,
             error_contains="flag",
             description="Public parse includes field context on bool failure",

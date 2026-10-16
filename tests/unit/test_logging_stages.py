@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import io
 import logging
+import sys
 import traceback
 from typing import TYPE_CHECKING
 
@@ -24,6 +25,83 @@ if TYPE_CHECKING:
 
 class TestsFlextLoggingStages:
     """Observable contracts of typed event stages and terminal rendering."""
+
+    @staticmethod
+    def test_closed_async_stream_preserves_native_failure() -> None:
+        """A failed sink terminates without logging back into its own writer."""
+        consumer = (
+            "import logging, sys, structlog\n"
+            "from flext_core import m, u\n"
+            "u.configure_structlog(settings=m.StructlogOptions("
+            "async_logging=True, log_level=logging.INFO))\n"
+            "sys.stdout.close()\n"
+            "structlog.get_logger().info('closed stream')\n"
+        )
+        executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
+        tm.that(u.Cli.process_succeeded(executed.outcome), eq=False)
+        tm.that(executed.outcome.timed_out, eq=False)
+        tm.that(executed.outcome.forwarded_signal, eq=None)
+        tm.that(executed.stderr, has="ValueError: I/O operation on closed file.")
+
+    @staticmethod
+    def test_async_emission_drains_before_reconfiguration_and_process_exit() -> None:
+        """Accepted public events reach the native stream before shutdown."""
+        events = (
+            "first accepted event",
+            "second accepted event",
+            "last accepted event",
+        )
+        consumer = (
+            "import logging, sys\n"
+            "from flext_core import m, u\n"
+            "u.configure_structlog(settings=m.StructlogOptions("
+            "async_logging=True, console_renderer=False, log_level=logging.INFO))\n"
+            "logger = u.create_module_logger('tests.logging.native.consumer')\n"
+            "for event in sys.argv[1:]:\n"
+            "    logger.info(event)\n"
+            "u.configure_structlog(settings=m.StructlogOptions("
+            "async_logging=False, console_renderer=False, log_level=logging.INFO))\n"
+        )
+        executed = tm.ok(
+            u.Cli.run_raw((sys.executable, "-c", consumer, *events)),
+        )
+        tm.that(u.Cli.process_succeeded(executed.outcome), eq=True)
+        tm.that(executed.outcome.timed_out, eq=False)
+        emitted = tuple(
+            u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))["event"]
+            for line in executed.stdout.splitlines()
+        )
+        tm.that(emitted, eq=events)
+        tm.that(executed.stderr, empty=True)
+
+    @staticmethod
+    def test_failed_async_sink_rethrows_the_same_public_exception() -> None:
+        """Subsequent public writes preserve the first native stream exception."""
+        consumer = (
+            "import logging, sys\n"
+            "from flext_core import m, u\n"
+            "u.configure_structlog(settings=m.StructlogOptions("
+            "async_logging=True, log_level=logging.INFO))\n"
+            "logger = u.create_module_logger('tests.logging.native.failure')\n"
+            "sys.stdout.close()\n"
+            "try:\n"
+            "    logger.info('first failed event')\n"
+            "except ValueError as first:\n"
+            "    try:\n"
+            "        logger.info('second failed event')\n"
+            "    except ValueError as second:\n"
+            "        if second is not first:\n"
+            "            raise AssertionError('native failure identity changed')\n"
+            "        raise first\n"
+            "    raise AssertionError('second event did not fail')\n"
+            "raise AssertionError('closed native stream did not fail')\n"
+        )
+        executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
+        tm.that(u.Cli.process_succeeded(executed.outcome), eq=False)
+        tm.that(executed.outcome.timed_out, eq=False)
+        tm.that(executed.outcome.forwarded_signal, eq=None)
+        tm.that(executed.stderr, has="ValueError: I/O operation on closed file.")
+        tm.that(executed.stderr, lacks="AssertionError")
 
     @pytest.fixture(autouse=True)
     def restore_logging_options(self) -> Generator[None]:

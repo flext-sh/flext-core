@@ -49,6 +49,17 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
     def read_project_document_cached(
         root: Path,
     ) -> FlextModelsProjectMetadata.PyprojectDocument:
+        """Read and validate the ``pyproject.toml`` document at one root.
+
+        The parsed document is cached per root path.
+
+        Args:
+            root: The project root holding ``pyproject.toml``.
+
+        Returns:
+            The resulting ``FlextModelsProjectMetadata.PyprojectDocument``.
+
+        """
         pyproject = root / c.PYPROJECT_FILENAME
         with pyproject.open("rb") as stream:
             return FlextModelsProjectMetadata.PyprojectDocument.model_validate(
@@ -61,6 +72,20 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
         root: Path,
         document: FlextModelsProjectMetadata.PyprojectDocument,
     ) -> FlextModelsProjectMetadata.ProjectMetadata:
+        """Build canonical project metadata from a parsed pyproject document.
+
+        When the document carries no ``[project]`` table, the package name
+        falls back to the docs override (or an unknown marker) and the version
+        to a placeholder.
+
+        Args:
+            root: The project root the metadata describes.
+            document: The parsed ``pyproject.toml`` document.
+
+        Returns:
+            The resulting ``FlextModelsProjectMetadata.ProjectMetadata``.
+
+        """
         project = document.project
         flext = document.tool.flext
         if project is None:
@@ -94,6 +119,18 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
 
     @staticmethod
     def derive_class_stem(project_name: str) -> str:
+        """Derive the CamelCase class stem from a project name.
+
+        Underscore-separated segments each capitalize; a configured
+        special-name override wins over the derivation.
+
+        Args:
+            project_name: The project distribution name.
+
+        Returns:
+            The resulting ``str``.
+
+        """
         normalized = project_name.lower()
         override = next(
             (value for name, value in c.SPECIAL_NAME_OVERRIDES if name == normalized),
@@ -148,6 +185,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
 
         Returns:
             The normalized underscore name of every parseable requirement.
+
         """
         names: list[str] = []
         for requirement in distribution.requires or ():
@@ -162,6 +200,19 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
         metadata: FlextProtocolsProjectMetadata.ProjectMetadata,
         distribution_name: str,
     ) -> bool:
+        """Report whether a project declares a distribution by name.
+
+        The project's own name and every ``Requires-Dist`` entry participate;
+        separators normalize, so ``flext_core`` matches ``flext-core``.
+
+        Args:
+            metadata: The project metadata to inspect.
+            distribution_name: The distribution name to look for.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         target_name = cls._normalize_distribution_name(distribution_name)
         if not target_name:
             return False

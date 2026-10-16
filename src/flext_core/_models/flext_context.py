@@ -243,7 +243,7 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
             The resulting ``t.MappingKV[str, t.Scalar]``.
 
         """
-        result: dict[str, t.Scalar] = {}
+        result: t.MutableMappingKV[str, t.Scalar] = {}
         if (value := u.CORRELATION_ID.get()) is not None:
             result[c.ContextKey.CORRELATION_ID] = str(value)
         if (value := u.PARENT_CORRELATION_ID.get()) is not None:

@@ -18,6 +18,13 @@ import pytest
 from tests import c, d, e, r
 
 
+@d.timeout(timeout_seconds=0.005)
+def slow_operation() -> str:
+    """Return after exceeding the configured timeout to exercise the boundary."""
+    time.sleep(0.05)
+    return "should_not_reach"
+
+
 class TestsFlextCoreDecoratorsRailwayRetry:
     """Public-contract behavior of the railway/retry/timeout decorators."""
 
@@ -196,12 +203,6 @@ class TestsFlextCoreDecoratorsRailwayRetry:
     def test_timeout_raises_timeout_error_when_duration_exceeded() -> None:
         # Arrange
         """Test timeout raises timeout error when duration exceeded."""
-
-        @d.timeout(timeout_seconds=0.005)
-        def slow_operation() -> str:
-            time.sleep(0.05)
-            return "should_not_reach"
-
         # Act / Assert
         with pytest.raises(e.FlextTimeoutError) as info:
             slow_operation()
@@ -211,12 +212,6 @@ class TestsFlextCoreDecoratorsRailwayRetry:
     def test_timeout_uses_default_error_code_when_none_provided() -> None:
         # Arrange
         """Test timeout uses default error code when none provided."""
-
-        @d.timeout(timeout_seconds=0.005)
-        def slow_operation() -> str:
-            time.sleep(0.05)
-            return "should_not_reach"
-
         # Act / Assert
         with pytest.raises(e.FlextTimeoutError) as info:
             slow_operation()

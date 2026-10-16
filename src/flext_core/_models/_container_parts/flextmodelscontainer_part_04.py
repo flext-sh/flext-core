@@ -15,14 +15,12 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models import FlextModelsBase as m, FlextModelsPydantic as mp
-from flext_core._models._container_parts.flextmodelscontainer_part_03 import (
-    FlextModelsContainer as FlextModelsContainerPart03,
-)
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._models._container_parts import flextmodelscontainer_part_03
 
 
-class FlextModelsContainer(FlextModelsContainerPart03):
-    class FactoryDecoratorConfig(m.ImmutableValueModel):
+class FlextModelsContainer(flextmodelscontainer_part_03.FlextModelsContainer):
+    class FactoryDecoratorConfig(FlextModelsBase.ImmutableValueModel):
         """Configuration extracted from @d.factory() decorator.
 
         Used by factory discovery to auto-register factories with FlextContainer.
@@ -46,21 +44,21 @@ class FlextModelsContainer(FlextModelsContainerPart03):
 
         name: Annotated[
             t.NonEmptyStr,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 ...,
                 description="Name to register this factory under in the container",
             ),
         ]
         singleton: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=False,
                 description="Whether factory creates singleton instances",
             ),
         ] = False
         lazy: Annotated[
             bool,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=True,
                 description="Whether to defer factory invocation until first use",
             ),

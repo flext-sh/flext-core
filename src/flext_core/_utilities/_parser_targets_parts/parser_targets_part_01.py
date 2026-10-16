@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
+from typing import cast
 
 from flext_core import FlextResult, c, p, t
 from flext_core._models import FlextModelsConfig, FlextModelsPydantic
@@ -36,7 +37,10 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         if options is not None:
             opts = options
         else:
-            opts = FlextModelsConfig.ParseOptions.model_validate(kwargs)
+            opts = cast(
+                "FlextModelsConfig.ParseOptions[T]",
+                FlextModelsConfig.ParseOptions.model_validate(kwargs),
+            )
         return opts, f"{opts.field_name}: " if opts.field_name else ""
 
     @staticmethod

@@ -27,8 +27,9 @@ class TestsFlextEnforcementCatalog:
     @staticmethod
     def test_catalog_is_frozen_and_rejects_mutation() -> None:
         """Test catalog is frozen and rejects mutation."""
+        field_name = "rules"
         with pytest.raises(c.ValidationError):
-            u.build_canonical_catalog().rules = ()
+            setattr(u.build_canonical_catalog(), field_name, ())
 
     @staticmethod
     def test_catalog_version_is_monotonic_positive_integer() -> None:

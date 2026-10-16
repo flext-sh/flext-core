@@ -171,7 +171,7 @@ def _alias_base_sets(
         The resulting ``(alias_base_sets, shared_peer_alias_base)`` pair.
 
     """
-    alias_base_sets = [
+    alias_base_sets: list[set[type]] = [
         {
             ancestor
             for ancestor in base.__mro__[1:]
@@ -179,9 +179,13 @@ def _alias_base_sets(
         }
         for base in target.__bases__
     ]
-    peer_alias_bases = [base_set for base_set in alias_base_sets if base_set]
-    shared_peer_alias_base = (
-        set.intersection(*peer_alias_bases) if peer_alias_bases else set()
+    peer_alias_bases: list[set[type]] = [
+        base_set for base_set in alias_base_sets if base_set
+    ]
+    shared_peer_alias_base: set[type] = (
+        peer_alias_bases[0].intersection(*peer_alias_bases[1:])
+        if peer_alias_bases
+        else set()
     )
     return (alias_base_sets, shared_peer_alias_base)
 

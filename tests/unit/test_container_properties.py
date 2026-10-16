@@ -191,7 +191,10 @@ class TestsFlextCoreContainerProperties:
         sanitized = "".join(ch for ch in name if ch.isalnum()) or "svc"
         assume(sanitized not in c.CONTAINER_RESERVED_NAMES)
 
-        _ = container.factory(sanitized, lambda value=sanitized: value)
+        def produce() -> str:
+            return sanitized
+
+        _ = container.factory(sanitized, produce)
 
         tm.ok(container.resolve(sanitized, type_cls=str), eq=sanitized)
         FlextContainer.reset_for_testing()

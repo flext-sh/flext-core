@@ -9,6 +9,7 @@ from __future__ import annotations
 import io
 import time
 from contextlib import redirect_stdout
+from functools import partial
 from typing import TYPE_CHECKING, NoReturn
 
 import pytest
@@ -92,7 +93,7 @@ class TestsFlextCoverageLoggings:
     def test_clear_scope_returns_success_for_bound_scopes(
         self,
         scope: str,
-        context: dict[str, str],
+        context: t.MappingKV[str, str],
     ) -> None:
         """Test clear scope returns success for bound scopes."""
         bind_result = u.bind_context(scope=scope, **context)
@@ -141,7 +142,8 @@ class TestsFlextCoverageLoggings:
             _fail()
         except OSError as exc:
             result = self.assert_captured_log_success(
-                lambda exc=exc: logger.exception(
+                partial(
+                    logger.exception,
                     "io operation failed",
                     exception=exc,
                     operation="file_read",

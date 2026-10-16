@@ -10,16 +10,19 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from tests._utilities.beartype_engine import TestsFlextBeartypeEngine
     from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin, u
     from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
     from tests._utilities.case_service_factories import (
         TestsFlextUtilitiesCaseServiceFactoriesMixin,
     )
     from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
+    from tests._utilities.decorators import TestsFlextDecoratorsLegacy
     from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
+    from tests._utilities.handlers import TestsFlextFlextHandlers
     from tests._utilities.parser_reliability import (
         TestsFlextUtilitiesParserReliabilityMixin,
     )
@@ -36,6 +39,9 @@ if TYPE_CHECKING:
     )
     from tests._utilities.reliability_scenarios import (
         TestsFlextUtilitiesReliabilityScenariosMixin,
+    )
+    from tests._utilities.result_exception_carrying import (
+        TestsFlextResultExceptionCarrying,
     )
     from tests._utilities.service_factories import (
         TestsFlextUtilitiesServiceFactoriesMixin,
@@ -63,6 +69,10 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
+    "TestsFlextBeartypeEngine",
+    "TestsFlextDecoratorsLegacy",
+    "TestsFlextFlextHandlers",
+    "TestsFlextResultExceptionCarrying",
     "TestsFlextUtilitiesCaseFactoriesMixin",
     "TestsFlextUtilitiesCaseGeneratorsMixin",
     "TestsFlextUtilitiesCaseServiceFactoriesMixin",
@@ -91,6 +101,10 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "TestsFlextBeartypeEngine": ".beartype_engine",
+        "TestsFlextDecoratorsLegacy": ".decorators",
+        "TestsFlextFlextHandlers": ".handlers",
+        "TestsFlextResultExceptionCarrying": ".result_exception_carrying",
         "TestsFlextUtilitiesCaseFactoriesMixin": ".case_factories",
         "TestsFlextUtilitiesCaseGeneratorsMixin": ".case_generators",
         "TestsFlextUtilitiesCaseServiceFactoriesMixin": ".case_service_factories",

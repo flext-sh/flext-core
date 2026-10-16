@@ -60,7 +60,10 @@ class FlextUtilitiesPydantic(
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    validate_call: ClassVar[FlextProtocolsPydantic.ValidateCall] = validate_call
+    if TYPE_CHECKING:
+        validate_call: ClassVar[FlextProtocolsPydantic.ValidateCall] = validate_call
+    else:
+        validate_call = staticmethod(validate_call)
     with_config = staticmethod(with_config)
 
     from_json = staticmethod(from_json)

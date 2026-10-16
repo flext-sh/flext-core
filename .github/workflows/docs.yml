@@ -6,7 +6,6 @@ name: Docs
     branches:
       - main
       - 0.12.0-dev
-      - 0.20.0-dev
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -67,8 +66,9 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-
             ${{ runner.os }}-3.13-tools-
 
       - name: Install the mise release pinned by mise.lock
@@ -149,7 +149,10 @@ jobs:
       # Why: save on every outcome — including a failing gate — so the next run
       # starts warm. Only written when the restore missed.
       - name: Save tool caches
-        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        # Native cache action access mode remains authoritative before upload.
+        # Fork requests are restore-only; an interrupted run cannot publish.
+        if: >-
+          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: actions/cache/save@v6
         with:
           path: |
@@ -163,7 +166,7 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ steps.tool-cache.outputs.cache-primary-key }}
 
 
       - name: Generation drift (blocking)
@@ -185,13 +188,13 @@ jobs:
         run: |
           set -eu
           for report_root in .reports apps; do
-            if [ -d "$report_root" ]; then
-              find "$report_root" \
+            if [ -d "${report_root}" ]; then
+              find "${report_root}" \
                 \( -path '*/audit-summary.json' -o -path '*/audit-report.md' -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
                 -type f -exec sh -eu -c '
                   for report_file do
-                    printf "::group::%s\n" "$report_file"
-                    tail -n 80 "$report_file"
+                    printf "::group::%s\n" "${report_file}"
+                    tail -n 80 "${report_file}"
                     printf "::endgroup::\n"
                   done
                 ' sh {} +
@@ -262,8 +265,9 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
+            ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}-
             ${{ runner.os }}-3.13-tools-
 
       - name: Install the mise release pinned by mise.lock
@@ -341,7 +345,10 @@ jobs:
       - name: Sync workspace toolchain
         run: make setup
       - name: Save tool caches
-        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        # Native cache action access mode remains authoritative before upload.
+        # Fork requests are restore-only; an interrupted run cannot publish.
+        if: >-
+          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: actions/cache/save@v6
         with:
           path: |
@@ -355,7 +362,7 @@ jobs:
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
-          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          key: ${{ steps.tool-cache.outputs.cache-primary-key }}
 
 
       - name: Build site

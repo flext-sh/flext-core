@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 
 def _log_result[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
-    """Decorator that logs each call, then passes the result through.
+    """Log each call, then pass the result through.
 
     Returns:
         The resulting ``Callable[P, T]``.

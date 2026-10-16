@@ -107,7 +107,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         )
         failed_guard = failed_guard_result
 
-        tm.that(cast("dict[str, t.JsonValue]", guarded_payload), eq=payload)
+        tm.that(cast("t.JsonDict", guarded_payload), eq=payload)
         tm.that(cast("list[str]", fallback_tags), eq=["cli"])
         tm.that(cast("int", guarded_attempt), eq=2)
         tm.fail(failed_guard)

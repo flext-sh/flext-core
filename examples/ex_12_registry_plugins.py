@@ -30,7 +30,7 @@ class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
         super().__init__(caller_file)
         self._handler_a = None
         self._handler_b = None
-        self._plugin_inputs = {}
+        self._plugin_inputs: t.StrDict = {}
 
     def _exercise_bindings_and_plugin_apis(
         self,
