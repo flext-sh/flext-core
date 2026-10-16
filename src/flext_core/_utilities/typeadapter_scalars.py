@@ -146,6 +146,17 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
 
     @classmethod
     @cache
+    def strict_str_tuple_adapter(
+        cls,
+    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrTuple]:
+        """Return the cached strict-mode adapter for ``StrTuple``."""
+        return cls.type_adapter(
+            TypeForm(FlextTypingBase.StrTuple),
+            config=ConfigDict(strict=True),
+        )
+
+    @classmethod
+    @cache
     def str_or_bytes_adapter(
         cls,
     ) -> FlextTypesPydantic.TypeAdapter[FlextTypesCore.TextOrBinaryContent]:

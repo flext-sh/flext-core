@@ -7,7 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Mapping, MutableMapping, MutableSequence, Sequence
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 from datetime import datetime
 from pathlib import Path
 from types import GenericAlias, UnionType
@@ -25,6 +32,7 @@ class FlextTypingBase(flexttypingbase_part_01.FlextTypingBase):
     type DictKV[KeyT, ValueT] = dict[KeyT, ValueT]
     type MutableMappingKV[KeyT, ValueT] = MutableMapping[KeyT, ValueT]
     type IterableOf[ItemT] = Iterable[ItemT]
+    type IteratorOf[ItemT] = Iterator[ItemT]
     type SequenceOf[ItemT] = Sequence[ItemT]
     type ListOf[ItemT] = list[ItemT]
     type MutableSequenceOf[ItemT] = MutableSequence[ItemT]

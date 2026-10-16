@@ -11,7 +11,7 @@ from datetime import date, time, tzinfo
 from enum import Enum
 from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
-from typing import TypeAliasType
+from typing import BinaryIO, TextIO, TypeAliasType
 
 from flext_core._protocols import (
     FlextProtocolsBase,
@@ -79,6 +79,8 @@ class FlextTypesServices:
         | LoggingExceptionInfo
     )
     type LoggingEvent = MutableMapping[str, LoggingEventValue]
+    type TextStream = TextIO
+    type BinaryStream = BinaryIO
     type LoggingProcessor = Callable[
         [FlextProtocolsLogging.OutputLogger, str, LoggingEvent],
         LoggingEvent | str | bytes,

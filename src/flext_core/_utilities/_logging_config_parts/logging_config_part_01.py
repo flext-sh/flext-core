@@ -7,16 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import atexit
-import io
 import queue
 import sys
 import threading
-import typing
-from typing import TYPE_CHECKING, ClassVar, override
+from typing import TYPE_CHECKING, ClassVar, TextIO, override
 
 import structlog
 
 from flext_core import c, t
+from flext_core._utilities import FlextUtilitiesTypingAdapterScalars
 
 if TYPE_CHECKING:
     import types
@@ -56,25 +55,300 @@ class FlextUtilitiesLoggingConfig:
         """
         return structlog
 
-    class _AsyncLogWriter(io.TextIOBase):
-        """Background log writer using a queue and a separate thread."""
+    class _NativeStreamMetadata(TextIO):
+        """Native stream identity and metadata, never fabricated.
 
-        def __init__(self, stream: typing.TextIO) -> None:
-            super().__init__()
+        Every attribute is read from the wrapped native stream (the live
+        ``sys.stdout``/``sys.stderr`` when those are wrapped); a native stream
+        lacking an attribute raises its native ``AttributeError``.
+        """
+
+        def __init__(self, stream: t.TextStream) -> None:
             self.stream = stream
             self._use_live_stdout = stream is sys.stdout
             self._use_live_stderr = stream is sys.stderr
-            self._stream_mode: str = str(getattr(stream, "mode", "w"))
-            self._stream_name: str = str(getattr(stream, "name", "<async-log-writer>"))
-            self._stream_encoding: str = str(
-                getattr(stream, "encoding", c.DEFAULT_ENCODING),
-            )
-            self._stream_errors: str | None = getattr(stream, "errors", None)
-            self._stream_newlines: str | t.VariadicTuple[str] | None = getattr(
-                stream,
-                "newlines",
-                None,
-            )
+            self._closed = False
+
+        @property
+        def _target_stream(self) -> t.TextStream:
+            if self._use_live_stdout:
+                return sys.stdout
+            if self._use_live_stderr:
+                return sys.stderr
+            return self.stream
+
+        @property
+        @override
+        def mode(self) -> str:
+            """Native stream mode."""
+            return self._target_stream.mode
+
+        @property
+        @override
+        def name(self) -> str | int:
+            """Native stream path or file descriptor.
+
+            Raises:
+                TypeError: If the native name is neither a path nor a descriptor.
+
+            """
+            name = self._target_stream.name
+            if isinstance(name, str | int):
+                return name
+            msg = "Text stream name must be a path or file descriptor"
+            raise TypeError(msg)
+
+        @property
+        @override
+        def buffer(self) -> t.BinaryStream:
+            """Native binary buffer of the wrapped stream."""
+            return self._target_stream.buffer
+
+        @property
+        @override
+        def line_buffering(self) -> int:
+            """Native line-buffering flag."""
+            return self._target_stream.line_buffering
+
+        @property
+        @override
+        def encoding(self) -> str:
+            """Native text encoding."""
+            return self._target_stream.encoding
+
+        @property
+        @override
+        def errors(self) -> str | None:
+            """Native encoding error policy."""
+            return self._target_stream.errors
+
+        @property
+        @override
+        def newlines(self) -> str | t.StrTuple | None:
+            """Native newline translation state.
+
+            Raises:
+                TypeError: If the native value is not a string, tuple, or None.
+
+            """
+            newlines = self._target_stream.newlines
+            if newlines is None or isinstance(newlines, str):
+                return newlines
+            if isinstance(newlines, tuple):
+                adapter = FlextUtilitiesTypingAdapterScalars.strict_str_tuple_adapter()
+                return adapter.validate_python(newlines)
+            msg = "Text stream newlines must be a string or tuple of strings"
+            raise TypeError(msg)
+
+        @property
+        @override
+        def closed(self) -> bool:
+            """Whether this adapter is closed; the native stream stays open."""
+            return self._closed
+
+    class _NativeStreamOperations(_NativeStreamMetadata):
+        """Non-write operations delegated to the native stream.
+
+        Operations that observe the stream first drain admitted writes; closing
+        this adapter never closes the caller's native stream.
+        """
+
+        @override
+        def close(self) -> None:
+            """Flush admitted writes, then close this adapter only."""
+            if not self._closed:
+                self.flush()
+                self._closed = True
+
+        @override
+        def fileno(self) -> int:
+            """Return the native file descriptor.
+
+            Returns:
+                The descriptor of the wrapped stream.
+
+            """
+            return self._open_stream().fileno()
+
+        @override
+        def isatty(self) -> bool:
+            """Return whether the native stream is interactive.
+
+            Returns:
+                The interactivity of the wrapped stream.
+
+            """
+            return self._open_stream().isatty()
+
+        @override
+        def readable(self) -> bool:
+            """Return whether the native stream is readable.
+
+            Returns:
+                The readability of the wrapped stream.
+
+            """
+            return self._open_stream().readable()
+
+        @override
+        def seekable(self) -> bool:
+            """Return whether the native stream is seekable.
+
+            Returns:
+                The seekability of the wrapped stream.
+
+            """
+            return self._open_stream().seekable()
+
+        @override
+        def writable(self) -> bool:
+            """Return whether the native stream is writable.
+
+            Returns:
+                The writability of the wrapped stream.
+
+            """
+            return self._open_stream().writable()
+
+        @override
+        def read(self, n: int = -1, /) -> str:
+            """Read from the native stream after admitted writes drain.
+
+            Returns:
+                The text read from the wrapped stream.
+
+            """
+            return self._drained_stream().read(n)
+
+        @override
+        def readline(self, limit: int = -1, /) -> str:
+            """Read one native line after admitted writes drain.
+
+            Returns:
+                The line read from the wrapped stream.
+
+            """
+            return self._drained_stream().readline(limit)
+
+        @override
+        def readlines(self, hint: int = -1, /) -> list[str]:
+            """Read native lines after admitted writes drain.
+
+            Returns:
+                The lines read from the wrapped stream.
+
+            """
+            return self._drained_stream().readlines(hint)
+
+        @override
+        def seek(self, offset: int, whence: int = 0, /) -> int:
+            """Move the native position after admitted writes drain.
+
+            Returns:
+                The new position of the wrapped stream.
+
+            """
+            return self._drained_stream().seek(offset, whence)
+
+        @override
+        def tell(self) -> int:
+            """Return the native position after admitted writes drain.
+
+            Returns:
+                The current position of the wrapped stream.
+
+            """
+            return self._drained_stream().tell()
+
+        @override
+        def truncate(self, size: int | None = None, /) -> int:
+            """Truncate the native stream after admitted writes drain.
+
+            Returns:
+                The new size of the wrapped stream.
+
+            """
+            return self._drained_stream().truncate(size)
+
+        @override
+        def writelines(self, lines: t.IterableOf[str], /) -> None:
+            """Queue each line through the same admission as ``write``."""
+            for line in lines:
+                _ = self.write(line)
+
+        @override
+        def __iter__(self) -> t.IteratorOf[str]:
+            """Iterate native lines.
+
+            Returns:
+                This adapter as its own line iterator.
+
+            """
+            return self
+
+        @override
+        def __next__(self) -> str:
+            """Return the next native line after admitted writes drain.
+
+            Returns:
+                The next line of the wrapped stream.
+
+            """
+            return next(self._drained_stream())
+
+        @override
+        def __enter__(self) -> t.TextStream:
+            """Enter a context that closes this adapter on exit.
+
+            Returns:
+                This open adapter.
+
+            """
+            _ = self._open_stream()
+            return self
+
+        @override
+        def __exit__(
+            self,
+            exc_type: type[BaseException] | None,
+            exc_value: BaseException | None,
+            traceback: types.TracebackType | None,
+            /,
+        ) -> None:
+            """Close this adapter without closing the native stream."""
+            self.close()
+
+        def _open_stream(self) -> t.TextStream:
+            """Return the native stream while this adapter is open.
+
+            Returns:
+                The wrapped native stream.
+
+            Raises:
+                ValueError: If this adapter is closed.
+
+            """
+            if self._closed:
+                msg = "I/O operation on closed log stream"
+                raise ValueError(msg)
+            return self._target_stream
+
+        def _drained_stream(self) -> t.TextStream:
+            """Return the native stream once admitted writes reached it.
+
+            Returns:
+                The wrapped native stream after a causal flush.
+
+            """
+            _ = self._open_stream()
+            self.flush()
+            return self._target_stream
+
+    class _AsyncLogWriter(_NativeStreamOperations):
+        """Real text stream whose writes are queued to a background thread."""
+
+        def __init__(self, stream: t.TextStream) -> None:
+            super().__init__(stream)
             self._failure: BaseException | None = None
             self.queue: queue.Queue[str] = queue.Queue(maxsize=c.MAX_ITEMS)
             self.thread = threading.Thread(
@@ -84,37 +358,6 @@ class FlextUtilitiesLoggingConfig:
             )
             self.thread.start()
             _ = atexit.register(self.shutdown)
-
-        @property
-        def _target_stream(self) -> typing.TextIO:
-            if self._use_live_stdout:
-                return sys.stdout
-            if self._use_live_stderr:
-                return sys.stderr
-            return self.stream
-
-        @property
-        def mode(self) -> str:
-            """Expose text stream mode for TextIO compatibility."""
-            return self._stream_mode
-
-        @property
-        def name(self) -> str:
-            """Expose text stream name for TextIO compatibility."""
-            return self._stream_name
-
-        @property
-        def buffer(self) -> typing.BinaryIO:
-            """The underlying binary buffer."""
-            buf: typing.BinaryIO | None = getattr(self._target_stream, "buffer", None)
-            if buf is not None:
-                return buf
-            return io.BytesIO()
-
-        @property
-        def line_buffering(self) -> bool:
-            """The whether line buffering is enabled."""
-            return bool(getattr(self._target_stream, "line_buffering", False))
 
         @override
         def flush(self) -> None:
