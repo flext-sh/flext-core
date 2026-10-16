@@ -220,8 +220,12 @@ class TestsFlextCoreServiceOperations:
     class UndocumentedService(s[bool]):
         """Operation without a docstring."""
 
-        def status(self) -> p.Result[bool]:
+        def _status(self) -> p.Result[bool]:
             return r[bool].ok(True)
+
+        # The public operation is bound to a non-public function, which needs
+        # no docstring: discovery reaches ``status`` with ``__doc__`` unset.
+        status = _status
 
     class PlainReturnService(s[bool]):
         """Operation returning a plain value."""
