@@ -16,11 +16,11 @@ name: CI
   push:
     branches:
       - main
-      - 0.12.0-dev
+      - upload-20261007
   pull_request:
     branches:
       - main
-      - 0.12.0-dev
+      - upload-20261007
     types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_call:
     secrets:
@@ -38,8 +38,11 @@ name: CI
 # End SECTION: triggers
 
 # Why: one active run per workflow and branch prevents obsolete CI from consuming runners.
+# The event and PR number keep pull_request runs out of the integration push
+# group: a PR event delivered after its merge resolves github.ref to the base
+# branch and, keyed by ref alone, cancelled the post-merge run.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ (github.event_name == 'pull_request' && github.event.pull_request.number) || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -328,7 +331,7 @@ jobs:
       # successes, so warm restores never discard new provisioning progress.
       - name: Save tool caches
         # Native cache action access mode remains authoritative before upload.
-        # Fork requests are restore-only; an interrupted run cannot publish.
+        # Only declared events may publish; fork requests remain restore-only.
         if: >-
           ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
         uses: actions/cache/save@v6
