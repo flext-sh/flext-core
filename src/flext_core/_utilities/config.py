@@ -1,10 +1,9 @@
 """FlextUtilitiesConfig - minimal declarative config helpers (ADR-005).
 
-Runtime-minimal config primitives for flext-core self-configuration: TOML load
-(stdlib ``tomllib``), deep merge, and ``${VAR}`` env expansion (stdlib
-``string.Template``). **No Jinja2, no YAML, no JSON Schema here** — those live in
-``flext-cli`` (``u.Cli.config_load`` / ``u.Cli.render_template`` /
-``u.Cli.yaml_validate_schema``), which imports and amplifies these primitives.
+Runtime config primitives for flext-core self-configuration: TOML loading,
+strict YAML configuration ingress, deep merge and ``${VAR}`` expansion.
+The CLI composes these primitives with template rendering, YAML editing and
+schema validation through its own public utilities.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -41,7 +40,7 @@ class FlextUtilitiesConfig:
     class Yaml:
         """Owner facade for the yaml primitives config consumers route through.
 
-        Consumer projects must reach yaml via ``u.Config.Yaml`` so no consumer
+        Consumer projects reach these primitives through ``u.Yaml`` so no consumer
         module imports yaml directly (transport ownership stays with
         flext-core, ENFORCE-070).
         """
