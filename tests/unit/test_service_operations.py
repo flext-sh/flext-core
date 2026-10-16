@@ -221,7 +221,15 @@ class TestsFlextCoreServiceOperations:
         """Operation without a docstring."""
 
         def status(self) -> p.Result[bool]:
+            """Check the status.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
             return r[bool].ok(True)
+
+        status.__doc__ = None
 
     class PlainReturnService(s[bool]):
         """Operation returning a plain value."""
