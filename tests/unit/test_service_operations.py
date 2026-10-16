@@ -229,6 +229,8 @@ class TestsFlextCoreServiceOperations:
             """
             return r[bool].ok(True)
 
+        status.__doc__ = None
+
     class PlainReturnService(s[bool]):
         """Operation returning a plain value."""
 
