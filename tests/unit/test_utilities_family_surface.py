@@ -10,9 +10,8 @@ SPDX-License-Identifier: MIT.
 
 from __future__ import annotations
 
-from flext_tests import tm
-
 from flext_core.utilities import FlextUtilitiesFamilySurface
+from tests import tm
 
 
 class TestsFlextCoreUtilitiesFamilySurface:

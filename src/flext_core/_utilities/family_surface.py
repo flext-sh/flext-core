@@ -12,12 +12,11 @@ import importlib.metadata
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c, normalize_lazy_imports
 from flext_core._utilities import FlextUtilitiesProjectMetadata
-from flext_core.lazy import normalize_lazy_imports
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextUtilitiesFamilySurface:
@@ -52,11 +51,12 @@ class FlextUtilitiesFamilySurface:
         Returns:
             True when the distribution name or one requirement carries the
             family prefix.
+
         """
         return distribution_name.startswith(
-            FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX,
+            c.NAMESPACE_FAMILY_PREFIX,
         ) or any(
-            requirement.startswith(FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX)
+            requirement.startswith(c.NAMESPACE_FAMILY_PREFIX)
             for requirement in requirement_names
         )
 
@@ -77,7 +77,7 @@ class FlextUtilitiesFamilySurface:
             The resulting ``t.MappingKV[str, str]``.
 
         """
-        module_names: dict[str, str] = {}
+        module_names: FlextTypingBase.MutableStrMapping = {}
         for (
             module_name,
             distribution_names,
@@ -148,11 +148,11 @@ class FlextUtilitiesFamilySurface:
                 frozenset(published),
                 MappingProxyType(dict(normalized)),
             ))
-        if len(snapshot) < FlextConstantsEnforcement.FAMILY_SURFACE_MIN_PUBLISHED:
+        if len(snapshot) < c.FAMILY_SURFACE_MIN_PUBLISHED:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
-                f"{FlextConstantsEnforcement.NAMESPACE_FAMILY_PREFIX!r} or a "
+                f"{c.NAMESPACE_FAMILY_PREFIX!r} or a "
                 "requirement edge to it"
             )
             raise RuntimeError(msg)
@@ -173,14 +173,71 @@ class FlextUtilitiesFamilySurface:
             The resulting ``t.MappingKV[str, t.VariadicTuple[str]]``.
 
         """
-        declaration = tuple(
-            name[0].lower() for name in FlextConstantsEnforcement.NAMESPACE_LAYER_NAMES
-        )
+        declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
         owners = {
             name: tuple(alias for alias in declaration if alias in published)
             for name, published, _ in (FlextUtilitiesFamilySurface._surface_snapshot())
         }
         return MappingProxyType(owners)
+
+    @staticmethod
+    def _grouped_surface_entries() -> FlextTypingBase.MappingKV[
+        str, FlextTypingBase.MutableMappingKV[str, list[str]]
+    ]:
+        """Group each family root's lazy-map entries by owner module and kind.
+
+        Returns:
+            The resulting mapping of family roots to owner-module entries.
+
+        """
+        grouped: FlextTypingBase.MutableMappingKV[
+            str,
+            FlextTypingBase.MutableMappingKV[str, list[str]],
+        ] = {}
+        for _, _, entries in FlextUtilitiesFamilySurface._surface_snapshot():
+            for alias, entry in entries.items():
+                module = entry if isinstance(entry, str) else entry[0]
+                kind = "aliases" if len(alias) == 1 else "names"
+                bucket = grouped.setdefault(module, {"aliases": [], "names": []})
+                bucket[kind].append(alias)
+        return grouped
+
+    @staticmethod
+    def _canonical_letters(
+        bucket: FlextTypingBase.MappingKV[str, list[str]],
+    ) -> list[str]:
+        """Return the canonical single-letter aliases of one module bucket.
+
+        Returns:
+            The resulting ``list[str]``.
+
+        """
+        return [
+            alias
+            for alias in bucket["aliases"]
+            if alias in c.ENFORCEMENT_CANONICAL_ALIASES
+        ]
+
+    @staticmethod
+    def _register_alias_rename(
+        renames: FlextTypingBase.MutableMappingKV[str, str],
+        long_name: str,
+        alias: str,
+        module: str,
+    ) -> None:
+        """Publish one long-name rename, failing on conflicting alias claims.
+
+        Raises:
+            ValueError: If published family surface maps.
+
+        """
+        previous = renames.setdefault(long_name, alias)
+        if previous != alias:
+            msg = (
+                f"published family surface maps {long_name!r} to "
+                f"both {previous!r} and {alias!r} via {module!r}"
+            )
+            raise ValueError(msg)
 
     @staticmethod
     def compatibility_alias_renames() -> FlextTypingBase.MappingKV[str, str]:
@@ -197,40 +254,23 @@ class FlextUtilitiesFamilySurface:
         Returns:
             The resulting ``t.MappingKV[str, str]``.
 
-        Raises:
-            ValueError: If published family surface maps.
-
         """
-        grouped = {}
-        for _, _, entries in FlextUtilitiesFamilySurface._surface_snapshot():
-            for alias, entry in entries.items():
-                module = entry if isinstance(entry, str) else entry[0]
-                kind = "aliases" if len(alias) == 1 else "names"
-                if module not in grouped:
-                    grouped[module] = cast(
-                        "FlextTypingBase.MutableMappingKV[str, list[str]]",
-                        {"aliases": [], "names": []},
-                    )
-                bucket = grouped[module]
-                bucket[kind].append(alias)
         renames: FlextTypingBase.MutableMappingKV[str, str] = {}
-        for module, bucket in grouped.items():
-            letters = [
-                alias
-                for alias in bucket["aliases"]
-                if alias in FlextConstantsEnforcement.ENFORCEMENT_CANONICAL_ALIASES
-            ]
+        for (
+            module,
+            bucket,
+        ) in FlextUtilitiesFamilySurface._grouped_surface_entries().items():
+            letters = FlextUtilitiesFamilySurface._canonical_letters(bucket)
             for long_name in bucket["names"]:
                 if not long_name.startswith("Flext"):
                     continue
                 for alias in letters:
-                    previous = renames.setdefault(long_name, alias)
-                    if previous != alias:
-                        msg = (
-                            f"published family surface maps {long_name!r} to "
-                            f"both {previous!r} and {alias!r} via {module!r}"
-                        )
-                        raise ValueError(msg)
+                    FlextUtilitiesFamilySurface._register_alias_rename(
+                        renames,
+                        long_name,
+                        alias,
+                        module,
+                    )
         return cast("FlextTypingBase.StrMapping", MappingProxyType(renames))
 
 

@@ -11,17 +11,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Sized
+from typing import TYPE_CHECKING, ClassVar, cast
 
-from flext_core import c, r, t
+from typing_extensions import TypeForm
+
+from flext_core import FlextResult, c, t
 from flext_core._models import FlextModelsCollections
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._utilities.guards_type_core import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities.guards_type_model import FlextUtilitiesGuardsTypeModel
-from flext_core._utilities.guards_type_protocol import FlextUtilitiesGuardsTypeProtocol
+from flext_core._utilities import (
+    FlextUtilitiesBase,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesGuardsTypeModel,
+    FlextUtilitiesGuardsTypeProtocol,
+)
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping, Sized
+    from collections.abc import Callable, Mapping
 
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _guards_parts/part_01..02 (one
@@ -74,9 +80,8 @@ class FlextUtilitiesGuards(
         """
         if isinstance(value, c.NUMERIC_TYPES):
             return value
-        if isinstance(value, (str, bytes, list, tuple, dict, set, frozenset)):
-            sized_value: Sized = value
-            return len(sized_value)
+        if isinstance(value, Sized):
+            return len(value)
         return 0
 
     @staticmethod
@@ -142,7 +147,9 @@ class FlextUtilitiesGuards(
             mem_raw = getattr(guard_spec, mem_op, None)
             if mem_raw is not None and not mem_fn(
                 value,
-                t.json_list_adapter().validate_python(mem_raw),
+                FlextUtilitiesBase.type_adapter(TypeForm(t.JsonList)).validate_python(
+                    mem_raw
+                ),
             ):
                 return False
         return True
@@ -188,7 +195,7 @@ class FlextUtilitiesGuards(
         """
         if guard_spec.contains is None:
             return True
-        return FlextUtilitiesGuardsTypeCore.container(
+        return FlextUtilitiesGuardsTypeCore.container_value(
             value,
         ) and FlextUtilitiesGuards._check_iterable_contains(
             value,
@@ -226,6 +233,17 @@ class FlextUtilitiesGuards(
         spec: FlextModelsCollections.GuardCheckSpec | None = None,
         **criteria: t.GuardInput,
     ) -> bool:
+        """Check one value against a guard spec merged with inline criteria.
+
+        Args:
+            value: The value to check.
+            spec: The optional base guard specification.
+            **criteria: The spec fields overriding ``spec``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         guard_spec = (
             spec if spec is not None else FlextModelsCollections.GuardCheckSpec()
         )
@@ -233,7 +251,7 @@ class FlextUtilitiesGuards(
             criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
                 criteria,
             )
-            criteria_update: dict[str, t.GuardInput | None] = {
+            criteria_update: t.MutableMappingKV[str, t.GuardInput | None] = {
                 field_name: getattr(criteria_spec, field_name)
                 for field_name in criteria_spec.model_fields_set
             }
@@ -244,6 +262,25 @@ class FlextUtilitiesGuards(
             guard_spec,
             check_val,
         ) and FlextUtilitiesGuards._check_spec_ops(value, guard_spec, check_val)
+
+    @staticmethod
+    def _check_none_type_constraints(
+        value: t.GuardInput,
+        guard_spec: FlextModelsCollections.GuardCheckSpec,
+    ) -> bool:
+        """Validate none/is_/not_ constraints independently of emptiness checks.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        if guard_spec.none is True and value is not None:
+            return False
+        if guard_spec.none is False and value is None:
+            return False
+        if guard_spec.is_ is not None and not isinstance(value, guard_spec.is_):
+            return False
+        return not (guard_spec.not_ is not None and isinstance(value, guard_spec.not_))
 
     @staticmethod
     def _check_special_constraints(
@@ -257,13 +294,7 @@ class FlextUtilitiesGuards(
             The resulting ``bool``.
 
         """
-        if guard_spec.none is True and value is not None:
-            return False
-        if guard_spec.none is False and value is None:
-            return False
-        if guard_spec.is_ is not None and not isinstance(value, guard_spec.is_):
-            return False
-        if guard_spec.not_ is not None and isinstance(value, guard_spec.not_):
+        if not FlextUtilitiesGuards._check_none_type_constraints(value, guard_spec):
             return False
         if guard_spec.empty is True and check_val != 0:
             return False
@@ -277,7 +308,7 @@ class FlextUtilitiesGuards(
             The resulting ``t.JsonValue``.
 
         """
-        return value if FlextUtilitiesGuards.container(value) else str(value)
+        return value if FlextUtilitiesGuards.container_value(value) else str(value)
 
     @staticmethod
     def _check_validator(
@@ -293,10 +324,13 @@ class FlextUtilitiesGuards(
         if isinstance(validator, type):
             return isinstance(value, validator)
         if isinstance(validator, tuple):
+            candidates = cast("t.VariadicTuple[t.TypeHintSpecifier]", validator)
+            if not all(isinstance(item, type) for item in candidates):
+                return False
             tuple_types: t.VariadicTuple[type] = tuple(
-                item for item in validator if isinstance(item, type)
+                item for item in candidates if isinstance(item, type)
             )
-            return len(tuple_types) == len(validator) and isinstance(value, tuple_types)
+            return isinstance(value, tuple_types)
         if callable(validator):
             return validator(value)
         return bool(value)
@@ -312,6 +346,23 @@ class FlextUtilitiesGuards(
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
     ) -> t.JsonValue | bool | FlextProtocolsResult.Result[t.JsonValue]:
+        """Validate a value into a verdict, value, default, or failure.
+
+        An exception raised by the validator counts as a validation failure.
+
+        Args:
+            value: The value to validate.
+            validator: The callable, type, or tuple of types accepting the value.
+            default: The fallback value returned on failure when provided.
+            return_value: Whether to return the validated (or default) value
+                instead of a boolean verdict, and a failed ``p.Result``
+                instead of ``False``.
+
+        Returns:
+            The validated value, the default, the boolean verdict, or the
+            failed ``p.Result``.
+
+        """
         fail_msg = "Guard validation failed"
         try:
             validation_passed = FlextUtilitiesGuards._check_validator(value, validator)
@@ -326,7 +377,9 @@ class FlextUtilitiesGuards(
             )
         match default:
             case None:
-                return r[t.JsonValue].fail(fail_msg) if return_value else False
+                return (
+                    FlextResult[t.JsonValue].fail(fail_msg) if return_value else False
+                )
             case default_value:
                 return FlextUtilitiesGuards._to_container_or_str(default_value)
 

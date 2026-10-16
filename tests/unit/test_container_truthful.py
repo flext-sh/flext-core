@@ -15,17 +15,12 @@ import types
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import d, tm
 
-from flext_core.container import FlextContainer
-from tests import e
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
-from tests.utilities import u
+from flext_core import FlextContainer
+from tests import c, d, e, m, p, tm, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreContainerTruthful:

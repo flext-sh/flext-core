@@ -8,23 +8,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from examples.constants import c
+from examples import ExamplesFlextShared, c, h, m, r, u
 from examples.ex_12_registry_support import (
     ProtocolHandler,
     as_registry_handler,
     discovered_handler,
 )
-from examples.models import m
-from examples.shared import ExamplesFlextShared
-from examples.utilities import u
-from flext_core import h, r
 
 if TYPE_CHECKING:
-    from examples.protocols import p
-    from examples.typings import t
+    from examples import p, t
 
 
-class Ex12RegistryFlow(ExamplesFlextShared):
+class ExamplesFlextRegistryFlow(ExamplesFlextShared):
     """Registry flow checks for the executable example."""
 
     def _exercise_create_and_service_methods(self) -> t.Pair[p.Registry, p.Dispatcher]:

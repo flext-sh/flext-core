@@ -13,14 +13,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import r, tm
 
 import tests.utilities
-from tests.constants import c
+from tests import c, r, tm
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
@@ -163,7 +161,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
     def test_from_validation_success_returns_populated_model() -> None:
         # Arrange
         """Test from validation success returns populated model."""
-        valid: dict[str, t.JsonPayload] = {"name": "Alice", "age": 30}
+        valid: t.MappingKV[str, t.JsonPayload] = {"name": "Alice", "age": 30}
 
         # Act
         result = r[

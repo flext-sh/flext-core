@@ -6,17 +6,111 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Literal, Protocol, Self, overload, runtime_checkable
+
+from typing_extensions import TypeForm
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, MutableSequence
     from types import TracebackType
+
+    from pydantic.config import JsonDict
+    from pydantic.fields import Deprecated
+    from pydantic.functional_serializers import (
+        FieldPlainSerializer,
+        FieldWrapSerializer,
+        ModelPlainSerializer,
+        ModelWrapSerializer,
+    )
+    from pydantic_core.core_schema import WhenUsed
 
     from flext_core import m, t
 
 
 class FlextProtocolsBase:
     """Hierarchical protocol namespace organized by Interface Segregation Principle."""
+
+    @runtime_checkable
+    class FieldSerializerFactory(Protocol):
+        """Native Pydantic field serializer overloads, including callback bounds."""
+
+        @overload
+        def __call__[SerializerT: FieldWrapSerializer, ReturnT](
+            self,
+            field: str,
+            /,
+            *fields: str,
+            mode: Literal["wrap"],
+            return_type: TypeForm[ReturnT] = ...,
+            when_used: WhenUsed = ...,
+            check_fields: bool | None = ...,
+        ) -> Callable[[SerializerT], SerializerT]: ...
+
+        @overload
+        def __call__[SerializerT: FieldPlainSerializer, ReturnT](
+            self,
+            field: str,
+            /,
+            *fields: str,
+            mode: Literal["plain"] = ...,
+            return_type: TypeForm[ReturnT] = ...,
+            when_used: WhenUsed = ...,
+            check_fields: bool | None = ...,
+        ) -> Callable[[SerializerT], SerializerT]: ...
+
+    @runtime_checkable
+    class ModelSerializerFactory(Protocol):
+        """Native Pydantic bare, plain and wrap model serializer overloads."""
+
+        @overload
+        def __call__[SerializerT: ModelPlainSerializer](
+            self, f: SerializerT, /
+        ) -> SerializerT: ...
+
+        @overload
+        def __call__[SerializerT: ModelWrapSerializer, ReturnT](
+            self,
+            *,
+            mode: Literal["wrap"],
+            when_used: WhenUsed = "always",
+            return_type: TypeForm[ReturnT] = ...,
+        ) -> Callable[[SerializerT], SerializerT]: ...
+
+        @overload
+        def __call__[SerializerT: ModelPlainSerializer, ReturnT](
+            self,
+            *,
+            mode: Literal["plain"] = ...,
+            when_used: WhenUsed = "always",
+            return_type: TypeForm[ReturnT] = ...,
+        ) -> Callable[[SerializerT], SerializerT]: ...
+
+    @runtime_checkable
+    class ComputedFieldFactory(Protocol):
+        """Native Pydantic computed-field overloads and keyword contracts."""
+
+        @overload
+        def __call__[PropertyT](self, func: PropertyT, /) -> PropertyT: ...
+
+        @overload
+        def __call__[PropertyT, ExcludeT, ExampleT](
+            self,
+            *,
+            alias: str | None = None,
+            alias_priority: int | None = None,
+            exclude_if: Callable[[ExcludeT], bool] | None = None,
+            title: str | None = None,
+            field_title_generator: Callable[[str, t.ComputedFieldInfo], str]
+            | None = None,
+            description: str | None = None,
+            deprecated: Deprecated | str | bool | None = None,
+            examples: list[ExampleT] | None = None,
+            json_schema_extra: JsonDict | Callable[[JsonDict], None] | None = None,
+            repr: bool = True,
+            # This native parameter accepts an unconstrained schema descriptor.
+            return_type: FlextProtocolsBase.AttributeProbe = ...,
+        ) -> Callable[[PropertyT], PropertyT]: ...
 
     @runtime_checkable
     class Base(Protocol):

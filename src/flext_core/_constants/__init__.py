@@ -18,6 +18,15 @@ if TYPE_CHECKING:
         _enforcement_parts,
         _errors_parts,
     )
+    from flext_core._constants._enforcement_data.flextpredicaterule import (
+        FlextPredicateRule,
+    )
+    from flext_core._constants._enforcement_data.flextsmellthresholds import (
+        FlextSmellThresholds,
+    )
+    from flext_core._constants._enforcement_data.package_data import (
+        FlextConstantsEnforcementData,
+    )
     from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
         FlextConstantsEnforcementEnums,
     )
@@ -83,6 +92,7 @@ __all__: tuple[str, ...] = (
     "FlextConstantsConfig",
     "FlextConstantsCqrs",
     "FlextConstantsEnforcement",
+    "FlextConstantsEnforcementData",
     "FlextConstantsEnforcementEnums",
     "FlextConstantsEnforcementFixActions",
     "FlextConstantsEnforcementNamespace",
@@ -111,6 +121,8 @@ __all__: tuple[str, ...] = (
     "FlextConstantsTimeout",
     "FlextConstantsValidation",
     "FlextMroViolation",
+    "FlextPredicateRule",
+    "FlextSmellThresholds",
     "_enforcement_data",
     "_enforcement_parts",
     "_errors_parts",
@@ -124,6 +136,7 @@ install_lazy_exports(
         "FlextConstantsConfig": ".config",
         "FlextConstantsCqrs": ".cqrs",
         "FlextConstantsEnforcement": ".enforcement",
+        "FlextConstantsEnforcementData": "._enforcement_data.package_data",
         "FlextConstantsEnforcementEnums": (
             "._enforcement_parts.flextconstantsenforcement_part_01"
         ),
@@ -174,6 +187,8 @@ install_lazy_exports(
         "FlextConstantsTimeout": ".timeout",
         "FlextConstantsValidation": ".validation",
         "FlextMroViolation": ".enforcement",
+        "FlextPredicateRule": "._enforcement_data.flextpredicaterule",
+        "FlextSmellThresholds": "._enforcement_data.flextsmellthresholds",
         "_enforcement_data": "._enforcement_data",
         "_enforcement_parts": "._enforcement_parts",
         "_errors_parts": "._errors_parts",

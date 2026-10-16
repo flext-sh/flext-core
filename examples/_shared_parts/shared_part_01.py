@@ -8,30 +8,29 @@ from __future__ import annotations
 
 import hashlib
 import string
+from collections.abc import MutableSequence
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from examples.models import m
-from flext_core import r, u
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
+from examples import m, p, r
 
 
-class ExamplesFlextSharedBase(m.BaseModel):
+class ExamplesFlextSharedBase:
     """Base state and deterministic helpers for golden-file examples."""
 
-    SEED: int = 42
+    SEED: ClassVar[int] = 42
     _BOOL_THRESHOLD: ClassVar[float] = 0.5
 
     caller_file: Path
-    _results: MutableSequence[str] = u.PrivateAttr(default_factory=list)
-    _counter: int = u.PrivateAttr(default_factory=lambda: 0)
+    _results: MutableSequence[str]
+    _counter: int
 
     def __init__(self, caller_file: str | Path) -> None:
         """Initialise with the caller's ``__file__`` for golden-file resolution."""
-        super().__init__(caller_file=Path(caller_file))
+        self.caller_file = Path(caller_file)
+        self._results = []
+        self._counter = 0
 
     def _next_unit_float(self) -> float:
         payload = f"{self.SEED}:{self._counter}".encode()
@@ -41,11 +40,12 @@ class ExamplesFlextSharedBase(m.BaseModel):
         max_u64 = (1 << 64) - 1
         return raw / max_u64
 
-    @staticmethod
-    def exercise() -> None:
-        """Override in subclasses to exercise the target class."""
+    def exercise(self) -> None:
+        """Override in subclasses to exercise the target with instance state."""
         msg = m.Examples.ErrorMessages.EXERCISE_NOT_IMPLEMENTED
-        raise NotImplementedError(msg)
+        error = NotImplementedError(msg)
+        error.add_note(f"Example harness: {self.caller_file}")
+        raise error
 
     def rand_bool(self) -> bool:
         """Return a deterministic pseudo-random boolean.
@@ -107,7 +107,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
         self._results.append(f"[{name}]")
 
     @staticmethod
-    def ser(v: object | None) -> str:
+    def ser(v: p.AttributeProbe | None) -> str:
         """Deterministic, human-readable serialisation for golden-file output.
 
         Returns:
@@ -118,6 +118,7 @@ class ExamplesFlextSharedBase(m.BaseModel):
             return "None"
         if isinstance(v, r):
             return "Result"
+        value_type = type(v)
         result: str
         if isinstance(v, bool | int | float):
             result = str(v)
@@ -128,9 +129,9 @@ class ExamplesFlextSharedBase(m.BaseModel):
         elif isinstance(v, Path):
             result = str(v)
         elif isinstance(v, (list, dict)):
-            result = type(v).__name__.lower()
+            result = value_type.__name__.lower()
         else:
-            result = type(v).__name__
+            result = value_type.__name__
         return result
 
 

@@ -30,6 +30,12 @@ class TestsFlextTypes(FlextTestsTypes):
     - All generic types come from TestsFlextTypes
     """
 
+    type AnyAlias = str | FlextTestsTypes.UnconstrainedValue
+    type CleanAlias = str | int
+    type NestedAnyAlias = FlextTestsTypes.MappingKV[
+        str, FlextTestsTypes.UnconstrainedValue
+    ]
+
     class Core:
         """Flext-core-specific type definitions for testing.
 

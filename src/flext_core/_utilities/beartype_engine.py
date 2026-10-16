@@ -16,42 +16,23 @@ from typing import ClassVar, TypeAliasType, override
 
 from pydantic.fields import FieldInfo
 
-from flext_core._constants import FlextConstantsEnforcement
+from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._typings.base import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesBeartypeTypeAliases
-from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_03 import (
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import (
+    FlextUtilitiesBeartypeAttrVisitor,
+    FlextUtilitiesBeartypeDeprecatedVisitor,
+    FlextUtilitiesBeartypeFieldVisitor,
+    FlextUtilitiesBeartypeImportVisitor,
+    FlextUtilitiesBeartypeMethodVisitor,
+    FlextUtilitiesBeartypeModuleVisitor,
+    FlextUtilitiesBeartypeTypeAliases,
+)
+from flext_core._utilities._beartype._class_visitor_parts import (
     FlextUtilitiesBeartypeClassVisitor,
 )
-from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
-    FlextUtilitiesBeartypeHelpers,
-)
-from flext_core._utilities._beartype.attr_visitor import (
-    FlextUtilitiesBeartypeAttrVisitor,
-)
-from flext_core._utilities._beartype.deprecated_visitor import (
-    FlextUtilitiesBeartypeDeprecatedVisitor,
-)
-from flext_core._utilities._beartype.field_visitor import (
-    FlextUtilitiesBeartypeFieldVisitor,
-)
-from flext_core._utilities._beartype.import_visitor import (
-    FlextUtilitiesBeartypeImportVisitor,
-)
-from flext_core._utilities._beartype.method_visitor import (
-    FlextUtilitiesBeartypeMethodVisitor,
-)
-from flext_core._utilities._beartype.module_visitor import (
-    FlextUtilitiesBeartypeModuleVisitor,
-)
-from flext_core._utilities.beartype_typingext_patch import (
-    FlextUtilitiesBeartypeTypingExtPatch,
-)
-
-# Side-effect: monkey-patch beartype cave so typing_extensions.TypeAliasType
-# (used by pydantic.JsonValue et al.) is accepted as a PEP-695 alias.
-FlextUtilitiesBeartypeTypingExtPatch.apply()
+from flext_core._utilities._beartype._helpers_parts import FlextUtilitiesBeartypeHelpers
 
 
 class FlextUtilitiesBeartypeEngine(
@@ -68,10 +49,22 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def defined_inside(inner_cls: type, outer_qualname: str) -> bool:
+        """Report whether a class is qualnamed inside the named outer class.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return getattr(inner_cls, "__qualname__", "").startswith(f"{outer_qualname}.")
 
     @staticmethod
     def defined_in_function_scope(target: type) -> bool:
+        """Report whether a type was defined inside a function scope.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return "<locals>" in getattr(target, "__qualname__", "")
 
     @staticmethod
@@ -79,10 +72,17 @@ class FlextUtilitiesBeartypeEngine(
         name: str,
         value: FlextProtocolsBase.AttributeProbe,
     ) -> bool:
-        if (
-            name.startswith("_")
-            or name in FlextConstantsEnforcement.ENFORCEMENT_CONSTANTS_SKIP_ATTRS
-        ):
+        """Report whether a class attribute qualifies as an enforced constant.
+
+        Args:
+            name: The attribute name.
+            value: The attribute value.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        if name.startswith("_") or name in c.ENFORCEMENT_CONSTANTS_SKIP_ATTRS:
             return False
         if isinstance(value, (type, classmethod, staticmethod, property)):
             return False
@@ -90,20 +90,40 @@ class FlextUtilitiesBeartypeEngine(
 
     @staticmethod
     def attr_accept_public(name: str) -> bool:
+        """Report whether an attribute name is public (not underscore-prefixed).
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return not name.startswith("_")
 
     @staticmethod
     def attr_accept_utility(target: type, name: str) -> bool:
+        """Report whether a utility method name is subject to enforcement.
+
+        Args:
+            target: The utility class owning the method.
+            name: The method name.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         if name.startswith("_"):
             return False
-        if name in FlextConstantsEnforcement.ENFORCEMENT_UTILITIES_EXEMPT_METHODS:
+        if name in c.ENFORCEMENT_UTILITIES_EXEMPT_METHODS:
             return False
-        return target.__name__ not in (
-            FlextConstantsEnforcement.ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS
-        )
+        return target.__name__ not in (c.ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS)
 
     @staticmethod
     def contains_any(hint: FlextTypingBase.TypeHintSpecifier | None) -> bool:
+        """Report whether a hint is or contains ``Any`` or ``object`` at any depth.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         return FlextUtilitiesBeartypeHelpers.contains_any_recursive(hint, seen=set())
 
     @staticmethod
@@ -216,9 +236,20 @@ class FlextUtilitiesBeartypeEngine(
     @override
     @staticmethod
     def has_forbidden_collection_origin(
-        hint: FlextTypingBase.TypeHintSpecifier | None,
+        hint: FlextTypingBase.TypeFormSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
+        """Match a hint's collection origin against the forbidden names.
+
+        Args:
+            hint: The type form to inspect.
+            forbidden: The forbidden collection origin names.
+
+        Returns:
+            ``(True, origin name)`` when the origin is forbidden, otherwise
+            ``(False, '')``.
+
+        """
         return FlextUtilitiesBeartypeHelpers.has_forbidden_collection_origin(
             hint,
             forbidden,
@@ -227,7 +258,7 @@ class FlextUtilitiesBeartypeEngine(
     @classmethod
     def apply(
         cls,
-        kind: FlextConstantsEnforcement.EnforcementPredicateKind,
+        kind: c.EnforcementPredicateKind,
         params: FlextModelsPydantic.BaseModel,
         *args: FlextProtocolsBase.AttributeProbe,
     ) -> FlextTypingBase.StrMapping | None:
@@ -241,59 +272,59 @@ class FlextUtilitiesBeartypeEngine(
 
     _VISITORS: ClassVar[
         FlextTypingBase.MappingKV[
-            FlextConstantsEnforcement.EnforcementPredicateKind,
+            c.EnforcementPredicateKind,
             Callable[..., FlextTypingBase.StrMapping | None],
         ]
     ] = MappingProxyType({
-        FlextConstantsEnforcement.EnforcementPredicateKind.FIELD_SHAPE: (
+        c.EnforcementPredicateKind.FIELD_SHAPE: (
             FlextUtilitiesBeartypeFieldVisitor.v_field_shape
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.MODEL_CONFIG: (
+        c.EnforcementPredicateKind.MODEL_CONFIG: (
             FlextUtilitiesBeartypeFieldVisitor.v_model_config
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.ATTR_SHAPE: (
+        c.EnforcementPredicateKind.ATTR_SHAPE: (
             FlextUtilitiesBeartypeAttrVisitor.v_attr_shape
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.CLASSVAR_CONSTANT: (
+        c.EnforcementPredicateKind.CLASSVAR_CONSTANT: (
             FlextUtilitiesBeartypeAttrVisitor.v_classvar_constant
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.METHOD_SHAPE: (
+        c.EnforcementPredicateKind.METHOD_SHAPE: (
             FlextUtilitiesBeartypeMethodVisitor.v_method_shape
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.CLASS_PLACEMENT: (
+        c.EnforcementPredicateKind.CLASS_PLACEMENT: (
             FlextUtilitiesBeartypeClassVisitor.v_class_placement
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.PROTOCOL_TREE: (
+        c.EnforcementPredicateKind.PROTOCOL_TREE: (
             FlextUtilitiesBeartypeClassVisitor.v_protocol_tree
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.MRO_SHAPE: (
+        c.EnforcementPredicateKind.MRO_SHAPE: (
             FlextUtilitiesBeartypeClassVisitor.v_mro_shape
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.LOOSE_SYMBOL: (
+        c.EnforcementPredicateKind.LOOSE_SYMBOL: (
             FlextUtilitiesBeartypeClassVisitor.v_loose_symbol
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.IMPORT_BLACKLIST: (
+        c.EnforcementPredicateKind.IMPORT_BLACKLIST: (
             FlextUtilitiesBeartypeImportVisitor.v_import_blacklist
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.ALIAS_REBIND: (
+        c.EnforcementPredicateKind.ALIAS_REBIND: (
             FlextUtilitiesBeartypeImportVisitor.v_alias_rebind
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.COMPATIBILITY_ALIAS: (
+        c.EnforcementPredicateKind.COMPATIBILITY_ALIAS: (
             FlextUtilitiesBeartypeImportVisitor.v_compatibility_alias
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.LIBRARY_IMPORT: (
+        c.EnforcementPredicateKind.LIBRARY_IMPORT: (
             FlextUtilitiesBeartypeImportVisitor.v_library_import
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.LOC_CAP: (
+        c.EnforcementPredicateKind.LOC_CAP: (
             FlextUtilitiesBeartypeModuleVisitor.v_loc_cap
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.MODULE_ALIAS: (
+        c.EnforcementPredicateKind.MODULE_ALIAS: (
             FlextUtilitiesBeartypeModuleVisitor.v_module_alias
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.DUPLICATE_SYMBOL: (
+        c.EnforcementPredicateKind.DUPLICATE_SYMBOL: (
             FlextUtilitiesBeartypeModuleVisitor.v_duplicate_symbol
         ),
-        FlextConstantsEnforcement.EnforcementPredicateKind.DEPRECATED_SYNTAX: (
+        c.EnforcementPredicateKind.DEPRECATED_SYNTAX: (
             FlextUtilitiesBeartypeDeprecatedVisitor.v_deprecated_syntax
         ),
     })

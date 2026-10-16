@@ -10,12 +10,12 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from examples.constants import c
+from examples import c
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from examples.typings import t
+    from examples import t
 
 
 class ExamplesFlextModelsOutput:

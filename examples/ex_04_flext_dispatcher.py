@@ -9,19 +9,24 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.models import m
-from examples.shared import ExamplesFlextShared
-from examples.utilities import u
-from flext_core import p, r, t
+from examples import ExamplesFlextShared, m, p, r, t, u
 
 
-class _CreateUserHandler:
+class ExamplesFlextCreateUserHandler:
+    """Define ``ExamplesFlextCreateUserHandler``."""
+
     message_type = m.Examples.CreateUser
 
     @staticmethod
     def handle(
         message: p.Routable,
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
+        """Provide ``handle``.
+
+        Returns:
+            The resulting ``t.JsonPayload | p.ResultView[t.JsonPayload] | None``.
+
+        """
         if not isinstance(message, m.Examples.CreateUser):
             return r[str].fail("unexpected_message")
         return r[str].ok(f"created:{message.username}")
@@ -66,8 +71,9 @@ class _AutoFallbackHandler:
         return r[str].ok("auto:fallback")
 
 
-class _EventSubscriber:
+class _UserCreatedSubscriber:
     message_type = m.Examples.UserCreated
+    _prefix: str = ""
 
     def __init__(self) -> None:
         self.events: list[str] = []
@@ -78,24 +84,16 @@ class _EventSubscriber:
     ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
         if not isinstance(message, m.Examples.UserCreated):
             return r[bool].fail("unexpected_message")
-        self.events.append(message.username)
+        self.events.append(f"{self._prefix}{message.username}")
         return r[bool].ok(value=True)
 
 
-class _AuditSubscriber:
-    message_type = m.Examples.UserCreated
+class _EventSubscriber(_UserCreatedSubscriber):
+    pass
 
-    def __init__(self) -> None:
-        self.events: list[str] = []
 
-    def handle(
-        self,
-        message: p.Routable,
-    ) -> t.JsonPayload | p.ResultView[t.JsonPayload] | None:
-        if not isinstance(message, m.Examples.UserCreated):
-            return r[bool].fail("unexpected_message")
-        self.events.append(f"audit:{message.username}")
-        return r[bool].ok(value=True)
+class _AuditSubscriber(_UserCreatedSubscriber):
+    _prefix = "audit:"
 
 
 class _PingHandler:
@@ -141,7 +139,7 @@ class Ex04DispatchDsl:
 
         """
         dispatcher = u.build_dispatcher()
-        _ = dispatcher.register_handler(_CreateUserHandler())
+        _ = dispatcher.register_handler(ExamplesFlextCreateUserHandler())
         _ = dispatcher.register_handler(_GetUserHandler())
         _ = dispatcher.register_handler(_DeleteUserHandler())
         _ = dispatcher.register_handler(_PingHandler())
@@ -184,7 +182,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         )
         self.audit_check(
             "register(Handle).is_success",
-            dispatcher.register_handler(_CreateUserHandler()).success,
+            dispatcher.register_handler(ExamplesFlextCreateUserHandler()).success,
         )
         self.audit_check(
             "register(DispatchMessage).is_success",

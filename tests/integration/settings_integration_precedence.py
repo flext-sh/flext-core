@@ -8,9 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_tests import tm
-
-from flext_core import FlextSettings
+from flext_core._settings import FlextSettings
+from tests import tm
 from tests.integration.settings_integration_factories import (
     TestsFlextFlextSettingsFactories,
 )
@@ -48,7 +47,7 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
             _ = env_file.write_text(env_content, encoding="utf-8")
             tm.that(env_file.read_text(encoding="utf-8"), eq=env_content)
             with u.Tests.env_vars_context({"FLEXT_ENV_FILE": str(env_file)}):
-                from_dotenv = FlextSettings(_env_file=str(env_file))
+                from_dotenv = FlextSettings()
                 tm.that(from_dotenv.log_level, eq="WARNING")
                 tm.that(from_dotenv.debug, eq=True)
 

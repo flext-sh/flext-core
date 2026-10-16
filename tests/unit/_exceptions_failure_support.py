@@ -9,19 +9,15 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from flext_tests import e
-
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+from tests import c, e, m, p
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 type FailureFactory = Callable[[], p.Result[bool]]
 
 FAILURES: t.SequenceOf[
-    tuple[str, FailureFactory, str, str, dict[str, str | int | None]]
+    tuple[str, FailureFactory, str, str, t.MappingKV[str, str | int | None]]
 ] = [
     (
         "config",

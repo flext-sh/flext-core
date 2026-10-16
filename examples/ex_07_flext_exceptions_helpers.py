@@ -6,10 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples.models import m
-from examples.protocols import p
-from examples.shared import ExamplesFlextShared
-from flext_core import e
+from examples import ExamplesFlextShared, e, m, p
 
 
 def _raise_attribute_access_error() -> None:
@@ -199,7 +196,7 @@ def _raise_validation_error() -> None:
     )
 
 
-class Ex07FlextExceptionSubclasses(ExamplesFlextShared):
+class ExamplesFlextExceptionSubclasses(ExamplesFlextShared):
     """Exercise structured exception subclasses."""
 
     def _exercise_specific_exceptions(self) -> None:

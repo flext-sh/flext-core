@@ -11,9 +11,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from typing import override
 
-from examples.protocols import p
-from examples.shared import ExamplesFlextShared
-from flext_core import u
+from examples import ExamplesFlextShared, p, u
 
 
 def _raise_value_error(message: str) -> None:
@@ -26,7 +24,7 @@ def _raise_value_error(message: str) -> None:
     raise ValueError(message)
 
 
-class Ex03FlextLogger(ExamplesFlextShared):
+class ExamplesFlextLogger(ExamplesFlextShared):
     """Exercise FlextUtilitiesLogging public APIs against the golden file."""
 
     def __init__(self) -> None:
@@ -58,7 +56,7 @@ class Ex03FlextLogger(ExamplesFlextShared):
         try:
             _raise_value_error(message)
         except ValueError as exc:
-            return Ex03FlextLogger._ok(logger.exception(label, exception=exc))
+            return ExamplesFlextLogger._ok(logger.exception(label, exception=exc))
         msg = f"expected ValueError({message!r}) was not raised"
         raise AssertionError(msg)
 
@@ -222,4 +220,4 @@ class Ex03FlextLogger(ExamplesFlextShared):
 
 
 if __name__ == "__main__":
-    Ex03FlextLogger().run()
+    ExamplesFlextLogger().run()

@@ -13,7 +13,8 @@ from __future__ import annotations
 
 from enum import StrEnum
 
-from flext_core import c, p, r, t
+from flext_core import FlextResult, c, p, t
+from flext_core._models import FlextModelsConfig
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesParserTargets,
@@ -24,11 +25,11 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
     """Universal type parser dispatch — strings, enums, models, primitives."""
 
     @staticmethod
-    @r.safe
+    @FlextResult.safe
     def parse[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextUtilitiesParserTargets.ParseOptions[T] | None = None,
+        options: FlextModelsConfig.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Universal type parser supporting enums, models, and primitives.
@@ -44,9 +45,9 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
     def _dispatch[T](
         value: t.JsonPayload,
         target: type[T],
-        opts: FlextUtilitiesParserTargets.ParseOptions[T],
+        opts: FlextModelsConfig.ParseOptions[T],
         fp: str,
-        kwargs: dict[str, t.JsonPayload],
+        kwargs: t.MappingKV[str, t.JsonPayload],
     ) -> T:
         """Dispatch parsing with pre-resolved options for stable type inference.
 
@@ -77,7 +78,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
                             opts,
-                            r.require_error(enum_result),
+                            FlextResult.require_error(enum_result),
                         ).unwrap()
                         if enum_result.failure
                         else enum_result.value
@@ -92,7 +93,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
                             opts,
-                            r.require_error(model_result),
+                            FlextResult.require_error(model_result),
                         ).unwrap()
                         if model_result.failure
                         else model_result.value

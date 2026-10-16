@@ -15,9 +15,7 @@ from typing import ClassVar
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, t
 
 
 class TestsFlextCoreEnforcementSources:
@@ -25,7 +23,7 @@ class TestsFlextCoreEnforcementSources:
 
     # One representative valid instance per surviving source variant, keyed by the
     # discriminator literal it must expose on the public ``kind`` field.
-    _SOURCE_CASES: ClassVar[dict[str, m.BaseModel]] = {
+    _SOURCE_CASES: ClassVar[t.MappingKV[str, m.BaseModel]] = {
         "flext_infra_rule": m.EnforcementInfraRuleSource(rule_ids=("ban-cast",)),
         "runtime_warning": m.EnforcementRuntimeWarningSource(
             category="FlextMroWarning",

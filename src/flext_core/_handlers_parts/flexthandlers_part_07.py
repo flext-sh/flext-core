@@ -9,9 +9,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
-from flext_core._handlers_parts.flexthandlers_part_06 import (
-    FlextHandlers as FlextHandlersPart06,
-)
+from flext_core._handlers_parts import flexthandlers_part_06
+from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -21,9 +20,21 @@ if TYPE_CHECKING:
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart06[MessageT_contra, ResultT],
+    flexthandlers_part_06.FlextHandlers[MessageT_contra, ResultT],
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
+
+    def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
+        """Initialize the facade, forwarding configuration to the base.
+
+        Declared on the public facade so pyright's pydantic model synthesis for
+        this class keeps exposing the base ``settings`` keyword to consumers.
+
+        Args:
+            settings: Optional handler configuration model.
+
+        """
+        super().__init__(settings=settings)
 
     class Discovery:
         """Auto-discovery mechanism for handler decorators.
@@ -131,7 +142,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             return sorted(handlers, key=_priority_then_name)
 
 
-def _is_decorated_handler(func: object) -> bool:
+def _is_decorated_handler(func: FlextProtocolsBase.AttributeProbe) -> bool:
     """Whether one module attribute is a callable @handler function.
 
     Returns:

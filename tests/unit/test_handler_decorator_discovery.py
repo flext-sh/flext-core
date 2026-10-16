@@ -16,12 +16,11 @@ import types
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import h, r
 
-from tests.models import m
+from tests import h, m, r
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreHandlerDecoratorDiscovery:

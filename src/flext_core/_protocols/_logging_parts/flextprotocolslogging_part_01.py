@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
+from structlog.types import BindableLogger
+
 if TYPE_CHECKING:
     from flext_core import t
 
@@ -16,7 +18,7 @@ class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
     @runtime_checkable
-    class Logger(Protocol):
+    class Logger(BindableLogger, Protocol):
         """Protocol for structlog logger with all logging methods.
 
         Extends BindableLogger to add explicit method signatures for
@@ -133,6 +135,46 @@ class FlextProtocolsLogging:
         def warn(self, message: str) -> None: ...
 
         def warning(self, message: str) -> None: ...
+
+    @runtime_checkable
+    class LoggingStage(Protocol):
+        """Transform one typed event before the terminal renderer runs."""
+
+        def __call__(
+            self,
+            logger: FlextProtocolsLogging.OutputLogger,
+            method_name: str,
+            event_dict: t.LoggingEvent,
+        ) -> t.LoggingEvent:
+            """Return the next event; stage exceptions propagate unchanged."""
+            ...
+
+    @runtime_checkable
+    class StructlogOptions(Protocol):
+        """Declared options consumed by the logging composition owner."""
+
+        @property
+        def log_level(self) -> int | None: ...
+
+        @property
+        def console_renderer(self) -> bool: ...
+
+        @property
+        def processing_stages(
+            self,
+        ) -> t.SequenceOf[FlextProtocolsLogging.LoggingStage]: ...
+
+        @property
+        def wrapper_class_factory(self) -> t.LoggerWrapperFactory | None: ...
+
+        @property
+        def logger_factory(self) -> t.LoggerFactory: ...
+
+        @property
+        def cache_logger_on_first_use(self) -> bool: ...
+
+        @property
+        def async_logging(self) -> bool: ...
 
 
 __all__: list[str] = ["FlextProtocolsLogging"]

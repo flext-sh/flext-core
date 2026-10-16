@@ -9,15 +9,14 @@ from __future__ import annotations
 import sys
 from typing import cast
 
-from examples._shared_parts.shared_part_01 import ExamplesFlextSharedBase
-from examples.models import m
-from flext_core import p, r, t
+from examples import m, p, r, t
+from examples._shared_parts import ExamplesFlextSharedBase
 
 
 class ExamplesFlextShared(ExamplesFlextSharedBase):
     """Base class for golden-file example scripts."""
 
-    def audit_check(self, label: str, value: object | None) -> None:
+    def audit_check(self, label: str, value: p.AttributeProbe | None) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
         separator = m.Examples.LABEL_VALUE_SEPARATOR
         self._results.append(f"{label}{separator}{self.ser(value)}")

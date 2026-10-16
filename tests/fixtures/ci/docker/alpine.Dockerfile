@@ -12,8 +12,8 @@ FROM alpine:3.21
 # The seed is the whole host contract: curl fetches mise, git is what uv shells
 # out to for the flext-infra git+https requirement (uv embeds no git of its
 # own), and make invokes the verbs. bash is for the project scripts.
-# libstdc++ is musl-specific: node and bun link against libstdc++.so.6 at
-# runtime, so on Alpine they install cleanly and then fail with "Error loading
+# libstdc++ is musl-specific: node links against libstdc++.so.6 at
+# runtime, so on Alpine it installs cleanly and then fails with "Error loading
 # shared library". Glibc images ship it in the base system.
 RUN apk add --no-cache \
       bash build-base ca-certificates curl git make libstdc++ \

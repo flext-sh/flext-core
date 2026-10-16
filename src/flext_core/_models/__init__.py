@@ -44,14 +44,6 @@ if TYPE_CHECKING:
         FlextModelsEnforcementResolution,
     )
     from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
-        FlextModelsProjectMetadataFields,
-    )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
-        FlextModelsProjectMetadataAggregates,
-        FlextModelsProjectMetadataContract,
-        FlextModelsProjectMetadataDocument,
-    )
     from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
         FlextModelsPyprojectIngressContract,
     )
@@ -72,6 +64,7 @@ if TYPE_CHECKING:
     from flext_core._models.flext_mixins import FlextMixins
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.namespace import FlextModelsNamespace
+    from flext_core._models.options import FlextModelsOptions
     from flext_core._models.project_metadata import FlextModelsProjectMetadata
     from flext_core._models.pydantic import FlextModelsPydantic
     from flext_core._models.registry import FlextModelsRegistry
@@ -111,11 +104,8 @@ __all__: tuple[str, ...] = (
     "FlextModelsExceptionParams",
     "FlextModelsHandler",
     "FlextModelsNamespace",
+    "FlextModelsOptions",
     "FlextModelsProjectMetadata",
-    "FlextModelsProjectMetadataAggregates",
-    "FlextModelsProjectMetadataContract",
-    "FlextModelsProjectMetadataDocument",
-    "FlextModelsProjectMetadataFields",
     "FlextModelsPydantic",
     "FlextModelsPyprojectIngressContract",
     "FlextModelsRegistry",
@@ -167,19 +157,8 @@ install_lazy_exports(
         "FlextModelsExceptionParams": ".exception_params",
         "FlextModelsHandler": ".handler",
         "FlextModelsNamespace": ".namespace",
+        "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
-        "FlextModelsProjectMetadataAggregates": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
-        ),
-        "FlextModelsProjectMetadataContract": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
-        ),
-        "FlextModelsProjectMetadataDocument": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
-        ),
-        "FlextModelsProjectMetadataFields": (
-            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
-        ),
         "FlextModelsPydantic": ".pydantic",
         "FlextModelsPyprojectIngressContract": (
             "._project_metadata_parts.flextmodelsprojectmetadata_part_05"

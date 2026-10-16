@@ -6,6 +6,7 @@
 - [Base Model + Field](#base-model-field)
 - [ConfigDict + model_dump](#configdict-model_dump)
 - [field_validator](#field_validator)
+- [Native Decorators](#native-decorators)
 - [examples-backed sanity check](#examples-backed-sanity-check)
 
 <!-- TOC END -->
@@ -13,6 +14,32 @@
 ## Overview
 
 This guide shows practical Pydantic v2 patterns used in `flext-core`.
+
+## Native Decorators
+
+Use `m.field_serializer`, `m.model_serializer`, and `m.computed_field` through
+the public facade. The corresponding `u` declarations inherit the same owner
+through MRO; they do not implement another serializer or computed-field path.
+
+The model owner binds the native Pydantic callables as typed `ClassVar` factories.
+Their protocols preserve the bare and configured overloads, plain and wrap modes,
+callback bounds, and keyword contracts. Wrapping an overloaded factory in another
+`staticmethod` constructor can discard overloads during type inference and is not
+the declaration pattern used here. `t.ComputedFieldInfo` provides the native
+metadata annotation for computed-field title callbacks.
+
+Validate these declarations by constructing real models and checking public
+validation, property access, Python dumps, and JSON dumps. Wrap-serializer tests
+exercise the real native handler; tests must not replace it or accept an unchanged
+payload in place of the declared transformation.
+
+An internal field can expose a structural `p` contract while retaining its canonical
+model's validation and serialization schema: annotate it with
+`Annotated[p.Contract, m.GetPydanticSchema(lambda _source, handler: handler.generate_schema(m.Owner))]`.
+The metadata delegates schema construction; it does not reconstruct validated
+instances. The protocol and model must be structurally compatible. This does not
+make unrelated implementations of the protocol valid model inputs: instance reuse,
+subclass serialization and validation remain governed by the selected model preset.
 
 ## Base Model + Field
 
@@ -106,9 +133,9 @@ if valid.port != expected_port:
 import io
 from contextlib import redirect_stdout
 
-from examples.ex_02_flext_settings import Ex02FlextSettings
+from examples.ex_02_flext_settings import ExamplesFlextSettingsUsage
 
 stream = io.StringIO()
 with redirect_stdout(stream):
-    Ex02FlextSettings("docs/guides/pydantic-v2-patterns.md").exercise()
+    ExamplesFlextSettingsUsage("docs/guides/pydantic-v2-patterns.md").exercise()
 ```

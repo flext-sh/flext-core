@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._models import FlextModelsPydantic
 
 
 class FlextModelsProjectMetadataContract(FlextModelsPydantic.BaseModel):
@@ -23,3 +23,6 @@ class FlextModelsProjectMetadataContract(FlextModelsPydantic.BaseModel):
 # declaration-only owner replaces the method-bearing split model hierarchy.
 # The standards-owned TOML ingress base lives in part_05 (one class per
 # module, NS-000).
+
+
+__all__: list[str] = ["FlextModelsProjectMetadataContract"]

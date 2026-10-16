@@ -8,35 +8,32 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, override
 
-from flext_tests import m as tm, r, u
+from flext_tests import r
 
-from tests._models.mixins import TestsFlextModelsMixins
-from tests.base import s
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
+from tests import c, m, s, t
+from tests._models import TestsFlextModelsMixins
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextUtilitiesRailwayServicesMixin:
     """Railway service helpers."""
 
-    class GetUserService(s[tm.Tests.User]):
+    class GetUserService(s[m.Tests.User]):
         """Service to get user."""
 
         user_id: Annotated[
             str,
-            u.Field(description="Identifier of the user to fetch."),
+            m.Field(description="Identifier of the user to fetch."),
         ] = ""
 
         @override
-        def execute(self) -> p.Result[tm.Tests.User]:
+        def execute(self) -> p.Result[m.Tests.User]:
             if self.user_id in c.Tests.USER_IDS_INVALID:
-                return r[tm.Tests.User].fail(c.Tests.USER_NOT_FOUND)
-            return r[tm.Tests.User].ok(
-                tm.Tests.User(
+                return r[m.Tests.User].fail(c.Tests.USER_NOT_FOUND)
+            return r[m.Tests.User].ok(
+                m.Tests.User(
                     id=self.user_id,
                     unique_id=self.user_id,
                     name=f"{c.Tests.DEFAULT_USER_NAME_PREFIX}{self.user_id}",
@@ -47,8 +44,8 @@ class TestsFlextUtilitiesRailwayServicesMixin:
     class SendEmailService(s[m.Tests.EmailResponse]):
         """Service to send email."""
 
-        to: Annotated[str, u.Field(description="Destination email address.")] = ""
-        subject: Annotated[str, u.Field(description="Email subject line.")] = ""
+        to: Annotated[str, m.Field(description="Destination email address.")] = ""
+        subject: Annotated[str, m.Field(description="Email subject line.")] = ""
 
         @override
         def execute(self) -> p.Result[m.Tests.EmailResponse]:

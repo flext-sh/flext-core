@@ -23,8 +23,22 @@ from typing import (
 
 import pytest
 
-from flext_core import m, t
-from tests.utilities import u
+from tests import m, t, u
+
+# Deliberate broad-annotation fixture: the layered checker under test must
+# detect this exact runtime type, so it is exposed as a type alias usable
+# inside an annotation.
+type _ANY_TYPE = t.UnconstrainedValue
+
+
+def _non_runtime_decorator(cls: type) -> type:
+    """Apply a decorator other than ``@runtime_checkable`` to a Protocol.
+
+    Returns:
+        The undecorated class, matching a mis-decorated Protocol.
+
+    """
+    return cls
 
 
 class TestsFlextCoreEnforcementLayers:
@@ -60,7 +74,7 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _constants_mutable_dict() -> type:
         class _CConstants:
-            DATA: ClassVar[dict[str, int]] = {"x": 1}
+            DATA: ClassVar[t.MutableIntMapping] = {"x": 1}
 
         return _CConstants
 
@@ -100,7 +114,7 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _types_any_alias() -> type:
         class _TTypes:
-            type BadAlias = typing.Any
+            type BadAlias = _ANY_TYPE
 
         return _TTypes
 
@@ -108,7 +122,10 @@ class TestsFlextCoreEnforcementLayers:
     def _utilities_instance_method() -> type:
         # Built dynamically: the offending shape is an instance method, which a
         # ``class`` body would see rewritten to ``@staticmethod`` by ``make fix``.
-        return type("_UUtilities", (), {"run": lambda _self: None})
+        def _run(_self: t.UnconstrainedValue) -> None:
+            return None
+
+        return type("_UUtilities", (), {"run": _run})
 
     @staticmethod
     def _constants_frozenset() -> type:
@@ -170,7 +187,7 @@ class TestsFlextCoreEnforcementLayers:
     @staticmethod
     def _protocols_other_decorator() -> type:
         class _PProtocols:
-            @typing.final
+            @_non_runtime_decorator
             class InnerProto(Protocol):
                 @staticmethod
                 def do() -> None:

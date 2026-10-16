@@ -9,23 +9,22 @@ from __future__ import annotations
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from examples.protocols import p
-from flext_core import r, u
+from examples import p, r, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-def _log_result[T](fn: Callable[..., T]) -> Callable[..., T]:
-    """Decorator that logs each call, then passes the result through.
+def _log_result[**P, T](fn: Callable[P, T]) -> Callable[P, T]:
+    """Log each call, then pass the result through.
 
     Returns:
-        The resulting ``Callable[..., T]``.
+        The resulting ``Callable[P, T]``.
 
     """
 
     @wraps(fn)
-    def _wrapper(*args: object, **kwargs: object) -> T:
+    def _wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         _ = u.fetch_logger(fn.__name__).info(f"calling {fn.__name__}")
         return fn(*args, **kwargs)
 

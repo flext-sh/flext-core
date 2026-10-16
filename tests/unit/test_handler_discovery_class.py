@@ -13,12 +13,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import h, r, tm
 
-from tests.models import m
+from tests import h, m, r, tm
 
 if TYPE_CHECKING:
-    from tests.protocols import p
+    from tests import p
 
 
 class TestsFlextCoreHandlerDiscoveryClass:

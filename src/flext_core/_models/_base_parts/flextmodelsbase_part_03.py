@@ -16,34 +16,35 @@ from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
 from flext_core import c
-from flext_core._models._base_parts.flextmodelsbase_part_02 import (
-    FlextModelsBase as FlextModelsBasePart02,
-)
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as ur,
-)
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities.generators import FlextUtilitiesGenerators as ug
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic as up
+from flext_core._models import FlextModelsPydantic
+from flext_core._models._base_parts import flextmodelsbase_part_02
+from flext_core._runtime import FlextRuntimeMetadataValidation
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesGenerators
 
 
-class FlextModelsBase(FlextModelsBasePart02):
-    class TimestampableMixin(FlextModelsBasePart02.MutableConfiguredMixin):
+class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
+    class TimestampableMixin(
+        flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin
+    ):
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
         created_at: Annotated[
             datetime,
-            mp.AfterValidator(ur.ensure_utc_datetime),
-            mp.Field(
+            FlextModelsPydantic.AfterValidator(
+                FlextRuntimeMetadataValidation.ensure_utc_datetime
+            ),
+            FlextModelsPydantic.Field(
                 description="Creation timestamp (configured timezone)",
                 frozen=True,
             ),
-        ] = mp.Field(default_factory=ug.now)
+        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         updated_at: Annotated[
             datetime | None,
-            mp.AfterValidator(ur.ensure_utc_datetime),
-            mp.Field(
+            FlextModelsPydantic.AfterValidator(
+                FlextRuntimeMetadataValidation.ensure_utc_datetime
+            ),
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Last update timestamp (configured timezone)",
             ),
@@ -58,17 +59,20 @@ class FlextModelsBase(FlextModelsBasePart02):
         # rejected by ``inspect_field_serializer``, and the self-less
         # ``(value)`` shape fails the fleet method-naming rule. The
         # classmethod keeps the value mapping pure (no instance state).
-        @up.field_serializer("created_at", "updated_at", when_used="json")
+        @FlextModelsPydantic.field_serializer(
+            "created_at", "updated_at", when_used="json"
+        )
         @classmethod
         def serialize_timestamps(cls, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
 
             Returns:
                 The resulting ``str | None``.
+
             """
             return value.isoformat() if value else None
 
-        @mp.model_validator(mode="after")
+        @FlextModelsPydantic.model_validator(mode="after")
         def validate_timestamp_consistency(self) -> Self:
             """Validate timestamp consistency.
 
@@ -78,24 +82,27 @@ class FlextModelsBase(FlextModelsBasePart02):
             Raises:
                 ValueError: If ``self.updated_at is not None and self.updated_at <
                     self.created_at``.
+
             """
             if self.updated_at is not None and self.updated_at < self.created_at:
                 raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
             return self
 
-    class VersionableMixin(FlextModelsBasePart02.MutableConfiguredMixin):
+    class VersionableMixin(
+        flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin
+    ):
         """Mixin for versioning with optimistic locking."""
 
         version: Annotated[
-            t.NonNegativeInt,
-            mp.Field(
+            FlextTypingBase.NonNegativeInt,
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Version number for optimistic locking",
                 frozen=False,
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
 
-        @mp.model_validator(mode="after")
+        @FlextModelsPydantic.model_validator(mode="after")
         def validate_version_consistency(self) -> Self:
             """Ensure version consistency.
 
@@ -104,6 +111,7 @@ class FlextModelsBase(FlextModelsBasePart02):
 
             Raises:
                 ValueError: If ``self.version < c.DEFAULT_RETRY_DELAY_SECONDS``.
+
             """
             if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
                 raise ValueError(
@@ -114,35 +122,37 @@ class FlextModelsBase(FlextModelsBasePart02):
                 )
             return self
 
-    class RetryConfigurationMixin(mp.BaseModel):
+    class RetryConfigurationMixin(FlextModelsPydantic.BaseModel):
         """Mixin for shared retry configuration properties."""
 
-        model_config: ClassVar[mp.ConfigDict] = mp.ConfigDict(populate_by_name=True)
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(populate_by_name=True)
+        )
         max_retries: Annotated[
-            t.NonNegativeInt,
-            mp.Field(
+            FlextTypingBase.NonNegativeInt,
+            FlextModelsPydantic.Field(
                 default=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
                 description="Maximum retry attempts",
             ),
         ] = c.MAX_RETRY_ATTEMPTS
         initial_delay_seconds: Annotated[
-            t.PositiveFloat,
-            mp.Field(
+            FlextTypingBase.PositiveFloat,
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Initial delay between retries",
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
         max_delay_seconds: Annotated[
-            t.PositiveFloat,
-            mp.Field(
+            FlextTypingBase.PositiveFloat,
+            FlextModelsPydantic.Field(
                 default=c.DEFAULT_MAX_DELAY_SECONDS,
                 description="Maximum delay between retries",
             ),
         ] = c.DEFAULT_MAX_DELAY_SECONDS
 
     class TimestampedModel(
-        FlextModelsBasePart02.ArbitraryTypesModel,
+        flextmodelsbase_part_02.FlextModelsBase.ArbitraryTypesModel,
         TimestampableMixin,
     ):
         """Model with timestamp fields."""

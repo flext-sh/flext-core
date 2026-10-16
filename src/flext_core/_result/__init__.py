@@ -21,6 +21,7 @@ if TYPE_CHECKING:
         copy_result,
         ok_result,
     )
+    from flext_core._result.result import FlextResultComposed
     from flext_core._result.transforms import FlextResultTransforms
     from flext_core._result.unwrap import FlextResultUnwrap
 
@@ -28,6 +29,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = (
     "FlextResultBase",
     "FlextResultBehavior",
+    "FlextResultComposed",
     "FlextResultComposition",
     "FlextResultConstruction",
     "FlextResultTransforms",
@@ -42,6 +44,7 @@ install_lazy_exports(
     MappingProxyType({
         "FlextResultBase": ".base",
         "FlextResultBehavior": ".behavior",
+        "FlextResultComposed": ".result",
         "FlextResultComposition": ".composition",
         "FlextResultConstruction": ".construction",
         "FlextResultTransforms": ".transforms",

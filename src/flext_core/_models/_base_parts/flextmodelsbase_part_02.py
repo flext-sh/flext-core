@@ -15,29 +15,24 @@ from __future__ import annotations
 import uuid
 from collections.abc import Hashable
 from datetime import datetime
-from types import MappingProxyType
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, dataclass_transform, override
 
 from pydantic import ConfigDict
+from typing_extensions import TypeForm
 
 from flext_core import c
-from flext_core._constants import FlextConstantsProjectMetadata as cpm
-from flext_core._models._base_parts.flextmodelsbase_part_01 import (
-    FlextModelsBase as FlextModelsBasePart01,
-)
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-from flext_core._runtime._metadata_validation import (
-    FlextRuntimeMetadataValidation as ur,
-)
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities import FlextUtilitiesGenerators as ug
+from flext_core._models import FlextModelsPydantic
+from flext_core._models._base_parts import flextmodelsbase_part_01
+from flext_core._runtime import FlextRuntimeMetadataValidation
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesGenerators
 
 
-class FlextModelsBase(FlextModelsBasePart01):
-    class StrictModel(FlextModelsBasePart01.StrictModel):
+class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
+    class StrictModel(flextmodelsbase_part_01.FlextModelsBase.StrictModel):
         """Reusable strict model preset for validated domain boundaries."""
 
-    class Metadata(mp.BaseModel):
+    class Metadata(FlextModelsPydantic.BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -49,7 +44,7 @@ class FlextModelsBase(FlextModelsBasePart01):
         )
         created_at: Annotated[
             datetime,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description=(
                     "Timestamp when the metadata record was first created (configured "
                     "timezone)."
@@ -57,10 +52,10 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ] = mp.Field(default_factory=ug.now)
+        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         updated_at: Annotated[
             datetime,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description=(
                     "Timestamp of the most recent metadata update (configured "
                     "timezone)."
@@ -68,21 +63,21 @@ class FlextModelsBase(FlextModelsBasePart01):
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ] = mp.Field(default_factory=ug.now)
+        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         version: Annotated[
             str,
-            mp.Field(
-                default=cpm.METADATA_SCHEMA_VERSION_DEFAULT,
+            FlextModelsPydantic.Field(
+                default=c.METADATA_SCHEMA_VERSION_DEFAULT,
                 description=(
                     "Semantic version string representing the metadata schema revision."
                 ),
                 title="Metadata Version",
                 examples=["1.0.0", "1.2.3"],
             ),
-        ] = cpm.METADATA_SCHEMA_VERSION_DEFAULT
+        ] = c.METADATA_SCHEMA_VERSION_DEFAULT
         created_by: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Identifier of the actor that originally created this metadata."
@@ -93,7 +88,7 @@ class FlextModelsBase(FlextModelsBasePart01):
         ] = None
         modified_by: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Identifier of the actor that last modified this metadata.",
                 title="Modified By",
@@ -101,27 +96,39 @@ class FlextModelsBase(FlextModelsBasePart01):
             ),
         ] = None
         tags: Annotated[
-            t.StrSequence,
-            mp.Field(
+            FlextTypingBase.StrSequence,
+            FlextModelsPydantic.Field(
                 description=(
                     "Normalized labels used to classify and filter this metadata."
                 ),
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ] = mp.Field(default_factory=tuple)
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.StrSequence)
+            )
+        )
         attributes: Annotated[
-            t.JsonMapping,
-            mp.BeforeValidator(ur.validate_metadata_attributes),
-            mp.Field(
+            FlextTypingBase.JsonMapping,
+            FlextModelsPydantic.BeforeValidator(
+                FlextRuntimeMetadataValidation.validate_metadata_attributes
+            ),
+            FlextModelsPydantic.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = mp.Field(default_factory=lambda: MappingProxyType[str, t.JsonValue]({}))
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(FlextTypingBase.JsonMapping)
+            )
+        )
         metadata_value: Annotated[
-            t.Scalar | None,
-            mp.Field(default=None, description="Scalar metadata value."),
+            FlextTypingBase.Scalar | None,
+            FlextModelsPydantic.Field(
+                default=None, description="Scalar metadata value."
+            ),
         ] = None
 
     class ContractModel(StrictModel):
@@ -143,14 +150,15 @@ class FlextModelsBase(FlextModelsBasePart01):
         def __eq__(self, other: object) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
-            self_dump: t.JsonMapping = self.model_dump()
-            other_dump: t.JsonMapping = other.model_dump()
+            self_dump: FlextTypingBase.JsonMapping = self.model_dump()
+            other_dump: FlextTypingBase.JsonMapping = other.model_dump()
             return self_dump == other_dump
 
         def __hash__(self) -> int:
             data = self.model_dump()
             return hash(tuple(sorted(((k, str(v)) for k, v in data.items()))))
 
+    @dataclass_transform(kw_only_default=True)
     class MutableConfiguredMixin:
         """Shared preset for mutable mixins with assignment validation."""
 
@@ -168,9 +176,9 @@ class FlextModelsBase(FlextModelsBasePart01):
         """Mixin for unique identifiers."""
 
         unique_id: Annotated[
-            t.NonEmptyStr,
-            mp.Field(description="Unique identifier", frozen=False),
-        ] = mp.Field(default_factory=lambda: str(uuid.uuid4()))
+            FlextTypingBase.NonEmptyStr,
+            FlextModelsPydantic.Field(description="Unique identifier", frozen=False),
+        ] = FlextModelsPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
 
 
 __all__: list[str] = ["FlextModelsBase"]

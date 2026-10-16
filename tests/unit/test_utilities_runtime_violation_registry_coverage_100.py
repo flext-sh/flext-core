@@ -15,8 +15,8 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesRuntimeViolationRegistry
-from tests.models import m
+from flext_core import FlextUtilitiesRuntimeViolationRegistry
+from tests import m
 
 
 @pytest.mark.usefixtures("_isolated_buffer")

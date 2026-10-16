@@ -10,13 +10,11 @@ import math
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from tests.constants import c
-from tests.models import m
+from tests import c, m, tm
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextModelsExceptionParamsCore:
@@ -29,7 +27,7 @@ class TestsFlextModelsExceptionParamsCore:
     def test_strict_mode_rejects_type_coercion() -> None:
         """strict=True: a string is not coerced into an int port."""
         with pytest.raises(c.ValidationError):
-            m.ConnectionErrorParams(port="5432")
+            m.ConnectionErrorParams.model_validate({"port": "5432"})
 
     @staticmethod
     def test_validate_assignment_rejects_bad_value() -> None:
@@ -74,7 +72,7 @@ class TestsFlextModelsExceptionParamsCore:
     @staticmethod
     def test_validation_error_params_scalar_values(
         field: str | None,
-        value: t.Scalar | None,
+        value: t.JsonValue,
     ) -> None:
         params = m.ValidationErrorParams(field=field, value=value)
         tm.that(params.field, eq=field)

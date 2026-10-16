@@ -13,11 +13,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
 
 import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests.protocols import p
+from tests import p
 
 
 class TestsFlextCoreBeartypeEngine(
@@ -151,7 +153,7 @@ class TestsFlextCoreBeartypeEngine(
             return 0
 
         static_value: p.AttributeProbe = staticmethod(_fn)
-        class_value: p.AttributeProbe = classmethod(_cls_fn)
+        class_value = cast("p.AttributeProbe", classmethod(_cls_fn))
         property_value: p.AttributeProbe = property(_fn)
 
         assert (

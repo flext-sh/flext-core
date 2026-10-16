@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_03 import (
-    FlextModelsContextScope as FlextModelsContextScopePartFinal,
-)
+from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_03
 
 
-class FlextModelsContextScope(FlextModelsContextScopePartFinal):
+class FlextModelsContextScope(flextmodelscontextscope_part_03.FlextModelsContextScope):
     """Public facade for FlextModelsContextScope."""
 
 

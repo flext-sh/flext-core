@@ -12,12 +12,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import string
+
 import pytest
+from typing_extensions import TypeForm
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests.models import m
+from tests import m, u
 from tests.unit._enforcement_support import make_class, synthetic_method
-from tests.utilities import u
 
 _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
 _ACCESSOR_FRAGMENT = "accessor method"
@@ -76,12 +78,61 @@ class TestsFlextCoreEnforcementAccessors:
         assert accessor.message.startswith("FlextCoreAccessedGet.get_user")
 
     @staticmethod
+    def test_override_of_a_foreign_contract_keeps_its_name() -> None:
+        # Arrange — stdlib string.Formatter declares get_value; a subclass
+        # overriding it cannot rename a name the library calls.
+        """Test override of a foreign contract keeps its name."""
+        cls = type(
+            "FlextCoreFormatter",
+            (string.Formatter,),
+            {"get_value": synthetic_method},
+        )
+        cls.__qualname__ = cls.__name__
+        cls.__module__ = "flext_core.synthetic"
+
+        # Act
+        accessor = [
+            v for v in u.check(cls).violations if _ACCESSOR_FRAGMENT in v.message
+        ]
+
+        # Assert
+        assert not accessor, "an override of a foreign contract is not an accessor"
+
+    @staticmethod
+    def test_accessor_is_judged_once_at_the_introducing_class() -> None:
+        # Arrange — the base introduces get_user; the subclass overrides it.
+        """Test accessor is judged once at the introducing class."""
+        base = make_class("FlextCoreAccessedBase", {"get_user": synthetic_method})
+        child: type = type(
+            "FlextCoreAccessedChild",
+            (base,),
+            {"get_user": synthetic_method},
+        )
+        child.__qualname__ = child.__name__
+        child.__module__ = "flext_core.synthetic"
+
+        # Act
+        on_base = [
+            v for v in u.check(base).violations if _ACCESSOR_FRAGMENT in v.message
+        ]
+        on_child = [
+            v for v in u.check(child).violations if _ACCESSOR_FRAGMENT in v.message
+        ]
+
+        # Assert — reported where the name is introduced, never re-reported.
+        assert on_base
+        assert not on_child
+
+    @staticmethod
     def test_bare_collection_field_is_flagged() -> None:
         # Arrange
         """Test bare collection field is flagged."""
 
         class _M(m.ArbitraryTypesModel):
-            items: list[str] = m.Field(default_factory=list, description="d")
+            items: list[str] = m.Field(
+                default_factory=u.empty(TypeForm(list[str])),
+                description="d",
+            )
 
         # Act
         messages = [v.message for v in u.check(_M).violations]

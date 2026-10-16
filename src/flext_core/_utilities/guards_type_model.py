@@ -82,6 +82,7 @@ class FlextUtilitiesGuardsTypeModel:
             The resulting ``TypeIs[mp.BaseModel]``.
 
         from pydantic import BaseModel as PydanticBaseModel
+
         """
         return (
             isinstance(value, PydanticBaseModel)

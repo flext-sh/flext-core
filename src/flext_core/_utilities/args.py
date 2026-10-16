@@ -8,7 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, r, t
+from flext_core import FlextResult, c, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsResult
 
@@ -40,9 +40,9 @@ class FlextUtilitiesArgs:
             empty_kwargs: t.JsonMapping = {}
             kwargs = empty_kwargs
         try:
-            return r[M].ok(model_cls.model_validate(kwargs))
+            return FlextResult[M].ok(model_cls.model_validate(kwargs))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return r[M].fail_op("parse options model", exc)
+            return FlextResult[M].fail_op("parse options model", exc)
 
     @staticmethod
     def resolve_options[M: FlextModelsPydantic.BaseModel](
@@ -62,7 +62,7 @@ class FlextUtilitiesArgs:
 
         """
         if options is not None:
-            return r[M].ok(options)
+            return FlextResult[M].ok(options)
         return FlextUtilitiesArgs.parse_model(
             kwargs,
             model_cls,

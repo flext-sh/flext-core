@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, TypeGuard, TypeIs
+from typing import TYPE_CHECKING, TypeGuard, TypeIs, cast
 
 from flext_core import c, t
 
@@ -62,7 +62,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         """
         for sequence_item in value:
-            if not FlextUtilitiesGuardsTypeCore.container(sequence_item):
+            if not FlextUtilitiesGuardsTypeCore.container_value(sequence_item):
                 return False
         return True
 
@@ -77,7 +77,7 @@ class FlextUtilitiesGuardsTypeCore:
 
         """
         for mapped_value in value.values():
-            if not FlextUtilitiesGuardsTypeCore.container(mapped_value):
+            if not FlextUtilitiesGuardsTypeCore.container_value(mapped_value):
                 return False
         return True
 
@@ -89,7 +89,9 @@ class FlextUtilitiesGuardsTypeCore:
             The resulting ``bool``.
 
         """
-        return bool(isinstance(value, Mapping) and value)
+        return bool(
+            isinstance(value, Mapping) and cast("dict[str, t.JsonPayload]", value)
+        )
 
     @staticmethod
     def empty_value(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> bool:
@@ -108,7 +110,7 @@ class FlextUtilitiesGuardsTypeCore:
         return False
 
     @staticmethod
-    def container(
+    def container_value(
         value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel | None,
     ) -> TypeIs[t.JsonValue]:
         """Check if value is a valid container (recursive validation).

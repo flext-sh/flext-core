@@ -6,21 +6,29 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast, override
+from typing import Self
 
 from pydantic import BaseModel, PrivateAttr
 
 from flext_core import c
-from flext_core._runtime._metadata import FlextRuntimeMetadata
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.services import FlextTypesServices
-from flext_core.typings import ConfigModelInput, JsonDict, JsonMapping, T
+from flext_core._runtime import FlextRuntimeMetadata
+from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core.typings import JsonDict
 
 
 class FlextResultBase[T](BaseModel):
-    """Internal data container for FlextResult."""
+    """Internal data container for FlextResult.
 
-    model_config = {"arbitrary_types_allowed": True, "populate_by_name": True}
+    Population keeps pydantic's own ``(**data)`` contract; the result family
+    builds instances only through ``create_success`` and ``create_failure``,
+    which validate the public fields and then bind the private payload.
+    """
+
+    model_config = {
+        "arbitrary_types_allowed": True,
+        "populate_by_name": True,
+        "extra": "forbid",
+    }
 
     success: bool = True
     error: str | None = None
@@ -31,18 +39,62 @@ class FlextResultBase[T](BaseModel):
     _exception: BaseException | None = PrivateAttr(default=None)
 
     @classmethod
+    def create_success(cls, value: T) -> Self:
+        """Build a successful result carrying ``value``.
+
+        Args:
+            value: The success payload to bind.
+
+        Returns:
+            The validated success instance.
+
+        """
+        cls.reject_banned_result_parameterization()
+        cls.reject_banned_success_payload(value)
+        instance: Self = cls.model_validate({"success": True})
+        instance._payload = value
+        return instance
+
+    @classmethod
+    def create_failure(
+        cls,
+        error: str,
+        error_code: str | None,
+        error_data: JsonDict | None,
+        exception: BaseException | None,
+    ) -> Self:
+        """Build a failed result from already-normalized failure state.
+
+        Args:
+            error: The human-readable error message.
+            error_code: Optional machine-readable error code.
+            error_data: Optional structured error payload.
+            exception: Optional exception bound to the failure.
+
+        Returns:
+            The validated failure instance.
+
+        """
+        cls.reject_banned_result_parameterization()
+        instance: Self = cls.model_validate({
+            "success": False,
+            "error": error,
+            "error_code": error_code,
+            "error_data": error_data,
+        })
+        instance._exception = exception
+        return instance
+
+    @classmethod
     def reject_banned_result_parameterization(cls) -> None:
         """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations.
 
         Raises:
-            ValueError: If ``arg0 is None or arg0 is type(None)``; or if ``arg0 is
-                object``.
+            ValueError: If the first type argument is ``None``/``NoneType`` or
+                ``object``.
 
         """
-        meta = getattr(cls, "__pydantic_generic_metadata__", None)
-        if not isinstance(meta, dict):
-            return
-        args = meta.get("args") or ()
+        args = cls.__pydantic_generic_metadata__["args"]
         if not args:
             return
         arg0 = args[0]
@@ -52,11 +104,11 @@ class FlextResultBase[T](BaseModel):
             raise ValueError(c.ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN)
 
     @staticmethod
-    def reject_banned_success_payload(value: object) -> None:
+    def reject_banned_success_payload(value: T) -> None:
         """Reject ``None`` and bare ``object()`` as success payloads.
 
         Raises:
-            ValueError: If ``value is None``; or if ``type(value) is object``.
+            ValueError: If ``value`` is ``None`` or its exact type is ``object``.
 
         """
         if value is None:
@@ -70,34 +122,20 @@ class FlextResultBase[T](BaseModel):
         | FlextTypesServices.ConfigModelInput
         | None,
     ) -> JsonDict | None:
+        """Validate and normalize error data into a plain JSON mapping.
+
+        Args:
+            error_data: The model, mapping, or config input to normalize.
+
+        Returns:
+            The resulting ``JsonDict``, or ``None`` when ``error_data``
+            normalizes to ``None``.
+
+        """
         normalized = FlextRuntimeMetadata.normalize_model_input_mapping(error_data)
         if normalized is None:
             return None
         return dict(normalized)
-
-    @override
-    def __init__(
-        self,
-        error_code: str | None = None,
-        error_data: JsonMapping | ConfigModelInput | None = None,
-        *,
-        value: T | None = None,
-        error: str | None = None,
-        success: bool = True,
-        exception: BaseException | None = None,
-    ) -> None:
-        type(self).reject_banned_result_parameterization()
-        super().__init__(
-            error=error,
-            error_code=error_code,
-            success=success,
-            error_data=self.validate_error_data(error_data),
-        )
-        if success:
-            self.reject_banned_success_payload(value)
-            self._payload = cast("T", value)
-        elif exception is not None:
-            self._exception = exception
 
 
 __all__: list[str] = ["FlextResultBase"]

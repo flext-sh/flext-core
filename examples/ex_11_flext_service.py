@@ -9,14 +9,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, override
 
-from examples.models import m
-from examples.shared import ExamplesFlextShared
-from examples.typings import t
-from examples.utilities import u
-from flext_core import p, r, s
+from examples import ExamplesFlextShared, m, p, r, s, t, u
 
 
-class _EchoService(s[str]):
+class ExamplesFlextEchoService(s[str]):
+    """Define ``ExamplesFlextEchoService``."""
+
     payload: Annotated[
         m.Examples.Payload,
         u.Field(description="Payload processed by the example service"),
@@ -36,16 +34,34 @@ class _EchoService(s[str]):
         return r[str].ok(f"echo:{self.payload.text}")
 
     def service_info(self) -> t.JsonMapping:
+        """Provide ``service_info``.
+
+        Returns:
+            The resulting ``t.JsonMapping``.
+
+        """
         return {"service": type(self).__name__, "payload": self.payload.text}
 
     def valid(self) -> bool:
+        """Provide ``valid``.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
         validation: p.Result[bool] = self.validate_business_rules()
         return validation.success
 
     def validate_business_rules(self) -> p.Result[bool]:
+        """Provide ``validate_business_rules``.
+
+        Returns:
+            The resulting ``p.Result[bool]``.
+
+        """
         if self.rule_error:
-            return r[bool](error=self.rule_error, success=False)
-        return r[bool](value=True, success=True)
+            return r[bool].fail(self.rule_error)
+        return r[bool].ok(value=True)
 
 
 class ExampleService:
@@ -59,7 +75,7 @@ class ExampleService:
             The resulting ``p.Result[str]``.
 
         """
-        service = _EchoService(payload=m.Examples.Payload(text="ok"))
+        service = ExamplesFlextEchoService(payload=m.Examples.Payload(text="ok"))
         return service.execute()
 
 
@@ -69,8 +85,8 @@ class _ExampleServiceGolden(ExamplesFlextShared):
     @override
     def exercise(self) -> None:
         """Exercise service execution, validation, and runtime accessors."""
-        service = _EchoService(payload=m.Examples.Payload(text="ok"))
-        validation_failure = _EchoService(
+        service = ExamplesFlextEchoService(payload=m.Examples.Payload(text="ok"))
+        validation_failure = ExamplesFlextEchoService(
             payload=m.Examples.Payload(text="ok"),
             rule_error="Failed to validate business_rule: E_RULE",
         )

@@ -12,14 +12,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, p, r, t, u
-from flext_core._handlers_parts.flexthandlers_part_03 import (
-    FlextHandlers as FlextHandlersPart03,
-)
+from flext_core._handlers_parts import flexthandlers_part_03
 from flext_core._utilities import FlextUtilitiesHandler
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart03[MessageT_contra, ResultT],
+    flexthandlers_part_03.FlextHandlers[MessageT_contra, ResultT],
 ):
     def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.

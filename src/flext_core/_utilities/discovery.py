@@ -27,7 +27,7 @@ from flext_core._models import FlextModelsContainer, FlextModelsService
 if TYPE_CHECKING:
     from types import ModuleType
 
-    from flext_core.service import FlextService
+    from flext_core import FlextService
 
 
 class FlextUtilitiesDiscovery:
@@ -243,7 +243,7 @@ class FlextUtilitiesDiscovery:
                 raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
             annotation = annotations[param.name]
             request = FlextUtilitiesDiscovery._resolve(func, where, annotation)
-            if not (isinstance(request, type) and issubclass(request, BaseModel)):
+            if not issubclass(request, BaseModel):
                 raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
         return request
 

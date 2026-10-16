@@ -19,9 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, p, t, u
 
 
 class TestsFlextFacadeFlatSsotAccess:
@@ -67,8 +65,11 @@ class TestsFlextFacadeFlatSsotAccess:
         assert u.derive_class_stem("") == ""
 
     @staticmethod
-    def _metadata(tmp_path: Path, **overrides: object) -> m.ProjectMetadata:
-        payload: dict[str, object] = {
+    def _metadata(
+        tmp_path: Path,
+        **overrides: p.AttributeProbe,
+    ) -> m.ProjectMetadata:
+        payload: t.MutableMappingKV[str, p.AttributeProbe] = {
             "root": tmp_path,
             "package_name": "flext_ldif",
             "class_stem": "FlextLdif",
@@ -94,8 +95,9 @@ class TestsFlextFacadeFlatSsotAccess:
         """Test project metadata is immutable."""
         metadata = self._metadata(tmp_path)
 
+        field_name = "package_name"
         with pytest.raises(m.ValidationError):
-            metadata.package_name = "other"
+            setattr(metadata, field_name, "other")
 
     @staticmethod
     def test_project_metadata_rejects_unknown_field(tmp_path: Path) -> None:

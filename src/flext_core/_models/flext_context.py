@@ -12,8 +12,11 @@ from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, e, m, p, r, t, u
-from flext_core._models._context._scope_ops import FlextContextScopeOps
+from typing_extensions import TypeForm
+
+from flext_core import FlextExceptions, FlextResult, c, m, p, t, u
+from flext_core._models._context import FlextContextScopeOps
+from flext_core._utilities import FlextUtilitiesBase
 
 # NOTE (multi-agent): mro-i6nq.12 — Generator is annotation-only; importing it
 # under TYPE_CHECKING keeps the public runtime facade graph lazy. The module
@@ -98,9 +101,9 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
         container = FlextContext.resolve_container()
         try:
             _ = container.bind(service_name, service)
-        except e.ValidationError as exc:
-            return r[bool].fail_op("register service", exc)
-        return r[bool].ok(value=True)
+        except FlextExceptions.ValidationError as exc:
+            return FlextResult[bool].fail_op("register service", exc)
+        return FlextResult[bool].ok(value=True)
 
     @staticmethod
     def resolve_correlation_id() -> str | None:
@@ -208,7 +211,9 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
         """
         start_time = u.generate_datetime_utc()
         start_perf = time.perf_counter()
-        payload = t.json_mapping_adapter().validate_python({
+        payload = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python({
             str(c.MetadataKey.START_TIME): start_time.isoformat(),
             str(c.ContextKey.OPERATION_NAME): operation_name or "",
         })
@@ -238,7 +243,7 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
             The resulting ``t.MappingKV[str, t.Scalar]``.
 
         """
-        result: dict[str, t.Scalar] = {}
+        result: t.MutableMappingKV[str, t.Scalar] = {}
         if (value := u.CORRELATION_ID.get()) is not None:
             result[c.ContextKey.CORRELATION_ID] = str(value)
         if (value := u.PARENT_CORRELATION_ID.get()) is not None:

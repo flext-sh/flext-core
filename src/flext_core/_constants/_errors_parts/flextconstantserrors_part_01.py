@@ -153,3 +153,6 @@ class FlextConstantsErrorsMessages:
     ERR_VALIDATION_FAILED: ClassVar[str] = "Validation failed"
     ERR_VALIDATION_FAILED_WITH_ERROR: ClassVar[str] = "Validation failed: {error}"
     ERR_GENERATOR_KIND_MISSING: ClassVar[str] = "No kind provided for prefix resolution"
+
+
+__all__: tuple[str, ...] = ("FlextConstantsErrorsMessages",)

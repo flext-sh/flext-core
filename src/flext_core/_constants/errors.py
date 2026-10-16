@@ -6,20 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
-    FlextConstantsErrorsMessages,
-)
-from flext_core._constants._errors_parts.flextconstantserrors_part_02 import (
-    FlextConstantsErrorsRuntimeExceptions,
-)
-from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
-    FlextConstantsErrorsValidationExceptions,
-)
-from flext_core._constants._errors_parts.flextconstantserrors_part_04 import (
+from flext_core._constants._errors_parts import (
     FlextConstantsErrorsDomainParser,
-)
-from flext_core._constants._errors_parts.flextconstantserrors_part_05 import (
+    FlextConstantsErrorsMessages,
+    FlextConstantsErrorsRuntimeExceptions,
     FlextConstantsErrorsRuntimeSettings,
+    FlextConstantsErrorsValidationExceptions,
 )
 
 

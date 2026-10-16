@@ -13,8 +13,6 @@ from flext_core import m
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests.typings import t
-
 
 class TestsFlextModelsDomainMixin:
     """Domain and parser model helpers."""
@@ -33,10 +31,6 @@ class TestsFlextModelsDomainMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
         value: int = 0
-
-        def __init__(self, value: int = 0, **kwargs: t.Scalar) -> None:
-            """Initialize model for domain utility edge-case testing."""
-            super().__init__(value=value, **kwargs)
 
         @override
         def __repr__(self) -> str:

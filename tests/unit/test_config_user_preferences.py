@@ -24,7 +24,8 @@ from pathlib import Path
 from types import ModuleType
 
 import pytest
-from flext_tests import u
+
+from tests import u
 
 _SUBCLASS_SOURCE = '''
 from __future__ import annotations
@@ -72,6 +73,36 @@ class TestPackagedConfigWithUserPreferences:
     """Packaged defaults plus optional user overlay, keyed by package namespace."""
 
     @staticmethod
+    def _install_packaged(
+        tmp_path: Path,
+        package: str,
+        packaged_yaml: str,
+        xdg_root: Path,
+    ) -> ModuleType:
+        """Install one synthetic package under an isolated XDG root.
+
+        Returns:
+            The synthetic package module carrying ``SynthConfig``.
+
+        """
+        with u.Tests.env_vars_context(env_vars={"XDG_CONFIG_HOME": str(xdg_root)}):
+            return _install_package(tmp_path / "site-packages", package, packaged_yaml)
+
+    @staticmethod
+    def _seed_user_preferences(
+        xdg_root: Path,
+        package_namespace: str,
+        preferences_yaml: str,
+    ) -> None:
+        """Write one user preferences overlay under the XDG package namespace."""
+        user_dir = xdg_root / package_namespace
+        user_dir.mkdir(parents=True)
+        (user_dir / "preferences.yaml").write_text(
+            preferences_yaml,
+            encoding="utf-8",
+        )
+
+    @staticmethod
     def test_packaged_defaults_load_without_a_source_checkout(
         tmp_path: Path,
     ) -> None:
@@ -79,10 +110,11 @@ class TestPackagedConfigWithUserPreferences:
         with u.Tests.env_vars_context(
             env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
         ):
-            module = _install_package(
-                tmp_path / "site-packages",
+            module = TestPackagedConfigWithUserPreferences._install_packaged(
+                tmp_path,
                 "synthpkg_alpha",
                 "greeting: packaged\nlevel: 1\n",
+                tmp_path / "xdg",
             )
 
             config = module.SynthConfig.fetch_global()
@@ -95,11 +127,10 @@ class TestPackagedConfigWithUserPreferences:
         """Given a user YAML, When loaded, Then it wins and leaves the rest."""
         xdg = tmp_path / "xdg"
         with u.Tests.env_vars_context(env_vars={"XDG_CONFIG_HOME": str(xdg)}):
-            user_dir = xdg / "synthpkg-beta"
-            user_dir.mkdir(parents=True)
-            (user_dir / "preferences.yaml").write_text(
+            TestPackagedConfigWithUserPreferences._seed_user_preferences(
+                xdg,
+                "synthpkg-beta",
                 "greeting: operator\n",
-                encoding="utf-8",
             )
             module = _install_package(
                 tmp_path / "site-packages",
@@ -118,10 +149,11 @@ class TestPackagedConfigWithUserPreferences:
         with u.Tests.env_vars_context(
             env_vars={"XDG_CONFIG_HOME": str(tmp_path / "empty-xdg")},
         ):
-            module = _install_package(
-                tmp_path / "site-packages",
+            module = TestPackagedConfigWithUserPreferences._install_packaged(
+                tmp_path,
                 "synthpkg_gamma",
                 "greeting: packaged\nlevel: 3\n",
+                tmp_path / "empty-xdg",
             )
 
             config = module.SynthConfig.fetch_global()
@@ -134,11 +166,10 @@ class TestPackagedConfigWithUserPreferences:
         """Given two packages, When both load, Then neither reads the other."""
         xdg = tmp_path / "xdg"
         with u.Tests.env_vars_context(env_vars={"XDG_CONFIG_HOME": str(xdg)}):
-            foreign = xdg / "synthpkg-delta"
-            foreign.mkdir(parents=True)
-            (foreign / "preferences.yaml").write_text(
+            TestPackagedConfigWithUserPreferences._seed_user_preferences(
+                xdg,
+                "synthpkg-delta",
                 "greeting: delta\n",
-                encoding="utf-8",
             )
             site = tmp_path / "site-packages"
             delta = _install_package(site, "synthpkg_delta", "greeting: packaged\n")
@@ -146,6 +177,69 @@ class TestPackagedConfigWithUserPreferences:
 
             assert delta.SynthConfig.fetch_global().greeting == "delta"
             assert epsilon.SynthConfig.fetch_global().greeting == "packaged"
+
+    @staticmethod
+    @pytest.mark.parametrize("layout", ["site-packages", "src", "member/src"])
+    def test_nested_mro_declaration_uses_its_package_resource(
+        tmp_path: Path,
+        layout: str,
+    ) -> None:
+        """Declaration depth and source layout cannot select repository defaults."""
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        ):
+            root = tmp_path / layout
+            parent = _install_package(root, "synthpkg_parent", "greeting: parent\n")
+            child = _install_package(root, "synthpkg_nested", "greeting: packaged\n")
+            nested = root / "synthpkg_nested" / "declarations"
+            nested.mkdir()
+            (nested / "__init__.py").write_text("", encoding="utf-8")
+            (nested / "owner.py").write_text(
+                "from synthpkg_parent._config import SynthConfig\n"
+                "class NestedConfig(SynthConfig):\n"
+                "    pass\n",
+                encoding="utf-8",
+            )
+            for directory in (nested / "config", tmp_path / "config"):
+                directory.mkdir()
+                (directory / "defaults.yaml").write_text(
+                    "greeting: foreign\n", encoding="utf-8"
+                )
+            module = importlib.import_module("synthpkg_nested.declarations.owner")
+            config = module.NestedConfig.fetch_global()
+            assert config.greeting == child.SynthConfig.fetch_global().greeting
+            assert config.greeting != parent.SynthConfig.fetch_global().greeting
+            assert module.NestedConfig.fetch_global() is config
+            assert config is not parent.SynthConfig.fetch_global()
+
+    @staticmethod
+    def test_missing_declared_resource_never_borrows_repository_config(
+        tmp_path: Path,
+    ) -> None:
+        """A missing packaged declaration fails even with a repository lookalike."""
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        ):
+            root = tmp_path / "src"
+            _install_package(root, "synthpkg_missing", "greeting: packaged\n")
+            package = root / "synthpkg_missing"
+            (package / "config" / "defaults.yaml").unlink()
+            (package / "config").rmdir()
+            (tmp_path / "config").mkdir()
+            (tmp_path / "config" / "defaults.yaml").write_text(
+                "greeting: foreign\n", encoding="utf-8"
+            )
+            (package / "declared.py").write_text(
+                "from typing import ClassVar\n"
+                "from synthpkg_missing._config import SynthConfig\n"
+                "class DeclaredConfig(SynthConfig):\n"
+                "    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = (\n"
+                "        'defaults.yaml',)\n",
+                encoding="utf-8",
+            )
+            module = importlib.import_module("synthpkg_missing.declared")
+            with pytest.raises(FileNotFoundError, match="declared config directory"):
+                module.DeclaredConfig.fetch_global()
 
     @staticmethod
     def test_explicit_config_dir_env_override_replaces_the_root(

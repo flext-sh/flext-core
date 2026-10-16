@@ -25,13 +25,67 @@ from flext_core.lazy import (
     merge_lazy_imports,
     normalize_lazy_imports,
 )
+from tests import u
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from pathlib import Path
+
+    from tests import t
+
+
+def _register_alpha_child(child_package_name: str, alpha_module_name: str) -> None:
+    """Register a child package and its alpha module carrying a relative lazy map."""
+    child_package = ModuleType(child_package_name)
+    child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
+    alpha_module = ModuleType(alpha_module_name)
+
+    class Alpha:
+        pass
+
+    alpha_module.__dict__["Alpha"] = Alpha
+    sys.modules[child_package_name] = child_package
+    sys.modules[alpha_module_name] = alpha_module
 
 
 class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("raw_literal", "accepted"),
+        [
+            ("{'Alpha': 'pkg.alpha'}", True),
+            ("{'Alpha': ('pkg.alpha', 'Alpha')}", True),
+            ("{'Alpha': ['pkg.alpha', 'Alpha']}", True),
+            ("None", False),
+            ("{'Alpha': ('pkg.alpha',)}", False),
+            ("{'Alpha': ('pkg.alpha', 'Alpha', 'extra')}", False),
+            ("{'Alpha': 123}", False),
+            ("{123: 'pkg.alpha'}", False),
+        ],
+    )
+    def test_fresh_normalizer_validates_the_public_lazy_entry_shape(
+        tmp_path: Path,
+        raw_literal: str,
+        accepted: bool,
+    ) -> None:
+        """The entry contract accepts strings/pairs and rejects malformed maps."""
+        script = (
+            "from flext_core.lazy import normalize_lazy_imports\n"
+            "try:\n"
+            f"    normalized = normalize_lazy_imports('pkg', {raw_literal})\n"
+            "except TypeError as exc:\n"
+            "    assert exc.__cause__ is not None\n"
+            "    print('rejected')\n"
+            "else:\n"
+            "    assert normalized['Alpha'] in ('pkg.alpha', ('pkg.alpha', 'Alpha'))\n"
+            "    print('accepted')\n"
+        )
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
+        assert result.success, result.error
+        assert result.value.outcome.raw_return_code == 0, result.value.stderr
+        assert result.value.stdout.strip() == ("accepted" if accepted else "rejected")
+        assert result.value.stderr == ""
 
     @staticmethod
     def test_merge_normalizes_child_relative_targets_to_absolute_paths() -> None:
@@ -39,16 +93,7 @@ class TestsFlextCoreLazyExportsMerge:
         child_package_name = "test_lazy_pkg_merge.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
-        child_package = ModuleType(child_package_name)
-        child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
-        alpha_module = ModuleType(alpha_module_name)
-
-        class Alpha:
-            pass
-
-        alpha_module.__dict__["Alpha"] = Alpha
-        sys.modules[child_package_name] = child_package
-        sys.modules[alpha_module_name] = alpha_module
+        _register_alpha_child(child_package_name, alpha_module_name)
         try:
             merged = merge_lazy_imports((child_package_name,), {})
 
@@ -64,16 +109,7 @@ class TestsFlextCoreLazyExportsMerge:
         child_package_name = f"{parent_package_name}.child"
         alpha_module_name = f"{child_package_name}.alpha"
 
-        child_package = ModuleType(child_package_name)
-        child_package.__dict__["_LAZY_IMPORTS"] = {"Alpha": (".alpha", "Alpha")}
-        alpha_module = ModuleType(alpha_module_name)
-
-        class Alpha:
-            pass
-
-        alpha_module.__dict__["Alpha"] = Alpha
-        sys.modules[child_package_name] = child_package
-        sys.modules[alpha_module_name] = alpha_module
+        _register_alpha_child(child_package_name, alpha_module_name)
         try:
             merged = merge_lazy_imports(
                 (".child",),
@@ -142,8 +178,8 @@ class TestsFlextCoreLazyExportsMerge:
     @staticmethod
     def test_normalize_map_resolves_relative_and_preserves_absolute(
         module_path: str,
-        raw: dict[str, str | tuple[str, str]],
-        expected: dict[str, str | tuple[str, str]],
+        raw: t.LazyImportMap,
+        expected: t.LazyImportDict,
     ) -> None:
         """Relative targets bind to the module; absolute targets pass through."""
         assert normalize_lazy_imports(module_path, raw) == expected

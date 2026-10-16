@@ -6,39 +6,44 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models.enforcement import FlextModelsEnforcement as me
-from flext_core._typings.base import FlextTypingBase as t
-from flext_core._utilities import (
-    alias_first_violation,
-    redundant_inner_violation,
-    self_ref_violation,
+from flext_core._models import FlextModelsEnforcement
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype._class_visitor_parts import class_visitor_part_01
+from flext_core._utilities._beartype._class_visitor_parts._parts import (
+    class_visitor_part_02_01,
+    class_visitor_part_02_02,
 )
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     NO_VIOLATION,
-    FlextUtilitiesBeartypeClassVisitor as FlextUtilitiesBeartypeClassVisitorPart01,
 )
 
 
-class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart01):
+class FlextUtilitiesBeartypeClassVisitor(
+    class_visitor_part_01.FlextUtilitiesBeartypeClassVisitor
+):
     @staticmethod
-    def v_mro_shape(params: me.MroShapeParams, target: type) -> t.StrMapping | None:
+    def v_mro_shape(
+        params: FlextModelsEnforcement.MroShapeParams, target: type
+    ) -> FlextTypingBase.StrMapping | None:
         """MRO_SHAPE — facade base ordering and inner-namespace redundancy.
 
         Returns:
-            The resulting ``t.StrMapping | None``.
+            The resulting ``FlextTypingBase.StrMapping | None``.
 
         """
         if not target.__bases__:
             return NO_VIOLATION
 
-        alias_violation = alias_first_violation(target, params)
-        redundant_inner = redundant_inner_violation(
+        alias_violation = class_visitor_part_02_01.alias_first_violation(target, params)
+        redundant_inner = class_visitor_part_02_02.redundant_inner_violation(
             target,
             alias_violation,
             forbid_redundant_inner=params.forbid_redundant_inner,
         )
         violation = alias_violation or redundant_inner
-        self_ref = self_ref_violation(target, violation, params)
+        self_ref = class_visitor_part_02_02.self_ref_violation(
+            target, violation, params
+        )
         return violation or self_ref
 
 

@@ -12,12 +12,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING
 
-from pydantic import Field
-
-from flext_core import c, p, r, t
-from flext_core._models import FlextModelsBase
+from flext_core import FlextResult, c, p, t
+from flext_core._models import FlextModelsConfig
 from flext_core._utilities import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
@@ -29,18 +27,6 @@ type _HandledExceptions = tuple[type[Exception], ...]
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    class RetryOptions(FlextModelsBase.FlexibleInternalModel):
-        """Configuration options for retry logic."""
-
-        max_attempts: Annotated[
-            int | None,
-            Field(ge=1, description="Maximum number of retry attempts"),
-        ] = None
-        delay_seconds: Annotated[
-            float | None,
-            Field(ge=0, description="Initial delay between retries in seconds"),
-        ] = None
-
     _RETRYABLE_EXCEPTIONS: _HandledExceptions = (
         AttributeError,
         TypeError,
@@ -49,6 +35,22 @@ class FlextUtilitiesReliability:
         KeyError,
         OSError,
     )
+
+    @staticmethod
+    def _resolve_handled(
+        catch: type[Exception] | _HandledExceptions | None,
+    ) -> _HandledExceptions:
+        """Resolve the handled-exception tuple from the ``catch`` specification.
+
+        Returns:
+            The resolved ``_HandledExceptions`` tuple.
+
+        """
+        if catch is None:
+            return FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
+        if isinstance(catch, type):
+            return (catch,)
+        return catch
 
     @staticmethod
     def try_[TResult](
@@ -68,16 +70,11 @@ class FlextUtilitiesReliability:
             The resulting ``p.Result[TResult]``.
 
         """
-        if catch is None:
-            handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
-        elif isinstance(catch, type):
-            handled = (catch,)
-        else:
-            handled = catch
+        handled = FlextUtilitiesReliability._resolve_handled(catch)
         try:
-            return r[TResult].ok(operation())
+            return FlextResult[TResult].ok(operation())
         except handled as exc:
-            return r[TResult].fail_op(op_name, exc)
+            return FlextResult[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def guard_result[TResult](
@@ -101,21 +98,16 @@ class FlextUtilitiesReliability:
             The resulting ``p.Result[TResult]``.
 
         """
-        if catch is None:
-            handled = FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
-        elif isinstance(catch, type):
-            handled = (catch,)
-        else:
-            handled = catch
+        handled = FlextUtilitiesReliability._resolve_handled(catch)
         try:
             return operation()
         except handled as exc:
-            return r[TResult].fail_op(op_name, exc)
+            return FlextResult[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def retry[TResult](
         operation: Callable[[], p.Result[TResult]],
-        options: FlextUtilitiesReliability.RetryOptions | None = None,
+        options: FlextModelsConfig.RetryOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.
@@ -134,11 +126,11 @@ class FlextUtilitiesReliability:
         opts_res = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
-            FlextUtilitiesReliability.RetryOptions,
+            FlextModelsConfig.RetryOptions,
         )
         if opts_res.failure:
             # Preserve the validated options failure metadata for every consumer.
-            return r[TResult].from_failure(opts_res)
+            return FlextResult[TResult].from_failure(opts_res)
         opts = opts_res.value
         max_att = (
             opts.max_attempts if opts.max_attempts is not None else c.MAX_RETRY_ATTEMPTS
@@ -153,7 +145,7 @@ class FlextUtilitiesReliability:
             try:
                 result = operation()
             except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as exc:
-                result = r[TResult].fail_op("execute retry operation", exc)
+                result = FlextResult[TResult].fail_op("execute retry operation", exc)
             if result.success:
                 return result
             last_failure = result
@@ -165,9 +157,11 @@ class FlextUtilitiesReliability:
                 if current_delay > 0:
                     time.sleep(current_delay)
         if last_failure is None:
-            return r[TResult].fail(c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT)
+            return FlextResult[TResult].fail(
+                c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
+            )
         return (
-            r[TResult]
+            FlextResult[TResult]
             .from_failure(last_failure)
             .map_error(
                 lambda error: f"Operation failed after {max_att} attempts: {error}",

@@ -10,7 +10,7 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core import FlextContainer, c, m
+from flext_core import FlextContainer, FlextUtilitiesLogging, c, m
 from flext_core._models import FlextContext
 from flext_core._protocols import (
     FlextProtocolsBase,
@@ -18,8 +18,7 @@ from flext_core._protocols import (
     FlextProtocolsContext,
     FlextProtocolsLogging,
 )
-from flext_core._typings.services import FlextTypesServices
-from flext_core.loggings import FlextUtilitiesLogging
+from flext_core._typings import FlextTypesServices
 
 if TYPE_CHECKING:
     from collections.abc import Callable

@@ -13,11 +13,13 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
-from flext_core import c, p, r, t
+from flext_core import FlextResult, c, p, t
 from flext_core._models import FlextModelsContainers
-from flext_core._runtime._metadata import FlextRuntimeMetadata
-from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
-from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
+from flext_core._runtime import FlextRuntimeMetadata
+from flext_core._utilities import (
+    FlextUtilitiesCollectionIter,
+    FlextUtilitiesCollectionMerge,
+)
 
 
 class FlextUtilitiesCollection(
@@ -78,14 +80,14 @@ class FlextUtilitiesCollection(
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
-                    return r[TItem].ok(v)
-            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+                    return FlextResult[TItem].ok(v)
+            return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         if isinstance(items, c.SEQUENCE_PAIR_TYPES):
             for item in items:
                 if predicate(item):
-                    return r[TItem].ok(item)
-            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
-        return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+                    return FlextResult[TItem].ok(item)
+            return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+        return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
     @staticmethod
     def process[TItem, TMapped](
@@ -112,9 +114,9 @@ class FlextUtilitiesCollection(
             def process_item(current_item: TItem = item_typed) -> TMapped:
                 return processor(current_item)
 
-            process_result = r[TMapped].create_from_callable(process_item)
+            process_result = FlextResult[TMapped].create_from_callable(process_item)
             if process_result.failure:
-                return r[Sequence[TMapped]].fail(
+                return FlextResult[Sequence[TMapped]].fail(
                     c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
                         item=item,
                         error=process_result.error,
@@ -124,7 +126,7 @@ class FlextUtilitiesCollection(
                 )
             processed_item: TMapped = process_result.unwrap()
             results.append(processed_item)
-        return r[Sequence[TMapped]].ok(results)
+        return FlextResult[Sequence[TMapped]].ok(results)
 
 
 __all__: list[str] = ["FlextUtilitiesCollection"]

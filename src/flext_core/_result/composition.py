@@ -11,8 +11,7 @@ from typing import TYPE_CHECKING, Self, cast
 from pydantic import ValidationError
 
 from flext_core import c
-from flext_core._result.construction import copy_result, ok_result
-from flext_core._result.transforms import FlextResultTransforms
+from flext_core._result import FlextResultTransforms, copy_result, ok_result
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence, Sequence
@@ -21,13 +20,28 @@ if TYPE_CHECKING:
 
 
 class FlextResultComposition[T](FlextResultTransforms[T]):
-    """Sequence, resource, and decorator composition helpers."""
+    """Sequence, resource, and decorator composition helpers.
+
+    Combines many results (``accumulate_errors``, ``traverse``), wraps
+    resource acquisition and cleanup around result-producing operations
+    (``with_resource``), and guards plain functions via ``safe`` so runtime
+    exceptions become ``r.Fail`` instead of raising.
+    """
 
     @classmethod
     def accumulate_errors[ValueT](
         cls: type[Self],
         *results: p.Result[ValueT],
     ) -> p.Result[Sequence[ValueT]]:
+        """Collect every payload, or fail joining all error messages.
+
+        Args:
+            *results: The results to combine.
+
+        Returns:
+            The resulting ``p.Result[Sequence[ValueT]]``.
+
+        """
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
         for result in results:
@@ -47,6 +61,21 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
         *,
         fail_fast: bool = True,
     ) -> p.Result[Sequence[U]]:
+        """Map a result-returning function over every item.
+
+        With ``fail_fast`` the first failure (or catchable exception) returns
+        immediately; otherwise every item runs and all error messages
+        accumulate into one failure.
+
+        Args:
+            items: The input sequence mapped over.
+            func: The result-returning function applied to each item.
+            fail_fast: Whether to stop at the first failure.
+
+        Returns:
+            The resulting ``p.Result[Sequence[U]]``.
+
+        """
         if fail_fast:
             results: MutableSequence[U] = []
             for item in items:
@@ -78,6 +107,20 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
         op: Callable[[R], p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
     ) -> p.Result[U]:
+        """Run an operation over an acquired resource with optional cleanup.
+
+        Any catchable exception raised while acquiring, operating, or cleaning
+        up becomes a failure; a cleanup failure discards the operation result.
+
+        Args:
+            factory: The callable acquiring the resource.
+            op: The result-returning operation over the resource.
+            cleanup: The optional callable releasing the resource.
+
+        Returns:
+            The resulting ``p.Result[U]``.
+
+        """
         try:
             resource = factory()
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
@@ -108,6 +151,16 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
         cls: type[Self],
         func: Callable[PFunc, U],
     ) -> Callable[PFunc, p.Result[U]]:
+        """Wrap a callable so catchable runtime exceptions become failures.
+
+        Args:
+            func: The callable to guard.
+
+        Returns:
+            The resulting ``Callable[PFunc, p.Result[U]]``.
+
+        """
+
         def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
             try:
                 return ok_result(cls._factory(), func(*args, **kwargs))

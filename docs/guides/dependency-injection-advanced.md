@@ -30,14 +30,21 @@ composition model.
 Use the canonical container example as the reference path.
 
 ```python
-from examples.ex_08_flext_container import Ex08FlextContainer
+from examples.ex_08_flext_container import ExamplesFlextContainer
 
-demo = Ex08FlextContainer("docs/guides/dependency-injection-advanced.md")
+demo = ExamplesFlextContainer("docs/guides/dependency-injection-advanced.md")
 demo.exercise()
 ```
 
-The `Ex08FlextContainer` flow exercises binding, factories, resources, the registration
+The `ExamplesFlextContainer` flow exercises binding, factories, resources, the registration
 rules, resolution, and scoped containers.
+
+The example harness is a runtime object, not a Pydantic payload model. Its output
+buffer and factory/resource counters are initialized per invocation, so separate
+examples do not share mutable registration state. The common `run()` lifecycle
+calls an instance `exercise()` and verifies the golden output; an example may also
+provide its own `run()` implementation. Integration checks execute the real public
+modules and preserve existing failure artifacts rather than deleting them to pass.
 
 ## Registration Rules
 

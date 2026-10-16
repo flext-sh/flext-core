@@ -9,8 +9,8 @@ from __future__ import annotations
 import time
 
 from flext_core import c
-from flext_core._decorators._base import FlextDecoratorsBase
-from flext_core._typings.base import FlextTypingBase
+from flext_core._decorators import FlextDecoratorsBase
+from flext_core._typings import FlextTypingBase
 
 
 class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):

@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextSettings, c, u
+from flext_core import FlextSettings
+from flext_core.constants import c
+from flext_core.utilities import u
 
 
-class ExamplesSettings(FlextSettings):
+class ExamplesFlextSettings(FlextSettings):
     """Application settings model for settings examples."""
 
     api_timeout: float = u.Field(

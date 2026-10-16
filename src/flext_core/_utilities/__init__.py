@@ -30,12 +30,25 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
         alias_first_violation,
     )
-    from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_02 import (
-        redundant_inner_violation,
-        self_ref_violation,
+    from flext_core._utilities._beartype._field_union_scan import declared_union_members
+    from flext_core._utilities._beartype._import_blacklist_visitor import (
+        FlextUtilitiesBeartypeImportBlacklistVisitor,
     )
     from flext_core._utilities._beartype._library_visitor import (
         FlextUtilitiesBeartypeLibraryVisitor,
+    )
+    from flext_core._utilities._beartype._module_source_deferred import (
+        deferred_alias,
+        guarded_imports,
+    )
+    from flext_core._utilities._beartype._module_source_provenance import owner_derived
+    from flext_core._utilities._beartype._module_source_scan import (
+        bound_names,
+        declarations,
+        export_names,
+        loads,
+        parse_module,
+        scope_nodes,
     )
     from flext_core._utilities._beartype.attr_visitor import (
         FlextUtilitiesBeartypeAttrVisitor,
@@ -75,9 +88,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
     from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
-    from flext_core._utilities.beartype_typingext_patch import (
-        FlextUtilitiesBeartypeTypingExtPatch,
-    )
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
@@ -128,6 +138,10 @@ if TYPE_CHECKING:
     )
     from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
+    from flext_core._utilities.typeadapter_json import FlextUtilitiesTypingAdapterJson
+    from flext_core._utilities.typeadapter_scalars import (
+        FlextUtilitiesTypingAdapterScalars,
+    )
 
 
 __all__: tuple[str, ...] = (
@@ -142,13 +156,13 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeEngine",
     "FlextUtilitiesBeartypeFieldVisitor",
     "FlextUtilitiesBeartypeHelpers",
+    "FlextUtilitiesBeartypeImportBlacklistVisitor",
     "FlextUtilitiesBeartypeImportVisitor",
     "FlextUtilitiesBeartypeLibraryVisitor",
     "FlextUtilitiesBeartypeMethodVisitor",
     "FlextUtilitiesBeartypeModuleSource",
     "FlextUtilitiesBeartypeModuleVisitor",
     "FlextUtilitiesBeartypeTypeAliases",
-    "FlextUtilitiesBeartypeTypingExtPatch",
     "FlextUtilitiesChecker",
     "FlextUtilitiesCollection",
     "FlextUtilitiesCollectionIter",
@@ -192,6 +206,8 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesRuntimeViolationRegistry",
     "FlextUtilitiesSettings",
     "FlextUtilitiesText",
+    "FlextUtilitiesTypingAdapterJson",
+    "FlextUtilitiesTypingAdapterScalars",
     "_beartype",
     "_checker_parts",
     "_enforcement_collect_parts",
@@ -202,8 +218,16 @@ __all__: tuple[str, ...] = (
     "_mapper_extract_parts",
     "_parser_targets_parts",
     "alias_first_violation",
-    "redundant_inner_violation",
-    "self_ref_violation",
+    "bound_names",
+    "declarations",
+    "declared_union_members",
+    "deferred_alias",
+    "export_names",
+    "guarded_imports",
+    "loads",
+    "owner_derived",
+    "parse_module",
+    "scope_nodes",
 )
 
 install_lazy_exports(
@@ -221,13 +245,15 @@ install_lazy_exports(
         "FlextUtilitiesBeartypeEngine": ".beartype_engine",
         "FlextUtilitiesBeartypeFieldVisitor": "._beartype.field_visitor",
         "FlextUtilitiesBeartypeHelpers": "._beartype.helpers",
+        "FlextUtilitiesBeartypeImportBlacklistVisitor": (
+            "._beartype._import_blacklist_visitor"
+        ),
         "FlextUtilitiesBeartypeImportVisitor": "._beartype.import_visitor",
         "FlextUtilitiesBeartypeLibraryVisitor": "._beartype._library_visitor",
         "FlextUtilitiesBeartypeMethodVisitor": "._beartype.method_visitor",
         "FlextUtilitiesBeartypeModuleSource": "._beartype.module_source",
         "FlextUtilitiesBeartypeModuleVisitor": "._beartype.module_visitor",
         "FlextUtilitiesBeartypeTypeAliases": "._beartype.type_aliases",
-        "FlextUtilitiesBeartypeTypingExtPatch": ".beartype_typingext_patch",
         "FlextUtilitiesChecker": ".checker",
         "FlextUtilitiesCollection": ".collection",
         "FlextUtilitiesCollectionIter": ".collection_iter",
@@ -271,6 +297,8 @@ install_lazy_exports(
         "FlextUtilitiesRuntimeViolationRegistry": ".runtime_violation_registry",
         "FlextUtilitiesSettings": ".settings",
         "FlextUtilitiesText": ".text",
+        "FlextUtilitiesTypingAdapterJson": ".typeadapter_json",
+        "FlextUtilitiesTypingAdapterScalars": ".typeadapter_scalars",
         "_beartype": "._beartype",
         "_checker_parts": "._checker_parts",
         "_enforcement_collect_parts": "._enforcement_collect_parts",
@@ -283,12 +311,16 @@ install_lazy_exports(
         "alias_first_violation": (
             "._beartype._class_visitor_parts._parts.class_visitor_part_02_01"
         ),
-        "redundant_inner_violation": (
-            "._beartype._class_visitor_parts._parts.class_visitor_part_02_02"
-        ),
-        "self_ref_violation": (
-            "._beartype._class_visitor_parts._parts.class_visitor_part_02_02"
-        ),
+        "bound_names": "._beartype._module_source_scan",
+        "declarations": "._beartype._module_source_scan",
+        "declared_union_members": "._beartype._field_union_scan",
+        "deferred_alias": "._beartype._module_source_deferred",
+        "export_names": "._beartype._module_source_scan",
+        "guarded_imports": "._beartype._module_source_deferred",
+        "loads": "._beartype._module_source_scan",
+        "owner_derived": "._beartype._module_source_provenance",
+        "parse_module": "._beartype._module_source_scan",
+        "scope_nodes": "._beartype._module_source_scan",
     }),
     public_exports=__all__,
 )

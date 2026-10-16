@@ -18,9 +18,10 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence
 from types import MappingProxyType
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._typings.services import FlextTypesServices
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypesServices
 
 
 class FlextConstantsGuards:

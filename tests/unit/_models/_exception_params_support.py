@@ -6,13 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests.models import m
+from tests import m
 
 
 class TestsFlextModelsExceptionParamsSupport:
-    """Canonical namespace owner."""
+    """Shared exception parameter model lists."""
 
-    _ALL_PARAMS_MODELS = [
+    ALL_PARAMS_MODELS = [
         m.ValidationErrorParams,
         m.ConfigurationErrorParams,
         m.ConnectionErrorParams,
@@ -28,7 +28,7 @@ class TestsFlextModelsExceptionParamsSupport:
         m.AttributeAccessErrorParams,
     ]
 
-    _ALL_PARAMS_IDS = [
+    ALL_PARAMS_IDS = [
         "validation",
         "configuration",
         "connection",

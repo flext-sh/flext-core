@@ -10,21 +10,18 @@ import sys
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from flext_core._lazy_parts.flextlazy_member import FlextLazyMember
-from flext_core._lazy_parts.flextlazy_part_01 import (
-    FlextLazyPart01,
-    LazyImportDict,
-    LazyImportMap,
-    MutableLazyImportMap,
-)
+from flext_core.flextlazy_member import FlextLazyMember
+from flext_core.flextlazy_part_01 import FlextLazyPart01
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, MutableMapping, Sequence
 
     from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
 class FlextLazy(FlextLazyPart01):
+    """Install and resolve exports without generated-package bootstrap imports."""
+
     @staticmethod
     def member(module: str, owner: str, member: str) -> FlextLazyMember:
         """Return a descriptor deferring ``owner.member`` from ``module``.
@@ -59,7 +56,7 @@ class FlextLazy(FlextLazyPart01):
     def get(
         self,
         name: str,
-        lazy_imports: LazyImportMap,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
         module_globals: ModuleGlobals,
         module_name: str,
     ) -> ModuleGlobalValue:
@@ -79,11 +76,7 @@ class FlextLazy(FlextLazyPart01):
             msg = f"module {module_name!r} has no attribute {name!r}"
             raise AttributeError(msg)
 
-        module_path, attr = (
-            (entry, name)
-            if isinstance(entry, str)
-            else self._alias_adapter.validate_python(entry)
-        )
+        module_path, attr = (entry, name) if isinstance(entry, str) else entry
 
         try:
             mod = self._load(module_path)
@@ -120,7 +113,10 @@ class FlextLazy(FlextLazyPart01):
         return value
 
     @staticmethod
-    def cleanup(module_name: str, lazy_imports: LazyImportMap) -> None:
+    def cleanup(
+        module_name: str,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
+    ) -> None:
         """Remove eager child module attrs."""
         current = sys.modules.get(module_name)
         if current is None:
@@ -138,11 +134,11 @@ class FlextLazy(FlextLazyPart01):
     def merge(
         self,
         child_module_paths: Sequence[str],
-        local_lazy_imports: LazyImportMap,
+        local_lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
         exclude_names: Sequence[str] = (),
         module_name: str | None = None,
-    ) -> MutableLazyImportMap:
+    ) -> MutableMapping[str, str | tuple[str, str]]:
         """Merge child lazy maps with local entries.
 
         Returns:
@@ -150,14 +146,15 @@ class FlextLazy(FlextLazyPart01):
 
         """
         key = tuple(self._child_path(path, module_name) for path in child_module_paths)
-        children: LazyImportDict | None = self.child_merge_cache.get(key)
+        children = self.child_merge_cache.get(key)
         if children is None:
-            children = {}
+            new_children: MutableMapping[str, str | tuple[str, str]] = {}
             for path in key:
                 for name, entry in self._child_map(path).items():
-                    if name not in children or name.lower() != name:
-                        children[name] = entry
-            self.child_merge_cache[key] = children
+                    if name not in new_children or name.lower() != name:
+                        new_children[name] = entry
+            self.child_merge_cache[key] = new_children
+            children = new_children
 
         merged = dict(children)
         merged.update(local_lazy_imports)
@@ -169,7 +166,7 @@ class FlextLazy(FlextLazyPart01):
         self,
         module_name: str,
         module_globals: ModuleGlobals,
-        lazy_imports: LazyImportMap,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
         publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
@@ -222,4 +219,4 @@ class FlextLazy(FlextLazyPart01):
         self.install_cache[module_name] = pre_signature
 
 
-__all__: list[str] = ["FlextLazy", "FlextLazyMember"]
+__all__: list[str] = ["FlextLazy"]

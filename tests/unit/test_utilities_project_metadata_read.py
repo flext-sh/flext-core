@@ -11,19 +11,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
 from typing import cast
 
 import pytest
-from flext_tests import tm
 
-from flext_core import r
-from tests.constants import c
-from tests.models import m
-from tests.protocols import p
+from tests import c, m, p, r, tm, u
 from tests.unit._project_metadata_support import write_pyproject
-from tests.utilities import u
 
 
 def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
@@ -37,7 +31,7 @@ def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
     try:
         document = u.read_project_document_cached(resolved)
         meta = u.build_project_metadata(resolved, document)
-    except (OSError, ValueError, tomllib.TOMLDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         return cast(
             "p.ResultView[m.ProjectMetadata]",
             r[m.ProjectMetadata].fail(

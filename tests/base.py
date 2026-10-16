@@ -6,18 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
-from flext_tests import FlextTestsServiceBase as _FlextTestsServiceBase
+from flext_tests import FlextTestsServiceBase
 
 from tests import c
-
-if TYPE_CHECKING:
-    from tests import p
+from tests.protocols import p
 
 
 class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](
-    _FlextTestsServiceBase[TDomainResult],
+    FlextTestsServiceBase[TDomainResult],
 ):
     """Project-local test service base with flext-core result typing."""
 

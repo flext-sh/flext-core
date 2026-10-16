@@ -1,6 +1,6 @@
 """Behavioral tests for the beartype enforcement import-hook predicate.
 
-Exercises the public contract of ``FlextUtilitiesBeartypeEngine.apply`` for the
+Exercises the public contract of ``u.apply`` for the
 ``DEPRECATED_SYNTAX`` / ``no_wrapper_root_alias_import`` shape (ENFORCE-055):
 given a class defined in a test/example/script wrapper module, the engine
 returns a violation mapping when that module contains a forbidden facade alias
@@ -20,10 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from flext_core import c
-from flext_core.models import FlextModelsEnforcement
-from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests.typings import t
+from tests import c, m, t, u
 
 _FORBIDDEN_IMPORT = "from tests.constants import c"
 
@@ -74,9 +71,9 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             The resulting ``t.StrMapping | None``.
 
         """
-        return FlextUtilitiesBeartypeEngine.apply(
+        return u.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            FlextModelsEnforcement.DeprecatedSyntaxParams(
+            m.DeprecatedSyntaxParams(
                 ast_shape="no_wrapper_root_alias_import",
             ),
             target,
@@ -171,9 +168,9 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             + "\n",
         )
 
-        result = FlextUtilitiesBeartypeEngine.apply(
+        result = u.apply(
             c.EnforcementPredicateKind.DEPRECATED_SYNTAX,
-            FlextModelsEnforcement.DeprecatedSyntaxParams(
+            m.DeprecatedSyntaxParams(
                 ast_shape="no_core_tests_namespace",
             ),
             probe,

@@ -11,16 +11,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import typing
 import warnings
 from typing import Annotated
 
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests.constants import c
-from tests.models import m
-from tests.utilities import u
+from tests import c, m, t, u
+
+# Deliberate broad-annotation fixture: the enforcement engine under test must
+# detect this exact runtime type, so it is exposed as a type alias usable
+# inside an annotation.
+type _ANY_TYPE = t.UnconstrainedValue
 
 
 def _hard_violation(
@@ -114,8 +116,9 @@ class TestsFlextCoreEnforcementReports:
         violation = _hard_violation()
 
         # Pydantic's frozen ValidationError subclasses ValueError.
+        field_name = "qualname"
         with pytest.raises(m.ValidationError):
-            violation.qualname = "other"
+            setattr(violation, field_name, "other")
 
     @staticmethod
     def test_violation_model_dump_exposes_public_fields() -> None:
@@ -143,7 +146,7 @@ class TestsFlextCoreEnforcementReports:
         """Test check flags any typed field with rule metadata."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = u.check(_WithAny)
 
@@ -157,7 +160,7 @@ class TestsFlextCoreEnforcementReports:
         """Test check messages embed bracketed rule identifiers."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = u.check(_WithAny)
 
@@ -186,7 +189,7 @@ class TestsFlextCoreEnforcementReports:
         """Test check model construction flags any field."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = FlextUtilitiesEnforcement.check_model_construction(_WithAny)
 
@@ -317,7 +320,7 @@ class TestsFlextCoreEnforcementReports:
         """Test emit of checked report carries layer tag and fix."""
 
         class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[typing.Any, m.Field(description="d")] = None
+            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
 
         report = u.check(_WithAny)
         assert report.violations

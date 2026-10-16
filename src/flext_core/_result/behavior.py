@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Self, TypeIs, override
 
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._result.base import FlextResultBase
+from flext_core._result import FlextResultBase
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -17,8 +17,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
-    "reject_banned_result_parameterization",
-    "reject_banned_success_payload",
+    "create_success",
     "require_error",
     "fail",
     "from_result",
@@ -29,7 +28,7 @@ _RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
 
 
 def _is_result_factory(
-    cls: type[object],
+    cls: type,
 ) -> TypeIs[type[FlextProtocolsResult.ResultFactory]]:
     """Narrow a class to the result factory contract after member validation.
 
@@ -43,14 +42,28 @@ def _is_result_factory(
 
 
 class FlextResultBehavior[T](FlextResultBase[T]):
-    """Behavior layer: context manager, dunder methods, error accessors."""
+    """Behavior layer: context manager, dunder methods, error accessors.
+
+    Adds the pythonic surface of the result — ``__enter__``/``__exit__`` for
+    scoped usage, truthiness via ``__bool__``, the ``|`` rail operator, and
+    the ``failure``, ``value`` and ``exception`` accessors that expose the
+    failure state.
+    """
 
     @property
     def failure(self) -> bool:
+        """Whether this result represents a failure."""
         return not self.success
 
     @property
     def value(self) -> T:
+        """The success payload bound to this result.
+
+        Raises:
+            RuntimeError: If this result is a failure, chained from the
+                exception that produced it.
+
+        """
         if not self.success:
             error_msg = self.error or ""
             msg = f"Cannot access value of failed result: {error_msg}"
@@ -59,20 +72,22 @@ class FlextResultBehavior[T](FlextResultBase[T]):
 
     @property
     def exception(self) -> BaseException | None:
+        """The exception that produced this failure, if any."""
         return self._exception
 
     @classmethod
     def _factory(cls) -> type[FlextProtocolsResult.ResultFactory]:
-        """Return the concrete MRO only after structural factory validation.
+        """Return the concrete result class after structural factory validation.
 
         Returns:
-            The concrete MRO only after structural factory validation.
+            The concrete result class implementing the factory contract.
 
         Raises:
-            TypeError: If ``not _is_result_factory(factory_cls)``.
+            TypeError: If the class does not implement the result factory
+                contract.
 
         """
-        factory_cls: type[object] = cls
+        factory_cls: type = cls
         if not _is_result_factory(factory_cls):
             msg = f"{cls.__name__} does not implement the result factory contract"
             raise TypeError(msg)
@@ -90,6 +105,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         pass
 
     def __or__[D](self, default: D) -> T | D:
+        """Return the payload on success, otherwise ``default``."""
         if self.success:
             return self._payload
         return default

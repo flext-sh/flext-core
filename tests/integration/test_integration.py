@@ -10,16 +10,13 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Final
 
 import pytest
-from flext_tests import r, tm
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
-from tests import e
-from tests.protocols import p
-from tests.utilities import u
+from tests import e, p, r, tm, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 pytestmark = [pytest.mark.integration]
 

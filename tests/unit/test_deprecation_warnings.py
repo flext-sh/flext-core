@@ -13,8 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import r
-from tests import p
+from tests import p, r
 
 
 def _double(value: int) -> int:

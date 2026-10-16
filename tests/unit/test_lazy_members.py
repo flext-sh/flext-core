@@ -10,9 +10,9 @@ import sys
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from flext_core.lazy import FlextLazyMember, lazy_member, resolve_lazy_members
+from flext_core import FlextLazyMember, lazy_member, resolve_lazy_members
+from tests import tm
 
 if TYPE_CHECKING:
     from pathlib import Path

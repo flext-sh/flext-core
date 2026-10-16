@@ -9,14 +9,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
-from tests.models import m
-from tests.utilities import u
+from tests import m, tm, u
 
 if TYPE_CHECKING:
-    from tests.protocols import p
-    from tests.typings import t
+    from tests import p, t
 
 
 class TestsFlextContainerResolution:
@@ -113,13 +110,13 @@ class TestsFlextContainerResolution:
     def test_get_typed_wrong_type(clean_container: p.Container) -> None:
         """Test typed retrieval with wrong type fails using fixtures."""
         clean_container.bind("string_service", "test_value")
-        result = clean_container.resolve("string_service", type_cls=dict)
+        result = clean_container.resolve("string_service", type_cls=int)
         _ = u.Tests.assert_failure(result)
 
     @staticmethod
     def test_get_typed_nonexistent(clean_container: p.Container) -> None:
         """Test typed retrieval of non-existent service using fixtures."""
-        result = clean_container.resolve("nonexistent", type_cls=dict)
+        result = clean_container.resolve("nonexistent", type_cls=int)
         u.Tests.assert_failure(result, expected_error="not found")
 
     @pytest.mark.parametrize(

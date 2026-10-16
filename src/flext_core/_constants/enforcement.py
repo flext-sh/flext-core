@@ -9,26 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
+from flext_core._constants._enforcement_parts import (
     FlextConstantsEnforcementEnums,
-)
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_02 import (
-    FlextConstantsEnforcementRuntime,
-)
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_03 import (
-    FlextConstantsEnforcementNamespace,
-)
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
-    FlextConstantsEnforcementRules,
-)
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_06 import (
-    FlextConstantsEnforcementTargets,
-)
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
-    FlextConstantsEnforcementSmellData,
-)
-from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
     FlextConstantsEnforcementFixActions,
+    FlextConstantsEnforcementNamespace,
+    FlextConstantsEnforcementRules,
+    FlextConstantsEnforcementRuntime,
+    FlextConstantsEnforcementSmellData,
+    FlextConstantsEnforcementTargets,
 )
 
 
@@ -53,6 +41,7 @@ class FlextConstantsEnforcement(
 # mro-pulj (codex): the declaring module owns every supported root import;
 # generated registries must not be required to publish this violation model.
 FlextMroViolation = FlextConstantsEnforcement.FlextMroViolation
+"""Root-importable runtime governance violation category (``e.MroViolation``)."""
 
 __all__: list[str] = [
     "FlextConstantsEnforcement",

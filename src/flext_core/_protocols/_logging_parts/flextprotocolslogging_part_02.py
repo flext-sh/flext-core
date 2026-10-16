@@ -8,19 +8,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core._protocols._logging_parts.flextprotocolslogging_part_01 import (
-    FlextProtocolsLogging as FlextProtocolsLoggingPart01,
-)
-from flext_core._protocols.base import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols._logging_parts import flextprotocolslogging_part_01
 
 if TYPE_CHECKING:
     from datetime import datetime
 
     from flext_core import t
-    from flext_core._protocols.result import FlextProtocolsResult
+    from flext_core._protocols import FlextProtocolsResult
 
 
-class FlextProtocolsLogging(FlextProtocolsLoggingPart01):
+class FlextProtocolsLogging(flextprotocolslogging_part_01.FlextProtocolsLogging):
     @runtime_checkable
     class Metadata(Protocol):
         """Metadata protocol."""

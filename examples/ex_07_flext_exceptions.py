@@ -9,9 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples.ex_07_flext_exceptions_helpers import Ex07FlextExceptionSubclasses
-from examples.models import m
-from flext_core import c, e, r
+from examples import c, e, m, r
+from examples.ex_07_flext_exceptions_helpers import ExamplesFlextExceptionSubclasses
 
 
 def _raise_value_error() -> None:
@@ -24,7 +23,7 @@ def _raise_value_error() -> None:
     raise ValueError(m.Examples.ErrorMessages.BOOM)
 
 
-class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
+class ExamplesFlextExceptions(ExamplesFlextExceptionSubclasses):
     """Exercise e API with deterministic output checks."""
 
     @override
@@ -143,4 +142,4 @@ class Ex07FlextExceptions(Ex07FlextExceptionSubclasses):
 
 
 if __name__ == "__main__":
-    Ex07FlextExceptions(caller_file=Path(__file__)).run()
+    ExamplesFlextExceptions(caller_file=Path(__file__)).run()

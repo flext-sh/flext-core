@@ -18,10 +18,10 @@ from typing import TYPE_CHECKING, Never
 
 import pytest
 
-from flext_core import u
+from tests import u
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from tests import p
 
 _OUTSIDE_CONTEXT = "Working outside of application context"
 _PROBE_MODULE = "probe_module_with_proxy"

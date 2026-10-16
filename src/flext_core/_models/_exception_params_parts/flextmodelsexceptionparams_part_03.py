@@ -13,37 +13,42 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
+from flext_core._models import FlextModelsPydantic
 from flext_core._models._exception_params_parts import (
-    flextmodelsexceptionparams_part_01 as part_01,
-    flextmodelsexceptionparams_part_02 as part_02,
+    flextmodelsexceptionparams_part_01,
+    flextmodelsexceptionparams_part_02,
 )
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-
-FlextModelsExceptionParamsPart01 = part_01.FlextModelsExceptionParams
-FlextModelsExceptionParamsPart02 = part_02.FlextModelsExceptionParams
 
 
-class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
-    class OperationErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
+class FlextModelsExceptionParams(
+    flextmodelsexceptionparams_part_02.FlextModelsExceptionParams
+):
+    class OperationErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for OperationError."""
 
         operation: Annotated[
             str | None,
-            mp.Field(description="Operation name associated with the failure."),
+            FlextModelsPydantic.Field(
+                description="Operation name associated with the failure."
+            ),
         ] = None
         reason: Annotated[
             str | None,
-            mp.Field(description="Short reason explaining the operation failure."),
+            FlextModelsPydantic.Field(
+                description="Short reason explaining the operation failure."
+            ),
         ] = None
 
     class ServiceLookupParams(
-        FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams,
     ):
         """Validated params for service lookup and narrowing failures."""
 
         service_name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Service identifier requested from the container/registry.",
                 title="Service Name",
@@ -51,12 +56,14 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
             ),
         ] = None
 
-    class RegistryPluginParams(FlextModelsExceptionParamsPart01.ParamsModel):
+    class RegistryPluginParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for registry plugin registration lifecycle."""
 
         category: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Registry category for plugin registration.",
                 title="Category",
@@ -65,7 +72,7 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
         ] = None
         name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Plugin name within a category.",
                 title="Plugin Name",
@@ -74,7 +81,7 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
         ] = None
         scope: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Registration scope used by registry operations.",
                 title="Scope",
@@ -82,12 +89,14 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
             ),
         ] = None
 
-    class AttributeAccessErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
+    class AttributeAccessErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for AttributeAccessError."""
 
         attribute_name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Attribute name that could not be accessed safely.",
                 title="Attribute Name",
@@ -96,7 +105,7 @@ class FlextModelsExceptionParams(FlextModelsExceptionParamsPart02):
         ] = None
         attribute_context: Annotated[
             t.RuntimeData | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Context payload describing the state during access failure."

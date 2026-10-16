@@ -10,11 +10,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._result.result import _FlextResult
+from flext_core._result import FlextResultComposed
 
 
-class FlextResult[T](_FlextResult[T]):
-    """Public concrete result facade; runtime and typing share one MRO."""
+class FlextResult[T](FlextResultComposed[T]):
+    """Public concrete result facade; runtime and typing share one MRO.
+
+    Instances carry either a success payload or a failure message plus the
+    exception that produced it. Every operation returns a new ``FlextResult``
+    so failures propagate explicitly instead of raising at the call site;
+    use the ``unwrap``/``behavior`` helpers to extract payloads or bind the
+    error. ``r`` is the canonical letter alias for this class.
+    """
 
 
 r = FlextResult

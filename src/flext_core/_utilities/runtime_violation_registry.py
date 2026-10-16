@@ -53,3 +53,6 @@ class FlextUtilitiesRuntimeViolationRegistry:
         """Drop every buffered report without returning them."""
         with cls._violation_lock:
             cls._violation_buffer.clear()
+
+
+__all__: tuple[str, ...] = ("FlextUtilitiesRuntimeViolationRegistry",)

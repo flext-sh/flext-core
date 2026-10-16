@@ -13,21 +13,23 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
+from flext_core._models import FlextModelsPydantic
 from flext_core._models._exception_params_parts import (
-    flextmodelsexceptionparams_part_01 as part_01,
+    flextmodelsexceptionparams_part_01,
 )
-from flext_core._models.pydantic import FlextModelsPydantic as mp
-
-FlextModelsExceptionParamsPart01 = part_01.FlextModelsExceptionParams
 
 
-class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
-    class TimeoutErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
+class FlextModelsExceptionParams(
+    flextmodelsexceptionparams_part_01.FlextModelsExceptionParams
+):
+    class TimeoutErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for TimeoutError."""
 
         timeout_seconds: Annotated[
             t.Numeric | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Timeout duration in seconds that triggered this exception."
@@ -38,7 +40,7 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
         ] = None
         operation: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Operation name that exceeded the configured timeout.",
                 title="Operation",
@@ -46,30 +48,34 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
             ),
         ] = None
 
-    class AuthenticationErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
+    class AuthenticationErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for AuthenticationError."""
 
         auth_method: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description="Authentication method used when the failure occurred.",
             ),
         ] = None
         user_id: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 description=(
                     "User identifier associated with the authentication attempt."
                 ),
             ),
         ] = None
 
-    class AuthorizationErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
+    class AuthorizationErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for AuthorizationError."""
 
         user_id: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="User identifier denied access to a protected resource.",
                 title="User ID",
@@ -78,7 +84,7 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
         ] = None
         resource: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Protected resource that triggered the authorization failure."
@@ -89,7 +95,7 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
         ] = None
         permission: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Missing permission required to complete the requested action."
@@ -99,15 +105,19 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
             ),
         ] = None
 
-    class NotFoundErrorParams(FlextModelsExceptionParamsPart01.ResourceIdentityParams):
+    class NotFoundErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams
+    ):
         """Validated params for NotFoundError."""
 
-    class ConflictErrorParams(FlextModelsExceptionParamsPart01.ResourceIdentityParams):
+    class ConflictErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams
+    ):
         """Validated params for ConflictError."""
 
         conflict_reason: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Human-readable explanation for why the conflict occurred.",
                 title="Conflict Reason",
@@ -115,12 +125,14 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
             ),
         ] = None
 
-    class RateLimitErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
+    class RateLimitErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for RateLimitError."""
 
         limit: Annotated[
             int | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Maximum request count allowed within the configured window."
@@ -131,7 +143,7 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
         ] = None
         window_seconds: Annotated[
             int | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Duration, in seconds, of the rate-limit window.",
                 title="Window Seconds",
@@ -140,7 +152,7 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
         ] = None
         retry_after: Annotated[
             t.Numeric | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Time in seconds clients should wait before retrying.",
                 title="Retry After",
@@ -148,19 +160,21 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
             ),
         ] = None
 
-    class CircuitBreakerErrorParams(FlextModelsExceptionParamsPart01.ParamsModel):
+    class CircuitBreakerErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+    ):
         """Validated params for CircuitBreakerError."""
 
         service_name: Annotated[
             str | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="External service monitored by the circuit breaker.",
             ),
         ] = None
         failure_count: Annotated[
             int | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description=(
                     "Consecutive failure count at the moment the breaker opened."
@@ -169,13 +183,15 @@ class FlextModelsExceptionParams(part_01.FlextModelsExceptionParams):
         ] = None
         reset_timeout: Annotated[
             t.Numeric | None,
-            mp.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Seconds before allowing a circuit breaker reset attempt.",
             ),
         ] = None
 
-    class TypeErrorParams(FlextModelsExceptionParamsPart01.ExpectedActualTypeParams):
+    class TypeErrorParams(
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams
+    ):
         """Validated params for TypeError."""
 
 

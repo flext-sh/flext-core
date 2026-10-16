@@ -13,8 +13,7 @@ from typing import Annotated
 from pydantic import field_validator
 
 from flext_core import c, t
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
 _EMPTY_SCALAR_MAPPING: t.MappingKV[str, t.Scalar] = MappingProxyType({})
 

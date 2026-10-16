@@ -9,16 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from typing_extensions import TypeForm
 
 from flext_core import c, t
-from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
-    FlextModelsCqrs as FlextModelsCqrsPart01,
-)
-from flext_core._models.base import FlextModelsBase as m
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._models._cqrs_parts import flextmodelscqrs_part_01
 from flext_core._runtime import FlextRuntimeMetadata
 from flext_core._utilities import FlextUtilitiesGenerators
 
@@ -33,7 +31,7 @@ from flext_core._utilities import FlextUtilitiesGenerators
 # family inits, which resolve single leaf modules without touching the facade.
 
 
-class FlextModelsCqrs(FlextModelsCqrsPart01):
+class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
@@ -41,7 +39,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
     directly via FlextModelsCqrs.*
     """
 
-    class Command(m.ArbitraryTypesModel):
+    class Command(FlextModelsBase.ArbitraryTypesModel):
         """Base class for CQRS commands with validation."""
 
         tag: ClassVar[Literal["command"]] = "command"
@@ -75,7 +73,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             Field(description="Identity of the principal that issued this command."),
         ] = None
 
-    class Query(m.ArbitraryTypesModel):
+    class Query(FlextModelsBase.ArbitraryTypesModel):
         """Query model for CQRS query operations."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -99,9 +97,13 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 title="Query Filters",
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
-        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
+        ] = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.MappingKV[str, t.Scalar]),
+            ),
+        )
         pagination: Annotated[
-            FlextModelsCqrsPart01.Pagination,
+            flextmodelscqrs_part_01.FlextModelsCqrs.Pagination,
             Field(
                 description=(
                     "Pagination settings controlling page number"
@@ -110,7 +112,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 title="Pagination",
                 examples=[{"page": 1, "size": 50}],
             ),
-        ] = Field(default_factory=FlextModelsCqrsPart01.Pagination)
+        ] = Field(default_factory=flextmodelscqrs_part_01.FlextModelsCqrs.Pagination)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -147,7 +149,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             pagination_cls: type[BaseModel] = getattr(
                 cls,
                 "Pagination",
-                FlextModelsCqrsPart01.Pagination,
+                flextmodelscqrs_part_01.FlextModelsCqrs.Pagination,
             )
             normalized_input = FlextRuntimeMetadata.normalize_model_input_mapping(v)
             if normalized_input is None:
@@ -157,7 +159,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             except ValidationError:
                 return pagination_cls()
 
-    class Handler(m.ArbitraryTypesModel):
+    class Handler(FlextModelsBase.ArbitraryTypesModel):
         """Handler configuration model."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -199,11 +201,11 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             ),
         ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
-            m.Metadata | None,
+            FlextModelsBase.Metadata | None,
             Field(description="Handler metadata (Pydantic model)"),
         ] = None
 
-    class Event(m.ArbitraryTypesModel):
+    class Event(FlextModelsBase.ArbitraryTypesModel):
         """Event model for CQRS event operations.
 
         Events represent domain events that occur as a result of command execution.
@@ -241,11 +243,19 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         data: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event payload data"),
-        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
+        ] = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.MappingKV[str, t.Scalar]),
+            ),
+        )
         metadata: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
-        ] = Field(default_factory=lambda: MappingProxyType[str, t.Scalar]({}))
+        ] = Field(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(t.MappingKV[str, t.Scalar]),
+            ),
+        )
 
     type FlextMessage = t.MessageUnion[Command, Query, Event]
 

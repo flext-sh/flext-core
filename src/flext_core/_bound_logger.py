@@ -14,15 +14,14 @@ from __future__ import annotations
 import traceback
 from typing import TYPE_CHECKING, Self, override
 
-from flext_core import c, e, p, t
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext as ulc
-from flext_core.result import r
+from flext_core import c, p, r, t
+from flext_core._utilities import FlextUtilitiesLoggingContext
 
 if TYPE_CHECKING:
     from structlog.typing import Context
 
 
-class FlextBoundLogger(ulc):
+class FlextBoundLogger(FlextUtilitiesLoggingContext):
     """Context-aware bound logger instance handed out by the logging facade.
 
     Composed via MRO from ``FlextUtilitiesLoggingContext`` (context binding,
@@ -187,7 +186,7 @@ class FlextBoundLogger(ulc):
         return context_dict
 
     def exception(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log exception with conditional stack trace (DEBUG only).
+        """Log structured exception context and propagate processing failures.
 
         Returns:
             The resulting ``t.LogResult``.
@@ -199,25 +198,21 @@ class FlextBoundLogger(ulc):
             for arg in args
             if not isinstance(arg, BaseException)
         )
-        try:
-            resolved_exception: Exception | None = (
-                args[0] if args and isinstance(args[0], Exception) else None
-            )
-            context_dict = self._exception_context_from_inputs(
-                resolved_exception,
-                kw.get("exception"),
-                kw.get("exc_info", True),
-                kw,
-            )
-            _ = self.logger.error(
-                message,
-                *filtered_args,
-                **self._to_scalar_context(context_dict),
-            )
-            return r[bool].ok(value=True)
-        except c.EXC_BROAD_RUNTIME as exc:
-            self._report_internal_logging_failure("exception", exc)
-            return e.fail_operation("exception logging", exc)
+        resolved_exception: Exception | None = (
+            args[0] if args and isinstance(args[0], Exception) else None
+        )
+        context_dict = self._exception_context_from_inputs(
+            resolved_exception,
+            kw.get("exception"),
+            kw.get("exc_info", True),
+            kw,
+        )
+        _ = self.logger.error(
+            message,
+            *filtered_args,
+            **self._to_scalar_context(context_dict),
+        )
+        return r[bool].ok(value=True)
 
     def build_exception_context(
         self,
@@ -287,7 +282,7 @@ class FlextBoundLogger(ulc):
         args: t.SequenceOf[t.LogValue],
         context: t.MappingKV[str, t.LogValue],
     ) -> t.JsonMapping:
-        resolved_context: dict[str, t.LogValue] = dict(context)
+        resolved_context: t.MutableMappingKV[str, t.LogValue] = dict(context)
         if "source" not in resolved_context and (
             source_path := FlextBoundLogger._caller_source_path()
         ):
@@ -303,19 +298,16 @@ class FlextBoundLogger(ulc):
         *args: t.LogValue,
         **context: t.LogValue,
     ) -> t.LogResult:
-        """Consolidate all log level methods into one internal logging path.
+        """Emit a log event and propagate processing failures unchanged.
 
         Returns:
             The resulting ``t.LogResult``.
 
         """
-        try:
-            level_str = self._resolve_level_name(level)
-            scalar_context = self._resolve_log_context(args, context)
-            getattr(self.logger, level_str)(event, **scalar_context)
-            return r[bool].ok(value=True)
-        except c.EXC_BROAD_RUNTIME as exc:
-            return e.fail_operation("logging", exc)
+        level_str = self._resolve_level_name(level)
+        scalar_context = self._resolve_log_context(args, context)
+        getattr(self.logger, level_str)(event, **scalar_context)
+        return r[bool].ok(value=True)
 
     def _log_standard_level(
         self,
@@ -387,22 +379,15 @@ class FlextBoundLogger(ulc):
         *args: t.LogValue,
         **kwargs: t.JsonPayload,
     ) -> t.LogResult:
-        """Log trace message.
+        """Log a formatted trace message and propagate failures unchanged.
 
         Returns:
             The resulting ``t.LogResult``.
 
         """
-        try:
-            try:
-                formatted_message = message % args if args else message
-            except c.EXC_TYPE_VALIDATION:
-                formatted_message = f"{message} | args={args!r}"
-            self.logger.debug(
-                formatted_message,
-                **self._to_scalar_context(kwargs),
-            )
-            return r[bool].ok(value=True)
-        except c.EXC_BROAD_RUNTIME as exc:
-            self._report_internal_logging_failure("trace", exc)
-            return e.fail_operation("trace logging", exc)
+        formatted_message = message % args if args else message
+        self.logger.debug(
+            formatted_message,
+            **self._to_scalar_context(kwargs),
+        )
+        return r[bool].ok(value=True)

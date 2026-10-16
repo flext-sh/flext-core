@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import r
+from examples import r
 
 
 def run() -> None:
@@ -22,7 +22,7 @@ def run() -> None:
         raise RuntimeError(msg)
 
 
-class Ex05FlextMixins:
+class ExamplesFlextMixins:
     """Compatibility wrapper expected by examples package exports."""
 
     @staticmethod

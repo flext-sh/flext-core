@@ -12,12 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pytest
-from flext_tests import tm
+from typing_extensions import TypeForm
 
-from tests.constants import c
-from tests.models import m
-from tests.typings import t
-from tests.utilities import u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreTypingsValidationNumbers:
@@ -36,7 +33,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         @staticmethod
         def test_strips_surrounding_whitespace(value: str, expected: str) -> None:
             """A non-blank value is returned with surrounding whitespace removed."""
-            adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
+            adapter: m.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
 
             result = adapter.validate_python(value)
 
@@ -46,7 +43,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         @staticmethod
         def test_rejects_blank_or_whitespace_only(value: str) -> None:
             """An empty or whitespace-only value raises the public ValidationError."""
-            adapter: m.TypeAdapter[str] = u.type_adapter(t.StrippedStr)
+            adapter: m.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
 
             with pytest.raises(c.ValidationError):
                 adapter.validate_python(value)

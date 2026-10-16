@@ -10,7 +10,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
-    from flext_core._typings.base import FlextTypingBase as t
+    from flext_core import t
 
 
 class FlextConstantsEnforcementFixActions:

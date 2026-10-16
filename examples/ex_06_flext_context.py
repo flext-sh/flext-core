@@ -26,7 +26,7 @@ def run() -> None:
         raise RuntimeError(msg)
 
 
-class Ex06FlextContext:
+class ExamplesFlextContext:
     """Compatibility wrapper expected by examples package exports."""
 
     @staticmethod

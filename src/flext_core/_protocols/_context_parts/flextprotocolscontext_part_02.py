@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols._context_parts.flextprotocolscontext_part_01 import (
-    FlextProtocolsContext as FlextProtocolsContextPart01,
-)
+from flext_core._protocols._context_parts import flextprotocolscontext_part_01
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
@@ -18,7 +16,7 @@ if TYPE_CHECKING:
     from flext_core import m, p, t
 
 
-class FlextProtocolsContext(FlextProtocolsContextPart01):
+class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext):
     @runtime_checkable
     class ContextRequestNamespace(Protocol):
         """Protocol for request-level helpers on the context class."""

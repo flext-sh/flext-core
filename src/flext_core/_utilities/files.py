@@ -16,8 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import cast
 
-from flext_core import p
-from flext_core.result import FlextResult
+from flext_core import FlextResult, p
 
 
 class FlextUtilitiesFiles:

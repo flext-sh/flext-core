@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from tests.models import m
-from tests.utilities import u
+from flext_tests.models import m
+from flext_tests.typings import t
+from flext_tests.utilities import u
+from typing_extensions import TypeForm
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from tests.typings import t
 
 
 class TestsFlextSettingsConfigTestCase(m.BaseModel):
@@ -30,14 +30,14 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
     expected_values: Annotated[
         t.JsonMapping,
         m.Field(description="Expected effective values"),
-    ] = m.Field(default_factory=dict)
+    ] = m.Field(default_factory=u.empty(TypeForm(t.JsonMapping)))
     file_format: Annotated[str, m.Field(description="Configuration file format")] = (
         "json"
     )
     env_vars: Annotated[
         t.StrMapping,
         m.Field(description="Environment variable overrides"),
-    ] = m.Field(default_factory=dict)
+    ] = m.Field(default_factory=u.empty(TypeForm(t.StrMapping)))
     description: Annotated[
         str,
         m.Field(description="Human-readable test description"),

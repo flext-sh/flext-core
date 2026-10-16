@@ -11,14 +11,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from flext_tests import tm
 
 from flext_core import FlextContainer, FlextSettings
-from tests import c, m
-from tests.utilities import u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
-    from tests.typings import t
+    from tests import t
 
 
 class TestsFlextCoreUtilitiesSettings:

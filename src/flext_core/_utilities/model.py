@@ -12,53 +12,20 @@ from importlib import import_module
 from typing import overload
 
 from pydantic import TypeAdapter
+from typing_extensions import TypeForm
 
-from flext_core import c, e, p, r, t
-from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesArgs
+from flext_core import FlextExceptions, FlextResult, c, p, t
+from flext_core._models import FlextModelsConfig, FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesArgs, FlextUtilitiesBase
 
 
 class FlextUtilitiesModel:
     """Utilities for Pydantic model initialization."""
 
-    class ModelDumpOptions(FlextModelsBase.FlexibleInternalModel):
-        """Options controlling Pydantic model_dump() serialization behavior."""
-
-        by_alias: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Serialize using field aliases",
-            validate_default=True,
-        )
-        exclude_none: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Exclude None-valued fields",
-            validate_default=True,
-        )
-        exclude_unset: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Exclude fields not explicitly set",
-            validate_default=True,
-        )
-        exclude_defaults: bool | None = FlextModelsPydantic.Field(
-            None,
-            description="Exclude fields matching defaults",
-            validate_default=True,
-        )
-        include: set[str] | None = FlextModelsPydantic.Field(
-            None,
-            description="Whitelist of field names to include",
-            validate_default=True,
-        )
-        exclude: set[str] | None = FlextModelsPydantic.Field(
-            None,
-            description="Blacklist of field names to exclude",
-            validate_default=True,
-        )
-
     @staticmethod
     def dump(
         model: FlextModelsPydantic.BaseModel,
-        options: FlextUtilitiesModel.ModelDumpOptions | None = None,
+        options: FlextModelsConfig.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> t.MappingKV[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
@@ -79,10 +46,12 @@ class FlextUtilitiesModel:
         opts = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
-            FlextUtilitiesModel.ModelDumpOptions,
+            FlextModelsConfig.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
-        dumped: t.JsonMapping = t.json_mapping_adapter().validate_python(
+        dumped: t.JsonMapping = FlextUtilitiesBase.type_adapter(
+            TypeForm(t.JsonMapping)
+        ).validate_python(
             model.model_dump(mode="json", **opts_dict),
         )
         return dumped
@@ -93,6 +62,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``t.SettingsClass``.
+
         """
         settings_module = import_module("flext_core")
         settings_cls: t.SettingsClass = settings_module.FlextSettings
@@ -104,6 +74,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.ContainerType``.
+
         """
         container_module = import_module("flext_core")
         container_cls: p.ContainerType = container_module.FlextContainer
@@ -115,6 +86,7 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.ContextType``.
+
         """
         context_module = import_module("flext_core")
         context_cls: p.ContextType = context_module.FlextContext
@@ -140,19 +112,9 @@ class FlextUtilitiesModel:
         strict: bool | None = None,
     ) -> p.Result[TValue]: ...
 
-    @overload
-    @staticmethod
-    def validate_value(
-        target: t.DynamicTypeHint,
-        data: t.JsonPayload,
-        *,
-        from_json: bool = False,
-        strict: bool | None = None,
-    ) -> p.Result[t.JsonValue]: ...
-
     @staticmethod
     def validate_value[TValue](
-        target: t.ValueAdapter[TValue] | t.TypeHintSpecifier,
+        target: t.ValueAdapter[TValue] | type[TValue],
         data: t.JsonPayload,
         *,
         from_json: bool = False,
@@ -162,21 +124,26 @@ class FlextUtilitiesModel:
 
         Returns:
             The resulting ``p.Result[TValue]``.
+
         """
         try:
             adapter: t.ValueAdapter[TValue] = (
-                target if isinstance(target, TypeAdapter) else TypeAdapter(target)
+                target
+                if isinstance(target, TypeAdapter)
+                else FlextUtilitiesBase.type_adapter(target)
             )
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
-                    return e.fail_validation(
+                    return FlextExceptions.fail_validation(
                         "json_input",
                         error="JSON validation requires str or bytes input",
                     )
-                return r[TValue].ok(adapter.validate_json(data, strict=strict))
-            return r[TValue].ok(adapter.validate_python(data, strict=strict))
+                return FlextResult[TValue].ok(
+                    adapter.validate_json(data, strict=strict)
+                )
+            return FlextResult[TValue].ok(adapter.validate_python(data, strict=strict))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return e.fail_validation(error=exc)
+            return FlextExceptions.fail_validation(error=exc)
 
 
 __all__: list[str] = ["FlextUtilitiesModel"]

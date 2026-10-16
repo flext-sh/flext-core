@@ -10,15 +10,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._typings.typeadapter_json import FlextTypesTypeAdapterJson
-from flext_core._typings.typeadapter_scalars import FlextTypesTypeAdapterScalars
+from flext_core._utilities import (
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
+)
 
 
-class FlextTypesTypeAdapters(FlextTypesTypeAdapterJson, FlextTypesTypeAdapterScalars):
+class FlextTypesTypeAdapters(
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
+):
     """Cached ``FlextTypesPydantic.TypeAdapter`` factories.
 
-    JSON-shape factories live in ``FlextTypesTypeAdapterJson`` and
-    scalar/binary factories in ``FlextTypesTypeAdapterScalars``; this
+    JSON-shape factories live in ``FlextUtilitiesTypingAdapterJson`` and
+    scalar/binary factories in ``FlextUtilitiesTypingAdapterScalars``; this
     class composes both so the public ``FlextTypingBase`` surface stays
     unchanged.
     """

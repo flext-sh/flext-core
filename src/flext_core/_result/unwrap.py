@@ -9,27 +9,57 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c
-from flext_core._result.composition import FlextResultComposition
+from flext_core._result import FlextResultComposition
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 class FlextResultUnwrap[T](FlextResultComposition[T]):
-    """Value extraction helpers for results."""
+    """Value extraction helpers for results.
+
+    Provides the terminal operations of the railway: ``unwrap`` (raises on
+    failure), ``unwrap_or`` (default on failure) and ``unwrap_or_else``
+    (lazily computed default on failure).
+    """
 
     def unwrap(self) -> T:
+        """Return the success payload.
+
+        Raises:
+            RuntimeError: If this result is a failure, chained from the
+                attached exception.
+
+        """
         if self.failure:
             msg = c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
             raise RuntimeError(msg) from self.exception
         return self.value
 
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:
+        """Return the payload on success, otherwise ``default``.
+
+        Args:
+            default: The fallback value used when this result is a failure.
+
+        Returns:
+            The success payload or ``default``.
+
+        """
         if self.success:
             return self._payload
         return default
 
     def unwrap_or_else[DefaultT](self, func: Callable[[], DefaultT]) -> T | DefaultT:
+        """Return the payload on success, otherwise ``func()``.
+
+        Args:
+            func: The callable producing the fallback value on failure.
+
+        Returns:
+            The success payload or the ``func()`` result.
+
+        """
         if self.success:
             return self._payload
         return func()

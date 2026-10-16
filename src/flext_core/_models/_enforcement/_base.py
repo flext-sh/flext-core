@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._typings.base import FlextTypingBase
+from flext_core._models import FlextModelsPydantic
+from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsEnforcementModelBase(FlextModelsPydantic.BaseModel):

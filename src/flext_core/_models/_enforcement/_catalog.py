@@ -11,9 +11,11 @@ from typing import Annotated
 from pydantic import Discriminator, Field, model_validator
 
 from flext_core import c
-from flext_core._models._enforcement._base import FlextModelsEnforcementModelBase
-from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-from flext_core._typings.base import FlextTypingBase
+from flext_core._models._enforcement import (
+    FlextModelsEnforcementModelBase,
+    FlextModelsEnforcementSources,
+)
+from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
@@ -80,6 +82,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             Returns:
                 The resulting ``tuple[FlextModelsEnforcementCatalog.EnforcementRuleSpec,
                     ...]``.
+
             """
             return tuple(rule for rule in self.rules if rule.source.kind == kind.value)
 
