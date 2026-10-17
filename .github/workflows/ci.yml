@@ -16,11 +16,11 @@ name: CI
   push:
     branches:
       - main
-      - upload-20261007
+      - 0.12.0-dev
   pull_request:
     branches:
       - main
-      - upload-20261007
+      - 0.12.0-dev
     types: [opened, synchronize, reopened, ready_for_review, edited]
   workflow_call:
     secrets:

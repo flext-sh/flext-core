@@ -5,13 +5,13 @@
 # @flext-rendered-by: flext-infra 0.12.0
 [dependency-groups]
 dev = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@upload-20261007",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "mkdocstrings-python>=2.0.9",
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
   "editables>=0.6",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@upload-20261007",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis",
   "mkdocs",
   "mkdocs-autorefs",
@@ -67,15 +67,20 @@ dev = [
   "yamlfix>=1.19.1",
 ]
 codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@upload-20261007",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
 ]
 
 [tool.uv]
 constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
+override-dependencies = [
+  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+  "flext-core",
+]
 package = false
-override-dependencies = ["flext-core"]
 
 [tool.uv.sources.flext-core]
 path = "../../.."
