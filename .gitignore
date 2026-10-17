@@ -38,8 +38,8 @@
 .gemini/*.agents-governance.json
 .claude/settings.local.json
 
-# Private local config overrides
-/config/codegen-overrides.local.yaml
+# Private local config layers
+/config/*.local.yaml
 
 # Gas City skill projections (runtime state, never source)
 .agents/skills/.gc-skill-ownership.json

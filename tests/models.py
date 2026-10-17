@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Models for flext-core tests.
 
 Provides TestsFlextModels using composition with TestsFlextModels and TestsFlextModels.
@@ -18,8 +19,7 @@ from typing import override
 
 from flext_tests import FlextTestsModels
 
-from tests._models import TestsFlextModelsMixins
-from tests._models.mixins import TestsFlextModelsNamespace
+from tests._models import TestsFlextModelsMixins, TestsFlextModelsNamespace
 
 
 class TestsFlextModels(FlextTestsModels):

@@ -65,6 +65,7 @@ Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
 dev = [
+  "mkdocstrings-python>=2.0.9",
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
@@ -81,7 +82,6 @@ dev = [
   "mkdocs-redirects>=1.2.3",
   "mkdocs-section-index>=0.3.12",
   "mkdocstrings>=1.0.6",
-  "mkdocstrings-python>=2.0.8",
   "msgpack-types",
   "mypy>=2.3.1",
   "platformdirs>=4.12.0",
@@ -153,7 +153,6 @@ omit = [
 
 [tool.deptry]
 known_first_party = ["flext_core"]
-optional_dependencies_dev_groups = ["dev"]
 
 [tool.flext.docs]
 package_name = "flext_core"
@@ -165,7 +164,7 @@ scan_dirs = ["src"]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-include = ["/src/flext_core/**"]
+only-include = ["src/flext_core"]
 
 [tool.hatch.build.targets.wheel.sources]
 "src/flext_core" = "flext_core"
@@ -174,7 +173,7 @@ include = ["/src/flext_core/**"]
 "pyproject.toml" = "flext_core/pyproject.toml"
 
 [tool.hatch.build.targets.sdist]
-include = ["/src/flext_core/**"]
+only-include = ["src/flext_core"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "pyproject.toml" = "pyproject.toml"
@@ -465,12 +464,12 @@ notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
 
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = [
+  "examples._models.ExamplesFlextSharedHandle",
+  "examples._models.ExamplesFlextSharedPerson",
   "examples._models.ex04._CommandEnvelope",
   "examples._models.ex04._EventEnvelope",
   "examples._models.ex04._QueryEnvelope",
   "examples._models.ex10.Message",
-  "examples._models.handle.ExamplesFlextSharedHandle",
-  "examples._models.person.ExamplesFlextSharedPerson",
   "examples.m.Examples.Handle",
   "examples.m.Examples.Person",
   "examples.s",

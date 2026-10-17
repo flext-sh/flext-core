@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping, Set as AbstractSet
+from collections.abc import Callable, Iterator, MutableMapping, Set as AbstractSet
+from concurrent.futures import Future
 from datetime import date, time, tzinfo
 from enum import Enum
 from pathlib import Path
@@ -79,6 +80,11 @@ class FlextTypesServices:
         | LoggingExceptionInfo
     )
     type LoggingEvent = MutableMapping[str, LoggingEventValue]
+    type LoggingContext = dict[str, LoggingEventValue]
+    type TextStream = TextIO
+    type BinaryStream = BinaryIO
+    type TextStreamIterator = Iterator[str]
+    type LoggingWriteCompletion = Future[int]
     type TextStream = TextIO
     type BinaryStream = BinaryIO
     type LoggingProcessor = Callable[
@@ -160,8 +166,10 @@ class FlextTypesServices:
         JsonPayload | FlextProtocolsResult.ResultView[JsonPayload] | None,
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
-    type LoggerFactory = Callable[..., FlextProtocolsLogging.OutputLogger] | None
-    type LoggerWrapperFactory = Callable[[], type[FlextProtocolsLogging.Logger]]
+    type LoggerFactory = FlextProtocolsLogging.OutputLoggerFactory | None
+    type LoggerWrapperFactory = Callable[
+        [], type[FlextProtocolsLogging.NativeLoggingWrapper]
+    ]
 
     type SortableObjectType = str | int | float
     type ValueAdapter[T] = FlextTypesPydantic.TypeAdapter[T]

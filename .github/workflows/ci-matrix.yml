@@ -26,9 +26,9 @@ permissions:
 # End SECTION: permissions
 
 # === SECTION: concurrency (managed) ===
-# Source: template (one run per workflow+ref)
+# Source: template (one manual run per workflow, event and ref).
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 # End SECTION: concurrency
 
