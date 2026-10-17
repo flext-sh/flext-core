@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from types import MappingProxyType
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 __all__: tuple[str, ...] = ()
 
