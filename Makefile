@@ -452,8 +452,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
-BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check census census-constants smells test test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -1199,6 +1199,36 @@ _activated-profile-environment-report: _builtin_require_interpreter
 
 
 
+profile-lanes: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'profile-lanes' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-lanes,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-lanes)
+
+.PHONY: _activated-profile-lanes
+
+_activated-profile-lanes: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-lanes,$(call RUN_PUBLIC,profile-lanes))
+
+
+
+
+profile-lanes-report: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'profile-lanes-report' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-lanes-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-lanes-report)
+
+.PHONY: _activated-profile-lanes-report
+
+_activated-profile-lanes-report: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-lanes-report,$(call RUN_PUBLIC,profile-lanes-report))
+
+
+
+
 profile-mod: _builtin_require_workspace
 	@printf '==> %s | project=%s | profile=%s\n' 'profile-mod' "$(PROJECT_ROOT)" 'standalone'
 
@@ -1525,18 +1555,11 @@ _activated-initialize: _builtin_require_interpreter
 
 
 
-
-project-new: _builtin_require_workspace
+# This operation consumes the declared physical runtime without activating the
+# environment file it may itself regenerate.
+project-new: _builtin_require_workspace _builtin_require_interpreter
 	@printf '==> %s | project=%s | profile=%s\n' 'project-new' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-project-new,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-project-new)
-
-.PHONY: _activated-project-new
-
-_activated-project-new: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-project-new,$(call RUN_PUBLIC,project-new))
+	$(call RUN_PUBLIC,project-new)
 
 
 
@@ -1723,7 +1746,7 @@ upg:
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make upg to execute it.'
 
 upg-sources:
-	@printf '  %-16s %s\n' 'upg-sources' 'Migrate an explicitly selected dependency Git reference through the current tool owner before the consumer resolves its own locks.'
+	@printf '  %-16s %s\n' 'upg-sources' 'Migrate an explicitly selected dependency Git reference in the root and its declared member manifests before resolving their locks.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make upg-sources to execute it.'
 
 validate-lifecycle:
@@ -1785,6 +1808,14 @@ profile-environment:
 profile-environment-report:
 	@printf '  %-16s %s\n' 'profile-environment-report' 'Render the profile retained by the canonical environment provenance guard.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-environment-report to execute it.'
+
+profile-lanes:
+	@printf '  %-16s %s\n' 'profile-lanes' 'Profile the complete read-only workspace lane audit and retain its native failure outcome.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-lanes to execute it.'
+
+profile-lanes-report:
+	@printf '  %-16s %s\n' 'profile-lanes-report' 'Render the retained profile of the complete workspace lane audit.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-lanes-report to execute it.'
 
 profile-mod:
 	@printf '  %-16s %s\n' 'profile-mod' 'Profile the canonical mutating codemod lifecycle and retain the profile on failure.'
@@ -1958,7 +1989,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'upg' 'Resolve the newest declared releases, write the uv and mise locks, then prove the upgraded tree still converges; gates stay with make check.';
 
-	@printf '  %-16s %s\n' 'upg-sources' 'Migrate an explicitly selected dependency Git reference through the current tool owner before the consumer resolves its own locks.';
+	@printf '  %-16s %s\n' 'upg-sources' 'Migrate an explicitly selected dependency Git reference in the root and its declared member manifests before resolving their locks.';
 
 	@printf '  %-16s %s\n' 'validate-lifecycle' 'Execute the declared public runtime acceptance steps serially, with root-owned mutation fanout and typed first-failure receipts.';
 
@@ -1989,6 +2020,10 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'profile-environment' 'Profile the canonical environment provenance guard without invoking that guard as a prerequisite.';
 
 	@printf '  %-16s %s\n' 'profile-environment-report' 'Render the profile retained by the canonical environment provenance guard.';
+
+	@printf '  %-16s %s\n' 'profile-lanes' 'Profile the complete read-only workspace lane audit and retain its native failure outcome.';
+
+	@printf '  %-16s %s\n' 'profile-lanes-report' 'Render the retained profile of the complete workspace lane audit.';
 
 	@printf '  %-16s %s\n' 'profile-mod' 'Profile the canonical mutating codemod lifecycle and retain the profile on failure.';
 
@@ -2320,7 +2355,8 @@ ifneq ($(MAKECMDGOALS),help)
 endif
 
 # Runtime commands authenticate the graph setup provisioned; only setup installs.
-# Generation authenticates after publishing its declared activation inputs.
+# Generation guards its physical runtime and consumed inputs at publication;
+# the complete installed graph remains the explicit audit's responsibility.
 _builtin_require_environment: _builtin_require_interpreter
 ifneq ($(MAKECMDGOALS),help)
 	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
@@ -2354,8 +2390,9 @@ _upg_install_runtime:
 # consumer whose lock still pins an older producer (one without the routes
 # this template calls), or that has no view lock yet, upgrades in one run.
 # The corrective projection is then re-locked by _upg_reconcile_locks.
-# Only this elected runtime owner resolves both native views; attached
-# members delegate before bootstrap instead of writing member locks.
+# Only this elected runtime owner resolves both native UV views. Attached
+# members delegate before bootstrap; this owner also refreshes their declared
+# native tool locks for independent setup without installing member runtimes.
 # Reparse a changed dispatcher once; a second change fails the fixed point.
 .PHONY: _upg_lifecycle _upg_converge
 
@@ -2382,7 +2419,7 @@ _builtin-upg-sources: _builtin_require_environment
 	fi
 
 	@$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(SOURCE_ROOT)" \
-		--projects . --apply --git-source-url-prefix "$(SOURCE_URL_PREFIX)" \
+		--apply --git-source-url-prefix "$(SOURCE_URL_PREFIX)" \
 		--git-source-ref-from "$(SOURCE_REF_FROM)" --git-source-ref-to "$(SOURCE_REF_TO)"
 
 _upg_lifecycle: _builtin_setup_submodules
@@ -2401,7 +2438,7 @@ _upg_lifecycle: _builtin_setup_submodules
 	@$(SELF_MAKE) _upg_reconcile_locks
 	@$(SELF_MAKE) _upg_install_runtime
 	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
-	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what mise-config --scope self
+	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what mise-config --scope all
 	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what makefile --scope self
 	+@$(SELF_MAKE) _upg_provision_tools
 	@$(PROJECT_FLEXT_INFRA) deps modernize --repository-root "$(PROJECT_ROOT)" \
@@ -2409,11 +2446,13 @@ _upg_lifecycle: _builtin_setup_submodules
 	$(call RUN_PUBLIC_PRODUCE,gen)
 	+@$(SELF_MAKE) _upg_converge
 
-# Reparse the projected dispatcher before installing: its declared backend keys
-# must agree with the Mise configuration just generated by the upgraded owner.
+# Reparse the projected dispatcher before resolving the declared native tool
+# locks. Each writable FLEXT member retains its own lock for independent setup;
+# only the elected runtime receives an installation.
 .PHONY: _upg_provision_tools
 _upg_provision_tools:
 	@mise -C "$(PROJECT_ROOT)" lock --bump
+
 	@mise -C "$(PROJECT_ROOT)" install --locked --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"
 
 # Complete the upgrade against the projections just published. Re-reading the
@@ -2537,7 +2576,7 @@ _builtin_test_file_all: _builtin_require_environment
 	scratch_tmp="$$(cd "$$scratch/tmp" && pwd -P)"; \
 	TMPDIR="$$scratch_tmp"; TMP="$$scratch_tmp"; TEMP="$$scratch_tmp"; \
 	export TMPDIR TMP TEMP; \
-	TESTMON_DATAFILE="$$database" $(PYTEST_BOUNDED) $(PROJECT_INFRA_RUN) -m flext_infra._pytest_entry file
+	TESTMON_DATAFILE="$$database" $(PROJECT_INFRA_RUN) -m flext_infra._pytest_entry file
 
 # Literal-file selection and verdicts belong to the existing canonical checker.
 # Export the raw Make value instead of interpolating operator input into shell code.
@@ -2604,7 +2643,7 @@ profile-mypy-report: _builtin_require_environment
 
 # Profile the complete generation operation, including its publication.
 .PHONY: profile-gen
-profile-gen: _builtin_require_environment
+profile-gen: _builtin_require_interpreter
 	@mkdir -p "$(PROFILE_REPORTS_DIR)"
 	@set -eu; \
 	scope=all; \
@@ -2630,6 +2669,18 @@ _builtin-profile-environment-report: _builtin_require_interpreter
 	@cd "$(PROJECT_ROOT)" || exit $$?; \
 		$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
 		"$(PROFILE_REPORTS_DIR)/environment.pstats"
+
+# Measure the same complete lane audit used by the public audit verb.
+_builtin-profile-lanes: _builtin_require_environment
+	@mkdir -p "$(PROFILE_REPORTS_DIR)"
+	@$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry \
+		"$(PROFILE_REPORTS_DIR)/lanes.pstats" \
+		workspace verify-lanes --repo-root "$(PROJECT_ROOT)"
+
+_builtin-profile-lanes-report: _builtin_require_environment
+	@cd "$(PROJECT_ROOT)" || exit $$?; \
+		$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
+		"$(PROFILE_REPORTS_DIR)/lanes.pstats"
 
 # Measure the same mutating codemod lifecycle, retaining profiles on failure.
 _builtin-profile-mod: _builtin_require_environment
@@ -2692,7 +2743,8 @@ export TMPDIR TMP TEMP; \
 		"$(PROFILE_REPORTS_DIR)/pytest.pstats"
 
 _builtin-profile-test-report: _builtin_require_environment
-	@$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
+	@cd "$(PROJECT_ROOT)" || exit $$?; \
+		$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
 		"$(PROFILE_REPORTS_DIR)/pytest.pstats" "$(PROFILE_REPORTS_DIR)/pytest.pstats.json"
 
 
@@ -2810,17 +2862,17 @@ export FLEXT_NEW_FLEXT_SOURCE := $(value FLEXT_SOURCE)
 export FLEXT_NEW_YEAR := $(value YEAR)
 
 
-_builtin-project-new: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) codegen new --apply --name "$$FLEXT_NEW_NAME" --kind "$$FLEXT_NEW_KIND" --output-root "$$FLEXT_NEW_OUTPUT_ROOT" --provider "$$FLEXT_NEW_PROVIDER" --repository-url "$$FLEXT_NEW_REPOSITORY_URL" --repository-branch "$$FLEXT_NEW_REPOSITORY_BRANCH" --flext-repository-url "$$FLEXT_NEW_FLEXT_REPOSITORY_URL" --flext-repository-ref "$$FLEXT_NEW_FLEXT_REPOSITORY_REF" --license "$$FLEXT_NEW_LICENSE" --author-name "$$FLEXT_NEW_AUTHOR_NAME" --author-email "$$FLEXT_NEW_AUTHOR_EMAIL" --upstream "$$FLEXT_NEW_UPSTREAM" --flext-source "$$FLEXT_NEW_FLEXT_SOURCE" --year "$$FLEXT_NEW_YEAR"
+_builtin-project-new: _builtin_require_interpreter
+	@$(PROJECT_FLEXT_INFRA) codegen new --repository-root "$(PROJECT_ROOT)" --apply --name "$$FLEXT_NEW_NAME" --kind "$$FLEXT_NEW_KIND" --output-root "$$FLEXT_NEW_OUTPUT_ROOT" --provider "$$FLEXT_NEW_PROVIDER" --repository-url "$$FLEXT_NEW_REPOSITORY_URL" --repository-branch "$$FLEXT_NEW_REPOSITORY_BRANCH" --flext-repository-url "$$FLEXT_NEW_FLEXT_REPOSITORY_URL" --flext-repository-ref "$$FLEXT_NEW_FLEXT_REPOSITORY_REF" --license "$$FLEXT_NEW_LICENSE" --author-name "$$FLEXT_NEW_AUTHOR_NAME" --author-email "$$FLEXT_NEW_AUTHOR_EMAIL" --upstream "$$FLEXT_NEW_UPSTREAM" --flext-source "$$FLEXT_NEW_FLEXT_SOURCE" --year "$$FLEXT_NEW_YEAR"
 
 
-_builtin_gen_all: _builtin_require_environment
+_builtin_gen_all: _builtin_require_interpreter
 	@set -eu; \
 	scope=all; \
 	if [ "$(strip $(CI))" = "Y" ]; then scope=self; fi; \
 	$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --scope "$$scope"
 
-_builtin-gen-footprint: _builtin_require_environment
+_builtin-gen-footprint: _builtin_require_interpreter
 	@$(PROJECT_FLEXT_INFRA) codegen footprint --root "$(PROJECT_ROOT)" --scope all
 
 _builtin-bootstrap-candidate: _builtin_require_environment

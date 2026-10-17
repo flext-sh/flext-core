@@ -41,7 +41,9 @@ class FlextModelsConfig:
         completion: Annotated[
             FlextTypesServices.LoggingWriteCompletion,
             FlextModelsPydantic.Field(
-                description="Native completion receiving this job's result or first failure."
+                description=(
+                    "Native completion receiving this job's result or first failure."
+                ),
             ),
         ]
 

@@ -13,27 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import p, r
-
-
-def _double(value: int) -> int:
-    return value * 2
-
-
-def _increment(value: int) -> p.Result[int]:
-    return r[int].ok(value + 1)
-
-
-def _shout(error: str) -> str:
-    return error.upper()
-
-
-def _forty_two(_error: str) -> int:
-    return 42
-
-
-def _zero(_error: str) -> int:
-    return 0
+from tests import p, r, tm, u
 
 
 class TestsFlextCoreDeprecationWarnings:
@@ -41,120 +21,116 @@ class TestsFlextCoreDeprecationWarnings:
 
     @staticmethod
     def test_ok_reports_success_state() -> None:
-        # Arrange / Act
-        """Test ok reports success state."""
+        """A successful result reports success and never failure."""
         result: p.Result[str] = r[str].ok("value")
 
-        # Assert
-        assert result.success is True
-        assert result.failure is False
+        tm.that(result.success, eq=True)
+        tm.that(result.failure, eq=False)
 
     @staticmethod
     def test_fail_reports_failure_state() -> None:
-        # Arrange / Act
-        """Test fail reports failure state."""
+        """A failed result reports failure and never success."""
         result: p.Result[str] = r[str].fail("deprecated")
 
-        # Assert
-        assert result.failure is True
-        assert result.success is False
+        tm.that(result.failure, eq=True)
+        tm.that(result.success, eq=False)
 
     @staticmethod
     def test_ok_exposes_wrapped_value() -> None:
-        """Test ok exposes wrapped value."""
+        """A successful result exposes its wrapped value."""
         result: p.Result[int] = r[int].ok(42)
 
-        assert result.value == 42
-        assert result.unwrap() == 42
+        tm.that(result.value, eq=42)
+        tm.that(result.unwrap(), eq=42)
 
     @staticmethod
     def test_fail_exposes_error_message() -> None:
-        """Test fail exposes error message."""
+        """A failed result exposes its error message."""
         result: p.Result[int] = r[int].fail("boom")
 
-        assert result.error == "boom"
+        tm.that(result.error, eq="boom")
 
     @staticmethod
     def test_unwrap_on_failure_raises() -> None:
-        """Test unwrap on failure raises."""
+        """Unwrapping a failed result raises instead of returning a value."""
         result: p.Result[int] = r[int].fail("boom")
 
-        with pytest.raises(RuntimeError):
+        with pytest.raises(RuntimeError, match="boom"):
             result.unwrap()
 
     @staticmethod
     def test_map_transforms_success_value() -> None:
-        """Test map transforms success value."""
-        result: p.Result[int] = r[int].ok(5).map(_double)
+        """Map applies the callable to a successful value."""
+        result: p.Result[int] = r[int].ok(5).map(u.Tests.double)
 
-        assert result.success is True
-        assert result.unwrap() == 10
+        tm.that(result.success, eq=True)
+        tm.that(result.unwrap(), eq=10)
 
     @staticmethod
     def test_map_is_skipped_on_failure() -> None:
-        """Test map is skipped on failure."""
-        result: p.Result[int] = r[int].fail("boom").map(_double)
+        """Map keeps the failure untouched when the result failed."""
+        result: p.Result[int] = r[int].fail("boom").map(u.Tests.double)
 
-        assert result.failure is True
-        assert result.error == "boom"
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, eq="boom")
 
     @staticmethod
     def test_flat_map_chains_fallible_success() -> None:
-        """Test flat map chains fallible success."""
-        result: p.Result[int] = r[int].ok(5).flat_map(_increment)
+        """flat_map chains the fallible callable on success."""
+        result: p.Result[int] = r[int].ok(5).flat_map(u.Tests.increment)
 
-        assert result.unwrap() == 6
+        tm.that(result.unwrap(), eq=6)
 
     @staticmethod
     def test_flat_map_short_circuits_on_failure() -> None:
-        """Test flat map short circuits on failure."""
-        result: p.Result[int] = r[int].fail("boom").flat_map(_increment)
+        """flat_map keeps the failure untouched when the result failed."""
+        result: p.Result[int] = r[int].fail("boom").flat_map(u.Tests.increment)
 
-        assert result.failure is True
-        assert result.error == "boom"
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, eq="boom")
 
     @staticmethod
     def test_map_error_transforms_failure_only() -> None:
-        """Test map error transforms failure only."""
-        failed: p.Result[int] = r[int].fail("boom").map_error(_shout)
-        succeeded: p.Result[int] = r[int].ok(1).map_error(_shout)
+        """map_error transforms only the failure payload."""
+        failed: p.Result[int] = r[int].fail("boom").map_error(u.Tests.shout)
+        succeeded: p.Result[int] = r[int].ok(1).map_error(u.Tests.shout)
 
-        assert failed.error == "BOOM"
-        assert succeeded.unwrap() == 1
+        tm.that(failed.error, eq="BOOM")
+        tm.that(succeeded.unwrap(), eq=1)
 
     @staticmethod
     def test_recover_supplies_value_on_failure() -> None:
-        """Test recover supplies value on failure."""
-        result: p.Result[int] = r[int].fail("boom").recover(_forty_two)
+        """Recover supplies the callable's value on failure."""
+        result: p.Result[int] = r[int].fail("boom").recover(u.Tests.forty_two)
 
-        assert result.success is True
-        assert result.unwrap() == 42
+        tm.that(result.success, eq=True)
+        tm.that(result.unwrap(), eq=42)
 
     @staticmethod
     def test_recover_leaves_success_untouched() -> None:
-        """Test recover leaves success untouched."""
-        result: p.Result[int] = r[int].ok(5).recover(_zero)
+        """Recover keeps the successful value untouched."""
+        result: p.Result[int] = r[int].ok(5).recover(u.Tests.zero)
 
-        assert result.unwrap() == 5
+        tm.that(result.unwrap(), eq=5)
 
     @staticmethod
     def test_tap_observes_success_without_changing_value() -> None:
-        """Test tap observes success without changing value."""
+        """Tap observes a successful value without changing it."""
         seen: list[int] = []
 
         result: p.Result[int] = r[int].ok(5).tap(seen.append)
 
-        assert seen == [5]
-        assert result.unwrap() == 5
+        tm.that(seen, eq=[5])
+        tm.that(result.unwrap(), eq=5)
 
     @staticmethod
     def test_tap_error_runs_only_on_failure() -> None:
-        """Test tap error runs only on failure."""
+        """tap_error observes only failures."""
         failure_seen: list[str] = []
         success_seen: list[str] = []
 
         r[int].fail("boom").tap_error(failure_seen.append)
         r[int].ok(1).tap_error(success_seen.append)
 
-        assert failure_seen == ["boom"]
-        assert success_seen == []
+        tm.that(failure_seen, eq=["boom"])
+        tm.that(success_seen, eq=[])

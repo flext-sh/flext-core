@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
 import pytest
 from typing_extensions import TypeForm
@@ -183,7 +183,7 @@ class TestsFlextCorePydanticDeclarations:
     class _Credentials(m.BaseModel):
         """Model whose secret field is declared through the typings facade."""
 
-        model_config = m.ConfigDict(frozen=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         token: t.SecretStr
 

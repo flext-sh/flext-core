@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import d, e, r, u
+from tests import d, e, r, tm, u
 
 if TYPE_CHECKING:
     from tests import p
@@ -89,21 +89,18 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         assert business_operation.__name__ == "business_operation"
 
     @staticmethod
-    def test_railway_nests_a_preexisting_result() -> None:
-        # Arrange
-        """Test railway nests a preexisting result."""
+    def test_railway_preserves_a_preexisting_result() -> None:
+        """A preexisting result retains its identity and successful payload."""
+        original = r[str].ok("already_wrapped")
 
         @d.railway()
         def returns_result() -> p.Result[str]:
-            return r[str].ok("already_wrapped")
+            return original
 
-        # Act
         outcome = returns_result()
 
-        # Assert: railway wraps the returned value verbatim, producing r[r[str]].
-        inner = u.Tests.assert_success(outcome)
-        assert isinstance(inner, r)
-        assert u.Tests.assert_success(inner, expected_value="already_wrapped")
+        tm.that(outcome is original, eq=True)
+        tm.that(tm.ok(outcome), eq="already_wrapped")
 
     def test_retry_succeeds_after_transient_failure(self) -> None:
         # Arrange

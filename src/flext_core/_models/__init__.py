@@ -14,37 +14,36 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._models import (
-        _base_parts,
-        _container_parts,
-        _context,
-        _cqrs_parts,
-        _enforcement,
-        _exception_params_parts,
-        _project_metadata_parts,
+        _base_parts as _base_parts,
+        _container_parts as _container_parts,
+        _context as _context,
+        _cqrs_parts as _cqrs_parts,
+        _enforcement as _enforcement,
+        _exception_params_parts as _exception_params_parts,
+        _project_metadata_parts as _project_metadata_parts,
     )
-    from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_03 import (
+    from flext_core._models._context import (
+        FlextContextScopeOps,
+        FlextModelsContextData,
+        FlextModelsContextExport,
+        FlextModelsContextMetadata,
+        FlextModelsContextProxyVar,
         FlextModelsContextScope,
+        FlextModelsContextTokens,
     )
-    from flext_core._models._context._data import FlextModelsContextData
-    from flext_core._models._context._export import FlextModelsContextExport
-    from flext_core._models._context._metadata import FlextModelsContextMetadata
-    from flext_core._models._context._proxy_var import FlextModelsContextProxyVar
-    from flext_core._models._context._scope_ops import FlextContextScopeOps
-    from flext_core._models._context._tokens import FlextModelsContextTokens
-    from flext_core._models._enforcement._base import (
+    from flext_core._models._enforcement import (
         FlextModelsEnforcementBase,
-        FlextModelsEnforcementModelBase,
-    )
-    from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
-    from flext_core._models._enforcement._inspection import (
+        FlextModelsEnforcementCatalog,
         FlextModelsEnforcementInspection,
-    )
-    from flext_core._models._enforcement._params import FlextModelsEnforcementParams
-    from flext_core._models._enforcement._resolution import (
+        FlextModelsEnforcementModelBase,
+        FlextModelsEnforcementParams,
         FlextModelsEnforcementResolution,
+        FlextModelsEnforcementSources,
     )
-    from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+    from flext_core._models._project_metadata_parts import (
+        FlextModelsProjectMetadataAggregates,
+        FlextModelsProjectMetadataContract,
+        FlextModelsProjectMetadataDocument,
         FlextModelsPyprojectIngressContract,
     )
     from flext_core._models.base import FlextModelsBase
@@ -106,6 +105,9 @@ __all__: tuple[str, ...] = (
     "FlextModelsNamespace",
     "FlextModelsOptions",
     "FlextModelsProjectMetadata",
+    "FlextModelsProjectMetadataAggregates",
+    "FlextModelsProjectMetadataContract",
+    "FlextModelsProjectMetadataDocument",
     "FlextModelsPydantic",
     "FlextModelsPyprojectIngressContract",
     "FlextModelsRegistry",
@@ -159,6 +161,15 @@ install_lazy_exports(
         "FlextModelsNamespace": ".namespace",
         "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
+        "FlextModelsProjectMetadataAggregates": (
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_03"
+        ),
+        "FlextModelsProjectMetadataContract": (
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_01"
+        ),
+        "FlextModelsProjectMetadataDocument": (
+            "._project_metadata_parts.flextmodelsprojectmetadata_part_04"
+        ),
         "FlextModelsPydantic": ".pydantic",
         "FlextModelsPyprojectIngressContract": (
             "._project_metadata_parts.flextmodelsprojectmetadata_part_05"

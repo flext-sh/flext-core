@@ -13,11 +13,14 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._beartype import _class_visitor_parts, _helpers_parts
+    from flext_core._utilities._beartype import (
+        _class_visitor_parts as _class_visitor_parts,
+        _helpers_parts as _helpers_parts,
+    )
     from flext_core._utilities._beartype._alias_visitor import (
         FlextUtilitiesBeartypeAliasVisitor,
     )
-    from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
+    from flext_core._utilities._beartype._class_visitor_parts import (
         alias_first_violation,
     )
     from flext_core._utilities._beartype._field_union_scan import declared_union_members

@@ -25,7 +25,8 @@ from types import ModuleType
 
 import pytest
 
-from tests import u
+from flext_core.config_sources import FlextStrictYamlConfigSource
+from tests import tm, u
 
 _SUBCLASS_SOURCE = '''
 from __future__ import annotations
@@ -211,6 +212,85 @@ class TestPackagedConfigWithUserPreferences:
             assert config.greeting != parent.SynthConfig.fetch_global().greeting
             assert module.NestedConfig.fetch_global() is config
             assert config is not parent.SynthConfig.fetch_global()
+
+    @staticmethod
+    @pytest.mark.parametrize("layout", ["site-packages", "src", "member/src"])
+    def test_inherited_yaml_and_child_overrides_share_one_source_chain(
+        tmp_path: Path,
+        layout: str,
+    ) -> None:
+        """Required inherited values and child overrides come from their own YAML."""
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        ):
+            root = tmp_path / layout
+            _install_package(
+                root,
+                "synthpkg_base_chain",
+                "greeting: base\nlevel: 7\nparent_value: inherited\nentries: [base]\n",
+            )
+            _install_package(
+                root,
+                "synthpkg_child_chain",
+                "greeting: child\nchild_value: declared\nentries: [child]\n",
+            )
+            package = root / "synthpkg_child_chain"
+            (package / "owner.py").write_text(
+                "from synthpkg_base_chain._config import SynthConfig\n"
+                "class ChildConfig(SynthConfig):\n"
+                "    parent_value: str\n"
+                "    child_value: str\n"
+                "    entries: list[str]\n"
+                "class GrandchildConfig(ChildConfig):\n"
+                "    pass\n",
+                encoding="utf-8",
+            )
+            module = importlib.import_module("synthpkg_child_chain.owner")
+            inherited = module.GrandchildConfig.fetch_global()
+            expected = FlextStrictYamlConfigSource(
+                module.GrandchildConfig,
+                yaml_file=(
+                    root / "synthpkg_base_chain" / "config" / "defaults.yaml",
+                    package / "config" / "defaults.yaml",
+                ),
+                deep_merge=True,
+            )()
+
+            tm.that(inherited.model_dump(), eq=expected)
+            tm.that(module.GrandchildConfig.fetch_global() is inherited, eq=True)
+
+    @staticmethod
+    def test_child_declared_file_order_overrides_its_parent(tmp_path: Path) -> None:
+        """A child's explicit order wins when the same sources appear in its MRO."""
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        ):
+            root = tmp_path / "site-packages"
+            _install_package(root, "synthpkg_ordered_chain", "greeting: defaults\n")
+            package = root / "synthpkg_ordered_chain"
+            first = package / "config" / "first.yaml"
+            second = package / "config" / "second.yaml"
+            first.write_text("greeting: first\nlevel: 1\n", encoding="utf-8")
+            second.write_text("greeting: second\nlevel: 2\n", encoding="utf-8")
+            (package / "owner.py").write_text(
+                "from typing import ClassVar\n"
+                "from synthpkg_ordered_chain._config import SynthConfig\n"
+                "class ParentConfig(SynthConfig):\n"
+                "    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = (\n"
+                "        'first.yaml', 'second.yaml')\n"
+                "class ChildConfig(ParentConfig):\n"
+                "    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = (\n"
+                "        'second.yaml', 'first.yaml')\n",
+                encoding="utf-8",
+            )
+            module = importlib.import_module("synthpkg_ordered_chain.owner")
+            expected = FlextStrictYamlConfigSource(
+                module.ChildConfig,
+                yaml_file=(second, first),
+                deep_merge=True,
+            )()
+
+            tm.that(module.ChildConfig.fetch_global().model_dump(), eq=expected)
 
     @staticmethod
     def test_missing_declared_resource_never_borrows_repository_config(

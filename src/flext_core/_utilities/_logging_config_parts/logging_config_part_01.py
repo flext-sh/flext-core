@@ -117,9 +117,6 @@ class FlextUtilitiesLoggingConfig:
             Returns:
                 The number of characters admitted to the output queue.
 
-            Raises:
-                ValueError: If this writer has already stopped.
-
             """
             _ = self._admit(s)
             return len(s)

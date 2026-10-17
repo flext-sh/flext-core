@@ -16,13 +16,22 @@ if TYPE_CHECKING:
     from flext_core._utilities._logging_config_parts.logging_config_part_03 import (
         FlextUtilitiesLoggingConfig,
     )
+    from flext_core._utilities._logging_config_parts.logging_stream import (
+        FlextUtilitiesLoggingStream,
+    )
 
 
-__all__: tuple[str, ...] = ("FlextUtilitiesLoggingConfig",)
+__all__: tuple[str, ...] = (
+    "FlextUtilitiesLoggingConfig",
+    "FlextUtilitiesLoggingStream",
+)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextUtilitiesLoggingConfig": ".logging_config_part_03"}),
+    MappingProxyType({
+        "FlextUtilitiesLoggingConfig": ".logging_config_part_03",
+        "FlextUtilitiesLoggingStream": ".logging_stream",
+    }),
     public_exports=__all__,
 )

@@ -33,7 +33,7 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
     Container ops: `FlextContext.resolve_container()` — class-level.
     """
 
-    model_config = m.ConfigDict(
+    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         extra="forbid",
         validate_assignment=False,
         arbitrary_types_allowed=True,

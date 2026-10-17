@@ -226,6 +226,9 @@ class FlextModelsPydantic:
     class BaseSettings(_PydanticBaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
+    class EnvSettingsSource(pydantic_settings.EnvSettingsSource):
+        """Canonical environment source exported through the FLEXT models facade."""
+
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(

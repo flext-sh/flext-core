@@ -14,54 +14,30 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants import (
-        _enforcement_data,
-        _enforcement_parts,
-        _errors_parts,
+        _enforcement_data as _enforcement_data,
+        _enforcement_parts as _enforcement_parts,
+        _errors_parts as _errors_parts,
     )
-    from flext_core._constants._enforcement_data.flextpredicaterule import (
+    from flext_core._constants._enforcement_data import (
+        FlextConstantsEnforcementData,
         FlextPredicateRule,
-    )
-    from flext_core._constants._enforcement_data.flextsmellthresholds import (
         FlextSmellThresholds,
     )
-    from flext_core._constants._enforcement_data.package_data import (
-        FlextConstantsEnforcementData,
-    )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
+    from flext_core._constants._enforcement_parts import (
         FlextConstantsEnforcementEnums,
-    )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_02 import (
-        FlextConstantsEnforcementRuntime,
-    )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_03 import (
+        FlextConstantsEnforcementFixActions,
         FlextConstantsEnforcementNamespace,
-    )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
         FlextConstantsEnforcementRules,
-    )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_06 import (
+        FlextConstantsEnforcementRuntime,
+        FlextConstantsEnforcementSmellData,
         FlextConstantsEnforcementTargets,
     )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
-        FlextConstantsEnforcementSmellData,
-    )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
-        FlextConstantsEnforcementFixActions,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
-        FlextConstantsErrorsMessages,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_02 import (
-        FlextConstantsErrorsRuntimeExceptions,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
-        FlextConstantsErrorsValidationExceptions,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_04 import (
+    from flext_core._constants._errors_parts import (
         FlextConstantsErrorsDomainParser,
-    )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_05 import (
+        FlextConstantsErrorsMessages,
+        FlextConstantsErrorsRuntimeExceptions,
         FlextConstantsErrorsRuntimeSettings,
+        FlextConstantsErrorsValidationExceptions,
     )
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.config import FlextConstantsConfig

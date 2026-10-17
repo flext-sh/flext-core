@@ -111,7 +111,7 @@ class FlextConfig(BaseSettings):
         return sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml"))
 
     @classmethod
-    def _config_files(cls) -> list[Path]:
+    def config_files(cls) -> list[Path]:
         """Collect packaged ``config/*.yaml`` first, then the operator's overlay files.
 
         Later files win on key collision, so operator preferences override the
@@ -170,6 +170,26 @@ class FlextConfig(BaseSettings):
         return data
 
     @classmethod
+    def _config_source_files(cls) -> list[Path]:
+        """Compose each declaring owner's YAML in base-to-subclass precedence.
+
+        Each hook is bound to its own class, so inherited namespaces retain their
+        package resources. Shared files keep the most specific declaration's order
+        and enter the existing list-aware merger once.
+
+        Returns:
+            Ordered, unique source paths for the complete config inheritance chain.
+
+        """
+        paths = tuple(
+            path
+            for owner in reversed(cls.__mro__)
+            if issubclass(owner, FlextConfig)
+            for path in owner.config_files()
+        )
+        return list(reversed(dict.fromkeys(reversed(paths))))
+
+    @classmethod
     @override
     def settings_customise_sources(
         cls,
@@ -193,7 +213,7 @@ class FlextConfig(BaseSettings):
             # before settings construction; consumers never add local parsers.
             FlextStrictYamlConfigSource(
                 settings_cls,
-                yaml_file=cls._config_files(),
+                yaml_file=cls._config_source_files(),
                 yaml_config_section=FlextConstantsConfig.YAML_CONFIG_SECTION,
                 deep_merge=True,
                 transform=cls._transform_loaded_yaml,
@@ -221,7 +241,7 @@ class FlextConfig(BaseSettings):
             try:
                 created = cls()
             except ValidationError as error:
-                sources = ", ".join(str(path) for path in cls._config_files())
+                sources = ", ".join(str(path) for path in cls._config_source_files())
                 error.add_note(
                     f"Configuration owner: {inspect.getfile(cls)}; sources: {sources}"
                 )

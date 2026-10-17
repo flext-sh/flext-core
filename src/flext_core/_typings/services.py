@@ -85,8 +85,6 @@ class FlextTypesServices:
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
     type LoggingWriteCompletion = Future[int]
-    type TextStream = TextIO
-    type BinaryStream = BinaryIO
     type LoggingProcessor = Callable[
         [FlextProtocolsLogging.OutputLogger, str, LoggingEvent],
         LoggingEvent | str | bytes,
