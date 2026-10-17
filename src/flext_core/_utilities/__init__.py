@@ -14,69 +14,41 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities import (
-        _beartype,
-        _checker_parts,
-        _enforcement_collect_parts,
-        _enforcement_parts,
-        _logging_config_parts,
-        _logging_context_parts,
-        _mapper_access_parts,
-        _mapper_extract_parts,
-        _parser_targets_parts,
+        _beartype as _beartype,
+        _checker_parts as _checker_parts,
+        _enforcement_collect_parts as _enforcement_collect_parts,
+        _enforcement_parts as _enforcement_parts,
+        _logging_config_parts as _logging_config_parts,
+        _logging_context_parts as _logging_context_parts,
+        _mapper_access_parts as _mapper_access_parts,
+        _mapper_extract_parts as _mapper_extract_parts,
+        _parser_targets_parts as _parser_targets_parts,
     )
-    from flext_core._utilities._beartype._alias_visitor import (
+    from flext_core._utilities._beartype import (
         FlextUtilitiesBeartypeAliasVisitor,
-    )
-    from flext_core._utilities._beartype._class_visitor_parts._parts.class_visitor_part_02_01 import (
-        alias_first_violation,
-    )
-    from flext_core._utilities._beartype._field_union_scan import declared_union_members
-    from flext_core._utilities._beartype._import_blacklist_visitor import (
+        FlextUtilitiesBeartypeAttrVisitor,
+        FlextUtilitiesBeartypeClassVisitor,
+        FlextUtilitiesBeartypeDeprecatedVisitor,
+        FlextUtilitiesBeartypeFieldVisitor,
+        FlextUtilitiesBeartypeHelpers,
         FlextUtilitiesBeartypeImportBlacklistVisitor,
-    )
-    from flext_core._utilities._beartype._library_visitor import (
+        FlextUtilitiesBeartypeImportVisitor,
         FlextUtilitiesBeartypeLibraryVisitor,
-    )
-    from flext_core._utilities._beartype._module_source_deferred import (
-        deferred_alias,
-        guarded_imports,
-    )
-    from flext_core._utilities._beartype._module_source_provenance import owner_derived
-    from flext_core._utilities._beartype._module_source_scan import (
+        FlextUtilitiesBeartypeMethodVisitor,
+        FlextUtilitiesBeartypeModuleSource,
+        FlextUtilitiesBeartypeModuleVisitor,
+        FlextUtilitiesBeartypeTypeAliases,
+        alias_first_violation,
         bound_names,
         declarations,
+        declared_union_members,
+        deferred_alias,
         export_names,
+        guarded_imports,
         loads,
+        owner_derived,
         parse_module,
         scope_nodes,
-    )
-    from flext_core._utilities._beartype.attr_visitor import (
-        FlextUtilitiesBeartypeAttrVisitor,
-    )
-    from flext_core._utilities._beartype.class_visitor import (
-        FlextUtilitiesBeartypeClassVisitor,
-    )
-    from flext_core._utilities._beartype.deprecated_visitor import (
-        FlextUtilitiesBeartypeDeprecatedVisitor,
-    )
-    from flext_core._utilities._beartype.field_visitor import (
-        FlextUtilitiesBeartypeFieldVisitor,
-    )
-    from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
-    from flext_core._utilities._beartype.import_visitor import (
-        FlextUtilitiesBeartypeImportVisitor,
-    )
-    from flext_core._utilities._beartype.method_visitor import (
-        FlextUtilitiesBeartypeMethodVisitor,
-    )
-    from flext_core._utilities._beartype.module_source import (
-        FlextUtilitiesBeartypeModuleSource,
-    )
-    from flext_core._utilities._beartype.module_visitor import (
-        FlextUtilitiesBeartypeModuleVisitor,
-    )
-    from flext_core._utilities._beartype.type_aliases import (
-        FlextUtilitiesBeartypeTypeAliases,
     )
     from flext_core._utilities._guards_type_protocol_specs import (
         FlextUtilitiesGuardsTypeProtocolSpecsMixin,
@@ -84,6 +56,7 @@ if TYPE_CHECKING:
     from flext_core._utilities._guards_type_protocol_string import (
         FlextUtilitiesGuardsTypeProtocolStringMixin,
     )
+    from flext_core._utilities._logging_config_parts import FlextUtilitiesLoggingStream
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
@@ -191,6 +164,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesLogging",
     "FlextUtilitiesLoggingConfig",
     "FlextUtilitiesLoggingContext",
+    "FlextUtilitiesLoggingStream",
     "FlextUtilitiesMapper",
     "FlextUtilitiesMapperAccess",
     "FlextUtilitiesMapperExtract",
@@ -282,6 +256,7 @@ install_lazy_exports(
         "FlextUtilitiesLogging": ".logging",
         "FlextUtilitiesLoggingConfig": ".logging_config",
         "FlextUtilitiesLoggingContext": ".logging_context",
+        "FlextUtilitiesLoggingStream": "._logging_config_parts.logging_stream",
         "FlextUtilitiesMapper": ".mapper",
         "FlextUtilitiesMapperAccess": ".mapper_access",
         "FlextUtilitiesMapperExtract": ".mapper_extract",

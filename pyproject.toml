@@ -65,12 +65,13 @@ Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
 dev = [
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@upload-20261007",
   "mkdocstrings-python>=2.0.9",
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
   "editables>=0.6",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@upload-20261007",
   "hypothesis",
   "mkdocs",
   "mkdocs-autorefs",
@@ -126,7 +127,7 @@ dev = [
   "yamlfix>=1.19.1",
 ]
 codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@upload-20261007",
 ]
 
 [tool.codespell]
@@ -518,6 +519,7 @@ runtime-evaluated-base-classes = [
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract",
   "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract",
   "flext_core._models.base.FlextModelsBase.ArbitraryTypesModel",
+  "flext_core._models.base.FlextModelsBase.ContractModel",
   "flext_core._models.base.FlextModelsBase.FlexibleInternalModel",
   "flext_core._models.base.FlextModelsBase.FrozenModel",
   "flext_core._models.base.FlextModelsBase.ImmutableValueModel",
@@ -543,6 +545,7 @@ runtime-evaluated-base-classes = [
   "flext_core.m.Value",
   "flext_core.s",
   "flext_core.x",
+  "flext_tests.FlextTestsModels.Tests",
   "flext_tests.FlextTestsServiceBase",
   "flext_tests.FlextTestsUtilities.Tests",
   "flext_tests.h",

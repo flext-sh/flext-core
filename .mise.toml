@@ -11,10 +11,10 @@
 # `mise install` provisions it from mise.lock and every later `mise` resolved
 # through the mise-managed shims runs exactly that release. Python dependency
 # declarations remain owned by pyproject.toml. Tools are declared `latest`;
-# only `make upg` resolves them and writes the committed mise.lock. Mise uses
-# the lock wherever it pins a tool; an entry the lock does not carry yet
-# resolves normally instead of failing, so an outdated lock never blocks
-# `mise install`, `mise use`, setup or any verb (no strict locked mode).
+# only `make upg` resolves them and writes the committed mise.lock. Setup
+# installs declared tools with `mise install --locked`; missing or incompatible
+# lock entries fail. `make upg` runs `mise lock --bump` against the regenerated
+# manifest before installing from the resulting lock.
 
 # === SECTION: settings (managed) ===
 # Source: config:codegen.toolchain.mise_lockfile / mise_lockfile_platforms /
@@ -49,7 +49,7 @@ python = "3.13"
 "github:jdx/mise" = "2026.10.3"
 # Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 "uv" = "latest"
-"github:direnv/direnv" = "latest"
+"github:direnv/direnv" = { version = "latest", bin = "direnv" }
 "taplo" = "latest"
 "aqua:ast-grep/ast-grep" = "latest"
 "gitleaks" = "latest"

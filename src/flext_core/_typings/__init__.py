@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._typings import _base_parts
+    from flext_core._typings import _base_parts as _base_parts
     from flext_core._typings.annotateds import FlextTypesAnnotateds
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.config import FlextTypingConfig
