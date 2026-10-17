@@ -118,6 +118,17 @@ class TestsFlextCoreTypingsNew:
             adapter.validate_python(["a", 1])
 
     @staticmethod
+    def test_strict_str_tuple_adapter_rejects_coercion() -> None:
+        """strict_str_tuple_adapter accepts only a real tuple of strings."""
+        adapter = u.strict_str_tuple_adapter()
+        tm.that(adapter.validate_python(("\n", "\r\n")), eq=("\n", "\r\n"))
+        tm.that(adapter is u.strict_str_tuple_adapter(), eq=True)
+        with pytest.raises(c.ValidationError):
+            adapter.validate_python(["\n"])
+        with pytest.raises(c.ValidationError):
+            adapter.validate_python(("\n", 1))
+
+    @staticmethod
     def test_bool_adapter_accepts_bool() -> None:
         """bool_adapter validates boolean values."""
         flag = True

@@ -49,7 +49,7 @@ python = "3.13"
 "github:jdx/mise" = "2026.10.3"
 # Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 "uv" = "latest"
-"direnv" = "latest"
+"github:direnv/direnv" = "latest"
 "taplo" = "latest"
 "aqua:ast-grep/ast-grep" = "latest"
 "gitleaks" = "latest"

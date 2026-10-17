@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Runtime-checkable structural typing protocols - Thin MRO facade.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.

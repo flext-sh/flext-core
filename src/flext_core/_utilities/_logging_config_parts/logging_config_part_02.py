@@ -1,7 +1,7 @@
 """Structlog processor chain assembly and level-based context filtering.
 
-Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
-the 200-line cap (AGENTS.md §3.1). Handles processor construction,
+Extracted from FlextUtilitiesLogging as an MRO mixin under the configured
+source-size budget. Handles processor construction,
 structlog parameter resolution, and async writer lifecycle.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import TextIO, cast
 
 import structlog
 from structlog.processors import JSONRenderer, StackInfoRenderer, TimeStamper
@@ -166,15 +165,16 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             The resulting ``t.LoggerFactory | None``.
 
         """
+        if not async_logging and cls._async_writer is not None:
+            cls._async_writer.shutdown()
+            cls._async_writer = None
         if logger_factory is not None:
             return logger_factory
         if not async_logging:
-            return None
+            return structlog.PrintLoggerFactory()
         if cls._async_writer is None:
             cls._async_writer = cls._AsyncLogWriter(sys.stdout)
-        return structlog.PrintLoggerFactory(
-            file=cast("TextIO", cls._async_writer),
-        )
+        return structlog.PrintLoggerFactory(file=cls._async_writer)
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingConfig"]

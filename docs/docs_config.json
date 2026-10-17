@@ -3,7 +3,7 @@
     "placeholder_patterns": [
       "(^|[^A-Za-z])TODO[ ]*:",
       "(^|[^A-Za-z])FIXME[ ]*:",
-      "(^|[^A-Za-z])placeholder([^A-Za-z]|$)",
+      "(?im)^\\s*(?:#{1,6}\\s+)?placeholder\\s*(?::|$)|<placeholder>",
       "(^|[^A-Za-z])Lorem([^A-Za-z]|$)",
       "No sections found"
     ],
