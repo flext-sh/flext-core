@@ -8,12 +8,22 @@ from __future__ import annotations
 
 from importlib import import_module
 
-from flext_core import m, p
+from flext_core import FlextRuntime, m, p
+from flext_core._models import FlextModelsNamespace
 from flext_core._utilities import FlextUtilitiesModelOptions
 
 
-class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
-    """Runtime DSL: dispatcher, registry, and service-runtime construction."""
+class FlextUtilitiesModelRuntime(
+    FlextUtilitiesModelOptions,
+    FlextRuntime,
+    FlextModelsNamespace,
+):
+    """Runtime DSL: dispatcher, registry, and service-runtime construction.
+
+    The facade receives the runtime metadata helpers (``u.normalize_to_metadata``)
+    and namespace enforcement through this declared owner: the facade generator
+    composes only classes the ``_utilities`` family declares.
+    """
 
     @classmethod
     def build_dispatcher(cls) -> p.Dispatcher:
