@@ -192,6 +192,19 @@ processing and its original exception propagates through public logging methods,
 including `exception` and `trace`. Successful emissions retain the public
 `r[bool]` result contract. Invalid trace formatting also raises its native error.
 
+## Asynchronous Output Stream
+
+With `async_logging=True`, the managed writer is a real text stream over the live
+`sys.stdout`: writes are queued to a background thread, while metadata (`mode`,
+`name`, `encoding`, `errors`, `newlines`, `line_buffering`, `buffer`) and
+non-write operations belong to the underlying stream at call time. Nothing is
+fabricated: a native stream that lacks an attribute raises its native
+`AttributeError`, and no replacement binary buffer exists. Read, seek, tell,
+truncate, and iteration first drain admitted writes. Closing the writer flushes
+admitted writes without closing the caller's stream; afterwards its delegated
+operations (descriptor, capability queries, reads, positioning, iteration, and
+context entry) raise `ValueError`.
+
 `wrapper_class_factory` is a zero-argument registration factory returning a
 native wrapper class. That class accepts the output logger, processor sequence,
 and context mapping and implements native binding and level emission through
