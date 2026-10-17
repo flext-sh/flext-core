@@ -1,17 +1,5 @@
 Infra:
   codegen:
-    vscode:
-      additional_settings:
-        python-envs.workspaceSearchPaths:
-        - ./.venv
-        - ./*/.venv
-        terminal.integrated.env.linux:
-          PATH: ${workspaceFolder}/.venv/bin:${env:PATH}
-          VIRTUAL_ENV: ${workspaceFolder}/.venv
-        ruff.interpreter:
-        - ${workspaceFolder}/.venv/bin/python
-        ruff.path:
-        - ${workspaceFolder}/.venv/bin/ruff
     repository:
       namespace_scan_dirs:
       - src
