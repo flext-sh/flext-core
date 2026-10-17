@@ -25,6 +25,26 @@ from flext_core._typings.services import FlextTypesServices
 class FlextModelsConfig:
     """Container for declarative config record models (ADR-005)."""
 
+    class AsyncLogJob(FlextModelsBase.ContractModel):
+        """Immutable queued write or native flush barrier.
+
+        A missing text value requests a flush without writing any characters.
+        The completion belongs to the caller awaiting the native stream result.
+        """
+
+        text: Annotated[
+            str | None,
+            FlextModelsPydantic.Field(
+                description="Exact queued text, or None for a native flush barrier."
+            ),
+        ]
+        completion: Annotated[
+            FlextTypesServices.LoggingWriteCompletion,
+            FlextModelsPydantic.Field(
+                description="Native completion receiving this job's result or first failure."
+            ),
+        ]
+
     class StructlogOptions(FlextModelsBase.ArbitraryTypesModel):
         """Knob options for the structlog runtime configuration."""
 
