@@ -13,6 +13,7 @@ from flext_tests import FlextTestsConstants
 from flext_core import FlextConstants
 from tests._constants import (
     TestsFlextConstantsDomain,
+    TestsFlextConstantsEnums,
     TestsFlextConstantsErrors,
     TestsFlextConstantsFixtures,
     TestsFlextConstantsOther,
@@ -31,6 +32,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextConstants):
         TestsFlextConstantsServices,
         TestsFlextConstantsErrors,
         TestsFlextConstantsDomain,
+        TestsFlextConstantsEnums,
         FlextTestsConstants.Tests,
     ):
         """Flat constants for test composition and parametrization.

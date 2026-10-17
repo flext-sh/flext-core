@@ -14,6 +14,7 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests._constants.domain import TestsFlextConstantsDomain
+    from tests._constants.enums import TestsFlextConstantsEnums
     from tests._constants.errors import TestsFlextConstantsErrors
     from tests._constants.fixtures import TestsFlextConstantsFixtures
     from tests._constants.other import TestsFlextConstantsOther
@@ -23,6 +24,7 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "TestsFlextConstantsDomain",
+    "TestsFlextConstantsEnums",
     "TestsFlextConstantsErrors",
     "TestsFlextConstantsFixtures",
     "TestsFlextConstantsOther",
@@ -35,6 +37,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "TestsFlextConstantsDomain": ".domain",
+        "TestsFlextConstantsEnums": ".enums",
         "TestsFlextConstantsErrors": ".errors",
         "TestsFlextConstantsFixtures": ".fixtures",
         "TestsFlextConstantsOther": ".other",

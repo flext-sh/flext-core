@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from tests._utilities.reliability_scenarios import (
         TestsFlextUtilitiesReliabilityScenariosMixin,
     )
+    from tests._utilities.result_combinators import TestsFlextUtilitiesResultCombinators
     from tests._utilities.result_exception_carrying import (
         TestsFlextResultExceptionCarrying,
     )
@@ -85,6 +86,7 @@ __all__: tuple[str, ...] = (
     "TestsFlextUtilitiesRailwayPipelinesMixin",
     "TestsFlextUtilitiesRailwayServicesMixin",
     "TestsFlextUtilitiesReliabilityScenariosMixin",
+    "TestsFlextUtilitiesResultCombinators",
     "TestsFlextUtilitiesServiceFactoriesMixin",
     "TestsFlextUtilitiesServicesMixin",
     "TestsFlextUtilitiesUserFactoriesMixin",
@@ -117,6 +119,7 @@ install_lazy_exports(
         "TestsFlextUtilitiesRailwayPipelinesMixin": ".railway_pipelines",
         "TestsFlextUtilitiesRailwayServicesMixin": ".railway_services",
         "TestsFlextUtilitiesReliabilityScenariosMixin": ".reliability_scenarios",
+        "TestsFlextUtilitiesResultCombinators": ".result_combinators",
         "TestsFlextUtilitiesServiceFactoriesMixin": ".service_factories",
         "TestsFlextUtilitiesServicesMixin": ".services",
         "TestsFlextUtilitiesUserFactoriesMixin": ".user_factories",

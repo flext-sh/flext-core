@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum
-
 import pytest
 
 from tests import c, t, tm, u
@@ -19,9 +17,6 @@ from tests import c, t, tm, u
 
 class TestsFlextCoreTypingsNew:
     """Tests for ``FlextCoreTypingsNew``."""
-
-    class _Color(StrEnum):
-        RED = "red"
 
     @staticmethod
     def test_json_value_adapter_accepts_nested_json() -> None:
@@ -103,8 +98,7 @@ class TestsFlextCoreTypingsNew:
     def test_enum_type_adapter_accepts_strenum_class() -> None:
         """enum_type_adapter validates StrEnum subclasses as type values."""
         tm.that(
-            u.enum_type_adapter().validate_python(TestsFlextCoreTypingsNew._Color)
-            is TestsFlextCoreTypingsNew._Color,
+            u.enum_type_adapter().validate_python(c.Tests.Color) is c.Tests.Color,
             eq=True,
         )
 
