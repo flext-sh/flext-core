@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from operator import itemgetter
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 import pytest
 from typing_extensions import TypeForm
@@ -37,7 +37,7 @@ class TestsFlextUtilitiesPydantic:
     class _FieldFactoryContract(m.BaseModel):
         """Required fields and typed factories through both public facades."""
 
-        model_config = m.ConfigDict(str_strip_whitespace=True)
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(str_strip_whitespace=True)
 
         label: str = u.Field(min_length=1)
         echo: str = m.Field(default_factory=_validated_label)
