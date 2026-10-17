@@ -162,9 +162,7 @@ class FlextProtocolsLogging:
     class OutputLoggerFactory(Protocol):
         """Construct an output logger from native positional logger names."""
 
-        def __call__(
-            self, *args: str
-        ) -> FlextProtocolsLogging.OutputLogger: ...
+        def __call__(self, *args: str) -> FlextProtocolsLogging.OutputLogger: ...
 
     @runtime_checkable
     class NativeLoggingWrapper(Protocol):

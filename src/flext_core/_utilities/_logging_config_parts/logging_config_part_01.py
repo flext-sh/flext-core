@@ -16,9 +16,6 @@ import structlog
 
 from flext_core import c, p, t
 from flext_core._models.config import FlextModelsConfig
-from flext_core._utilities._logging_config_parts.logging_stream import (
-    FlextUtilitiesLoggingStream,
-)
 from flext_core._utilities import FlextUtilitiesTypingAdapterScalars
 
 if TYPE_CHECKING:
@@ -376,6 +373,7 @@ class FlextUtilitiesLoggingConfig:
 
             Raises:
                 TimeoutError: If the worker exceeds its shutdown deadline.
+
             """
             with self._admission:
                 if self.closed:
@@ -400,6 +398,7 @@ class FlextUtilitiesLoggingConfig:
 
             Raises:
                 ValueError: If this writer has already stopped.
+
             """
             _ = self._admit(s)
             return len(s)
@@ -413,6 +412,7 @@ class FlextUtilitiesLoggingConfig:
             Raises:
                 Full: If the configured queue rejects further work.
                 ValueError: If the writer has stopped.
+
             """
             completion: t.LoggingWriteCompletion = Future()
             with self._admission:
@@ -430,9 +430,7 @@ class FlextUtilitiesLoggingConfig:
                     if self.stop_event.is_set():
                         msg = "I/O operation on stopped async log writer"
                         raise ValueError(msg)
-                job = FlextModelsConfig.AsyncLogJob(
-                    text=text, completion=completion
-                )
+                job = FlextModelsConfig.AsyncLogJob(text=text, completion=completion)
                 self.queue.put_nowait(job)
             return completion
 

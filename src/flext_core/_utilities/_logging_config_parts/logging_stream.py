@@ -75,9 +75,8 @@ class FlextUtilitiesLoggingStream:
             if newlines is None or isinstance(newlines, str):
                 return newlines
             if isinstance(newlines, tuple):
-                return (
-                    FlextUtilitiesTypingAdapterScalars.strict_str_tuple_adapter()
-                    .validate_python(newlines)
+                return FlextUtilitiesTypingAdapterScalars.strict_str_tuple_adapter().validate_python(
+                    newlines
                 )
             msg = "Text stream newlines must be a string or tuple of strings"
             raise TypeError(msg)

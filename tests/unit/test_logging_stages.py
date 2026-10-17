@@ -320,9 +320,7 @@ class TestsFlextLoggingStages:
         first_options = m.StructlogOptions(
             async_logging=initial_async,
             logger_factory=(
-                None
-                if initial_async
-                else structlog.PrintLoggerFactory(file=old_stream)
+                None if initial_async else structlog.PrintLoggerFactory(file=old_stream)
             ),
         )
         u.configure_structlog(settings=first_options)
@@ -388,6 +386,7 @@ class TestsFlextLoggingStages:
 
         Raises:
             TimeoutError: If public emission cannot start or recover in time.
+
         """
         read_fd, write_fd = os.pipe()
         capacity = fcntl.fcntl(write_fd, fcntl.F_GETPIPE_SZ)
@@ -404,7 +403,7 @@ class TestsFlextLoggingStages:
 
                 def emit() -> None:
                     try:
-                        result = logger.info(f"blocked pipe output {payload}")
+                        result = logger.info("blocked pipe output %s", payload)
                     except ValueError as exc:
                         emitted.append(exc)
                     else:
@@ -446,9 +445,7 @@ class TestsFlextLoggingStages:
                     tm.that(outcome.__traceback__ is not None, eq=True)
                 else:
                     tm.that(outcome.success, eq=True)
-                u.configure_structlog(
-                    settings=m.StructlogOptions(async_logging=False)
-                )
+                u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
             reader.join(timeout=c.DEFAULT_TIMEOUT_SECONDS)
             if reader.is_alive():
                 msg = "Native pipe drainage did not finish after closing its writer"
@@ -463,6 +460,7 @@ class TestsFlextLoggingStages:
 
         Raises:
             TimeoutError: If the child exceeds the configured process deadline.
+
         """
         match scenario:
             case "blocked_pipe":
