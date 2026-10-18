@@ -1,4 +1,4 @@
-"""Message dispatch orchestration with reliability features.
+"""Atomic handler registration and snapshot-based message dispatch.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,221 +6,248 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence, Sequence
+from collections.abc import Sequence
+from threading import Lock
+from types import MappingProxyType, MethodType
 from typing import cast
 
-from flext_core import c, p, r, t, u
-from flext_core._utilities import FlextUtilitiesDispatcherExecute
+from flext_core import c, m, p, r, t, u
 
 
 class FlextDispatcher:
-    """Application-level dispatcher that satisfies the command bus protocol."""
+    """Own routes and publish complete immutable snapshots before execution."""
 
     def __init__(self) -> None:
-        """Initialize the dispatcher with an empty handler registry."""
-        super().__init__()
+        """Initialize an isolated route store and its publication lock."""
         self.logger = u.fetch_logger(__name__)
-        handlers: t.RegistryDict[
-            tuple[t.DispatchableHandler, t.RoutedHandlerCallable]
-        ] = {}
-        self._handlers = handlers
-        self._auto_handlers: MutableSequence[
-            tuple[
-                t.DispatchableHandler,
-                t.RoutedHandlerCallable,
-                tuple[t.TypeHintSpecifier, ...],
-            ]
-        ] = []
-        event_subscribers: t.RegistryDict[
-            MutableSequence[tuple[t.DispatchableHandler, t.RoutedHandlerCallable]]
-        ] = {}
-        self._event_subscribers = event_subscribers
+        self._lock = Lock()
+        self._routes: t.MappingKV[str | None, tuple[t.DispatcherRouteEntry, ...]] = (
+            MappingProxyType({})
+        )
 
     def dispatch(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-        """Dispatch a CQRS message to its registered handler.
-
-        Returns:
-            The resulting ``p.Result[t.JsonPayload]``.
-
-        """
+        """Execute a command against one snapshot without holding its lock."""
+        routes = self._routes
         try:
-            route_name = u.resolve_message_route(message)
-        except c.EXC_TYPE_VALIDATION as exc:
+            route = u.resolve_message_route(message)
+            for key in (route, None):
+                for handler, resolved, accepted, is_event, _ in routes.get(key, ()):
+                    if not is_event and (
+                        key is not None
+                        or u.can_handle_message_type(accepted, type(message))
+                        or (
+                            isinstance(handler, p.AutoDiscoverableHandler)
+                            and handler.can_handle(type(message))
+                        )
+                    ):
+                        return u.execute_dispatcher_handler(
+                            resolved_handler=resolved,
+                            message=message,
+                            route_name=route,
+                            logger=self.logger,
+                        )
+        except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
             return r[t.JsonPayload].fail_op("dispatch message", exc)
-        handler_entry = self._handlers.get(route_name)
-        if not handler_entry:
-            msg_type = message.__class__
-            for auto_h, resolved_handler, accepted in self._auto_handlers:
-                if u.can_handle_message_type(accepted, msg_type) or (
-                    isinstance(auto_h, p.AutoDiscoverableHandler)
-                    and auto_h.can_handle(msg_type)
-                ):
-                    handler_entry = (auto_h, resolved_handler)
-                    break
-        if not handler_entry:
-            return r[t.JsonPayload].fail_op(
-                "resolve message handler",
-                f"No handler found for {route_name}",
-            )
-        _, resolved_handler = handler_entry
-        return self._execute_handler(resolved_handler, message, route_name)
+        return r[t.JsonPayload].fail_op(
+            "resolve message handler", f"No handler found for {route}"
+        )
 
     def publish(self, event: p.Routable | t.SequenceOf[p.Routable]) -> p.Result[bool]:
-        """Publish events to all registered subscribers.
+        """Publish in input/registration order, stopping at the first failure.
 
-        Returns:
-            The resulting ``p.Result[bool]``.
-
+        All events in a sequence use the same snapshot. Earlier external effects
+        are retained when a later subscriber fails.
         """
-        if isinstance(event, Sequence):
-            for evt in cast("t.SequenceOf[p.Routable]", event):
-                _ = self.publish(evt)
-            return r[bool].ok(value=True)
-        route_name = u.resolve_message_route(event)
-        handlers = self._event_subscribers.get(route_name, [])
-        evt_type = event.__class__
-        for auto_h, resolved_handler, accepted in self._auto_handlers:
-            if (
-                u.can_handle_message_type(accepted, evt_type)
-                or (
-                    isinstance(auto_h, p.AutoDiscoverableHandler)
-                    and auto_h.can_handle(evt_type)
-                )
-            ) and all(
-                existing_handler is not auto_h for existing_handler, _ in handlers
-            ):
-                handlers.append((auto_h, resolved_handler))
-        if not handlers:
-            return r[bool].ok(value=True)
-        for _, resolved_handler in handlers:
-            _ = self._execute_handler(resolved_handler, event, route_name)
-        return r[bool].ok(value=True)
-
-    @staticmethod
-    def _resolve_handler_callable(
-        handler: t.DispatchableHandler,
-    ) -> t.RoutedHandlerCallable | None:
-        """Resolve the dispatch entrypoint callable for one handler.
-
-        Returns:
-            The resulting ``t.RoutedHandlerCallable | None``.
-
-        """
-        match handler:
-            case p.DispatchMessage():
-                return handler.dispatch_message
-            case p.Handle():
-                return handler.handle
-            case p.Execute():
-                return handler.execute
-            case callable_handler if callable(callable_handler):
-                return callable_handler
-            case _:
-                return None
-
-    @staticmethod
-    def _resolve_handler_route(
-        handler: t.DispatchableHandler,
-        accepted_message_types: tuple[t.TypeHintSpecifier, ...],
-    ) -> str | None:
-        """Resolve the explicit or computed route name for one handler.
-
-        Returns:
-            The resulting ``str | None``.
-
-        """
-        handler_message_type = getattr(handler, "message_type", None)
-        route_candidates: tuple[t.TypeHintSpecifier | str | None, ...] = (
-            handler_message_type,
-            accepted_message_types[0] if accepted_message_types else None,
+        routes = self._routes
+        events = (
+            cast("t.SequenceOf[p.Routable]", event)
+            if isinstance(event, Sequence)
+            else (event,)
         )
-        route_name: str | None = None
-        for candidate in route_candidates:
-            match candidate:
-                case None:
-                    continue
-                case str() as route_text:
-                    route_name = route_text
-                case type() as route_type:
-                    try:
-                        route_name = u.resolve_message_route(route_type)
-                    except c.EXC_TYPE_VALIDATION:
+        try:
+            for message in events:
+                route = u.resolve_message_route(message)
+                invoked: list[t.DispatchableHandler] = []
+                subscribers = sorted(
+                    (
+                        (key, entry)
+                        for key in (route, None)
+                        for entry in routes.get(key, ())
+                    ),
+                    key=lambda item: item[1][4],
+                )
+                for key, (handler, resolved, accepted, is_event, _) in subscribers:
+                    if not is_event or any(
+                        self._same_handler(handler, previous) for previous in invoked
+                    ):
                         continue
-                case _:
-                    continue
-            break
-        return route_name
+                    if key is None and not (
+                        u.can_handle_message_type(accepted, type(message))
+                        or (
+                            isinstance(handler, p.AutoDiscoverableHandler)
+                            and handler.can_handle(type(message))
+                        )
+                    ):
+                        continue
+                    invoked.append(handler)
+                    result = u.execute_dispatcher_handler(
+                        resolved_handler=resolved,
+                        message=message,
+                        route_name=route,
+                        logger=self.logger,
+                    )
+                    if result.failure:
+                        return r[bool].from_failure(result)
+        except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+            return r[bool].fail_op("publish event", exc)
+        return r[bool].ok(True)
+
+    @staticmethod
+    def _same_handler(
+        left: t.DispatchableHandler, right: t.DispatchableHandler
+    ) -> bool:
+        """Compare bound methods by owner/function, never collaborator equality."""
+        return left is right or (
+            isinstance(left, MethodType)
+            and isinstance(right, MethodType)
+            and left.__self__ is right.__self__
+            and left.__func__ is right.__func__
+        )
 
     def register_handler(
         self,
         handler: t.DispatchableHandler,
         *,
+        message_type: t.RegistryBindingKey | None = None,
         is_event: bool = False,
     ) -> p.Result[bool]:
-        """Register a handler for a specific message type.
+        """Register one binding through the canonical atomic batch operation."""
+        return self.register_handlers((
+            m.HandlerRegistration(
+                handler=handler,
+                message_type=message_type,
+                is_event=is_event,
+            ),
+        )).map(lambda _report: True)
 
-        Returns:
-            The resulting ``p.Result[bool]``.
+    def register_handlers(
+        self, bindings: t.SequenceOf[p.HandlerRegistration]
+    ) -> p.Result[p.HandlerRegistrationReport]:
+        """Validate the entire batch, then atomically publish new bindings.
 
+        The report distinguishes identical repeats. Conflicts never replace a
+        command handler or expose a partially registered batch to readers.
         """
-        accepted_message_types: tuple[t.TypeHintSpecifier, ...] = tuple(
-            u.compute_accepted_message_types(type(handler)),
-        )
-        resolved_handler = self._resolve_handler_callable(handler)
-        if resolved_handler is None:
-            return r[bool].fail_op(
-                "register handler",
-                c.ERR_HANDLER_MUST_BE_CALLABLE,
-            )
-        is_auto_discoverable = isinstance(handler, p.AutoDiscoverableHandler)
-        route_name = self._resolve_handler_route(handler, accepted_message_types)
-        if route_name is None:
-            if is_auto_discoverable:
-                self._auto_handlers.append((
-                    handler,
-                    resolved_handler,
-                    accepted_message_types,
-                ))
-                self.logger.info(
-                    c.LOG_REGISTERED_AUTO_DISCOVERY_HANDLER,
-                    handler=str(handler),
+        prepared: list[
+            tuple[str | None, t.DispatcherRouteEntry, p.HandlerRegistration]
+        ] = []
+        try:
+            for binding in bindings:
+                if not isinstance(binding, p.HandlerRegistration):
+                    return r[p.HandlerRegistrationReport].fail_op(
+                        "register handlers", "Invalid handler registration"
+                    )
+                handler = binding.handler
+                resolved: t.RoutedHandlerCallable
+                match handler:
+                    case p.DispatchMessage():
+                        resolved = handler.dispatch_message
+                    case p.Handle():
+                        resolved = handler.handle
+                    case p.Execute():
+                        resolved = handler.execute
+                    case callable_handler if callable(callable_handler):
+                        resolved = callable_handler
+                    case _:
+                        return r[p.HandlerRegistrationReport].fail_op(
+                            "register handler", c.ERR_HANDLER_MUST_BE_CALLABLE
+                        )
+                accepted = tuple(u.compute_accepted_message_types(type(handler)))
+                metadata = getattr(handler, c.HANDLER_ATTR, None)
+                declared = getattr(handler, "message_type", None)
+                if metadata is not None:
+                    if not isinstance(metadata, p.DecoratorConfig):
+                        return r[p.HandlerRegistrationReport].fail_op(
+                            "register handlers", "Invalid handler metadata"
+                        )
+                    if metadata.timeout is not None or metadata.middleware:
+                        return r[p.HandlerRegistrationReport].fail_op(
+                            "register handlers",
+                            "Handler timeout and middleware are unsupported",
+                        )
+                explicit = binding.message_type
+                route = (
+                    u.resolve_message_route(explicit) if explicit is not None else None
                 )
-                return r[bool].ok(value=True)
-            return r[bool].fail_op(
-                "discover handler route",
-                c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
+                for declaration in (
+                    declared,
+                    metadata.command if metadata is not None else None,
+                ):
+                    if declaration is not None:
+                        declared_route = u.resolve_message_route(declaration)
+                        if route is not None and route != declared_route:
+                            return r[p.HandlerRegistrationReport].fail_op(
+                                "bind handler route",
+                                "Explicit route contradicts handler metadata",
+                            )
+                        route = declared_route
+                if route is None and accepted:
+                    try:
+                        route = u.resolve_message_route(accepted[0])
+                    except c.EXC_TYPE_VALIDATION:
+                        if not isinstance(handler, p.AutoDiscoverableHandler):
+                            raise
+                if route == "" or (
+                    route is None and not isinstance(handler, p.AutoDiscoverableHandler)
+                ):
+                    return r[p.HandlerRegistrationReport].fail_op(
+                        "discover handler route", c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED
+                    )
+                is_event = binding.is_event or (
+                    isinstance(handler, p.Handler)
+                    and handler.mode == c.HandlerType.EVENT
+                )
+                normalized = m.HandlerRegistration(
+                    handler=handler,
+                    message_type=route,
+                    is_event=is_event,
+                )
+                prepared.append((
+                    route,
+                    (handler, resolved, accepted, is_event, len(prepared)),
+                    normalized,
+                ))
+        except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+            return r[p.HandlerRegistrationReport].fail_op("register handlers", exc)
+        with self._lock:
+            candidate = dict(self._routes)
+            offset = sum(len(entries) for entries in candidate.values())
+            registered: list[p.HandlerRegistration] = []
+            skipped: list[p.HandlerRegistration] = []
+            for route, entry, binding in prepared:
+                existing = candidate.get(route, ())
+                if any(
+                    item[3] == entry[3] and self._same_handler(item[0], entry[0])
+                    for item in existing
+                ):
+                    skipped.append(binding)
+                    continue
+                if (
+                    route is not None
+                    and not entry[3]
+                    and any(not item[3] for item in existing)
+                ):
+                    return r[p.HandlerRegistrationReport].fail_op(
+                        "register handlers", f"Handler already registered for {route}"
+                    )
+                candidate[route] = (*existing, (*entry[:4], offset + len(registered)))
+                registered.append(binding)
+            report = m.HandlerRegistrationReport(
+                registered=tuple(registered),
+                skipped=tuple(skipped),
             )
-        if is_event:
-            self._event_subscribers.setdefault(route_name, []).append((
-                handler,
-                resolved_handler,
-            ))
-            self.logger.info(c.LOG_REGISTERED_EVENT_SUBSCRIBER, route=route_name)
-        else:
-            self._handlers[route_name] = (handler, resolved_handler)
-            self.logger.info(c.LOG_REGISTERED_HANDLER, route=route_name)
-        return r[bool].ok(value=True)
-
-    def _execute_handler(
-        self,
-        resolved_handler: t.RoutedHandlerCallable,
-        message: p.Routable,
-        route_name: str,
-    ) -> p.Result[t.JsonPayload]:
-        """Execute ``resolved_handler(message)`` and adapt to ``r[JsonPayload]``.
-
-        Returns:
-            The resulting ``p.Result[t.JsonPayload]``.
-
-        """
-        return FlextUtilitiesDispatcherExecute.execute_dispatcher_handler(
-            resolved_handler=resolved_handler,
-            message=message,
-            route_name=route_name,
-            logger=self.logger,
-        )
+            self._routes = MappingProxyType(candidate)
+        return r[p.HandlerRegistrationReport].ok(report)
 
 
-# Why: the generated package facade exports a root module's explicit public
-# ABI; without this declaration FlextDispatcher vanished from flext_core.
 __all__: list[str] = ["FlextDispatcher"]

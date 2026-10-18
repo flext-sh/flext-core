@@ -58,28 +58,34 @@ class TestsFlextHandlerDecoratorMetadata:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("priority", "timeout"),
-        [(0, None), (1, 0.5), (42, 5.0), (7, 30.0)],
+        "priority",
+        [0, 1, 42, 7],
     )
-    def test_priority_and_timeout_are_recorded_verbatim(
+    def test_priority_is_recorded_without_implicit_timeout(
         priority: int,
-        timeout: float | None,
     ) -> None:
-        """Test priority and timeout are recorded verbatim."""
+        """Priority orders discovery without requesting an unsupported policy."""
 
         class CreateCommand:
             pass
 
         class Service:
             @staticmethod
-            @h.handler(command=CreateCommand, priority=priority, timeout=timeout)
+            @h.handler(command=CreateCommand, priority=priority)
             def handle_user(cmd: CreateCommand) -> p.Result[str]:
                 _ = cmd
                 return r[str].ok("handled")
 
         _, config = h.Discovery.scan_class(Service)[0]
         tm.that(config.priority, eq=priority)
-        tm.that(config.model_dump()["timeout"], eq=timeout)
+        tm.that(config.model_dump()["timeout"] is None, eq=True)
+
+    @staticmethod
+    @pytest.mark.parametrize("timeout", [0.5, 5.0, 30.0])
+    def test_unsupported_timeout_is_rejected(timeout: float) -> None:
+        """A requested timeout fails at the decorator, before registration."""
+        with pytest.raises(ValueError, match="timeout execution is not supported"):
+            h.handler(command=str, timeout=timeout)
 
     @staticmethod
     def test_negative_priority_is_rejected() -> None:
@@ -139,8 +145,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(config.model_dump()["middleware"], eq=middleware_types)
 
     @staticmethod
-    def test_middleware_is_captured_by_value_not_reference() -> None:
-        """Test middleware is captured by value not reference."""
+    def test_unsupported_middleware_is_rejected() -> None:
+        """Nonempty middleware is rejected rather than silently ignored."""
 
         class CreateCommand:
             pass
@@ -155,21 +161,8 @@ class TestsFlextHandlerDecoratorMetadata:
 
         middleware_types: MutableSequence[type[p.Middleware]] = [PassthroughMiddleware]
 
-        class Service:
-            @staticmethod
-            @h.handler(command=CreateCommand, middleware=middleware_types)
-            def handle_user(cmd: CreateCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("handled")
-
-        # Mutating the caller's list after decoration must not leak into config.
-        middleware_types.append(PassthroughMiddleware)
-        _, config = h.Discovery.scan_class(Service)[0]
-        declared = m.DecoratorConfig(
-            command=CreateCommand,
-            middleware=[PassthroughMiddleware],
-        )
-        tm.that(config.model_dump(), eq=declared.model_dump())
+        with pytest.raises(ValueError, match="middleware execution is not supported"):
+            h.handler(command=CreateCommand, middleware=middleware_types)
 
     @staticmethod
     def test_decorator_returns_same_callable() -> None:
@@ -187,8 +180,8 @@ class TestsFlextHandlerDecoratorMetadata:
         tm.that(decorated is original_handler, eq=True)
 
     @staticmethod
-    def test_innermost_decorator_wins_when_stacked() -> None:
-        """Test innermost decorator wins when stacked."""
+    def test_stacked_declarations_are_rejected() -> None:
+        """A handler has exactly one schema declaration, never competing metadata."""
 
         class CreateCommand:
             pass
@@ -196,14 +189,11 @@ class TestsFlextHandlerDecoratorMetadata:
         class OtherCommand:
             pass
 
-        class Service:
-            @staticmethod
-            @h.handler(command=OtherCommand, priority=99)
-            @h.handler(command=CreateCommand, priority=1)
-            def handle_user(cmd: CreateCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("handled")
+        def handle_user(cmd: p.Base) -> p.Result[str]:
+            _ = cmd
+            return r[str].ok("handled")
 
-        _, config = h.Discovery.scan_class(Service)[0]
-        tm.that(config.command is CreateCommand, eq=True)
-        tm.that(config.priority, eq=1)
+        decorated = h.handler(command=CreateCommand, priority=1)(handle_user)
+        with pytest.raises(ValueError, match="metadata is already declared"):
+            h.handler(command=OtherCommand, priority=99)(decorated)
+        tm.that(decorated is handle_user, eq=True)

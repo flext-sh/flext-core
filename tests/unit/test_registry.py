@@ -10,10 +10,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, m, u
+from tests import c, h, m, r, t, u
 
 if TYPE_CHECKING:
-    from tests import p, t
+    from tests import p
 
 
 class TestsFlextCoreRegistry:
@@ -45,13 +45,17 @@ class TestsFlextCoreRegistry:
         registry: p.Registry,
     ) -> None:
         """Test register handler returns registration details."""
-        registration = registry.register_handler(u.Tests.Handler())
+        handler = u.Tests.Handler()
+        registration = registry.register_handler(handler)
 
         assert registration.success
         details = registration.value
         assert details.registration_id
-        assert details.status == c.Status.ACTIVE
-        assert details.handler_mode == c.HandlerType.COMMAND
+        assert (
+            details.status
+            == m.RegistrationDetails(registration_id=details.registration_id).status
+        )
+        assert details.handler_mode == handler.mode
 
     @staticmethod
     def test_register_handler_propagates_dispatcher_failure(
@@ -72,7 +76,16 @@ class TestsFlextCoreRegistry:
         registry: p.Registry,
     ) -> None:
         """Test register handlers batch reports every success."""
-        batch = registry.register_handlers([u.Tests.Handler(), u.Tests.Handler()])
+
+        @h.handler(command=m.Command)
+        def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("first")
+
+        @h.handler(command=m.Tests.RegistryQuery)
+        def second(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("second")
+
+        batch = registry.register_handlers((first, second))
 
         assert batch.success
         summary = batch.value
@@ -80,15 +93,24 @@ class TestsFlextCoreRegistry:
         assert summary.failure is False
         assert len(summary.registered) == 2
         assert list(summary.errors) == []
+        assert registry.dispatcher.dispatch(m.Command()).value == "first"
+        assert registry.dispatcher.dispatch(m.Tests.RegistryQuery()).value == "second"
 
     @staticmethod
     def test_register_bindings_batch_reports_every_success(
         registry: p.Registry,
     ) -> None:
         """Test register bindings batch reports every success."""
+
+        def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("first")
+
+        def second(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("second")
+
         batch = registry.register_bindings({
-            str: u.Tests.Handler(),
-            int: u.Tests.Handler(),
+            "bound-first": first,
+            "bound-second": second,
         })
 
         assert batch.success
@@ -96,6 +118,14 @@ class TestsFlextCoreRegistry:
         assert summary.success is True
         assert len(summary.registered) == 2
         assert list(summary.errors) == []
+        assert (
+            registry.dispatcher.dispatch(m.Command(command_type="bound-first")).value
+            == "first"
+        )
+        assert (
+            registry.dispatcher.dispatch(m.Command(command_type="bound-second")).value
+            == "second"
+        )
 
     @staticmethod
     def test_register_service_is_idempotent(registry: p.Registry) -> None:
@@ -118,6 +148,66 @@ class TestsFlextCoreRegistry:
 
         assert registry.unregister_plugin("validators", "local").success
         assert registry.fetch_plugin("validators", "local").failure
+        assert registry.register_plugin("validators", "local", "replacement").success
+        assert registry.fetch_plugin("validators", "local").value == "replacement"
+
+    @staticmethod
+    @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
+    def test_plugin_identity_and_conflicts(scope: c.RegistrationScope) -> None:
+        """Models remain live collaborators, not dumps or equality-based aliases."""
+        registry = u.build_registry()
+        plugin = m.ConfigMap(root={"plugin": "original"})
+        equal_but_distinct = m.ConfigMap(root={"plugin": "original"})
+        try:
+            assert registry.register_plugin(
+                "identity", "payload", plugin, scope=scope
+            ).success
+            assert registry.register_plugin(
+                "identity", "payload", plugin, scope=scope
+            ).success
+            assert registry.register_plugin(
+                "identity", "payload", equal_but_distinct, scope=scope
+            ).failure
+            assert (
+                registry.fetch_plugin("identity", "payload", scope=scope).value
+                is plugin
+            )
+        finally:
+            assert registry.unregister_plugin(
+                "identity", "payload", scope=scope
+            ).success
+
+    @staticmethod
+    def test_instance_plugins_do_not_leak_between_compositions() -> None:
+        """Two independently composed APIs do not inherit another registry's plugins."""
+        first, second = u.build_registry(), u.build_registry()
+        assert first.register_plugin("isolated", "payload", "one").success
+        assert second.fetch_plugin("isolated", "payload").failure
+
+    @staticmethod
+    def test_conflicting_batch_does_not_publish_earlier_binding(
+        registry: p.Registry,
+    ) -> None:
+        """A conflict in the last candidate cannot leave earlier routes registered."""
+
+        def original(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("original")
+
+        def replacement(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("replacement")
+
+        assert registry.register_bindings({"conflicting-batch": original}).success
+        assert registry.register_bindings({
+            "new-route": replacement,
+            "conflicting-batch": replacement,
+        }).failure
+        assert registry.dispatcher.dispatch(m.Command(command_type="new-route")).failure
+        assert (
+            registry.dispatcher.dispatch(
+                m.Command(command_type="conflicting-batch")
+            ).value
+            == "original"
+        )
 
     @staticmethod
     def test_class_scope_plugin_is_visible_across_instances() -> None:

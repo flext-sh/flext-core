@@ -87,14 +87,14 @@ class FlextConstantsErrorsRuntimeSettings:
     )
     ERR_SERVICE_OPERATION_SIGNATURE: Final[str] = (
         "must take self and at most one positional request parameter without "
-        "default. Fix: accept one Pydantic request model or nothing."
+        "default. Fix: accept one request Protocol or nothing."
     )
     ERR_SERVICE_OPERATION_DOCSTRING: Final[str] = (
         "must have a docstring. Fix: add a one-line summary docstring."
     )
     ERR_SERVICE_OPERATION_NAME: Final[str] = (
         "must annotate with a dotted name. Fix: use a module-level name such as "
-        "m.Ns.Request, or p.Result[...] for the return."
+        "p.Ns.Request, or p.Result[...] for the return."
     )
     ERR_SERVICE_OPERATION_EVALUATED: Final[str] = (
         "is evaluated instead of a string annotation. Fix: add "
@@ -105,8 +105,8 @@ class FlextConstantsErrorsRuntimeSettings:
         "TYPE_CHECKING, or undefined). Fix: import it at module runtime."
     )
     ERR_SERVICE_OPERATION_REQUEST: Final[str] = (
-        "must take a Pydantic model class as the request. Fix: annotate the "
-        "request with a Pydantic model subclass."
+        "must take a request Protocol with a Pydantic model declared in operation "
+        "metadata. Fix: annotate with p.Request and declare h.handler(command=m.Request)."
     )
     ERR_SERVICE_OPERATION_RESULT: Final[str] = (
         "must return p.Result. Fix: annotate the return as p.Result[...]."

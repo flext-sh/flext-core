@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import h, r, tm
+from tests import h, m, r, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -238,31 +238,72 @@ class TestsFlextHandlerDiscoveryModule:
         tm.that(len(handlers), eq=0)
 
     @pytest.mark.parametrize(
-        ("returned", "expected"),
-        [(42, 42), ("payload", "payload"), (None, None), ([1, 2], "[1, 2]")],
+        "returned",
+        [
+            42,
+            "payload",
+            None,
+            [1, 2],
+            m.Tests.DispatchRequest(
+                command_name="dispatch",
+                tenant="test",
+                environment="test",
+            ),
+        ],
     )
     @staticmethod
-    def test_discovered_callable_coerces_result_to_scalar_or_none(
-        returned: t.JsonValue,
-        expected: t.Scalar | None,
+    def test_discovered_callable_preserves_original_return_value(
+        returned: t.JsonPayload,
     ) -> None:
-        """The discovered callable exposes the documented scalar coercion."""
+        """Discovery preserves identity and never serializes the return value."""
         # Arrange
         module = types.ModuleType("coercion_module")
 
         @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
         def produce(
             cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> t.JsonValue:
+        ) -> t.JsonPayload:
             _ = cmd
             return returned
 
         module.__dict__["produce"] = produce
         _, discovered, _ = h.Discovery.scan_module(module)[0]
-        invoke: Callable[..., t.Scalar | None] = discovered
+        tm.that(discovered is produce, eq=True)
+        tm.that(discovered({}) is returned, eq=True)
 
-        # Act
-        result = invoke({})
+    @staticmethod
+    def test_rediscovery_preserves_identity_and_does_not_resolve_replacements() -> None:
+        """A discovered function survives replacement/removal of its module name."""
+        module = types.ModuleType("identity_module")
+        outcome = r[str].ok("original")
 
-        # Assert
-        tm.that(result, eq=expected)
+        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
+        def original(cmd: p.Base) -> p.Result[str]:
+            _ = cmd
+            return outcome
+
+        module.__dict__["handle"] = original
+        _, first, _ = h.Discovery.scan_module(module)[0]
+        _, second, _ = h.Discovery.scan_module(module)[0]
+        tm.that(first is second is original, eq=True)
+        module.__dict__["handle"] = lambda _cmd: "replacement"
+        tm.that(first({}) is outcome, eq=True)
+        del module.__dict__["handle"]
+        tm.that(first({}) is outcome, eq=True)
+
+    @staticmethod
+    def test_discovered_callable_preserves_failure_cause() -> None:
+        """Discovery does not repackage a failed Result or replace its cause."""
+        module = types.ModuleType("failure_identity_module")
+        cause = ValueError("request failed")
+        outcome = r[str].fail("request failed", exception=cause)
+
+        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
+        def original(cmd: p.Base) -> p.Result[str]:
+            _ = cmd
+            return outcome
+
+        module.__dict__["handle"] = original
+        _, discovered, _ = h.Discovery.scan_module(module)[0]
+        tm.that(discovered({}) is outcome, eq=True)
+        tm.that(outcome.exception is cause, eq=True)

@@ -139,6 +139,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
             arbitrary_types_allowed=True,
             ser_json_timedelta=c.SERIALIZATION_ISO8601,
             ser_json_bytes=c.SERIALIZATION_BASE64,
+            val_json_bytes=c.SERIALIZATION_BASE64,
             hide_input_in_errors=True,
             frozen=True,
         )

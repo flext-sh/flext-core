@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Self, override
 
 import pytest
 
-from tests import c, m, p, r, s, t, tm, u
+from tests import c, h, m, p, r, s, t, tm, u
 
 if TYPE_CHECKING:
     from flext_core import FlextSettings
@@ -42,7 +42,8 @@ class TestsFlextCoreServiceOperations:
             """
             return r[bool].ok(True)
 
-        def dispatch(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
+        @h.handler(command=m.Tests.DispatchRequest)
+        def dispatch(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Dispatch one command by name.
 
             The summary is the first docstring line only.
@@ -275,6 +276,53 @@ class TestsFlextCoreServiceOperations:
             """
             return r[bool].ok(bool(request))
 
+    class MissingMetadataService(s[bool]):
+        """A Protocol request without its explicit schema association."""
+
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+            """Send the requested command."""
+            return r[str].ok(request.command_name)
+
+    class AliasedRequestService(s[bool]):
+        """A quoted t alias resolves to the same Protocol without eval."""
+
+        @h.handler(command=m.Tests.DispatchRequest)
+        def send(self, request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
+            """Send the requested command."""
+            return r[str].ok(request.command_name)
+
+    class ConcreteRequestService(s[bool]):
+        """A model annotation cannot replace the public Protocol contract."""
+
+        @h.handler(command=m.Tests.DispatchRequest)
+        def send(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
+            """Send the requested command."""
+            return r[str].ok(request.command_name)
+
+    class MismatchedMetadataService(s[bool]):
+        """The explicit schema must provide every consumed Protocol member."""
+
+        @h.handler(command=m.Value)
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+            """Send the requested command."""
+            return r[str].ok(request.command_name)
+
+    class NonModelMetadataService(s[bool]):
+        """A metadata command class is not necessarily a request model."""
+
+        @h.handler(command=str)
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+            """Send the requested command."""
+            return r[str].ok(request.command_name)
+
+    class InputlessMetadataService(s[bool]):
+        """An input-less operation cannot consume declared command metadata."""
+
+        @h.handler(command=m.Tests.DispatchRequest)
+        def send(self) -> p.Result[str]:
+            """Report readiness."""
+            return r[str].ok("ready")
+
     # --- Discovery -------------------------------------------------------
 
     def test_discovers_request_and_input_less_operations(self) -> None:
@@ -288,6 +336,26 @@ class TestsFlextCoreServiceOperations:
                 ("status", "Report readiness.", None),
             ],
         )
+        tm.that(operations[0].handler is self.CommandService.dispatch, eq=True)
+
+    @pytest.mark.parametrize(
+        ("service_type", "defect"),
+        [
+            (MissingMetadataService, "requires typed h.handler"),
+            (ConcreteRequestService, "Protocol"),
+            (MismatchedMetadataService, "command_name"),
+            (NonModelMetadataService, "Pydantic request model"),
+            (InputlessMetadataService, "input-less operation"),
+        ],
+    )
+    def test_request_metadata_has_one_explicit_contract(
+        self,
+        service_type: type[p.Service[bool]],
+        defect: str,
+    ) -> None:
+        """Invalid schema associations fail lazily without annotation inference."""
+        with pytest.raises(TypeError, match=defect):
+            u.service_operations(service_type)
 
     def test_operations_are_frozen_models(self) -> None:
         """A reported ``m.ServiceOperation`` rejects assignment: it is frozen."""
@@ -296,6 +364,12 @@ class TestsFlextCoreServiceOperations:
 
         with pytest.raises(m.ValidationError):
             setattr(operation, field_name, operation.summary)
+
+    def test_quoted_protocol_alias_uses_explicit_model_metadata(self) -> None:
+        """Quoted aliases do not turn the annotation into a model lookup route."""
+        (operation,) = u.service_operations(self.AliasedRequestService)
+        tm.that(operation.request is m.Tests.DispatchRequest, eq=True)
+        tm.that(operation.handler is self.AliasedRequestService.send, eq=True)
 
     def test_discovery_is_cached_per_class(self) -> None:
         """A second call returns the same operations for the same class."""

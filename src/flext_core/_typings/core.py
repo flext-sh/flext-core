@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import ModuleType
+
 from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
@@ -16,6 +18,7 @@ class FlextTypesCore:
         FlextTypesPydantic.StrictStr | FlextTypesPydantic.StrictBytes
     )
     type RegistryBindingKey = str | type
+    type RegistryModule = ModuleType
 
     type FileContent = (
         FlextTypesPydantic.StrictStr

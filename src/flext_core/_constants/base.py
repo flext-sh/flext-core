@@ -16,6 +16,7 @@ class FlextConstantsBase:
 
     NAME: ClassVar[str] = "FLEXT"
     ZERO: ClassVar[int] = 0
+    REGISTRY_KEY_SEPARATOR: ClassVar[str] = "::"
 
     # Published for the module-scope consolidation consumers (fleet-wide,
     # 2026-10-03): the regenerated cli/context surfaces reference this tuple

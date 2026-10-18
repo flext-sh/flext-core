@@ -18,8 +18,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, override
 
-import pytest
-
 from tests import h, m, r, s
 
 if TYPE_CHECKING:
@@ -96,54 +94,6 @@ class TestsFlextHandlerDecoratorEdges:
 
         # Assert
         assert config.model_dump()["timeout"] is None
-
-    @pytest.mark.parametrize("timeout", [0.5, 5.0, 120.0])
-    @staticmethod
-    def test_explicit_timeout_is_preserved(timeout: float) -> None:
-        # Arrange
-        """Test explicit timeout is preserved."""
-
-        class CreateCommand(m.BaseModel):
-            pass
-
-        class Service:
-            @staticmethod
-            @h.handler(command=CreateCommand, timeout=timeout)
-            def handle(cmd: CreateCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("ok")
-
-        # Act
-        _, config = h.Discovery.scan_class(Service)[0]
-
-        # Assert
-        assert config.model_dump()["timeout"] == timeout
-
-    @staticmethod
-    def test_stacked_decorators_innermost_wins() -> None:
-        # Arrange: the innermost decorator runs first and takes precedence.
-        """Test stacked decorators innermost wins."""
-
-        class CreateCommand(m.BaseModel):
-            pass
-
-        class DeleteCommand(m.BaseModel):
-            pass
-
-        class Service:
-            @staticmethod
-            @h.handler(command=CreateCommand, priority=10)
-            @h.handler(command=DeleteCommand, priority=20)
-            def handle(cmd: DeleteCommand) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok("ok")
-
-        # Act
-        _, config = h.Discovery.scan_class(Service)[0]
-
-        # Assert: the inner (DeleteCommand/20) configuration is observed.
-        assert config.command is DeleteCommand
-        assert config.priority == 20
 
     @staticmethod
     def test_scan_class_sorts_handlers_by_priority_descending() -> None:

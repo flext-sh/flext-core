@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from importlib import import_module
 
-from flext_core import FlextRuntime, m, p
+from flext_core import FlextRuntime, c, m, p, r, t
 from flext_core._models import FlextModelsNamespace
 from flext_core._utilities import FlextUtilitiesModelOptions
 
@@ -49,7 +49,7 @@ class FlextUtilitiesModelRuntime(
         cls,
         dispatcher: p.Dispatcher | None = None,
         *,
-        auto_discover_handlers: bool = False,
+        discovery_module: t.RegistryModule | None = None,
     ) -> p.Registry:
         """Materialize the canonical registry implementation behind ``p.Registry``.
 
@@ -61,14 +61,85 @@ class FlextUtilitiesModelRuntime(
 
         """
         registry_module = import_module("flext_core.registry")
-        registry_candidate = registry_module.FlextRegistry.create(
-            dispatcher=dispatcher,
-            auto_discover_handlers=auto_discover_handlers,
+        elected_dispatcher = (
+            dispatcher if dispatcher is not None else cls.build_dispatcher()
+        )
+        registry_candidate = registry_module.FlextRegistry(
+            registry_runtime=cls.build_service_runtime(
+                m.RuntimeBootstrapOptions(
+                    dispatcher=elected_dispatcher,
+                )
+            ),
         )
         if not isinstance(registry_candidate, p.Registry):
             msg = "Resolved registry implementation does not satisfy p.Registry"
             raise TypeError(msg)
+        if discovery_module is not None:
+            handlers_module = import_module("flext_core.handlers")
+            elected_dispatcher.register_handlers(
+                tuple(
+                    m.HandlerRegistration(
+                        handler=handler, message_type=metadata.command
+                    )
+                    for _, handler, metadata in handlers_module.h.Discovery.scan_module(
+                        discovery_module
+                    )
+                )
+            ).unwrap()
         return registry_candidate
+
+    @staticmethod
+    def registry_same_value(
+        previous: t.RegisterableService,
+        candidate: t.RegisterableService,
+    ) -> bool:
+        """Compare collaborators by identity, immutable scalars by type and value."""
+        return previous is candidate or (
+            isinstance(previous, c.SCALAR_TYPES)
+            and type(previous) is type(candidate)
+            and previous == candidate
+        )
+
+    @staticmethod
+    def registry_plugin_key(category: str, name: str | None = None) -> p.Result[str]:
+        """Validate a plugin key, or a category prefix when no name is supplied."""
+        separator = c.REGISTRY_KEY_SEPARATOR
+        if (
+            not category
+            or separator in category
+            or (name is not None and (not name or separator in name))
+        ):
+            return r[str].fail(
+                c.ERR_REGISTRY_PLUGIN_KEY_INVALID.format(separator=separator)
+            )
+        return r[str].ok(
+            f"{category}{separator}{name}"
+            if name is not None
+            else f"{category}{separator}"
+        )
+
+    @staticmethod
+    def registry_registration_name(binding: p.HandlerRegistration) -> str:
+        """Read the normalized route published by the dispatcher."""
+        route = binding.message_type
+        return route if isinstance(route, str) else type(binding.handler).__qualname__
+
+    @classmethod
+    def registry_registration_details(
+        cls, binding: p.HandlerRegistration
+    ) -> p.RegistrationDetails:
+        """Project a normalized binding without losing the handler's declared mode."""
+        handler = binding.handler
+        return m.RegistrationDetails(
+            registration_id=cls.registry_registration_name(binding),
+            handler_mode=(
+                handler.mode
+                if isinstance(handler, p.Handler)
+                else c.HandlerType.EVENT
+                if binding.is_event
+                else c.HandlerType.COMMAND
+            ),
+        )
 
     @classmethod
     def _resolve_runtime_settings(

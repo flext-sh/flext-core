@@ -30,7 +30,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         command: type,
         *,
         priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
-        timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
+        timeout: float | None = None,
         middleware: t.SequenceOf[type[p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
         """Mark methods as handlers for commands.
@@ -53,26 +53,32 @@ class FlextHandlers[MessageT_contra, ResultT](
             ...     return r[User].ok(self._create(cmd))
 
         """
+        if timeout is not None:
+            msg = "Handler timeout execution is not supported"
+            raise ValueError(msg)
+        if middleware:
+            msg = "Handler middleware execution is not supported"
+            raise ValueError(msg)
 
         def decorator(func: Callable[PHandler, TResult]) -> Callable[PHandler, TResult]:
             """Apply handler configuration metadata to function.
 
-            Only sets the attribute if not already set - innermost decorator wins.
-            When multiple @h.handler() decorators are stacked, the first (innermost)
-            one to run takes precedence.
+            A callable has one declaration; stacked declarations are rejected.
 
             Returns:
                 The resulting ``Callable[PHandler, TResult]``.
 
             """
-            if not hasattr(func, c.HANDLER_ATTR):
-                settings = m.DecoratorConfig(
-                    command=command,
-                    priority=priority,
-                    timeout=timeout,
-                    middleware=middleware or (),
-                )
-                setattr(func, c.HANDLER_ATTR, settings)
+            if hasattr(func, c.HANDLER_ATTR):
+                msg = "Handler metadata is already declared on this callable"
+                raise ValueError(msg)
+            settings = m.DecoratorConfig(
+                command=command,
+                priority=priority,
+                timeout=timeout,
+                middleware=(),
+            )
+            setattr(func, c.HANDLER_ATTR, settings)
             return func
 
         return decorator

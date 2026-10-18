@@ -102,6 +102,9 @@ class FlextConstantsErrorsMessages:
     ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY: ClassVar[str] = (
         "{category} name cannot be empty"
     )
+    ERR_REGISTRY_PLUGIN_KEY_INVALID: ClassVar[str] = (
+        "Plugin category and name must be nonempty and cannot contain '{separator}'"
+    )
     ERR_REGISTRY_VALIDATION_ERROR: ClassVar[str] = "Validation error: {error}"
     ERR_REGISTRY_PLUGIN_NOT_REGISTERED: ClassVar[str] = (
         "{category} '{name}' not registered"

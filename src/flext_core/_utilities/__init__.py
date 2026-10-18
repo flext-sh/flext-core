@@ -97,9 +97,9 @@ if TYPE_CHECKING:
     from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
     from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
     from flext_core._utilities.mapper import FlextUtilitiesMapper
-    from flext_core._utilities.metadata import FlextUtilitiesMetadata
     from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
     from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
+    from flext_core._utilities.metadata import FlextUtilitiesMetadata
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.model_options import FlextUtilitiesModelOptions
     from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
@@ -169,9 +169,9 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesLoggingStream",
     "FlextUtilitiesMapper",
-    "FlextUtilitiesMetadata",
     "FlextUtilitiesMapperAccess",
     "FlextUtilitiesMapperExtract",
+    "FlextUtilitiesMetadata",
     "FlextUtilitiesModel",
     "FlextUtilitiesModelOptions",
     "FlextUtilitiesModelRuntime",

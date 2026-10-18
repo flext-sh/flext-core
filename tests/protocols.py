@@ -40,6 +40,13 @@ class TestsFlextProtocols(FlextTestsProtocols):
         """flext-core test protocols namespace."""
 
         @runtime_checkable
+        class DispatchRequest(Protocol):
+            """Only the request capability consumed by the dispatch operation."""
+
+            @property
+            def command_name(self) -> str: ...
+
+        @runtime_checkable
         class PublicPayload(FlextTestsProtocols.Base, Protocol):
             """Data consumed through a protocol and validated by its model owner."""
 

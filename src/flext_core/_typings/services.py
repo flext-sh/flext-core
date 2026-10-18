@@ -99,7 +99,7 @@ class FlextTypesServices:
     type ServiceClass = type
     type ServiceValue = (
         JsonPayload
-        | FlextTypesPydantic.BaseModelType
+        | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
         | FlextProtocolsContext.Context
@@ -164,6 +164,13 @@ class FlextTypesServices:
     type RoutedHandlerCallable = Callable[
         [FlextProtocolsBase.Routable],
         JsonPayload | FlextProtocolsResult.ResultView[JsonPayload] | None,
+    ]
+    type DispatcherRouteEntry = tuple[
+        DispatchableHandler,
+        RoutedHandlerCallable,
+        tuple[FlextTypingBase.TypeHintSpecifier, ...],
+        bool,
+        int,
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = FlextProtocolsLogging.OutputLoggerFactory | None

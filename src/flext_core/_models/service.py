@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._protocols.service import FlextProtocolsService
 
 
 class FlextModelsService:
@@ -90,12 +91,13 @@ class FlextModelsService:
             description="Pre-built dispatcher injected into the runtime.",
         )
 
-    class ServiceOperation(FlextModelsBase.FrozenModel):
+    class ServiceOperation(FlextModelsBase.ContractModel):
         """One typed operation of a service, as ``u.service_operations`` reports it.
 
         An operation is a public instance method declared below ``FlextService``
-        that takes nothing or one Pydantic request model and returns
-        ``p.Result``; its one-line docstring is the summary.
+        that takes nothing or one request Protocol and returns ``p.Result``.
+        ``h.handler`` supplies its concrete request model; the original function
+        is retained so execution never looks up a replacement by method name.
         """
 
         name: str = FlextModelsPydantic.Field(
@@ -106,6 +108,12 @@ class FlextModelsService:
         )
         request: t.ModelClass[t.BaseModelType] | None = FlextModelsPydantic.Field(
             description="Pydantic request model, or None for an input-less operation.",
+        )
+        handler: t.Port[FlextProtocolsService.ServiceOperationHandler] = (
+            FlextModelsPydantic.Field(
+                exclude=True,
+                description="Original unbound operation, invoked with the provided service.",
+            )
         )
 
 

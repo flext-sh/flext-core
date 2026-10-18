@@ -14,12 +14,13 @@ from __future__ import annotations
 
 import io
 import time
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stdout
 from typing import override
 
 import pytest
 
-from tests import m, p, r, t, u
+from tests import m, p, r, t, tm, u
 
 
 class TestsFlextCoreDispatcher:
@@ -42,6 +43,7 @@ class TestsFlextCoreDispatcher:
         def __init__(self, route: str) -> None:
             """Initialize with a route discriminator and an empty received log."""
             self.message_type = route
+            self.handler_id = route
             self.received: list[p.Routable] = []
 
         def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -66,6 +68,21 @@ class TestsFlextCoreDispatcher:
         def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
             self.received.append(message)
             raise RuntimeError(self.failure_detail)
+
+    class AutoSubscriber:
+        """An existing auto-discovery capability with no declared route."""
+
+        def __init__(self, calls: list[str]) -> None:
+            self.calls = calls
+
+        def can_handle(self, message_type: type) -> bool:
+            """Accept every event type for observable ordering tests."""
+            return isinstance(message_type, type)
+
+        def handle(self, _message: p.Routable) -> p.Result[t.JsonPayload]:
+            """Record execution without changing the subscriber collection."""
+            self.calls.append("auto")
+            return r[t.JsonPayload].ok(True)
 
     @staticmethod
     @pytest.fixture
@@ -294,6 +311,246 @@ class TestsFlextCoreDispatcher:
         assert failure_detail in result.error
         assert "RuntimeError" in emitted
         assert failure_detail in emitted
+
+    @staticmethod
+    def test_command_conflict_preserves_original_and_bound_method_identity(
+        dispatcher: p.Dispatcher,
+    ) -> None:
+        """Repeated bound-method access is idempotent, not a new handler."""
+        original = RecordingHandler("identity")
+        replacement = RecordingHandler("identity")
+        tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(
+                    handler=original.handle,
+                    message_type="identity",
+                ),
+            )),
+            where=lambda report: len(report.registered) == 1 and not report.skipped,
+        )
+        tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(
+                    handler=original.handle,
+                    message_type="identity",
+                ),
+            )),
+            where=lambda report: not report.registered and len(report.skipped) == 1,
+        )
+        tm.fail(
+            dispatcher.register_handler(replacement.handle, message_type="identity")
+        )
+        message = RouteMessage(command_type="identity")
+        tm.ok(dispatcher.dispatch(message))
+        tm.that(original.received == [message])
+        tm.that(not replacement.received)
+
+    @staticmethod
+    @pytest.mark.parametrize("invalid_last", [False, True])
+    def test_batch_failure_never_publishes_earlier_entries(
+        dispatcher: p.Dispatcher,
+        *,
+        invalid_last: bool,
+    ) -> None:
+        """Internal conflicts and noncallable tails preserve the old snapshot."""
+        first = RecordingHandler("atomic")
+        last: t.DispatchableHandler = (
+            RouteMessage() if invalid_last else RecordingHandler("atomic")
+        )
+        tm.fail(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(handler=first),
+                m.HandlerRegistration(handler=last),
+            ))
+        )
+        tm.fail(dispatcher.dispatch(RouteMessage(command_type="atomic")))
+        tm.that(not first.received)
+
+    @staticmethod
+    def test_existing_command_conflict_does_not_publish_new_route(
+        dispatcher: p.Dispatcher,
+    ) -> None:
+        """A conflict with active state rejects every binding in the batch."""
+        original = RecordingHandler("occupied")
+        tm.ok(dispatcher.register_handler(original))
+        tm.fail(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(handler=RecordingHandler("new")),
+                m.HandlerRegistration(handler=RecordingHandler("occupied")),
+            ))
+        )
+        tm.fail(dispatcher.dispatch(RouteMessage(command_type="new")))
+        tm.ok(dispatcher.dispatch(RouteMessage(command_type="occupied")))
+        tm.that(len(original.received) == 1)
+
+    @staticmethod
+    def test_explicit_bindings_route_original_callable_and_reject_contradiction(
+        dispatcher: p.Dispatcher,
+    ) -> None:
+        """Explicit routes bind callables without changing their metadata."""
+        first = RecordingHandler("first")
+        second = RecordingHandler("second")
+        tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(handler=first.handle, message_type="first"),
+                m.HandlerRegistration(handler=second.handle, message_type="second"),
+            )),
+            where=lambda report: len(report.registered) == 2 and not report.skipped,
+        )
+        messages = (
+            RouteMessage(command_type="first"),
+            RouteMessage(command_type="second"),
+        )
+        for message in messages:
+            tm.ok(dispatcher.dispatch(message))
+        tm.that(first.received == [messages[0]])
+        tm.that(second.received == [messages[1]])
+        tm.fail(dispatcher.register_handler(first, message_type="contradiction"))
+        tm.fail(dispatcher.dispatch(RouteMessage(command_type="contradiction")))
+
+    @staticmethod
+    def test_event_batch_fans_out_distinct_subscribers_once(
+        dispatcher: p.Dispatcher,
+    ) -> None:
+        """Event route duplicates retain distinct subscribers and deduplicate identities."""
+        first = RecordingHandler("fanout")
+        second = RecordingHandler("fanout")
+        tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(
+                    handler=first.handle, message_type="fanout", is_event=True
+                ),
+                m.HandlerRegistration(
+                    handler=second.handle, message_type="fanout", is_event=True
+                ),
+                m.HandlerRegistration(
+                    handler=first.handle, message_type="fanout", is_event=True
+                ),
+            )),
+            where=lambda report: (
+                len(report.registered) == 2 and len(report.skipped) == 1
+            ),
+        )
+        event = RouteMessage(event_type="fanout")
+        tm.ok(dispatcher.publish(event))
+        tm.that(first.received == [event])
+        tm.that(second.received == [event])
+
+    @staticmethod
+    @pytest.mark.parametrize("raises", [False, True])
+    def test_publication_stops_at_failure_and_preserves_cause(
+        dispatcher: p.Dispatcher,
+        *,
+        raises: bool,
+    ) -> None:
+        """Failure halts remaining subscribers/events, retaining earlier effects."""
+        cause = RuntimeError("subscriber unavailable")
+        before = RecordingHandler("failure")
+        after = RecordingHandler("failure")
+        failures: list[p.Routable] = []
+
+        def failing(message: p.Routable) -> p.Result[t.JsonPayload]:
+            failures.append(message)
+            if raises:
+                raise cause
+            return r[t.JsonPayload].fail("subscriber unavailable", exception=cause)
+
+        tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(handler=before, is_event=True),
+                m.HandlerRegistration(
+                    handler=failing, message_type="failure", is_event=True
+                ),
+                m.HandlerRegistration(handler=after, is_event=True),
+            )),
+            where=lambda report: len(report.registered) == 3 and not report.skipped,
+        )
+        event = RouteMessage(event_type="failure")
+        result = dispatcher.publish((event, event))
+        tm.fail(result)
+        tm.that(result.exception is cause)
+        tm.that(before.received == [event])
+        tm.that(failures == [event])
+        tm.that(not after.received)
+
+    @staticmethod
+    def test_registration_during_publish_uses_next_operation_snapshot(
+        dispatcher: p.Dispatcher,
+    ) -> None:
+        """Reentrant registration does not deadlock or change an active sequence."""
+        late = RecordingHandler("snapshot")
+        registrations: list[p.Result[bool]] = []
+
+        def registering(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            registrations.append(dispatcher.register_handler(late, is_event=True))
+            return r[t.JsonPayload].ok(True)
+
+        tm.ok(
+            dispatcher.register_handler(
+                registering, message_type="snapshot", is_event=True
+            )
+        )
+        event = RouteMessage(event_type="snapshot")
+        tm.ok(dispatcher.publish((event, event)))
+        tm.that(not late.received)
+        tm.ok(dispatcher.publish(event))
+        tm.that(late.received == [event])
+        for registration in registrations:
+            tm.ok(registration, eq=True)
+
+    @staticmethod
+    def test_concurrent_command_writers_cannot_overwrite_each_other(
+        dispatcher: p.Dispatcher,
+    ) -> None:
+        """One writer owns a command route and every rejected batch stays absent."""
+        first = RecordingHandler("concurrent")
+        second = RecordingHandler("concurrent")
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [
+                pool.submit(
+                    dispatcher.register_handlers,
+                    (
+                        m.HandlerRegistration(handler=handler),
+                        m.HandlerRegistration(handler=RecordingHandler(extra)),
+                    ),
+                )
+                for handler, extra in (
+                    (first, "winner_first"),
+                    (second, "winner_second"),
+                )
+            ]
+            results = [future.result() for future in futures]
+        tm.that(sum(result.success for result in results) == 1)
+        tm.ok(dispatcher.dispatch(RouteMessage(command_type="concurrent")))
+        tm.that(len(first.received) + len(second.received) == 1)
+        for result, route in zip(
+            results, ("winner_first", "winner_second"), strict=True
+        ):
+            observed = dispatcher.dispatch(RouteMessage(command_type=route))
+            tm.that(observed.success is result.success)
+
+    @staticmethod
+    def test_auto_and_explicit_subscribers_follow_registration_order(
+        dispatcher: p.Dispatcher,
+    ) -> None:
+        """Explicit routing does not jump ahead of an older auto subscriber."""
+        calls: list[str] = []
+        auto = TestsFlextCoreDispatcher.AutoSubscriber(calls)
+
+        def explicit(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("explicit")
+            return r[t.JsonPayload].ok(True)
+
+        tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(handler=auto, is_event=True),
+                m.HandlerRegistration(
+                    handler=explicit, message_type="ordered", is_event=True
+                ),
+            ))
+        )
+        tm.ok(dispatcher.publish(RouteMessage(event_type="ordered")))
+        tm.that(calls == ["auto", "explicit"])
 
 
 RouteMessage = TestsFlextCoreDispatcher.RouteMessage

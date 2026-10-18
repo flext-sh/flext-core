@@ -109,6 +109,14 @@ class FlextProtocolsHandler:
         @property
         def priority(self) -> int: ...
 
+        @property
+        def timeout(self) -> float | None: ...
+
+        @property
+        def middleware(
+            self,
+        ) -> t.SequenceOf[type[FlextProtocolsHandler.Middleware]]: ...
+
     # ------------------------------------------------------------------
     # Handler — mirrors FlextHandlers public instance surface
     # ------------------------------------------------------------------
@@ -236,6 +244,31 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
+    class HandlerRegistration(Protocol):
+        """Immutable registration capability accepted by the dispatcher."""
+
+        @property
+        def handler(self) -> t.DispatchableHandler: ...
+
+        @property
+        def message_type(self) -> t.RegistryBindingKey | None: ...
+
+        @property
+        def is_event(self) -> bool: ...
+
+    @runtime_checkable
+    class HandlerRegistrationReport(Protocol):
+        """Precise outcome of one atomic registration batch."""
+
+        @property
+        def registered(
+            self,
+        ) -> tuple[FlextProtocolsHandler.HandlerRegistration, ...]: ...
+
+        @property
+        def skipped(self) -> tuple[FlextProtocolsHandler.HandlerRegistration, ...]: ...
+
+    @runtime_checkable
     class Dispatcher(FlextProtocolsBase.Base, Protocol):
         """Protocol for dispatching and publishing messages in CQRS systems.
 
@@ -261,9 +294,18 @@ class FlextProtocolsHandler:
             self,
             handler: t.DispatchableHandler,
             *,
+            message_type: t.RegistryBindingKey | None = None,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a handler for message routing."""
+            ...
+
+        def register_handlers(
+            self, bindings: t.SequenceOf[FlextProtocolsHandler.HandlerRegistration]
+        ) -> FlextProtocolsResult.Result[
+            FlextProtocolsHandler.HandlerRegistrationReport
+        ]:
+            """Atomically bind handlers and report new and idempotent bindings."""
             ...
 
     # ------------------------------------------------------------------
@@ -288,9 +330,18 @@ class FlextProtocolsHandler:
             self,
             handler: t.DispatchableHandler,
             *,
+            message_type: t.RegistryBindingKey | None = None,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a handler for command routing."""
+            ...
+
+        def register_handlers(
+            self, bindings: t.SequenceOf[FlextProtocolsHandler.HandlerRegistration]
+        ) -> FlextProtocolsResult.Result[
+            FlextProtocolsHandler.HandlerRegistrationReport
+        ]:
+            """Atomically bind handlers and report new and idempotent bindings."""
             ...
 
     # ------------------------------------------------------------------
