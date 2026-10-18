@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import asyncio
 import fcntl
 import io
 import logging
@@ -16,7 +17,8 @@ import select
 import sys
 import threading
 import traceback
-from contextlib import redirect_stdout
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import redirect_stderr
 from typing import TYPE_CHECKING
 
 import pytest
@@ -36,25 +38,27 @@ class TestsFlextLoggingStages:
     def test_closed_async_stream_preserves_native_failure() -> None:
         """A failed sink terminates without logging back into its own writer."""
         consumer = (
-            "import logging, sys, structlog\n"
+            "import contextlib, io, logging, sys, structlog\n"
             "from flext_core import m, u\n"
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=True, log_level=logging.INFO))\n"
-            "sys.stdout.close()\n"
-            "structlog.get_logger().info('closed stream')\n"
+            "stream = io.StringIO()\n"
+            "stream.close()\n"
+            "with contextlib.redirect_stderr(stream):\n"
+            "    structlog.get_logger().info('closed stream')\n"
         )
         executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
         tm.that(u.Cli.process_succeeded(executed.outcome), eq=False)
         tm.that(executed.outcome.timed_out, eq=False)
         tm.that(executed.outcome.forwarded_signal, eq=None)
-        tm.that(executed.stderr, has="ValueError: I/O operation on closed file.")
+        tm.that(executed.stderr, has="ValueError: I/O operation on closed file")
 
     @staticmethod
     def test_async_emission_drains_before_reconfiguration_and_process_exit() -> None:
         """Accepted public events reach the native stream before shutdown."""
         events = (
-            "first accepted event",
-            "second accepted event",
+            " first accepted event ",
+            "\tsecond accepted event\n",
             "last accepted event",
         )
         consumer = (
@@ -75,21 +79,24 @@ class TestsFlextLoggingStages:
         tm.that(executed.outcome.timed_out, eq=False)
         emitted = tuple(
             u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))["event"]
-            for line in executed.stdout.splitlines()
+            for line in executed.stderr.splitlines()
         )
         tm.that(emitted, eq=events)
-        tm.that(executed.stderr, empty=True)
+        tm.that(executed.stdout, empty=True)
 
     @staticmethod
     def test_failed_async_sink_rethrows_the_same_public_exception() -> None:
         """Subsequent public writes preserve the first native stream exception."""
         consumer = (
-            "import logging, sys\n"
+            "import contextlib, io, logging, sys\n"
             "from flext_core import m, u\n"
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=True, log_level=logging.INFO))\n"
             "logger = u.create_module_logger('tests.logging.native.failure')\n"
-            "sys.stdout.close()\n"
+            "stream = io.StringIO()\n"
+            "stream.close()\n"
+            "previous_stderr = sys.stderr\n"
+            "sys.stderr = stream\n"
             "try:\n"
             "    logger.info('first failed event')\n"
             "except ValueError as first:\n"
@@ -98,6 +105,7 @@ class TestsFlextLoggingStages:
             "    except ValueError as second:\n"
             "        if second is not first:\n"
             "            raise AssertionError('native failure identity changed')\n"
+            "        sys.stderr = previous_stderr\n"
             "        raise first\n"
             "    raise AssertionError('second event did not fail')\n"
             "raise AssertionError('closed native stream did not fail')\n"
@@ -106,14 +114,26 @@ class TestsFlextLoggingStages:
         tm.that(u.Cli.process_succeeded(executed.outcome), eq=False)
         tm.that(executed.outcome.timed_out, eq=False)
         tm.that(executed.outcome.forwarded_signal, eq=None)
-        tm.that(executed.stderr, has="ValueError: I/O operation on closed file.")
+        tm.that(executed.stderr, has="ValueError: I/O operation on closed file")
         tm.that(executed.stderr, lacks="AssertionError")
 
     @pytest.fixture(autouse=True)
     def restore_logging_options(self) -> Generator[None]:
-        """Restore public default configuration after each registration."""
-        yield
-        u.configure_structlog(settings=m.StructlogOptions())
+        """Restore the actual captured configuration after each registration."""
+        original_settings, original_options = u.logging_settings(), u.logging_options()
+        try:
+            selected = u.resolve_logging_settings(
+                log_level=c.LogLevel.DEBUG, trace=False
+            )
+            u.configure_structlog(
+                settings=m.StructlogOptions(async_logging=False),
+                runtime_settings=selected,
+            )
+            yield
+        finally:
+            u.configure_structlog(
+                settings=original_options, runtime_settings=original_settings
+            )
 
     def test_ordered_stages_preserve_nested_values_and_render(self) -> None:
         """Stages share an event in order and the final renderer emits it."""
@@ -158,10 +178,7 @@ class TestsFlextLoggingStages:
         tm.that(result.success, eq=True)
         tm.that(len(observed), eq=2)
         tm.that(observed[1]["payload"], eq=payload)
-        # An info event carries no exception context; only the exception
-        # entrypoint attaches it (observed at runtime: the stage sees
-        # event, level, payload, source and timestamp).
-        tm.that("exc_info" in observed[1], eq=False)
+        tm.that(observed[1]["exception_type"], eq="ValueError")
         tm.that('"stage_order": ["first", "second"]' in stream.getvalue(), eq=True)
 
     @pytest.mark.parametrize("entrypoint", ["info", "exception", "trace"])
@@ -197,6 +214,7 @@ class TestsFlextLoggingStages:
             ),
         )
         logger = u.create_module_logger(f"tests.logging.stages.failure.{entrypoint}")
+        u.apply_log_level(log_level=c.LogLevel.DEBUG, trace=True)
 
         match entrypoint:
             case "exception":
@@ -215,7 +233,7 @@ class TestsFlextLoggingStages:
         tm.that(frames[-1].name, eq="fail_first")
 
     def test_exception_context_reaches_stage(self) -> None:
-        """Explicit public exceptions retain their structured traceback."""
+        """Native SDK stages receive causal metadata and the original exception."""
         observed: list[t.LoggingEvent] = []
         stream = io.StringIO()
 
@@ -239,6 +257,7 @@ class TestsFlextLoggingStages:
         try:
             raise error
         except OSError as exc:
+            original_traceback = exc.__traceback__
             result = logger.exception(
                 "operation failed",
                 exception=exc,
@@ -248,7 +267,9 @@ class TestsFlextLoggingStages:
         tm.that(result.success, eq=True)
         tm.that(observed[0]["exception_type"], eq=type(error).__name__)
         tm.that(observed[0]["exception_message"], eq=str(error))
-        tm.that(str(error) in str(observed[0]["stack_trace"]), eq=True)
+        info = tm.not_none(u.resolve_logging_exception_info(observed[0]["exc_info"]))
+        tm.that(info[1] is error, eq=True)
+        tm.that(info[2] is original_traceback, eq=True)
         tm.that("operation failed" in stream.getvalue(), eq=True)
 
     def test_invalid_registration_is_rejected(self) -> None:
@@ -275,8 +296,8 @@ class TestsFlextLoggingStages:
 
         tm.that(stream.getvalue(), eq="")
 
-    def test_explicit_registration_preserves_cached_logger_chain(self) -> None:
-        """Only fresh loggers consume a replacement processing chain."""
+    def test_explicit_registration_updates_cached_logger_chain(self) -> None:
+        """Cached and fresh public loggers consume the elected processing chain."""
         stream = io.StringIO()
         observed: list[str] = []
         initial = m.StructlogOptions(
@@ -307,7 +328,7 @@ class TestsFlextLoggingStages:
         result = fresh.info("replacement chain")
 
         tm.that(result.success, eq=True)
-        tm.that(observed, eq=["replacement chain"])
+        tm.that(observed, eq=["cached chain", "replacement chain"])
         tm.that("cached chain" in stream.getvalue(), eq=True)
         tm.that("replacement chain" in stream.getvalue(), eq=True)
 
@@ -326,11 +347,11 @@ class TestsFlextLoggingStages:
         u.configure_structlog(settings=first_options)
         initial = u.create_module_logger("tests.logging.factory.initial")
         first_stdout = io.StringIO()
-        with redirect_stdout(first_stdout):
+        with redirect_stderr(first_stdout):
             _ = initial.info("initial output")
         u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
         current_stdout = io.StringIO()
-        with redirect_stdout(current_stdout):
+        with redirect_stderr(current_stdout):
             current = u.create_module_logger("tests.logging.factory.synchronous")
             result = current.info("synchronous replacement")
         tm.that(result.success, eq=True)
@@ -362,6 +383,391 @@ class TestsFlextLoggingStages:
         tm.that("operation" in stream.getvalue(), eq=True)
         tm.that("native" in stream.getvalue(), eq=True)
 
+    def test_native_destinations_share_one_sanitized_observer_event(self) -> None:
+        """Native handlers present the same event without duplicating hooks."""
+        structured, console = io.StringIO(), io.StringIO()
+        observed: list[p.LoggingRecord] = []
+        handlers = (
+            u.create_logging_handler(stream=structured),
+            u.create_logging_handler(stream=console, console_renderer=True),
+        )
+        selected = u.resolve_logging_settings(log_level=c.LogLevel.DEBUG)
+        u.configure_structlog(
+            runtime_settings=selected,
+            settings=m.StructlogOptions(
+                handlers=handlers, observers=(observed.append,)
+            ),
+        )
+        with structlog.contextvars.bound_contextvars(correlation_id="real-operation"):
+            tm.ok(
+                u.log(
+                    "delivered %s", "once", payload={"password": "private", "count": 2}
+                )
+            )
+        tm.that(len(observed), eq=1)
+        record = observed[0]
+        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(structured.getvalue())))
+        tm.that(record.message, eq="delivered once")
+        tm.that(rendered["correlation_id"], eq=record.context["correlation_id"])
+        tm.that(rendered["payload"], eq={"password": "[REDACTED]", "count": 2})
+        tm.that(console.getvalue(), has="delivered once", lacks="private")
+        tm.that(structured.getvalue(), lacks="private")
+        for handler in handlers:
+            handler.close()
+
+    def test_ordinary_event_is_filtered_without_relabeling_or_changing_caller(
+        self,
+    ) -> None:
+        """WARNING policy filters ordinary INFO before observers or destinations."""
+        first, second = io.StringIO(), io.StringIO()
+        observed: list[p.LoggingRecord] = []
+        handlers = (
+            u.create_logging_handler(stream=first),
+            u.create_logging_handler(stream=second),
+        )
+        selected = u.resolve_logging_settings(log_level=c.LogLevel.WARNING)
+        u.configure_structlog(
+            runtime_settings=selected,
+            settings=m.StructlogOptions(
+                handlers=handlers,
+                observers=(observed.append,),
+            ),
+        )
+        tm.ok(u.log("ordinary filtered event"))
+        tm.that(first.getvalue(), eq="")
+        tm.that(second.getvalue(), eq="")
+        tm.that(observed, eq=[])
+        tm.ok(u.warning("visible warning"))
+        tm.that(len(observed), eq=1)
+        record = observed[0]
+        tm.that(record.level, eq="warning")
+        tm.that(record.context["logger"], eq=__name__)
+        tm.that(record.context["pathname"], eq=__file__)
+        tm.that(
+            record.context["func_name"],
+            eq="test_ordinary_event_is_filtered_without_relabeling_or_changing_caller",
+        )
+        for stream in (first, second):
+            event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+            tm.that(event["event"], eq=record.message)
+            tm.that(event["logger"], eq=record.context["logger"])
+
+    def test_native_context_ownership_is_thread_and_task_local(self) -> None:
+        """Concurrent split scope APIs neither leak keys nor erase a parent."""
+        observed: list[p.LoggingRecord] = []
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                log_level=logging.DEBUG,
+                observers=(observed.append,),
+                logger_factory=structlog.PrintLoggerFactory(file=io.StringIO()),
+            )
+        )
+        thread_barrier = threading.Barrier(2)
+
+        def emit_thread(marker: str) -> None:
+            tm.ok(u.bind_context("isolation", logging_scope_isolation=marker))
+            thread_barrier.wait()
+            tm.ok(u.log("thread context", marker=marker))
+            tm.ok(u.clear_scope("isolation"))
+            tm.that(
+                structlog.contextvars.get_contextvars().get("logging_scope_isolation"),
+                eq=None,
+            )
+
+        async def emit_tasks() -> None:
+            barrier = asyncio.Barrier(2)
+
+            async def emit(marker: str) -> None:
+                tm.ok(u.bind_context("isolation", logging_scope_isolation=marker))
+                await barrier.wait()
+                tm.ok(u.log("task context", marker=marker))
+                tm.ok(u.clear_scope("isolation"))
+                tm.that(
+                    structlog.contextvars.get_contextvars().get(
+                        "logging_scope_isolation"
+                    ),
+                    eq=None,
+                )
+
+            await asyncio.gather(emit("task one"), emit("task two"))
+
+        with structlog.contextvars.bound_contextvars(logging_scope_isolation="parent"):
+            with ThreadPoolExecutor(max_workers=2) as pool:
+                list(pool.map(emit_thread, ("thread one", "thread two")))
+            asyncio.run(emit_tasks())
+            tm.that(
+                structlog.contextvars.get_contextvars()["logging_scope_isolation"],
+                eq="parent",
+            )
+        tm.that(len(observed), eq=4)
+        for record in observed:
+            tm.that(
+                record.context["logging_scope_isolation"], eq=record.context["marker"]
+            )
+
+    def test_bound_cached_logger_observes_factory_and_hook_removal(self) -> None:
+        """Binding keeps context, not a stale processor/factory composition."""
+        old, current = io.StringIO(), io.StringIO()
+        observed: list[p.LoggingRecord] = []
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                log_level=logging.DEBUG,
+                cache_logger_on_first_use=True,
+                logger_factory=structlog.PrintLoggerFactory(file=old),
+                observers=(observed.append,),
+            )
+        )
+        cached = u.fetch_logger("real.cached").bind(operation="bound")
+        tm.ok(cached.info("before replacement"))
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                log_level=logging.DEBUG,
+                console_renderer=False,
+                logger_factory=structlog.PrintLoggerFactory(file=current),
+            )
+        )
+        tm.ok(cached.info("after replacement"))
+        tm.that(len(observed), eq=1)
+        tm.that(old.getvalue(), lacks="after replacement")
+        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(current.getvalue())))
+        tm.that(rendered["operation"], eq="bound")
+        tm.that(rendered["event"], eq="after replacement")
+
+    def test_error_trace_retains_native_chains_without_locals_or_secrets(self) -> None:
+        """ERROR plus trace expands the original cause using native processors."""
+        stream = io.StringIO()
+        observed: list[p.LoggingRecord] = []
+        secret = "selected-sensitive-input"
+        selected = u.resolve_logging_settings(
+            log_level=c.LogLevel.ERROR, trace=True, debug=False
+        )
+        u.configure_structlog(
+            runtime_settings=selected,
+            settings=m.StructlogOptions(
+                console_renderer=False,
+                observers=(observed.append,),
+                redacted_values=(secret,),
+                logger_factory=structlog.PrintLoggerFactory(file=stream),
+            ),
+        )
+        cause = ValueError(f"invalid credential {secret}")
+        original = RuntimeError("operation failed")
+        try:
+            try:
+                raise cause
+            except ValueError:
+                raise original from cause
+        except RuntimeError as error:
+            tm.ok(u.failure("causal error", exception=error))
+        tm.ok(u.debug("filtered detail"))
+        record = observed[0]
+        tm.that(record.exception is original, eq=True)
+        tm.that(
+            "exception"
+            in m.LoggingRecord.model_validate(
+                record, from_attributes=True
+            ).model_dump(),
+            eq=False,
+        )
+        tm.that(record.context["exception_type"], eq=type(original).__name__)
+        tm.that(record.context["exception_message"], eq=str(original))
+        tm.that(stream.getvalue(), has="stack_trace", lacks=secret)
+        tm.that(stream.getvalue(), has="ValueError", lacks='"locals"')
+        tm.that(stream.getvalue(), lacks="filtered detail")
+        tm.that(original.__cause__ is cause, eq=True)
+
+    def test_business_exception_survives_selected_observer_failure(self) -> None:
+        """The selected failure is visible without replacing the original cause."""
+        hook_error = OSError("capture unavailable")
+        cause = ValueError("business cause")
+        original = RuntimeError("business failure")
+
+        def capture(event: p.LoggingRecord) -> None:
+            raise hook_error
+
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                log_level=logging.DEBUG,
+                observers=(capture,),
+                async_logging=False,
+            )
+        )
+        with pytest.raises(RuntimeError) as caught:
+            try:
+                try:
+                    raise cause
+                except ValueError:
+                    raise original from cause
+            except RuntimeError as error:
+                _ = u.failure("operation failed", exception=error)
+        tm.that(caught.value is original, eq=True)
+        tm.that(original.__cause__ is cause, eq=True)
+        tm.that(original.__context__ is hook_error, eq=True)
+        tm.that(original.__notes__, has="Logging also failed: OSError")
+
+    def test_native_exception_group_and_original_cause_remain_observable(self) -> None:
+        """Group children survive native expansion without serializing raw causes."""
+        observed: list[p.LoggingRecord] = []
+        stream = io.StringIO()
+        selected = u.resolve_logging_settings(log_level=c.LogLevel.ERROR, trace=True)
+        u.configure_structlog(
+            runtime_settings=selected,
+            settings=m.StructlogOptions(
+                console_renderer=False,
+                observers=(observed.append,),
+                logger_factory=structlog.PrintLoggerFactory(file=stream),
+            ),
+        )
+        original = ExceptionGroup(
+            "grouped operation", [ValueError("first"), OSError("second")]
+        )
+        try:
+            raise original
+        except ExceptionGroup as error:
+            tm.ok(u.failure("group failed", exception=error))
+        tm.that(observed[0].exception is original, eq=True)
+        tm.that(stream.getvalue(), has="ExceptionGroup")
+        tm.that(stream.getvalue(), has="ValueError")
+        tm.that(stream.getvalue(), has="OSError", lacks='"locals"')
+
+    def test_native_handler_sink_failure_escapes(self) -> None:
+        """The native StreamHandler adapter does not swallow a closed stream."""
+        stream = io.StringIO()
+        handler = u.create_logging_handler(stream=stream)
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                log_level=logging.DEBUG,
+                handlers=(handler,),
+                async_logging=False,
+            )
+        )
+        stream.close()
+        with pytest.raises(ValueError, match="closed file") as caught:
+            _ = u.log("native sink failure")
+        tm.that(caught.value.__traceback__ is not None, eq=True)
+
+    def test_saved_native_exception_info_preserves_original_and_supplied_traceback(
+        self,
+    ) -> None:
+        """Outside except, a failed sink never replaces a saved exception tuple."""
+        for original in (
+            ValueError("saved business failure"),
+            KeyboardInterrupt("saved interrupt"),
+        ):
+            cause = LookupError("original cause")
+            try:
+                raise original from cause
+            except BaseException:
+                saved_tb = original.__traceback__
+                saved: t.LoggingExceptionInfo = type(original), original, saved_tb
+                resolved = u.resolve_logging_exception_info(True)
+                if resolved is None:
+                    pytest.fail("An active exception must resolve to native exc_info")
+                tm.that(resolved[0] is saved[0], eq=True)
+                tm.that(resolved[1] is saved[1], eq=True)
+                tm.that(resolved[2] is saved[2], eq=True)
+                tm.that(u.resolve_logging_exception_info(False), eq=None)
+            try:
+                raise original
+            except BaseException:
+                discarded_tb = original.__traceback__
+            tm.that(discarded_tb is saved_tb, eq=False)
+            stream = io.StringIO()
+            observed: list[p.LoggingRecord] = []
+            handler = u.create_logging_handler(stream=stream)
+            u.configure_structlog(
+                settings=m.StructlogOptions(
+                    log_level=logging.DEBUG,
+                    handlers=(handler,),
+                    observers=(observed.append,),
+                )
+            )
+            stream.close()
+            with pytest.raises(type(original)) as caught:
+                _ = u.fetch_logger("saved.native.exception").error(
+                    "failed operation", exc_info=saved
+                )
+            tm.that(caught.value is original, eq=True)
+            tm.that(observed[0].exception is original, eq=True)
+            tm.that(original.__cause__ is cause, eq=True)
+            tm.that(isinstance(original.__context__, ValueError), eq=True)
+            restored_tb = original.__traceback__
+            while restored_tb is not None and restored_tb is not saved_tb:
+                tm.that(restored_tb is discarded_tb, eq=False)
+                restored_tb = restored_tb.tb_next
+            tm.that(restored_tb is saved_tb, eq=True)
+
+    def test_declared_sensitive_keys_are_casefolded_before_hooks_and_sinks(
+        self,
+    ) -> None:
+        """One shared redactor handles actual keys and embedded JSON uniformly."""
+        structured, console = io.StringIO(), io.StringIO()
+        observed: list[p.LoggingRecord] = []
+        declared_key = "ClientSecret"
+        secret = "mixed-case-sensitive-payload"
+        options = m.StructlogOptions(
+            log_level=logging.DEBUG,
+            redacted_keys=(declared_key,),
+            observers=(observed.append,),
+            handlers=(
+                u.create_logging_handler(stream=structured),
+                u.create_logging_handler(stream=console, console_renderer=True),
+            ),
+        )
+        u.configure_structlog(settings=options)
+        payload = dict.fromkeys(
+            (declared_key, declared_key.casefold(), declared_key.swapcase()), secret
+        )
+        tm.ok(
+            u.log(
+                "declared sensitive payload",
+                payload={
+                    "nested": [payload],
+                    "encoded": u.to_json(payload),
+                    "retained": "public",
+                },
+            )
+        )
+        tm.that(len(observed), eq=1)
+        dumped = m.LoggingRecord.model_validate(
+            observed[0], from_attributes=True
+        ).model_dump_json()
+        for text in (structured.getvalue(), console.getvalue(), dumped):
+            tm.that(text, lacks=secret, has="public")
+
+    def test_invalid_policy_and_unbound_selected_handler_have_no_emission(self) -> None:
+        """Validation rejects selected incomplete composition before effects."""
+        original = u.logging_settings()
+        stream = io.StringIO()
+        with pytest.raises(ValueError):
+            _ = u.resolve_logging_settings(logging_profile="unbound-presentation")
+        with pytest.raises(ValueError, match="ProcessorFormatter"):
+            u.configure_structlog(
+                settings=m.StructlogOptions(handlers=(logging.StreamHandler(stream),))
+            )
+        tm.that(u.logging_settings() is original, eq=True)
+        tm.that(stream.getvalue(), eq="")
+
+    def test_native_positional_formatter_accepts_mapping_and_filters_before_format(
+        self,
+    ) -> None:
+        """Native formatting follows severity election, not a second custom path."""
+        stream = io.StringIO()
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                log_level=logging.INFO,
+                console_renderer=False,
+                logger_factory=structlog.PrintLoggerFactory(file=stream),
+            )
+        )
+        logger = u.fetch_logger("native.arguments")
+        tm.ok(logger.debug("filtered invalid %d", "not an integer"))
+        tm.that(stream.getvalue(), eq="")
+        tm.ok(logger.info("named %(actor)s", {"actor": "sam"}))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        tm.that(event["event"], eq="named sam")
+        tm.that("positional_args" in event, eq=False)
+
     @staticmethod
     def exercise_async_stream_failure() -> None:
         """Observe a real closed stream in an isolated logging process."""
@@ -369,7 +775,7 @@ class TestsFlextLoggingStages:
         stream.close()
         u.configure_structlog(settings=m.StructlogOptions(async_logging=True))
         logger = u.create_module_logger("tests.logging.async.failure")
-        with redirect_stdout(stream):
+        with redirect_stderr(stream):
             with pytest.raises(ValueError, match="closed file") as first:
                 _ = logger.info("first closed output")
             with pytest.raises(ValueError, match="closed file") as second:
@@ -392,7 +798,7 @@ class TestsFlextLoggingStages:
         capacity = fcntl.fcntl(write_fd, fcntl.F_GETPIPE_SZ)
         payload = "x" * (capacity * 3)
         try:
-            with os.fdopen(write_fd, "w") as stream, redirect_stdout(stream):
+            with os.fdopen(write_fd, "w") as stream, redirect_stderr(stream):
                 u.configure_structlog(
                     settings=m.StructlogOptions(
                         async_logging=True, console_renderer=False

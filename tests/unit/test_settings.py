@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextSettings
-from tests import m, u
+from tests import u
 
 
 class TestsFlextCoreSettings:
@@ -303,11 +303,13 @@ class TestsFlextCoreSettings:
         FlextSettings.reset_for_testing()
 
     @staticmethod
-    def test_trace_requires_debug_invariant() -> None:
-        """trace=True without debug raises the documented validation error."""
-        with pytest.raises(m.ValidationError):
-            FlextSettings.update_global(trace=True, debug=False)
-        FlextSettings.reset_for_testing()
+    def test_trace_detail_is_independent_of_debug_and_severity() -> None:
+        """Trace-only settings preserve the captured severity."""
+        original = FlextSettings.fetch_global()
+        selected = original.clone(trace=True, debug=False)
+        assert selected.trace
+        assert not selected.debug
+        assert selected.log_level == original.log_level
 
     @staticmethod
     def test_reset_for_testing_drops_singleton() -> None:

@@ -283,19 +283,40 @@ if not pinged.success or pinged.value != greeter.ping_response:
   serializers.
 - Discovery is lazy: the CLI and tools call it; class creation never checks operation
   shape. The result is cached per class.
-- Annotations are resolved without `eval`. The module declares
-  `from __future__ import annotations`, so each annotation is a string that is parsed;
-  its dotted name resolves the first part in the module namespace of the method and the
-  rest by attribute. In the current request-bearing path, a concrete schema imported
-  only under `TYPE_CHECKING` remains unbound and discovery fails. This describes the
-  existing schema/annotation coupling, not a recommended consumer signature; its
-  separation from the carrier protocol remains an owner defect.
+- Annotations are resolved without `eval`. A request-bearing operation annotates its
+  consumed capability through `p.Request` (or a `t` alias), and declares the concrete
+  Pydantic schema once with `@h.handler(command=m.Request)`. Both declarations must
+  resolve at the owner; discovery rejects missing or contradictory metadata. The
+  catalog retains the original operation callable, not a name-based dispatch wrapper.
 - A malformed operation raises `TypeError` naming the operation, the annotation, the
   module and the fix: an async or generic method, `*args`, `**kwargs`, keyword-only
   parameters or defaults, more than one request, a missing docstring, a request that is
-  not a Pydantic model class, or a return that is not `p.Result[...]`. Two sibling
+  not a protocol, missing concrete Pydantic command metadata, unsupported timeout or
+  middleware policies, or a return that is not `p.Result[...]`. Two sibling
   classes declaring one operation name, and a service without operations, fail the same
   way.
+
+## Registry composition
+
+`u.build_registry(dispatcher, discovery_module=module)` composes an explicitly supplied
+dispatcher and discovers only the supplied module. Omit `discovery_module` when no
+discovery is required. There is no creation/auto-discovery flag or implicit stack scan.
+`h.Discovery.scan_module(module)` returns original decorated callables and metadata;
+it neither invokes them nor stringifies their results.
+
+`register_handlers` and `register_bindings` publish atomically: an invalid or conflicting
+entry leaves every route unchanged. Their summary distinguishes exact new `registered`
+entries from idempotent `skipped` entries. The same callable is idempotent; another
+callable on the same command route conflicts, regardless of priority. A binding must
+agree with the concrete command metadata. Dispatch preserves owned model identity and
+Result failures with their causes through the canonical executor.
+
+Instance plugin storage is isolated by default. Sharing requires injecting the same
+`p.Registry` explicitly; class scope is selected only with `c.RegistrationScope.CLASS`.
+Registration preserves the plugin object, rejects conflicting replacements, validates
+before publication, and removal releases the key for registration again. The executable
+`examples/ex_12_flext_registry.py` demonstrates these contracts, including a service
+consuming a required `t.Port[p.Registry]` declared in its model owner through MRO.
 
 ## Failures
 

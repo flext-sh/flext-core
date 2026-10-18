@@ -10,10 +10,14 @@ from collections.abc import Callable, Iterator, MutableMapping, Set as AbstractS
 from concurrent.futures import Future
 from datetime import date, time, tzinfo
 from enum import Enum
+from logging import Formatter, Handler, LogRecord
 from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import BinaryIO, TextIO, TypeAliasType
 
+from structlog.typing import Processor
+
+from flext_core._constants import FlextConstantsLogging
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsContainer,
@@ -29,6 +33,8 @@ from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
+
+    type OperationMetricsStream = Iterator[FlextTypingBase.MappingKV[str, JsonPayload]]
 
     type JsonPayloadLeaf = (
         FlextTypingBase.Scalar
@@ -68,16 +74,17 @@ class FlextTypesServices:
     type ScalarOrModel = FlextTypingBase.Scalar | FlextTypesPydantic.BaseModelType
     type ModelClass[T: FlextTypesPydantic.BaseModelType] = type[T]
     type LogArgument = JsonPayload | FlextProtocolsBase.Model
-    type LogValue = LogArgument | Exception
+    type LogLevel = FlextConstantsLogging.LogLevel
+    type LoggingTraceback = TracebackType
     type LoggingExceptionInfo = tuple[
-        type[BaseException], BaseException, TracebackType | None
+        type[BaseException], BaseException, LoggingTraceback | None
     ]
+    type LogValue = LogArgument | BaseException | LoggingExceptionInfo
+    type LoggingNativeRecord = LogRecord
+    type LoggingNativeFormatter = Formatter
+    type LoggingNativeHandlers = list[Handler]
     type LoggingEventValue = (
-        LogValue
-        | BaseException
-        | type[BaseException]
-        | TracebackType
-        | LoggingExceptionInfo
+        LogValue | type[BaseException] | LoggingTraceback | tuple[LogValue, ...]
     )
     type LoggingEvent = MutableMapping[str, LoggingEventValue]
     type LoggingContext = dict[str, LoggingEventValue]
@@ -85,10 +92,7 @@ class FlextTypesServices:
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
     type LoggingWriteCompletion = Future[int]
-    type LoggingProcessor = Callable[
-        [FlextProtocolsLogging.OutputLogger, str, LoggingEvent],
-        LoggingEvent | str | bytes,
-    ]
+    type LoggingProcessor = Processor
     type LogResult = FlextProtocolsResult.Result[bool]
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
@@ -97,7 +101,7 @@ class FlextTypesServices:
     type ServiceClass = type
     type ServiceValue = (
         JsonPayload
-        | FlextTypesPydantic.BaseModelType
+        | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
         | FlextProtocolsContext.Context
@@ -162,6 +166,13 @@ class FlextTypesServices:
     type RoutedHandlerCallable = Callable[
         [FlextProtocolsBase.Routable],
         JsonPayload | FlextProtocolsResult.ResultView[JsonPayload] | None,
+    ]
+    type DispatcherRouteEntry = tuple[
+        DispatchableHandler,
+        RoutedHandlerCallable,
+        tuple[FlextTypingBase.TypeHintSpecifier, ...],
+        bool,
+        int,
     ]
     type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
     type LoggerFactory = FlextProtocolsLogging.OutputLoggerFactory | None

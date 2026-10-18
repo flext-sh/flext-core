@@ -1,6 +1,6 @@
 """Logging context binding and value normalization.
 
-MRO part 01: context dictionary merge, bind/unbind operations.
+MRO part 01: native contextvars binding and scope-key ownership.
 
 Extracted from FlextUtilitiesLogging as an MRO mixin to keep the facade under
 the 200-line cap (AGENTS.md §3.1).
@@ -11,57 +11,31 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from contextvars import ContextVar
+from typing import ClassVar
 
-from typing_extensions import TypeForm
-
-from flext_core import FlextExceptions, FlextResult, FlextRuntime, c, p, t
-from flext_core._utilities import (
-    FlextUtilitiesBase,
-    FlextUtilitiesCollection,
-    FlextUtilitiesGuardsTypeModel,
-    FlextUtilitiesLoggingConfig,
-)
-
-if TYPE_CHECKING:
-    import types
+from flext_core import FlextExceptions, FlextResult, c, p, t
+from flext_core._utilities import FlextUtilitiesLoggingConfig
 
 
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
-    """Context binding, value normalization, and source path helpers."""
+    """Native context-local bindings; scopes track key ownership, never values."""
 
-    _scoped_contexts: ClassVar[t.ScopedContainerRegistry]
-
-    _level_contexts: ClassVar[t.ScopedContainerRegistry]
-
-    @classmethod
-    def _merge_scoped_context(
-        cls,
-        scope: str,
-        context: t.MappingKV[str, t.JsonPayload],
-    ) -> t.JsonDict:
-        cls._scoped_contexts.setdefault(scope, {})
-        current_context = cls.to_container_context(cls._scoped_contexts[scope])
-        incoming_context = cls.to_container_context(context)
-        merge_result = FlextUtilitiesCollection.merge_mappings(
-            incoming_context,
-            current_context,
-            strategy=c.MergeStrategy.DEEP,
-        )
-        return dict(merge_result.unwrap_or(current_context))
+    _scope_keys: ClassVar[ContextVar[t.MappingKV[str, frozenset[str]]]] = ContextVar(
+        "flext_logging_scope_keys",
+        default={},
+    )
 
     @classmethod
     def bind_context(cls, scope: str, **context: t.JsonPayload) -> p.Result[bool]:
-        """Bind context variables to a specific scope.
-
-        Returns:
-            The resulting ``p.Result[bool]``.
-
-        """
+        """Bind native context and record this context's scoped key ownership."""
         try:
-            cls._scoped_contexts[scope] = cls._merge_scoped_context(scope, context)
             cls.structlog().contextvars.bind_contextvars(**context)
+            scopes = cls._scope_keys.get()
+            cls._scope_keys.set({
+                **scopes,
+                scope: scopes.get(scope, frozenset()) | context.keys(),
+            })
             return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return FlextExceptions.fail_operation(
@@ -70,49 +44,30 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @classmethod
     def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
-        """Bind context globally using structlog contextvars.
-
-        Returns:
-            The resulting ``p.Result[bool]``.
-
-        """
+        """Bind values in the current native logging context."""
         try:
-            normalized_context = cls.to_container_context(context)
-            cls.structlog().contextvars.bind_contextvars(**normalized_context)
+            cls.structlog().contextvars.bind_contextvars(**context)
             return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return FlextExceptions.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
 
     @classmethod
     def clear_global_context(cls) -> p.Result[bool]:
-        """Clear global logging context and cached scoped bindings.
-
-        Returns:
-            The resulting ``p.Result[bool]``.
-
-        """
+        """Clear this context's native values and scoped key ownership."""
         try:
             cls.structlog().contextvars.clear_contextvars()
-            cls._scoped_contexts.clear()
-            cls._level_contexts.clear()
+            cls._scope_keys.set({})
             return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return FlextExceptions.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
 
     @classmethod
     def clear_scope(cls, scope: str) -> p.Result[bool]:
-        """Clear all context variables for a specific scope.
-
-        Returns:
-            The resulting ``p.Result[bool]``.
-
-        """
+        """Unbind the keys owned by this scope in the current context."""
         try:
-            if scope in cls._scoped_contexts:
-                keys = list(cls._scoped_contexts[scope].keys())
-                if keys:
-                    cls.structlog().contextvars.unbind_contextvars(*keys)
-                cls._scoped_contexts[scope].clear()
+            scopes = dict(cls._scope_keys.get())
+            cls.structlog().contextvars.unbind_contextvars(*scopes.pop(scope, ()))
+            cls._scope_keys.set(scopes)
             return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return FlextExceptions.fail_operation(
@@ -121,132 +76,16 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
-        """Unbind specific keys from global context.
-
-        Returns:
-            The resulting ``p.Result[bool]``.
-
-        """
+        """Unbind native keys and retire their scoped ownership."""
         try:
-            unbind_keys: t.StrSequence = list(keys)
-            cls.structlog().contextvars.unbind_contextvars(*unbind_keys)
+            cls.structlog().contextvars.unbind_contextvars(*keys)
+            cls._scope_keys.set({
+                scope: owned.difference(keys)
+                for scope, owned in cls._scope_keys.get().items()
+            })
             return FlextResult[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
             return FlextExceptions.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
-
-    @staticmethod
-    def _to_container_value(
-        value: t.LogValue | t.JsonValue | t.JsonPayload | None,
-    ) -> t.JsonValue:
-        """Normalize value to Container (internal helper).
-
-        Returns:
-            The resulting ``t.JsonValue``.
-
-        """
-        if isinstance(value, Exception):
-            return str(value)
-        if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
-            dumped_value: t.JsonValue = FlextUtilitiesBase.type_adapter(
-                TypeForm(t.JsonValue)
-            ).validate_python(
-                value.model_dump(mode="json"),
-            )
-            return dumped_value
-        normalized_value: t.JsonValue = FlextUtilitiesBase.type_adapter(
-            TypeForm(t.JsonValue)
-        ).validate_python(
-            FlextRuntime.normalize_to_json_value(value),
-        )
-        return normalized_value
-
-    @staticmethod
-    def to_container_context(
-        context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload],
-    ) -> t.JsonMapping:
-        """Convert mapping to container context using normalization.
-
-        Returns:
-            The resulting ``t.JsonMapping``.
-
-        """
-        return {
-            key: FlextUtilitiesLoggingContext._to_container_value(value)
-            for key, value in context.items()
-        }
-
-    @classmethod
-    def _to_scalar_context(
-        cls,
-        context: t.MappingKV[str, t.LogValue | t.JsonValue | t.JsonPayload | None],
-    ) -> t.JsonMapping:
-        validated: t.JsonMapping = FlextUtilitiesBase.type_adapter(
-            TypeForm(t.JsonMapping)
-        ).validate_python({
-            key: cls._to_container_value(value) for key, value in context.items()
-        })
-        return validated
-
-    @staticmethod
-    def _extract_class_name(frame: types.FrameType) -> str | None:
-        """Extract class name from frame locals or qualname.
-
-        Returns:
-            The resulting ``str | None``.
-
-        """
-        if c.FRAME_SELF_KEY in frame.f_locals:
-            self_obj = frame.f_locals[c.FRAME_SELF_KEY]
-            if hasattr(self_obj, "__class__"):
-                class_name: str = self_obj.__class__.__name__
-                return class_name
-        if hasattr(frame.f_code, "co_qualname"):
-            qualname = frame.f_code.co_qualname
-            if "." in qualname:
-                parts = qualname.rsplit(".", 1)
-                if len(parts) == c.LEVEL_PREFIX_PARTS_COUNT:
-                    potential_class = parts[0]
-                    if potential_class and potential_class[0].isupper():
-                        return potential_class
-        return None
-
-    @staticmethod
-    def _find_repository_root(abs_path: Path) -> Path | None:
-        """Find workspace root by looking for common markers.
-
-        Returns:
-            The resulting ``Path | None``.
-
-        """
-        current = abs_path.parent
-        for _ in range(10):
-            if any((current / marker).exists() for marker in c.REPOSITORY_ROOT_MARKERS):
-                return current
-            if current == current.parent:
-                break
-            current = current.parent
-        return None
-
-    @staticmethod
-    def _format_caller_source_path(caller_frame: types.FrameType) -> str | None:
-        filename = caller_frame.f_code.co_filename
-        abs_path = Path(filename).resolve()
-        repository_root = FlextUtilitiesLoggingContext._find_repository_root(abs_path)
-        if repository_root is None:
-            return None
-        relative_path = abs_path.relative_to(repository_root)
-        if relative_path.parts and relative_path.parts[0] == c.VENV_DIR_NAME:
-            return None
-        file_path = str(relative_path)
-        line_number = caller_frame.f_lineno
-        method_name = caller_frame.f_code.co_name
-        class_name = FlextUtilitiesLoggingContext._extract_class_name(caller_frame)
-        source_parts = [f"{file_path}:{line_number}"]
-        if class_name and method_name:
-            source_parts.append(f"{class_name}.{method_name}")
-        elif method_name and method_name != c.MODULE_FRAME_NAME:
-            source_parts.append(method_name)
-        return " ".join(source_parts) if len(source_parts) > 1 else source_parts[0]
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingContext"]

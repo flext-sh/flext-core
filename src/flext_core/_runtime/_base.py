@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._typings import FlextTypingBase
 
 if TYPE_CHECKING:
@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from flext_core._typings import FlextTypesServices
 
 
-# mro-i6nq.8: Keep the runtime base free of unused provider passthroughs.
 class FlextRuntimeBase:
     """Foundational runtime helpers shared by higher runtime namespaces."""
 
@@ -74,18 +73,18 @@ class FlextRuntimeBase:
         *,
         trace: bool,
         debug: bool,
-        log_level: c.LogLevel,
-    ) -> c.LogLevel:
-        """Resolve log level: DEBUG if trace, INFO if debug, else log_level.
+        log_level: t.LogLevel,
+        log_level_explicit: bool = True,
+    ) -> t.LogLevel:
+        """Resolve severity once; trace controls detail, never the threshold.
 
         Returns:
-            The resulting ``c.LogLevel``.
+            The resulting ``t.LogLevel``.
 
         """
-        if trace:
+        _ = trace
+        if debug and not log_level_explicit:
             return c.LogLevel.DEBUG
-        if debug:
-            return c.LogLevel.INFO
         return log_level
 
     @staticmethod

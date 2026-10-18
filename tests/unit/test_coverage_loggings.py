@@ -7,23 +7,39 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import io
-import time
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr
 from functools import partial
 from typing import TYPE_CHECKING, NoReturn
 
 import pytest
 
-from tests import tm, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Generator
 
     from tests import p, t
 
 
 class TestsFlextCoverageLoggings:
     """Tests for ``FlextCoverageLoggings``."""
+
+    @staticmethod
+    @pytest.fixture(autouse=True)
+    def restore_logging() -> Generator[None]:
+        """Select an observable severity without assuming the configured default."""
+        original_settings, original_options = u.logging_settings(), u.logging_options()
+        try:
+            selected = u.resolve_logging_settings(log_level=c.LogLevel.DEBUG)
+            u.configure_structlog(
+                settings=m.StructlogOptions(async_logging=False),
+                runtime_settings=selected,
+            )
+            yield
+        finally:
+            u.configure_structlog(
+                settings=original_options, runtime_settings=original_settings
+            )
 
     @staticmethod
     def make_result_logger(name: str) -> p.Logger:
@@ -67,14 +83,8 @@ class TestsFlextCoverageLoggings:
 
         """
         stream = io.StringIO()
-        with redirect_stdout(stream):
+        with redirect_stderr(stream):
             result = emit()
-            deadline = time.monotonic() + 0.25
-            while time.monotonic() < deadline:
-                output = stream.getvalue()
-                if contains in output:
-                    break
-                time.sleep(0.01)
 
         output = stream.getvalue()
         tm.that(contains in output, eq=True)
@@ -120,13 +130,13 @@ class TestsFlextCoverageLoggings:
         )
         tm.that(result.value, eq=True)
 
-    def test_logging_preserves_message_template_with_format_arguments(self) -> None:
-        """Test logging preserves message template with format arguments."""
+    def test_logging_interpolates_printf_arguments_once(self) -> None:
+        """The native adapter retains the public printf-style call contract."""
         logger = self.make_result_logger("tests.loggings.format")
 
         result = self.assert_captured_log_success(
             lambda: logger.info("User %s logged in", "john"),
-            contains="User %s logged in",
+            contains="User john logged in",
         )
         tm.that(result.value, eq=True)
 

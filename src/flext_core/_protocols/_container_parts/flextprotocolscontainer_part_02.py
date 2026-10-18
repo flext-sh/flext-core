@@ -48,7 +48,11 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             """Clear all services and factories."""
             ...
 
-        def register_core_services(self) -> None:
+        def register_core_services(
+            self,
+            *,
+            dispatcher: FlextProtocolsHandler.Dispatcher | None = None,
+        ) -> None:
             """Register canonical core services in the container."""
             ...
 
@@ -122,7 +126,8 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             self,
             *,
             subproject: str | None = None,
-            registration: m.ServiceRegistrationSpec | None = None,
+            registration: flextprotocolscontainer_part_01.FlextProtocolsContainer.ServiceRegistrationSpec
+            | None = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...

@@ -29,6 +29,40 @@ from flext_core._utilities import FlextUtilitiesPydantic
 class FlextModelsHandler:
     """Handler state namespace."""
 
+    class HandlerRegistration(FlextModelsBase.ArbitraryTypesModel):
+        """One immutable binding in an atomic dispatcher registration batch."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
+        handler: t.Port[t.DispatchableHandler] = FlextModelsPydantic.Field(
+            description="Original handler whose identity owns the binding",
+            exclude=True,
+        )
+        message_type: t.RegistryBindingKey | None = FlextModelsPydantic.Field(
+            default=None, description="Explicit message type or route name"
+        )
+        is_event: bool = FlextModelsPydantic.Field(
+            default=False, description="Whether this binding subscribes to events"
+        )
+
+    class HandlerRegistrationReport(FlextModelsBase.ArbitraryTypesModel):
+        """Exact new and idempotent bindings from one atomic registration."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
+        registered: tuple[t.Port[p.HandlerRegistration], ...] = (
+            FlextModelsPydantic.Field(
+                description="Bindings newly published by the batch",
+                exclude=True,
+            )
+        )
+        skipped: tuple[t.Port[p.HandlerRegistration], ...] = FlextModelsPydantic.Field(
+            description="Bindings already owned by the same handler",
+            exclude=True,
+        )
+
     class RegistrationDetails(FlextModelsBase.ArbitraryTypesModel):
         """Registration details tracked by ``FlextRegistry``."""
 
@@ -192,11 +226,11 @@ class FlextModelsHandler:
         timeout: Annotated[
             float | None,
             FlextModelsPydantic.Field(
-                default=c.DEFAULT_TIMEOUT_SECONDS,
+                default=None,
                 description="Handler execution timeout in seconds",
                 gt=0.0,
             ),
-        ] = c.DEFAULT_TIMEOUT_SECONDS
+        ] = None
         middleware: Annotated[
             t.SequenceOf[type[p.Middleware]],
             FlextModelsPydantic.Field(

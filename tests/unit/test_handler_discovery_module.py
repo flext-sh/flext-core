@@ -1,9 +1,4 @@
-"""Behavioral tests for FlextHandlers.Discovery.scan_module public contract.
-
-These tests exercise only the observable contract of ``h.Discovery.scan_module``:
-which module-level functions it discovers, the ordering guarantee, the metadata
-it surfaces, and the behavior of the callable it hands back. No private members
-of the unit under test are touched.
+"""Public decorator/discovery contracts through shared models and real services.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,258 +6,281 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import types
+from time import monotonic
 from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import h, r, tm
+from tests import c, h, m, p, r, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from tests import p, t
+    from tests import t
 
 
-class TestsFlextHandlerDiscoveryModule:
-    """Public-contract tests for module handler discovery."""
-
-    class _CreateCommand:
-        """Sample command payload used to decorate discovered handlers."""
-
-    class _DeleteCommand:
-        """Second sample command payload for multi-handler modules."""
+class TestsFlextHandlerDiscovery:
+    """One behavioral suite replaces duplicated payload stubs and fixture engines."""
 
     @staticmethod
-    def test_scan_module_discovers_every_decorated_public_function() -> None:
-        """All decorated public functions are discovered."""
-        # Arrange
-        module = types.ModuleType("decorated_module")
+    @pytest.mark.parametrize("priority", [0, 1, 10, 100])
+    def test_declared_metadata_and_original_callable(priority: int) -> None:
+        """The decorator and scanner preserve the function and its explicit declaration."""
+        outcome = r[str].ok("created")
 
-        @h.handler(
-            command=TestsFlextHandlerDiscoveryModule._CreateCommand,
-            priority=100,
-        )
-        def handle_create(
-            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> p.Result[str]:
-            _ = cmd
+        def operation(_request: p.Routable) -> p.Result[str]:
+            return outcome
+
+        decorated = h.handler(command=m.Command, priority=priority)(operation)
+        module = u.Tests.handler_module("declared_handlers", operation=decorated)
+        name, found, metadata = h.Discovery.scan_module(module)[0]
+        tm.that(name, eq="operation")
+        tm.that(decorated is operation)
+        tm.that(found is operation)
+        tm.that(metadata.command is m.Command)
+        tm.that(metadata.priority, eq=priority)
+        tm.that(metadata.timeout, eq=None)
+        tm.that(tuple(metadata.middleware), eq=())
+        tm.that(found(m.Command()) is outcome)
+
+    @staticmethod
+    @pytest.mark.parametrize("explicit_empty", [False, True])
+    def test_defaults_come_from_the_model_owner(*, explicit_empty: bool) -> None:
+        """Default expectations are derived, never frozen to today's configured values."""
+
+        def operation(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("created")
 
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._DeleteCommand, priority=50)
-        def handle_delete(
-            cmd: TestsFlextHandlerDiscoveryModule._DeleteCommand,
-        ) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("deleted")
-
-        module.__dict__["handle_create"] = handle_create
-        module.__dict__["handle_delete"] = handle_delete
-
-        # Act
-        handlers = h.Discovery.scan_module(module)
-        names = [name for name, _, _ in handlers]
-
-        # Assert
-        tm.that(len(handlers), eq=2)
-        tm.that(names, has="handle_create")
-        tm.that(names, has="handle_delete")
-
-    @staticmethod
-    def test_scan_module_omits_underscore_prefixed_functions() -> None:
-        """Private module functions are excluded from discovery."""
-        # Arrange
-        module = types.ModuleType("private_check_module")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def _private_handler(
-            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("private")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def public_handler(
-            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("public")
-
-        module.__dict__["_private_handler"] = _private_handler
-        module.__dict__["public_handler"] = public_handler
-
-        # Act
-        handlers = h.Discovery.scan_module(module)
-        names = [name for name, _, _ in handlers]
-
-        # Assert
-        tm.that("_private_handler" not in names, eq=True)
-        tm.that(names, has="public_handler")
-
-    @staticmethod
-    def test_scan_module_ignores_non_callable_and_undecorated_members() -> None:
-        """Undecorated functions and non-callable values are ignored."""
-        # Arrange
-        module = types.ModuleType("mixed_members_module")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def decorated(
-            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("ok")
-
-        def plain(cmd: TestsFlextHandlerDiscoveryModule._CreateCommand) -> str:
-            _ = cmd
-            return "plain"
-
-        module.__dict__["decorated"] = decorated
-        module.__dict__["plain"] = plain
-        module.__dict__["constant"] = 123
-
-        # Act
-        handlers = h.Discovery.scan_module(module)
-        names = [name for name, _, _ in handlers]
-
-        # Assert
-        tm.that(len(handlers), eq=1)
-        tm.that(names, has="decorated")
-        tm.that("plain" not in names, eq=True)
-        tm.that("constant" not in names, eq=True)
-
-    @staticmethod
-    def _priority_module(
-        module_name: str,
-        handlers: tuple[tuple[str, int, str], ...],
-    ) -> types.ModuleType:
-        """Build one synthetic module holding priority-decorated handlers.
-
-        Args:
-            module_name: Synthetic module name.
-            handlers: ``(attribute_name, priority, payload)`` triples.
-
-        Returns:
-            The resulting ``types.ModuleType``.
-
-        """
-        module = types.ModuleType(module_name)
-
-        def build(
-            attr_name: str,
-            priority: int,
-            payload: str,
-        ) -> tuple[str, Callable[..., t.UnconstrainedValue]]:
-            @h.handler(
-                command=TestsFlextHandlerDiscoveryModule._CreateCommand,
-                priority=priority,
-            )
-            def handler(
-                cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-            ) -> p.Result[str]:
-                _ = cmd
-                return r[str].ok(payload)
-
-            return attr_name, handler
-
-        for attr_name, priority, payload in handlers:
-            name, handler = build(attr_name, priority, payload)
-            module.__dict__[name] = handler
-        return module
-
-    @staticmethod
-    def test_scan_module_orders_by_priority_descending() -> None:
-        """Discovered functions are ordered from highest to lowest priority."""
-        # Arrange
-        module = TestsFlextHandlerDiscoveryModule._priority_module(
-            "priority_order_module",
-            (("low", 10, "low"), ("high", 90, "high")),
+        decorator = (
+            h.handler(command=m.Command, timeout=None, middleware=())
+            if explicit_empty
+            else h.handler(command=m.Command)
         )
-
-        # Act
-        ordered = [name for name, _, _ in h.Discovery.scan_module(module)]
-
-        # Assert
-        tm.that(ordered, eq=["high", "low"])
-
-    @staticmethod
-    def test_scan_module_breaks_priority_ties_by_name() -> None:
-        """Equal-priority functions use their names as a stable tie breaker."""
-        # Arrange
-        module = TestsFlextHandlerDiscoveryModule._priority_module(
-            "tie_break_module",
-            (("bravo", 5, "b"), ("alpha", 5, "a")),
-        )
-
-        # Act
-        ordered = [name for name, _, _ in h.Discovery.scan_module(module)]
-
-        # Assert
-        tm.that(ordered, eq=["alpha", "bravo"])
-
-    @staticmethod
-    def test_scan_module_surfaces_decorator_metadata() -> None:
-        """Discovery preserves the handler's public decorator metadata."""
-        # Arrange
-        module = types.ModuleType("metadata_module")
-
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._DeleteCommand, priority=7)
-        def handle(
-            cmd: TestsFlextHandlerDiscoveryModule._DeleteCommand,
-        ) -> p.Result[str]:
-            _ = cmd
-            return r[str].ok("done")
-
-        module.__dict__["handle"] = handle
-
-        # Act
-        _, _, config = h.Discovery.scan_module(module)[0]
-
-        # Assert
+        decorated = decorator(operation)
+        metadata = h.Discovery.scan_module(
+            u.Tests.handler_module("default_handlers", operation=decorated),
+        )[0][2]
+        expected = m.DecoratorConfig(command=m.Command)
         tm.that(
-            config.command is TestsFlextHandlerDiscoveryModule._DeleteCommand,
-            eq=True,
+            (
+                metadata.command,
+                metadata.priority,
+                metadata.timeout,
+                tuple(metadata.middleware),
+            ),
+            eq=(
+                expected.command,
+                expected.priority,
+                expected.timeout,
+                tuple(expected.middleware),
+            ),
         )
-        tm.that(config.priority, eq=7)
 
     @staticmethod
-    def test_scan_module_returns_empty_for_module_without_handlers() -> None:
-        """A module without decorated handlers yields an empty sequence."""
-        # Arrange
-        module = types.ModuleType("bare_module")
-        module.__dict__["value"] = 42
+    @pytest.mark.parametrize("timeout", [0.0, 1.0, 30.0])
+    def test_unsupported_timeout_fails_before_application(timeout: float) -> None:
+        """The executor never accepts a policy it cannot implement."""
+        with pytest.raises(ValueError):
+            h.handler(command=m.Command, timeout=timeout)
 
-        # Act
-        handlers = h.Discovery.scan_module(module)
-
-        # Assert
-        tm.that(len(handlers), eq=0)
-
-    @pytest.mark.parametrize(
-        ("returned", "expected"),
-        [(42, 42), ("payload", "payload"), (None, None), ([1, 2], "[1, 2]")],
-    )
     @staticmethod
-    def test_discovered_callable_coerces_result_to_scalar_or_none(
-        returned: t.JsonValue,
-        expected: t.Scalar | None,
+    def test_unsupported_middleware_fails_before_application() -> None:
+        """Any requested middleware requires an executor capability, not silent success."""
+        with pytest.raises(ValueError):
+            h.handler(command=m.Command, middleware=(p.Middleware,))
+
+    @staticmethod
+    def test_negative_priority_fails_at_the_pydantic_boundary() -> None:
+        """The declared nonnegative invariant is validated by its model, not custom code."""
+
+        def operation(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("created")
+
+        with pytest.raises(c.ValidationError):
+            h.handler(command=m.Command, priority=-1)(operation)
+
+    @staticmethod
+    @pytest.mark.parametrize("command", [m.Command, m.Event])
+    def test_stacked_declarations_leave_original_metadata_unchanged(
+        command: type,
     ) -> None:
-        """The discovered callable exposes the documented scalar coercion."""
-        # Arrange
-        module = types.ModuleType("coercion_module")
+        """Identical and conflicting second declarations both fail without replacement."""
 
-        @h.handler(command=TestsFlextHandlerDiscoveryModule._CreateCommand)
-        def produce(
-            cmd: TestsFlextHandlerDiscoveryModule._CreateCommand,
-        ) -> t.JsonValue:
-            _ = cmd
-            return returned
+        @h.handler(command=m.Command)
+        def operation(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("created")
 
-        module.__dict__["produce"] = produce
-        _, discovered, _ = h.Discovery.scan_module(module)[0]
-        invoke: Callable[..., t.Scalar | None] = discovered
+        module = u.Tests.handler_module("single_declaration", operation=operation)
+        original = h.Discovery.scan_module(module)[0][2]
+        with pytest.raises(ValueError):
+            h.handler(command=command)(operation)
+        tm.that(h.Discovery.scan_module(module)[0][2] is original)
 
-        # Act
-        result = invoke({})
+    @staticmethod
+    def test_module_filters_private_plain_scalar_and_native_members() -> None:
+        """An unrelated imported builtin has no metadata dictionary and is simply ignored."""
 
-        # Assert
-        tm.that(result, eq=expected)
+        @h.handler(command=m.Command)
+        def operation(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("created")
+
+        def plain(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("plain")
+
+        module = u.Tests.handler_module(
+            "filtered_handlers",
+            public=operation,
+            _private=operation,
+            plain=plain,
+            constant=17,
+            monotonic=monotonic,
+        )
+        found = h.Discovery.scan_module(module)
+        tm.that(tuple(item[0] for item in found), eq=("public",))
+        tm.that(found[0][1] is operation)
+
+    @staticmethod
+    def test_module_priority_and_alias_name_order_are_deterministic() -> None:
+        """Order depends on declared priority then export name, not insertion or function name."""
+
+        @h.handler(command=m.Command, priority=10)
+        def tied(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("tied")
+
+        @h.handler(command=m.Event, priority=100)
+        def high(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("high")
+
+        module = u.Tests.handler_module(
+            "ordered_handlers", zebra=tied, top=high, alpha=tied
+        )
+        first = h.Discovery.scan_module(module)
+        second = h.Discovery.scan_module(module)
+        tm.that(tuple(item[0] for item in first), eq=("top", "alpha", "zebra"))
+        tm.that(tuple(item[0] for item in second), eq=tuple(item[0] for item in first))
+        tm.that(
+            all(left[1] is right[1] for left, right in zip(first, second, strict=True))
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "payload", [None, 7, "plain", [1], m.ConfigMap(root={"native": 1})]
+    )
+    def test_discovery_preserves_raw_payload_identity(payload: t.JsonPayload) -> None:
+        """Discovery must not stringify, serialize, wrap, or execute the original function."""
+
+        @h.handler(command=m.Command)
+        def operation(_request: p.Routable) -> t.JsonPayload:
+            return payload
+
+        module = u.Tests.handler_module("payload_handlers", operation=operation)
+        found = h.Discovery.scan_module(module)[0][1]
+        tm.that(found is operation)
+        tm.that(found(m.Command()) is payload)
+
+    @staticmethod
+    @pytest.mark.parametrize("failure", [False, True])
+    def test_result_identity_cause_and_no_late_module_lookup(*, failure: bool) -> None:
+        """Saved handlers survive replacement/removal without resolving a module by name."""
+        cause = RuntimeError("handler operation failed")
+        outcome = (
+            r[str].fail("original failure", exception=cause)
+            if failure
+            else r[str].ok("original")
+        )
+
+        @h.handler(command=m.Command)
+        def operation(_request: p.Routable) -> p.Result[str]:
+            return outcome
+
+        @h.handler(command=m.Command)
+        def replacement(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("replacement")
+
+        module = u.Tests.handler_module("unimported_handlers", operation=operation)
+        saved = h.Discovery.scan_module(module)[0][1]
+        module.operation = replacement
+        tm.that(h.Discovery.scan_module(module)[0][1] is replacement)
+        del module.operation
+        tm.that(h.Discovery.scan_module(module), empty=True)
+        tm.that(saved is operation)
+        tm.that(saved(m.Command()) is outcome)
+        if failure:
+            tm.that(outcome.exception is cause)
+
+    @staticmethod
+    @pytest.mark.parametrize("invalid", ["invalid", m.ConfigMap(root={})])
+    def test_malformed_metadata_fails_before_registration(
+        invalid: t.JsonPayload,
+    ) -> None:
+        """Foreign metadata is rejected instead of being treated as an absent handler."""
+
+        def operation(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("created")
+
+        setattr(operation, c.HANDLER_ATTR, invalid)
+        with pytest.raises(TypeError):
+            h.Discovery.scan_module(
+                u.Tests.handler_module("invalid_handlers", operation=operation)
+            )
+
+    @staticmethod
+    def test_injected_unsupported_policy_is_rejected_by_discovery() -> None:
+        """A structurally valid data model cannot silently activate unsupported execution."""
+
+        def operation(_request: p.Routable) -> p.Result[str]:
+            return r[str].ok("created")
+
+        setattr(
+            operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command, timeout=1.0)
+        )
+        with pytest.raises(ValueError):
+            h.Discovery.scan_module(
+                u.Tests.handler_module("unsupported_handlers", operation=operation)
+            )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("service_type", "names"),
+        [
+            (u.Tests.HandlerService, ("create", "delete", "query")),
+            (u.Tests.InheritedHandlerService, ("create", "delete", "query")),
+            (u.Tests.PrivateHandlerService, ("_private",)),
+            (u.Tests.DescriptorHandlerService, ("class_method", "static")),
+        ],
+    )
+    def test_class_discovery_uses_real_service_mro_and_descriptors(
+        service_type: type,
+        names: t.StrSequence,
+    ) -> None:
+        """Class scanning includes inheritance/private/static/class methods, without plain ones."""
+        first = h.Discovery.scan_class(service_type)
+        second = h.Discovery.scan_class(service_type)
+        tm.that(tuple(name for name, _ in first), eq=names)
+        tm.that(tuple(name for name, _ in second), eq=names)
+        priorities = [metadata.priority for _, metadata in first]
+        tm.that(priorities, eq=sorted(priorities, reverse=True))
+        tm.that(h.Discovery.has_handlers(service_type))
+
+    @staticmethod
+    def test_class_metadata_and_request_forwarding_are_observable() -> None:
+        """An instance executes its declared operation, while MRO respects the override."""
+        metadata = dict(h.Discovery.scan_class(u.Tests.HandlerService))
+        tm.that(metadata["create"].command is m.Command)
+        tm.that(metadata["delete"].command is m.Event)
+        tm.that(metadata["query"].command is m.Tests.RegistryQuery)
+        request = m.Command(command_type="request-forwarded")
+        tm.that(
+            tm.ok(u.Tests.HandlerService().create(request)), eq=request.command_type
+        )
+        tm.that(
+            tm.ok(u.Tests.InheritedHandlerService().create(request)), eq="overridden"
+        )
+
+    @staticmethod
+    def test_empty_inputs_do_not_construct_a_service() -> None:
+        """Discovery is explicit introspection, never bootstrap or implicit execution."""
+        tm.that(
+            h.Discovery.scan_module(u.Tests.handler_module("empty_handlers", value=1)),
+            empty=True,
+        )
+        tm.that(h.Discovery.scan_class(m.Command), empty=True)
+        tm.that(not h.Discovery.has_handlers(m.Command))

@@ -7,15 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import atexit
+import logging
 import queue
+import sys
 import threading
 from concurrent.futures import Future
+from types import TracebackType
 from typing import TYPE_CHECKING, ClassVar, override
 
 import structlog
 
-from flext_core import c, p, t
-from flext_core._models.config import FlextModelsConfig
+from flext_core import c, m, p, t
 from flext_core._utilities._logging_config_parts.logging_stream import (
     FlextUtilitiesLoggingStream,
 )
@@ -27,24 +29,48 @@ if TYPE_CHECKING:
 class FlextUtilitiesLoggingConfig:
     """Structlog configuration, async writer, and processor chain assembly."""
 
-    _structlog_configured: ClassVar[bool] = False
     _log_threshold: ClassVar[int]
+    _runtime_settings: ClassVar[p.LoggingSettings | None] = None
+    _options: ClassVar[p.StructlogOptions | None] = None
+
+    class _StreamHandler(logging.StreamHandler[t.TextStream]):
+        """Retain native rendering/locking while surfacing the native sink error."""
+
+        @override
+        def handleError(self, record: t.LoggingNativeRecord) -> None:
+            error = sys.exception()
+            if error is not None:
+                raise error
+            msg = "Logging handler failed without an active exception"
+            raise RuntimeError(msg)
+
+    @staticmethod
+    def resolve_logging_exception_info(
+        value: t.LoggingEventValue | None,
+    ) -> t.LoggingExceptionInfo | None:
+        """Resolve native exception inputs once, retaining a saved traceback."""
+        if value is True:
+            value = sys.exception()
+        if isinstance(value, BaseException):
+            return type(value), value, value.__traceback__
+        if value is None or value is False:
+            return None
+        if (
+            isinstance(value, tuple)
+            and len(value) == 3
+            and isinstance(value[0], type)
+            and issubclass(value[0], BaseException)
+            and isinstance(value[1], BaseException)
+            and (value[2] is None or isinstance(value[2], TracebackType))
+        ):
+            return value[0], value[1], value[2]
+        msg = "exc_info must be an exception, saved tuple, boolean or None"
+        raise TypeError(msg)
 
     @staticmethod
     def log_threshold() -> int:
-        """Return the process-wide minimum level number that is emitted.
-
-        Returns:
-            The process-wide minimum level number that is emitted.
-
-        """
+        """Return the elected minimum severity applied before enrichment."""
         return FlextUtilitiesLoggingConfig._log_threshold
-
-    @staticmethod
-    def _publish_logging_state(*, configured: bool, threshold: int) -> None:
-        """Store the process-wide configuration flag and level threshold."""
-        FlextUtilitiesLoggingConfig._structlog_configured = configured
-        FlextUtilitiesLoggingConfig._log_threshold = threshold
 
     @staticmethod
     def structlog() -> types.ModuleType:
@@ -148,7 +174,7 @@ class FlextUtilitiesLoggingConfig:
                     if self.stop_event.is_set():
                         msg = "I/O operation on stopped async log writer"
                         raise ValueError(msg)
-                job = FlextModelsConfig.AsyncLogJob(text=text, completion=completion)
+                job = m.AsyncLogJob(text=text, completion=completion)
                 self.queue.put_nowait(job)
             return completion
 

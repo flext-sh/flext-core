@@ -22,11 +22,40 @@ from flext_core._protocols import (
     FlextProtocolsResult,
     FlextProtocolsSettings,
 )
-from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core._typings import FlextTypesPydantic, FlextTypesServices, FlextTypingBase
 
 
 class FlextProtocolsService:
     """Protocols for service execution, mixin infrastructure, and repository access."""
+
+    @runtime_checkable
+    class ServiceOperationHandler(Protocol):
+        """Original unbound operation called with its explicitly provided service."""
+
+        def __call__(
+            self,
+            service: FlextProtocolsBase.Base,
+            /,
+            *requests: FlextProtocolsBase.Base,
+        ) -> FlextProtocolsResult.Result[FlextTypesServices.JsonPayload]: ...
+
+    @runtime_checkable
+    class ServiceOperation(Protocol):
+        """One discovered operation and its sole request-schema association."""
+
+        @property
+        def name(self) -> str: ...
+
+        @property
+        def summary(self) -> str: ...
+
+        @property
+        def request(
+            self,
+        ) -> FlextTypesServices.ModelClass[FlextTypesPydantic.BaseModelType] | None: ...
+
+        @property
+        def handler(self) -> FlextProtocolsService.ServiceOperationHandler: ...
 
     # ------------------------------------------------------------------
     # RuntimeBootstrapProvider — a service base that declares its runtime

@@ -8,12 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c, t
+from flext_core import t, u
 from flext_core._handlers_parts import flexthandlers_part_06
-from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
     from types import ModuleType
 
     from flext_core import p
@@ -42,8 +40,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         Scans classes for methods decorated with @handler() and provides
         utilities for finding and analyzing handler configurations.
 
-        This class enables zero-settings handler registration in FlextService
-        by automatically discovering decorated methods at initialization time.
+        Discovery does not construct services or register dependencies. The API
+        composition root chooses the module/class and registers the returned data.
         """
 
         @staticmethod
@@ -59,16 +57,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             Returns:
                 True if class has at least one handler, False otherwise
 
-            Example:
-                >>> if FlextHandlers.Discovery.has_handlers(MyService):
-                ...     # Auto-setup dispatcher/registry
-                ...     service._setup_dispatcher()
-
             """
-            return any(
-                hasattr(getattr(target_class, name, None), c.HANDLER_ATTR)
-                for name in dir(target_class)
-            )
+            return bool(FlextHandlers.Discovery.scan_class(target_class))
 
         @staticmethod
         def scan_class(
@@ -91,24 +81,21 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     u.Cli.print(f"{method_name}: {settings.command.__name__}")
 
             """
-            handlers: t.SequenceOf[tuple[str, p.DecoratorConfig]] = [
-                (name, getattr(method, c.HANDLER_ATTR))
-                for name in dir(target_class)
-                if hasattr(method := getattr(target_class, name, None), c.HANDLER_ATTR)
-            ]
+            handlers: t.MutableSequenceOf[tuple[str, p.DecoratorConfig]] = []
+            for name in dir(target_class):
+                method = getattr(target_class, name, None)
+                if callable(method):
+                    metadata = u.handler_metadata(
+                        method, name=f"{target_class.__qualname__}.{name}"
+                    )
+                    if metadata is not None:
+                        handlers.append((name, metadata))
+            return sorted(handlers, key=lambda entry: (-entry[1].priority, entry[0]))
 
-            def _priority(entry: tuple[str, p.DecoratorConfig]) -> int:
-                return entry[1].priority
-
-            return sorted(handlers, key=_priority, reverse=True)
-
-        @classmethod
+        @staticmethod
         def scan_module(
-            cls,
             module: ModuleType,
-        ) -> t.SequenceOf[
-            tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]
-        ]:
+        ) -> t.SequenceOf[tuple[str, t.ResolvedHandlerCallable, p.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -127,60 +114,17 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     u.Cli.print(f"{func_name}: {settings.command.__name__}")
 
             """
-            handlers = [
-                _narrowed_entry(module, name)
-                for name in dir(module)
-                if not name.startswith("_")
-                and _is_decorated_handler(getattr(module, name, None))
-            ]
-
-            def _priority_then_name(
-                entry: tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig],
-            ) -> tuple[int, str]:
-                return (-entry[2].priority, entry[0])
-
-            return sorted(handlers, key=_priority_then_name)
-
-
-def _is_decorated_handler(func: FlextProtocolsBase.AttributeProbe) -> bool:
-    """Whether one module attribute is a callable @handler function.
-
-    Returns:
-        The resulting ``bool``.
-
-    """
-    return func is not None and callable(func) and hasattr(func, c.HANDLER_ATTR)
-
-
-def _narrowed_entry(
-    module: ModuleType,
-    name: str,
-) -> tuple[str, Callable[..., t.Scalar | None], p.DecoratorConfig]:
-    """Build one sorted-scan entry wrapping the function for scalar calls.
-
-    Returns:
-        The resulting ``(name, narrowed_func, settings)`` entry.
-
-    """
-    func = getattr(module, name)
-    settings: p.DecoratorConfig = getattr(func, c.HANDLER_ATTR)
-
-    def narrowed_func(
-        message: t.JsonPayload,
-        function_name: str = name,
-    ) -> t.Scalar | None:
-        resolved_callable = getattr(module, function_name, None)
-        if not callable(resolved_callable):
-            return None
-        result = resolved_callable(message)
-        if result is None:
-            return None
-        if isinstance(result, c.SCALAR_TYPES):
-            return result
-        return str(result)
-
-    setattr(narrowed_func, c.HANDLER_ATTR, settings)
-    return (name, narrowed_func, settings)
+            handlers: list[
+                tuple[str, t.ResolvedHandlerCallable, p.DecoratorConfig]
+            ] = []
+            for name, func in vars(module).items():
+                if name.startswith("_") or not callable(func):
+                    continue
+                settings = u.handler_metadata(func, name=f"{module.__name__}.{name}")
+                if settings is None:
+                    continue
+                handlers.append((name, func, settings))
+            return sorted(handlers, key=lambda entry: (-entry[2].priority, entry[0]))
 
 
 __all__: list[str] = ["FlextHandlers"]

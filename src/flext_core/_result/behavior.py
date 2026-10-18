@@ -6,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, TypeIs, override
+from typing import TYPE_CHECKING, NoReturn, Self, TypeIs, override
 
+from flext_core import c
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._result import FlextResultBase
 
@@ -57,18 +58,24 @@ class FlextResultBehavior[T](FlextResultBase[T]):
 
     @property
     def value(self) -> T:
-        """The success payload bound to this result.
-
-        Raises:
-            RuntimeError: If this result is a failure, chained from the
-                exception that produced it.
-
-        """
+        """The success payload bound to this result."""
         if not self.success:
-            error_msg = self.error or ""
-            msg = f"Cannot access value of failed result: {error_msg}"
-            raise RuntimeError(msg) from self._exception
+            self._raise_failure()
         return self._payload
+
+    def _raise_failure(self) -> NoReturn:
+        """Raise one causal failure while retaining its structured result context."""
+        error = self._exception
+        if error is None:
+            error = RuntimeError(c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error))
+        if self.error or self.error_code is not None or self.error_data is not None:
+            note = self.model_dump_json(
+                include={"error", "error_code", "error_data"},
+                exclude_none=True,
+            )
+            if not hasattr(error, "__notes__") or note not in error.__notes__:
+                error.add_note(note)
+        raise error
 
     @property
     def exception(self) -> BaseException | None:

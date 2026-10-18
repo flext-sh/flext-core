@@ -122,8 +122,10 @@ class TestsFlextCoreResultExceptionSafeCallable(
         def divide(a: int, b: int) -> float:
             return a / b
 
-        with pytest.raises(RuntimeError, match="division by zero"):
-            divide(10, 0).unwrap()
+        failed = divide(10, 0)
+        with pytest.raises(ZeroDivisionError) as raised:
+            failed.unwrap()
+        tm.that(raised.value is failed.exception, eq=True)
 
     @staticmethod
     def test_safe_captures_value_error() -> None:

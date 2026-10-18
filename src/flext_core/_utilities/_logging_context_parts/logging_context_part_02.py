@@ -9,12 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-import logging
-import sys
-import types
+from typing_extensions import TypeForm
 
-from flext_core import c
+from flext_core import FlextRuntime, t
+from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesGuardsTypeModel
 from flext_core._utilities._logging_context_parts import logging_context_part_01
 
 
@@ -22,79 +20,27 @@ class FlextUtilitiesLoggingContext(
     logging_context_part_01.FlextUtilitiesLoggingContext
 ):
     @staticmethod
-    def _caller_source_path() -> str | None:
-        """Get source file path with line, class and method context.
-
-        Returns:
-            The resulting ``str | None``.
-
-        """
-        caller_frame: types.FrameType | None
-        try:
-            caller_frame = FlextUtilitiesLoggingContext._calling_frame()
-        except c.EXC_ATTR_RUNTIME_TYPE as exc:
-            FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.GET_CALLER_SOURCE,
-                exc,
+    def _to_container_value(value: t.LogValue | t.JsonValue) -> t.JsonValue:
+        """Adapt owned values only at the native logging SDK boundary."""
+        if isinstance(value, BaseException):
+            return str(value)
+        if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
+            return FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(
+                value.model_dump(mode="json"),
             )
-            caller_frame = None
-        if caller_frame is None:
-            return None
-        return FlextUtilitiesLoggingContext._format_caller_source_path(caller_frame)
+        return FlextRuntime.normalize_to_json_value(value)
 
     @staticmethod
-    def _calling_frame() -> types.FrameType | None:
-        """Walk the stack backward to the first non-logging caller.
-
-        Returns the first frame outside the logging machinery.
-
-        Generic: skips any frame whose source file path matches one of
-        ``c.LOGGING_INTERNAL_PATH_FRAGMENTS``. The first frame outside is the
-        true caller regardless of how many internal wrappers are involved.
-
-        Returns:
-            The resulting ``types.FrameType | None``.
-
-        """
-        frame = inspect.currentframe()
-        if frame is None:
-            return None
-        skip = c.LOGGING_INTERNAL_PATH_FRAGMENTS
-        while frame is not None:
-            filename = frame.f_code.co_filename
-            if not any(fragment in filename for fragment in skip):
-                return frame
-            frame = frame.f_back
-        return None
-
-    @staticmethod
-    def _report_internal_logging_failure(operation: str, exc: Exception) -> None:
-        """Report an internal logging failure; reporting itself must not raise."""
-        try:
-            FlextUtilitiesLoggingContext.structlog().fetch_logger(
-                c.LOGGER_NAME_FLEXT_CORE,
-            ).warning(
-                c.LOG_INTERNAL_OPERATION_FAILED,
-                operation=operation,
-                error=exc,
-                exception_type=exc.__class__.__name__,
-                exception_message=str(exc),
-            )
-        except c.CONTEXT_EXCEPTIONS as report_exc:
-            _ = sys.stderr.write(
-                f"flext-core logging: failed to report {operation}: {report_exc}\n",
-            )
-
-    @staticmethod
-    def _should_include_stack_trace() -> bool:
-        try:
-            return logging.root.getEffectiveLevel() <= logging.DEBUG
-        except c.EXC_ATTR_RUNTIME_TYPE as exc:
-            FlextUtilitiesLoggingContext._report_internal_logging_failure(
-                c.LoggingOperation.SHOULD_INCLUDE_STACK,
-                exc,
-            )
-            return True
+    def to_container_context(
+        context: t.MappingKV[str, t.LogValue | t.JsonValue],
+    ) -> t.JsonMapping:
+        """Serialize owned fields once before entering the native processor chain."""
+        return {
+            key: FlextUtilitiesLoggingContext._to_container_value(value)
+            for key, value in context.items()
+        }
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingContext"]

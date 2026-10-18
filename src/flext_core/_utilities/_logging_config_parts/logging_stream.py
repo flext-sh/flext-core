@@ -11,7 +11,7 @@ from types import TracebackType
 from typing import TextIO, override
 
 from flext_core import t
-from flext_core._utilities.typeadapter_scalars import FlextUtilitiesTypingAdapterScalars
+from flext_core._utilities import FlextUtilitiesTypingAdapterScalars
 
 
 class FlextUtilitiesLoggingStream:
@@ -75,9 +75,8 @@ class FlextUtilitiesLoggingStream:
             if newlines is None or isinstance(newlines, str):
                 return newlines
             if isinstance(newlines, tuple):
-                return FlextUtilitiesTypingAdapterScalars.strict_str_tuple_adapter().validate_python(
-                    newlines
-                )
+                scalars = FlextUtilitiesTypingAdapterScalars
+                return scalars.strict_str_tuple_adapter().validate_python(newlines)
             msg = "Text stream newlines must be a string or tuple of strings"
             raise TypeError(msg)
 

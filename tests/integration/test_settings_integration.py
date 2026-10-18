@@ -1,7 +1,7 @@
 """Integration contract for FlextSettings — real pydantic-settings behaviour.
 
 Exercises the current canonical surface (singleton lifecycle, env-var loading,
-precedence, clone, trace-requires-debug) using the universal scalar fields.
+precedence, clone, trace detail) using the universal scalar fields.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,10 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_core import FlextContainer, FlextSettings
-from tests import c, m, tm, u
+from tests import c, tm, u
 
 
 class TestsFlextSettingsIntegration:
@@ -96,10 +94,13 @@ class TestsFlextSettingsIntegration:
         tm.that(settings.log_level, eq="DEBUG")
 
     @staticmethod
-    def test_trace_without_debug_is_rejected() -> None:
-        """trace=True without debug raises the documented invariant error."""
-        with pytest.raises(m.ValidationError, match="trace mode requires debug"):
-            FlextSettings.update_global(trace=True, debug=False)
+    def test_trace_without_debug_preserves_actual_severity() -> None:
+        """Trace controls diagnostic detail independently of severity."""
+        original = FlextSettings.fetch_global()
+        selected = original.clone(trace=True, debug=False)
+        tm.that(selected.trace, eq=True)
+        tm.that(selected.debug, eq=False)
+        tm.that(selected.log_level, eq=original.log_level)
 
     @staticmethod
     def test_clone_produces_independent_copy_with_overrides() -> None:

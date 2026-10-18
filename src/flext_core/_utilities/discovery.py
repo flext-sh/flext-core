@@ -17,17 +17,15 @@ import inspect
 import operator
 from collections import ChainMap
 from types import FunctionType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, TypeAliasType, get_protocol_members, is_protocol
 
 from pydantic import BaseModel
 
-from flext_core import c, p, t
-from flext_core._models import FlextModelsContainer, FlextModelsService
+from flext_core import c, m, p, t
+from flext_core._utilities import FlextUtilitiesModelRuntime
 
 if TYPE_CHECKING:
     from types import ModuleType
-
-    from flext_core import FlextService
 
 
 class FlextUtilitiesDiscovery:
@@ -37,24 +35,24 @@ class FlextUtilitiesDiscovery:
     def _factory_config_for(
         module: ModuleType,
         name: str,
-    ) -> FlextModelsContainer.FactoryDecoratorConfig | None:
+    ) -> m.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
             return None
         config_raw = vars(func).get(c.FACTORY_ATTR)
-        if not isinstance(config_raw, FlextModelsContainer.FactoryDecoratorConfig):
+        if not isinstance(config_raw, m.FactoryDecoratorConfig):
             return None
         return config_raw
 
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> t.SequenceOf[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
+    ) -> t.SequenceOf[tuple[str, m.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name.
 
         Returns:
             The resulting ``t.SequenceOf[tuple[str,
-                FlextModelsContainer.FactoryDecoratorConfig]]``.
+                m.FactoryDecoratorConfig]]``.
 
         """
         return sorted(
@@ -73,8 +71,8 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     @functools.cache
     def service_operations(
-        service_type: type[FlextService[p.Base]],
-    ) -> tuple[FlextModelsService.ServiceOperation, ...]:
+        service_type: type[p.Service[p.Base]],
+    ) -> tuple[p.ServiceOperation, ...]:
         """Return the typed operations of a service class, sorted by name.
 
         An operation is a plain public function declared in a class of the MRO
@@ -97,7 +95,7 @@ class FlextUtilitiesDiscovery:
             if klass.__module__ == "flext_core.service"
         )
         below = service_type.__mro__[: service_type.__mro__.index(service_facade)]
-        infos = service_type.__pydantic_decorators__
+        infos = inspect.getattr_static(service_type, "__pydantic_decorators__")
         decorated = {
             *infos.field_validators,
             *infos.model_validators,
@@ -137,11 +135,11 @@ class FlextUtilitiesDiscovery:
         below: tuple[type, ...],
         name: str,
         func: FunctionType,
-    ) -> FlextModelsService.ServiceOperation:
+    ) -> p.ServiceOperation:
         """Validate one operation's shape and build its typed description.
 
         Returns:
-            The resulting ``FlextModelsService.ServiceOperation``.
+            The resulting ``m.ServiceOperation``.
 
         """
         where = (service_type, name, func.__module__)
@@ -157,10 +155,11 @@ class FlextUtilitiesDiscovery:
             where,
             signature,
         )
-        return FlextModelsService.ServiceOperation(
+        return m.ServiceOperation(
             name=name,
             summary=doc.strip().splitlines()[0],
             request=request,
+            handler=func,
         )
 
     @staticmethod
@@ -221,8 +220,8 @@ class FlextUtilitiesDiscovery:
         func: FunctionType,
         where: tuple[type, str, str],
         signature: inspect.Signature,
-    ) -> type | None:
-        """Resolve and validate the request model and return annotation.
+    ) -> t.ModelClass[t.BaseModelType] | None:
+        """Resolve a request Protocol and its single explicit model declaration.
 
         Returns:
             The resulting ``type | None``.
@@ -236,16 +235,54 @@ class FlextUtilitiesDiscovery:
         origin = FlextUtilitiesDiscovery._resolve(func, where, returned, subscript=True)
         if origin is not p.Result:
             raise error(where, returned, c.ERR_SERVICE_OPERATION_RESULT)
-        request = None
+        metadata = FlextUtilitiesModelRuntime.handler_metadata(
+            func,
+            name=f"{where[2]}.{where[0].__qualname__}.{where[1]}",
+        )
         params = tuple(signature.parameters.values())[1:]
+        if not params:
+            if metadata is not None:
+                raise error(
+                    where,
+                    signature,
+                    "An input-less operation cannot declare a command model.",
+                )
+            return None
         for param in params:
             if param.name not in annotations:
                 raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
             annotation = annotations[param.name]
-            request = FlextUtilitiesDiscovery._resolve(func, where, annotation)
+            contract = FlextUtilitiesDiscovery._resolve(func, where, annotation)
+            if not is_protocol(contract):
+                raise error(
+                    where,
+                    annotation,
+                    c.ERR_SERVICE_OPERATION_REQUEST,
+                )
+            if metadata is None:
+                raise error(
+                    where,
+                    annotation,
+                    "Request operation requires typed h.handler(command=m.Request) metadata.",
+                )
+            request = metadata.command
             if not issubclass(request, BaseModel):
-                raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
-        return request
+                raise error(
+                    where,
+                    annotation,
+                    "Handler command metadata must declare a Pydantic request model.",
+                )
+            missing = get_protocol_members(contract) - (
+                request.model_fields.keys() | set(dir(request))
+            )
+            if missing:
+                raise error(
+                    where,
+                    annotation,
+                    f"Request model does not satisfy Protocol members: {', '.join(sorted(missing))}.",
+                )
+            return request
+        raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
 
     @staticmethod
     def _resolve(
@@ -271,6 +308,8 @@ class FlextUtilitiesDiscovery:
         if not isinstance(annotation, str):
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_EVALUATED)
         node = ast.parse(annotation, mode="eval").body
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            node = ast.parse(node.value, mode="eval").body
         if subscript:
             if not isinstance(node, ast.Subscript):
                 raise error(where, annotation, c.ERR_SERVICE_OPERATION_RESULT)
@@ -295,6 +334,8 @@ class FlextUtilitiesDiscovery:
             except AttributeError as exc:
                 defect = c.ERR_SERVICE_OPERATION_UNBOUND
                 raise error(where, annotation, defect) from exc
+        if isinstance(resolved, TypeAliasType):
+            resolved = resolved.__value__
         if not isinstance(resolved, type):
             defect = (
                 c.ERR_SERVICE_OPERATION_RESULT

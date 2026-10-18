@@ -7,48 +7,34 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from typing_extensions import TypeForm
 
-from flext_core import t
+from flext_core import p, t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsEntity,
     FlextModelsHandler,
     FlextModelsPydantic,
 )
-from flext_core._protocols import FlextProtocolsHandler
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsRegistry:
     """Registry model namespace for handler registration aggregates."""
 
-    class RegistryState(FlextModelsBase.ArbitraryTypesModel):
-        """Validated registry runtime state shared by public registry methods."""
+    class RegistryOptions(FlextModelsBase.ArbitraryTypesModel):
+        """Validated runtime dependency and plugin ownership of a registry."""
 
-        dispatcher: Annotated[
-            FlextProtocolsHandler.Dispatcher | None,
-            FlextModelsPydantic.Field(
-                default=None,
-                description="Dispatcher used for handler registration and execution.",
-            ),
-        ] = None
-        registered_keys: Annotated[
-            frozenset[str],
-            FlextModelsPydantic.Field(
-                description="Keys registered in the instance scope of the registry.",
-            ),
-        ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(frozenset[str])),
+        registry_runtime: t.Port[p.ServiceRuntime] = FlextModelsPydantic.Field(
+            exclude=True,
+            description="Explicit runtime shared by registration and execution.",
         )
-
-        @FlextUtilitiesPydantic.computed_field
-        @property
-        def configured(self) -> bool:
-            """Whether a dispatcher has been materialized for the registry."""
-            return self.dispatcher is not None
+        _registered_keys: set[str] = FlextModelsPydantic.PrivateAttr(
+            default_factory=FlextModelsPydantic.empty(TypeForm(set[str])),
+        )
+        _class_plugin_storage: ClassVar[dict[str, t.RegisterableService]] = {}
 
     class RegistrySummary(FlextModelsEntity.Value):
         """Aggregated outcome for batch handler registration tracking."""

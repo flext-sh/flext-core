@@ -15,8 +15,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextContainer, FlextContext
-from tests import d, m
-from tests.unit._decorators_support import capture_stdout
+from tests import c, d, m, u
 
 
 class TestsFlextCoreDecoratorsInjectionLogging:
@@ -132,7 +131,9 @@ class TestsFlextCoreDecoratorsInjectionLogging:
             boom()
 
     @staticmethod
-    def test_log_operation_emits_operation_name_on_failure() -> None:
+    def test_log_operation_emits_operation_name_on_failure(
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
         """Test log operation emits operation name on failure."""
 
         @d.log_operation("named_failure_op")
@@ -140,11 +141,22 @@ class TestsFlextCoreDecoratorsInjectionLogging:
             error_msg = "kaboom"
             raise ValueError(error_msg)
 
-        def emit() -> None:
+        original_settings, original_options = u.logging_settings(), u.logging_options()
+        try:
+            selected = u.resolve_logging_settings(log_level=c.LogLevel.ERROR)
+            u.configure_structlog(
+                settings=m.StructlogOptions(async_logging=False),
+                runtime_settings=selected,
+            )
             with pytest.raises(ValueError, match="kaboom"):
                 boom()
-
-        _ = capture_stdout(emit, contains="named_failure_op")
+            captured = capsys.readouterr()
+            assert "named_failure_op" in captured.err
+            assert captured.out == ""
+        finally:
+            u.configure_structlog(
+                settings=original_options, runtime_settings=original_settings
+            )
 
     # --- d.with_correlation ----------------------------------------------
     @staticmethod

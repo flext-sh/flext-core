@@ -30,7 +30,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         command: type,
         *,
         priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
-        timeout: float | None = c.DEFAULT_TIMEOUT_SECONDS,
+        timeout: float | None = None,
         middleware: t.SequenceOf[type[p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
         """Mark methods as handlers for commands.
@@ -40,39 +40,45 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         Args:
             command: The command type this handler processes
-            priority: Handler priority (higher = processed first). Default: 0
-            timeout: Handler execution timeout in seconds. Default: None
-            middleware: List of middleware types to apply to this handler
+            priority: Higher priorities are discovered first; the model owns the default.
+            timeout: Non-None policies are rejected until the executor supports them.
+            middleware: Nonempty policies are rejected until the executor supports them.
 
         Returns:
-            Decorator function for marking handler methods
+            A declaration decorator that returns the original callable unchanged.
 
         Example:
-            >>> @FlextHandlers.handler(command=CreateUserCommand, priority=10)
-            ... def handle_create_user(self, cmd: CreateUserCommand) -> p.Result[User]:
-            ...     return r[User].ok(self._create(cmd))
+            >>> @FlextHandlers.handler(command=m.Command)
+            ... def handle_command(request: p.CommandRoutable) -> p.Result[str]:
+            ...     return r[str].ok(request.command_type)
 
         """
+        if timeout is not None:
+            msg = "Handler timeout execution is not supported"
+            raise ValueError(msg)
+        if middleware:
+            msg = "Handler middleware execution is not supported"
+            raise ValueError(msg)
 
         def decorator(func: Callable[PHandler, TResult]) -> Callable[PHandler, TResult]:
             """Apply handler configuration metadata to function.
 
-            Only sets the attribute if not already set - innermost decorator wins.
-            When multiple @h.handler() decorators are stacked, the first (innermost)
-            one to run takes precedence.
+            A callable has one declaration; stacked declarations are rejected.
 
             Returns:
                 The resulting ``Callable[PHandler, TResult]``.
 
             """
-            if not hasattr(func, c.HANDLER_ATTR):
-                settings = m.DecoratorConfig(
-                    command=command,
-                    priority=priority,
-                    timeout=timeout,
-                    middleware=middleware or (),
-                )
-                setattr(func, c.HANDLER_ATTR, settings)
+            if hasattr(func, c.HANDLER_ATTR):
+                msg = "Handler metadata is already declared on this callable"
+                raise ValueError(msg)
+            settings = m.DecoratorConfig(
+                command=command,
+                priority=priority,
+                timeout=timeout,
+                middleware=(),
+            )
+            setattr(func, c.HANDLER_ATTR, settings)
             return func
 
         return decorator

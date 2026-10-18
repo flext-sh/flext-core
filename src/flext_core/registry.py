@@ -1,225 +1,156 @@
-"""Handler registration and discovery facade.
+"""Canonical handler registration and identity-preserving plugin lifecycle.
 
-Provides handler registration with binding, tracking, and batch operations
-for the FLEXT dispatcher system.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-import inspect
-import sys
-from typing import TYPE_CHECKING, ClassVar, Self, cast, override
+from functools import partial
+from typing import TYPE_CHECKING, override
 
-from typing_extensions import TypeForm
-
-from flext_core import c, e, h, m, p, r, s, t, u
+from flext_core import c, e, m, p, r, s, t, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, MutableMapping
+    from collections.abc import Callable
 
 
-class FlextRegistry(s[bool]):
-    """Application-layer registry for CQRS handlers.
+class FlextRegistry(s[bool], m.RegistryOptions):
+    """Coordinate the injected runtime without another dispatch or storage engine."""
 
-    Extends s for automatic infrastructure (settings, context,
-    container, logging) while providing handler registration and management
-    capabilities. The registry pairs message types with handlers, enforces
-    idempotent registration, and exposes batch operations that return ``r``
-    summaries.
-
-    It delegates to ``FlextDispatcher`` (which implements ``p.Dispatcher``)
-    for actual handler registration and execution.
-    """
-
-    _state: m.RegistryState = m.PrivateAttr(default_factory=m.RegistryState)
-
-    _class_plugin_storage: ClassVar[MutableMapping[str, t.RegistrablePlugin]] = {}
-
-    _class_registered_keys: ClassVar[set[str]] = set()
-
-    dispatcher: t.Port[p.Dispatcher | None] = m.Field(
-        None,
-        exclude=True,
-        description="The dispatcher instance for executing handlers.",
-    )
+    def __init_subclass__(cls, **kwargs: t.Scalar | t.ScalarMapping) -> None:
+        """Keep explicitly selected class-scope plugins local to each subclass."""
+        super().__init_subclass__()
+        cls._class_plugin_storage = {}
 
     @override
-    def model_post_init(self, __context: t.ScalarMapping | None, /) -> None:
-        """Bind the validated dispatcher to the registry state."""
-        super().model_post_init(__context)
-        self._state = m.RegistryState(dispatcher=self.dispatcher)
+    def _get_runtime(self) -> p.ServiceRuntime:
+        return self.registry_runtime
 
-    def __init_subclass__(cls, **kwargs: t.Scalar | m.ConfigMap | t.ScalarList) -> None:
-        """Auto-create per-subclass class-level storage.
-
-        Each subclass gets its OWN storage (not shared with parent or siblings).
-        This enables auto-discovery patterns where plugins registered via
-        register_plugin(..., scope="class") are visible across all instances of that
-        subclass.
-        """
-        super().__init_subclass__()
-        cls._class_plugin_storage = {}  # MutableMapping[str, t.RegistrablePlugin]
-        cls._class_registered_keys = set()  # set[str]
-
-    @classmethod
-    def create(
-        cls,
-        dispatcher: p.Dispatcher | None = None,
-        *,
-        auto_discover_handlers: bool = False,
-    ) -> Self:
-        """Create a new FlextRegistry instance.
-
-        This is the preferred way to instantiate FlextRegistry. It provides
-        a clean factory pattern that each class owns, respecting Clean
-        Architecture principles where higher layers create their own instances.
-
-        Auto-discovery of handlers discovers all functions marked with
-        @h.handler() decorator in the calling module and auto-registers them
-        with built-in deduplication. This enables zero-settings handler
-        registration for services with idempotent tracking.
-
-        Args:
-            dispatcher: Optional CommandBus instance (defaults to DSL dispatcher)
-            auto_discover_handlers: If True, scan calling module for @handler()
-                decorated functions and auto-register them with deduplication.
-                Default: False.
-
-        Returns:
-            FlextRegistry instance with auto-discovered handlers if enabled.
-
-        """
-        instance = cls(dispatcher=dispatcher or u.build_dispatcher())
-        if auto_discover_handlers:
-            frame = inspect.currentframe()
-            if frame and frame.f_back:
-                caller_globals = frame.f_back.f_globals
-                module_name = caller_globals.get("__name__", "__main__")
-                caller_module = sys.modules.get(module_name)
-                if caller_module:
-                    handlers = h.Discovery.scan_module(caller_module)
-                    for _handler_name, handler_func, _handler_config in handlers:
-                        _ = handler_func
-        return instance
-
-    @staticmethod
-    def _narrow_value(
-        value: (
-            t.JsonValue
-            | t.RegisterableService
-            | t.RegistrablePlugin
-            | m.BaseModel
-            | None
-        ),
-    ) -> t.JsonPayload | None:
-        """Safe conversion using centralized utilities.
-
-        Returns:
-            The resulting ``t.JsonPayload | None``.
-
-        """
-        narrowed: t.JsonPayload | None = None
-        if value is None:
-            narrowed = None
-        elif isinstance(value, m.BaseModel):
-            narrowed = value
-        elif isinstance(
-            value,
-            (p.Logger, p.Settings, p.Context, p.Dispatcher),
-        ) or callable(value):
-            narrowed = str(value)
-        else:
-            normalized = u.normalize_to_metadata(value)
-            narrowed = u.type_adapter(TypeForm(t.JsonValue)).validate_python(normalized)
-        return narrowed
-
-    @staticmethod
-    def _normalize_registration_impl(
-        value: t.RegistrablePlugin,
-    ) -> t.RegisterableService:
-        """Normalize registry payloads to the container bind contract.
-
-        Returns:
-            The resulting ``t.RegisterableService``.
-
-        """
-        if callable(value):
-
-            def normalized_callable(
-                *args: p.AttributeProbe,
-                **kwargs: p.AttributeProbe,
-            ) -> t.JsonPayload | m.BaseModel | None:
-                result = value(*args, **kwargs)
-                return FlextRegistry._narrow_value(result)
-
-            return normalized_callable
-        return FlextRegistry._narrow_value(value)
-
-    @staticmethod
-    def _get_handler_mode(value: t.JsonPayload) -> c.HandlerType:
-        """Safe conversion to HandlerType (falls back to COMMAND).
-
-        Returns:
-            The resulting ``c.HandlerType``.
-
-        """
-        text = str(value)
-        if text in c.HandlerType.__members__:
-            return c.HandlerType[text]
-        try:
-            return c.HandlerType(text)
-        except ValueError:
-            return c.HandlerType.COMMAND
-
-    @staticmethod
-    def _get_status(value: t.JsonPayload) -> c.Status:
-        """Safe conversion to CommonStatus (falls back to ACTIVE).
-
-        Returns:
-            The resulting ``c.Status``.
-
-        """
-        text = str(value)
-        if text in c.Status.__members__:
-            return c.Status[text]
-        try:
-            return c.Status(text)
-        except ValueError:
-            return c.Status.ACTIVE
+    @property
+    def dispatcher(self) -> p.Dispatcher:
+        """Return the dispatcher used by the same runtime as plugin registration."""
+        return self.registry_runtime.dispatcher
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Validate registry is properly initialized.
+        """Validate the explicitly supplied runtime."""
+        return r[bool].ok(isinstance(self.registry_runtime, p.ServiceRuntime))
 
-        Returns:
-            r[bool]: Success if dispatcher is configured, failure otherwise.
-
-        """
-        dispatcher = self._state.dispatcher
-        if dispatcher is None or (not dispatcher):
-            return e.fail_operation("execute registry", c.ERR_DISPATCHER_NOT_CONFIGURED)
+    def register(self, name: str, service: t.RegisterableService) -> p.Result[bool]:
+        """Bind a collaborator unchanged, rejecting conflicting registrations."""
+        if self.container.has(name):
+            existing = self.container.resolve(name)
+            if existing.failure:
+                return r[bool].from_failure(existing)
+            previous = existing.value
+            if u.registry_same_value(previous, service):
+                return r[bool].ok(value=True)
+            return r[bool].fail_op(
+                "register service in registry",
+                c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name),
+            )
+        try:
+            self.container.bind(name, service)
+        except e.ValidationError as exc:
+            return e.fail_operation("register service in registry", exc)
         return r[bool].ok(value=True)
 
-    def _remember_registered_key(self, key: str) -> None:
-        """Persist one instance-scoped registry key via immutable model state."""
-        self._state = self._state.model_copy(
-            update={"registered_keys": self._state.registered_keys | frozenset({key})},
+    def register_handler(
+        self,
+        handler: t.DispatchableHandler,
+    ) -> p.Result[p.RegistrationDetails]:
+        """Register one handler through the canonical atomic batch owner."""
+        outcome = self.dispatcher.register_handlers((
+            m.HandlerRegistration(handler=handler),
+        ))
+        if outcome.failure:
+            return r[p.RegistrationDetails].from_failure(outcome)
+        report = outcome.value
+        binding = (report.registered or report.skipped)[0]
+        return r[p.RegistrationDetails].ok(u.registry_registration_details(binding))
+
+    def register_handlers(
+        self,
+        handlers: t.SequenceOf[t.DispatchableHandler],
+    ) -> p.Result[p.RegistrySummary]:
+        """Register every handler atomically without discarding failure metadata."""
+        return self._register_batch(
+            tuple(m.HandlerRegistration(handler=handler) for handler in handlers)
         )
 
-    def _forget_registered_key(self, key: str) -> None:
-        """Remove one instance-scoped registry key via immutable model state."""
-        self._state = self._state.model_copy(
-            update={
-                "registered_keys": frozenset(
-                    existing_key
-                    for existing_key in self._state.registered_keys
-                    if existing_key != key
-                ),
-            },
+    def register_bindings(
+        self,
+        bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
+    ) -> p.Result[p.RegistrySummary]:
+        """Bind each declared message route through the dispatcher itself."""
+        return self._register_batch(
+            tuple(
+                m.HandlerRegistration(handler=handler, message_type=message_type)
+                for message_type, handler in bindings.items()
+            )
         )
+
+    def _register_batch(
+        self,
+        bindings: t.SequenceOf[p.HandlerRegistration],
+    ) -> p.Result[p.RegistrySummary]:
+        outcome = self.dispatcher.register_handlers(bindings)
+        if outcome.failure:
+            return r[p.RegistrySummary].from_failure(outcome)
+        report = outcome.value
+        return r[p.RegistrySummary].ok(
+            m.RegistrySummary.model_validate({
+                "registered": [
+                    u.registry_registration_details(binding)
+                    for binding in report.registered
+                ],
+                "skipped": tuple(
+                    u.registry_registration_name(binding) for binding in report.skipped
+                ),
+            })
+        )
+
+    def register_plugin(
+        self,
+        category: str,
+        name: str,
+        plugin: t.RegisterableService,
+        *,
+        validate: Callable[[t.RegisterableService], p.Result[bool]] | None = None,
+        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
+    ) -> p.Result[bool]:
+        """Store the original plugin, never its string or serialized projection."""
+        key = u.registry_plugin_key(category, name)
+        if key.failure:
+            return r[bool].from_failure(key)
+        if validate is not None:
+            validated = u.guard_result(
+                partial(validate, plugin),
+                catch=c.EXC_RUNTIME_TYPE,
+                op_name="validate plugin registration",
+            )
+            if validated.failure:
+                return validated
+            if not validated.value:
+                return r[bool].fail_op("validate plugin registration", name)
+        with self._lock:
+            if scope == c.RegistrationScope.INSTANCE:
+                outcome = self.register(key.value, plugin)
+                if outcome.success:
+                    self._registered_keys.add(key.value)
+                return outcome
+            storage = self._class_plugin_storage
+            if key.value in storage:
+                previous = storage[key.value]
+                if u.registry_same_value(previous, plugin):
+                    return r[bool].ok(value=True)
+                return r[bool].fail_op(
+                    "register class plugin",
+                    c.ERR_CONTAINER_NAME_DUPLICATE.format(name=key.value),
+                )
+            storage[key.value] = plugin
+        return r[bool].ok(value=True)
 
     def fetch_plugin(
         self,
@@ -227,25 +158,19 @@ class FlextRegistry(s[bool]):
         name: str,
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[t.JsonPayload | None]:
-        """Get a registered plugin by category and name.
-
-        Returns:
-            Success with plugin (RegisterableService) or failure if not found.
-
-        """
-        key = f"{category}::{name}"
-        if scope == c.RegistrationScope.INSTANCE:
-            if key not in self._state.registered_keys:
+    ) -> p.Result[t.RegisterableService]:
+        """Fetch the unchanged collaborator from the selected registry scope."""
+        key = u.registry_plugin_key(category, name)
+        if key.failure:
+            return r[t.RegisterableService].from_failure(key)
+        with self._lock:
+            if scope == c.RegistrationScope.INSTANCE:
+                if key.value not in self._registered_keys:
+                    return e.fail_not_found(category, name)
+                return self.container.resolve(key.value)
+            if key.value not in self._class_plugin_storage:
                 return e.fail_not_found(category, name)
-            raw_result = self.container.resolve(key)
-            return raw_result.map(self._narrow_value)
-        cls = type(self)
-        if key not in cls._class_registered_keys:
-            return e.fail_not_found(category, name)
-        return r[t.JsonPayload | None].ok(
-            self._narrow_value(cls._class_plugin_storage[key]),
-        )
+            return r[t.RegisterableService].ok(self._class_plugin_storage[key.value])
 
     def list_plugins(
         self,
@@ -253,239 +178,26 @@ class FlextRegistry(s[bool]):
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
     ) -> p.Result[t.StrSequence]:
-        """List all plugins in a category.
-
-        Args:
-            category: Plugin category to list
-            scope: Registration scope to list (instance or class level)
-
-        Returns:
-            r[t.StrSequence]: Success with list of plugin names.
-
-        """
-        keys = self._state.registered_keys
-        if scope == c.RegistrationScope.CLASS:
-            keys = self._class_registered_keys
-        plugins: t.StrSequence = tuple(
-            k.split("::")[1] for k in keys if k.startswith(f"{category}::")
-        )
-        return r[t.StrSequence].ok(plugins)
-
-    def _add_successful_registration(
-        self,
-        key: str,
-        registration: m.RegistrationDetails,
-        summary: m.RegistrySummary,
-    ) -> None:
-        """Add successful registration to summary."""
-        self._remember_registered_key(key)
-        summary.registered.append(registration)
-
-    @staticmethod
-    def _finalize_summary(
-        summary: m.RegistrySummary,
-    ) -> p.Result[m.RegistrySummary]:
-        """Finalize summary based on error state.
-
-        Returns:
-            r[m.RegistrySummary]: Success result with summary or failure
-                result with errors.
-
-        """
-        if summary.errors:
-            return e.fail_operation(
-                "finalize registry summary",
-                "; ".join(summary.errors),
+        """List registered names deterministically in one category."""
+        key_prefix = u.registry_plugin_key(category)
+        if key_prefix.failure:
+            return r[t.StrSequence].from_failure(key_prefix)
+        prefix = key_prefix.value
+        with self._lock:
+            keys = (
+                self._registered_keys
+                if scope == c.RegistrationScope.INSTANCE
+                else self._class_plugin_storage.keys()
             )
-        return r[m.RegistrySummary].ok(summary)
-
-    def register(self, name: str, service: t.RegistrablePlugin) -> p.Result[bool]:
-        """Register a service component in the runtime container.
-
-        Args:
-            name: Service name for later retrieval
-            service: Service instance to register
-
-        Returns:
-            r[bool]: Success (True) when registered, or when the same value is
-            already registered under ``name``; failure for a different value
-            under a registered name, or an empty or reserved name.
-
-        """
-        normalized_service = self._normalize_registration_impl(service)
-        if self.container.has(name):
-            existing = self.container.resolve(name)
-            if existing.success and existing.value == normalized_service:
-                return r[bool].ok(value=True)
-            return r[bool].fail_op(
-                "register service in registry",
-                c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name),
+            return r[t.StrSequence].ok(
+                tuple(
+                    sorted(
+                        key.removeprefix(prefix)
+                        for key in keys
+                        if key.startswith(prefix)
+                    )
+                )
             )
-        try:
-            _ = self.container.bind(name, normalized_service)
-        except e.ValidationError as exc:
-            return e.fail_operation("register service in registry", exc)
-        return r[bool].ok(value=True)
-
-    def register_bindings(
-        self,
-        bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
-    ) -> p.Result[m.RegistrySummary]:
-        """Register message-to-handler bindings.
-
-        Args:
-            bindings: Map of MessageType -> HandlerInstance
-
-        Returns:
-            r[m.RegistrySummary]: Batch registration summary
-
-        """
-        summary = m.RegistrySummary()
-        for message_type, handler in bindings.items():
-            message_type_name = getattr(message_type, "__name__", str(message_type))
-            handler_name = getattr(handler, "__name__", type(handler).__name__)
-            if not isinstance(handler_name, str):
-                handler_name = type(handler).__name__
-            key = f"binding::{message_type_name}::{handler_name}"
-
-            reg_result = self.register_handler(handler)
-            if reg_result.success:
-                self._add_successful_registration(key, reg_result.value, summary)
-            else:
-                summary.errors.append(r.require_error(reg_result))
-        return self._finalize_summary(summary)
-
-    def register_handler(
-        self,
-        handler: t.DispatchableHandler,
-    ) -> p.Result[m.RegistrationDetails]:
-        """Register a handler instance or callable.
-
-        Re-registration is ignored and treated as success to guarantee
-        idempotent behaviour when multiple packages attempt to register
-        the same handler.
-
-        Returns:
-            r[m.RegistrationDetails]: Success result with registration details.
-
-        """
-        handler_id = str(getattr(handler, "handler_id", id(handler)))
-        status_raw: t.JsonPayload = getattr(handler, c.FIELD_STATUS, c.Status.ACTIVE)
-        status = self._get_status(status_raw)
-        handler_mode_raw: t.JsonPayload = getattr(
-            handler,
-            c.FIELD_HANDLER_MODE,
-            getattr(handler, "mode", c.HandlerType.COMMAND),
-        )
-        handler_mode = self._get_handler_mode(handler_mode_raw)
-
-        # Standard Dispatcher registration avoids passing name/metadata
-        # as it discovers routes from the handler itself.
-        registration_handler: t.DispatchableHandler = handler
-        dispatcher = self._state.dispatcher
-        if dispatcher is None:
-            return e.fail_operation(
-                "register handler in registry",
-                c.ERR_DISPATCHER_NOT_CONFIGURED,
-            )
-        registration_result = dispatcher.register_handler(
-            registration_handler,
-            is_event=(handler_mode == c.HandlerType.EVENT),
-        )
-
-        if registration_result.failure:
-            return r[m.RegistrationDetails].from_failure(registration_result)
-
-        self._remember_registered_key(handler_id)
-        return r[m.RegistrationDetails].ok(
-            m.RegistrationDetails(
-                registration_id=handler_id,
-                handler_mode=handler_mode,
-                status=status,
-            ),
-        )
-
-    def register_handlers(
-        self,
-        handlers: t.SequenceOf[t.DispatchableHandler],
-    ) -> p.Result[m.RegistrySummary]:
-        """Register multiple handlers in batch.
-
-        Args:
-            handlers: Sequence of handler instances or callables to register
-
-        Returns:
-            r[m.RegistrySummary]: Batch registration summary
-
-        """
-        summary = m.RegistrySummary()
-        for handler in handlers:
-            result = self.register_handler(handler)
-            handler_name = getattr(handler, "__name__", None)
-            key = (
-                handler_name
-                if isinstance(handler_name, str)
-                else type(handler).__name__
-            )
-            if result.success:
-                self._add_successful_registration(key, result.value, summary)
-            else:
-                summary.errors.append(r.require_error(result))
-        return self._finalize_summary(summary)
-
-    def register_plugin(
-        self,
-        category: str,
-        name: str,
-        plugin: t.RegistrablePlugin,
-        *,
-        validate: Callable[[t.RegistrablePlugin], r[bool]] | None = None,
-        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[bool]:
-        """Register a plugin with optional validation.
-
-        Args:
-            category: Plugin category (e.g., "protocols", "validators")
-            name: Plugin name within the category
-            plugin: Plugin instance to register
-            validate: Optional validation callable returning r[bool]
-            scope: Registration scope ("instance" or "class")
-
-        Returns:
-            r[bool]: Success if registered, failure with error details.
-
-        """
-        result: p.Result[bool] = r[bool].ok(value=True)
-        if not name:
-            params = m.RegistryPluginParams(category=category, name=name, scope=scope)
-            result = e.fail_validation(
-                m.ValidationErrorParams(field="name", value=name),
-                error=e.render_template(
-                    c.ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY,
-                    category=category,
-                    params=params,
-                ),
-            )
-        if result.success and validate:
-            try:
-                validation_result = validate(plugin)
-                if validation_result.failure:
-                    result = cast("p.Result[bool]", validation_result)
-            except c.EXC_RUNTIME_TYPE as exc:
-                result = e.fail_operation("validate plugin registration", exc)
-        if result.success:
-            key = f"{category}::{name}"
-            if scope == c.RegistrationScope.INSTANCE:
-                if key not in self._state.registered_keys:
-                    normalized_plugin = self._normalize_registration_impl(plugin)
-                    self.container.bind(key, normalized_plugin)
-                    self._remember_registered_key(key)
-            else:
-                cls = type(self)
-                if key not in cls._class_registered_keys:
-                    cls._class_plugin_storage[key] = plugin
-                    cls._class_registered_keys.add(key)
-        return result
 
     def unregister_plugin(
         self,
@@ -494,28 +206,22 @@ class FlextRegistry(s[bool]):
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
     ) -> p.Result[bool]:
-        """Unregister a plugin.
-
-        Args:
-            category: Plugin category
-            name: Plugin name
-            scope: Registration scope to unregister from (instance or class level)
-
-        Returns:
-            r[bool]: Success if unregistered, failure if not found.
-
-        """
-        key = f"{category}::{name}"
-        if scope == c.RegistrationScope.INSTANCE:
-            if key not in self._state.registered_keys:
+        """Remove storage before ownership, allowing a new registration afterward."""
+        key = u.registry_plugin_key(category, name)
+        if key.failure:
+            return r[bool].from_failure(key)
+        with self._lock:
+            if scope == c.RegistrationScope.INSTANCE:
+                if key.value not in self._registered_keys:
+                    return e.fail_not_found(category, name)
+                outcome = self.container.drop(key.value)
+                if outcome.failure:
+                    return outcome
+                self._registered_keys.remove(key.value)
+                return outcome
+            if key.value not in self._class_plugin_storage:
                 return e.fail_not_found(category, name)
-            self._forget_registered_key(key)
-            return r[bool].ok(value=True)
-        cls = type(self)
-        if key not in cls._class_registered_keys:
-            return e.fail_not_found(category, name)
-        del cls._class_plugin_storage[key]
-        cls._class_registered_keys.discard(key)
+            del self._class_plugin_storage[key.value]
         return r[bool].ok(value=True)
 
 

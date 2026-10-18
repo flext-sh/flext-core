@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 from flext_core import m, p
 from flext_core._utilities import FlextUtilitiesModel
 
@@ -22,8 +20,8 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
     @classmethod
     def resolve_runtime_options(
         cls,
-        source: m.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
-    ) -> m.RuntimeBootstrapOptions:
+        source: p.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
+    ) -> p.RuntimeBootstrapOptions:
         """Resolve the runtime options an options model or a component declares.
 
         A component contributes the options its service base declares through
@@ -33,7 +31,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
         ``ValidationError`` here instead of reaching the runtime.
 
         Returns:
-            The resulting ``m.RuntimeBootstrapOptions``.
+            The resulting ``p.RuntimeBootstrapOptions``.
 
         Raises:
             TypeError: If unknown runtime bootstrap source.
@@ -45,26 +43,26 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             case m.RuntimeBootstrapOptions():
                 return source
             case _:
-                candidate = cast(
-                    "m.RuntimeBootstrapOptions | p.MixinsInfrastructure",
-                    source,
-                )
-                if not isinstance(candidate, p.MixinsInfrastructure):
-                    msg = f"unknown runtime bootstrap source: {candidate!r}"
+                if not isinstance(source, p.MixinsInfrastructure):
+                    if isinstance(source, p.RuntimeBootstrapOptions):
+                        return m.RuntimeBootstrapOptions.model_validate(
+                            source, from_attributes=True
+                        )
+                    msg = f"unknown runtime bootstrap source: {source!r}"
                     raise TypeError(msg)
                 declared = (
                     m.RuntimeBootstrapOptions.model_validate(
-                        candidate.runtime_bootstrap_options(),
+                        source.runtime_bootstrap_options(),
                         from_attributes=True,
                     )
-                    if isinstance(candidate, p.RuntimeBootstrapProvider)
+                    if isinstance(source, p.RuntimeBootstrapProvider)
                     else m.RuntimeBootstrapOptions()
                 )
                 seeds = m.RuntimeBootstrapOptions(
-                    settings=candidate.runtime_settings,
-                    settings_type=candidate.settings_type,
-                    settings_overrides=candidate.settings_overrides,
-                    context=candidate.initial_context,
+                    settings=source.runtime_settings,
+                    settings_type=source.settings_type,
+                    settings_overrides=source.settings_overrides,
+                    context=source.initial_context,
                 )
                 return m.RuntimeBootstrapOptions.model_validate({
                     **dict(declared),

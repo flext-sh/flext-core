@@ -54,6 +54,11 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
                 description="Execution context attached to the container.",
             ),
         ] = None
+        dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="Explicit command bus retained by this scope; otherwise a fresh bus is built.",
+        )
         services: Annotated[
             t.MappingKV[str, t.RegisterableService] | None,
             FlextModelsPydantic.Field(

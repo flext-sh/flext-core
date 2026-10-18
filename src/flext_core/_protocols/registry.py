@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import c
 from flext_core._protocols import FlextProtocolsBase
@@ -17,12 +17,46 @@ from flext_core._protocols import FlextProtocolsBase
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import m, t
+    from flext_core import t
     from flext_core._protocols import FlextProtocolsHandler, FlextProtocolsResult
 
 
 class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
+
+    @runtime_checkable
+    class RegistrationDetails(FlextProtocolsBase.Base, Protocol):
+        """Observable registration identity and routing metadata."""
+
+        @property
+        def registration_id(self) -> str: ...
+
+        @property
+        def handler_mode(self) -> c.HandlerType: ...
+
+        @property
+        def status(self) -> c.Status: ...
+
+    @runtime_checkable
+    class RegistrySummary(FlextProtocolsBase.Base, Protocol):
+        """Observable outcome of one atomic registration batch."""
+
+        @property
+        def registered(
+            self,
+        ) -> t.SequenceOf[FlextProtocolsRegistry.RegistrationDetails]: ...
+
+        @property
+        def skipped(self) -> t.StrSequence: ...
+
+        @property
+        def errors(self) -> t.StrSequence: ...
+
+        @property
+        def success(self) -> bool: ...
+
+        @property
+        def failure(self) -> bool: ...
 
     @runtime_checkable
     class Registry(FlextProtocolsBase.Base, Protocol):
@@ -34,19 +68,10 @@ class FlextProtocolsRegistry:
 
         # --- fields ---
 
-        dispatcher: FlextProtocolsHandler.Dispatcher | None
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher: ...
 
         # --- lifecycle ---
-
-        @classmethod
-        def create(
-            cls,
-            dispatcher: FlextProtocolsHandler.Dispatcher | None = None,
-            *,
-            auto_discover_handlers: bool = False,
-        ) -> Self:
-            """Create a new registry instance."""
-            ...
 
         def execute(self) -> FlextProtocolsResult.Result[bool]:
             """Validate registry is properly initialized."""
@@ -57,7 +82,7 @@ class FlextProtocolsRegistry:
         def register(
             self,
             name: str,
-            service: t.RegistrablePlugin,
+            service: t.RegisterableService,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a service component."""
             ...
@@ -65,21 +90,21 @@ class FlextProtocolsRegistry:
         def register_handler(
             self,
             handler: t.DispatchableHandler,
-        ) -> FlextProtocolsResult.Result[m.RegistrationDetails]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
         def register_handlers(
             self,
             handlers: t.SequenceOf[t.DispatchableHandler],
-        ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
             self,
             bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
-        ) -> FlextProtocolsResult.Result[m.RegistrySummary]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
             """Register message-to-handler bindings."""
             ...
 
@@ -89,9 +114,11 @@ class FlextProtocolsRegistry:
             self,
             category: str,
             name: str,
-            plugin: t.RegistrablePlugin,
+            plugin: t.RegisterableService,
             *,
-            validate: Callable[[t.RegistrablePlugin], FlextProtocolsResult.Result[bool]]
+            validate: Callable[
+                [t.RegisterableService], FlextProtocolsResult.Result[bool]
+            ]
             | None = None,
             scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
         ) -> FlextProtocolsResult.Result[bool]:
@@ -114,7 +141,7 @@ class FlextProtocolsRegistry:
             name: str,
             *,
             scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
-        ) -> FlextProtocolsResult.Result[t.JsonPayload | None]:
+        ) -> FlextProtocolsResult.Result[t.RegisterableService]:
             """Get a registered plugin by category and name."""
             ...
 

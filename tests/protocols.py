@@ -18,6 +18,8 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
+from flext_core import c
+
 if TYPE_CHECKING:
     from tests import t
     from tests._models import TestsFlextModelsMixins
@@ -38,6 +40,18 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
     class Tests(FlextTestsProtocols.Tests):
         """flext-core test protocols namespace."""
+
+        class InferredCommand(Protocol):
+            """A request route hint does not restrict runtime handler capability."""
+
+            command_type: str = c.DEFAULT_COMMAND_TYPE
+
+        @runtime_checkable
+        class DispatchRequest(Protocol):
+            """Only the request capability consumed by the dispatch operation."""
+
+            @property
+            def command_name(self) -> str: ...
 
         @runtime_checkable
         class PublicPayload(FlextTestsProtocols.Base, Protocol):

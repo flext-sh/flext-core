@@ -102,6 +102,13 @@ class FlextConstantsErrorsMessages:
     ERR_REGISTRY_CATEGORY_NAME_CANNOT_BE_EMPTY: ClassVar[str] = (
         "{category} name cannot be empty"
     )
+    ERR_REGISTRY_PLUGIN_KEY_INVALID: ClassVar[str] = (
+        "Plugin category and name must be nonempty and cannot contain '{separator}'"
+    )
+    ERR_HANDLER_METADATA_INVALID: ClassVar[str] = "Invalid handler metadata for {name}"
+    ERR_HANDLER_POLICY_UNSUPPORTED: ClassVar[str] = (
+        "Handler timeout and middleware are unsupported"
+    )
     ERR_REGISTRY_VALIDATION_ERROR: ClassVar[str] = "Validation error: {error}"
     ERR_REGISTRY_PLUGIN_NOT_REGISTERED: ClassVar[str] = (
         "{category} '{name}' not registered"
@@ -129,7 +136,7 @@ class FlextConstantsErrorsMessages:
         "Success result payload cannot be None"
     )
     ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN: ClassVar[str] = (
-        "FlextResult cannot be parameterized with None; use r[bool].ok(True) "
+        "FlextResult cannot be parameterized with None; use r[bool].ok(value=True) "
         "or a concrete payload type"
     )
     ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN: ClassVar[str] = (

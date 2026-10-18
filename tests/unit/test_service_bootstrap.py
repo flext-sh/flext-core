@@ -15,7 +15,7 @@ from typing import override
 
 import pytest
 
-from flext_core import FlextContext, FlextSettings
+from flext_core import FlextContainer, FlextContext, FlextSettings
 from tests import c, m, p, r, s, t, tm, u
 
 
@@ -50,8 +50,13 @@ class TestsFlextCoreServiceBootstrap:
     def test_resolve_with_no_source_yields_empty_options() -> None:
         """Missing bootstrap input resolves to options that inject nothing."""
         resolved = u.resolve_runtime_options()
-
-        tm.that(dict(resolved), eq=dict(m.RuntimeBootstrapOptions()))
+        declared = m.RuntimeBootstrapOptions()
+        tm.that(resolved.settings is declared.settings, eq=True)
+        tm.that(resolved.settings_type is declared.settings_type, eq=True)
+        tm.that(resolved.settings_overrides, eq=declared.settings_overrides)
+        tm.that(resolved.context is declared.context, eq=True)
+        tm.that(resolved.container is declared.container, eq=True)
+        tm.that(resolved.dispatcher is declared.dispatcher, eq=True)
 
     @staticmethod
     def test_resolve_returns_supplied_model_unchanged() -> None:
@@ -113,7 +118,65 @@ class TestsFlextCoreServiceBootstrap:
 
         tm.that(type(runtime.settings) is declared, eq=True)
         tm.that(runtime.context is runtime.container.context, eq=True)
+        tm.that(runtime.settings is runtime.container.settings, eq=True)
         tm.that(runtime.dispatcher is runtime.container.dispatcher().unwrap(), eq=True)
+
+    @staticmethod
+    def test_logging_rebind_preserves_public_di_and_actual_provider_identity() -> None:
+        """A logging election scopes the supplied graph, not a fresh shared graph."""
+        original_settings, original_options = u.logging_settings(), u.logging_options()
+        source = FlextContainer.shared().scope()
+        selected_sink = m.ConfigMap(root={"destination": "selected"})
+        source.bind("logging.selected_sink", selected_sink)
+        context = FlextContext.create()
+        dispatcher = source.dispatcher().unwrap()
+        provider = FlextSettings.fetch_global().clone(log_level=c.LogLevel.ERROR)
+        initial = u.build_service_runtime(
+            m.RuntimeBootstrapOptions(
+                settings=provider,
+                container=source,
+                context=context,
+                dispatcher=dispatcher,
+            )
+        )
+        if not isinstance(initial.settings, p.LoggingSettings):
+            pytest.fail("The actual scoped settings must implement the logging port")
+        resolved = u.resolve_logging_settings(
+            runtime_settings=initial.settings, debug=True
+        )
+        rebound = u.build_service_runtime(
+            m.RuntimeBootstrapOptions(
+                settings=resolved,
+                container=initial.container,
+                context=initial.context,
+                dispatcher=initial.dispatcher,
+            )
+        )
+        if not isinstance(rebound.settings, p.LoggingSettings):
+            pytest.fail("The rebound provider must implement the logging port")
+        try:
+            u.configure_structlog(runtime_settings=rebound.settings)
+            tm.that(u.logging_settings() is rebound.settings, eq=True)
+            tm.that(rebound.settings is rebound.container.settings, eq=True)
+            tm.that(
+                rebound.container.resolve(c.Directory.CONFIG).unwrap()
+                is rebound.settings,
+                eq=True,
+            )
+            tm.that(
+                rebound.container.resolve("logging.selected_sink").unwrap()
+                is selected_sink,
+                eq=True,
+            )
+            tm.that(rebound.context is context, eq=True)
+            tm.that(rebound.dispatcher is dispatcher, eq=True)
+            tm.that(rebound.container.dispatcher().unwrap() is dispatcher, eq=True)
+            tm.that(initial.settings.log_level, eq=provider.log_level)
+            tm.that(rebound.settings.log_level, eq=c.LogLevel.DEBUG)
+        finally:
+            u.configure_structlog(
+                settings=original_options, runtime_settings=original_settings
+            )
 
     # --- Ports -----------------------------------------------------------
 

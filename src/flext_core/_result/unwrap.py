@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c
 from flext_core._result import FlextResultComposition
 
 if TYPE_CHECKING:
@@ -27,13 +26,10 @@ class FlextResultUnwrap[T](FlextResultComposition[T]):
         """Return the success payload.
 
         Raises:
-            RuntimeError: If this result is a failure, chained from the
-                attached exception.
+            BaseException: The original exception carried by a failure.
+            RuntimeError: If a logical failure has no original exception.
 
         """
-        if self.failure:
-            msg = c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
-            raise RuntimeError(msg) from self.exception
         return self.value
 
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:

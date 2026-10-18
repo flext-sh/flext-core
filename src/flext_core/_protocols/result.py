@@ -190,6 +190,7 @@ class FlextProtocolsResult:
             self,
             *,
             mode: str = "python",
+            exclude: set[str] | None = None,
         ) -> FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]: ...
 
     @runtime_checkable

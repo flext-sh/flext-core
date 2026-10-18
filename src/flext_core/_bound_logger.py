@@ -11,14 +11,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import traceback
-from typing import TYPE_CHECKING, Self, override
+import logging
+from typing import Self
+
+import structlog
 
 from flext_core import c, p, r, t
 from flext_core._utilities import FlextUtilitiesLoggingContext
-
-if TYPE_CHECKING:
-    from structlog.typing import Context
 
 
 class FlextBoundLogger(FlextUtilitiesLoggingContext):
@@ -29,14 +28,11 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
     its structlog binding.
     """
 
-    _structlog_instance: p.Logger | None = None
-
     def __init__(
         self,
         name: str,
         *,
         settings: p.Settings | None = None,
-        _bound_logger: p.Logger | None = None,
         context: t.MappingKV[str, t.JsonPayload | None] | None = None,
     ) -> None:
         """Initialize the bound logger with name and optional context.
@@ -51,9 +47,6 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
             raise ValueError(msg)
         resolved_name = name
         self.name = resolved_name
-        if _bound_logger is not None:
-            self._structlog_instance = _bound_logger
-            return
         resolved_context: t.MutableJsonMapping = {}
         if context is not None:
             resolved_context = dict(
@@ -71,288 +64,133 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
                 resolved_context[c.ContextKey.SERVICE_VERSION] = service_version
             if isinstance(correlation_id, str) and correlation_id:
                 resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
-        base_logger = self.resolve_bound_logger(resolved_name)
-        self._structlog_instance = (
-            base_logger.bind(
-                **self._to_scalar_context(resolved_context),
-            )
-            if resolved_context
-            else base_logger
+        resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
+        self._native = structlog.wrap_logger(
+            None,
+            logger_factory_args=(name,),
+            cache_logger_on_first_use=False,
+            **resolved_context,
         )
 
     def __call__(self) -> Self:
-        """Return self to support factory-style DI registration.
-
-        Returns:
-            Self to support factory-style DI registration.
-
-        """
+        """Return this logger for native factory-style DI registration."""
         return self
 
     @property
-    def _context(self) -> Context:
+    def _context(self) -> t.LoggingContext:
         """Context mapping for BindableLogger protocol compliance."""
-        return {}
+        return structlog.get_context(self._native)
 
     @property
-    def logger(self) -> p.Logger:
-        """Wrapped structlog logger instance."""
-        instance = self._structlog_instance
-        if instance is None:
-            instance = self.resolve_bound_logger(getattr(self, "name", __name__))
-            self._structlog_instance = instance
-        return instance
-
-    @classmethod
-    def resolve_bound_logger(cls, name: str) -> p.Logger:
-        """Fetch the underlying bound structlog logger for internal use.
-
-        Returns:
-            The resulting ``p.Logger``.
-
-        Raises:
-            ValueError: If logger name is required.
-
-        """
-        cls.ensure_structlog_configured()
-        if not name:
-            msg = "logger name is required"
-            raise ValueError(msg)
-        logger: p.Logger = cls.structlog().get_logger(name)
-        return logger
+    def logger(self) -> p.NativeLoggingWrapper:
+        """Native lazy composition, including the latest factory and processors."""
+        self.ensure_structlog_configured()
+        return self._native
 
     def bind(self, **context: t.JsonPayload) -> Self:
-        """Bind additional context, returning new logger (original unchanged).
-
-        Returns:
-            The resulting ``Self``.
-
-        """
-        bound_logger = self.logger.bind(**self.to_container_context(context))
-        return self.__class__(self.name, _bound_logger=bound_logger)
+        """Return a new logger with additional native bound context."""
+        bound_logger = self.logger.bind(**context)
+        return self.__class__(self.name, context=structlog.get_context(bound_logger))
 
     def new(self, **context: t.JsonPayload) -> Self:
-        """Create new logger with context — implements BindableLogger protocol.
-
-        Returns:
-            The resulting ``Self``.
-
-        """
-        return self.bind(**context)
-
-    @staticmethod
-    @override
-    def _should_include_stack_trace() -> bool:
-        """Whether stack traces should be included in exception logging.
-
-        Returns:
-            ``True`` — stack traces are included by default for all
-            exceptions routed through the structured logging facade.
-            Subclasses may override to suppress them selectively.
-
-        """
-        return True
-
-    def _exception_context_from_inputs(
-        self,
-        resolved_exception: Exception | None,
-        raw_exception: t.LogValue | None,
-        exc_info_value: t.LogValue,
-        extra_context: t.MappingKV[str, t.LogValue],
-    ) -> t.JsonDict:
-        include_stack_trace = self._should_include_stack_trace()
-        context_dict: t.JsonDict = {}
-        if resolved_exception is not None:
-            context_dict["exception_type"] = resolved_exception.__class__.__name__
-            context_dict["exception_message"] = str(resolved_exception)
-            if include_stack_trace:
-                context_dict["stack_trace"] = "".join(
-                    traceback.format_exception(
-                        resolved_exception.__class__,
-                        resolved_exception,
-                        resolved_exception.__traceback__,
-                    ),
-                )
-        elif exc_info_value and include_stack_trace:
-            context_dict["stack_trace"] = traceback.format_exc()
-        for key, value in extra_context.items():
-            if key in {"exception", "exc_info"}:
-                continue
-            if not isinstance(value, BaseException):
-                context_dict[key] = self._to_container_value(value)
-        if resolved_exception is None and isinstance(raw_exception, BaseException):
-            context_dict["exception_type"] = raw_exception.__class__.__name__
-            context_dict["exception_message"] = str(raw_exception)
-        return context_dict
+        """Replace bound context without mutating this logger."""
+        return self.__class__(self.name, context=context)
 
     def exception(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log structured exception context and propagate processing failures.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        message = msg
-        filtered_args: tuple[t.JsonValue, ...] = tuple(
-            self._to_container_value(arg)
-            for arg in args
-            if not isinstance(arg, BaseException)
-        )
-        resolved_exception: Exception | None = (
-            args[0] if args and isinstance(args[0], Exception) else None
-        )
-        context_dict = self._exception_context_from_inputs(
-            resolved_exception,
-            kw.get("exception"),
-            kw.get("exc_info", True),
-            kw,
-        )
-        _ = self.logger.error(
-            message,
-            *filtered_args,
-            **self._to_scalar_context(context_dict),
-        )
-        return r[bool].ok(value=True)
+        """Emit native exception context and preserve selected failures."""
+        if args and isinstance(args[0], BaseException):
+            kw["exception"], args = args[0], args[1:]
+        kw.setdefault("exc_info", True)
+        return self._log(c.LogLevel.ERROR, msg, *args, **kw)
 
     def build_exception_context(
         self,
         *,
-        exception: Exception | None,
+        exception: BaseException | None,
         exc_info: bool,
         context: t.MappingKV[str, t.JsonPayload | Exception],
-    ) -> t.JsonMapping:
-        """Build normalized structured exception context for logging.
-
-        Returns:
-            The resulting ``t.JsonMapping``.
-
-        """
-        result: t.JsonDict = {
-            k: str(v) if isinstance(v, Exception) else self._to_container_value(v)
-            for k, v in context.items()
+    ) -> t.LoggingEvent:
+        """Adapt causal data to native exc_info without formatting a stack."""
+        result: t.LoggingEvent = {
+            k: self._to_container_value(v) for k, v in context.items()
         }
         if exception is not None:
             result["exception_type"] = exception.__class__.__name__
             result["exception_message"] = str(exception)
-        if exc_info and self._should_include_stack_trace():
-            result["stack_trace"] = traceback.format_exc()
+        if exception is not None or exc_info:
+            result["exc_info"] = exception if exception is not None else exc_info
         return result
 
     def unbind(self, *keys: str, safe: bool = False) -> Self:
-        """Unbind keys from logger — implements BindableLogger protocol.
-
-        Returns:
-            The resulting ``Self``.
-
-        """
+        """Return a native binding without the selected keys."""
         bound_logger = (
             self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
         )
-        return self.__class__(self.name, _bound_logger=bound_logger)
+        return self.__class__(self.name, context=structlog.get_context(bound_logger))
 
     def try_unbind(self, *keys: str) -> Self:
-        """Unbind keys while ignoring missing values.
-
-        Returns:
-            The resulting ``Self``.
-
-        """
+        """Unbind keys while ignoring missing values."""
         return self.unbind(*keys, safe=True)
 
     def warning(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log warning message.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        return self._log_standard_level(c.LogLevel.WARNING, msg, *args, **kw)
-
-    @staticmethod
-    def _resolve_level_name(level: c.LogLevel | str) -> str:
-        match level:
-            case c.LogLevel() as enum_level:
-                level_raw: str = enum_level.value
-            case _:
-                level_raw = level
-        return level_raw.lower()
-
-    @staticmethod
-    def _resolve_log_context(
-        args: t.SequenceOf[t.LogValue],
-        context: t.MappingKV[str, t.LogValue],
-    ) -> t.JsonMapping:
-        resolved_context: t.MutableMappingKV[str, t.LogValue] = dict(context)
-        if "source" not in resolved_context and (
-            source_path := FlextBoundLogger._caller_source_path()
-        ):
-            resolved_context["source"] = source_path
-        for idx, arg in enumerate(args):
-            resolved_context[f"arg_{idx}"] = arg
-        return FlextBoundLogger._to_scalar_context(resolved_context)
+        """Emit WARNING through the native pipeline."""
+        return self._log(c.LogLevel.WARNING, msg, *args, **kw)
 
     def _log(
         self,
-        level: c.LogLevel | str,
+        level: t.LogLevel | str,
         event: str,
         *args: t.LogValue,
         **context: t.LogValue,
     ) -> t.LogResult:
-        """Emit a log event and propagate processing failures unchanged.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        level_str = self._resolve_level_name(level)
-        scalar_context = self._resolve_log_context(args, context)
-        getattr(self.logger, level_str)(event, **scalar_context)
+        """Emit once, preserving original business identity and saved traceback."""
+        exception = context.get("exception")
+        exc_info = context.get("exc_info", False)
+        business_info = self.resolve_logging_exception_info(True)
+        try:
+            selected_info = self.resolve_logging_exception_info(
+                exception if isinstance(exception, BaseException) else exc_info
+            )
+            if selected_info is not None:
+                business_info = selected_info
+            level_str = str(logging.getLevelName(self.level_number(level))).lower()
+            native_context: t.LoggingEvent = dict(
+                self.to_container_context({
+                    key: value
+                    for key, value in context.items()
+                    if key not in {"exc_info", "exception"}
+                })
+            )
+            if selected_info is not None:
+                native_context["exc_info"] = selected_info
+            if args:
+                native_context["positional_args"] = args
+            getattr(self.logger, level_str)(event, **native_context)
+        except BaseException as logging_error:
+            if business_info is not None and business_info[1] is not logging_error:
+                business_error = business_info[1]
+                business_error.add_note(
+                    f"Logging also failed: {type(logging_error).__name__}"
+                )
+                raise business_error.with_traceback(business_info[2])
+            raise
         return r[bool].ok(value=True)
 
-    def _log_standard_level(
-        self,
-        level: c.LogLevel,
-        msg: str,
-        *args: t.LogValue,
-        **kw: t.LogValue,
-    ) -> t.LogResult:
-        return self._log(level, msg, *args, **kw)
-
     def critical(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log critical message.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        return self._log_standard_level(c.LogLevel.CRITICAL, msg, *args, **kw)
+        """Emit CRITICAL through the native pipeline."""
+        return self._log(c.LogLevel.CRITICAL, msg, *args, **kw)
 
     def debug(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log debug message.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        return self._log_standard_level(c.LogLevel.DEBUG, msg, *args, **kw)
+        """Emit DEBUG through the native pipeline."""
+        return self._log(c.LogLevel.DEBUG, msg, *args, **kw)
 
     def error(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log error message.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        return self._log_standard_level(c.LogLevel.ERROR, msg, *args, **kw)
+        """Emit ERROR through the native pipeline."""
+        return self._log(c.LogLevel.ERROR, msg, *args, **kw)
 
     def info(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
-        """Log info message.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        return self._log_standard_level(c.LogLevel.INFO, msg, *args, **kw)
+        """Emit ordinary INFO through the native pipeline."""
+        return self._log(c.LogLevel.INFO, msg, *args, **kw)
 
     def log(
         self,
@@ -361,33 +199,16 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         *args: t.LogValue,
         **context: t.LogValue,
     ) -> t.LogResult:
-        """Log message with specified level.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        level_enum: c.LogLevel = c.LogLevel(level.upper())
-        converted_args: tuple[t.JsonValue, ...] = tuple(
-            self._to_container_value(arg) for arg in args
-        )
-        return self._log(level_enum, message, *converted_args, **context)
+        """Emit at the requested standard severity."""
+        return self._log(level, message, *args, **context)
 
     def trace(
         self,
         message: str,
         *args: t.LogValue,
-        **kwargs: t.JsonPayload,
+        **kwargs: t.LogValue,
     ) -> t.LogResult:
-        """Log a formatted trace message and propagate failures unchanged.
-
-        Returns:
-            The resulting ``t.LogResult``.
-
-        """
-        formatted_message = message % args if args else message
-        self.logger.debug(
-            formatted_message,
-            **self._to_scalar_context(kwargs),
-        )
+        """Emit opt-in high-volume diagnostics at DEBUG."""
+        if self.logging_settings().trace:
+            return self._log(c.LogLevel.DEBUG, message, *args, **kwargs)
         return r[bool].ok(value=True)

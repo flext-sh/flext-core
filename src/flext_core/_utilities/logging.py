@@ -12,29 +12,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, ClassVar, Self
+from typing import Self
 
-from flext_core import c, m, p, t
-from flext_core._bound_logger import FlextBoundLogger
+import structlog
+
+from flext_core import FlextBoundLogger, c, m, p, t
 from flext_core._utilities import FlextUtilitiesLoggingContext
 
-if TYPE_CHECKING:
-    import types
 
-
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _loggings_parts/part_01..05
-# into this single facade module.
 class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
-    """Context-aware utility logger tuned for dispatcher-centric CQRS flows.
+    """Typed direct entrypoints over the native structlog composition.
 
     Composed via MRO from:
     - FlextUtilitiesLoggingConfig — structlog configuration, async writer, processors
-    - FlextUtilitiesLoggingContext — context binding, value normalization, source paths
+    - FlextUtilitiesLoggingContext — native context binding and SDK value boundaries
     """
-
-    _scoped_contexts: ClassVar[t.ScopedContainerRegistry] = {}
-
-    _level_contexts: ClassVar[t.ScopedContainerRegistry] = {}
 
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""
@@ -47,12 +39,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             self._start_time: float = 0.0
 
         def __enter__(self) -> Self:
-            """Start tracking.
-
-            Returns:
-                The resulting ``Self``.
-
-            """
+            """Start timing this operation."""
             self._start_time = time.time()
             return self
 
@@ -60,13 +47,13 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             self,
             exc_type: type[BaseException] | None,
             exc_val: BaseException | None,
-            _exc_tb: types.TracebackType | None,
+            _exc_tb: t.LoggingTraceback | None,
         ) -> None:
-            """Log timing; the context-manager traceback is intentionally unused."""
+            """Log timing while preserving the original business exception."""
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = "success" if success else "failed"
-            context: m.ConfigMap = m.ConfigMap(
+            context = m.ConfigMap(
                 root={
                     c.MetadataKey.DURATION_SECONDS: elapsed,
                     c.HandlerType.OPERATION: self._operation_name,
@@ -76,20 +63,76 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
                 context["exception_message"] = str(exc_val) if exc_val else ""
-            # The FLEXT logger never %-interpolates positional args (it records
-            # them as ``arg_<n>`` context), so the event text is composed here.
             emit = self.logger.info if success else self.logger.error
             event = f"{self._operation_name} {status}"
-            _ = emit(event, **FlextUtilitiesLogging.to_container_context(context.root))
+            try:
+                _ = emit(
+                    event, **FlextUtilitiesLogging.to_container_context(context.root)
+                )
+            except BaseException as logging_error:
+                if exc_val is not None and exc_val is not logging_error:
+                    exc_val.add_note(
+                        f"Logging also failed: {type(logging_error).__name__}"
+                    )
+                    raise exc_val.with_traceback(_exc_tb)
+                raise
+
+    @classmethod
+    def _direct_logger(cls) -> p.Logger:
+        """Let native structlog resolve the real caller on each direct emission."""
+        native = structlog.stdlib.LoggerFactory(ignore_frame_names=[__name__])()
+        return cls.create_module_logger(native.name)
+
+    @classmethod
+    def log(
+        cls,
+        message: str,
+        *args: t.LogValue,
+        level: str | None = None,
+        **context: t.LogValue,
+    ) -> t.LogResult:
+        """Emit an ordinary event through the elected Core composition."""
+        return cls._direct_logger().log(
+            level if level is not None else c.LogLevel.INFO, message, *args, **context
+        )
+
+    @classmethod
+    def debug(
+        cls, message: str, *args: t.LogValue, **context: t.LogValue
+    ) -> t.LogResult:
+        """Emit a DEBUG event without allocating a consumer-owned logger."""
+        return cls.log(message, *args, level=c.LogLevel.DEBUG, **context)
+
+    @classmethod
+    def trace(
+        cls, message: str, *args: t.LogValue, **context: t.LogValue
+    ) -> t.LogResult:
+        """Emit opt-in high-volume detail at DEBUG, never another severity."""
+        return cls._direct_logger().trace(message, *args, **context)
+
+    @classmethod
+    def warning(
+        cls, message: str, *args: t.LogValue, **context: t.LogValue
+    ) -> t.LogResult:
+        """Emit a WARNING event through the same pipeline."""
+        return cls.log(message, *args, level=c.LogLevel.WARNING, **context)
+
+    @classmethod
+    def failure(
+        cls,
+        message: str,
+        *args: t.LogValue,
+        exception: BaseException | None = None,
+        **context: t.LogValue,
+    ) -> t.LogResult:
+        """Emit ERROR with original causal data; trace only changes its detail."""
+        if exception is not None:
+            context["exception"] = exception
+        return cls._direct_logger().exception(message, *args, **context)
 
     @classmethod
     def fetch_logger(cls, name: str) -> p.Logger:
-        """Fetch the canonical public logger wrapper.
-
-        Returns:
-            The resulting ``p.Logger``.
-
-        """
+        """Construct the canonical lazy logger for an explicit name."""
         return cls.create_module_logger(name)
 
     @classmethod
@@ -99,25 +142,9 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         *,
         context: t.MappingKV[str, t.JsonPayload | None] | None = None,
     ) -> p.Logger:
-        """Create a logger instance for a module.
-
-        Returns:
-            The resulting ``p.Logger``.
-
-        """
-        cls.ensure_structlog_configured()
-        merged_context: t.MutableJsonMapping = {}
-        if context is not None:
-            merged_context.update(
-                cls.to_container_context({
-                    key: value for key, value in context.items() if value is not None
-                }),
-            )
-        # Construct the concrete logging owner, never ``cls``: this classmethod
-        # is re-exposed through foreign test/utility facades whose construction
-        # would return a facade instance instead of a logger.
-        logger: p.Logger = FlextBoundLogger(name, context=merged_context)
-        return logger
+        """Construct a lazy module logger without configuring a destination."""
+        # Foreign utility facades must construct the canonical logger, not `cls`.
+        return FlextBoundLogger(name, context=context)
 
 
 __all__: tuple[str, ...] = ("FlextUtilitiesLogging",)
