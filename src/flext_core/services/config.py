@@ -14,7 +14,12 @@ class FlextServiceConfig(s[p.Base]):
 
     @property
     def config(self) -> p.Settings:
-        """Return the config from this component's container."""
+        """Config from this component's container.
+
+        Raises:
+            RuntimeError: If config resolution fails.
+
+        """
         result = self.container.resolve(c.Directory.CONFIG)
         if result.failure:
             msg = f"Failed to resolve config: {result.error}"
@@ -23,7 +28,7 @@ class FlextServiceConfig(s[p.Base]):
 
     @property
     def settings(self) -> p.Settings:
-        """Return the settings from this component's runtime."""
+        """Settings from this component's runtime."""
         return self._get_runtime().settings
 
 

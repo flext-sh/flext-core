@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import m, p, s, u
+from flext_core import m, p, registry as registry_module, s, u
 
 
 class FlextServiceRegistry(s[p.Base]):
@@ -14,9 +14,7 @@ class FlextServiceRegistry(s[p.Base]):
 
     @property
     def registry(self) -> p.Registry:
-        """Return the registry from this component's container."""
-        from flext_core import registry as registry_module
-
+        """Registry from this component's container."""
         runtime = self._get_runtime()
         return registry_module.FlextRegistry(
             registry_runtime=u.build_service_runtime(

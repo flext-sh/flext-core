@@ -14,7 +14,7 @@ class FlextServiceContainer(s[p.Base]):
 
     @property
     def container(self) -> p.Container:
-        """Return the container from this component's runtime."""
+        """Container from this component's runtime."""
         return self._get_runtime().container
 
 
