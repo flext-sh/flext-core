@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_core import FlextContainer
-from tests import tm, u
+from tests import m, tm, u
 
 if TYPE_CHECKING:
     from tests import p, t
@@ -128,6 +128,22 @@ class TestsFlextCoreContainer:
             empty=True,
             msg="Repeated clear must keep the container empty",
         )
+
+    @staticmethod
+    def test_scope_preserves_explicit_settings_provider(
+        clean_container: p.Container,
+    ) -> None:
+        """An injected provider keeps its identity without changing the parent."""
+        parent_settings = clean_container.settings
+        injected = parent_settings.clone()
+
+        scoped = clean_container.scope(
+            registration=m.ServiceRegistrationSpec(settings=injected),
+        )
+
+        tm.that(scoped.settings is injected, eq=True)
+        tm.that(clean_container.settings is parent_settings, eq=True)
+        tm.that(scoped.settings is not parent_settings, eq=True)
 
     @staticmethod
     def test_scope_inherits_parent_registrations(

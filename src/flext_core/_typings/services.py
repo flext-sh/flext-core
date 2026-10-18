@@ -34,6 +34,8 @@ from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
+    type OperationMetricsStream = Iterator[FlextTypingBase.MappingKV[str, JsonPayload]]
+
     type JsonPayloadLeaf = (
         FlextTypingBase.Scalar
         | Path

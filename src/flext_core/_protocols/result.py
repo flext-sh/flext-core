@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import (
     TYPE_CHECKING,
-    AbstractSet,
     Protocol,
     Self,
     TypeVar,
@@ -198,7 +197,7 @@ class FlextProtocolsResult:
             self,
             *,
             mode: str = "python",
-            exclude: AbstractSet[str] | None = None,
+            exclude: set[str] | None = None,
         ) -> FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]: ...
 
     @runtime_checkable

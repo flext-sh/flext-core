@@ -108,7 +108,8 @@ class TestsFlextCoreDispatcher:
             return r[t.JsonPayload].ok(True)
 
         tm.ok(dispatcher.register_handler(handler, message_type="event", is_event=True))
-        first, second = m.Event(event_type="event"), m.Event(event_type="event")
+        first = m.Event(event_type="event", aggregate_id="dispatcher")
+        second = m.Event(event_type="event", aggregate_id="dispatcher")
         tm.ok(dispatcher.publish((first, second) if sequence else first))
         tm.that(len(received), eq=2 if sequence else 1)
         tm.that(received[0] is first)
@@ -118,7 +119,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_publication_without_subscribers_is_a_successful_noop() -> None:
         dispatcher = u.build_dispatcher()
-        tm.that(tm.ok(dispatcher.publish(m.Event(event_type="absent"))), eq=True)
+        tm.that(tm.ok(dispatcher.publish(m.Event(event_type="absent", aggregate_id="dispatcher"))), eq=True)
         tm.that(tm.ok(dispatcher.publish(())), eq=True)
 
     @staticmethod
@@ -250,7 +251,7 @@ class TestsFlextCoreDispatcher:
         )
         tm.that(len(report.registered), eq=2)
         tm.that(len(report.skipped), eq=1)
-        tm.ok(dispatcher.publish(m.Event(event_type="fanout")))
+        tm.ok(dispatcher.publish(m.Event(event_type="fanout", aggregate_id="dispatcher")))
         tm.that(calls, eq=["first", "second"])
 
     @staticmethod
@@ -285,8 +286,8 @@ class TestsFlextCoreDispatcher:
             )
         )
         result = dispatcher.publish((
-            m.Event(event_type="ordered"),
-            m.Event(event_type="ordered"),
+            m.Event(event_type="ordered", aggregate_id="dispatcher"),
+            m.Event(event_type="ordered", aggregate_id="dispatcher"),
         ))
         tm.that(result.failure)
         tm.that(result.exception is cause)
@@ -314,7 +315,7 @@ class TestsFlextCoreDispatcher:
         tm.ok(
             dispatcher.register_handler(first, message_type="snapshot", is_event=True)
         )
-        event = m.Event(event_type="snapshot")
+        event = m.Event(event_type="snapshot", aggregate_id="dispatcher")
         tm.ok(dispatcher.publish((event, event)))
         tm.that(calls, eq=["first", "first"])
         tm.ok(dispatcher.publish(event))
@@ -368,6 +369,6 @@ class TestsFlextCoreDispatcher:
                 else (explicit_binding, auto_binding),
             )
         )
-        tm.ok(dispatcher.publish(m.Event(event_type="ordered")))
+        tm.ok(dispatcher.publish(m.Event(event_type="ordered", aggregate_id="dispatcher")))
         tm.that(observed, eq=[("ordered",)] if auto_first else [()])
         tm.that(auto.handled, eq=["ordered"])
