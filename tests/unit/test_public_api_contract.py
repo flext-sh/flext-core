@@ -22,6 +22,7 @@ from tests import e, p, r, t
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: t.VariadicTuple[str] = (
+    "FlextCore",
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
@@ -276,3 +277,19 @@ class TestsFlextCorePublicApiContract:
     def test_exceptions_mro_violation_is_real_reference() -> None:
         """``FlextExceptions.MroViolation`` is the canonical violation class."""
         assert flext_core.FlextExceptions.MroViolation is FlextMroViolation
+
+    @staticmethod
+    def test_flextcore_facade_is_importable_and_singleton() -> None:
+        """``FlextCore`` facade and ``core`` singleton are importable and functional."""
+        assert hasattr(flext_core, "FlextCore"), (
+            "FlextCore not importable from flext_core"
+        )
+        assert hasattr(flext_core, "core"), "core not importable from flext_core"
+        # The singleton should be an instance of FlextCore
+        assert isinstance(flext_core.core, flext_core.FlextCore)
+        # core should have container access via MRO
+        assert hasattr(flext_core.core, "container")
+        assert hasattr(flext_core.core, "registry")
+        assert hasattr(flext_core.core, "dispatcher")
+        assert hasattr(flext_core.core, "config")
+        assert hasattr(flext_core.core, "settings")
