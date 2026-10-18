@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from flext_core import c, m, p, t, u
 from flext_core._models import FlextMixins as FlextMixinsState
 
+
 class FlextMixins(FlextMixinsState):
     """Consume model-owned state and the canonical runtime through MRO."""
 
@@ -51,22 +52,29 @@ class FlextMixins(FlextMixinsState):
         """Track actual operation effects and always release the operation context."""
         stats = self._operation_stats.get(
             operation_name,
-            m.ConfigMap(root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}),
+            m.ConfigMap(
+                root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
+            ),
         )
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with self._context_type.timed_operation(operation_name) as metrics:
                 metrics_map: t.MutableMappingKV[str, t.JsonPayload] = {
-                    key: u.normalize_to_container(value) for key, value in metrics.items()
+                    key: u.normalize_to_container(value)
+                    for key, value in metrics.items()
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
                     yield metrics_map
                     if "duration_ms" in metrics_map:
                         total = u.to_float(stats.get("total_duration_ms", 0.0))
-                        stats["total_duration_ms"] = total + u.to_float(metrics_map.get("duration_ms", 0.0))
+                        stats["total_duration_ms"] = total + u.to_float(
+                            metrics_map.get("duration_ms", 0.0)
+                        )
                 except c.EXC_BROAD_RUNTIME as exc:
-                    self.logger.debug(c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION, exc_info=exc)
+                    self.logger.debug(
+                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION, exc_info=exc
+                    )
                     stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
                     raise
                 finally:
@@ -74,7 +82,9 @@ class FlextMixins(FlextMixinsState):
                     errors = u.to_int(stats.get("error_count", 0))
                     stats["success_rate"] = (count - errors) / count
                     if count > 0:
-                        stats["avg_duration_ms"] = u.to_float(stats.get("total_duration_ms", 0.0)) / count
+                        stats["avg_duration_ms"] = (
+                            u.to_float(stats.get("total_duration_ms", 0.0)) / count
+                        )
                     metrics_map["error_count"] = stats["error_count"]
                     metrics_map["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
@@ -89,6 +99,7 @@ class FlextMixins(FlextMixinsState):
         if self._runtime is None:
             self._runtime = u.build_service_runtime(self)
         return self._runtime
+
 
 x = FlextMixins
 

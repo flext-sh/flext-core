@@ -119,7 +119,14 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_publication_without_subscribers_is_a_successful_noop() -> None:
         dispatcher = u.build_dispatcher()
-        tm.that(tm.ok(dispatcher.publish(m.Event(event_type="absent", aggregate_id="dispatcher"))), eq=True)
+        tm.that(
+            tm.ok(
+                dispatcher.publish(
+                    m.Event(event_type="absent", aggregate_id="dispatcher")
+                )
+            ),
+            eq=True,
+        )
         tm.that(tm.ok(dispatcher.publish(())), eq=True)
 
     @staticmethod
@@ -251,7 +258,9 @@ class TestsFlextCoreDispatcher:
         )
         tm.that(len(report.registered), eq=2)
         tm.that(len(report.skipped), eq=1)
-        tm.ok(dispatcher.publish(m.Event(event_type="fanout", aggregate_id="dispatcher")))
+        tm.ok(
+            dispatcher.publish(m.Event(event_type="fanout", aggregate_id="dispatcher"))
+        )
         tm.that(calls, eq=["first", "second"])
 
     @staticmethod
@@ -369,6 +378,8 @@ class TestsFlextCoreDispatcher:
                 else (explicit_binding, auto_binding),
             )
         )
-        tm.ok(dispatcher.publish(m.Event(event_type="ordered", aggregate_id="dispatcher")))
+        tm.ok(
+            dispatcher.publish(m.Event(event_type="ordered", aggregate_id="dispatcher"))
+        )
         tm.that(observed, eq=[("ordered",)] if auto_first else [()])
         tm.that(auto.handled, eq=["ordered"])
