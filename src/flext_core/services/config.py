@@ -6,16 +6,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import p, s
+from flext_core import c, p, r, s
 
 
 class FlextServiceConfig(s[p.Base]):
     """Provide config and settings access through the public facade."""
 
     @property
-    def config(self) -> p.Config:
+    def config(self) -> p.Settings:
         """Config from this component's container."""
-        return self.container.resolve(p.Config.NAME).unwrap()
+        result = self.container.resolve(c.Directory.CONFIG)
+        if result.failure:
+            return r[p.Settings].from_failure(result)
+        return r[p.Settings].ok(result.value)
 
     @property
     def settings(self) -> p.Settings:
