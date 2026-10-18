@@ -363,7 +363,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             )
         )
         self._config = (
-            spec.settings.clone()
+            spec.settings
             if spec.settings is not None
             else self._settings_type.fetch_global()
         )

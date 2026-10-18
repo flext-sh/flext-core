@@ -158,15 +158,14 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         )
         logger_factory = options.logger_factory
         if options.handlers:
+            output_root = logging.RootLogger(logging.NOTSET)
+            output_root.handlers = native_handlers
+            manager = logging.Manager(output_root)
 
             def native_factory(*names: str) -> p.OutputLogger:
-                output = logging.getLogger(
+                return manager.getLogger(
                     names[0] if names else c.LOGGER_NAME_FLEXT_CORE,
-                    level=logging.NOTSET,
                 )
-                output.handlers = native_handlers
-                output.propagate = False
-                return output
 
             logger_factory = native_factory
         factory_to_use = cls._resolve_logger_factory(

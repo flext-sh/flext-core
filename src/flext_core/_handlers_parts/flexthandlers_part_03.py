@@ -40,17 +40,17 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         Args:
             command: The command type this handler processes
-            priority: Handler priority (higher = processed first). Default: 0
-            timeout: Handler execution timeout in seconds. Default: None
-            middleware: List of middleware types to apply to this handler
+            priority: Higher priorities are discovered first; the model owns the default.
+            timeout: Non-None policies are rejected until the executor supports them.
+            middleware: Nonempty policies are rejected until the executor supports them.
 
         Returns:
-            Decorator function for marking handler methods
+            A declaration decorator that returns the original callable unchanged.
 
         Example:
-            >>> @FlextHandlers.handler(command=CreateUserCommand, priority=10)
-            ... def handle_create_user(self, cmd: CreateUserCommand) -> p.Result[User]:
-            ...     return r[User].ok(self._create(cmd))
+            >>> @FlextHandlers.handler(command=m.Command)
+            ... def handle_command(request: p.CommandRoutable) -> p.Result[str]:
+            ...     return r[str].ok(request.command_type)
 
         """
         if timeout is not None:

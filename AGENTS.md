@@ -41,7 +41,7 @@ src/flext_core/
 | `FlextModels` (`m`)    | class | `models.py`    | Pydantic-2 models        |
 | `FlextResult` (`r`)    | class | `result.py`    | railway result (ADR-001) |
 | `FlextContainer`       | class | `container.py` | DI container             |
-| `FlextService` (`s`)   | class | `service.py`   | singleton service base   |
+| `FlextService` (`s`)   | class | `service.py`   | Pydantic service runtime |
 
 ## Conventions (specific to this package)
 
@@ -57,12 +57,13 @@ src/flext_core/
 
 ## Commands
 
-Run from the workspace root (selector-free; the root dispatcher routes to every
-member — `PROJECT=` is not a root Make variable):
+Run member verbs from the workspace root. Root `make check` checks the root project,
+not every member; select the member's Makefile without changing the working directory:
 
 ```bash
-make check
-make test
+make -f flext-core/Makefile check
+make -f flext-core/Makefile test
+make -f flext-core/Makefile examples
 ```
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->

@@ -1,10 +1,4 @@
-"""Behavioral tests for FlextDispatcher public contract.
-
-Exercises the observable command-bus surface exposed through the test
-facades: handler registration, message dispatch, event publication and the
-protocol-conformance guarantee of the builder. Every assertion targets the
-public return contract (``r[T]`` outcome, payloads, error messages) — never
-internal registries or logging side effects.
+"""Public dispatcher behavior with native messages, callbacks and shared capabilities.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,539 +7,367 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from typing import override
 
 import pytest
 
-from tests import m, p, r, t, tm, u
+from tests import c, h, m, p, r, t, tm, u
 
 
 class TestsFlextCoreDispatcher:
-    """Public-behavior contract for the flext-core message dispatcher."""
-
-    class RouteMessage(m.BaseModel):
-        """Routable test message satisfying the ``p.Routable`` contract.
-
-        Declares all three CQRS route discriminators so a single model can stand
-        in for a command, a query or an event depending on which field is set.
-        """
-
-        command_type: str | None = None
-        query_type: str | None = None
-        event_type: str | None = None
-
-    class RecordingHandler:
-        """Handler that records every message it receives and returns a payload."""
-
-        def __init__(self, route: str) -> None:
-            """Initialize with a route discriminator and an empty received log."""
-            self.message_type = route
-            self.handler_id = route
-            self.received: list[p.Routable] = []
-
-        def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-            """Provide ``handle``.
-
-            Returns:
-                The resulting ``p.Result[t.JsonPayload]``.
-
-            """
-            self.received.append(message)
-            return r[t.JsonPayload].ok({"route": self.message_type})
-
-    class FailingHandler(RecordingHandler):
-        """Handler whose execution always raises, exercising the failure path."""
-
-        def __init__(self, route: str, failure_detail: str) -> None:
-            """Initialize with a route discriminator and the failure payload."""
-            super().__init__(route)
-            self.failure_detail = failure_detail
-
-        @override
-        def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
-            self.received.append(message)
-            raise RuntimeError(self.failure_detail)
-
-    class AutoSubscriber:
-        """An existing auto-discovery capability with no declared route."""
-
-        def __init__(self, calls: list[str]) -> None:
-            self.calls = calls
-
-        def can_handle(self, message_type: type) -> bool:
-            """Accept every event type for observable ordering tests."""
-            return isinstance(message_type, type)
-
-        def handle(self, _message: p.Routable) -> p.Result[t.JsonPayload]:
-            """Record execution without changing the subscriber collection."""
-            self.calls.append("auto")
-            return r[t.JsonPayload].ok(True)
+    """Test one atomic route owner, not local DTOs or a second handler engine."""
 
     @staticmethod
-    @pytest.fixture
-    def dispatcher() -> p.Dispatcher:
-        """Return a fresh dispatcher per test (isolation guarantee).
-
-        Returns:
-            A fresh dispatcher per test (isolation guarantee).
-
-        """
-        return u.build_dispatcher()
-
-    @staticmethod
-    def test_build_dispatcher_returns_protocol_conformant_instance() -> None:
-        # Arrange / Act
-        """Test build dispatcher returns protocol conformant instance."""
+    def test_inferred_route_preserves_broader_runtime_capability() -> None:
+        """A request annotation must not narrow an explicit can_handle capability."""
+        command, event = u.Tests.CapabilityHandler(), u.Tests.CapabilityHandler()
         dispatcher = u.build_dispatcher()
-
-        # Assert: builder promises a Dispatcher-shaped object, not a concrete type.
-        assert isinstance(dispatcher, p.Dispatcher)
-
-    @staticmethod
-    def test_register_callable_handler_succeeds(dispatcher: p.Dispatcher) -> None:
-        # Arrange / Act
-        """Test register callable handler succeeds."""
-        result = dispatcher.register_handler(RecordingHandler("register_ok"))
-
-        # Assert
-        assert result.success
-        assert result.value is True
+        tm.ok(dispatcher.register_handler(command))
+        tm.ok(dispatcher.register_handler(event, is_event=True))
+        message = m.Command(command_type="secondary-capability-route")
+        tm.that(tm.ok(dispatcher.dispatch(message)), eq=message.command_type)
+        tm.ok(dispatcher.publish(message))
+        tm.that(command.handled, eq=[message.command_type])
+        tm.that(event.handled, eq=[message.command_type])
 
     @staticmethod
-    def test_dispatch_routes_message_to_registered_handler(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        # Arrange
-        """Test dispatch routes message to registered handler."""
-        handler = RecordingHandler("routed_cmd")
-        _ = dispatcher.register_handler(handler)
-        command = RouteMessage(command_type="routed_cmd")
+    def test_builder_and_explicit_callback_registration() -> None:
+        """The builder returns the public capability and binds the original callable."""
+        dispatcher = u.build_dispatcher()
+        tm.that(isinstance(dispatcher, p.Dispatcher))
+        received: t.MutableSequenceOf[p.Routable] = []
 
-        # Act
-        result = dispatcher.dispatch(command)
+        def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
+            received.append(message)
+            return r[t.JsonPayload].ok("handled")
 
-        # Assert: handler ran with the exact message and its payload is surfaced.
-        assert result.success
-        assert result.value == {"route": "routed_cmd"}
-        assert result.error is None
-        assert handler.received == [command]
+        tm.ok(dispatcher.register_handler(handler, message_type="explicit"))
+        message = m.Command(command_type="explicit")
+        tm.that(tm.ok(dispatcher.dispatch(message)), eq="handled")
+        tm.that(len(received), eq=1)
+        tm.that(received[0] is message)
 
     @staticmethod
     @pytest.mark.parametrize("wrapped", [False, True])
     def test_public_execution_preserves_model_payload(*, wrapped: bool) -> None:
-        """The public helper accepts raw and result-wrapped Pydantic payloads."""
-        message = RouteMessage(command_type="model_payload")
-        payload = RouteMessage(query_type="model_response")
+        """Neither a native model nor a successful Result is converted to JSON text."""
+        dispatcher = u.build_dispatcher()
+        payload = m.ConfigMap(root={"native": "payload"})
 
-        def handle(_message: p.Routable) -> t.JsonPayload | p.Result[t.JsonPayload]:
+        def handler(_message: p.Routable) -> p.Result[t.JsonPayload] | t.JsonPayload:
             return r[t.JsonPayload].ok(payload) if wrapped else payload
 
-        result = u.execute_dispatcher_handler(
-            resolved_handler=handle,
-            message=message,
-            route_name="model_payload",
-            logger=u.fetch_logger(__name__),
-        )
-
-        assert result.success
-        assert result.value is payload
+        tm.ok(dispatcher.register_handler(handler, message_type="model"))
+        tm.that(tm.ok(dispatcher.dispatch(m.Command(command_type="model"))) is payload)
 
     @staticmethod
-    def test_dispatch_without_matching_handler_fails(
-        dispatcher: p.Dispatcher,
+    @pytest.mark.parametrize("registered", [False, True])
+    def test_unmatched_route_never_invokes_a_handler(*, registered: bool) -> None:
+        """Missing routes fail without executing a handler belonging to another route."""
+        dispatcher = u.build_dispatcher()
+        received: t.MutableSequenceOf[p.Routable] = []
+
+        def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
+            received.append(message)
+            return r[t.JsonPayload].ok(True)
+
+        if registered:
+            tm.ok(dispatcher.register_handler(handler, message_type="known"))
+        tm.that(dispatcher.dispatch(m.Command(command_type="unknown")).failure)
+        tm.that(received, empty=True)
+
+    @staticmethod
+    def test_message_without_a_route_fails_with_its_cause() -> None:
+        """The native route boundary rejects unroutable data without a fake default."""
+        result = u.build_dispatcher().dispatch(m.ConfigMap(root={}))
+        tm.that(result.failure)
+        tm.that(isinstance(result.exception, (TypeError, ValueError)))
+
+    @staticmethod
+    def test_callable_without_a_route_fails_before_execution() -> None:
+        """Opaque callbacks require explicit route metadata or a matching capability."""
+        received: t.MutableSequenceOf[p.Routable] = []
+
+        def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
+            received.append(message)
+            return r[t.JsonPayload].ok(True)
+
+        tm.that(u.build_dispatcher().register_handler(handler).failure)
+        tm.that(received, empty=True)
+
+    @staticmethod
+    @pytest.mark.parametrize("sequence", [False, True])
+    def test_publication_delivers_original_events_in_input_order(
+        *, sequence: bool
     ) -> None:
-        # Arrange: a well-routed message but no handler registered for it.
-        """Test dispatch without matching handler fails."""
-        command = RouteMessage(command_type="never_registered")
+        """One event or a sequence reaches the same subscriber without reconstruction."""
+        dispatcher = u.build_dispatcher()
+        received: t.MutableSequenceOf[p.Routable] = []
 
-        # Act
-        result = dispatcher.dispatch(command)
+        def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
+            received.append(message)
+            return r[t.JsonPayload].ok(True)
 
-        # Assert
-        assert result.failure
-        assert result.error is not None
-        assert "No handler found" in result.error
-
-    @staticmethod
-    def test_dispatch_message_without_route_fails(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        # Arrange: no route discriminator set -> unroutable message.
-        """Test dispatch message without route fails."""
-        message = RouteMessage()
-
-        # Act
-        result = dispatcher.dispatch(message)
-
-        # Assert: routing failure surfaces as a failed result, not an exception.
-        assert result.failure
-        assert result.error is not None
-        assert "dispatch message" in result.error
+        tm.ok(dispatcher.register_handler(handler, message_type="event", is_event=True))
+        first, second = m.Event(event_type="event"), m.Event(event_type="event")
+        tm.ok(dispatcher.publish((first, second) if sequence else first))
+        tm.that(len(received), eq=2 if sequence else 1)
+        tm.that(received[0] is first)
+        if sequence:
+            tm.that(received[1] is second)
 
     @staticmethod
-    def test_registered_handler_is_not_invoked_for_other_routes(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        # Arrange
-        """Test registered handler is not invoked for other routes."""
-        handler = RecordingHandler("owns_this")
-        _ = dispatcher.register_handler(handler)
-
-        # Act: dispatch an unrelated, unregistered route.
-        result = dispatcher.dispatch(RouteMessage(command_type="something_else"))
-
-        # Assert: the handler must not observe messages outside its route.
-        assert result.failure
-        assert handler.received == []
+    def test_publication_without_subscribers_is_a_successful_noop() -> None:
+        dispatcher = u.build_dispatcher()
+        tm.that(tm.ok(dispatcher.publish(m.Event(event_type="absent"))), eq=True)
+        tm.that(tm.ok(dispatcher.publish(())), eq=True)
 
     @staticmethod
-    def test_register_callable_without_route_fails(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        # Arrange: callable exposing no message_type / event_type / can_handle.
-        """Test register callable without route fails."""
+    def test_composed_dispatchers_do_not_share_routes() -> None:
+        first, second = u.build_dispatcher(), u.build_dispatcher()
 
-        def orphan_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
-            return r[t.JsonPayload].ok({})
+        def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("first")
 
-        # Act
-        result = dispatcher.register_handler(orphan_handler)
-
-        # Assert
-        assert result.failure
-        assert result.error is not None
-        assert "message_type" in result.error
+        tm.ok(first.register_handler(handler, message_type="isolated"))
+        message = m.Command(command_type="isolated")
+        tm.that(tm.ok(first.dispatch(message)), eq="first")
+        tm.that(second.dispatch(message).failure)
 
     @staticmethod
-    def test_publish_invokes_subscriber_and_reports_success(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        # Arrange
-        """Test publish invokes subscriber and reports success."""
-        subscriber = RecordingHandler("thing_happened")
-        _ = dispatcher.register_handler(subscriber, is_event=True)
-        event = RouteMessage(event_type="thing_happened")
-
-        # Act
-        result = dispatcher.publish(event)
-
-        # Assert: publication succeeds and the subscriber observed the event.
-        assert result.success
-        assert result.value is True
-        assert subscriber.received == [event]
-
-    @staticmethod
-    def test_publish_sequence_fans_out_to_each_event(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        # Arrange
-        """Test publish sequence fans out to each event."""
-        subscriber = RecordingHandler("batched")
-        _ = dispatcher.register_handler(subscriber, is_event=True)
-        event = RouteMessage(event_type="batched")
-
-        # Act
-        result = dispatcher.publish([event, event, event])
-
-        # Assert
-        assert result.success
-        assert len(subscriber.received) == 3
-
-    @staticmethod
-    def test_publish_without_subscribers_is_successful_noop(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        # Arrange: no subscriber registered for this event route.
-        """Test publish without subscribers is successful noop."""
-        event = RouteMessage(event_type="unheard")
-
-        # Act
-        result = dispatcher.publish(event)
-
-        # Assert: publishing to nobody is a benign success, not an error.
-        assert result.success
-        assert result.value is True
-
-    @staticmethod
-    def test_dispatchers_do_not_share_handler_registrations() -> None:
-        # Arrange
-        """Test dispatchers do not share handler registrations."""
-        registered = u.build_dispatcher()
-        _ = registered.register_handler(RecordingHandler("isolated_cmd"))
-        other = u.build_dispatcher()
-        command = RouteMessage(command_type="isolated_cmd")
-
-        # Act
-        registered_result = registered.dispatch(command)
-        other_result = other.dispatch(command)
-
-        # Assert: registration on one instance never leaks into another.
-        assert registered_result.success
-        assert other_result.failure
-
-    @staticmethod
-    def test_dispatch_logs_handler_exception_type_and_message(
+    def test_handler_exception_preserves_cause_and_emits_real_diagnostics(
         capfd: p.Tests.OutputCapture,
     ) -> None:
-        # Arrange: a handler whose execution raises a runtime failure.
-        """Test dispatch logs handler exception type and message."""
-        failure_detail = "upstream inventory unavailable"
-
-        # Act: capture what an operator would actually see on the log stream.
         dispatcher = u.build_dispatcher()
-        _ = dispatcher.register_handler(FailingHandler("explodes", failure_detail))
-        result = dispatcher.dispatch(RouteMessage(command_type="explodes"))
+        cause = RuntimeError("native handler failure")
+
+        def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            raise cause
+
+        tm.ok(dispatcher.register_handler(handler, message_type="explodes"))
+        result = dispatcher.dispatch(m.Command(command_type="explodes"))
         captured = capfd.readouterr()
-        emitted = captured.out + captured.err
-
-        # Assert: the failure is reported AND its cause is diagnosable in the log.
-        assert result.failure
-        assert result.error is not None
-        assert failure_detail in result.error
-        assert "RuntimeError" in emitted
-        assert failure_detail in emitted
-
-    @staticmethod
-    def test_command_conflict_preserves_original_and_bound_method_identity(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        """Repeated bound-method access is idempotent, not a new handler."""
-        original = RecordingHandler("identity")
-        replacement = RecordingHandler("identity")
-        tm.ok(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(
-                    handler=original.handle,
-                    message_type="identity",
-                ),
-            )),
-            where=lambda report: len(report.registered) == 1 and not report.skipped,
-        )
-        tm.ok(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(
-                    handler=original.handle,
-                    message_type="identity",
-                ),
-            )),
-            where=lambda report: not report.registered and len(report.skipped) == 1,
-        )
-        tm.fail(
-            dispatcher.register_handler(replacement.handle, message_type="identity")
-        )
-        message = RouteMessage(command_type="identity")
-        tm.ok(dispatcher.dispatch(message))
-        tm.that(original.received == [message])
-        tm.that(not replacement.received)
-
-    @staticmethod
-    @pytest.mark.parametrize("invalid_last", [False, True])
-    def test_batch_failure_never_publishes_earlier_entries(
-        dispatcher: p.Dispatcher,
-        *,
-        invalid_last: bool,
-    ) -> None:
-        """Internal conflicts and noncallable tails preserve the old snapshot."""
-        first = RecordingHandler("atomic")
-        last: t.DispatchableHandler = (
-            RouteMessage() if invalid_last else RecordingHandler("atomic")
-        )
-        tm.fail(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(handler=first),
-                m.HandlerRegistration(handler=last),
-            ))
-        )
-        tm.fail(dispatcher.dispatch(RouteMessage(command_type="atomic")))
-        tm.that(not first.received)
-
-    @staticmethod
-    def test_existing_command_conflict_does_not_publish_new_route(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        """A conflict with active state rejects every binding in the batch."""
-        original = RecordingHandler("occupied")
-        tm.ok(dispatcher.register_handler(original))
-        tm.fail(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(handler=RecordingHandler("new")),
-                m.HandlerRegistration(handler=RecordingHandler("occupied")),
-            ))
-        )
-        tm.fail(dispatcher.dispatch(RouteMessage(command_type="new")))
-        tm.ok(dispatcher.dispatch(RouteMessage(command_type="occupied")))
-        tm.that(len(original.received) == 1)
-
-    @staticmethod
-    def test_explicit_bindings_route_original_callable_and_reject_contradiction(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        """Explicit routes bind callables without changing their metadata."""
-        first = RecordingHandler("first")
-        second = RecordingHandler("second")
-        tm.ok(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(handler=first.handle, message_type="first"),
-                m.HandlerRegistration(handler=second.handle, message_type="second"),
-            )),
-            where=lambda report: len(report.registered) == 2 and not report.skipped,
-        )
-        messages = (
-            RouteMessage(command_type="first"),
-            RouteMessage(command_type="second"),
-        )
-        for message in messages:
-            tm.ok(dispatcher.dispatch(message))
-        tm.that(first.received == [messages[0]])
-        tm.that(second.received == [messages[1]])
-        tm.fail(dispatcher.register_handler(first, message_type="contradiction"))
-        tm.fail(dispatcher.dispatch(RouteMessage(command_type="contradiction")))
-
-    @staticmethod
-    def test_event_batch_fans_out_distinct_subscribers_once(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        """Event route duplicates retain distinct subscribers and deduplicate identities."""
-        first = RecordingHandler("fanout")
-        second = RecordingHandler("fanout")
-        tm.ok(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(
-                    handler=first.handle, message_type="fanout", is_event=True
-                ),
-                m.HandlerRegistration(
-                    handler=second.handle, message_type="fanout", is_event=True
-                ),
-                m.HandlerRegistration(
-                    handler=first.handle, message_type="fanout", is_event=True
-                ),
-            )),
-            where=lambda report: (
-                len(report.registered) == 2 and len(report.skipped) == 1
-            ),
-        )
-        event = RouteMessage(event_type="fanout")
-        tm.ok(dispatcher.publish(event))
-        tm.that(first.received == [event])
-        tm.that(second.received == [event])
-
-    @staticmethod
-    @pytest.mark.parametrize("raises", [False, True])
-    def test_publication_stops_at_failure_and_preserves_cause(
-        dispatcher: p.Dispatcher,
-        *,
-        raises: bool,
-    ) -> None:
-        """Failure halts remaining subscribers/events, retaining earlier effects."""
-        cause = RuntimeError("subscriber unavailable")
-        before = RecordingHandler("failure")
-        after = RecordingHandler("failure")
-        failures: list[p.Routable] = []
-
-        def failing(message: p.Routable) -> p.Result[t.JsonPayload]:
-            failures.append(message)
-            if raises:
-                raise cause
-            return r[t.JsonPayload].fail("subscriber unavailable", exception=cause)
-
-        tm.ok(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(handler=before, is_event=True),
-                m.HandlerRegistration(
-                    handler=failing, message_type="failure", is_event=True
-                ),
-                m.HandlerRegistration(handler=after, is_event=True),
-            )),
-            where=lambda report: len(report.registered) == 3 and not report.skipped,
-        )
-        event = RouteMessage(event_type="failure")
-        result = dispatcher.publish((event, event))
-        tm.fail(result)
+        tm.that(result.failure)
         tm.that(result.exception is cause)
-        tm.that(before.received == [event])
-        tm.that(failures == [event])
-        tm.that(not after.received)
+        tm.that(captured.out + captured.err, contains=type(cause).__name__)
+        tm.that(captured.out + captured.err, contains=str(cause))
 
     @staticmethod
-    def test_registration_during_publish_uses_next_operation_snapshot(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        """Reentrant registration does not deadlock or change an active sequence."""
-        late = RecordingHandler("snapshot")
-        registrations: list[p.Result[bool]] = []
+    def test_bound_method_repeat_is_idempotent_and_another_receiver_conflicts() -> None:
+        dispatcher = u.build_dispatcher()
+        original, other = u.Tests.CapabilityHandler(), u.Tests.CapabilityHandler()
+        first = original.handle
+        tm.ok(dispatcher.register_handler(first, message_type="bound"))
+        repeat = tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(handler=original.handle, message_type="bound"),
+            ))
+        )
+        tm.that(repeat.registered, empty=True)
+        tm.that(len(repeat.skipped), eq=1)
+        tm.that(dispatcher.register_handler(other.handle, message_type="bound").failure)
+        message = m.Command(command_type="bound")
+        tm.that(tm.ok(dispatcher.dispatch(message)), eq=message.command_type)
+        tm.that(original.handled, eq=[message.command_type])
+        tm.that(other.handled, empty=True)
 
-        def registering(_message: p.Routable) -> p.Result[t.JsonPayload]:
-            registrations.append(dispatcher.register_handler(late, is_event=True))
+    @staticmethod
+    @pytest.mark.parametrize("existing", [False, True])
+    def test_batch_conflict_never_publishes_an_earlier_binding(
+        *, existing: bool
+    ) -> None:
+        """Conflicts within a batch and with published state preserve the previous graph."""
+        dispatcher = u.build_dispatcher()
+
+        def original(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("original")
+
+        def replacement(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("replacement")
+
+        if existing:
+            tm.ok(dispatcher.register_handler(original, message_type="conflict"))
+        bindings = [m.HandlerRegistration(handler=replacement, message_type="new")]
+        if not existing:
+            bindings.append(
+                m.HandlerRegistration(handler=original, message_type="conflict")
+            )
+        bindings.append(
+            m.HandlerRegistration(handler=replacement, message_type="conflict")
+        )
+        tm.that(dispatcher.register_handlers(bindings).failure)
+        tm.that(dispatcher.dispatch(m.Command(command_type="new")).failure)
+        result = dispatcher.dispatch(m.Command(command_type="conflict"))
+        if existing:
+            tm.that(tm.ok(result), eq="original")
+        else:
+            tm.that(result.failure)
+
+    @staticmethod
+    def test_explicit_binding_preserves_callable_and_rejects_contradictory_metadata() -> (
+        None
+    ):
+        dispatcher = u.build_dispatcher()
+
+        @h.handler(command=m.Command)
+        def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("original")
+
+        report = tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(
+                    handler=handler, message_type=c.DEFAULT_COMMAND_TYPE
+                ),
+            ))
+        )
+        tm.that(report.registered[0].handler is handler)
+        tm.that(
+            dispatcher.register_handler(handler, message_type="contradictory").failure
+        )
+        tm.that(tm.ok(dispatcher.dispatch(m.Command())), eq="original")
+
+    @staticmethod
+    def test_event_batch_fans_out_distinct_callbacks_once() -> None:
+        dispatcher = u.build_dispatcher()
+        calls: t.MutableSequenceOf[str] = []
+
+        def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("first")
             return r[t.JsonPayload].ok(True)
 
-        tm.ok(
-            dispatcher.register_handler(
-                registering, message_type="snapshot", is_event=True
+        def second(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("second")
+            return r[t.JsonPayload].ok(True)
+
+        report = tm.ok(
+            dispatcher.register_handlers(
+                tuple(
+                    m.HandlerRegistration(
+                        handler=handler, message_type="fanout", is_event=True
+                    )
+                    for handler in (first, second, first)
+                )
             )
         )
-        event = RouteMessage(event_type="snapshot")
-        tm.ok(dispatcher.publish((event, event)))
-        tm.that(not late.received)
-        tm.ok(dispatcher.publish(event))
-        tm.that(late.received == [event])
-        for registration in registrations:
-            tm.ok(registration, eq=True)
+        tm.that(len(report.registered), eq=2)
+        tm.that(len(report.skipped), eq=1)
+        tm.ok(dispatcher.publish(m.Event(event_type="fanout")))
+        tm.that(calls, eq=["first", "second"])
 
     @staticmethod
-    def test_concurrent_command_writers_cannot_overwrite_each_other(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        """One writer owns a command route and every rejected batch stays absent."""
-        first = RecordingHandler("concurrent")
-        second = RecordingHandler("concurrent")
-        with ThreadPoolExecutor(max_workers=2) as pool:
-            futures = [
-                pool.submit(
-                    dispatcher.register_handlers,
-                    (
-                        m.HandlerRegistration(handler=handler),
-                        m.HandlerRegistration(handler=RecordingHandler(extra)),
-                    ),
-                )
-                for handler, extra in (
-                    (first, "winner_first"),
-                    (second, "winner_second"),
-                )
-            ]
-            results = [future.result() for future in futures]
-        tm.that(sum(result.success for result in results) == 1)
-        tm.ok(dispatcher.dispatch(RouteMessage(command_type="concurrent")))
-        tm.that(len(first.received) + len(second.received) == 1)
-        for result, route in zip(
-            results, ("winner_first", "winner_second"), strict=True
-        ):
-            observed = dispatcher.dispatch(RouteMessage(command_type=route))
-            tm.that(observed.success is result.success)
+    def test_publication_stops_at_failure_without_undoing_prior_effects() -> None:
+        dispatcher = u.build_dispatcher()
+        calls: t.MutableSequenceOf[str] = []
+        cause = RuntimeError("subscriber failure")
+        failure = r[t.JsonPayload].fail(
+            "subscriber rejected", exception=cause, error_code="event-rejected"
+        )
 
-    @staticmethod
-    def test_auto_and_explicit_subscribers_follow_registration_order(
-        dispatcher: p.Dispatcher,
-    ) -> None:
-        """Explicit routing does not jump ahead of an older auto subscriber."""
-        calls: list[str] = []
-        auto = TestsFlextCoreDispatcher.AutoSubscriber(calls)
+        def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("first")
+            return r[t.JsonPayload].ok(True)
 
-        def explicit(_message: p.Routable) -> p.Result[t.JsonPayload]:
-            calls.append("explicit")
+        def failed(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("failed")
+            return failure
+
+        def later(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("later")
             return r[t.JsonPayload].ok(True)
 
         tm.ok(
-            dispatcher.register_handlers((
-                m.HandlerRegistration(handler=auto, is_event=True),
-                m.HandlerRegistration(
-                    handler=explicit, message_type="ordered", is_event=True
-                ),
-            ))
+            dispatcher.register_handlers(
+                tuple(
+                    m.HandlerRegistration(
+                        handler=handler, message_type="ordered", is_event=True
+                    )
+                    for handler in (first, failed, later)
+                )
+            )
         )
-        tm.ok(dispatcher.publish(RouteMessage(event_type="ordered")))
-        tm.that(calls == ["auto", "explicit"])
+        result = dispatcher.publish((
+            m.Event(event_type="ordered"),
+            m.Event(event_type="ordered"),
+        ))
+        tm.that(result.failure)
+        tm.that(result.exception is cause)
+        tm.that(result.error_code, eq=failure.error_code)
+        tm.that(calls, eq=["first", "failed"])
 
+    @staticmethod
+    def test_reentrant_registration_is_visible_only_to_the_next_snapshot() -> None:
+        dispatcher = u.build_dispatcher()
+        calls: t.MutableSequenceOf[str] = []
 
-RouteMessage = TestsFlextCoreDispatcher.RouteMessage
-RecordingHandler = TestsFlextCoreDispatcher.RecordingHandler
-FailingHandler = TestsFlextCoreDispatcher.FailingHandler
+        def later(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("later")
+            return r[t.JsonPayload].ok(True)
+
+        def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            calls.append("first")
+            tm.ok(
+                dispatcher.register_handler(
+                    later, message_type="snapshot", is_event=True
+                )
+            )
+            return r[t.JsonPayload].ok(True)
+
+        tm.ok(
+            dispatcher.register_handler(first, message_type="snapshot", is_event=True)
+        )
+        event = m.Event(event_type="snapshot")
+        tm.ok(dispatcher.publish((event, event)))
+        tm.that(calls, eq=["first", "first"])
+        tm.ok(dispatcher.publish(event))
+        tm.that(calls, eq=["first", "first", "first", "later"])
+
+    @staticmethod
+    def test_concurrent_command_writers_never_overwrite_the_winner() -> None:
+        dispatcher = u.build_dispatcher()
+
+        def left(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("left")
+
+        def right(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            return r[t.JsonPayload].ok("right")
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            first = pool.submit(
+                dispatcher.register_handler, left, message_type="concurrent"
+            )
+            second = pool.submit(
+                dispatcher.register_handler, right, message_type="concurrent"
+            )
+            outcomes = (first.result(), second.result())
+        tm.that(sum(result.success for result in outcomes), eq=1)
+        tm.that(
+            tm.ok(dispatcher.dispatch(m.Command(command_type="concurrent"))),
+            eq="left" if outcomes[0].success else "right",
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize("auto_first", [False, True])
+    def test_auto_and_explicit_subscribers_follow_registration_order(
+        *, auto_first: bool
+    ) -> None:
+        dispatcher = u.build_dispatcher()
+        auto = u.Tests.AutoSubscriber()
+        observed: t.MutableSequenceOf[t.StrSequence] = []
+
+        def explicit(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            observed.append(tuple(auto.handled))
+            return r[t.JsonPayload].ok(True)
+
+        auto_binding = m.HandlerRegistration(handler=auto, is_event=True)
+        explicit_binding = m.HandlerRegistration(
+            handler=explicit, message_type="ordered", is_event=True
+        )
+        tm.ok(
+            dispatcher.register_handlers(
+                (auto_binding, explicit_binding)
+                if auto_first
+                else (explicit_binding, auto_binding),
+            )
+        )
+        tm.ok(dispatcher.publish(m.Event(event_type="ordered")))
+        tm.that(observed, eq=[("ordered",)] if auto_first else [()])
+        tm.that(auto.handled, eq=["ordered"])

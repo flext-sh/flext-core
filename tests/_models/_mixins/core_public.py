@@ -23,6 +23,13 @@ class TestsFlextModelsCorePublicMixin:
 
         query_type: str = "registry-query"
 
+    class HandlerObservations(m.ManagedModel):
+        """Owned effects recorded by an actual capability-based test handler."""
+
+        handled: t.MutableSequenceOf[str] = u.Field(
+            default_factory=u.empty(TypeForm(t.MutableSequenceOf[str])),
+        )
+
     class BinaryContract(m.ContractModel):
         """Binary contract exercising the public JSON persistence boundary."""
 

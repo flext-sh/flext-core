@@ -105,6 +105,10 @@ class FlextConstantsErrorsMessages:
     ERR_REGISTRY_PLUGIN_KEY_INVALID: ClassVar[str] = (
         "Plugin category and name must be nonempty and cannot contain '{separator}'"
     )
+    ERR_HANDLER_METADATA_INVALID: ClassVar[str] = "Invalid handler metadata for {name}"
+    ERR_HANDLER_POLICY_UNSUPPORTED: ClassVar[str] = (
+        "Handler timeout and middleware are unsupported"
+    )
     ERR_REGISTRY_VALIDATION_ERROR: ClassVar[str] = "Validation error: {error}"
     ERR_REGISTRY_PLUGIN_NOT_REGISTERED: ClassVar[str] = (
         "{category} '{name}' not registered"

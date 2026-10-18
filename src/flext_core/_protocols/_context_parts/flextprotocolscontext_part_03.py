@@ -35,12 +35,23 @@ class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext)
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options a service base declares for its runtime."""
 
-        settings: p.Settings | None
-        settings_type: t.SettingsClass | None
-        settings_overrides: t.ScalarMapping | None
-        context: p.Context | None
-        container: p.Container | None
-        dispatcher: p.Dispatcher | None
+        @property
+        def settings(self) -> p.Settings | None: ...
+
+        @property
+        def settings_type(self) -> t.SettingsClass | None: ...
+
+        @property
+        def settings_overrides(self) -> t.ScalarMapping | None: ...
+
+        @property
+        def context(self) -> p.Context | None: ...
+
+        @property
+        def container(self) -> p.Container | None: ...
+
+        @property
+        def dispatcher(self) -> p.Dispatcher | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsContext"]

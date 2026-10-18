@@ -207,6 +207,26 @@ class TestsFlextCoreRegistry:
             ).success
 
     @staticmethod
+    @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
+    def test_bound_plugin_method_is_idempotent(scope: c.RegistrationScope) -> None:
+        """Repeated bound-method access preserves the same receiver and function."""
+        registry = u.build_registry()
+        payload = m.ConfigMap(root={})
+        original = payload.model_dump
+        try:
+            assert registry.register_plugin(
+                "bound", "method", original, scope=scope
+            ).success
+            assert registry.register_plugin(
+                "bound", "method", payload.model_dump, scope=scope
+            ).success
+            assert (
+                registry.fetch_plugin("bound", "method", scope=scope).value is original
+            )
+        finally:
+            assert registry.unregister_plugin("bound", "method", scope=scope).success
+
+    @staticmethod
     def test_instance_plugins_do_not_leak_between_compositions() -> None:
         """Two independently composed APIs do not inherit another registry's plugins."""
         first, second = u.build_registry(), u.build_registry()

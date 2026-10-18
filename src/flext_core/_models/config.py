@@ -13,9 +13,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar
 
+from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._protocols._logging_parts import FlextProtocolsLogging
-from flext_core._typings import FlextTypesPydantic, FlextTypesServices, FlextTypingBase
 
 
 class FlextModelsConfig:
@@ -28,6 +27,10 @@ class FlextModelsConfig:
         The completion belongs to the caller awaiting the native stream result.
         """
 
+        model_config: ClassVar[t.ConfigDict] = FlextModelsPydantic.ConfigDict(
+            str_strip_whitespace=False
+        )
+
         text: Annotated[
             str | None,
             FlextModelsPydantic.Field(
@@ -35,7 +38,7 @@ class FlextModelsConfig:
             ),
         ]
         completion: Annotated[
-            FlextTypesServices.LoggingWriteCompletion,
+            t.LoggingWriteCompletion,
             FlextModelsPydantic.Field(
                 description=(
                     "Native completion receiving this job's result or first failure."
@@ -46,12 +49,10 @@ class FlextModelsConfig:
     class StructlogOptions(FlextModelsBase.ArbitraryTypesModel):
         """Knob options for the structlog runtime configuration."""
 
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(
-                extra="forbid",
-                validate_assignment=True,
-                arbitrary_types_allowed=True,
-            )
+        model_config: ClassVar[t.ConfigDict] = FlextModelsPydantic.ConfigDict(
+            extra="forbid",
+            validate_assignment=True,
+            arbitrary_types_allowed=True,
         )
 
         log_level: Annotated[
@@ -69,44 +70,44 @@ class FlextModelsConfig:
             ),
         ] = None
         processing_stages: Annotated[
-            FlextTypingBase.SequenceOf[FlextProtocolsLogging.LoggingStage],
+            t.SequenceOf[p.LoggingStage],
             FlextModelsPydantic.Field(
                 description="Ordered typed event stages executed before rendering.",
             ),
         ] = ()
         observers: Annotated[
-            FlextTypingBase.SequenceOf[FlextProtocolsLogging.LoggingObserver],
+            t.SequenceOf[p.LoggingObserver],
             FlextModelsPydantic.Field(
                 description="Typed observers notified with each sanitized event.",
             ),
         ] = ()
         handlers: Annotated[
-            FlextTypingBase.SequenceOf[FlextProtocolsLogging.LoggingHandler],
+            t.SequenceOf[p.LoggingHandler],
             FlextModelsPydantic.Field(
                 description="Native logging handlers attached to the runtime.",
             ),
         ] = ()
         redacted_keys: Annotated[
-            FlextTypingBase.SequenceOf[str],
+            t.SequenceOf[str],
             FlextModelsPydantic.Field(
                 description="Context keys whose values never reach the rendered event.",
             ),
         ] = ()
         redacted_values: Annotated[
-            FlextTypingBase.SequenceOf[str],
+            t.SequenceOf[str],
             FlextModelsPydantic.Field(
                 description="Exact values scrubbed from every rendered event.",
             ),
         ] = ()
         wrapper_class_factory: Annotated[
-            FlextTypesServices.LoggerWrapperFactory | None,
+            t.LoggerWrapperFactory | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the bound-logger wrapper class.",
             ),
         ] = None
         logger_factory: Annotated[
-            FlextTypesServices.LoggerFactory | None,
+            t.LoggerFactory | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the logger.",
@@ -139,7 +140,7 @@ class FlextModelsConfig:
         )
 
         data: Annotated[
-            FlextTypingBase.JsonMapping,
+            t.JsonMapping,
             FlextModelsPydantic.Field(
                 description="Parsed config mapping (execution parametrization).",
             ),
@@ -265,6 +266,10 @@ class FlextModelsConfig:
     class LoggingRecord(FlextModelsBase.ContractModel):
         """Sanitized pre-presentation event shared by typed observers."""
 
+        model_config: ClassVar[t.ConfigDict] = FlextModelsPydantic.ConfigDict(
+            str_strip_whitespace=False
+        )
+
         message: Annotated[
             str,
             FlextModelsPydantic.Field(description="Rendered event message text."),
@@ -274,18 +279,16 @@ class FlextModelsConfig:
             FlextModelsPydantic.Field(description="Event level name."),
         ]
         context: Annotated[
-            FlextTypingBase.JsonMapping,
+            t.JsonMapping,
             FlextModelsPydantic.Field(
                 description="Sanitized structured event context."
             ),
         ]
-        exception: FlextTypesPydantic.SkipJsonSchema[BaseException | None] = (
-            FlextModelsPydantic.Field(
-                default=None,
-                exclude=True,
-                repr=False,
-                description="Original local-only cause; never serialized into logging context.",
-            )
+        exception: t.SkipJsonSchema[BaseException | None] = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            repr=False,
+            description="Original local-only cause; never serialized into logging context.",
         )
 
 

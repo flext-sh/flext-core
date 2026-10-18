@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c, m, t
+from flext_core import t, u
 from flext_core._handlers_parts import flexthandlers_part_06
 
 if TYPE_CHECKING:
@@ -40,8 +40,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         Scans classes for methods decorated with @handler() and provides
         utilities for finding and analyzing handler configurations.
 
-        This class enables zero-settings handler registration in FlextService
-        by automatically discovering decorated methods at initialization time.
+        Discovery does not construct services or register dependencies. The API
+        composition root chooses the module/class and registers the returned data.
         """
 
         @staticmethod
@@ -57,16 +57,8 @@ class FlextHandlers[MessageT_contra, ResultT](
             Returns:
                 True if class has at least one handler, False otherwise
 
-            Example:
-                >>> if FlextHandlers.Discovery.has_handlers(MyService):
-                ...     # Auto-setup dispatcher/registry
-                ...     service._setup_dispatcher()
-
             """
-            return any(
-                hasattr(getattr(target_class, name, None), c.HANDLER_ATTR)
-                for name in dir(target_class)
-            )
+            return bool(FlextHandlers.Discovery.scan_class(target_class))
 
         @staticmethod
         def scan_class(
@@ -89,16 +81,16 @@ class FlextHandlers[MessageT_contra, ResultT](
                 ...     u.Cli.print(f"{method_name}: {settings.command.__name__}")
 
             """
-            handlers: t.SequenceOf[tuple[str, p.DecoratorConfig]] = [
-                (name, getattr(method, c.HANDLER_ATTR))
-                for name in dir(target_class)
-                if hasattr(method := getattr(target_class, name, None), c.HANDLER_ATTR)
-            ]
-
-            def _priority(entry: tuple[str, p.DecoratorConfig]) -> int:
-                return entry[1].priority
-
-            return sorted(handlers, key=_priority, reverse=True)
+            handlers: t.MutableSequenceOf[tuple[str, p.DecoratorConfig]] = []
+            for name in dir(target_class):
+                method = getattr(target_class, name, None)
+                if callable(method):
+                    metadata = u.handler_metadata(
+                        method, name=f"{target_class.__qualname__}.{name}"
+                    )
+                    if metadata is not None:
+                        handlers.append((name, metadata))
+            return sorted(handlers, key=lambda entry: (-entry[1].priority, entry[0]))
 
         @staticmethod
         def scan_module(
@@ -128,18 +120,9 @@ class FlextHandlers[MessageT_contra, ResultT](
             for name, func in vars(module).items():
                 if name.startswith("_") or not callable(func):
                     continue
-                settings = vars(func).get(c.HANDLER_ATTR)
+                settings = u.handler_metadata(func, name=f"{module.__name__}.{name}")
                 if settings is None:
                     continue
-                if not isinstance(settings, m.DecoratorConfig):
-                    msg = f"Invalid handler metadata for {module.__name__}.{name}"
-                    raise TypeError(msg)
-                if settings.timeout is not None or settings.middleware:
-                    msg = (
-                        "Unsupported handler execution policy for "
-                        f"{module.__name__}.{name}"
-                    )
-                    raise ValueError(msg)
                 handlers.append((name, func, settings))
             return sorted(handlers, key=lambda entry: (-entry[2].priority, entry[0]))
 

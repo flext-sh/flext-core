@@ -57,8 +57,8 @@ class TestsFlextLoggingStages:
     def test_async_emission_drains_before_reconfiguration_and_process_exit() -> None:
         """Accepted public events reach the native stream before shutdown."""
         events = (
-            "first accepted event",
-            "second accepted event",
+            " first accepted event ",
+            "\tsecond accepted event\n",
             "last accepted event",
         )
         consumer = (
@@ -257,6 +257,7 @@ class TestsFlextLoggingStages:
         try:
             raise error
         except OSError as exc:
+            original_traceback = exc.__traceback__
             result = logger.exception(
                 "operation failed",
                 exception=exc,
@@ -266,7 +267,9 @@ class TestsFlextLoggingStages:
         tm.that(result.success, eq=True)
         tm.that(observed[0]["exception_type"], eq=type(error).__name__)
         tm.that(observed[0]["exception_message"], eq=str(error))
-        tm.that(observed[0]["exc_info"] is error, eq=True)
+        info = tm.not_none(u.resolve_logging_exception_info(observed[0]["exc_info"]))
+        tm.that(info[1] is error, eq=True)
+        tm.that(info[2] is original_traceback, eq=True)
         tm.that("operation failed" in stream.getvalue(), eq=True)
 
     def test_invalid_registration_is_rejected(self) -> None:

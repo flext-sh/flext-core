@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from threading import Lock
-from types import MappingProxyType, MethodType
+from types import MappingProxyType
 from typing import cast
 
 from flext_core import c, m, p, r, t, u
@@ -78,7 +78,7 @@ class FlextDispatcher:
                 )
                 for key, (handler, resolved, accepted, is_event, _) in subscribers:
                     if not is_event or any(
-                        self._same_handler(handler, previous) for previous in invoked
+                        u.registry_same_value(handler, previous) for previous in invoked
                     ):
                         continue
                     if key is None and not (
@@ -101,18 +101,6 @@ class FlextDispatcher:
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
             return r[bool].fail_op("publish event", exc)
         return r[bool].ok(True)
-
-    @staticmethod
-    def _same_handler(
-        left: t.DispatchableHandler, right: t.DispatchableHandler
-    ) -> bool:
-        """Compare bound methods by owner/function, never collaborator equality."""
-        return left is right or (
-            isinstance(left, MethodType)
-            and isinstance(right, MethodType)
-            and left.__self__ is right.__self__
-            and left.__func__ is right.__func__
-        )
 
     def register_handler(
         self,
@@ -163,18 +151,8 @@ class FlextDispatcher:
                             "register handler", c.ERR_HANDLER_MUST_BE_CALLABLE
                         )
                 accepted = tuple(u.compute_accepted_message_types(type(handler)))
-                metadata = getattr(handler, c.HANDLER_ATTR, None)
+                metadata = u.handler_metadata(handler, name=type(handler).__qualname__)
                 declared = getattr(handler, "message_type", None)
-                if metadata is not None:
-                    if not isinstance(metadata, p.DecoratorConfig):
-                        return r[p.HandlerRegistrationReport].fail_op(
-                            "register handlers", "Invalid handler metadata"
-                        )
-                    if metadata.timeout is not None or metadata.middleware:
-                        return r[p.HandlerRegistrationReport].fail_op(
-                            "register handlers",
-                            "Handler timeout and middleware are unsupported",
-                        )
                 explicit = binding.message_type
                 route = (
                     u.resolve_message_route(explicit) if explicit is not None else None
@@ -191,12 +169,12 @@ class FlextDispatcher:
                                 "Explicit route contradicts handler metadata",
                             )
                         route = declared_route
-                if route is None and accepted:
-                    try:
-                        route = u.resolve_message_route(accepted[0])
-                    except c.EXC_TYPE_VALIDATION:
-                        if not isinstance(handler, p.AutoDiscoverableHandler):
-                            raise
+                if (
+                    route is None
+                    and accepted
+                    and not isinstance(handler, p.AutoDiscoverableHandler)
+                ):
+                    route = u.resolve_message_route(accepted[0])
                 if route == "" or (
                     route is None and not isinstance(handler, p.AutoDiscoverableHandler)
                 ):
@@ -227,7 +205,7 @@ class FlextDispatcher:
             for route, entry, binding in prepared:
                 existing = candidate.get(route, ())
                 if any(
-                    item[3] == entry[3] and self._same_handler(item[0], entry[0])
+                    item[3] == entry[3] and u.registry_same_value(item[0], entry[0])
                     for item in existing
                 ):
                     skipped.append(binding)

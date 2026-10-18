@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from importlib import import_module
+from types import MethodType
 
 from flext_core import FlextRuntime, c, m, p, r, t
 from flext_core._models import FlextModelsNamespace
@@ -90,14 +91,23 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def registry_same_value(
-        previous: t.RegisterableService,
-        candidate: t.RegisterableService,
+        previous: t.RegisterableService | t.DispatchableHandler,
+        candidate: t.RegisterableService | t.DispatchableHandler,
     ) -> bool:
         """Compare collaborators by identity, immutable scalars by type and value."""
-        return previous is candidate or (
-            isinstance(previous, c.SCALAR_TYPES)
-            and type(previous) is type(candidate)
-            and previous == candidate
+        return (
+            previous is candidate
+            or (
+                isinstance(previous, MethodType)
+                and isinstance(candidate, MethodType)
+                and previous.__self__ is candidate.__self__
+                and previous.__func__ is candidate.__func__
+            )
+            or (
+                any(type(previous) is scalar_type for scalar_type in c.SCALAR_TYPES)
+                and type(previous) is type(candidate)
+                and previous == candidate
+            )
         )
 
     @staticmethod
@@ -123,6 +133,22 @@ class FlextUtilitiesModelRuntime(
         """Read the normalized route published by the dispatcher."""
         route = binding.message_type
         return route if isinstance(route, str) else type(binding.handler).__qualname__
+
+    @staticmethod
+    def handler_metadata(
+        candidate: t.RegisterableService | t.DispatchableHandler,
+        *,
+        name: str,
+    ) -> p.DecoratorConfig | None:
+        """Read validated decorator data without wrapping or invoking a callable."""
+        metadata = getattr(candidate, c.HANDLER_ATTR, None)
+        if metadata is None:
+            return None
+        if not isinstance(metadata, m.DecoratorConfig):
+            raise TypeError(c.ERR_HANDLER_METADATA_INVALID.format(name=name))
+        if metadata.timeout is not None or metadata.middleware:
+            raise ValueError(c.ERR_HANDLER_POLICY_UNSUPPORTED)
+        return metadata
 
     @classmethod
     def registry_registration_details(

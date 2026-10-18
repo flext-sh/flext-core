@@ -21,12 +21,8 @@ from typing import TYPE_CHECKING, TypeAliasType, get_protocol_members, is_protoc
 
 from pydantic import BaseModel
 
-from flext_core import c, p, t
-from flext_core._models import (
-    FlextModelsContainer,
-    FlextModelsHandler,
-    FlextModelsService,
-)
+from flext_core import c, m, p, t
+from flext_core._utilities import FlextUtilitiesModelRuntime
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -39,24 +35,24 @@ class FlextUtilitiesDiscovery:
     def _factory_config_for(
         module: ModuleType,
         name: str,
-    ) -> FlextModelsContainer.FactoryDecoratorConfig | None:
+    ) -> m.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
             return None
         config_raw = vars(func).get(c.FACTORY_ATTR)
-        if not isinstance(config_raw, FlextModelsContainer.FactoryDecoratorConfig):
+        if not isinstance(config_raw, m.FactoryDecoratorConfig):
             return None
         return config_raw
 
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> t.SequenceOf[tuple[str, FlextModelsContainer.FactoryDecoratorConfig]]:
+    ) -> t.SequenceOf[tuple[str, m.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name.
 
         Returns:
             The resulting ``t.SequenceOf[tuple[str,
-                FlextModelsContainer.FactoryDecoratorConfig]]``.
+                m.FactoryDecoratorConfig]]``.
 
         """
         return sorted(
@@ -143,7 +139,7 @@ class FlextUtilitiesDiscovery:
         """Validate one operation's shape and build its typed description.
 
         Returns:
-            The resulting ``FlextModelsService.ServiceOperation``.
+            The resulting ``m.ServiceOperation``.
 
         """
         where = (service_type, name, func.__module__)
@@ -159,7 +155,7 @@ class FlextUtilitiesDiscovery:
             where,
             signature,
         )
-        return FlextModelsService.ServiceOperation(
+        return m.ServiceOperation(
             name=name,
             summary=doc.strip().splitlines()[0],
             request=request,
@@ -239,7 +235,10 @@ class FlextUtilitiesDiscovery:
         origin = FlextUtilitiesDiscovery._resolve(func, where, returned, subscript=True)
         if origin is not p.Result:
             raise error(where, returned, c.ERR_SERVICE_OPERATION_RESULT)
-        metadata = vars(func).get(c.HANDLER_ATTR)
+        metadata = FlextUtilitiesModelRuntime.handler_metadata(
+            func,
+            name=f"{where[2]}.{where[0].__qualname__}.{where[1]}",
+        )
         params = tuple(signature.parameters.values())[1:]
         if not params:
             if metadata is not None:
@@ -260,7 +259,7 @@ class FlextUtilitiesDiscovery:
                     annotation,
                     c.ERR_SERVICE_OPERATION_REQUEST,
                 )
-            if not isinstance(metadata, FlextModelsHandler.DecoratorConfig):
+            if metadata is None:
                 raise error(
                     where,
                     annotation,
@@ -272,12 +271,6 @@ class FlextUtilitiesDiscovery:
                     where,
                     annotation,
                     "Handler command metadata must declare a Pydantic request model.",
-                )
-            if metadata.timeout is not None or metadata.middleware:
-                raise error(
-                    where,
-                    annotation,
-                    "Handler timeout and middleware execution policies are not supported.",
                 )
             missing = get_protocol_members(contract) - (
                 request.model_fields.keys() | set(dir(request))

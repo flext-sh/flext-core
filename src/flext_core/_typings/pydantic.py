@@ -31,6 +31,7 @@ class FlextTypesPydantic:
     """
 
     # String constraints
+    type ConfigDict = pydantic.ConfigDict
     type ComputedFieldInfo = pydantic.fields.ComputedFieldInfo
     constr = pydantic.constr
     type StrictStr = pydantic.StrictStr
