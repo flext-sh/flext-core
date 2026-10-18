@@ -1,4 +1,4 @@
-"""Support objects for the registry DSL example.
+"""Original decorated callables and a port-bearing registry consumer.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,86 +6,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import override
 
-from examples import h, m, r, t, u
-
-if TYPE_CHECKING:
-    from examples import p
+from examples import h, m, p, r, s, t
 
 
-class ProtocolHandler:
-    """Protocol-like handler used by the registry example."""
-
-    message_type: type[m.Command]
-
-    def __init__(self, label: str, message_type: type[m.Command]) -> None:
-        """Store the handler label and message type."""
-        self._label = label
-        self.message_type = message_type
-
-    def can_handle(self, message_type: type[m.Command]) -> bool:
-        """Return whether this handler supports the message type.
-
-        Returns:
-            Whether this handler supports the message type.
-
-        """
-        return message_type is self.message_type
-
-    def handle(self, message: p.Routable) -> p.Result[t.Scalar]:
-        """Handle a command and return a scalar result.
-
-        Returns:
-            The resulting ``p.Result[t.Scalar]``.
-
-        """
-        value = ""
-        if isinstance(message, m.Examples.CommandA):
-            value = message.value
-        elif isinstance(message, m.Examples.CommandB):
-            value = str(message.amount)
-        return r[t.Scalar].ok(f"{self._label}:{value}")
-
-    def __call__(self, message: p.Routable) -> p.Result[t.Scalar]:
-        """Callable adapter for registry handler protocols expecting callables.
-
-        Returns:
-            The resulting ``p.Result[t.Scalar]``.
-
-        """
-        return self.handle(message)
-
-
-def as_registry_handler(handler: ProtocolHandler) -> t.DispatchableHandler:
-    """Adapt protocol handlers to the registry callable contract.
-
-    Returns:
-        The resulting ``t.DispatchableHandler``.
-
-    """
-
-    class _RegistryHandlerCallable:
-        handler_id: str
-        message_type: type[m.Command]
-
-        def __init__(self, source: ProtocolHandler) -> None:
-            self._source = source
-            self.handler_id = source.message_type.__name__
-            self.message_type = source.message_type
-
-        def __call__(self, message: p.Routable) -> t.JsonPayload:
-            return u.normalize_to_container(self._source.handle(message).unwrap_or(""))
-
-    return _RegistryHandlerCallable(handler)
-
-
-@h.handler(m.Examples.CommandA, priority=3)
-def discovered_handler(message: m.Command) -> m.Command:
-    """Return the discovered command unchanged for registry dispatch.
-
-    Returns:
-        The discovered command unchanged for registry dispatch.
-
-    """
+@h.handler(command=m.Examples.CommandA, priority=3)
+def discovered_handler(message: p.Routable) -> t.JsonPayload:
+    """Return the original owned payload without serializing it."""
+    if not isinstance(message, m.Examples.CommandA):
+        msg = "Expected CommandA"
+        raise TypeError(msg)
     return message
+
+
+@h.handler(command=m.Examples.CommandB)
+def amount_handler(message: p.Routable) -> p.Result[t.JsonPayload]:
+    """Execute a second route through the canonical Result boundary."""
+    if not isinstance(message, m.Examples.CommandB):
+        return r[t.JsonPayload].fail("Expected CommandB")
+    return r[t.JsonPayload].ok(message.amount)
+
+
+class RegistryLookup(s[t.RegisterableService], m.Examples.RegistryLookupOptions):
+    """Consume a registry supplied explicitly by the example composition root."""
+
+    @override
+    def execute(self) -> p.Result[t.RegisterableService]:
+        """Resolve the requested plugin without constructing another registry."""
+        return self.registry.fetch_plugin(self.category, self.plugin_name)

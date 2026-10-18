@@ -1,6 +1,7 @@
 Infra:
   codegen:
     repository:
+      examples_module: examples.ex_12_flext_registry
       namespace_scan_dirs:
       - src
     toolchain:

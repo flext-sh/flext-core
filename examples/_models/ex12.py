@@ -8,11 +8,18 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m
+from flext_core import m, p, t
 
 
 class ExamplesFlextModelsEx12:
     """Examples namespace wrapper for ex12 models."""
+
+    class RegistryLookupOptions(m.ArbitraryTypesModel):
+        """Validated dependencies and input of the plugin lookup service."""
+
+        registry: t.Port[p.Registry] = m.Field(exclude=True)
+        category: str
+        plugin_name: str
 
     class CommandA(m.Command):
         command_type: Annotated[

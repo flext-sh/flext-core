@@ -12,10 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import io
-import time
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import redirect_stdout
 from typing import override
 
 import pytest
@@ -287,23 +284,19 @@ class TestsFlextCoreDispatcher:
         assert other_result.failure
 
     @staticmethod
-    def test_dispatch_logs_handler_exception_type_and_message() -> None:
+    def test_dispatch_logs_handler_exception_type_and_message(
+        capfd: p.Tests.OutputCapture,
+    ) -> None:
         # Arrange: a handler whose execution raises a runtime failure.
         """Test dispatch logs handler exception type and message."""
         failure_detail = "upstream inventory unavailable"
 
         # Act: capture what an operator would actually see on the log stream.
-        stream = io.StringIO()
-        with redirect_stdout(stream):
-            dispatcher = u.build_dispatcher()
-            _ = dispatcher.register_handler(FailingHandler("explodes", failure_detail))
-            result = dispatcher.dispatch(RouteMessage(command_type="explodes"))
-            deadline = time.monotonic() + 0.25
-            while time.monotonic() < deadline:
-                if "RuntimeError" in stream.getvalue():
-                    break
-                time.sleep(0.01)
-        emitted = stream.getvalue()
+        dispatcher = u.build_dispatcher()
+        _ = dispatcher.register_handler(FailingHandler("explodes", failure_detail))
+        result = dispatcher.dispatch(RouteMessage(command_type="explodes"))
+        captured = capfd.readouterr()
+        emitted = captured.out + captured.err
 
         # Assert: the failure is reported AND its cause is diagnosable in the log.
         assert result.failure

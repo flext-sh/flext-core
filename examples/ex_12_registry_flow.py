@@ -1,4 +1,4 @@
-"""Registry creation, dispatch, and summary example sections.
+"""Explicit discovery, real dispatch, and atomic binding examples.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,208 +6,131 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from examples import ExamplesFlextShared, c, h, m, r, u
-from examples.ex_12_registry_support import (
-    ProtocolHandler,
-    as_registry_handler,
-    discovered_handler,
+from examples import (
+    ExamplesFlextShared,
+    c,
+    ex_12_registry_support as support,
+    h,
+    m,
+    p,
+    r,
+    t,
+    u,
 )
-
-if TYPE_CHECKING:
-    from examples import p, t
 
 
 class ExamplesFlextRegistryFlow(ExamplesFlextShared):
-    """Registry flow checks for the executable example."""
+    """Exercise the public registry and dispatcher as one explicit graph."""
 
-    def _exercise_create_and_service_methods(self) -> t.Pair[p.Registry, p.Dispatcher]:
-        self.section("create_and_service_methods")
-        discovered_value = self.rand_str(4)
+    def _exercise_discovery(self) -> p.Registry:
+        self.section("explicit_discovery")
         dispatcher = u.build_dispatcher()
-        registry = u.build_registry(dispatcher=dispatcher)
-        _ = u.build_registry()
-        _ = u.build_registry(dispatcher=None)
-        _ = u.build_registry(auto_discover_handlers=False)
-        _ = u.build_registry(auto_discover_handlers=True)
+        registry = u.build_registry(dispatcher, discovery_module=support)
+        self.audit_check("dispatcher.identity", registry.dispatcher is dispatcher)
+        self.audit_check("execute.success", registry.execute().value)
+        discovered = h.Discovery.scan_module(support)
         self.audit_check(
-            "decorated_handler.type",
-            type(
-                discovered_handler(m.Examples.CommandA(value=discovered_value)),
-            ).__name__,
+            "discovery.callable_identity",
+            any(handler is support.discovered_handler for _, handler, _ in discovered),
         )
-        self.audit_check("execute.success", registry.execute().success)
-        return (registry, dispatcher)
-
-    def _exercise_registration_and_dispatch(
-        self,
-        registry: p.Registry,
-        dispatcher: p.Dispatcher,
-    ) -> t.Pair[ProtocolHandler, ProtocolHandler]:
-        """Register flow handlers and dispatch commands through them.
-
-        Returns:
-            The resulting ``t.Pair[ProtocolHandler, ProtocolHandler]``.
-
-        """
-        self.section("registration_and_dispatch")
-        handlers, labels = self._register_flow_handlers(registry)
-        self._dispatch_flow_commands(dispatcher, labels)
-        return handlers
-
-    def _register_flow_handlers(
-        self,
-        registry: p.Registry,
-    ) -> t.Pair[t.Pair[ProtocolHandler, ProtocolHandler], t.Pair[str, str]]:
-        """Register handler_a/handler_b and the callable-mode handler.
-
-        Returns:
-            The resulting ``t.Pair``.
-
-        """
-        label_a = self.rand_str(3)
-        label_b = self.rand_str(3)
-        callable_prefix = self.rand_str(3)
-        callable_name = self.rand_str(10)
-        handler_a = ProtocolHandler(label_a, m.Examples.CommandA)
-        handler_b = ProtocolHandler(label_b, m.Examples.CommandB)
-        handler_mode = h.create_from_callable(
-            lambda msg: f"{callable_prefix}:{msg!r}",
-            handler_name=callable_name,
+        command = m.Examples.CommandA(value=self.rand_str(6))
+        self.audit_check(
+            "dispatch.model_identity", dispatcher.dispatch(command).value is command
+        )
+        amount = self.rand_int(1, 100)
+        self.audit_check(
+            "dispatch.result_payload",
+            dispatcher.dispatch(m.Examples.CommandB(amount=amount)).value == amount,
+        )
+        repeated = registry.register_handlers([
+            handler for _, handler, _ in discovered
+        ]).value
+        self.audit_check("rediscovery.no_new_entries", len(repeated.registered) == 0)
+        self.audit_check(
+            "rediscovery.exact_skipped",
+            tuple(repeated.skipped)
+            == tuple(
+                u.resolve_message_route(metadata.command)
+                for _, _, metadata in discovered
+            ),
+        )
+        self.audit_check(
+            "rediscovery.model_identity", dispatcher.dispatch(command).value is command
+        )
+        callable_handler = h.create_from_callable(
+            lambda value: value,
+            handler_name=self.rand_str(8),
             handler_type=c.HandlerType.COMMAND,
         )
-        reg_one = registry.register_handler(as_registry_handler(handler_a))
-        reg_dup = registry.register_handler(as_registry_handler(handler_a))
-        reg_two = registry.register_handler(as_registry_handler(handler_b))
-        reg_mode = registry.register_handler(as_registry_handler(handler_a))
-        self.audit_check("register_handler.a.success", reg_one.success)
+        value = self.rand_str(6)
         self.audit_check(
-            "register_handler.a.id_present",
-            bool(reg_one.value.registration_id) if reg_one.success else False,
+            "create_from_callable.payload",
+            callable_handler.handle(value).value == value,
         )
-        self.audit_check("register_handler.duplicate.success", reg_dup.success)
-        self.audit_check("register_handler.b.success", reg_two.success)
-        self.audit_check("register_handler.mode.success", reg_mode.success)
-        handler_mode_probe = handler_mode.handle(callable_prefix)
-        self.audit_check(
-            "create_from_callable.handle_success",
-            handler_mode_probe.success,
-        )
-        batch = registry.register_handlers([
-            as_registry_handler(handler_a),
-            as_registry_handler(handler_b),
-            as_registry_handler(handler_a),
-        ])
-        self.audit_check("register_handlers.success", batch.success)
-        self.audit_check(
-            "register_handlers.registered_len",
-            len(batch.value.registered) if batch.success else -1,
-        )
-        self.audit_check(
-            "register_handlers.errors_len",
-            len(batch.value.errors) if batch.success else -1,
-        )
-        return (handler_a, handler_b), (label_a, label_b)
+        return registry
 
-    def _dispatch_flow_commands(
-        self,
-        dispatcher: p.Dispatcher,
-        labels: t.Pair[str, str],
-    ) -> None:
-        """Dispatch CommandA/CommandB through the registered handlers."""
-        label_a, label_b = labels
-        cmd_a_value = self.rand_str(6)
-        cmd_b_value = self.rand_int(1, 100)
-        cmd_a = m.Examples.CommandA(value=cmd_a_value)
-        dispatch_a = dispatcher.dispatch(cmd_a)
-        self.audit_check("dispatch.a.success", dispatch_a.success)
+    def _exercise_atomic_bindings(self) -> None:
+        self.section("atomic_bindings")
+        registry = u.build_registry()
+        command = m.Examples.CommandA(value=self.rand_str(6))
+        amount = m.Examples.CommandB(amount=self.rand_int(1, 100))
+        first = registry.register_handler(support.discovered_handler)
+        self.audit_check("register_handler.success", first.success)
         self.audit_check(
-            "dispatch.a.value",
-            dispatch_a.value == f"{label_a}:{cmd_a_value}",
+            "register_handler.id_present", bool(first.value.registration_id)
         )
-        cmd_b = m.Examples.CommandB(amount=cmd_b_value)
-        dispatch_b = dispatcher.dispatch(cmd_b)
-        self.audit_check("dispatch.b.success", dispatch_b.success)
+        repeated = registry.register_bindings({
+            m.Examples.CommandA: support.discovered_handler
+        }).value
         self.audit_check(
-            "dispatch.b.value",
-            dispatch_b.value == f"{label_b}:{cmd_b_value}",
+            "binding.duplicate_exact",
+            len(repeated.registered) == 0
+            and tuple(repeated.skipped) == (u.resolve_message_route(command),),
         )
+        contradictory = registry.register_bindings({
+            m.Examples.CommandB: support.discovered_handler
+        })
+        self.audit_check("binding.metadata_conflict", contradictory.failure)
 
-    def _exercise_summary_and_mixins(self) -> None:
-        """Exercise summary models, result mixins, and utility generators."""
-        self.section("summary_and_mixins")
-        self._summary_model_checks()
-        self._mixin_and_utility_checks()
+        def conflicting_handler(_message: p.Routable) -> t.JsonPayload:
+            """Represent a distinct callable competing for an occupied route."""
+            return "conflicting handler"
 
-    def _summary_model_checks(self) -> None:
-        """Check success/failure attribute shapes of registry summaries."""
-        summary_error = self.rand_str(5)
-        summary_ok = m.RegistrySummary()
-        summary_fail = m.RegistrySummary(errors=[summary_error])
-        ok_success_attr = summary_ok.success
-        summary_ok_success = (
-            ok_success_attr() if callable(ok_success_attr) else ok_success_attr
+        failed = registry.register_bindings({
+            m.Examples.CommandB: support.amount_handler,
+            m.Examples.CommandA: conflicting_handler,
+        })
+        self.audit_check("batch.conflict", failed.failure)
+        self.audit_check(
+            "batch.no_partial_route", registry.dispatcher.dispatch(amount).failure
         )
-        ok_failure_attr = summary_ok.failure
-        summary_ok_failure = (
-            ok_failure_attr() if callable(ok_failure_attr) else ok_failure_attr
+        self.audit_check(
+            "batch.original_preserved",
+            registry.dispatcher.dispatch(command).value is command,
         )
-        fail_success_attr = summary_fail.success
-        summary_fail_success = (
-            fail_success_attr() if callable(fail_success_attr) else fail_success_attr
+        added = registry.register_bindings({
+            m.Examples.CommandB: support.amount_handler
+        }).value
+        self.audit_check(
+            "binding.exact_registered",
+            tuple(entry.registration_id for entry in added.registered)
+            == (u.resolve_message_route(amount),)
+            and len(added.skipped) == 0,
         )
-        fail_failure_attr = summary_fail.failure
-        summary_fail_failure = (
-            fail_failure_attr() if callable(fail_failure_attr) else fail_failure_attr
+        self.audit_check(
+            "binding.dispatch",
+            registry.dispatcher.dispatch(amount).value == amount.amount,
         )
-        self.audit_check("summary.ok.success", summary_ok_success)
-        self.audit_check("summary.ok.failure", summary_ok_failure)
-        self.audit_check("summary.fail.success", summary_fail_success)
-        self.audit_check("summary.fail.failure", summary_fail_failure)
+        cause = RuntimeError("Handler rejected the command")
 
-    def _mixin_and_utility_checks(self) -> None:
-        """Check result mixins, dict conversion, and id generators."""
-        ok_value = self.rand_str(6)
-        fail_message = self.rand_str(7)
-        fail_code = self.rand_str(5)
-        ensured_raw = self.rand_int(1, 200)
-        ensured_existing = self.rand_int(1, 200)
-        map_key_a = self.rand_str(3)
-        map_key_b = self.rand_str(3)
-        map_val_a = self.rand_int(1, 9)
-        map_val_b = self.rand_str(3)
-        handler_name = self.rand_str(6)
-        handler_id = self.rand_str(8)
-        prefix = f"reg.{self.rand_str(4)}"
-        ok_result = r[str].ok(ok_value)
-        fail_result = r[str].fail(fail_message, error_code=fail_code)
-        self.audit_check("mixin.ok.unwrap_or", ok_result.value == ok_value)
-        self.audit_check("mixin.fail.error", fail_result.error == fail_message)
-        self.audit_check("mixin.fail.error_code", fail_result.error_code == fail_code)
-        self.audit_check(
-            "ensure_result.raw",
-            r[int].ok(ensured_raw).value == ensured_raw,
-        )
-        self.audit_check(
-            "ensure_result.existing",
-            r[int].ok(ensured_existing).value == ensured_existing,
-        )
-        self.audit_check("to_dict.none", m.ConfigMap(root={}))
-        self.audit_check(
-            "to_dict.mapping",
-            m.ConfigMap(root={map_key_a: map_val_a, map_key_b: map_val_b}),
-        )
-        self.audit_check(
-            "to_dict.basemodel",
-            m.Handler(handler_name=handler_name, handler_id=handler_id).model_dump(),
-        )
-        self.audit_check("generate_id.len", len(u.generate_id()))
-        self.audit_check(
-            "generate_prefixed_id",
-            u.generate_prefixed_id(prefix, 6).startswith(f"{prefix}_"),
-        )
-        self.audit_check(
-            "generate_datetime_utc.type",
-            type(u.generate_datetime_utc()).__name__,
-        )
+        def failed_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
+            """Preserve the original domain failure through dispatch."""
+            return r[t.JsonPayload].fail(str(cause), exception=cause)
+
+        failed_registry = u.build_registry()
+        failed_registry.register_bindings({
+            m.Examples.CommandB: failed_handler
+        }).unwrap()
+        outcome = failed_registry.dispatcher.dispatch(amount)
+        self.audit_check("dispatch.failure", outcome.failure)
+        self.audit_check("dispatch.cause", outcome.exception is cause)

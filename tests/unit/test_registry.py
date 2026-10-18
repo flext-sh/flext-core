@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from flext_core import FlextRegistry
 from tests import c, h, m, r, t, u
 
 if TYPE_CHECKING:
@@ -18,6 +19,34 @@ if TYPE_CHECKING:
 
 class TestsFlextCoreRegistry:
     """Assert observable behavior of the registry public API."""
+
+    @staticmethod
+    def test_registry_consumes_one_validated_runtime() -> None:
+        """Registration and plugin storage share the explicit composition graph."""
+        runtime = u.build_service_runtime()
+        registry = FlextRegistry(registry_runtime=runtime)
+        assert registry.dispatcher is runtime.dispatcher
+        assert registry.container is runtime.container
+        assert "registry_runtime" not in registry.model_dump()
+        assert "registry_runtime" not in registry.model_json_schema().get(
+            "properties", {}
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize("payload", [{}, {"registry_runtime": "invalid"}])
+    def test_registry_rejects_missing_or_invalid_runtime(payload: t.JsonDict) -> None:
+        """A required port is never bootstrapped or silently replaced on invalid ingress."""
+        with pytest.raises((TypeError, ValueError)):
+            FlextRegistry.model_validate(payload)
+
+    @staticmethod
+    def test_registry_validates_runtime_assignment() -> None:
+        """Assignment cannot invalidate the composed graph after construction."""
+        runtime = u.build_service_runtime()
+        registry = FlextRegistry(registry_runtime=runtime)
+        with pytest.raises((TypeError, ValueError)):
+            registry.registry_runtime = "invalid"
+        assert registry.registry_runtime is runtime
 
     @staticmethod
     @pytest.fixture
