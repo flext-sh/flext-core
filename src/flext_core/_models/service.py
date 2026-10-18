@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._typings import FlextTypesPydantic
 
 
 class FlextModelsService:
@@ -30,19 +29,19 @@ class FlextModelsService:
         settings, context, container or dispatcher.
         """
 
-        settings: FlextTypesPydantic.Port[p.Settings] = FlextModelsPydantic.Field(
+        settings: t.Port[p.Settings] = FlextModelsPydantic.Field(
             exclude=True,
             description="Service configuration settings for runtime behavior.",
         )
-        context: FlextTypesPydantic.Port[p.Context] = FlextModelsPydantic.Field(
+        context: t.Port[p.Context] = FlextModelsPydantic.Field(
             exclude=True,
             description="Execution context carrying correlation and tracing metadata.",
         )
-        container: FlextTypesPydantic.Port[p.Container] = FlextModelsPydantic.Field(
+        container: t.Port[p.Container] = FlextModelsPydantic.Field(
             exclude=True,
             description="Dependency injection container scoped to this runtime.",
         )
-        dispatcher: FlextTypesPydantic.Port[p.Dispatcher] = FlextModelsPydantic.Field(
+        dispatcher: t.Port[p.Dispatcher] = FlextModelsPydantic.Field(
             exclude=True,
             description="Dispatcher resolved for CQRS routing in this runtime.",
         )
@@ -55,16 +54,14 @@ class FlextModelsService:
         container's command bus).
         """
 
-        settings: FlextTypesPydantic.Port[p.Settings | None] = (
-            FlextModelsPydantic.Field(
-                default=None,
-                exclude=True,
-                description=(
-                    "Pre-built settings instance used directly for the runtime."
-                ),
-            )
+        settings: t.Port[p.Settings | None] = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description=(
+                "Settings source cloned once into the elected container scope."
+            ),
         )
-        settings_type: FlextTypesPydantic.SkipJsonSchema[t.SettingsClass | None] = (
+        settings_type: t.SkipJsonSchema[t.SettingsClass | None] = (
             FlextModelsPydantic.Field(
                 default=None,
                 exclude=True,
@@ -77,17 +74,20 @@ class FlextModelsService:
                 "Key-value overrides applied on top of the loaded configuration."
             ),
         )
-        context: FlextTypesPydantic.Port[p.Context | None] = FlextModelsPydantic.Field(
+        context: t.Port[p.Context | None] = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
             description="Pre-built execution context to inject into the runtime.",
         )
-        dispatcher: FlextTypesPydantic.Port[p.Dispatcher | None] = (
-            FlextModelsPydantic.Field(
-                default=None,
-                exclude=True,
-                description="Pre-built dispatcher injected into the runtime.",
-            )
+        container: t.Port[p.Container | None] = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="Existing container whose public DI registrations the runtime preserves.",
+        )
+        dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="Pre-built dispatcher injected into the runtime.",
         )
 
     class ServiceOperation(FlextModelsBase.FrozenModel):

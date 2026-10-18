@@ -73,14 +73,9 @@ class FlextUtilitiesModelRuntime(
     @classmethod
     def _resolve_runtime_settings(
         cls,
-        runtime_options: m.RuntimeBootstrapOptions,
+        runtime_options: p.RuntimeBootstrapOptions,
     ) -> p.Settings:
-        """Return the injected settings, or load the declared settings class.
-
-        Returns:
-            The injected settings, or load the declared settings class.
-
-        """
+        """Return the injected provider or load the declared settings class."""
         settings = runtime_options.settings
         overrides = runtime_options.settings_overrides
         if settings is not None:
@@ -91,16 +86,17 @@ class FlextUtilitiesModelRuntime(
     @classmethod
     def build_service_runtime(
         cls,
-        source: m.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
-    ) -> m.ServiceRuntime:
+        source: p.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
+    ) -> p.ServiceRuntime:
         """Materialize settings, context, container and dispatcher for one component.
 
-        The container is a scope of the shared container bound to the resolved
-        settings and context. A dispatcher the options do not inject is the
+        The container scopes the injected container, or the shared container,
+        preserving public DI registrations. Its settings are the runtime's
+        actual elected provider. A dispatcher the options do not inject is the
         container's command bus; failing to resolve it raises with its cause.
 
         Returns:
-            The resulting ``m.ServiceRuntime``.
+            The resulting ``p.ServiceRuntime``.
 
         """
         options = cls.resolve_runtime_options(source)
@@ -110,27 +106,21 @@ class FlextUtilitiesModelRuntime(
             if options.context is not None
             else cls._context_type().create()
         )
-        container = (
-            cls
-            ._container_type()
-            .shared()
-            .scope(
-                registration=m.ServiceRegistrationSpec(
-                    settings=settings,
-                    context=context,
-                ),
-            )
-        )
-        dispatcher = (
-            options.dispatcher
-            if options.dispatcher is not None
-            else container.dispatcher().unwrap()
+        source_container = options.container
+        if source_container is None:
+            source_container = cls._container_type().shared()
+        container = source_container.scope(
+            registration=m.ServiceRegistrationSpec(
+                settings=settings,
+                context=context,
+                dispatcher=options.dispatcher,
+            ),
         )
         return m.ServiceRuntime(
-            settings=settings,
+            settings=container.settings,
             context=container.context,
             container=container,
-            dispatcher=dispatcher,
+            dispatcher=container.dispatcher().unwrap(),
         )
 
 

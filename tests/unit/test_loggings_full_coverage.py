@@ -7,26 +7,25 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import io
-import time
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr
 from typing import TYPE_CHECKING, NoReturn
 
 import pytest
 
-from tests import p, tm, u
+from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Generator
 
     from tests import t
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
-    ("debug", False),
+    ("debug", True),
     ("info", True),
     ("warning", True),
     ("error", True),
     ("critical", True),
-    ("trace", False),
+    ("trace", True),
 )
 
 
@@ -35,6 +34,25 @@ class TestsFlextLoggings:
 
     Covers create, bind, log, track, and strict returns.
     """
+
+    @staticmethod
+    @pytest.fixture(autouse=True)
+    def restore_logging() -> Generator[None]:
+        """Exercise all standard severities, then restore the captured policy."""
+        original_settings, original_options = u.logging_settings(), u.logging_options()
+        try:
+            selected = u.resolve_logging_settings(
+                log_level=c.LogLevel.DEBUG, trace=True
+            )
+            u.configure_structlog(
+                settings=m.StructlogOptions(async_logging=False),
+                runtime_settings=selected,
+            )
+            yield
+        finally:
+            u.configure_structlog(
+                settings=original_options, runtime_settings=original_settings
+            )
 
     @classmethod
     def _assert_log_output[TResult: p.Result[bool] | None](
@@ -46,15 +64,8 @@ class TestsFlextLoggings:
         expected_tokens: t.StrSequence = (),
     ) -> TResult:
         stream = io.StringIO()
-        with redirect_stdout(stream):
+        with redirect_stderr(stream):
             result = emit()
-            deadline = time.monotonic() + 0.25
-            while (
-                expect_output
-                and time.monotonic() < deadline
-                and contains not in stream.getvalue()
-            ):
-                time.sleep(0.01)
         output = stream.getvalue()
 
         if expect_output:
@@ -189,7 +200,7 @@ class TestsFlextLoggings:
         """Test every log level returns success result with value true."""
         result = self._assert_log_output(
             lambda: getattr(logger, level)("test %s message", level),
-            contains="test %s message",
+            contains=f"test {level} message",
             expect_output=expect_output,
         )
         tm.ok(result)
@@ -225,7 +236,7 @@ class TestsFlextLoggings:
 
             result = self._assert_log_output(
                 emit,
-                contains="test %s message",
+                contains=f"test {level} message",
                 expect_output=expect_output,
             )
             tm.ok(result)
@@ -255,11 +266,8 @@ class TestsFlextLoggings:
         """Test log source points to call site not logging internals."""
         marker = "source probe"
         stream = io.StringIO()
-        with redirect_stdout(stream):
+        with redirect_stderr(stream):
             result = logger.info(marker)
-            deadline = time.monotonic() + 0.25
-            while marker not in stream.getvalue() and time.monotonic() < deadline:
-                time.sleep(0.01)
 
         output = stream.getvalue()
         tm.ok(result)

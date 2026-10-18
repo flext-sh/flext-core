@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from structlog.types import BindableLogger
 
+from flext_core._protocols import FlextProtocolsSettings
+
 if TYPE_CHECKING:
     from flext_core import t
 
@@ -59,10 +61,10 @@ class FlextProtocolsLogging:
         def build_exception_context(
             self,
             *,
-            exception: Exception | None,
+            exception: BaseException | None,
             exc_info: bool,
             context: t.MappingKV[str, t.JsonPayload | Exception],
-        ) -> t.JsonMapping:
+        ) -> t.LoggingEvent:
             """Build normalized structured exception context."""
             ...
 
@@ -110,7 +112,7 @@ class FlextProtocolsLogging:
             self,
             message: str,
             *args: t.LogValue,
-            **kwargs: t.JsonPayload,
+            **kwargs: t.LogValue,
         ) -> t.LogResult:
             """Log a trace/debug-level diagnostic message."""
             ...
@@ -138,8 +140,6 @@ class FlextProtocolsLogging:
         def exception(self, message: str) -> None: ...
 
         def info(self, message: str) -> None: ...
-
-        def msg(self, message: str) -> None: ...
 
         def warn(self, message: str) -> None: ...
 
@@ -206,12 +206,24 @@ class FlextProtocolsLogging:
         def log_level(self) -> int | None: ...
 
         @property
-        def console_renderer(self) -> bool: ...
+        def console_renderer(self) -> bool | None: ...
 
         @property
         def processing_stages(
             self,
         ) -> t.SequenceOf[FlextProtocolsLogging.LoggingStage]: ...
+
+        @property
+        def observers(self) -> t.SequenceOf[FlextProtocolsLogging.LoggingObserver]: ...
+
+        @property
+        def handlers(self) -> t.SequenceOf[FlextProtocolsLogging.LoggingHandler]: ...
+
+        @property
+        def redacted_keys(self) -> t.SequenceOf[str]: ...
+
+        @property
+        def redacted_values(self) -> t.SequenceOf[str]: ...
 
         @property
         def wrapper_class_factory(self) -> t.LoggerWrapperFactory | None: ...
@@ -223,7 +235,71 @@ class FlextProtocolsLogging:
         def cache_logger_on_first_use(self) -> bool: ...
 
         @property
+        def async_logging(self) -> bool | None: ...
+
+    @runtime_checkable
+    class LoggingSettings(FlextProtocolsSettings.Settings, Protocol):
+        """Actual application settings elected by the Core composition root."""
+
+        @property
+        def debug(self) -> bool: ...
+
+        @property
+        def trace(self) -> bool: ...
+
+        @property
         def async_logging(self) -> bool: ...
+
+        @property
+        def logging_profile(self) -> str: ...
+
+        @property
+        def model_fields_set(self) -> set[str]: ...
+
+    class LoggingRecord(Protocol):
+        """Sanitized event snapshot, independent of destination presentation."""
+
+        @property
+        def message(self) -> str: ...
+
+        @property
+        def level(self) -> str: ...
+
+        @property
+        def context(self) -> t.JsonMapping: ...
+
+        @property
+        def exception(self) -> BaseException | None: ...
+
+    @runtime_checkable
+    class LoggingObserver(Protocol):
+        """Receive one sanitized snapshot before native output fanout."""
+
+        def __call__(self, event: FlextProtocolsLogging.LoggingRecord) -> None: ...
+
+    @runtime_checkable
+    class LoggingHandler(Protocol):
+        """Native handler contract used by configuration and stdlib fanout."""
+
+        @property
+        def level(self) -> int: ...
+
+        @property
+        def formatter(self) -> t.LoggingNativeFormatter | None: ...
+
+        def handle(
+            self, record: t.LoggingNativeRecord
+        ) -> bool | t.LoggingNativeRecord: ...
+
+        def handleError(self, record: t.LoggingNativeRecord) -> None: ...
+
+        def setFormatter(self, fmt: t.LoggingNativeFormatter | None) -> None: ...
+
+        def setLevel(self, level: int | str) -> None: ...
+
+        def flush(self) -> None: ...
+
+        def close(self) -> None: ...
 
 
 __all__: list[str] = ["FlextProtocolsLogging"]

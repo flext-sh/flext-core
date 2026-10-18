@@ -50,6 +50,7 @@ class FlextConstantsInfrastructure:
         OPERATION_METADATA = "operation_metadata"
         REQUEST_TIMESTAMP = "request_timestamp"
         SERVICE_MODULE = "service_module"
+        LOGGER_NAME = "logger_name"
 
     SENSITIVE_ERROR_DATA_KEYS: ClassVar[frozenset[str]] = frozenset({
         "password",

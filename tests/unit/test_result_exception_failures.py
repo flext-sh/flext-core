@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from traceback import format_exception, walk_tb
 from typing import TYPE_CHECKING, Annotated
 
 import pytest
@@ -195,26 +196,116 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(failure.unwrap_or(99), eq=99)
 
     @staticmethod
-    def test_unwrap_raises_on_carried_failure_with_its_cause() -> None:
-        """Test unwrap raises on carried failure with its cause."""
-        exc = ValueError("boom")
-        failure: p.Result[int] = r[int].fail("bad", exception=exc)
+    @pytest.mark.parametrize("use_property", [False, True])
+    @pytest.mark.parametrize("kind", [ValueError, OSError, KeyboardInterrupt])
+    def test_failure_terminals_preserve_native_identity_and_result_context(
+        use_property: bool,
+        kind: type[BaseException],
+    ) -> None:
+        """Extraction retains the actual cause, producer traceback and metadata."""
+        cause = LookupError("original cause")
+        try:
+            msg = "capture failed"
+            raise kind(msg) from cause
+        except BaseException as caught:
+            original = caught
+        producer = tm.not_none(original.__traceback__)
+        failure: p.Result[int] = r[int].fail(
+            "selected observer failed",
+            error_code="CAPTURE_FAILURE",
+            error_data={"target": "selected-observer"},
+            exception=original,
+        )
 
-        with pytest.raises(RuntimeError, match="bad") as raised:
-            failure.unwrap()
+        with pytest.raises(kind) as raised:
+            _ = failure.value if use_property else failure.unwrap()
 
-        tm.that(raised.value.__cause__ is exc, eq=True)
+        tm.that(raised.value is original, eq=True)
+        tm.that(raised.value.__cause__ is cause, eq=True)
+        tm.that(
+            any(
+                frame is producer.tb_frame and line == producer.tb_lineno
+                for frame, line in walk_tb(raised.value.__traceback__)
+            ),
+            eq=True,
+        )
+        note = raised.value.__notes__[-1]
+        details = m.ConfigMap.model_validate_json(note)
+        tm.that(details["error"], eq=failure.error)
+        tm.that(details["error_code"], eq=failure.error_code)
+        tm.that(details["error_data"], eq=failure.error_data)
+
+        with pytest.raises(kind):
+            _ = failure.value if use_property else failure.unwrap()
+        tm.that(raised.value.__notes__.count(note), eq=1)
 
     @staticmethod
-    def test_value_access_raises_on_carried_failure_with_its_cause() -> None:
-        """Test value access raises on carried failure with its cause."""
-        exc = ValueError("boom")
-        failure: p.Result[int] = r[int].fail("bad", exception=exc)
+    @pytest.mark.parametrize("use_property", [False, True])
+    def test_logical_failure_terminal_retains_structured_context(
+        use_property: bool,
+    ) -> None:
+        """A failure without a native cause still exposes its full result context."""
+        failure: p.Result[int] = r[int].fail(
+            "capture rejected",
+            error_code="CAPTURE_REJECTED",
+            error_data={"target": "selected-observer"},
+        )
+        with pytest.raises(RuntimeError) as raised:
+            _ = failure.value if use_property else failure.unwrap()
+        details = m.ConfigMap.model_validate_json(raised.value.__notes__[-1])
+        tm.that(details["error"], eq=failure.error)
+        tm.that(details["error_code"], eq=failure.error_code)
+        tm.that(details["error_data"], eq=failure.error_data)
 
-        with pytest.raises(RuntimeError, match="bad") as raised:
-            _ = failure.value
+    @staticmethod
+    @pytest.mark.parametrize("use_property", [False, True])
+    @pytest.mark.parametrize("explicit_data", [False, True])
+    def test_failure_metadata_is_private_before_native_traceback_rendering(
+        use_property: bool,
+        explicit_data: bool,
+    ) -> None:
+        """Nested and JSON-text metadata use one privacy boundary before encoding."""
+        key = next(iter(c.SENSITIVE_ERROR_DATA_KEYS))
+        encoded = m.ConfigMap(
+            root={
+                key.swapcase(): "encoded-secret",
+                "PrivateTenant": "encoded-private",
+                "visible": "retained",
+            }
+        ).model_dump_json()
+        payload: t.JsonDict = {
+            "request": [
+                {
+                    key.swapcase(): "nested-secret",
+                    "PrivateTenant": "nested-private",
+                    "visible": "retained",
+                }
+            ],
+            "encoded": encoded,
+        }
 
-        tm.that(raised.value.__cause__ is exc, eq=True)
+        class PrivateError(ValueError):
+            excluded_context_keys = frozenset({"privatetenant"})
+
+            def __init__(self) -> None:
+                super().__init__("capture failed")
+                self.metadata = m.Metadata(attributes=payload)
+
+        original = PrivateError()
+        failure: p.Result[int] = r[int].fail(
+            "selected observer failed",
+            exception=original,
+            error_data=payload if explicit_data else None,
+        )
+        with pytest.raises(PrivateError) as raised:
+            _ = failure.value if use_property else failure.unwrap()
+        rendered = "".join(format_exception(raised.value))
+        tm.that(raised.value is original, eq=True)
+        tm.that(rendered, lacks="nested-secret")
+        tm.that(rendered, lacks="encoded-secret")
+        tm.that(rendered, lacks="nested-private")
+        tm.that(rendered, lacks="encoded-private")
+        tm.that(rendered, has="retained")
 
     @staticmethod
     def test_recover_produces_success_from_carried_failure() -> None:

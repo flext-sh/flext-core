@@ -10,10 +10,14 @@ from collections.abc import Callable, Iterator, MutableMapping, Set as AbstractS
 from concurrent.futures import Future
 from datetime import date, time, tzinfo
 from enum import Enum
+from logging import Formatter, Handler, LogRecord
 from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import BinaryIO, TextIO, TypeAliasType
 
+from structlog.typing import Processor
+
+from flext_core._constants import FlextConstantsLogging
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsContainer,
@@ -68,16 +72,17 @@ class FlextTypesServices:
     type ScalarOrModel = FlextTypingBase.Scalar | FlextTypesPydantic.BaseModelType
     type ModelClass[T: FlextTypesPydantic.BaseModelType] = type[T]
     type LogArgument = JsonPayload | FlextProtocolsBase.Model
-    type LogValue = LogArgument | Exception
+    type LogLevel = FlextConstantsLogging.LogLevel
+    type LoggingTraceback = TracebackType
     type LoggingExceptionInfo = tuple[
-        type[BaseException], BaseException, TracebackType | None
+        type[BaseException], BaseException, LoggingTraceback | None
     ]
+    type LogValue = LogArgument | BaseException | LoggingExceptionInfo
+    type LoggingNativeRecord = LogRecord
+    type LoggingNativeFormatter = Formatter
+    type LoggingNativeHandlers = list[Handler]
     type LoggingEventValue = (
-        LogValue
-        | BaseException
-        | type[BaseException]
-        | TracebackType
-        | LoggingExceptionInfo
+        LogValue | type[BaseException] | LoggingTraceback | tuple[LogValue, ...]
     )
     type LoggingEvent = MutableMapping[str, LoggingEventValue]
     type LoggingContext = dict[str, LoggingEventValue]
@@ -85,10 +90,7 @@ class FlextTypesServices:
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
     type LoggingWriteCompletion = Future[int]
-    type LoggingProcessor = Callable[
-        [FlextProtocolsLogging.OutputLogger, str, LoggingEvent],
-        LoggingEvent | str | bytes,
-    ]
+    type LoggingProcessor = Processor
     type LogResult = FlextProtocolsResult.Result[bool]
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]

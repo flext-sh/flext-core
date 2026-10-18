@@ -37,23 +37,23 @@ class TestsFlextCoreUtilitiesSettings:
     @pytest.mark.parametrize(
         ("trace", "debug", "requested", "expected"),
         [
-            (True, False, c.LogLevel.ERROR, c.LogLevel.DEBUG),
-            (True, True, c.LogLevel.WARNING, c.LogLevel.DEBUG),
-            (False, True, c.LogLevel.WARNING, c.LogLevel.INFO),
-            (False, True, c.LogLevel.ERROR, c.LogLevel.INFO),
+            (True, False, c.LogLevel.ERROR, c.LogLevel.ERROR),
+            (True, True, c.LogLevel.WARNING, c.LogLevel.WARNING),
+            (False, True, c.LogLevel.WARNING, c.LogLevel.WARNING),
+            (False, True, c.LogLevel.ERROR, c.LogLevel.ERROR),
             (False, False, c.LogLevel.ERROR, c.LogLevel.ERROR),
             (False, False, c.LogLevel.WARNING, c.LogLevel.WARNING),
         ],
     )
     @staticmethod
-    def test_effective_log_level_prioritises_trace_then_debug_then_request(
+    def test_effective_log_level_preserves_explicit_severity(
         *,
         trace: bool,
         debug: bool,
         requested: c.LogLevel,
         expected: c.LogLevel,
     ) -> None:
-        """Test effective log level prioritises trace then debug then request."""
+        """Explicit severity wins debug; trace never changes the threshold."""
         resolved = u.resolve_effective_log_level(
             trace=trace,
             debug=debug,
@@ -88,7 +88,7 @@ class TestsFlextCoreUtilitiesSettings:
         tm.that(snapshot.env_file, eq=str(env_file.resolve()))
         tm.that(snapshot.process_environment[c.ENV_FILE_ENV_VAR], eq=str(env_file))
         tm.that(snapshot.process_environment[probe_env_var], eq="integration")
-        tm.that(snapshot.log_level, eq=c.LogLevel.DEBUG)
+        tm.that(snapshot.log_level, eq=c.LogLevel.ERROR)
 
     @staticmethod
     def test_env_file_resolves_cwd_default_then_override_then_fallback(
@@ -143,7 +143,7 @@ class TestsFlextCoreUtilitiesSettings:
         tm.ok(resolved_summary)
         tm.that(
             resolved_summary.value,
-            eq={"env_file": c.ENV_FILE_DEFAULT, "log_level": c.LogLevel.INFO},
+            eq={"env_file": c.ENV_FILE_DEFAULT, "log_level": c.LogLevel.WARNING},
         )
 
     @staticmethod

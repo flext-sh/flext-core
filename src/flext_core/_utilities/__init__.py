@@ -23,6 +23,7 @@ if TYPE_CHECKING:
         _mapper_access_parts as _mapper_access_parts,
         _mapper_extract_parts as _mapper_extract_parts,
         _parser_targets_parts as _parser_targets_parts,
+        metadata as metadata,
     )
     from flext_core._utilities._beartype import (
         FlextUtilitiesBeartypeAliasVisitor,
@@ -38,6 +39,7 @@ if TYPE_CHECKING:
         FlextUtilitiesBeartypeModuleSource,
         FlextUtilitiesBeartypeModuleVisitor,
         FlextUtilitiesBeartypeTypeAliases,
+        _placeholder as _placeholder,
         alias_first_violation,
         bound_names,
         declarations,
@@ -95,6 +97,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
     from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
     from flext_core._utilities.mapper import FlextUtilitiesMapper
+    from flext_core._utilities.metadata import FlextUtilitiesMetadata
     from flext_core._utilities.mapper_access import FlextUtilitiesMapperAccess
     from flext_core._utilities.mapper_extract import FlextUtilitiesMapperExtract
     from flext_core._utilities.model import FlextUtilitiesModel
@@ -166,6 +169,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesLoggingStream",
     "FlextUtilitiesMapper",
+    "FlextUtilitiesMetadata",
     "FlextUtilitiesMapperAccess",
     "FlextUtilitiesMapperExtract",
     "FlextUtilitiesModel",
@@ -258,6 +262,7 @@ install_lazy_exports(
         "FlextUtilitiesLoggingContext": ".logging_context",
         "FlextUtilitiesLoggingStream": "._logging_config_parts.logging_stream",
         "FlextUtilitiesMapper": ".mapper",
+        "FlextUtilitiesMetadata": ".metadata",
         "FlextUtilitiesMapperAccess": ".mapper_access",
         "FlextUtilitiesMapperExtract": ".mapper_extract",
         "FlextUtilitiesModel": ".model",

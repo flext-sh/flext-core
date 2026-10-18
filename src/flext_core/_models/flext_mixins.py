@@ -17,10 +17,6 @@ from typing_extensions import TypeForm
 from flext_core import FlextContainer, c, m, p, t, u
 from flext_core._models import FlextContext
 
-# NOTE (multi-agent): mro-i6nq.12 — Generator/Mapping are annotation-only under
-# TYPE_CHECKING; MutableMapping is a runtime contract of the ``u.empty`` default.
-# The module owns its __all__: the mixins facade re-exports from here, never the
-# reverse.
 if TYPE_CHECKING:
     from collections.abc import Generator, Mapping
 
@@ -54,7 +50,7 @@ class FlextMixins(m.ArbitraryTypesModel):
         description="Initial context for the service scope.",
     )
 
-    _runtime: m.ServiceRuntime | None = u.PrivateAttr(None)
+    _runtime: p.ServiceRuntime | None = u.PrivateAttr(None)
 
     _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
         default_factory=u.empty(TypeForm(MutableMapping[str, m.ConfigMap])),
@@ -162,13 +158,8 @@ class FlextMixins(m.ArbitraryTypesModel):
             _ = u.clear_scope(c.ContextScope.OPERATION)
             self._context_type.apply_operation_name("")
 
-    def _get_runtime(self) -> m.ServiceRuntime:
-        """Build this component's runtime once and reuse it.
-
-        Returns:
-            The resulting ``m.ServiceRuntime``.
-
-        """
+    def _get_runtime(self) -> p.ServiceRuntime:
+        """Build and retain this component's actual scoped runtime."""
         if self._runtime is None:
             self._runtime = u.build_service_runtime(self)
         return self._runtime

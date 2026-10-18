@@ -25,31 +25,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import logging
 import os
 import sys
 import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, ClassVar, Self
+from typing import TYPE_CHECKING, Annotated, ClassVar, Literal, Self
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, Field, TypeAdapter, computed_field, model_validator
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
 
-from flext_core._constants import FlextConstantsEnvironment
+from flext_core._constants import FlextConstantsEnvironment, FlextConstantsSettings
 
 if TYPE_CHECKING:
     from flext_core import t
-from flext_core._constants.settings import FlextConstantsSettings
-
-ENV_FILE_ENV_VAR = FlextConstantsSettings.ENV_FILE_ENV_VAR
-"""Bootstrap env var that overrides the .env path (SSOT: ``_constants/settings``)."""
-
-_ERR_TRACE_REQUIRES_DEBUG = "trace mode requires debug mode to be enabled"
 
 
 def _resolve_env_file(namespace: str | None = None) -> str:
@@ -62,7 +57,7 @@ def _resolve_env_file(namespace: str | None = None) -> str:
         The resulting ``str``.
 
     """
-    custom_env_file = os.environ.get(ENV_FILE_ENV_VAR)
+    custom_env_file = os.environ.get(FlextConstantsSettings.ENV_FILE_ENV_VAR)
     if custom_env_file:
         custom_path = Path(custom_env_file)
         if custom_path.exists():
@@ -255,8 +250,13 @@ class FlextSettings(BaseSettings):
         return _resolve_env_file(namespace)
 
     debug: Annotated[bool, Field(description="Enable debug mode")] = False
-    trace: Annotated[bool, Field(description="Enable trace mode")] = False
+    trace: Annotated[
+        bool, Field(description="Enable detailed stacks and high-volume diagnostics")
+    ] = False
     log_level: str = Field(default="INFO", description="Log level")
+    logging_profile: Literal["console", "json"] = Field(
+        default="console", description="Diagnostic output presentation"
+    )
     timezone: Annotated[
         str,
         Field(description="IANA timezone for datetime operations"),
@@ -538,18 +538,23 @@ class FlextSettings(BaseSettings):
         return path
 
     @model_validator(mode="after")
-    def _validate_settings(self) -> Self:
-        """Enforce the trace-requires-debug invariant.
+    def _validate_logging(self) -> Self:
+        """Validate severity without logging or importing higher-layer utilities.
 
         Returns:
-            The resulting ``Self``.
+            Self: The validated settings instance.
 
         Raises:
-            ValueError: If ``self.trace and (not self.debug)``.
+            ValueError: If the log level is invalid.
 
         """
-        if self.trace and not self.debug:
-            raise ValueError(_ERR_TRACE_REQUIRES_DEBUG)
+        number = logging.getLevelNamesMapping().get(self.log_level.strip().upper())
+        if number is None or number < logging.DEBUG:
+            msg = f"Invalid log level: {self.log_level}"
+            raise ValueError(msg)
+        TypeAdapter(
+            type(self).model_fields["logging_profile"].annotation
+        ).validate_python(self.logging_profile, strict=True)
         return self
 
 

@@ -7,19 +7,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import io
-import time
-from contextlib import redirect_stdout
+from contextlib import redirect_stderr
 from typing import TYPE_CHECKING
 
 import pytest
-import structlog
 
-from tests import c, tm, u
+from flext_core import FlextSettings
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests import p, t
+    from tests import p
 
 
 class TestsFlextCoreLoggingThreshold:
@@ -28,24 +27,27 @@ class TestsFlextCoreLoggingThreshold:
     @staticmethod
     @pytest.fixture(autouse=True)
     def restore_default_level() -> Generator[None]:
-        """Leave the process-wide threshold at the settings default afterwards."""
-        yield
-        u.apply_log_level(log_level=c.LogLevel.INFO, debug=False, trace=False)
+        """Restore the captured application policy, never today's defaults."""
+        original_settings, original_options = u.logging_settings(), u.logging_options()
+        try:
+            u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
+            yield
+        finally:
+            u.configure_structlog(
+                settings=original_options, runtime_settings=original_settings
+            )
 
     @staticmethod
-    def captured(emit: Callable[[], p.Result[bool]], token: str) -> str:
-        """Run ``emit`` and return stdout once ``token`` shows up or time runs out.
+    def captured(emit: Callable[[], p.Result[bool]]) -> str:
+        """Capture real acknowledged emission without sleep or polling.
 
         Returns:
             The resulting ``str``.
 
         """
         stream = io.StringIO()
-        with redirect_stdout(stream):
+        with redirect_stderr(stream):
             _ = emit()
-            deadline = time.monotonic() + 0.25
-            while time.monotonic() < deadline and token not in stream.getvalue():
-                time.sleep(0.01)
         return stream.getvalue()
 
     def test_cached_logger_honours_level_applied_after_creation(self) -> None:
@@ -57,11 +59,9 @@ class TestsFlextCoreLoggingThreshold:
 
         info_out = self.captured(
             lambda: logger.info("info-under-warning"),
-            "info-under-warning",
         )
         warning_out = self.captured(
             lambda: logger.warning("warning-at-warning"),
-            "warning-at-warning",
         )
         tm.that("info-under-warning" in info_out, eq=False)
         tm.that("warning-at-warning" in warning_out, eq=True)
@@ -74,36 +74,56 @@ class TestsFlextCoreLoggingThreshold:
 
         debug_out = self.captured(
             lambda: logger.debug("debug-at-debug"),
-            "debug-at-debug",
         )
         tm.that("debug-at-debug" in debug_out, eq=True)
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("debug", "trace", "event_level", "dropped"),
+        ("debug", "trace"),
         [
-            (False, False, "info", True),
-            (True, False, "info", False),
-            (True, False, "debug", True),
-            (True, True, "debug", False),
+            (False, False),
+            (True, False),
+            (False, True),
+            (True, True),
         ],
     )
     def test_debug_and_trace_resolve_through_the_runtime_owner(
         *,
         debug: bool,
         trace: bool,
-        event_level: str,
-        dropped: bool,
     ) -> None:
-        """Test debug and trace resolve through the runtime owner."""
+        """Explicit ERROR always wins shorthand; trace is independent detail."""
         u.apply_log_level(log_level=c.LogLevel.ERROR, debug=debug, trace=trace)
-        event: t.LoggingEvent = {"level": event_level, "event": "probe"}
+        output = io.StringIO()
+        with redirect_stderr(output):
+            tm.ok(u.debug("filtered debug"))
+            tm.ok(u.failure("retained error"))
+        tm.that(output.getvalue(), lacks="filtered debug", has="retained error")
 
-        if dropped:
-            with pytest.raises(structlog.DropEvent):
-                _ = u.drop_below_threshold(None, event_level, event)
-        else:
-            tm.that(u.drop_below_threshold(None, event_level, event), eq=event)
+    @staticmethod
+    def test_debug_shorthand_selects_debug_and_omissions_preserve_it() -> None:
+        """The real public utility observes the elected application settings."""
+        current = FlextSettings.fetch_global().clone(log_level=c.LogLevel.ERROR)
+        selected = u.resolve_logging_settings(runtime_settings=current, debug=True)
+        tm.that(selected.log_level, eq=c.LogLevel.DEBUG)
+        tm.that(current.log_level, eq=c.LogLevel.ERROR)
+        u.configure_structlog(runtime_settings=selected)
+        u.apply_log_level()
+        output = io.StringIO()
+        with redirect_stderr(output):
+            tm.ok(u.debug("actual debug %s", "value"))
+        tm.that(output.getvalue(), has="actual debug value")
+        tm.that(u.logging_settings().log_level, eq=selected.log_level)
+
+    @staticmethod
+    def test_trace_alone_does_not_lower_the_elected_threshold() -> None:
+        """Trace adds stack detail without permitting otherwise filtered events."""
+        current = FlextSettings.fetch_global().clone(
+            log_level=c.LogLevel.ERROR, debug=False
+        )
+        selected = u.resolve_logging_settings(runtime_settings=current, trace=True)
+        tm.that(selected.log_level, eq=current.log_level)
+        tm.that(selected.trace, eq=True)
 
     @staticmethod
     def test_unknown_level_name_fails_loud() -> None:

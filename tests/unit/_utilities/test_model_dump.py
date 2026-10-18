@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import m
+from flext_core import e, m
 from tests import u
 
 
@@ -29,7 +29,7 @@ class TestsFlextCoreModelDump:
     def test_dump_fails_loud_on_invalid_inline_options() -> None:
         model = m.Pagination()
 
-        with pytest.raises(RuntimeError) as raised:
+        with pytest.raises(e.PydanticValidationError) as raised:
             u.dump(model, include=123)
 
-        assert raised.value.__cause__ is not None
+        assert any("include" in error["loc"] for error in raised.value.errors())

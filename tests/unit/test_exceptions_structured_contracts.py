@@ -178,11 +178,16 @@ class TestsFlextCoreExceptionsStructuredContracts:
         assert mapped.error_code == expected_code
 
         # Strict extraction preserves the failure instead of inventing a value.
-        with pytest.raises(RuntimeError) as raised:
-            result.unwrap()
-        assert str(raised.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
-            error=result.error,
-        )
+        if result.exception is not None:
+            with pytest.raises(type(result.exception)) as raised:
+                result.unwrap()
+            assert raised.value is result.exception
+        else:
+            with pytest.raises(RuntimeError) as logical:
+                result.unwrap()
+            assert str(logical.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
+                error=result.error,
+            )
 
         # recover converts a failure into a caller-defined success value.
         recovered = result.recover(lambda _error: False)

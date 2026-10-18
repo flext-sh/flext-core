@@ -116,11 +116,10 @@ class TestsFlextCoreExceptionsBase:
         mapped = result.map(lambda _value: False)
         assert mapped.failure
         assert mapped.error == result.error
-        with pytest.raises(RuntimeError) as raised:
+        assert result.exception is not None
+        with pytest.raises(type(result.exception)) as raised:
             mapped.unwrap()
-        assert str(raised.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
-            error=result.error,
-        )
+        assert raised.value is result.exception
 
     @staticmethod
     def test_fail_not_found_returns_structured_failure() -> None:

@@ -22,8 +22,6 @@ from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
 from flext_core._container_parts import FlextContainerTestingOps
 from flext_core._models import FlextContext
 
-# NOTE (multi-agent): mro-i6nq.12 — the concrete public facade remains the
-# runtime implementation; p.ContainerType is only its structural contract.
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
     from types import FrameType, ModuleType
@@ -58,7 +56,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _global_config: m.ContainerConfig
 
-    def __new__(cls, *, registration: m.ServiceRegistrationSpec | None = None) -> Self:
+    def __new__(cls, *, registration: p.ServiceRegistrationSpec | None = None) -> Self:
         """Create or return the global singleton instance."""
         _ = registration
         if cls._global_instance is None:
@@ -71,14 +69,17 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def __init__(
         self,
         *,
-        registration: m.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize the singleton once; later calls apply the explicit spec."""
         if not self._initialized:
             self.initialize_registrations(registration=registration)
         elif registration is not None:
-            self._apply_explicit_bootstrap(registration)
-            self._write_spec(registration)
+            spec = m.ServiceRegistrationSpec.model_validate(
+                registration, from_attributes=True
+            )
+            self._apply_explicit_bootstrap(spec)
+            self._write_spec(spec)
 
     @property
     @override
@@ -165,7 +166,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         self._registrations[name] = record
         return self
 
-    def _write_spec(self, spec: m.ServiceRegistrationSpec) -> None:
+    def _write_spec(self, spec: p.ServiceRegistrationSpec) -> None:
         """Write every service, factory and resource declared by a spec."""
         for name, service in (spec.services or {}).items():
             _ = self.bind(name, service)
@@ -332,7 +333,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def initialize_registrations(
         self,
         *,
-        registration: m.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Reset the registrations from a spec and register the core services.
 
@@ -341,7 +342,11 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 overrides, settings and context; defaults apply when omitted.
 
         """
-        spec = registration or m.ServiceRegistrationSpec()
+        spec = (
+            m.ServiceRegistrationSpec.model_validate(registration, from_attributes=True)
+            if registration is not None
+            else m.ServiceRegistrationSpec()
+        )
         self._registrations = {}
         self._global_config = spec.container_config or m.ContainerConfig()
         overrides = spec.user_overrides
@@ -366,16 +371,13 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             spec.context if spec.context is not None else self._context_type.create()
         )
         self._write_spec(spec)
-        self.register_core_services()
+        self.register_core_services(dispatcher=spec.dispatcher)
         self._initialized = True
 
     @override
-    def register_core_services(self) -> None:
-        """Register the reserved core services that are not registered yet."""
-        core: tuple[
-            tuple[str, Callable[[], m.ServiceRegistration | m.FactoryRegistration]],
-            ...,
-        ] = (
+    def register_core_services(self, *, dispatcher: p.Dispatcher | None = None) -> None:
+        """Register core services, retaining an explicitly injected command bus."""
+        core = (
             (
                 c.Directory.CONFIG,
                 partial(
@@ -404,12 +406,16 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 c.ServiceName.COMMAND_BUS,
                 lambda: m.ServiceRegistration(
                     name=c.ServiceName.COMMAND_BUS,
-                    service=u.build_dispatcher(),
+                    service=dispatcher
+                    if dispatcher is not None
+                    else u.build_dispatcher(),
                 ),
             ),
         )
         for name, build in core:
-            if name not in self._registrations:
+            if name not in self._registrations or (
+                name == c.ServiceName.COMMAND_BUS and dispatcher is not None
+            ):
                 _ = self._write(name, build, internal=True)
 
     @override
@@ -417,7 +423,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         self,
         *,
         subproject: str | None = None,
-        registration: m.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create an isolated scope inheriting the public registrations.
 
@@ -428,7 +434,11 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             The resulting ``Self``.
 
         """
-        spec = registration or m.ServiceRegistrationSpec()
+        spec = (
+            m.ServiceRegistrationSpec.model_validate(registration, from_attributes=True)
+            if registration is not None
+            else m.ServiceRegistrationSpec()
+        )
         settings_source = spec.settings if spec.settings is not None else self._config
         scoped_context = self.context.clone() if spec.context is None else spec.context
         if subproject:
@@ -437,8 +447,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         scoped = u.create_instance(self.__class__)
         scoped.initialize_registrations(
             registration=m.ServiceRegistrationSpec(
-                settings=settings_source.clone(),
+                settings=settings_source,
                 context=scoped_context,
+                dispatcher=spec.dispatcher,
                 services={
                     **{
                         name: record.service
@@ -574,9 +585,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     def _apply_explicit_bootstrap(
         self,
-        registration: m.ServiceRegistrationSpec,
+        registration: p.ServiceRegistrationSpec,
     ) -> None:
-        """Rebind the core settings and context of an existing container."""
+        """Rebind explicitly selected core collaborators of an existing container."""
         if registration.settings is not None:
             self._config = registration.settings
             _ = self._write(
@@ -588,6 +599,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 ),
                 internal=True,
             )
+
+        if registration.dispatcher is not None:
+            self.register_core_services(dispatcher=registration.dispatcher)
         if registration.context is not None:
             self._context = registration.context
             _ = self._write(

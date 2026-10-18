@@ -305,9 +305,9 @@ class TestsFlextUtilitiesPydantic:
         assert resolved.settings_overrides == {"dry_run": True}
         assert resolved.settings is None
         assert resolved.context is None
-        assert resolved.model_dump(mode="json") == {
-            "settings_overrides": {"dry_run": True},
-        }
+        assert resolved.settings_type is runtime_options.settings_type
+        assert resolved.container is runtime_options.container
+        assert resolved.dispatcher is runtime_options.dispatcher
 
     @staticmethod
     def test_private_attr_factories_preserve_pydantic_instance_semantics() -> None:

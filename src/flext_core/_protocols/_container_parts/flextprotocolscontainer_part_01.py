@@ -9,11 +9,28 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from flext_core import t
+    from flext_core import p, t
 
 
 class FlextProtocolsContainer:
     """Protocols for DI container behavior."""
+
+    @runtime_checkable
+    class ServiceRegistrationSpec(Protocol):
+        """Complete typed input validated by the canonical registration model."""
+
+        settings: p.Settings | None
+        context: p.Context | None
+        dispatcher: p.Dispatcher | None
+        services: t.ServiceMap | None
+        factories: t.FactoryMap | None
+        resources: t.ResourceMap | None
+
+        @property
+        def user_overrides(self) -> p.Model | t.UserOverridesMapping | None: ...
+
+        @property
+        def container_config(self) -> p.Model | None: ...
 
     @runtime_checkable
     class RootDict[RootValueT](Protocol):

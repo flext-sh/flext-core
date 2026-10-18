@@ -13,6 +13,7 @@ from pydantic import BaseModel, ValidationError
 from flext_core import c, p
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._result import FlextResultBase, FlextResultBehavior
+from flext_core._utilities.metadata import FlextUtilitiesMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -119,12 +120,6 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
                 payload = cls.validate_error_data(raw_attributes)
             except ValidationError:
                 payload = None
-        if payload is not None:
-            # Why: redact secrets before metadata becomes public Result.error_data
-            redacted_keys = cls._redacted_error_data_keys(exception)
-            payload = {
-                key: value for key, value in payload.items() if key not in redacted_keys
-            }
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:
             if payload is None:
@@ -187,9 +182,10 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         if payload is None:
             return None
         redacted_keys = cls._redacted_error_data_keys(exception)
-        filtered = {
-            key: value for key, value in payload.items() if key not in redacted_keys
-        }
+        filtered = FlextUtilitiesMetadata.redact_metadata(
+            payload,
+            keys=tuple(redacted_keys),
+        )
         return filtered or None
 
     @classmethod
@@ -221,13 +217,12 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
-        if error_data is not None:
-            resolved_error_data = cls._filter_sensitive_error_data(
-                cls.validate_error_data(error_data),
-                exception,
-            )
-        else:
-            resolved_error_data = cls._extract_exception_error_data(exception)
+        resolved_error_data = cls._filter_sensitive_error_data(
+            cls.validate_error_data(error_data)
+            if error_data is not None
+            else cls._extract_exception_error_data(exception),
+            exception,
+        )
         return cast(
             "p.Result[T]",
             cls.create_failure(

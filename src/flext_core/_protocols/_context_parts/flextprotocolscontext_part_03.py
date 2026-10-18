@@ -16,6 +16,22 @@ if TYPE_CHECKING:
 
 class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext):
     @runtime_checkable
+    class ServiceRuntime(Protocol):
+        """Actual scoped runtime selected by a component's composition root."""
+
+        @property
+        def settings(self) -> p.Settings: ...
+
+        @property
+        def context(self) -> p.Context: ...
+
+        @property
+        def container(self) -> p.Container: ...
+
+        @property
+        def dispatcher(self) -> p.Dispatcher: ...
+
+    @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options a service base declares for its runtime."""
 
@@ -23,6 +39,7 @@ class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext)
         settings_type: t.SettingsClass | None
         settings_overrides: t.ScalarMapping | None
         context: p.Context | None
+        container: p.Container | None
         dispatcher: p.Dispatcher | None
 
 

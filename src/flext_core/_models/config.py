@@ -13,13 +13,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar
 
-from flext_core._models.base import FlextModelsBase
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols._logging_parts.flextprotocolslogging_part_01 import (
-    FlextProtocolsLogging,
-)
-from flext_core._typings.base import FlextTypingBase
-from flext_core._typings.services import FlextTypesServices
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._protocols._logging_parts import FlextProtocolsLogging
+from flext_core._typings import FlextTypesPydantic, FlextTypesServices, FlextTypingBase
 
 
 class FlextModelsConfig:
@@ -66,16 +62,40 @@ class FlextModelsConfig:
             ),
         ] = None
         console_renderer: Annotated[
-            bool,
+            bool | None,
             FlextModelsPydantic.Field(
-                default=True,
+                default=None,
                 description="Use the console renderer.",
             ),
-        ] = True
+        ] = None
         processing_stages: Annotated[
             FlextTypingBase.SequenceOf[FlextProtocolsLogging.LoggingStage],
             FlextModelsPydantic.Field(
                 description="Ordered typed event stages executed before rendering.",
+            ),
+        ] = ()
+        observers: Annotated[
+            FlextTypingBase.SequenceOf[FlextProtocolsLogging.LoggingObserver],
+            FlextModelsPydantic.Field(
+                description="Typed observers notified with each sanitized event.",
+            ),
+        ] = ()
+        handlers: Annotated[
+            FlextTypingBase.SequenceOf[FlextProtocolsLogging.LoggingHandler],
+            FlextModelsPydantic.Field(
+                description="Native logging handlers attached to the runtime.",
+            ),
+        ] = ()
+        redacted_keys: Annotated[
+            FlextTypingBase.SequenceOf[str],
+            FlextModelsPydantic.Field(
+                description="Context keys whose values never reach the rendered event.",
+            ),
+        ] = ()
+        redacted_values: Annotated[
+            FlextTypingBase.SequenceOf[str],
+            FlextModelsPydantic.Field(
+                description="Exact values scrubbed from every rendered event.",
             ),
         ] = ()
         wrapper_class_factory: Annotated[
@@ -95,18 +115,18 @@ class FlextModelsConfig:
         cache_logger_on_first_use: Annotated[
             bool,
             FlextModelsPydantic.Field(
-                default=True,
+                default=False,
                 description="Cache the logger on first use.",
             ),
-        ] = True
+        ] = False
         async_logging: Annotated[
-            bool,
+            bool | None,
             FlextModelsPydantic.Field(
                 description=(
                     "Write rendered log events through the asynchronous writer."
                 ),
             ),
-        ] = True
+        ] = None
 
     class ConfigDocument(FlextModelsBase.FrozenModel):
         """A loaded, parsed config document with optional schema/source refs."""
@@ -241,6 +261,32 @@ class FlextModelsConfig:
                 description="Initial delay between retries in seconds",
             ),
         ] = None
+
+    class LoggingRecord(FlextModelsBase.ContractModel):
+        """Sanitized pre-presentation event shared by typed observers."""
+
+        message: Annotated[
+            str,
+            FlextModelsPydantic.Field(description="Rendered event message text."),
+        ]
+        level: Annotated[
+            str,
+            FlextModelsPydantic.Field(description="Event level name."),
+        ]
+        context: Annotated[
+            FlextTypingBase.JsonMapping,
+            FlextModelsPydantic.Field(
+                description="Sanitized structured event context."
+            ),
+        ]
+        exception: FlextTypesPydantic.SkipJsonSchema[BaseException | None] = (
+            FlextModelsPydantic.Field(
+                default=None,
+                exclude=True,
+                repr=False,
+                description="Original local-only cause; never serialized into logging context.",
+            )
+        )
 
 
 __all__: list[str] = ["FlextModelsConfig"]

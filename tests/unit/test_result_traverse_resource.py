@@ -180,8 +180,9 @@ class TestsFlextResultTraverseResource:
     def test_value_property_failure() -> None:
         """Test value property raises RuntimeError on failure."""
         result: p.Result[str] = r[str].fail("error")
-        with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
+        with pytest.raises(RuntimeError) as raised:
             _ = result.value
+        tm.that(str(raised.value), has=tm.not_none(result.error))
 
     @staticmethod
     def test_error_property_success() -> None:
@@ -228,8 +229,9 @@ class TestsFlextResultTraverseResource:
     def test_unwrap_failure() -> None:
         """Test unwrap raises RuntimeError on failure."""
         result: p.Result[str] = r[str].fail("error")
-        with pytest.raises(RuntimeError, match="Cannot access value of failed result"):
-            _ = result.value
+        with pytest.raises(RuntimeError) as raised:
+            result.unwrap()
+        tm.that(str(raised.value), has=tm.not_none(result.error))
 
     @staticmethod
     def test_flat_map_inner_failure() -> None:

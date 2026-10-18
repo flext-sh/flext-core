@@ -2,240 +2,133 @@
 
 <!-- TOC START -->
 
-- [Overview](#overview)
-- [Global Context](#global-context)
-- [Scoped Context](#scoped-context)
-- [Context Binding](#context-binding)
-- [Request Handler Pattern](#request-handler-pattern)
-- [Typed Processing Stages](#typed-processing-stages)
-- [Best Practices](#best-practices)
+- [Calls and settings](#calls-and-settings)
+- [Native capture and lexical context](#native-capture-and-lexical-context)
+- [Pipeline and safety](#pipeline-and-safety)
+- [Delivery and integration](#delivery-and-integration)
 
 <!-- TOC END -->
 
-## Overview
+## Calls and settings
 
-FLEXT logging is built on `structlog` through `FlextUtilitiesLogging`. The logger
-supports:
+Use the public Core `u` facade over native `structlog` and logging handlers:
 
-- Global context for app-wide metadata
-- Scoped context for request/operation data
-- Level-specific context for verbose diagnostics
+| Call | Meaning |
+| --- | --- |
+| `u.log(message, *args, level=None, **context)` | Ordinary INFO; `level` selects another standard severity. |
+| `u.debug(...)` / `u.warning(...)` | DEBUG / WARNING through the same pipeline. |
+| `u.trace(...)` | DEBUG detail, admitted only when `trace` is enabled and the threshold permits DEBUG. |
+| `u.failure(..., exception=cause)` | ERROR with the original `BaseException`, including its saved traceback. |
 
-All examples below are standalone and executable in markdown code-fence tests.
+An explicit `log_level` wins over `debug`; debug selects DEBUG only without an
+explicit level. Trace changes detail, never severity or threshold: ERROR plus
+trace still suppresses DEBUG/trace events but adds detailed ERROR stacks.
 
-## Global Context
+Core settings own `log_level`, `debug`, `trace`, `logging_profile`, and
+`async_logging`, sourced through `FLEXT_*` environment fields. Child settings keep
+their declared prefix; use their inherited fields, not a guessed `cli_log_level`.
+The composition root supplies the actual provider as `runtime_settings` to
+`u.configure_structlog`. `console` and `json` profiles select presentation, not
+different events. Read active values with `u.logging_settings()` and composition
+options with `u.logging_options()`; do not duplicate their defaults.
 
-Use global context for metadata that should be present in all messages.
+## Native capture and lexical context
 
-```python
-import io
-import time
-from contextlib import redirect_stdout
-
-from flext_core import FlextUtilitiesLogging
-
-_ = FlextUtilitiesLogging.bind_global_context(service="flext-core", environment="dev")
-stream = io.StringIO()
-with redirect_stdout(stream):
-    logger = FlextUtilitiesLogging.create_module_logger(__name__)
-    _ = logger.info("application_started")
-    deadline = time.monotonic() + 0.25
-    while (
-        time.monotonic() < deadline and "application_started" not in stream.getvalue()
-    ):
-        time.sleep(0.01)
-    if "application_started" not in stream.getvalue():
-        message = "Expected application_started log record"
-        raise RuntimeError(message)
-
-_ = FlextUtilitiesLogging.unbind_global_context("service", "environment")
-```
-
-Use `unbind_global_context` when you want to remove selected keys, or
-`clear_global_context` when you want a full reset.
+Select synchronous handlers and real streams for deterministic capture; no
+stdout redirection, polling, or sleeps are needed. This example deliberately
+selects DEBUG and trace, captures actual observer/output receipts, and restores
+the prior settings and options rather than assuming their values.
 
 ```python
-from flext_core import FlextUtilitiesLogging
+import json
+from io import StringIO
 
-_ = FlextUtilitiesLogging.bind_global_context(trace_id="trace-001")
-_ = FlextUtilitiesLogging.clear_global_context()
-```
+from structlog.contextvars import bound_contextvars
 
-## Scoped Context
+from flext_core import c, m, p, t, u
 
-Use `bind_context` to attach context to a logical scope (for example, a request id).
+prior_settings: p.LoggingSettings = u.logging_settings()
+prior_options: p.StructlogOptions = u.logging_options()
+receipts: t.MutableSequenceOf[p.LoggingRecord] = []
+json_stream = StringIO()
+console_stream = StringIO()
 
-```python
-import io
-import time
-from contextlib import redirect_stdout
 
-from flext_core import FlextUtilitiesLogging
+def observe(event: p.LoggingRecord) -> None:
+    receipts.append(event)
 
-scope = "request"
-_ = FlextUtilitiesLogging.bind_context(
-    scope=scope,
-    request_id="req-123",
-    user_id="u-42",
+
+selected = u.resolve_logging_settings(
+    runtime_settings=prior_settings,
+    log_level=c.LogLevel.DEBUG,
+    debug=False,
+    trace=True,
 )
-
-stream = io.StringIO()
-with redirect_stdout(stream):
-    logger = FlextUtilitiesLogging.create_module_logger(__name__)
-    _ = logger.info("request_started")
-    deadline = time.monotonic() + 0.25
-    while time.monotonic() < deadline and "request_started" not in stream.getvalue():
-        time.sleep(0.01)
-    if "request_started" not in stream.getvalue():
-        message = "Expected request_started log record"
-        raise RuntimeError(message)
-
-_ = FlextUtilitiesLogging.clear_scope(scope)
-```
-
-`clear_scope` removes context associated with that scope.
-
-## Context Binding
-
-Use global context to enrich related log lines and clear it when the scope ends.
-
-```python
-import io
-import time
-from contextlib import redirect_stdout
-
-from flext_core import FlextUtilitiesLogging
-
-_ = FlextUtilitiesLogging.bind_global_context(
-    internal_state="cache-miss",
-    debug_trace="trace-xyz",
+options = m.StructlogOptions(
+    async_logging=False,
+    handlers=(
+        u.create_logging_handler(stream=json_stream),
+        u.create_logging_handler(stream=console_stream, console_renderer=True),
+    ),
+    observers=(observe,),
 )
-
-stream = io.StringIO()
-with redirect_stdout(stream):
-    logger = FlextUtilitiesLogging.create_module_logger(__name__)
-    _ = logger.debug("debug_message")
-    _ = logger.info("info_message")
-    deadline = time.monotonic() + 0.25
-    while time.monotonic() < deadline and "info_message" not in stream.getvalue():
-        time.sleep(0.01)
-    if "info_message" not in stream.getvalue():
-        message = "Expected info_message log record"
-        raise RuntimeError(message)
-
-_ = FlextUtilitiesLogging.clear_global_context()
+cause = ValueError("invalid input")
+try:
+    u.configure_structlog(settings=options, runtime_settings=selected)
+    with bound_contextvars(request_id="req-123"):
+        _ = u.log("processed %s rows", 2)
+        _ = u.debug("batch_ready")
+        _ = u.warning("partial_batch")
+        _ = u.trace("batch_detail", row_count=2)
+        _ = u.failure("batch_failed", exception=cause)
+    output = json_stream.getvalue().splitlines()
+    assert len(receipts) == len(output)
+    assert json.loads(output[0])["event"] == receipts[0].message
+    assert receipts[0].message in console_stream.getvalue()
+    assert receipts[-1].exception is cause
+finally:
+    u.configure_structlog(settings=prior_options, runtime_settings=prior_settings)
 ```
 
-## Request Handler Pattern
+Native `bound_contextvars` restores lexical bindings, including nested scopes and
+exception exits. Existing `u.bind_global_context`, `u.bind_context`, unbind, and
+clear helpers remain valid; clearing removes keys, not a saved outer value. Do
+not add a context-copy engine or manual restoration stack.
 
-The typical flow is: bind request context, log, then clear scope in `finally`.
+## Pipeline and safety
 
-```python
-from __future__ import annotations
+Threshold filtering precedes native printf interpolation and enrichment. Ordered
+`processing_stages` implement `p.LoggingStage` over `t.LoggingEvent`; they run
+before exception rendering and sanitization, not as a second logging engine.
+Typed `p.LoggingObserver` callbacks receive one sanitized `p.LoggingRecord`
+before native handler fanout. JSON and console render the same enriched event;
+capture once at that boundary, never once per sink or by parsing rendered text.
 
-import io
-import time
-from contextlib import redirect_stdout
+Built-in sensitive-key redaction plus `redacted_keys`/`redacted_values` protects
+rendered context; detailed stacks omit locals. The observer's original exception
+is local-only and excluded from serialization: treat that object as sensitive.
+If formatting, a stage, observer, or sink fails, its native error escapes. When
+a business exception is present, Core preserves that same cause and traceback,
+adding a note for the logging failure rather than replacing the business error.
 
-from flext_core import FlextUtilitiesLogging
+## Delivery and integration
 
+Explicit configuration reaches existing public/cached loggers through their
+native lazy binding; no fresh-logger workaround is needed. An optionless
+`u.configure_structlog()` initializes only once. Selected handlers own their
+delivery lifecycle; use `u.create_logging_handler` for native formatting,
+locking, and fail-loud stream errors, not a swallowing stdlib handler.
 
-def handle_request(request_id: str, user_id: str) -> None:
-    """Log one request inside its correlation scope and clean up after.
+Without selected handlers/factory, Core diagnostics use stderr. Its managed
+asynchronous writer acknowledges emission flushes, drains admitted work on
+shutdown, and preserves the first stream failure without retry. Shutdown timeout
+and admission errors propagate; failed teardown retains ownership. Closing does
+not close the caller's stream. Native metadata/missing attributes retain native
+errors; print's text, newline, and flush calls are not one atomic shutdown unit.
 
-    Raises:
-        RuntimeError: When the expected log record never appears.
-
-    """
-    scope = "request"
-    _ = FlextUtilitiesLogging.bind_context(
-        scope=scope,
-        request_id=request_id,
-        user_id=user_id,
-    )
-    try:
-        stream = io.StringIO()
-        with redirect_stdout(stream):
-            logger = FlextUtilitiesLogging.create_module_logger(__name__)
-            _ = logger.info("request_processing")
-            deadline = time.monotonic() + 0.25
-            while (
-                time.monotonic() < deadline
-                and "request_processing" not in stream.getvalue()
-            ):
-                time.sleep(0.01)
-            if "request_processing" not in stream.getvalue():
-                message = "Expected request_processing log record"
-                raise RuntimeError(message)
-    finally:
-        _ = FlextUtilitiesLogging.clear_scope(scope)
-
-
-handle_request("req-99", "u-10")
-```
-
-## Typed Processing Stages
-
-Register custom event transformations with `m.StructlogOptions.processing_stages`
-and pass those options to `u.configure_structlog`. Each stage implements
-`p.LoggingStage`: it receives the output logger, method name, and
-`t.LoggingEvent`, and returns a typed event mapping. Stages execute in registration
-order after the built-in event processors and before the final renderer. Nested
-JSON context and exception information remain available in the event.
-
-Explicit options reconfigure subsequently created loggers, including after
-default logging initialization. Bound loggers already cached retain their
-processor chain; create a fresh public logger after changing registration.
-Calling `u.configure_structlog()` without options initializes defaults only once.
-Invalid noncallable registrations fail model validation. A stage failure stops
-processing and its original exception propagates through public logging methods,
-including `exception` and `trace`. Successful emissions retain the public
-`r[bool]` result contract. Invalid trace formatting also raises its native error.
-
-## Asynchronous Output Stream
-
-With `async_logging=True`, the managed writer is a real text stream over the live
-`sys.stdout`: writes are queued to a background thread, while metadata (`mode`,
-`name`, `encoding`, `errors`, `newlines`, `line_buffering`, `buffer`) and
-non-write operations belong to the underlying stream at call time. Nothing is
-fabricated: a native stream that lacks an attribute raises its native
-`AttributeError`, and no replacement binary buffer exists. Read, seek, tell,
-truncate, and iteration first drain admitted writes. Closing the writer flushes
-admitted writes without closing the caller's stream; afterwards its delegated
-operations (descriptor, capability queries, reads, positioning, iteration, and
-context entry) raise `ValueError`.
-
-`wrapper_class_factory` is a zero-argument registration factory returning a
-native wrapper class. That class accepts the output logger, processor sequence,
-and context mapping and implements native binding and level emission through
-`p.NativeLoggingWrapper`; it is separate from the public FLEXT logger adapter.
-Output factories accept positional logger names through `p.OutputLoggerFactory`.
-
-Explicit `async_logging=False` selects synchronous output for fresh loggers,
-including after an asynchronous or custom factory was configured. The managed
-writer is drained before that transition succeeds; its original failure or configured
-shutdown timeout propagates from `u.configure_structlog`. Ownership of the
-managed writer is cleared only after successful teardown. Already cached
-asynchronous loggers retain their old chain and reference the stopped writer.
-Queued output uses a real text-stream contract: metadata and operations belong to the
-underlying stream, and no replacement binary buffer is fabricated. Admission
-errors propagate immediately. A public emission flush waits for its queued
-writes and propagates the original stream failure. Later writes preserve that
-first failure instead of retrying the stream. Shutdown drains admitted work,
-and a worker that exceeds the configured shutdown deadline raises a timeout.
-Explicit flushes are native stream operations queued after admitted writes.
-Waiting for a flush or worker shutdown never holds the admission lock.
-Closing the adapter finishes its worker without closing the caller's stream.
-Failed teardown keeps the writer open and owned so admitted work can recover.
-Native printing performs separate text, newline, and flush calls; a concurrent
-shutdown preserves admitted work but rejects subsequent calls with their native
-`ValueError("I/O operation on stopped async log writer")`. A whole emission is
-not an atomic shutdown boundary.
-
-## Best Practices
-
-- Use global context for stable metadata (service, environment, version).
-- Use scoped context for per-request or per-operation values.
-- Use level context for diagnostic-only fields.
-- Always clear scoped context in `finally` blocks.
-- Keep context keys small and deterministic.
+Core is the foundation and never imports outer FLEXT packages. The application
+composition root injects settings, handlers, and observer ports. See
+[Observability](../../../flext-observability/docs/index.md) for capture/export
+integration and [CLI](../../../flext-cli/docs/index.md) for transport composition.
+Retirement of duplicate Observability logging remains pending; this guide does
+not certify that cutover or its gates.
