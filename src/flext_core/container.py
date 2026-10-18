@@ -439,7 +439,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             if registration is not None
             else m.ServiceRegistrationSpec()
         )
-        settings_source = spec.settings if spec.settings is not None else self._config
+        settings_source = (
+            spec.settings if spec.settings is not None else self._config.clone()
+        )
         scoped_context = self.context.clone() if spec.context is None else spec.context
         if subproject:
             _ = scoped_context.set("subproject", subproject)

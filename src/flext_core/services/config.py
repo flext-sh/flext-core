@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, p, r, s
+from flext_core import c, p, s
 
 
 class FlextServiceConfig(s[p.Base]):
@@ -14,15 +14,16 @@ class FlextServiceConfig(s[p.Base]):
 
     @property
     def config(self) -> p.Settings:
-        """Config from this component's container."""
+        """Return the config from this component's container."""
         result = self.container.resolve(c.Directory.CONFIG)
         if result.failure:
-            return r[p.Settings].from_failure(result)
-        return r[p.Settings].ok(result.value)
+            msg = f"Failed to resolve config: {result.error}"
+            raise RuntimeError(msg)
+        return result.value
 
     @property
     def settings(self) -> p.Settings:
-        """Settings from this component's runtime."""
+        """Return the settings from this component's runtime."""
         return self._get_runtime().settings
 
 

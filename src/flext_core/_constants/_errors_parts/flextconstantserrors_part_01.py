@@ -136,7 +136,7 @@ class FlextConstantsErrorsMessages:
         "Success result payload cannot be None"
     )
     ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN: ClassVar[str] = (
-        "FlextResult cannot be parameterized with None; use r[bool].ok(True) "
+        "FlextResult cannot be parameterized with None; use r[bool].ok(value=True) "
         "or a concrete payload type"
     )
     ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN: ClassVar[str] = (

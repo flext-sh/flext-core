@@ -101,14 +101,14 @@ class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
                 category,
                 name,
                 payload,
-                validate=lambda _plugin: r[bool].ok(False),
+                validate=lambda _plugin: r[bool].ok(value=False),
                 scope=scope,
             )
             accepted = registry.register_plugin(
                 category,
                 name,
                 payload,
-                validate=lambda _plugin: r[bool].ok(True),
+                validate=lambda _plugin: r[bool].ok(value=True),
                 scope=scope,
             )
             self.audit_check("validation.false", false.failure)

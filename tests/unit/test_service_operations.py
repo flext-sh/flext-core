@@ -40,7 +40,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         @h.handler(command=m.Tests.DispatchRequest)
         def dispatch(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
@@ -61,7 +61,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         @property
         def label(self) -> str:
@@ -76,7 +76,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         @staticmethod
         def helper() -> p.Result[bool]:
@@ -86,7 +86,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         @m.model_validator(mode="after")
         def check_state(self) -> Self:
@@ -106,7 +106,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     class ReadSide(s[bool]):
         """Sibling declaring ``run``."""
@@ -118,7 +118,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     class WriteSide(s[bool]):
         """Sibling also declaring ``run``."""
@@ -130,7 +130,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(False)
+            return r[bool].ok(value=False)
 
     class CollidingService(ReadSide, WriteSide):
         """Composes two siblings that both declare ``run``."""
@@ -146,7 +146,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(False)
+            return r[bool].ok(value=False)
 
     class EmptyService(s[bool]):
         """Service without operations."""
@@ -161,7 +161,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
     class GenericService(s[bool]):
         """Operation declaring type parameters."""
@@ -222,7 +222,7 @@ class TestsFlextCoreServiceOperations:
         """Operation without a docstring."""
 
         def _status(self) -> p.Result[bool]:
-            return r[bool].ok(True)
+            return r[bool].ok(value=True)
 
         # The public operation is bound to a non-public function, which needs
         # no docstring: discovery reaches ``status`` with ``__doc__`` unset.

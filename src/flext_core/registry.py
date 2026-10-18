@@ -45,7 +45,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
                 return r[bool].from_failure(existing)
             previous = existing.value
             if u.registry_same_value(previous, service):
-                return r[bool].ok(True)
+                return r[bool].ok(value=True)
             return r[bool].fail_op(
                 "register service in registry",
                 c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name),
@@ -54,7 +54,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             self.container.bind(name, service)
         except e.ValidationError as exc:
             return e.fail_operation("register service in registry", exc)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def register_handler(
         self,
@@ -144,13 +144,13 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             if key.value in storage:
                 previous = storage[key.value]
                 if u.registry_same_value(previous, plugin):
-                    return r[bool].ok(True)
+                    return r[bool].ok(value=True)
                 return r[bool].fail_op(
                     "register class plugin",
                     c.ERR_CONTAINER_NAME_DUPLICATE.format(name=key.value),
                 )
             storage[key.value] = plugin
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def fetch_plugin(
         self,
@@ -222,7 +222,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             if key.value not in self._class_plugin_storage:
                 return e.fail_not_found(category, name)
             del self._class_plugin_storage[key.value]
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
 
 __all__: list[str] = ["FlextRegistry"]

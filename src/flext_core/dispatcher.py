@@ -100,7 +100,7 @@ class FlextDispatcher:
                         return r[bool].from_failure(result)
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
             return r[bool].fail_op("publish event", exc)
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)
 
     def register_handler(
         self,

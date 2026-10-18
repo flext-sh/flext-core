@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import m, p, r, s, u
+from flext_core import m, p, s, u
 
 
 class FlextServiceRegistry(s[p.Base]):
@@ -18,18 +18,11 @@ class FlextServiceRegistry(s[p.Base]):
         from flext_core import registry as registry_module
 
         runtime = self._get_runtime()
-        registry_instance = registry_module.FlextRegistry(
+        return registry_module.FlextRegistry(
             registry_runtime=u.build_service_runtime(
                 m.RuntimeBootstrapOptions(dispatcher=runtime.dispatcher)
             )
         )
-        if not isinstance(registry_instance, p.Registry):
-            return r[p.Registry].fail(
-                u.TypeError(
-                    "Resolved registry implementation does not satisfy p.Registry"
-                )
-            )
-        return r[p.Registry].ok(registry_instance)
 
 
 __all__: list[str] = ["FlextServiceRegistry"]

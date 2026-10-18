@@ -89,4 +89,4 @@ class TestsFlextCleanServiceBase:
             A stable success result for enforcement import tests.
 
         """
-        return r[bool].ok(True)
+        return r[bool].ok(value=True)

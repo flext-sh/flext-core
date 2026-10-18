@@ -17,9 +17,18 @@ class ExamplesFlextModelsEx12:
     class RegistryLookupOptions(m.ArbitraryTypesModel):
         """Validated dependencies and input of the plugin lookup service."""
 
-        registry: t.Port[p.Registry] = m.Field(exclude=True)
-        category: str
-        plugin_name: str
+        registry: Annotated[
+            t.Port[p.Registry],
+            m.Field(exclude=True, description="Registry instance for plugin lookup"),
+        ]
+        category: Annotated[
+            str,
+            m.Field(description="Plugin category for registry lookup"),
+        ]
+        plugin_name: Annotated[
+            str,
+            m.Field(description="Plugin name for registry lookup"),
+        ]
 
     class CommandA(m.Command):
         command_type: Annotated[

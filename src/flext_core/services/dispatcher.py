@@ -14,7 +14,7 @@ class FlextServiceDispatcher(s[p.Base]):
 
     @property
     def dispatcher(self) -> p.Dispatcher:
-        """Dispatcher from this component's container."""
+        """Return the dispatcher from this component's container."""
         return self.container.dispatcher().unwrap()
 
 
