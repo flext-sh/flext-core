@@ -67,7 +67,7 @@ class FlextModelsPydantic:
     )
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
-    Field = pydantic.Field
+    Field = staticmethod(pydantic.Field)
 
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]

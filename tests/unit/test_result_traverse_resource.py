@@ -235,7 +235,12 @@ class TestsFlextResultTraverseResource:
         tm.that(carrier.model_dump(exclude={"absent"}), eq=payload)
         result: p.Result[str] = r[str].fail("error", error_data=carrier)
 
-        expected = u.redact_metadata(payload, keys=tuple(c.SENSITIVE_ERROR_DATA_KEYS))
+        protected = frozenset(key.casefold() for key in c.SENSITIVE_ERROR_DATA_KEYS)
+        expected = {
+            key: value
+            for key, value in payload.items()
+            if key.casefold() not in protected
+        }
         tm.that(result.error_data, eq=expected or None)
 
     @staticmethod
