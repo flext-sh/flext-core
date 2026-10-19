@@ -178,7 +178,7 @@ class FlextModelsHandler:
                 description="Stack of nested execution contexts.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: list[FlextModelsHandler.ExecutionContext](),
+            default_factory=list,
             validate_default=True,
         )
 

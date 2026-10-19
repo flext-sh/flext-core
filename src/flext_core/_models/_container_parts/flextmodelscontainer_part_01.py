@@ -22,6 +22,7 @@ from flext_core._models import (
     FlextModelsContainers,
     FlextModelsPydantic,
 )
+from flext_core._utilities import FlextUtilitiesGenerators
 
 
 class FlextModelsContainer:
@@ -37,7 +38,9 @@ class FlextModelsContainer:
                     "Timestamp when service was registered (configured timezone)"
                 ),
             ),
-        ] = FlextModelsPydantic.Field(default_factory=lambda: flext_core.u.now())
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextUtilitiesGenerators.now,
+        )
         metadata: Annotated[
             FlextModelsBase.Metadata | FlextModelsContainers.ConfigMap | None,
             FlextModelsPydantic.Field(

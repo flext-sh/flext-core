@@ -33,6 +33,9 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         Returns:
             The resulting ``p.Result[T]``.
 
+        Raises:
+            TypeError: If this instance lacks the complete public result family.
+
         """
         from flext_core import r
 
@@ -109,13 +112,15 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             result is preserved.
 
         """
+        from flext_core import r
+
         current: p.Result[T | U] = self._as_result()
         for func in funcs:
             if current.success:
                 try:
                     current = copy_result(func(current.value))
                 except c.EXC_BROAD_RUNTIME as exc:
-                    current = self.__class__.fail(str(exc), exception=exc)._as_result()
+                    current = r[T | U].fail(str(exc), exception=exc)
             else:
                 break
         return current
@@ -152,11 +157,13 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             The resulting ``p.Result[T | U]``.
 
         """
+        from flext_core import r
+
         if self.failure:
             try:
                 return copy_result(func(self.require_error(self._as_result())))
             except c.EXC_BROAD_RUNTIME as exc:
-                return self.__class__.fail(str(exc), exception=exc)._as_result()
+                return r[T | U].fail(str(exc), exception=exc)
         return self._as_result()
 
     def map[U](self: Self, func: Callable[[T], U]) -> p.Result[U]:
@@ -243,12 +250,14 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             The resulting ``p.Result[T | U]``.
 
         """
+        from flext_core import r
+
         if self.success:
             return self._as_result()
         try:
             return ok_result(func(self.require_error(self._as_result())))
         except c.EXC_BROAD_RUNTIME as exc:
-            return self.__class__.fail(str(exc), exception=exc)._as_result()
+            return r[T | U].fail(str(exc), exception=exc)
 
     def tap(self: Self, func: Callable[[T], None]) -> p.Result[T]:
         """Run a side effect on the payload without changing the result.

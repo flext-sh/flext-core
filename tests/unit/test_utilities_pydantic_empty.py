@@ -43,7 +43,7 @@ class TestsFlextUtilitiesPydanticEmpty:
             description="Read-only string sequence contract.",
         )
         items: t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item] = u.Field(
-            default_factory=lambda: list[TestsFlextUtilitiesPydanticEmpty._Item](),
+            default_factory=list[TestsFlextUtilitiesPydanticEmpty._Item],
             validate_default=True,
             description="Mutable sequence of a forward-referenced model.",
         )

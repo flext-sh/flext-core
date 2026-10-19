@@ -66,10 +66,11 @@ class FlextModelsPydantic:
         | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
     )
 
-    # Static type resolves the polymorphic factory contract (protocols layer);
-    # runtime binds the native pydantic functions byte-for-byte.
+    # Preserve the native field declaration and its dataclass-transform identity.
+    # Runtime access remains receiver-free through the staticmethod descriptor.
     if TYPE_CHECKING:
-        Field: ClassVar[FlextProtocolsPydantic.FieldFactory]
+        from pydantic import Field
+
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
     else:
         Field = staticmethod(pydantic.Field)

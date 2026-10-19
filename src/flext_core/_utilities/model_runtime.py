@@ -91,7 +91,13 @@ class FlextUtilitiesModelRuntime(
         previous: p.RegisterableService | p.DispatchableHandler,
         candidate: p.RegisterableService | p.DispatchableHandler,
     ) -> bool:
-        """Compare collaborators by identity, immutable scalars by type and value."""
+        """Compare collaborators by identity, immutable scalars by type and value.
+
+        Returns:
+            Whether both registrations identify the same collaborator, bound
+            method, or equally valued immutable scalar of the same type.
+
+        """
         return (
             previous is candidate
             or (
@@ -109,7 +115,13 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def registry_plugin_key(category: str, name: str | None = None) -> p.Result[str]:
-        """Validate a plugin key, or a category prefix when no name is supplied."""
+        """Validate a plugin key, or a category prefix when no name is supplied.
+
+        Returns:
+            The validated key or category prefix, or a failure when a component
+            is empty or contains the configured separator.
+
+        """
         separator = c.REGISTRY_KEY_SEPARATOR
         if (
             not category
@@ -127,7 +139,13 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def registry_registration_name(binding: p.HandlerRegistration) -> str:
-        """Read the normalized route published by the dispatcher."""
+        """Read the normalized route published by the dispatcher.
+
+        Returns:
+            The declared string route, otherwise the handler's qualified type
+            name used to identify the registration.
+
+        """
         route = binding.message_type
         return route if isinstance(route, str) else type(binding.handler).__qualname__
 
@@ -137,7 +155,16 @@ class FlextUtilitiesModelRuntime(
         *,
         name: str,
     ) -> p.DecoratorConfig | None:
-        """Read validated decorator data without wrapping or invoking a callable."""
+        """Read validated decorator data without wrapping or invoking a callable.
+
+        Returns:
+            The validated decorator metadata, or None when none is attached.
+
+        Raises:
+            TypeError: If attached metadata does not satisfy its model contract.
+            ValueError: If metadata requests an unsupported timeout or middleware.
+
+        """
         metadata = getattr(candidate, c.HANDLER_ATTR, None)
         if metadata is None:
             return None
@@ -151,7 +178,13 @@ class FlextUtilitiesModelRuntime(
     def registry_registration_details(
         cls, binding: p.HandlerRegistration
     ) -> p.RegistrationDetails:
-        """Project a normalized binding without losing the handler's declared mode."""
+        """Project a normalized binding without losing the handler's declared mode.
+
+        Returns:
+            Registration details containing the normalized identifier and the
+            declared or inferred handler mode.
+
+        """
         handler = binding.handler
         return m.RegistrationDetails(
             registration_id=cls.registry_registration_name(binding),

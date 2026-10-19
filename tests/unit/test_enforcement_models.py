@@ -25,6 +25,24 @@ class TestsFlextEnforcementModels:
     """Tests for ``FlextEnforcementModels``."""
 
     @staticmethod
+    def test_fix_action_defaults_are_independent_validated_json_mappings() -> None:
+        """Cold-imported fix contracts retain fresh defaults and JSON validation."""
+        first = m.EnforcementFixAction(kind="manual", target="native-default")
+        second = m.EnforcementFixAction(kind="manual", target="native-default")
+
+        tm.that(first.params, eq={})
+        tm.that(second.params, eq={})
+        tm.that(first.params is not second.params, truth=True)
+        restored = m.EnforcementFixAction.model_validate_json(first.model_dump_json())
+        tm.that(restored, eq=first)
+        with pytest.raises(m.ValidationError):
+            m.EnforcementFixAction.model_validate({
+                "kind": "manual",
+                "target": "native-default",
+                "params": {"unsupported": Path("not-json")},
+            })
+
+    @staticmethod
     def test_context_defaults_are_independent_readonly_contract_values() -> None:
         """Bootstrap defaults validate without sharing context collection state."""
         first_export = m.ContextExport()

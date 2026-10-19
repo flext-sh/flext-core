@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
+
 from flext_core import c, p, t
 from flext_core._utilities import FlextUtilitiesBase
 

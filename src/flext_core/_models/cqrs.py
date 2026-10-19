@@ -9,26 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
-import flext_core
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-from typing_extensions import TypeForm
 
 from flext_core import c, t
 from flext_core._models import FlextModelsBase
 from flext_core._models._cqrs_parts import flextmodelscqrs_part_01
 from flext_core._utilities import FlextUtilitiesGenerators
-
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _cqrs_parts/part_01..02 (one
-# FlextModelsCqrs namespace class split across a numbered MRO chain) into this
-# single facade module.
-# NOTE: the utilities facade (``flext_core.utilities``) is NOT importable from
-# here: ``flext_core._models.cqrs <-> flext_core.utilities`` is a true cycle
-# through the lazy ``e``/``m`` letter resolution (utilities facade -> logging
-# context part -> e -> exceptions -> m -> models.py -> this module). The two
-# consumed symbols are flattened to their concrete owners through the lazy
-# family inits, which resolve single leaf modules without touching the facade.
 
 
 class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
@@ -98,9 +87,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
         ] = Field(
-            default_factory=lambda: flext_core.u.empty(
-                TypeForm(t.MappingKV[str, t.Scalar]),
-            )(),
+            default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
         pagination: Annotated[
@@ -243,18 +230,14 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
             t.MappingKV[str, t.Scalar],
             Field(description="Event payload data"),
         ] = Field(
-            default_factory=lambda: flext_core.u.empty(
-                TypeForm(t.MappingKV[str, t.Scalar]),
-            )(),
+            default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
         metadata: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
         ] = Field(
-            default_factory=lambda: flext_core.u.empty(
-                TypeForm(t.MappingKV[str, t.Scalar]),
-            )(),
+            default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
 

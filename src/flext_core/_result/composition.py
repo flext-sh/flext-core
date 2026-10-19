@@ -166,7 +166,6 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             The resulting ``Callable[PFunc, p.Result[U]]``.
 
         """
-
         from flext_core import r
 
         def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:

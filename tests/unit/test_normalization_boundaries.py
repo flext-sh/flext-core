@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
-from types import ModuleType
+from types import MappingProxyType, ModuleType
 from typing import TYPE_CHECKING
 
 import pytest
@@ -36,9 +36,9 @@ class TestsNormalizationBoundaries:
         tm.that(u.normalize_to_json_value(value), eq=expected)
 
     @staticmethod
-    def test_json_null_and_container_blank_are_distinct() -> None:
+    def test_json_null_is_preserved_at_both_boundaries() -> None:
         tm.that(u.normalize_to_json_value(None) is None, eq=True)
-        tm.that(u.normalize_to_container(None), eq="")
+        tm.that(u.normalize_to_container(None) is None, eq=True)
         tm.that(u.normalize_to_container([None]), eq=[None])
 
     @staticmethod
@@ -64,6 +64,17 @@ class TestsNormalizationBoundaries:
         tm.that(metadata.attributes, eq={"path": str(path), "nested": [None]})
         with pytest.raises(m.ValidationError, match="_private"):
             m.Metadata.model_validate({"attributes": {"_private": 1}})
+
+    @staticmethod
+    def test_metadata_accepts_readonly_native_mapping_defaults() -> None:
+        """Readonly attribute inputs use the same validated JSON admission."""
+        source = MappingProxyType({"active": True})
+        metadata = m.Metadata(attributes=source)
+        tm.that(metadata.attributes, eq=u.normalize_to_json_mapping(source))
+        tm.that(source, eq={"active": True})
+        first, second = m.Metadata(), m.Metadata()
+        tm.that(first.attributes, eq=second.attributes)
+        tm.that(first.attributes is second.attributes, eq=False)
 
     @staticmethod
     def test_registration_uses_native_payload_and_metadata_contracts() -> None:

@@ -13,20 +13,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Hashable, Mapping
+from collections.abc import Hashable
 from datetime import datetime
 from typing import Annotated, ClassVar, dataclass_transform, override
 
-import flext_core
 from pydantic import ConfigDict
-from pydantic_core import to_jsonable_python
-from typing_extensions import TypeForm
 
-from flext_core import c, p
+from flext_core import c, p, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._base_parts import flextmodelsbase_part_01
-from flext_core._typings import FlextTypesAnnotateds, FlextTypingBase
-from flext_core._utilities import FlextUtilitiesGenerators
+from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesPydantic
 
 
 class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
@@ -97,7 +93,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
             ),
         ] = None
         tags: Annotated[
-            FlextTypingBase.StrSequence,
+            t.StrSequence,
             FlextModelsPydantic.Field(
                 description=(
                     "Normalized labels used to classify and filter this metadata."
@@ -110,20 +106,18 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
             validate_default=True,
         )
         attributes: Annotated[
-            FlextTypingBase.JsonMapping,
+            t.JsonMapping,
             FlextModelsPydantic.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: flext_core.u.empty(
-                TypeForm(FlextTypingBase.JsonMapping),
-            )(),
+            default_factory=dict,
             validate_default=True,
         )
         metadata_value: Annotated[
-            FlextTypingBase.Scalar | None,
+            t.Scalar | None,
             FlextModelsPydantic.Field(
                 default=None, description="Scalar metadata value."
             ),
@@ -131,25 +125,9 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
 
         @FlextModelsPydantic.field_validator("attributes", mode="before")
         @classmethod
-        def validate_metadata_attributes(
-            cls, value: p.MetadataInput
-        ) -> FlextTypingBase.JsonMapping:
-            """Normalize attributes with native serialization before field validation."""
-            if value is None:
-                return {}
-            normalized = to_jsonable_python(
-                value.model_dump(mode="json")
-                if isinstance(value, p.HasModelDump)
-                else value
-            )
-            if not isinstance(normalized, Mapping):
-                raise TypeError(c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
-            for key in normalized:
-                if key.startswith("_"):
-                    raise ValueError(
-                        c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key)
-                    )
-            return {key: item for key, item in normalized.items() if item is not None}
+        def validate_metadata_attributes(cls, value: p.MetadataInput) -> t.JsonMapping:
+            """Validate attributes through the canonical metadata boundary."""
+            return FlextUtilitiesPydantic.validate_metadata_attributes(value)
 
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""
@@ -171,8 +149,8 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         def __eq__(self, other: object) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
-            self_dump: FlextTypingBase.JsonMapping = self.model_dump()
-            other_dump: FlextTypingBase.JsonMapping = other.model_dump()
+            self_dump: t.JsonMapping = self.model_dump()
+            other_dump: t.JsonMapping = other.model_dump()
             return self_dump == other_dump
 
         def __hash__(self) -> int:
@@ -197,7 +175,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         """Mixin for unique identifiers."""
 
         unique_id: Annotated[
-            FlextTypesAnnotateds.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(description="Unique identifier", frozen=False),
         ] = FlextModelsPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
 

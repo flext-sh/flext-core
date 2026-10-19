@@ -449,11 +449,14 @@ class TestsFlextCoreGuards:
             "rawName": " alice ",
             "visits": 2,
         })
-        tm.that(payload.model_dump(), eq={
-            "raw_name": "Alice",
-            "visits": "2 visits",
-            "label": "Alice:2",
-        })
+        tm.that(
+            payload.model_dump(),
+            eq={
+                "raw_name": "Alice",
+                "visits": "2 visits",
+                "label": "Alice:2",
+            },
+        )
 
     @pytest.mark.parametrize(
         ("value", "expected"),

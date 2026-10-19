@@ -89,44 +89,6 @@ class FlextProtocolsPydantic:
         ) -> CallT: ...
 
     @runtime_checkable
-    class FieldFactory(Protocol):
-        """Receiver-free native field metadata factory for model declarations.
-
-        Declares the polymorphic call contract ``pydantic.Field`` exposes so a
-        checker resolves each ``m.Field(...)`` call site without a first-class
-        reference to the overloaded native function.
-        """
-
-        @overload
-        def __call__[DefaultT](
-            self,
-            default: DefaultT,
-            *,
-            default_factory: None = ...,
-            alias: str | PydanticUndefinedType | None = ...,
-            **kwargs: FlextProtocolsBase.AttributeProbe,
-        ) -> DefaultT: ...
-
-        @overload
-        def __call__[FactoryT](
-            self,
-            *,
-            default_factory: Callable[[], FactoryT]
-            | Callable[[Mapping[str, FlextProtocolsBase.AttributeProbe]], FactoryT],
-            alias: str | PydanticUndefinedType | None = ...,
-            **kwargs: FlextProtocolsBase.AttributeProbe,
-        ) -> FactoryT: ...
-
-        @overload
-        def __call__(
-            self,
-            *,
-            default_factory: None = ...,
-            alias: str | PydanticUndefinedType | None = ...,
-            **kwargs: FlextProtocolsBase.AttributeProbe,
-        ) -> FlextProtocolsPydantic.ModelField: ...
-
-    @runtime_checkable
     class UnsetPrivateAttribute(Protocol):
         """Native private descriptor created without a default or factory."""
 

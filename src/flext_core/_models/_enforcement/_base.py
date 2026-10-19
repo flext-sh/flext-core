@@ -91,4 +91,6 @@ class FlextModelsEnforcementBase:
             return any(fragment in message for message in self.messages)
 
 
+FlextModelsEnforcementBase.Report.model_rebuild()
+
 __all__: list[str] = ["FlextModelsEnforcementBase", "FlextModelsEnforcementModelBase"]

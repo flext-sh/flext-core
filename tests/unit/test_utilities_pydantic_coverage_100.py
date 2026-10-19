@@ -61,6 +61,26 @@ class TestsFlextUtilitiesPydantic:
             default_factory=u.empty(TypeForm(t.MutableStrMapping)),
         )
 
+    class _RequiredFieldContract(m.BaseModel):
+        """Native required declarations remain typed through both facades."""
+
+        model_label: str = m.Field(min_length=1)
+        utility_label: str = u.Field(min_length=1)
+
+    @staticmethod
+    def test_required_fields_preserve_annotations_and_validation() -> None:
+        """Metadata declarations are required, not descriptor-valued defaults."""
+        model = TestsFlextUtilitiesPydantic._RequiredFieldContract(
+            model_label="model",
+            utility_label="utility",
+        )
+        model_label: str = model.model_label
+        utility_label: str = model.utility_label
+        assert model_label == "model"
+        assert utility_label == "utility"
+        with pytest.raises(m.ValidationError):
+            TestsFlextUtilitiesPydantic._RequiredFieldContract.model_validate({})
+
     @staticmethod
     def test_field_factories_receive_validated_data_and_keep_required_fields() -> None:
         """Factories see validated fields and allocate independent defaults."""

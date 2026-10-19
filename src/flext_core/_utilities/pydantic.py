@@ -179,6 +179,8 @@ class FlextUtilitiesPydantic(
             if model_adapter.validator.isinstance_python(value)
             else value
         )
+        if isinstance(payload, Mapping):
+            payload = dict(payload)
         return adapter.validate_python(to_jsonable_python(payload), strict=True)
 
     @staticmethod

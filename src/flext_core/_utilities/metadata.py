@@ -1,4 +1,8 @@
-"""Shared public-metadata redaction at the JSON boundary."""
+"""Shared public-metadata redaction at the JSON boundary.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

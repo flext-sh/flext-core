@@ -441,7 +441,8 @@ class TestsFlextCoreContext:
                 FlextContext.new_correlation("inner"),
             ):
                 tm.that(u.PARENT_CORRELATION_ID.get(), eq="outer")
-                raise ValueError("nested failure")
+                msg = "nested failure"
+                raise ValueError(msg)
             tm.that(FlextContext.resolve_correlation_id(), eq="outer")
             tm.that(u.PARENT_CORRELATION_ID.get(), eq="ancestor")
         finally:
@@ -468,7 +469,8 @@ class TestsFlextCoreContext:
                 FlextContext.timed_operation("inner-operation") as metrics,
             ):
                 tm.that(FlextContext.resolve_operation_name(), eq="inner-operation")
-                raise ValueError("timed failure")
+                msg = "timed failure"
+                raise ValueError(msg)
             tm.that(FlextContext.resolve_operation_name(), eq="outer-operation")
             tm.that(
                 FlextContext.export_full_context()[c.ContextKey.SERVICE_NAME],

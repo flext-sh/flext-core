@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core import t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._enforcement import (
     FlextModelsEnforcementBase,
@@ -14,7 +15,6 @@ from flext_core._models._enforcement import (
     FlextModelsEnforcementParams,
     FlextModelsEnforcementSources,
 )
-from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsEnforcement(
@@ -33,9 +33,7 @@ class FlextModelsEnforcement(
         additionally answers whether every requested runtime inspection ran.
         """
 
-        deferred: FlextTypingBase.SequenceOf[
-            FlextModelsEnforcementInspection.DeferredInspection
-        ] = ()
+        deferred: t.SequenceOf[FlextModelsEnforcementInspection.DeferredInspection] = ()
 
         @FlextModelsPydantic.computed_field
         @property
