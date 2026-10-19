@@ -55,14 +55,17 @@ class TestsFlextTypeAliasResolution:
         payload = m.ConfigMap(root={"bootstrap": "value"})
         failure = m.ResultFailureSpec(error_data=payload)
         assert failure.error_data is payload
-        event = u.type_adapter(TypeForm(p.LoggingEvent)).validate_python({
+        event = u.type_adapter(
+            TypeForm(p.LoggingEvent), config=m.ArbitraryTypesModel.model_config
+        ).validate_python({
             "payload": payload,
             "event": "bootstrap",
         })
         assert event["payload"] is payload
         assert event["event"] == "bootstrap"
         overrides = u.type_adapter(
-            TypeForm(p.SettingsOverridesMapping)
+            TypeForm(p.SettingsOverridesMapping),
+            config=m.ArbitraryTypesModel.model_config,
         ).validate_python({
             "payload": payload,
         })
@@ -98,7 +101,7 @@ class TestsFlextTypeAliasResolution:
 
     @staticmethod
     def test_declared_static_only_alias_stays_lazy() -> None:
-        """Test declared static only alias stays lazy."""
+        """Authenticated static-only aliases retain their explicit deferred contract."""
         alias = TestsFlextTypeAliasDeclarations.LegalTypes.Deferred
 
         with pytest.raises(NameError) as raised:

@@ -6,24 +6,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextSettings
-from flext_core.constants import c
-from flext_core.utilities import u
+from flext_core import FlextSettings, c, m
 
 
 class ExamplesFlextSettings(FlextSettings):
     """Application settings model for settings examples."""
 
-    api_timeout: float = u.Field(
+    api_timeout: float = m.Field(
         default_factory=lambda: c.DEFAULT_TIMEOUT_SECONDS,
         gt=0,
     )
 
-    service_name: str = u.Field(
+    service_name: str = m.Field(
         default_factory=lambda: "example-service",
         description="Service name for application",
     )
-    feature_enabled: bool = u.Field(
+    feature_enabled: bool = m.Field(
         default_factory=lambda: True,
         description="Feature enable flag",
     )

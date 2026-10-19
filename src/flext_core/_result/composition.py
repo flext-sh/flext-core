@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Self
 
 from pydantic import ValidationError
 
 from flext_core import c
-from flext_core._result import FlextResultTransforms, copy_result, ok_result
+from flext_core._result import FlextResultTransforms
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableSequence
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from flext_core import p, t
 
 
-class FlextResultComposition[T](FlextResultTransforms[T]):
+class FlextResultComposition[T](FlextResultTransforms[T], ABC):
     """Sequence, resource, and decorator composition helpers.
 
     Combines many results (``accumulate_errors``, ``traverse``), wraps
@@ -43,8 +44,6 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             The resulting ``p.Result[Sequence[ValueT]]``.
 
         """
-        from flext_core import r
-
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
         for result in results:
@@ -53,9 +52,9 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             else:
                 errors.append(cls.require_error(result))
         if errors:
-            return r[Sequence[ValueT]].fail("; ".join(errors))
+            return cls._failure("; ".join(errors))
         payload: Sequence[ValueT] = successes
-        return ok_result(payload)
+        return cls._create_success(payload)
 
     @classmethod
     def traverse[V, U](
@@ -80,27 +79,25 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             The resulting ``p.Result[Sequence[U]]``.
 
         """
-        from flext_core import r
-
         if fail_fast:
             results: MutableSequence[U] = []
             for item in items:
                 try:
                     result = func(item)
                 except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-                    return r[Sequence[U]].fail(str(exc), exception=exc)
+                    return cls._failure(str(exc), exception=exc)
                 if result.failure:
-                    return r[Sequence[U]].from_failure(result)
+                    return cls._copy_failure(result)
                 results.append(result.value)
             payload: Sequence[U] = results
-            return ok_result(payload)
+            return cls._create_success(payload)
         all_results: MutableSequence[p.Result[U]] = []
         for item in items:
             try:
-                all_results.append(copy_result(func(item)))
+                all_results.append(cls.from_result(func(item)))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                 all_results.append(
-                    r[U].fail(str(exc), exception=exc),
+                    cls._failure(str(exc), exception=exc),
                 )
         return cls.accumulate_errors(*all_results)
 
@@ -125,22 +122,20 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             The resulting ``p.Result[U]``.
 
         """
-        from flext_core import r
-
         try:
             resource = factory()
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-            return r[U].fail(str(exc), exception=exc)
+            return cls._failure(str(exc), exception=exc)
         result: p.Result[U]
         try:
-            result = copy_result(op(resource))
+            result = cls.from_result(op(resource))
         except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-            result = r[U].fail(str(exc), exception=exc)
+            result = cls._failure(str(exc), exception=exc)
         if cleanup:
             try:
                 cleanup(resource)
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-                return r[U].fail(str(exc), exception=exc)
+                return cls._failure(str(exc), exception=exc)
         return result
 
     @staticmethod
@@ -166,13 +161,12 @@ class FlextResultComposition[T](FlextResultTransforms[T]):
             The resulting ``Callable[PFunc, p.Result[U]]``.
 
         """
-        from flext_core import r
 
         def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
             try:
-                return ok_result(func(*args, **kwargs))
+                return cls._create_success(func(*args, **kwargs))
             except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
-                return r[U].fail(str(exc), exception=exc)
+                return cls._failure(str(exc), exception=exc)
 
         return wrapper
 

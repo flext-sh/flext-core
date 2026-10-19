@@ -37,6 +37,8 @@ def bound_names(node: ast.AST) -> tuple[str, ...]:
         )
     if isinstance(node, ast.Name) and isinstance(node.ctx, (ast.Store, ast.Del)):
         return (node.id,)
+    if isinstance(node, ast.arg):
+        return (node.arg,)
     if isinstance(node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)):
         return (node.name,)
     return ()
@@ -60,23 +62,33 @@ def scope_nodes(node: ast.AST) -> Iterator[ast.AST]:
 
 def declarations(
     node: ast.AST,
-    scopes: tuple[ast.Module | ast.ClassDef, ...] = (),
+    scopes: tuple[
+        ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef, ...
+    ] = (),
     path: tuple[str, ...] = (),
 ) -> Iterator[
-    tuple[tuple[str, ...], ast.TypeAlias, tuple[ast.Module | ast.ClassDef, ...]]
+    tuple[
+        tuple[str, ...],
+        ast.TypeAlias,
+        tuple[ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef, ...],
+    ]
 ]:
-    """Yield every type-alias declaration with its scope chain and class path.
+    """Yield every type-alias declaration with its lexical scopes and qualified path.
 
     Yields:
         Each ``(path, declaration, scopes)`` triple.
 
     """
-    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda)):
+    if isinstance(node, ast.Lambda):
         return
-    if isinstance(node, (ast.Module, ast.ClassDef)):
+    if isinstance(
+        node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+    ):
         scopes = (*scopes, node)
     if isinstance(node, ast.ClassDef):
         path = (*path, node.name)
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+        path = (*path, node.name, "<locals>")
     if isinstance(node, ast.TypeAlias):
         yield (*path, node.name.id), node, scopes
         return

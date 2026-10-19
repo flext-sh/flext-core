@@ -18,26 +18,26 @@ class FlextMixins(FlextModelsBase.ArbitraryTypesModel):
     """Own service runtime inputs and state without operational behavior."""
 
     settings_type: t.SkipJsonSchema[p.SettingsType | None] = FlextModelsPydantic.Field(
-        None,
+        default=None,
         validate_default=True,
         exclude=True,
         description="FlextSettings class used to initialize the service runtime.",
     )
     runtime_settings: t.Port[p.Settings | None] = FlextModelsPydantic.Field(
-        None,
+        default=None,
         exclude=True,
         description="Pre-built settings instance used directly for the runtime.",
     )
     settings_overrides: t.SkipJsonSchema[t.ScalarMapping | None] = (
         FlextModelsPydantic.Field(
-            None,
+            default=None,
             validate_default=True,
             exclude=True,
             description="Settings overrides applied at instantiation.",
         )
     )
     initial_context: t.Port[p.Context | None] = FlextModelsPydantic.Field(
-        None,
+        default=None,
         exclude=True,
         description="Initial context for the service scope.",
     )

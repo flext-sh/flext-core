@@ -200,7 +200,7 @@ class FlextDispatcher:
     @staticmethod
     def _normalize_binding(
         binding: p.HandlerRegistration,
-        accepted: tuple[type, ...],
+        accepted: tuple[t.TypeHintSpecifier, ...],
     ) -> p.Result[p.HandlerRegistration]:
         """Resolve declarations without publishing an incomplete route.
 
@@ -248,7 +248,7 @@ class FlextDispatcher:
 
     @staticmethod
     def _prepare_binding(
-        binding: p.HandlerRegistration,
+        binding: p.AttributeProbe,
         index: int,
     ) -> p.Result[tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]]:
         """Prepare one validated binding before acquiring the publication lock.

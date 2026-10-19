@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import override
 
-from flext_core import m, u
+from flext_core import m
 
 
 class ExamplesFlextModelsEx05:
@@ -22,11 +22,11 @@ class ExamplesFlextModelsEx05:
         INACTIVE = "inactive"
 
     class UserModel(m.Value):
-        name: str = u.Field(description="User display name")
-        status: ExamplesFlextModelsEx05.StatusEnum = u.Field(
+        name: str = m.Field(description="User display name")
+        status: ExamplesFlextModelsEx05.StatusEnum = m.Field(
             description="User account status",
         )
-        age: int = u.Field(description="User age in years")
+        age: int = m.Field(description="User age in years")
 
         @m.field_validator("status", mode="before")
         @classmethod
@@ -42,7 +42,7 @@ class ExamplesFlextModelsEx05:
         """Marker model that is not a valid handler."""
 
     class HandlerLike(m.Value):
-        data: m.ConfigMap = u.Field(
+        data: m.ConfigMap = m.Field(
             default_factory=lambda: m.ConfigMap(root={}),
             description="Handler payload map",
         )

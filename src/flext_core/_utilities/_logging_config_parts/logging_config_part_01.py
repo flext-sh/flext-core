@@ -11,7 +11,7 @@ import logging
 import queue
 import sys
 import threading
-from concurrent.futures import Future
+from concurrent.futures import Future, ThreadPoolExecutor
 from types import TracebackType
 from typing import TYPE_CHECKING, ClassVar, override
 
@@ -46,7 +46,7 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def resolve_logging_exception_info(
-        value: p.LoggingEventValue | None,
+        value: p.LoggingEventValue | tuple[p.AttributeProbe, ...] | None,
     ) -> t.LoggingExceptionInfo | None:
         """Resolve native exception inputs once, retaining a saved traceback.
 
@@ -63,12 +63,11 @@ class FlextUtilitiesLoggingConfig:
             return type(value), value, value.__traceback__
         if value is None or value is False:
             return None
-        if not isinstance(value, tuple):
+        if not isinstance(value, tuple) or len(value) != len(sys.exc_info()):
             msg = "exc_info must be an exception, saved tuple, boolean or None"
             raise TypeError(msg)
         if (
-            len(value) == len(sys.exc_info())
-            and isinstance(value[0], type)
+            isinstance(value[0], type)
             and issubclass(value[0], BaseException)
             and isinstance(value[1], BaseException)
             and (value[2] is None or isinstance(value[2], TracebackType))
@@ -195,41 +194,47 @@ class FlextUtilitiesLoggingConfig:
 
         def _worker(self) -> None:
             """Transfer failures to awaiting callers without replacing them."""
-            while True:
-                try:
-                    job = self.queue.get(
-                        timeout=c.LOG_WORKER_POLL_SECONDS,
-                    )
-                except queue.Empty:
+            with ThreadPoolExecutor(max_workers=1) as writer:
+                while True:
+                    try:
+                        job = self.queue.get(
+                            timeout=c.LOG_WORKER_POLL_SECONDS,
+                        )
+                    except queue.Empty:
+                        with self._admission:
+                            if self.stop_event.is_set() and self.queue.empty():
+                                break
+                        continue
                     with self._admission:
-                        if self.stop_event.is_set() and self.queue.empty():
-                            break
-                    continue
-                with self._admission:
-                    failure = self._failure
-                    self._admission.notify_all()
-                if failure is not None:
-                    job.completion.set_exception(failure)
-                    self.queue.task_done()
-                    continue
-                try:
-                    written = (
-                        self._target_stream.write(job.text)
-                        if job.text is not None
-                        else 0
-                    )
-                    self._target_stream.flush()
-                except BaseException as exc:
-                    with self._admission:
-                        self._failure = exc
-                        self.stop_event.set()
+                        failure = self._failure
                         self._admission.notify_all()
-                    atexit.unregister(self.shutdown)
-                    job.completion.set_exception(exc)
-                else:
-                    job.completion.set_result(written)
-                finally:
+                    if failure is not None:
+                        job.completion.set_exception(failure)
+                        self.queue.task_done()
+                        continue
+                    operation = writer.submit(self._write_job, job)
+                    failure = operation.exception()
+                    if failure is not None:
+                        with self._admission:
+                            self._failure = failure
+                            self.stop_event.set()
+                            self._admission.notify_all()
+                        atexit.unregister(self.shutdown)
+                        job.completion.set_exception(failure)
+                    else:
+                        job.completion.set_result(operation.result())
                     self.queue.task_done()
+
+        def _write_job(self, job: p.AsyncLogJob) -> int:
+            """Let a native Future retain every sink failure for the caller.
+
+            Returns:
+                The number of characters written before flushing.
+
+            """
+            written = self._target_stream.write(job.text) if job.text is not None else 0
+            self._target_stream.flush()
+            return written
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
@@ -264,21 +269,24 @@ class FlextUtilitiesLoggingConfig:
             The selected output factory.
 
         """
-        owner = FlextUtilitiesLoggingConfig
         if (
             not async_logging or logger_factory is not None
-        ) and owner._async_writer is not None:
-            owner._async_writer.shutdown()
-            owner._async_writer = None
+        ) and FlextUtilitiesLoggingConfig._async_writer is not None:
+            FlextUtilitiesLoggingConfig._async_writer.shutdown()
+            FlextUtilitiesLoggingConfig._async_writer = None
         if logger_factory is not None:
             return logger_factory
         if not async_logging:
             return structlog.PrintLoggerFactory(
                 file=FlextUtilitiesLoggingStream.TextStream(sys.stderr)
             )
-        if owner._async_writer is None:
-            owner._async_writer = owner._AsyncLogWriter(sys.stderr)
-        return structlog.PrintLoggerFactory(file=owner._async_writer)
+        if FlextUtilitiesLoggingConfig._async_writer is None:
+            FlextUtilitiesLoggingConfig._async_writer = (
+                FlextUtilitiesLoggingConfig._AsyncLogWriter(sys.stderr)
+            )
+        return structlog.PrintLoggerFactory(
+            file=FlextUtilitiesLoggingConfig._async_writer
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingConfig"]

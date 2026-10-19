@@ -98,7 +98,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
                     " and page size for query results."
                 ),
                 title="Pagination",
-                examples=[{"page": 1, "size": 50}],
+                examples=[{"page": c.FIRST_PAGE_INDEX, "size": c.DEFAULT_PAGE_SIZE}],
             ),
         ] = Field(default_factory=flextmodelscqrs_part_01.FlextModelsCqrs.Pagination)
         query_id: Annotated[

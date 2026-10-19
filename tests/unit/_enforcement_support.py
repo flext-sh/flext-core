@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 
 _INVALID_ANNOTATION_SOURCE = """\
 from collections.abc import Mapping, Sequence
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from flext_core import m
 
@@ -39,6 +39,15 @@ class InvalidTypes:
     type ObjectAlias = object
     type NestedObjectAlias = list[object]
     type CleanAlias = str | int
+
+
+def shadowed_guard_owner():
+    class Host:
+        TYPE_CHECKING = False
+        if TYPE_CHECKING:
+            from pathlib import PurePath as GuardedPath
+        type LazyAlias = GuardedPath | str
+    return Host
 
 
 def model_fixture():

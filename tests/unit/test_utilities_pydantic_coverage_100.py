@@ -43,9 +43,9 @@ class TestsFlextUtilitiesPydantic:
     @staticmethod
     def test_unset_factories_expose_native_metadata() -> None:
         """An omitted value produces metadata, not a contextual field value."""
-        metadata = u.Field(description="Native field metadata")
+        metadata = m.Field(description="Native field metadata")
         tm.that(metadata.annotation is None, eq=True)
-        private = u.PrivateAttr()
+        private = m.PrivateAttr()
         tm.that(isinstance(private, p.UnsetPrivateAttribute), eq=True)
         undefined = private.get_default()
         tm.that(private.get_default(call_default_factory=True) is undefined, eq=True)
@@ -55,12 +55,12 @@ class TestsFlextUtilitiesPydantic:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(str_strip_whitespace=True)
 
-        label: str = u.Field(min_length=1)
+        label: str = m.Field(min_length=1)
         echo: str = m.Field(default_factory=_validated_label)
         model_values: t.MutableStrMapping = m.Field(
             default_factory=u.empty(TypeForm(t.MutableStrMapping)),
         )
-        utility_values: t.MutableStrMapping = u.Field(
+        utility_values: t.MutableStrMapping = m.Field(
             default_factory=u.empty(TypeForm(t.MutableStrMapping)),
         )
 
@@ -68,7 +68,7 @@ class TestsFlextUtilitiesPydantic:
         """Native required declarations remain typed through both facades."""
 
         model_label: str = m.Field(min_length=1)
-        utility_label: str = u.Field(min_length=1)
+        utility_label: str = m.Field(min_length=1)
 
     @staticmethod
     def test_required_fields_preserve_annotations_and_validation() -> None:
@@ -115,8 +115,8 @@ class TestsFlextUtilitiesPydantic:
         ] = m.Field(description="Model collection with an annotation-owned factory.")
         utility_values: Annotated[
             t.MutableStrMapping,
-            u.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
-        ] = u.Field(description="Utility collection with an annotation-owned factory.")
+            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+        ] = m.Field(description="Utility collection with an annotation-owned factory.")
 
     @staticmethod
     def test_assignment_metadata_preserves_annotated_factories() -> None:
@@ -145,8 +145,8 @@ class TestsFlextUtilitiesPydantic:
         ] = m.Field(default_factory=None)
         utility_values: Annotated[
             t.MutableStrMapping,
-            u.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
-        ] = u.Field(default_factory=None)
+            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+        ] = m.Field(default_factory=None)
 
     @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
     @staticmethod
@@ -198,11 +198,11 @@ class TestsFlextUtilitiesPydantic:
         _model_values: list[str] = FlextModels.PrivateAttr(
             default_factory=list[str],
         )
-        _utility_values: list[str] = u.PrivateAttr(
+        _utility_values: list[str] = m.PrivateAttr(
             default_factory=u.empty(TypeForm(list[str])),
         )
         _label_copy: str = FlextModels.PrivateAttr(default_factory=_validated_label)
-        _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
+        _reader: Callable[[str], str] = m.PrivateAttr(default_factory=_input_reader)
 
         def record_model(self, value: str) -> None:
             """Append to the core-model private history."""

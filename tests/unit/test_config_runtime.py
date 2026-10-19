@@ -45,7 +45,7 @@ class TestsFlextCoreConfigSettingsCanonical:
         customized = settings.clone(debug=not default_debug)
         facade = FlextCore(runtime_settings=customized)
 
-        tm.that(facade.settings.debug, eq=customized.debug)
+        tm.that(facade.settings.model_dump(), eq=customized.model_dump())
         tm.that(settings.debug, eq=default_debug)
         tm.that(config.model_dump(), eq=configuration)
         tm.rejects_assignment(config, "anything", "mutated", expected=m.ValidationError)

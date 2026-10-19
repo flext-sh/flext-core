@@ -17,11 +17,11 @@ class ExamplesFlextEchoService(s[str]):
 
     payload: Annotated[
         m.Examples.Payload,
-        u.Field(description="Payload processed by the example service"),
+        m.Field(description="Payload processed by the example service"),
     ]
     rule_error: Annotated[
         str,
-        u.Field(
+        m.Field(
             description="Optional validation error returned by the example service",
         ),
     ] = ""

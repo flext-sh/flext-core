@@ -40,8 +40,9 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_03.FlextProtocolsCont
         | None
     )
 
+    # The generic guard already builds registration values from these leaves.
     type GuardInput = t.GuardInput[
-        FlextProtocolsContainer.RegisterableService
+        FlextProtocolsContainer.RegistryCollaborator
         | FlextProtocolsContainer.Container
         | FlextProtocolsHandler.Handle
         | FlextProtocolsHandler.Middleware

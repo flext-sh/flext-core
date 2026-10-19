@@ -65,7 +65,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
             if isinstance(correlation_id, str) and correlation_id:
                 resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
         resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
-        self._native = structlog.wrap_logger(
+        self._native: p.NativeLoggingWrapper = structlog.wrap_logger(
             None,
             processors=None,
             wrapper_class=None,

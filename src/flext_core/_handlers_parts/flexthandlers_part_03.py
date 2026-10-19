@@ -26,7 +26,10 @@ class FlextHandlers[MessageT_contra, ResultT](
     flexthandlers_part_02.FlextHandlers[MessageT_contra, ResultT],
 ):
     @staticmethod
-    def handler[**PHandler, TResult](
+    def handler[
+        **PHandler,
+        TResult: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
+    ](
         command: type,
         *,
         priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
@@ -37,6 +40,8 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         Stores handler configuration as metadata on the decorated method,
         enabling auto-discovery by FlextService and handler registries.
+        The result bound describes the synchronous executor's supported domain;
+        metadata attachment does not validate a callable's signature or output.
 
         Args:
             command: The command type this handler processes

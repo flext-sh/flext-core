@@ -73,6 +73,7 @@ class FlextConstantsBase:
     HTTP_STATUS_MIN: ClassVar[int] = 100
     HTTP_STATUS_MAX: ClassVar[int] = 599
 
+    FIRST_PAGE_INDEX: ClassVar[int] = 1
     DEFAULT_PAGE_SIZE: ClassVar[int] = 10
     MAX_PAGE_SIZE: ClassVar[int] = 1000
     MIN_PAGE_SIZE: ClassVar[int] = 1

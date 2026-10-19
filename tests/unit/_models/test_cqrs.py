@@ -176,18 +176,14 @@ class TestsFlextCoreCqrs:
 
     @pytest.mark.parametrize(
         "invalid_pagination",
-        [{"page": 0, "size": -5}, {"size": 10_000}, {"page": -1}],
+        [{"page": 0, "size": -5}, {"size": c.MAX_PAGE_SIZE + 1}, {"page": -1}],
     )
     @staticmethod
-    def test_query_falls_back_to_default_pagination_on_invalid_input(
+    def test_query_rejects_invalid_pagination(
         invalid_pagination: t.MappingKV[str, t.Scalar],
     ) -> None:
-        # Act
-        query = m.Query.model_validate({"pagination": invalid_pagination})
-
-        # Assert
-        assert query.pagination.page == 1
-        assert query.pagination.size == 10
+        with pytest.raises(c.ValidationError):
+            m.Query.model_validate({"pagination": invalid_pagination})
 
     @staticmethod
     def test_query_subclass_extends_fields_and_inherits_contract() -> None:

@@ -8,13 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import t, u
+from typing_extensions import TypeForm
+
+from flext_core import p, t, u
 from flext_core._handlers_parts import flexthandlers_part_06
 
 if TYPE_CHECKING:
     from types import ModuleType
-
-    from flext_core import p
 
 
 class FlextHandlers[MessageT_contra, ResultT](
@@ -82,11 +82,13 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             """
             handlers: t.MutableSequenceOf[tuple[str, p.DecoratorConfig]] = []
+            callable_adapter = u.type_adapter(TypeForm(p.ResolvedHandlerCallable))
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
-                if callable(method):
+                if callable_adapter.validator.isinstance_python(method):
+                    candidate = callable_adapter.validate_python(method)
                     metadata = u.handler_metadata(
-                        method, name=f"{target_class.__qualname__}.{name}"
+                        candidate, name=f"{target_class.__qualname__}.{name}"
                     )
                     if metadata is not None:
                         handlers.append((name, metadata))
@@ -100,6 +102,8 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             Introspects the module to find all functions with handler configuration
             metadata, returning them sorted by priority for consistent ordering.
+            SDK admission preserves callable identity; it checks callability only,
+            not the signature or return domain checked at execution.
 
             Args:
                 module: Module to scan for handler decorators
@@ -117,13 +121,19 @@ class FlextHandlers[MessageT_contra, ResultT](
             handlers: list[
                 tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]
             ] = []
+            callable_adapter = u.type_adapter(TypeForm(p.ResolvedHandlerCallable))
             for name, func in vars(module).items():
-                if name.startswith("_") or not callable(func):
+                if name.startswith(
+                    "_"
+                ) or not callable_adapter.validator.isinstance_python(func):
                     continue
-                settings = u.handler_metadata(func, name=f"{module.__name__}.{name}")
+                candidate = callable_adapter.validate_python(func)
+                settings = u.handler_metadata(
+                    candidate, name=f"{module.__name__}.{name}"
+                )
                 if settings is None:
                     continue
-                handlers.append((name, func, settings))
+                handlers.append((name, candidate, settings))
             return sorted(handlers, key=lambda entry: (-entry[2].priority, entry[0]))
 
 

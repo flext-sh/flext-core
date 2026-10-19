@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import m, r, tm, u
+from tests import c, m, r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
@@ -211,19 +211,32 @@ class TestsFlextResultTraverseResource:
     @staticmethod
     def test_error_data_property_accepts_model_dump_carrier() -> None:
         """Result error_data accepts protocol carriers through runtime normalization."""
+        payload: t.JsonDict = {"alpha": 1, "beta": "two"}
 
         class ModelDumpCarrier:
             @staticmethod
             def model_dump(
                 *,
                 mode: str = "python",
+                exclude: set[str] | None = None,
             ) -> t.MappingKV[str, t.JsonPayload | None]:
                 _ = mode
-                return {"alpha": 1, "beta": "two"}
+                return {
+                    key: value
+                    for key, value in payload.items()
+                    if exclude is None or key not in exclude
+                }
 
-        result: p.Result[str] = r[str].fail("error", error_data=ModelDumpCarrier())
+        carrier: p.HasModelDump = ModelDumpCarrier()
+        tm.that(carrier.model_dump(), eq=payload)
+        tm.that(carrier.model_dump(exclude=set[str]()), eq=payload)
+        tm.that(carrier.model_dump(exclude={"alpha"}), eq={"beta": "two"})
+        tm.that(carrier.model_dump(exclude={"alpha", "beta"}), empty=True)
+        tm.that(carrier.model_dump(exclude={"absent"}), eq=payload)
+        result: p.Result[str] = r[str].fail("error", error_data=carrier)
 
-        tm.that(result.error_data, eq={"alpha": 1, "beta": "two"})
+        expected = u.redact_metadata(payload, keys=tuple(c.SENSITIVE_ERROR_DATA_KEYS))
+        tm.that(result.error_data, eq=expected or None)
 
     @staticmethod
     def test_unwrap_failure() -> None:

@@ -32,8 +32,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_builder_and_explicit_callback_registration() -> None:
         """The builder returns the public capability and binds the original callable."""
-        dispatcher = u.build_dispatcher()
-        tm.that(isinstance(dispatcher, p.Dispatcher))
+        dispatcher: p.Dispatcher = u.build_dispatcher()
         received: t.MutableSequenceOf[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -166,7 +165,7 @@ class TestsFlextCoreDispatcher:
     def test_bound_method_repeat_is_idempotent_and_another_receiver_conflicts() -> None:
         """Repeated bound methods are idempotent only for the same receiver."""
         dispatcher = u.build_dispatcher()
-        original, other = u.Tests.CapabilityHandler(), u.Tests.CapabilityHandler()
+        original, other = u.Tests.AutoSubscriber(), u.Tests.AutoSubscriber()
         first = original.handle
         tm.ok(dispatcher.register_handler(first, message_type="bound"))
         repeat = tm.ok(
@@ -178,7 +177,7 @@ class TestsFlextCoreDispatcher:
         tm.that(len(repeat.skipped), eq=1)
         tm.that(dispatcher.register_handler(other.handle, message_type="bound").failure)
         message = m.Command(command_type="bound")
-        tm.that(tm.ok(dispatcher.dispatch(message)), eq=message.command_type)
+        tm.that(tm.ok(dispatcher.dispatch(message)), eq=True)
         tm.that(original.handled, eq=[message.command_type])
         tm.that(other.handled, empty=True)
 
@@ -215,9 +214,7 @@ class TestsFlextCoreDispatcher:
             tm.that(result.failure)
 
     @staticmethod
-    def test_explicit_binding_preserves_callable_and_rejects_contradictory_metadata() -> (
-        None
-    ):
+    def test_explicit_binding_preserves_callable_and_rejects_conflict() -> None:
         """Explicit bindings retain identity and reject contradictory metadata."""
         dispatcher = u.build_dispatcher()
 

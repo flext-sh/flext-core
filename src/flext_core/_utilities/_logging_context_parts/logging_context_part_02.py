@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pydantic_core import to_jsonable_python
 from typing_extensions import TypeForm
 
 from flext_core import FlextRuntime, p, t
@@ -29,6 +30,10 @@ class FlextUtilitiesLoggingContext(
         """
         if isinstance(value, BaseException):
             return str(value)
+        if isinstance(value, tuple):
+            return FlextUtilitiesBase.type_adapter(
+                TypeForm(t.JsonValue)
+            ).validate_python(to_jsonable_python(value), strict=True)
         if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
             return FlextUtilitiesBase.type_adapter(
                 TypeForm(t.JsonValue)

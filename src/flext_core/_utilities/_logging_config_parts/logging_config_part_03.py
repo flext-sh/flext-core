@@ -38,20 +38,16 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         _ = trace
         return c.LogLevel.DEBUG if debug and not log_level_explicit else log_level
 
-    @staticmethod
-    def logging_settings() -> p.LoggingSettings:
+    @classmethod
+    def logging_settings(cls) -> p.LoggingSettings:
         """Return the elected application provider, or the actual Core settings."""
-        selected = (
-            logging_config_part_01.FlextUtilitiesLoggingConfig.selected_logging_settings()
-        )
+        selected = cls.selected_logging_settings()
         return selected if selected is not None else FlextSettings.fetch_global()
 
-    @staticmethod
-    def logging_options() -> p.StructlogOptions:
+    @classmethod
+    def logging_options(cls) -> p.StructlogOptions:
         """Return the active composition for scoped lifecycle restoration."""
-        selected = (
-            logging_config_part_01.FlextUtilitiesLoggingConfig.selected_logging_options()
-        )
+        selected = cls.selected_logging_options()
         return selected if selected is not None else m.StructlogOptions()
 
     @classmethod
@@ -86,7 +82,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         selected = current.clone(**overrides)
         level = cls.resolve_effective_log_level(
             log_level=c.LogLevel(
-                str(logging.getLevelName(cls.level_number(selected.log_level)))
+                logging.getLevelName(cls.level_number(selected.log_level))
             ),
             debug=selected.debug,
             trace=selected.trace,
@@ -156,7 +152,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         elif options.log_level is not None:
             selected = cls.resolve_logging_settings(
                 runtime_settings=selected,
-                log_level=str(logging.getLevelName(options.log_level)),
+                log_level=logging.getLevelName(options.log_level),
             )
         native_handlers = cls._validated_native_handlers(options)
         threshold = cls.level_number(selected.log_level)

@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, MutableSequence
-from typing import cast, get_args, get_origin
+from collections.abc import Mapping, MutableSequence
+from typing import get_args, get_origin
 
 from pydantic import BaseModel
 
@@ -101,10 +101,7 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
             return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
-        handle_method = cast(
-            "Callable[..., FlextTypesServices.ModuleExport]",
-            handle_method_raw,
-        )
+        handle_method = handle_method_raw
         signature_result = cls._get_method_signature(handle_method)
         if signature_result.failure:
             return FlextResult[FlextTypingBase.TypeHintSpecifier].from_failure(

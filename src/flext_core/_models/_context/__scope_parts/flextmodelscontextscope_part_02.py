@@ -8,14 +8,17 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 from types import MappingProxyType
+from typing import Annotated
 
 from flext_core import t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_01
+from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
+    FlextModelsContextScope as FlextModelsContextScopeBase,
+)
 from flext_core._protocols import FlextProtocolsContainer
 
 
-class FlextModelsContextScope(flextmodelscontextscope_part_01.FlextModelsContextScope):
+class FlextModelsContextScope(FlextModelsContextScopeBase):
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Mutable context metadata, hooks, statistics and scope-variable registry."""
 
@@ -30,9 +33,13 @@ class FlextModelsContextScope(flextmodelscontextscope_part_01.FlextModelsContext
             validate_default=True,
             description="Lifecycle hooks keyed by event name",
         )
-        statistics: flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics = FlextModelsPydantic.Field(
-            default_factory=flextmodelscontextscope_part_01.FlextModelsContextScope.ContextStatistics,
-            description="Operation counters for this context instance",
+        statistics: Annotated[
+            FlextModelsContextScopeBase.ContextStatistics,
+            FlextModelsPydantic.Field(
+                description="Operation counters for this context instance"
+            ),
+        ] = FlextModelsPydantic.Field(
+            default_factory=FlextModelsContextScopeBase.ContextStatistics,
         )
         active: bool = FlextModelsPydantic.Field(
             default=True, description="Whether the context accepts operations"

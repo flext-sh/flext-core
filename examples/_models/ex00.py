@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from examples._models.errors import ExamplesFlextModelsErrors
-from flext_core import c, m, p, r, t, u
+from flext_core import c, m, p, r, t
 
 _err = ExamplesFlextModelsErrors
 
@@ -20,9 +20,9 @@ class ExamplesFlextModelsEx00:
     class UserProfile(m.Entity):
         """User profile transport model."""
 
-        name: Annotated[str, u.Field(min_length=1, description="User display name")]
-        email: Annotated[str, u.Field(min_length=1, description="User email address")]
-        status: Annotated[c.Status, u.Field(description="User account status")] = (
+        name: Annotated[str, m.Field(min_length=1, description="User display name")]
+        email: Annotated[str, m.Field(min_length=1, description="User email address")]
+        status: Annotated[c.Status, m.Field(description="User account status")] = (
             c.Status.ACTIVE
         )
 
@@ -41,8 +41,8 @@ class ExamplesFlextModelsEx00:
     class UserInput(m.Value):
         """Raw user input model."""
 
-        name: Annotated[str, u.Field(min_length=1, description="User display name")]
-        email: Annotated[str, u.Field(min_length=1, description="User email address")]
+        name: Annotated[str, m.Field(min_length=1, description="User display name")]
+        email: Annotated[str, m.Field(min_length=1, description="User email address")]
 
         @m.field_validator("name", "email", mode="before")
         @classmethod

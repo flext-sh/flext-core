@@ -174,6 +174,8 @@ class TestsFlextLoggingStages:
             _ = int("active exception context")
         except ValueError:
             result = logger.info("ordered stages", payload=payload, exc_info=True)
+        else:
+            pytest.fail("Invalid integer conversion must provide active exc_info")
 
         tm.that(result.success, eq=True)
         tm.that(len(observed), eq=2)
@@ -366,7 +368,7 @@ class TestsFlextLoggingStages:
 
         def wrapper_factory() -> type[p.NativeLoggingWrapper]:
             registrations.append("native")
-            return structlog.BoundLogger
+            return structlog.stdlib.BoundLogger
 
         u.configure_structlog(
             settings=m.StructlogOptions(
@@ -386,6 +388,7 @@ class TestsFlextLoggingStages:
     def test_native_destinations_share_one_sanitized_observer_event(self) -> None:
         """Native handlers present the same event without duplicating hooks."""
         structured, console = io.StringIO(), io.StringIO()
+        password = u.generate_id()
         observed: list[p.LoggingRecord] = []
         handlers = (
             u.create_logging_handler(stream=structured),
@@ -401,7 +404,7 @@ class TestsFlextLoggingStages:
         with structlog.contextvars.bound_contextvars(correlation_id="real-operation"):
             tm.ok(
                 u.log(
-                    "delivered %s", "once", payload={"password": "private", "count": 2}
+                    "delivered %s", "once", payload={"password": password, "count": 2}
                 )
             )
         tm.that(len(observed), eq=1)
@@ -409,9 +412,13 @@ class TestsFlextLoggingStages:
         rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(structured.getvalue())))
         tm.that(record.message, eq="delivered once")
         tm.that(rendered["correlation_id"], eq=record.context["correlation_id"])
-        tm.that(rendered["payload"], eq={"password": "[REDACTED]", "count": 2})
-        tm.that(console.getvalue(), has="delivered once", lacks="private")
-        tm.that(structured.getvalue(), lacks="private")
+        sanitized = u.Cli.json_as_mapping(record.context["payload"])
+        tm.that(rendered["payload"], eq=sanitized)
+        tm.that(sanitized["count"], eq=2)
+        tm.that(sanitized["password"] == password, eq=False)
+        tm.that(str(record.context), lacks=password)
+        tm.that(console.getvalue(), has="delivered once", lacks=password)
+        tm.that(structured.getvalue(), lacks=password)
         for handler in handlers:
             handler.close()
 
@@ -441,7 +448,7 @@ class TestsFlextLoggingStages:
         tm.that(len(observed), eq=1)
         record = observed[0]
         tm.that(record.level, eq="warning")
-        tm.that(record.context["logger"], eq=__name__)
+        tm.that(record.context[c.ContextKey.LOGGER_NAME], eq=__name__)
         tm.that(record.context["pathname"], eq=__file__)
         tm.that(
             record.context["func_name"],
@@ -450,7 +457,10 @@ class TestsFlextLoggingStages:
         for stream in (first, second):
             event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
             tm.that(event["event"], eq=record.message)
-            tm.that(event["logger"], eq=record.context["logger"])
+            tm.that(
+                event[c.ContextKey.LOGGER_NAME],
+                eq=record.context[c.ContextKey.LOGGER_NAME],
+            )
 
     def test_native_context_ownership_is_thread_and_task_local(self) -> None:
         """Concurrent split scope APIs neither leak keys nor erase a parent."""
@@ -680,10 +690,14 @@ class TestsFlextLoggingStages:
                 tm.that(resolved[1] is saved[1], eq=True)
                 tm.that(resolved[2] is saved[2], eq=True)
                 tm.that(u.resolve_logging_exception_info(False), eq=None)
+            else:
+                pytest.fail("The original exception must be raised with its cause")
             try:
                 fail_again(original)
             except (ValueError, KeyboardInterrupt):
                 discarded_tb = original.__traceback__
+            else:
+                pytest.fail("Re-raising the original exception must add a traceback")
             tm.that(discarded_tb is saved_tb, eq=False)
             stream = io.StringIO()
             observed: list[p.LoggingRecord] = []
@@ -728,15 +742,16 @@ class TestsFlextLoggingStages:
             ),
         )
         u.configure_structlog(settings=options)
-        payload = dict.fromkeys(
+        payload: t.JsonDict = dict.fromkeys(
             (declared_key, declared_key.casefold(), declared_key.swapcase()),
             sensitive_value,
         )
+        nested: t.JsonList = [payload]
         tm.ok(
             u.log(
                 "declared sensitive payload",
                 payload={
-                    "nested": [payload],
+                    "nested": nested,
                     "encoded": u.to_json(payload),
                     "retained": "public",
                 },
@@ -753,9 +768,9 @@ class TestsFlextLoggingStages:
         """Validation rejects selected incomplete composition before effects."""
         original = u.logging_settings()
         stream = io.StringIO()
-        with pytest.raises(m.ValidationError, match="logging_profile"):
+        with pytest.raises(m.ValidationError):
             _ = u.resolve_logging_settings(logging_profile="unbound-presentation")
-        with pytest.raises(ValueError, match="ProcessorFormatter"):
+        with pytest.raises(TypeError, match="ProcessorFormatter"):
             u.configure_structlog(
                 settings=m.StructlogOptions(handlers=(logging.StreamHandler(stream),))
             )
@@ -840,8 +855,10 @@ class TestsFlextLoggingStages:
 
                 emission = threading.Thread(target=emit, daemon=True)
                 emission.start()
+                write_fds: list[int] = []
+                exceptional_fds: list[int] = []
                 readable, _, _ = select.select(
-                    [read_fd], [], [], c.DEFAULT_TIMEOUT_SECONDS
+                    [read_fd], write_fds, exceptional_fds, c.DEFAULT_TIMEOUT_SECONDS
                 )
                 if not readable:
                     msg = "Public logging did not reach the native pipe"

@@ -24,14 +24,7 @@ class FlextProtocolsLogging(flextprotocolslogging_part_01.FlextProtocolsLogging)
         """Metadata protocol."""
 
         @property
-        def attributes(
-            self,
-        ) -> t.MappingKV[
-            str,
-            t.Scalar
-            | t.MappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]]
-            | t.SequenceOf[t.Scalar],
-        ]:
+        def attributes(self) -> t.JsonMapping:
             """Metadata attributes."""
             ...
 
