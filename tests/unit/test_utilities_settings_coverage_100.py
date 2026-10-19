@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Never
 
 import pytest
 
 from flext_core import FlextContainer, FlextSettings
-from tests import c, m, p, tm, u
+from tests import c, m, tm, u
 
 
 class TestsFlextCoreUtilitiesSettings:
@@ -118,12 +119,10 @@ class TestsFlextCoreUtilitiesSettings:
         expected_summary = m.ConfigMap(
             root={
                 "env_file": expected_env_file,
-                "log_level": str(
-                    u.resolve_effective_log_level(
-                        trace=False,
-                        debug=True,
-                        log_level=c.LogLevel.WARNING,
-                    ),
+                "log_level": u.resolve_effective_log_level(
+                    trace=False,
+                    debug=True,
+                    log_level=c.LogLevel.WARNING,
                 ),
             }
         )
@@ -136,19 +135,18 @@ class TestsFlextCoreUtilitiesSettings:
             "settings_summary",
             build_settings_summary,
         )
-        resolved_summary = container.resolve("settings_summary")
+        resolved_summary = container.resolve("settings_summary", type_cls=m.ConfigMap)
 
         tm.ok(success_result)
         tm.that(success_result.value, eq=True)
         tm.ok(resolved_summary)
         summary = resolved_summary.value
         tm.that(summary is expected_summary, eq=True)
-        assert isinstance(summary, p.HasModelDump)
         tm.that(
-            summary.model_dump(mode="json"),
+            summary.root,
             eq={
                 "env_file": expected_env_file,
-                "log_level": str(c.LogLevel.WARNING),
+                "log_level": c.LogLevel.WARNING,
             },
         )
 
@@ -159,7 +157,7 @@ class TestsFlextCoreUtilitiesSettings:
         container.clear()
         error_message = "factory exploded"
 
-        def failing_factory() -> p.ServiceValue:
+        def failing_factory() -> Never:
             raise RuntimeError(error_message)
 
         failure_result = u.register_factory(

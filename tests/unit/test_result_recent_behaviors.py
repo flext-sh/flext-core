@@ -83,11 +83,14 @@ class TestsFlextCoreResultRecentBehaviors:
     @staticmethod
     def test_flow_through_threads_value_through_all_steps() -> None:
         """When every step succeeds, ``flow_through`` returns the final value."""
-        result = (
-            r[int]
-            .ok(1)
-            .flow_through(lambda v: r[int].ok(v + 1), lambda v: r[int].ok(v * 10))
-        )
+
+        def increment(value: int) -> p.Result[int]:
+            return r[int].ok(value + 1)
+
+        def multiply(value: int) -> p.Result[int]:
+            return r[int].ok(value * 10)
+
+        result = r[int].ok(1).flow_through(increment, multiply)
 
         assert result.success is True
         assert result.value == 20

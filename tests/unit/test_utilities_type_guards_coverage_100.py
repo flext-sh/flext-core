@@ -10,8 +10,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import pytest
-
 from tests import m, p, tm, u
 
 if TYPE_CHECKING:
@@ -103,15 +101,12 @@ class TestsFlextCoreUtilitiesTypeGuards:
             return_value=True,
         )
 
-        if not isinstance(failed_guard_result, p.Result):
-            pytest.fail("Guard failure did not return the public result contract")
-        failed_guard = failed_guard_result
-
-        tm.that(guarded_payload, eq=payload)
-        tm.that(fallback_tags, eq=["cli"])
-        tm.that(guarded_attempt, eq=2)
-        tm.fail(failed_guard)
+        assert guarded_payload == payload
+        assert fallback_tags == ["cli"]
+        assert guarded_attempt == 2
+        assert isinstance(failed_guard_result, p.Result)
+        tm.fail(failed_guard_result)
         tm.that(
-            failed_guard.error,
+            failed_guard_result.error,
             eq="Guard validation raised ValueError: invalid metadata",
         )

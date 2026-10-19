@@ -131,16 +131,13 @@ class TestsFlextCoreContainerTruthful:
         """Registration normalizes a validated copy without altering caller data."""
         instant = datetime.now(UTC)
         path = Path("registered-payload")
-        payload = {"created": instant, "path": path}
+        payload: t.MappingKV[str, datetime | Path] = {"created": instant, "path": path}
         _ = clean_container.bind("mapping-payload", payload)
-        value = tm.ok(clean_container.resolve("mapping-payload"))
-
-        tm.that(isinstance(value, p.Model), eq=True)
-        if isinstance(value, p.Model):
-            tm.that(
-                value.model_dump(mode="json"),
-                eq=u.normalize_to_json_value(payload),
-            )
+        value = tm.ok(clean_container.resolve("mapping-payload", type_cls=m.ConfigMap))
+        tm.that(
+            value.model_dump(mode="json"),
+            eq=u.normalize_to_json_value(payload),
+        )
         tm.that(payload["created"] is instant, eq=True)
         tm.that(payload["path"] is path, eq=True)
 
@@ -151,16 +148,15 @@ class TestsFlextCoreContainerTruthful:
         """The registry model port admits list output, not only named fields."""
         instant = datetime.now(UTC)
         path = Path("sequence-payload")
-        payload = ["entry", path, instant]
+        payload: t.SequenceOf[str | Path | datetime] = ["entry", path, instant]
         _ = clean_container.bind("sequence-payload", payload)
-        value = tm.ok(clean_container.resolve("sequence-payload"))
-
-        tm.that(isinstance(value, p.Model), eq=True)
-        if isinstance(value, p.Model):
-            tm.that(
-                value.model_dump(mode="json"),
-                eq=u.normalize_to_json_value(payload),
-            )
+        value = tm.ok(
+            clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
+        )
+        tm.that(
+            value.model_dump(mode="json"),
+            eq=u.normalize_to_json_value(payload),
+        )
         tm.that(payload[1] is path, eq=True)
         tm.that(payload[2] is instant, eq=True)
 
@@ -171,14 +167,11 @@ class TestsFlextCoreContainerTruthful:
         """A nested Pydantic value retains its own validated serialization."""
         metadata = m.Metadata()
         _ = clean_container.bind("model-payload", {"metadata": metadata})
-        value = tm.ok(clean_container.resolve("model-payload"))
-
-        tm.that(isinstance(value, p.Model), eq=True)
-        if isinstance(value, p.Model):
-            tm.that(
-                value.model_dump(mode="json"),
-                eq={"metadata": metadata.model_dump(mode="json")},
-            )
+        value = tm.ok(clean_container.resolve("model-payload", type_cls=m.ConfigMap))
+        tm.that(
+            value.model_dump(mode="json"),
+            eq={"metadata": metadata.model_dump(mode="json")},
+        )
 
     @staticmethod
     def test_set_normalization_uses_json_without_an_order_contract() -> None:

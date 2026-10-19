@@ -139,8 +139,8 @@ class TestsFlextUtilitiesPydantic:
             truth=True,
         )
 
-    class _ClearedAnnotatedFactoryContract(m.BaseModel):
-        """Explicit None clears the earlier factory through both facades."""
+    class _RequiredCollectionContract(m.BaseModel):
+        """Required collections declare their types without default factories."""
 
         model_values: Annotated[
             t.MutableStrMapping,
@@ -155,12 +155,12 @@ class TestsFlextUtilitiesPydantic:
 
     @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
     @staticmethod
-    def test_explicit_none_clears_annotated_factories(missing_name: str) -> None:
-        """Cleared factories require supplied values instead of inventing defaults."""
+    def test_required_collections_reject_missing_values(missing_name: str) -> None:
+        """Required fields reject omission and retain the supplied values."""
         partial: t.JsonDict = {"model_values": {}, "utility_values": {}}
         del partial[missing_name]
         with pytest.raises(m.ValidationError):
-            TestsFlextUtilitiesPydantic._ClearedAnnotatedFactoryContract.model_validate(
+            TestsFlextUtilitiesPydantic._RequiredCollectionContract.model_validate(
                 partial,
             )
         values: t.JsonDict = {
@@ -168,7 +168,7 @@ class TestsFlextUtilitiesPydantic:
             "utility_values": {"utility": "supplied"},
         }
         payload = (
-            TestsFlextUtilitiesPydantic._ClearedAnnotatedFactoryContract.model_validate(
+            TestsFlextUtilitiesPydantic._RequiredCollectionContract.model_validate(
                 values,
             )
         )

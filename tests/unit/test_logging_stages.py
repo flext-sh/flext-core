@@ -30,6 +30,7 @@ from tests import c, m, p, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from typing import Never
 
 
 class TestsFlextLoggingStages:
@@ -171,8 +172,9 @@ class TestsFlextLoggingStages:
         logger = u.create_module_logger("tests.logging.stages.ordered")
         payload: t.JsonDict = {"items": [1, {"enabled": True}], "empty": None}
 
+        failure = ValueError("active exception context")
         try:
-            _ = int("active exception context")
+            raise failure
         except ValueError:
             result = logger.info("ordered stages", payload=payload, exc_info=True)
         else:
@@ -668,7 +670,8 @@ class TestsFlextLoggingStages:
         cause = ValueError("business cause")
         original = RuntimeError("business failure")
 
-        def capture(_event: p.LoggingRecord) -> None:
+        def capture(event: p.LoggingRecord) -> Never:
+            _ = event
             raise hook_error
 
         u.configure_structlog(
@@ -743,10 +746,10 @@ class TestsFlextLoggingStages:
 
         def fail_with_cause(
             original: ValueError | KeyboardInterrupt, cause: LookupError
-        ) -> None:
+        ) -> Never:
             raise original from cause
 
-        def fail_again(original: ValueError | KeyboardInterrupt) -> None:
+        def fail_again(original: ValueError | KeyboardInterrupt) -> Never:
             raise original
 
         for original in (
@@ -828,7 +831,7 @@ class TestsFlextLoggingStages:
                 "declared sensitive payload",
                 payload={
                     "nested": nested,
-                    "encoded": u.to_json(payload),
+                    "encoded": tm.ok(u.Cli.json_dumps(payload)),
                     "retained": "public",
                 },
             )

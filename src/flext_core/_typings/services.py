@@ -62,8 +62,8 @@ class FlextTypesServices:
     )
     type JsonPayloadCollectionValue = (
         JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, JsonPayloadLeaf]
-        | FlextTypingBase.SequenceOf[JsonPayloadLeaf]
+        | FlextTypingBase.MappingKV[str, JsonPayloadCollectionValue]
+        | FlextTypingBase.SequenceOf[JsonPayloadCollectionValue]
     )
     type JsonPayload = (
         JsonPayloadLeaf

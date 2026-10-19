@@ -25,7 +25,7 @@ class FlextProtocolsLogging(flextprotocolslogging_part_01.FlextProtocolsLogging)
 
         @property
         def attributes(self) -> t.JsonMapping:
-            """Metadata attributes."""
+            """JSON attributes validated by the canonical metadata model."""
             ...
 
         @property
