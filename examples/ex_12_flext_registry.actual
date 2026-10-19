@@ -1,0 +1,86 @@
+[explicit_discovery]
+dispatcher.identity: True
+execute.success: True
+discovery.callable_identity: True
+dispatch.model_identity: True
+dispatch.result_payload: True
+rediscovery.no_new_entries: True
+rediscovery.exact_skipped: True
+rediscovery.model_identity: True
+create_from_callable.payload: True
+
+[atomic_bindings]
+register_handler.success: True
+register_handler.id_present: True
+binding.duplicate_exact: True
+binding.metadata_conflict: True
+batch.conflict: True
+batch.no_partial_route: True
+batch.original_preserved: True
+binding.exact_registered: True
+binding.dispatch: True
+dispatch.failure: True
+dispatch.cause: True
+
+[plugin_lifecycle]
+plugin.register: True
+plugin.duplicate: True
+plugin.identity: True
+plugin.list: True
+plugin.conflict: True
+plugin.conflict_preserves_identity: True
+plugin.unregister: True
+plugin.missing: True
+plugin.remove_missing: True
+plugin.reregister: True
+plugin.replacement_identity: True
+plugin.cleanup: True
+plugin.register: True
+plugin.duplicate: True
+plugin.identity: True
+plugin.list: True
+plugin.conflict: True
+plugin.conflict_preserves_identity: True
+plugin.unregister: True
+plugin.missing: True
+plugin.remove_missing: True
+plugin.reregister: True
+plugin.replacement_identity: True
+plugin.cleanup: True
+
+[plugin_validation]
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.false: True
+validation.accepted: True
+validation.cleanup: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.false: True
+validation.accepted: True
+validation.cleanup: True
+
+[explicit_sharing]
+service.shared_registry: True
+service.shared_payload: True
+service.isolated: True
+service.cleanup: True
+service.removal_visible: True
+register.service: True
+register.invalid: True
