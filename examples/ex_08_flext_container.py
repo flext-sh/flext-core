@@ -163,7 +163,7 @@ class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
             "result.ok.roundtrip",
             r[int].ok(random_ok_val).value == random_ok_val,
         )
-        self.audit_check("runtime.normalize.bool", u.normalize_to_container(val=True))
+        self.audit_check("runtime.normalize.bool", u.normalize_to_container(value=True))
         self.audit_check("constants.default_max_services", c.DEFAULT_SIZE)
         return root
 

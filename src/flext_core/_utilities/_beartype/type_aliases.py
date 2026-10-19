@@ -10,7 +10,15 @@ import ast
 import builtins
 from collections import ChainMap
 from types import ModuleType
-from typing import Annotated, ForwardRef, TypeAliasType, get_args, get_origin
+from typing import (
+    Annotated,
+    ForwardRef,
+    Optional,
+    TypeAliasType,
+    Union,
+    get_args,
+    get_origin,
+)
 
 from pydantic._internal._model_construction import unpack_lenient_weakvaluedict
 from pydantic._internal._namespace_utils import NamespacesTuple, NsResolver
@@ -29,8 +37,8 @@ class FlextUtilitiesBeartypeTypeAliases:
         hint: str | ForwardRef,
         *,
         owner: ModuleType | type | None,
-    ) -> type | TypeAliasType:
-        """Look up the outer contract without evaluating its element expression."""
+    ) -> type | TypeAliasType | None:
+        """Look up the outer contract; known unions are not exact mutable origins."""
         if owner is None:
             msg = f"Declaring namespace required for annotation {hint!r}"
             raise ValueError(msg)
@@ -53,6 +61,8 @@ class FlextUtilitiesBeartypeTypeAliases:
             if isinstance(node, ast.Constant) and isinstance(node.value, str):
                 node = ast.parse(node.value, mode="eval").body
                 continue
+            if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
+                return None
             expression = node.value if isinstance(node, ast.Subscript) else node
             attributes: list[str] = []
             while isinstance(expression, ast.Attribute):
@@ -64,6 +74,10 @@ class FlextUtilitiesBeartypeTypeAliases:
             binding: FlextProtocolsBase.AttributeProbe = namespace[expression.id]
             for attribute in attributes:
                 binding = getattr(binding, attribute)
+            if isinstance(node, ast.Subscript) and (
+                binding is Optional or binding is Union
+            ):
+                return None
             if binding is Annotated and isinstance(node, ast.Subscript):
                 if not isinstance(node.slice, ast.Tuple):
                     msg = f"Annotated contract requires metadata: {hint!r}"

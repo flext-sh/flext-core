@@ -226,7 +226,12 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                 continue
             args: tuple[FlextProtocolsBase.AttributeProbe, ...] = (
                 (model_type, name, info)
-                if tag in {"missing_description", "no_inline_union"}
+                if tag
+                in {
+                    "missing_description",
+                    "no_inline_union",
+                    "no_raw_collections_field_default",
+                }
                 else (info,)
             )
             yield f'Field "{name}"', args

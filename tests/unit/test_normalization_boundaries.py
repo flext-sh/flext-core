@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, e, m, r, tm, u
+from tests import c, e, m, r, t, tm, u
 
 if TYPE_CHECKING:
-    from tests import p, t
+    from tests import p
 
 
 class TestsNormalizationBoundaries:
@@ -45,6 +45,22 @@ class TestsNormalizationBoundaries:
     def test_json_serialization_rejects_unknown_input() -> None:
         with pytest.raises(ValueError):
             u.normalize_to_json_value(type)
+
+    @staticmethod
+    def test_native_adapter_is_constructible_through_the_model_provider() -> None:
+        """The public SDK provider constructs an adapter, not a type-only alias."""
+        adapter = u.type_adapter(TypeForm(t.MutableMappingKV[str, int]))
+        tm.that(adapter.validate_json(b'{"value": 1}'), eq={"value": 1})
+        with pytest.raises(ValueError):
+            adapter.validate_json(b'{"value": "not an integer"}')
+
+    @staticmethod
+    def test_native_adapter_preserves_explicit_validation_policy() -> None:
+        """The native provider does not relax the caller's declared policy."""
+        adapter = u.type_adapter(TypeForm(int), config=m.ConfigDict(strict=True))
+        tm.that(adapter.validate_python(1), eq=1)
+        with pytest.raises(ValueError):
+            adapter.validate_python("1")
 
     @staticmethod
     def test_container_preserves_models_and_unwraps_root_payloads() -> None:

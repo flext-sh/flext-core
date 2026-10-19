@@ -66,18 +66,33 @@ class FlextModelsPydantic:
         | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
     )
 
-    # Preserve the native field declaration and its dataclass-transform identity.
-    # Runtime access remains receiver-free through the staticmethod descriptor.
-    Field = staticmethod(pydantic.Field)
-
+    # staticmethod inference retains only the first native Field overload.
+    # Expose the native declaration to checkers, not the descriptor constructor.
     if TYPE_CHECKING:
+
+        class _NativeStatic[FunctionT]:
+            """Describe staticmethod without decomposing native overloads."""
+
+            def __init__(self, function: FunctionT) -> None:
+                self.__func__ = function
+
+            def __get__(
+                self,
+                instance: FlextProtocolsBase.AttributeProbe | None,
+                owner: type | None = None,
+            ) -> FunctionT:
+                return self.__func__
+
+        Field = _NativeStatic(pydantic.Field)
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
     else:
+        Field = staticmethod(pydantic.Field)
         PrivateAttr = staticmethod(pydantic.PrivateAttr)
 
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
+            Field.__func__,
             pydantic.Field,
             pydantic.PrivateAttr,
         ),
@@ -94,6 +109,7 @@ class FlextModelsPydantic:
     @dataclass_transform(
         kw_only_default=True,
         field_specifiers=(
+            Field.__func__,
             pydantic.Field,
             pydantic.PrivateAttr,
         ),
@@ -233,8 +249,7 @@ class FlextModelsPydantic:
     type FieldInfo = pydantic.fields.FieldInfo
     type FieldSerializationInfo = pydantic.FieldSerializationInfo
 
-    class TypeAdapter[T](pydantic.TypeAdapter[T]):
-        """Native schema adapter constructor preserving its generic value type."""
+    type TypeAdapter[T] = pydantic.TypeAdapter[T]
 
     # Annotation marker that wraps a callable schema hook.
     GetPydanticSchema = GetPydanticSchema
