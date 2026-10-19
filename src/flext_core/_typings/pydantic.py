@@ -129,6 +129,7 @@ class FlextTypesPydantic:
     # single source of truth for the JSON type surface.
     type JsonValue = pydantic.JsonValue
     type BaseModelType = pydantic.BaseModel
+    # Payload unions admit existing models without constructing BaseModel from data.
     type BaseModelInstance = pydantic.InstanceOf[pydantic.BaseModel]
     # PEP 695 aliases, never bare class-scope assignments: a bare
     # ``BaseModel = pydantic.BaseModel`` is a variable to mypy, so it is not
