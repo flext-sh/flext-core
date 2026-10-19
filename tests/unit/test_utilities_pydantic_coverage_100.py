@@ -70,6 +70,30 @@ class TestsFlextUtilitiesPydantic:
         model_label: str = m.Field(min_length=1)
         utility_label: str = m.Field(min_length=1)
 
+    class _FieldDefaultsContract(m.BaseModel):
+        """Native default overloads remain available through the composed facade."""
+
+        label: str = m.Field(default="native", min_length=1)
+        attempts: int = m.Field(3, ge=0)
+        optional: str | None = m.Field(default=None)
+
+    @staticmethod
+    def test_field_defaults_preserve_native_types_and_validation() -> None:
+        """Default overloads preserve identity, defaults and schema constraints."""
+        tm.that(m.Field is FlextModels.Field, eq=True)
+        model = TestsFlextUtilitiesPydantic._FieldDefaultsContract()
+        label: str = model.label
+        attempts: int = model.attempts
+        optional: str | None = model.optional
+        tm.that(label, eq="native")
+        tm.that(attempts, eq=3)
+        tm.that(optional is None, eq=True)
+        with pytest.raises(m.ValidationError):
+            TestsFlextUtilitiesPydantic._FieldDefaultsContract.model_validate({
+                "label": "",
+                "attempts": -1,
+            })
+
     @staticmethod
     def test_required_fields_preserve_annotations_and_validation() -> None:
         """Metadata declarations are required, not descriptor-valued defaults."""

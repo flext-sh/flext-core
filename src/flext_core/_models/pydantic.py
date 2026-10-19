@@ -43,6 +43,7 @@ from pydantic import (
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
+from flext_core._utilities.base import FlextUtilitiesBase
 
 if TYPE_CHECKING:
     from flext_core._typings import FlextTypingBase
@@ -67,7 +68,7 @@ class FlextModelsPydantic:
     )
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
-    Field = staticmethod(pydantic.Field)
+    Field = FlextUtilitiesBase.StaticExport(pydantic.Field)
 
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
