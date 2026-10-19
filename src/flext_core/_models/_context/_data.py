@@ -40,7 +40,15 @@ class FlextModelsContextData:
         def validate_dict_serializable(
             cls, value: p.ModelInput | None
         ) -> t.MappingKV[str, t.Scalar]:
-            """Validate the immutable flat scalar representation at ingress."""
+            """Validate the immutable flat scalar representation at ingress.
+
+            Returns:
+                The immutable scalar mapping.
+
+            Raises:
+                TypeError: If the input cannot represent a mapping.
+
+            """
             if value is None:
                 return _EMPTY_SCALAR_MAPPING
             data = (
@@ -49,7 +57,7 @@ class FlextModelsContextData:
                 else value
             )
             if not isinstance(data, Mapping):
-                raise ValueError(
+                raise TypeError(
                     c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
                         type_name=type(value).__name__
                     )
@@ -62,7 +70,12 @@ class FlextModelsContextData:
         @FlextModelsPydantic.field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata_before(cls, value: p.MetadataInput) -> p.MetadataInput:
-            """Validate attribute mappings as metadata without a failure fallback."""
+            """Validate attribute mappings as metadata without a failure fallback.
+
+            Returns:
+                The validated metadata or unchanged nonmapping input.
+
+            """
             if isinstance(value, dict):
                 return FlextModelsBase.Metadata.model_validate({
                     c.FIELD_ATTRIBUTES: value

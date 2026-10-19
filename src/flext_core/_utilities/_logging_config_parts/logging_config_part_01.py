@@ -48,16 +48,26 @@ class FlextUtilitiesLoggingConfig:
     def resolve_logging_exception_info(
         value: p.LoggingEventValue | None,
     ) -> t.LoggingExceptionInfo | None:
-        """Resolve native exception inputs once, retaining a saved traceback."""
+        """Resolve native exception inputs once, retaining a saved traceback.
+
+        Returns:
+            The exception triple or None when exception capture is disabled.
+
+        Raises:
+            TypeError: If the native exception input is invalid.
+
+        """
         if value is True:
             value = sys.exception()
         if isinstance(value, BaseException):
             return type(value), value, value.__traceback__
         if value is None or value is False:
             return None
+        if not isinstance(value, tuple):
+            msg = "exc_info must be an exception, saved tuple, boolean or None"
+            raise TypeError(msg)
         if (
-            isinstance(value, tuple)
-            and len(value) == 3
+            len(value) == len(sys.exc_info())
             and isinstance(value[0], type)
             and issubclass(value[0], BaseException)
             and isinstance(value[1], BaseException)
@@ -222,6 +232,53 @@ class FlextUtilitiesLoggingConfig:
                     self.queue.task_done()
 
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
+
+    @staticmethod
+    def selected_logging_settings() -> p.LoggingSettings | None:
+        """Return the explicitly elected logging settings."""
+        return FlextUtilitiesLoggingConfig._runtime_settings
+
+    @staticmethod
+    def selected_logging_options() -> p.StructlogOptions | None:
+        """Return the elected composition, if configured."""
+        return FlextUtilitiesLoggingConfig._options
+
+    @staticmethod
+    def configure_logging_state(
+        settings: p.LoggingSettings, options: p.StructlogOptions, threshold: int
+    ) -> None:
+        """Publish the state owned by the shared logging configuration."""
+        FlextUtilitiesLoggingConfig._runtime_settings = settings
+        FlextUtilitiesLoggingConfig._options = options
+        FlextUtilitiesLoggingConfig._log_threshold = threshold
+
+    @staticmethod
+    def _resolve_logger_factory(
+        *,
+        logger_factory: p.OutputLoggerFactory | None,
+        async_logging: bool,
+    ) -> p.OutputLoggerFactory | None:
+        """Keep the selected native factory or the acknowledged stderr writer.
+
+        Returns:
+            The selected output factory.
+
+        """
+        owner = FlextUtilitiesLoggingConfig
+        if (
+            not async_logging or logger_factory is not None
+        ) and owner._async_writer is not None:
+            owner._async_writer.shutdown()
+            owner._async_writer = None
+        if logger_factory is not None:
+            return logger_factory
+        if not async_logging:
+            return structlog.PrintLoggerFactory(
+                file=FlextUtilitiesLoggingStream.TextStream(sys.stderr)
+            )
+        if owner._async_writer is None:
+            owner._async_writer = owner._AsyncLogWriter(sys.stderr)
+        return structlog.PrintLoggerFactory(file=owner._async_writer)
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingConfig"]

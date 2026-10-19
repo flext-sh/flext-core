@@ -62,8 +62,9 @@ class TestsFlextCoreEnforcementReports:
     def test_report_validates_round_trip_and_rejects_invalid_or_mutated_state() -> None:
         """Public reports validate their payload and preserve frozen state."""
         report = m.Report(violations=(_hard_violation(message="validated"),))
-        restored = m.Report.model_validate_json(report.model_dump_json())
-        assert restored == report
+        payload = report.model_dump_json(round_trip=True)
+        restored = m.Report.model_validate_json(payload)
+        assert restored.model_dump_json(round_trip=True) == payload
         assert restored.messages == ["validated"]
         with pytest.raises(m.ValidationError):
             m.Report.model_validate({"violations": ({"message": "incomplete"},)})

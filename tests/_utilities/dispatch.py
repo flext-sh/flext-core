@@ -22,7 +22,12 @@ class TestsFlextUtilitiesDispatchMixin:
         name: str,
         **members: p.RegisterableService | p.DispatchableHandler,
     ) -> t.RegistryModule:
-        """Build an actual module for the public discovery API, without import patches."""
+        """Build an actual module for the public discovery API.
+
+        Returns:
+            A module exposing the supplied members without import patches.
+
+        """
         module = ModuleType(name)
         for member_name, value in members.items():
             setattr(module, member_name, value)

@@ -13,7 +13,12 @@ from examples import h, m, p, r, s, t
 
 @h.handler(command=m.Examples.CommandA, priority=3)
 def discovered_handler(message: p.Routable) -> t.JsonPayload:
-    """Return the original owned payload without serializing it."""
+    """Return the original owned payload without serializing it.
+
+    Raises:
+        TypeError: If the message is not CommandA.
+
+    """
     if not isinstance(message, m.Examples.CommandA):
         msg = "Expected CommandA"
         raise TypeError(msg)
@@ -22,7 +27,12 @@ def discovered_handler(message: p.Routable) -> t.JsonPayload:
 
 @h.handler(command=m.Examples.CommandB)
 def amount_handler(message: p.Routable) -> p.Result[t.JsonPayload]:
-    """Execute a second route through the canonical Result boundary."""
+    """Execute a second route through the canonical Result boundary.
+
+    Returns:
+        The command amount or an invalid-message failure.
+
+    """
     if not isinstance(message, m.Examples.CommandB):
         return r[t.JsonPayload].fail("Expected CommandB")
     return r[t.JsonPayload].ok(message.amount)
@@ -33,5 +43,10 @@ class RegistryLookup(s[p.RegisterableService], m.Examples.RegistryLookupOptions)
 
     @override
     def execute(self) -> p.Result[p.RegisterableService]:
-        """Resolve the requested plugin without constructing another registry."""
+        """Resolve the requested plugin without constructing another registry.
+
+        Returns:
+            The registry's plugin lookup result.
+
+        """
         return self.registry.fetch_plugin(self.category, self.plugin_name)

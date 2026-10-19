@@ -29,20 +29,29 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         log_level: t.LogLevel,
         log_level_explicit: bool = True,
     ) -> t.LogLevel:
-        """Keep trace detail independent of the configured logging threshold."""
+        """Keep trace detail independent of the configured logging threshold.
+
+        Returns:
+            The effective severity without changing trace detail.
+
+        """
         _ = trace
         return c.LogLevel.DEBUG if debug and not log_level_explicit else log_level
 
     @staticmethod
     def logging_settings() -> p.LoggingSettings:
         """Return the elected application provider, or the actual Core settings."""
-        selected = logging_config_part_01.FlextUtilitiesLoggingConfig._runtime_settings
+        selected = (
+            logging_config_part_01.FlextUtilitiesLoggingConfig.selected_logging_settings()
+        )
         return selected if selected is not None else FlextSettings.fetch_global()
 
     @staticmethod
     def logging_options() -> p.StructlogOptions:
         """Return the active composition for scoped lifecycle restoration."""
-        selected = logging_config_part_01.FlextUtilitiesLoggingConfig._options
+        selected = (
+            logging_config_part_01.FlextUtilitiesLoggingConfig.selected_logging_options()
+        )
         return selected if selected is not None else m.StructlogOptions()
 
     @classmethod
@@ -55,7 +64,12 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         trace: bool | None = None,
         logging_profile: str | None = None,
     ) -> p.LoggingSettings:
-        """Validate optional overrides without I/O or process-wide mutation."""
+        """Validate optional overrides without I/O or process-wide mutation.
+
+        Returns:
+            The validated logging settings snapshot.
+
+        """
         current = (
             runtime_settings if runtime_settings is not None else cls.logging_settings()
         )
@@ -91,7 +105,12 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         console_renderer: bool = False,
         log_level: str | None = None,
     ) -> p.LoggingHandler:
-        """Compose native per-destination presentation with fail-loud delivery."""
+        """Compose native per-destination presentation with fail-loud delivery.
+
+        Returns:
+            The configured native handler.
+
+        """
         handler = cls._StreamHandler(stream)
         handler.setFormatter(
             structlog.stdlib.ProcessorFormatter(
@@ -120,7 +139,11 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         Caller-supplied handlers retain ownership of their delivery lifecycle.
         """
         owner = logging_config_part_01.FlextUtilitiesLoggingConfig
-        if owner._options is not None and settings is None and runtime_settings is None:
+        if (
+            owner.selected_logging_options() is not None
+            and settings is None
+            and runtime_settings is None
+        ):
             return
         options = settings if settings is not None else cls.logging_options()
         selected = cls.resolve_logging_settings(runtime_settings=runtime_settings)
@@ -135,21 +158,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
                 runtime_settings=selected,
                 log_level=str(logging.getLevelName(options.log_level)),
             )
-        if options.handlers and options.logger_factory is not None:
-            msg = "Select native handlers or a logger factory, not both"
-            raise ValueError(msg)
-        native_handlers: t.LoggingNativeHandlers = []
-        for handler in options.handlers:
-            if not isinstance(handler, logging.Handler):
-                msg = "Selected handlers must implement the native logging.Handler boundary"
-                raise TypeError(msg)
-            if not isinstance(handler.formatter, structlog.stdlib.ProcessorFormatter):
-                msg = "Selected handlers require a native ProcessorFormatter"
-                raise ValueError(msg)
-            if type(handler).handleError is logging.Handler.handleError:
-                msg = "Selected handlers must propagate sink failures; use create_logging_handler"
-                raise ValueError(msg)
-            native_handlers.append(handler)
+        native_handlers = cls._validated_native_handlers(options)
         threshold = cls.level_number(selected.log_level)
         processors = cls._build_structlog_processors(
             console_renderer=(
@@ -193,21 +202,66 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
             logger_factory=factory_to_use,
             cache_logger_on_first_use=options.cache_logger_on_first_use,
         )
-        owner._runtime_settings = (
-            runtime_settings if runtime_settings is not None else selected
+        owner.configure_logging_state(
+            runtime_settings if runtime_settings is not None else selected,
+            options,
+            threshold,
         )
-        owner._options = options
-        owner._log_threshold = threshold
+
+    @staticmethod
+    def _validated_native_handlers(
+        options: p.StructlogOptions,
+    ) -> t.LoggingNativeHandlers:
+        """Validate native sink contracts before replacing the active composition.
+
+        Returns:
+            The admitted native handlers.
+
+        Raises:
+            TypeError: If a handler or formatter has an incompatible type.
+            ValueError: If factories conflict or sink failures are not propagated.
+
+        """
+        if options.handlers and options.logger_factory is not None:
+            msg = "Select native handlers or a logger factory, not both"
+            raise ValueError(msg)
+        handlers: t.LoggingNativeHandlers = []
+        for handler in options.handlers:
+            if not isinstance(handler, logging.Handler):
+                msg = (
+                    "Selected handlers must implement the native "
+                    "logging.Handler boundary"
+                )
+                raise TypeError(msg)
+            if not isinstance(handler.formatter, structlog.stdlib.ProcessorFormatter):
+                msg = "Selected handlers require a native ProcessorFormatter"
+                raise TypeError(msg)
+            if type(handler).handleError is logging.Handler.handleError:
+                msg = (
+                    "Selected handlers must propagate sink failures; "
+                    "use create_logging_handler"
+                )
+                raise ValueError(msg)
+            handlers.append(handler)
+        return handlers
 
     @classmethod
     def ensure_structlog_configured(cls) -> None:
         """Ensure structlog is configured (called automatically on first use)."""
-        if logging_config_part_01.FlextUtilitiesLoggingConfig._options is None:
+        if cls.selected_logging_options() is None:
             cls.configure_structlog()
 
     @staticmethod
     def level_number(level: int | str) -> int:
-        """Validate a standard severity and return its native number."""
+        """Validate a standard severity and return its native number.
+
+        Returns:
+            The native numeric severity.
+
+        Raises:
+            ValueError: If the severity is not a supported standard level.
+
+        """
         value = (
             level
             if isinstance(level, int)

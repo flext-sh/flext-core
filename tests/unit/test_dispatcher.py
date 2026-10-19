@@ -62,7 +62,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     @pytest.mark.parametrize("registered", [False, True])
     def test_unmatched_route_never_invokes_a_handler(*, registered: bool) -> None:
-        """Missing routes fail without executing a handler belonging to another route."""
+        """Missing routes fail without executing another route's handler."""
         dispatcher = u.build_dispatcher()
         received: t.MutableSequenceOf[p.Routable] = []
 
@@ -99,7 +99,7 @@ class TestsFlextCoreDispatcher:
     def test_publication_delivers_original_events_in_input_order(
         *, sequence: bool
     ) -> None:
-        """One event or a sequence reaches the same subscriber without reconstruction."""
+        """Events reach the same subscriber without reconstruction."""
         dispatcher = u.build_dispatcher()
         received: t.MutableSequenceOf[p.Routable] = []
 
@@ -118,6 +118,7 @@ class TestsFlextCoreDispatcher:
 
     @staticmethod
     def test_publication_without_subscribers_is_a_successful_noop() -> None:
+        """Publishing without subscribers succeeds without effects."""
         dispatcher = u.build_dispatcher()
         tm.that(
             tm.ok(
@@ -131,6 +132,7 @@ class TestsFlextCoreDispatcher:
 
     @staticmethod
     def test_composed_dispatchers_do_not_share_routes() -> None:
+        """Each composed dispatcher owns independent route bindings."""
         first, second = u.build_dispatcher(), u.build_dispatcher()
 
         def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -145,6 +147,7 @@ class TestsFlextCoreDispatcher:
     def test_handler_exception_preserves_cause_and_emits_real_diagnostics(
         capfd: p.Tests.OutputCapture,
     ) -> None:
+        """Handler failures retain their cause and emit native diagnostics."""
         dispatcher = u.build_dispatcher()
         cause = RuntimeError("native handler failure")
 
@@ -161,6 +164,7 @@ class TestsFlextCoreDispatcher:
 
     @staticmethod
     def test_bound_method_repeat_is_idempotent_and_another_receiver_conflicts() -> None:
+        """Repeated bound methods are idempotent only for the same receiver."""
         dispatcher = u.build_dispatcher()
         original, other = u.Tests.CapabilityHandler(), u.Tests.CapabilityHandler()
         first = original.handle
@@ -183,7 +187,7 @@ class TestsFlextCoreDispatcher:
     def test_batch_conflict_never_publishes_an_earlier_binding(
         *, existing: bool
     ) -> None:
-        """Conflicts within a batch and with published state preserve the previous graph."""
+        """Batch conflicts preserve the previously published graph."""
         dispatcher = u.build_dispatcher()
 
         def original(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -214,6 +218,7 @@ class TestsFlextCoreDispatcher:
     def test_explicit_binding_preserves_callable_and_rejects_contradictory_metadata() -> (
         None
     ):
+        """Explicit bindings retain identity and reject contradictory metadata."""
         dispatcher = u.build_dispatcher()
 
         @h.handler(command=m.Command)
@@ -235,6 +240,7 @@ class TestsFlextCoreDispatcher:
 
     @staticmethod
     def test_event_batch_fans_out_distinct_callbacks_once() -> None:
+        """Each distinct subscriber receives one event from the batch."""
         dispatcher = u.build_dispatcher()
         calls: t.MutableSequenceOf[str] = []
 
@@ -265,6 +271,7 @@ class TestsFlextCoreDispatcher:
 
     @staticmethod
     def test_publication_stops_at_failure_without_undoing_prior_effects() -> None:
+        """Publication retains prior effects and stops at the first failure."""
         dispatcher = u.build_dispatcher()
         calls: t.MutableSequenceOf[str] = []
         cause = RuntimeError("subscriber failure")
@@ -305,6 +312,7 @@ class TestsFlextCoreDispatcher:
 
     @staticmethod
     def test_reentrant_registration_is_visible_only_to_the_next_snapshot() -> None:
+        """Registration during publication affects only later snapshots."""
         dispatcher = u.build_dispatcher()
         calls: t.MutableSequenceOf[str] = []
 
@@ -332,6 +340,7 @@ class TestsFlextCoreDispatcher:
 
     @staticmethod
     def test_concurrent_command_writers_never_overwrite_the_winner() -> None:
+        """Concurrent registrations elect exactly one command handler."""
         dispatcher = u.build_dispatcher()
 
         def left(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -359,6 +368,7 @@ class TestsFlextCoreDispatcher:
     def test_auto_and_explicit_subscribers_follow_registration_order(
         *, auto_first: bool
     ) -> None:
+        """Automatic and explicit subscribers retain registration order."""
         dispatcher = u.build_dispatcher()
         auto = u.Tests.AutoSubscriber()
         observed: t.MutableSequenceOf[t.StrSequence] = []

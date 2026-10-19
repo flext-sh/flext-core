@@ -157,6 +157,7 @@ class TestsFlextEnforcementModels:
         assert second.items == []
         provided: t.MutableSequenceOf[_M.Value] = [value]
         assert _M(items=provided).items == provided
+        assert not messages(u.check(_M), fragment="read-only field contract")
         with pytest.raises(m.ValidationError):
             _M.model_validate({"items": 42})
 
@@ -209,10 +210,68 @@ class TestsFlextEnforcementModels:
 
             items: t.MutableMappingKV[str, _M.Value] = m.Field(
                 default_factory=dict,
+                validate_default=True,
                 description="Mutable mapping KV contract.",
             )
 
         assert not messages(u.check(_M), fragment="read-only field contract")
+        first = _M()
+        second = _M()
+        assert first.items == second.items == {}
+        assert first.items is not second.items
+        value = _M.Value()
+        first.items["value"] = value
+        assert first.items == {"value": value}
+        assert second.items == {}
+        assert not messages(u.check(_M), fragment="read-only field contract")
+
+    @staticmethod
+    def test_mutable_collection_unions_keep_pre_and_post_completion_policy() -> None:
+        """Native completion never turns a non-exact mutable union into an error."""
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            sequence_union: t.MutableSequenceOf[_M.Value] | None = m.Field(
+                default_factory=list,
+                validate_default=True,
+                description="Optional mutable sequence with a PEP 604 union.",
+            )
+            sequence_optional: t.MutableSequenceOf[_M.Value] | None = m.Field(
+                default_factory=list,
+                validate_default=True,
+                description="Optional mutable sequence with a typing contract.",
+            )
+            sequence_typing_union: t.MutableSequenceOf[_M.Value] | None = m.Field(
+                default_factory=list,
+                validate_default=True,
+                description="Mutable sequence with a native typing union.",
+            )
+            mapping_union: t.MutableMappingKV[str, _M.Value] | None = m.Field(
+                default_factory=dict,
+                validate_default=True,
+                description="Optional mutable mapping with a PEP 604 union.",
+            )
+            mapping_optional: t.MutableMappingKV[str, _M.Value] | None = m.Field(
+                default_factory=dict,
+                validate_default=True,
+                description="Optional mutable mapping with a typing contract.",
+            )
+            mapping_typing_union: t.MutableMappingKV[str, _M.Value] | None = m.Field(
+                default_factory=dict,
+                validate_default=True,
+                description="Mutable mapping with a native typing union.",
+            )
+
+        before = messages(u.check(_M), fragment="read-only field contract")
+        assert len(before) == 6
+        instance = _M()
+        assert instance.sequence_union == instance.sequence_optional == []
+        assert instance.sequence_typing_union == []
+        assert instance.mapping_union == instance.mapping_optional == {}
+        assert instance.mapping_typing_union == {}
+        assert messages(u.check(_M), fragment="read-only field contract") == before
 
     @staticmethod
     def test_mutable_json_mapping_alias_dict_factory_passes() -> None:

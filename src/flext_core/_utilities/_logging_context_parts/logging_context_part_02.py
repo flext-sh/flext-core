@@ -21,7 +21,12 @@ class FlextUtilitiesLoggingContext(
 ):
     @staticmethod
     def _to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
-        """Adapt owned values only at the native logging SDK boundary."""
+        """Adapt owned values only at the native logging SDK boundary.
+
+        Returns:
+            The JSON-compatible logging value.
+
+        """
         if isinstance(value, BaseException):
             return str(value)
         if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
@@ -36,7 +41,12 @@ class FlextUtilitiesLoggingContext(
     def to_container_context(
         context: t.MappingKV[str, p.LogValue | t.JsonValue],
     ) -> t.JsonMapping:
-        """Serialize owned fields once before entering the native processor chain."""
+        """Serialize owned fields once before entering the native processor chain.
+
+        Returns:
+            The JSON-compatible context mapping.
+
+        """
         return {
             key: FlextUtilitiesLoggingContext._to_container_value(value)
             for key, value in context.items()

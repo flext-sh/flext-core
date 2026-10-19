@@ -126,7 +126,12 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         @FlextModelsPydantic.field_validator("attributes", mode="before")
         @classmethod
         def validate_metadata_attributes(cls, value: p.MetadataInput) -> t.JsonMapping:
-            """Validate attributes through the canonical metadata boundary."""
+            """Validate attributes through the canonical metadata boundary.
+
+            Returns:
+                The validated JSON metadata attributes.
+
+            """
             return FlextUtilitiesPydantic.validate_metadata_attributes(value)
 
     class ContractModel(StrictModel):

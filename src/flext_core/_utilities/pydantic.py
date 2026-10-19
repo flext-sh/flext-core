@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence, Set as AbstractSet
 from pathlib import Path
+from types import EllipsisType
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -181,7 +182,9 @@ class FlextUtilitiesPydantic(
             else value
         )
         if isinstance(payload, Mapping):
-            payload = dict(payload)
+            payload = _models.FlextModelsContainers.ConfigMap.model_validate(
+                payload
+            ).root
         return adapter.validate_python(to_jsonable_python(payload), strict=True)
 
     @staticmethod
@@ -282,6 +285,39 @@ class FlextUtilitiesPydantic(
             c.FIELD_ATTRIBUTES: {} if attributes is None else dict(attributes)
         })
 
+    @staticmethod
+    def _empty_collection_seed[ContractT](contract: TypeForm[ContractT]) -> bytes:
+        """Select a native JSON seed without discarding the original contract.
+
+        Returns:
+            The empty object or array input for the collection shape.
+
+        Raises:
+            TypeError: The contract has no supported collection shape.
+
+        """
+        current: t.TypeFormSpecifier = contract
+        while True:
+            origin = get_origin(current)
+            if origin is Annotated:
+                current = get_args(current)[0]
+            elif isinstance(current, TypeAliasType):
+                current = current.__value__
+            elif isinstance(origin, TypeAliasType):
+                current = origin.__value__
+            else:
+                break
+        resolved = origin or current
+        if isinstance(resolved, type) and not issubclass(
+            resolved, (*c.STR_BINARY_TYPES, BaseModel)
+        ):
+            if issubclass(resolved, Mapping):
+                return c.EMPTY_COLLECTION_JSON_SEEDS["object"]
+            if issubclass(resolved, (Sequence, AbstractSet)):
+                return c.EMPTY_COLLECTION_JSON_SEEDS["array"]
+        msg = f"empty default requires a collection contract; got {contract!r}"
+        raise TypeError(msg)
+
     @overload
     @staticmethod
     def empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]: ...
@@ -295,7 +331,7 @@ class FlextUtilitiesPydantic(
 
     @staticmethod
     def empty[ContractT](
-        contract: TypeForm[ContractT] | None = None,
+        contract: TypeForm[ContractT] | EllipsisType = ...,
         *,
         contract_factory: Callable[[], TypeForm[ContractT]] | None = None,
     ) -> Callable[[], ContractT]:
@@ -308,18 +344,29 @@ class FlextUtilitiesPydantic(
         exists. Exactly one contract source is required. Resolution and adapter
         construction happen on the first value, never while declaring a field.
 
+        Args:
+            contract: A collection contract already available at declaration.
+            contract_factory: Resolve a contract once its declarations exist.
+
         Returns:
             A zero-argument factory with independent validated collection values.
+
+        Raises:
+            TypeError: Exactly one contract source must be supplied.
 
         """
         resolve_contract: Callable[[], TypeForm[ContractT]]
         if contract_factory is None:
-            if contract is None:
+            if isinstance(contract, EllipsisType):
                 msg = "empty requires a collection contract or contract_factory"
                 raise TypeError(msg)
             fixed_contract = contract
-            resolve_contract = lambda: fixed_contract
-        elif contract is None:
+
+            def resolve_fixed_contract() -> TypeForm[ContractT]:
+                return fixed_contract
+
+            resolve_contract = resolve_fixed_contract
+        elif isinstance(contract, EllipsisType):
             resolve_contract = contract_factory
         else:
             msg = "empty accepts either contract or contract_factory, not both"
@@ -331,36 +378,7 @@ class FlextUtilitiesPydantic(
             nonlocal adapter, seed
             if adapter is None:
                 resolved_contract = resolve_contract()
-                current: t.TypeFormSpecifier = resolved_contract
-                while True:
-                    origin = get_origin(current)
-                    if origin is Annotated:
-                        current = get_args(current)[0]
-                    elif isinstance(current, TypeAliasType):
-                        current = current.__value__
-                    elif isinstance(origin, TypeAliasType):
-                        current = origin.__value__
-                    else:
-                        break
-                resolved = origin or current
-                if not isinstance(resolved, type) or issubclass(
-                    resolved, (*c.STR_BINARY_TYPES, BaseModel)
-                ):
-                    msg = (
-                        "empty default requires a collection contract; "
-                        f"got {resolved_contract!r}"
-                    )
-                    raise TypeError(msg)
-                if issubclass(resolved, Mapping):
-                    seed = c.EMPTY_COLLECTION_JSON_SEEDS["object"]
-                elif issubclass(resolved, (Sequence, AbstractSet)):
-                    seed = c.EMPTY_COLLECTION_JSON_SEEDS["array"]
-                else:
-                    msg = (
-                        "empty default requires a collection contract; "
-                        f"got {resolved_contract!r}"
-                    )
-                    raise TypeError(msg)
+                seed = FlextUtilitiesPydantic._empty_collection_seed(resolved_contract)
                 native_adapter = FlextUtilitiesBase.type_adapter(
                     resolved_contract,
                     config=_models.FlextModelsBase.ArbitraryTypesModel.model_config,

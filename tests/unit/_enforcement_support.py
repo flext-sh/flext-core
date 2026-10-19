@@ -53,7 +53,15 @@ BadModel = model_fixture()
 
 @contextmanager
 def invalid_annotations(tmp_path: Path) -> Generator[ModuleType]:
-    """Load deliberate invalid source while the native checker inspects it."""
+    """Load deliberate invalid source while the native checker inspects it.
+
+    Yields:
+        The loaded module containing invalid annotation fixtures.
+
+    Raises:
+        ImportError: If the fixture has no native module loader.
+
+    """
     path = tmp_path / "invalid_annotations_fixture.py"
     path.write_text(_INVALID_ANNOTATION_SOURCE, encoding="utf-8")
     name = path.stem

@@ -46,7 +46,12 @@ class FlextUtilitiesContext:
                 })
 
         def get(self) -> t.JsonPayload | datetime | None:
-            """Read the same backing value as structlog's context processors."""
+            """Read the same backing value as structlog's context processors.
+
+            Returns:
+                The bound value or this proxy's default.
+
+            """
             context: t.MappingKV[str, t.JsonPayload | datetime] = (
                 structlog.contextvars.get_contextvars()
             )
@@ -54,7 +59,12 @@ class FlextUtilitiesContext:
             return self._default if value is None else value
 
         def set(self, value: ValueT | None) -> p.ContextProxyToken:
-            """Set or unbind a value and return its validated reset token."""
+            """Set or unbind a value and return its validated reset token.
+
+            Returns:
+                The token restoring the previous value.
+
+            """
             previous = self.get()
             if value is None:
                 structlog.contextvars.unbind_contextvars(self._key)
@@ -97,28 +107,48 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def create_str_proxy(key: str, default: str | None = None) -> p.ContextProxy[str]:
-        """Create a string proxy over the shared structlog storage."""
+        """Create a string proxy over the shared structlog storage.
+
+        Returns:
+            The string context proxy.
+
+        """
         return FlextUtilitiesContext.StructlogProxyContextVar[str](key, default)
 
     @staticmethod
     def create_datetime_proxy(
         key: str, default: datetime | None = None
     ) -> p.ContextProxy[datetime]:
-        """Create a timestamp proxy over the shared structlog storage."""
+        """Create a timestamp proxy over the shared structlog storage.
+
+        Returns:
+            The timestamp context proxy.
+
+        """
         return FlextUtilitiesContext.StructlogProxyContextVar[datetime](key, default)
 
     @staticmethod
     def create_dict_proxy(
         key: str, default: t.JsonMapping | None = None
     ) -> p.ContextProxy[t.JsonMapping]:
-        """Create a mapping proxy over the shared structlog storage."""
+        """Create a mapping proxy over the shared structlog storage.
+
+        Returns:
+            The mapping context proxy.
+
+        """
         return FlextUtilitiesContext.StructlogProxyContextVar[t.JsonMapping](
             key, default
         )
 
     @staticmethod
     def resolve_correlation_id() -> str | None:
-        """Read the active correlation identifier."""
+        """Read the active correlation identifier.
+
+        Returns:
+            The active identifier, when present.
+
+        """
         value = FlextUtilitiesContext.CORRELATION_ID.get()
         return value if isinstance(value, str) else None
 
@@ -127,7 +157,12 @@ class FlextUtilitiesContext:
     def new_correlation(
         correlation_id: str | None = None, parent_id: str | None = None
     ) -> Generator[str]:
-        """Scope a correlation identifier and restore both previous identifiers."""
+        """Scope a correlation identifier and restore both previous identifiers.
+
+        Yields:
+            The scoped correlation identifier.
+
+        """
         correlation_id = (
             correlation_id
             if correlation_id is not None
@@ -199,7 +234,12 @@ class FlextUtilitiesContext:
     def timed_operation(
         operation_name: str | None = None,
     ) -> Generator[p.MutableRootDict[t.JsonPayload]]:
-        """Scope operation timing and finalize the yielded metadata on exit."""
+        """Scope operation timing and finalize the yielded metadata on exit.
+
+        Yields:
+            The mutable operation metadata.
+
+        """
         start = FlextUtilitiesGenerators.generate_datetime_utc()
         perf = time.perf_counter()
         payload: t.JsonMapping = {
@@ -231,7 +271,12 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def export_full_context() -> t.MappingKV[str, t.Scalar]:
-        """Export active scalar context variables, formatting operation timestamps."""
+        """Export active scalar context variables, formatting operation timestamps.
+
+        Returns:
+            The active scalar context snapshot.
+
+        """
         exported: t.MutableMappingKV[str, t.Scalar] = {}
         for key, proxy in (
             (c.ContextKey.CORRELATION_ID, FlextUtilitiesContext.CORRELATION_ID),
@@ -274,7 +319,12 @@ class FlextUtilitiesContext:
     def create_context_runtime(
         metadata: p.ContextMetadata | None = None,
     ) -> p.ContextRuntimeState:
-        """Create independent built-in scopes with an immutable metadata snapshot."""
+        """Create independent built-in scopes with an immutable metadata snapshot.
+
+        Returns:
+            The independent runtime state.
+
+        """
         scope_vars: t.MutableMappingKV[
             str, ContextVar[p.MutableRootDict[t.JsonPayload] | None]
         ] = {
@@ -299,7 +349,12 @@ class FlextUtilitiesContext:
     ) -> tuple[
         p.ContextRuntimeState, ContextVar[p.MutableRootDict[t.JsonPayload] | None]
     ]:
-        """Reuse a scope variable or add one without mutating the prior state."""
+        """Reuse a scope variable or add one without mutating the prior state.
+
+        Returns:
+            The resulting state and selected scope variable.
+
+        """
         existing = state.scope_vars.get(scope)
         if existing is not None:
             return state, existing
@@ -314,7 +369,12 @@ class FlextUtilitiesContext:
     def update_context_operation(
         state: p.ContextRuntimeState, operation: str
     ) -> p.ContextRuntimeState:
-        """Copy state with the existing counter and operation-metric updates."""
+        """Copy state with the existing counter and operation-metric updates.
+
+        Returns:
+            The state with updated operation statistics.
+
+        """
         counters: t.MappingKV[str, int] = {
             "sets": state.statistics.sets,
             "gets": state.statistics.gets,

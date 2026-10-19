@@ -18,7 +18,12 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
 
     @classmethod
     def create(cls, **initial_data: t.JsonPayload) -> p.Context:
-        """Create a context seeded with the supplied scope values."""
+        """Create a context seeded with the supplied scope values.
+
+        Returns:
+            The initialized context.
+
+        """
         context = cls()
         for key, value in initial_data.items():
             _ = context.set(key, value)
@@ -26,7 +31,12 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
 
     @classmethod
     def resolve_container(cls) -> p.Container:
-        """Return the configured container, failing if none was configured."""
+        """Return the configured container, failing if none was configured.
+
+        Raises:
+            RuntimeError: If no container has been configured.
+
+        """
         if cls._container_state.container is None:
             raise RuntimeError(c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED)
         return cls._container_state.container
@@ -40,7 +50,12 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
 
     @staticmethod
     def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
-        """Resolve a named service through the configured container."""
+        """Resolve a named service through the configured container.
+
+        Returns:
+            The resolved service or its failure.
+
+        """
         return FlextContext.resolve_container().resolve(service_name)
 
     @staticmethod
@@ -48,7 +63,12 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
         service_name: str,
         service: p.RegisterableService,
     ) -> p.Result[bool]:
-        """Register a service, preserving the validation failure boundary."""
+        """Register a service, preserving the validation failure boundary.
+
+        Returns:
+            Registration success or validation failure.
+
+        """
         try:
             _ = FlextContext.resolve_container().bind(service_name, service)
         except FlextExceptions.ValidationError as exc:
@@ -56,7 +76,12 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
         return FlextResult[bool].ok(value=True)
 
     def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
-        """Store a value in this context's scope."""
+        """Store a value in this context's scope.
+
+        Returns:
+            A successful storage result.
+
+        """
         self.data.root.update({key: value})
         return FlextResult[bool].ok(value=True)
 
@@ -70,7 +95,12 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
         return FlextResult[t.JsonPayload].ok(value)
 
     def has(self, key: str) -> bool:
-        """Whether the scope contains the key, including null-valued entries."""
+        """Whether the scope contains the key, including null-valued entries.
+
+        Returns:
+            Whether the key is present.
+
+        """
         return key in self.data.root
 
     def keys(self) -> t.StrSequence:
@@ -112,19 +142,34 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
         self.data.root.clear()
 
     def merge(self, other: p.Context | t.MappingKV[str, t.JsonPayload]) -> Self:
-        """Merge a context or mapping into this instance and return it."""
+        """Merge a context or mapping into this instance and return it.
+
+        Returns:
+            This context with merged values.
+
+        """
         self.data.root.update(other.items() if isinstance(other, p.Context) else other)
         return self
 
     def clone(self) -> Self:
-        """Deep-copy scope data and copy the immutable metadata snapshot."""
+        """Deep-copy scope data and copy the immutable metadata snapshot.
+
+        Returns:
+            An independent context copy.
+
+        """
         return self.__class__(
             data=self.data.model_copy(deep=True),
             metadata=self.metadata.model_copy(),
         )
 
     def export(self, *, as_dict: bool = True) -> t.MappingKV[str, t.JsonPayload] | Self:
-        """Export a scope mapping or return this context unchanged."""
+        """Export a scope mapping or return this context unchanged.
+
+        Returns:
+            A scope snapshot or this context.
+
+        """
         return dict(self.data.root) if as_dict else self
 
 

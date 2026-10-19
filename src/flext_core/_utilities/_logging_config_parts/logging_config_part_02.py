@@ -27,7 +27,6 @@ from structlog.tracebacks import ExceptionDictTransformer
 
 from flext_core import c, m, p, t
 from flext_core._utilities._logging_config_parts import (
-    FlextUtilitiesLoggingStream,
     logging_config_part_01,
 )
 from flext_core._utilities.metadata import FlextUtilitiesMetadata
@@ -40,7 +39,13 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         method_name: str,
         event_dict: p.LoggingEvent,
     ) -> p.LoggingEvent:
-        """Filter level-tagged context using the native severity mapping."""
+        """Filter level-tagged context using the native severity mapping.
+
+        Returns:
+            The event without context above its severity.
+
+        """
+        _ = logger
         level_hierarchy = logging.getLevelNamesMapping()
         current_level = level_hierarchy[method_name.upper()]
         filtered_dict: p.LoggingEvent = {}
@@ -48,14 +53,13 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             if not key.startswith("_level_"):
                 filtered_dict[key] = value
                 continue
-            parts = key.split("_", 3)
-            if len(parts) < 4:
+            required, separator, actual_key = key.removeprefix("_level_").partition("_")
+            if not separator:
                 filtered_dict[key] = value
                 continue
-            required_level = level_hierarchy[parts[2].upper()]
+            required_level = level_hierarchy[required.upper()]
             if current_level < required_level:
                 continue
-            actual_key = parts[3]
             normalized_key = "settings" if actual_key == "config" else actual_key
             filtered_dict[normalized_key] = value
         return filtered_dict
@@ -66,7 +70,15 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         method_name: str,
         event_dict: p.LoggingEvent,
     ) -> p.LoggingEvent:
-        """Apply the elected threshold before native enrichment and hooks."""
+        """Apply the elected threshold before native enrichment and hooks.
+
+        Returns:
+            The admitted event.
+
+        Raises:
+            DropEvent: If the event falls below the elected threshold.
+
+        """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
         if level < logging_config_part_01.FlextUtilitiesLoggingConfig.log_threshold():
@@ -79,7 +91,13 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         method_name: str,
         event: p.LoggingEvent,
     ) -> p.LoggingEvent:
-        """Keep causal metadata before the native processor consumes exc_info."""
+        """Keep causal metadata before the native processor consumes exc_info.
+
+        Returns:
+            The event with its original exception metadata.
+
+        """
+        _ = logger, method_name
         info = FlextUtilitiesLoggingConfig.resolve_logging_exception_info(
             event.get("exc_info")
         )
@@ -98,7 +116,13 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         *,
         options: p.StructlogOptions,
     ) -> p.LoggingEvent:
-        """Sanitize the SDK boundary, then notify typed subscribers once."""
+        """Sanitize the SDK boundary, then notify typed subscribers once.
+
+        Returns:
+            The sanitized event delivered to subscribers.
+
+        """
+        _ = logger, method_name
         original_exception = event.pop("_original_exception", None)
 
         # ConsoleRenderer accepts text in `exception`; native structured stacks
@@ -138,7 +162,12 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         options: p.StructlogOptions,
         trace: bool,
     ) -> t.SequenceOf[t.LoggingProcessor]:
-        """Compose one shared event pipeline and a native terminal renderer."""
+        """Compose one shared event pipeline and a native terminal renderer.
+
+        Returns:
+            The ordered native processors.
+
+        """
         from flext_core._bound_logger import FlextBoundLogger
         from flext_core._utilities.logging import FlextUtilitiesLogging
 
@@ -174,30 +203,5 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         else:
             processors.append(JSONRenderer())
         return processors
-
-    @classmethod
-    def _resolve_logger_factory(
-        cls,
-        *,
-        logger_factory: p.OutputLoggerFactory | None,
-        async_logging: bool,
-    ) -> p.OutputLoggerFactory | None:
-        """Keep the selected native factory or the acknowledged stderr writer."""
-        owner = logging_config_part_01.FlextUtilitiesLoggingConfig
-        if (
-            not async_logging or logger_factory is not None
-        ) and owner._async_writer is not None:
-            owner._async_writer.shutdown()
-            owner._async_writer = None
-        if logger_factory is not None:
-            return logger_factory
-        if not async_logging:
-            return structlog.PrintLoggerFactory(
-                file=FlextUtilitiesLoggingStream.TextStream(sys.stderr)
-            )
-        if owner._async_writer is None:
-            owner._async_writer = cls._AsyncLogWriter(sys.stderr)
-        return structlog.PrintLoggerFactory(file=owner._async_writer)
-
 
 __all__: list[str] = ["FlextUtilitiesLoggingConfig"]

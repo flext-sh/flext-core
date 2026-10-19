@@ -280,7 +280,12 @@ class TestsFlextCoreServiceOperations:
         """A Protocol request without its explicit schema association."""
 
         def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
-            """Send the requested command."""
+            """Send the requested command.
+
+            Returns:
+                The requested command name in a successful result.
+
+            """
             return r[str].ok(request.command_name)
 
     class AliasedRequestService(s[bool]):
@@ -288,7 +293,12 @@ class TestsFlextCoreServiceOperations:
 
         @h.handler(command=m.Tests.DispatchRequest)
         def send(self, request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
-            """Send the requested command."""
+            """Send the requested command.
+
+            Returns:
+                The requested command name in a successful result.
+
+            """
             return r[str].ok(request.command_name)
 
     class ConcreteRequestService(s[bool]):
@@ -296,7 +306,12 @@ class TestsFlextCoreServiceOperations:
 
         @h.handler(command=m.Tests.DispatchRequest)
         def send(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
-            """Send the requested command."""
+            """Send the requested command.
+
+            Returns:
+                The requested command name in a successful result.
+
+            """
             return r[str].ok(request.command_name)
 
     class MismatchedMetadataService(s[bool]):
@@ -304,7 +319,12 @@ class TestsFlextCoreServiceOperations:
 
         @h.handler(command=m.Value)
         def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
-            """Send the requested command."""
+            """Send the requested command.
+
+            Returns:
+                The requested command name in a successful result.
+
+            """
             return r[str].ok(request.command_name)
 
     class NonModelMetadataService(s[bool]):
@@ -312,7 +332,12 @@ class TestsFlextCoreServiceOperations:
 
         @h.handler(command=str)
         def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
-            """Send the requested command."""
+            """Send the requested command.
+
+            Returns:
+                The requested command name in a successful result.
+
+            """
             return r[str].ok(request.command_name)
 
     class InputlessMetadataService(s[bool]):
@@ -320,7 +345,12 @@ class TestsFlextCoreServiceOperations:
 
         @h.handler(command=m.Tests.DispatchRequest)
         def send(self) -> p.Result[str]:
-            """Report readiness."""
+            """Report readiness.
+
+            Returns:
+                A successful readiness result.
+
+            """
             return r[str].ok("ready")
 
     # --- Discovery -------------------------------------------------------

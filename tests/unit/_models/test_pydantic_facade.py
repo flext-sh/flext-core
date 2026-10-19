@@ -17,13 +17,49 @@ from typing import Annotated, ClassVar, Literal
 import pytest
 from typing_extensions import TypeForm
 
-from tests import m, p, t, u
+from flext_core import m
+from tests import TestsFlextModels, p, t, tm, u
 
 
 class TestsFlextCorePydanticDeclarations:
     """Behavioral contract for the advanced pydantic facade exports."""
 
-    class _DetailedPayload(m.Tests.PublicPayload):
+    @staticmethod
+    def test_field_required_defaults_factories_and_aliases() -> None:
+        """Native field declarations retain validation and serialization behavior."""
+
+        class Defaults(m.BaseModel):
+            required: str = m.Field(description="Required value")
+            defaulted: int = m.Field(default=3, description="Default value")
+            generated: t.VariadicTuple[str] = m.Field(
+                default_factory=tuple, description="Factory value"
+            )
+
+        class Payload(Defaults):
+            aliased: str = m.Field(
+                validation_alias=m.AliasPath("input", "value"),
+                serialization_alias="output",
+                description="Aliased value",
+            )
+
+        payload = Payload.model_validate({
+            "required": "present",
+            "input": {"value": "alias"},
+        })
+        tm.that(payload.required, eq="present")
+        tm.that(payload.defaulted, eq=3)
+        tm.that(payload.generated, eq=())
+        tm.that(payload.aliased, eq="alias")
+        tm.that(payload.model_dump(by_alias=True)["output"], eq="alias")
+        constructed = Defaults(required="constructor")
+        tm.that(constructed.defaulted, eq=3)
+        tm.that(constructed.generated, eq=())
+        with pytest.raises(m.ValidationError):
+            Payload.model_validate({"input": {"value": "alias"}})
+        with pytest.raises(m.ValidationError):
+            Payload.model_validate({"required": "present", "aliased": "wrong route"})
+
+    class _DetailedPayload(TestsFlextModels.Tests.PublicPayload):
         """Subclass-only data must respect the declared serialization boundary."""
 
         detail: str
@@ -34,7 +70,9 @@ class TestsFlextCorePydanticDeclarations:
         item: Annotated[
             p.Tests.PublicPayload,
             m.GetPydanticSchema(
-                lambda _source, handler: handler.generate_schema(m.Tests.PublicPayload),
+                lambda _source, handler: handler.generate_schema(
+                    TestsFlextModels.Tests.PublicPayload
+                ),
             ),
         ]
 
@@ -55,21 +93,24 @@ class TestsFlextCorePydanticDeclarations:
             "visits": "2 visits",
             "label": "Alice:2",
         }
-        assert (box.item.raw_name, box.item.visits) == ("Alice", 2)
-        assert box.model_dump()["item"] == expected
-        assert '"visits":"2 visits"' in box.model_dump_json()
+        tm.that((box.item.raw_name, box.item.visits), eq=("Alice", 2))
+        tm.that(box.model_dump()["item"], eq=expected)
+        tm.that(box.model_dump_json(), has='"visits":"2 visits"')
         payload: p.Tests.PublicPayload
         for payload in (
-            m.Tests.PublicPayload(raw_name="alice", visits=2),
-            TestsFlextCorePydanticDeclarations._DetailedPayload(
-                raw_name="alice",
-                visits=2,
-                detail="private",
-            ),
+            TestsFlextModels.Tests.PublicPayload.model_validate({
+                "rawName": "alice",
+                "visits": 2,
+            }),
+            TestsFlextCorePydanticDeclarations._DetailedPayload.model_validate({
+                "rawName": "alice",
+                "visits": 2,
+                "detail": "private",
+            }),
         ):
             box = TestsFlextCorePydanticDeclarations._ProtocolBox(item=payload)
-            assert box.item is payload
-            assert box.model_dump()["item"] == expected
+            tm.that(box.item is payload, eq=True)
+            tm.that(box.model_dump()["item"], eq=expected)
 
         def reject() -> None:
             """Validate the malformed payload through the declared input form."""
@@ -92,17 +133,17 @@ class TestsFlextCorePydanticDeclarations:
     ) -> None:
         model_type = TestsFlextCorePydanticDeclarations._ProtocolBox
         field = model_type.model_fields["item"]
-        assert field.annotation is p.Tests.PublicPayload
-        assert model_type.model_config.get(
-            "frozen", False
-        ) == m.ContractModel.model_config.get("frozen", False)
+        tm.that(field.annotation is p.Tests.PublicPayload, eq=True)
+        tm.that(
+            model_type.model_config.get("frozen", False),
+            eq=m.ContractModel.model_config.get("frozen", False),
+        )
         schema = TestsFlextCorePydanticDeclarations._ProtocolBox.model_json_schema(
             mode=mode,
         )
-        assert schema["$defs"][
-            "PublicPayload"
-        ] == m.Tests.PublicPayload.model_json_schema(
-            mode=mode,
+        tm.that(
+            schema["$defs"]["PublicPayload"],
+            eq=TestsFlextModels.Tests.PublicPayload.model_json_schema(mode=mode),
         )
 
     class _VectorInput(m.BaseModel):
@@ -251,27 +292,30 @@ class TestsFlextCorePydanticDeclarations:
             "wrapped_utility": 11,
         })
 
-        assert payload.model_dump() == {
-            "plain_model": "model:3",
-            "plain_utility": "utility:5",
-            "wrapped_model": 8,
-            "wrapped_utility": 11,
-        }
+        tm.that(
+            payload.model_dump(),
+            eq={
+                "plain_model": "model:3",
+                "plain_utility": "utility:5",
+                "wrapped_model": 8,
+                "wrapped_utility": 11,
+            },
+        )
         expected_json = {
             "plain_model": "model:3",
             "plain_utility": "utility:5",
             "wrapped_model": 8,
             "wrapped_utility": 13,
         }
-        assert payload.model_dump(mode="json") == expected_json
-        assert (
+        tm.that(payload.model_dump(mode="json"), eq=expected_json)
+        tm.that(
             u.type_adapter(TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json()
-            )
-            == expected_json
+            ),
+            eq=expected_json,
         )
-        assert (payload.plain_model, payload.plain_utility) == (3, 5)
-        assert (payload.wrapped_model, payload.wrapped_utility) == (7, 11)
+        tm.that((payload.plain_model, payload.plain_utility), eq=(3, 5))
+        tm.that((payload.wrapped_model, payload.wrapped_utility), eq=(7, 11))
 
     class _ComputedFields(m.BaseModel):
         """Real computed properties in bare and configured native forms."""
@@ -306,20 +350,20 @@ class TestsFlextCorePydanticDeclarations:
         payload = TestsFlextCorePydanticDeclarations._ComputedFields(value=7)
         directory: str = payload.directory
         doubled: int = payload.doubled
-        assert directory.removeprefix("stream-") == str(payload.value)
-        assert doubled == payload.value * 2
+        tm.that(directory.removeprefix("stream-"), eq=str(payload.value))
+        tm.that(doubled, eq=payload.value * 2)
         expected = {
             "value": payload.value,
             "directory": directory,
             "scaled": doubled,
         }
-        assert payload.model_dump(by_alias=True) == expected
-        assert payload.model_dump(mode="json", by_alias=True) == expected
-        assert (
+        tm.that(payload.model_dump(by_alias=True), eq=expected)
+        tm.that(payload.model_dump(mode="json", by_alias=True), eq=expected)
+        tm.that(
             u.type_adapter(TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json(by_alias=True)
-            )
-            == expected
+            ),
+            eq=expected,
         )
 
     @staticmethod
@@ -329,16 +373,18 @@ class TestsFlextCorePydanticDeclarations:
             "token": round_trip_value,
         })
 
-        assert isinstance(credentials.token, t.SecretStr)
-        assert credentials.token.get_secret_value() == "s3cret"
-        assert "s3cret" not in repr(credentials)
+        tm.that(credentials.token.get_secret_value(), eq="s3cret")
+        tm.that("s3cret" in repr(credentials), eq=False)
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Credentials.model_validate({})
 
     @staticmethod
     def test_string_constraints_accept_valid_and_reject_invalid_values() -> None:
-        assert TestsFlextCorePydanticDeclarations._Constrained(code="abc").code == "abc"
+        tm.that(
+            TestsFlextCorePydanticDeclarations._Constrained(code="abc").code,
+            eq="abc",
+        )
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Constrained(code="ab")
@@ -353,7 +399,7 @@ class TestsFlextCorePydanticDeclarations:
         })
 
         assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
-        assert pet.animal.bark == "woof"
+        tm.that(pet.animal.bark, eq="woof")
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Pet.model_validate({
@@ -369,7 +415,7 @@ class TestsFlextCorePydanticDeclarations:
             ),
         )
 
-        assert box.model_dump() == {"item": {"name": "flext", "detail": "advanced"}}
+        tm.that(box.model_dump(), eq={"item": {"name": "flext", "detail": "advanced"}})
 
     @staticmethod
     def test_type_adapter_constructor_validates_python_values() -> None:
@@ -378,7 +424,7 @@ class TestsFlextCorePydanticDeclarations:
         adapter: m.TypeAdapter[int] = u.type_adapter(int)
         validated = adapter.validate_python(sample_value)
 
-        assert validated == sample_value
+        tm.that(validated, eq=sample_value)
         with pytest.raises(m.ValidationError):
             adapter.validate_python("not an integer")
 
@@ -388,19 +434,19 @@ class TestsFlextCorePydanticDeclarations:
             Annotated[list[int], m.FailFast()],
         )
 
-        assert adapter.validate_python([1, 2]) == [1, 2]
+        tm.that(adapter.validate_python([1, 2]), eq=[1, 2])
 
         with pytest.raises(m.ValidationError) as exc_info:
             adapter.validate_python(["first", "second"])
 
-        assert len(exc_info.value.errors()) == 1
+        tm.that(exc_info.value.errors(), length=1)
 
     @staticmethod
     def test_instance_of_accepts_instance_and_rejects_foreign_object() -> None:
         greeter = TestsFlextCorePydanticDeclarations._Greeter()
         card = TestsFlextCorePydanticDeclarations._GreetingCard(payload=greeter)
 
-        assert card.payload is greeter
+        tm.that(card.payload is greeter, eq=True)
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._GreetingCard.model_validate({
@@ -427,7 +473,7 @@ class TestsFlextCorePydanticDeclarations:
         vector = adapter.validate_python({"x": 1, "y": 2})
 
         assert isinstance(vector, TestsFlextCorePydanticDeclarations._Vector)
-        assert (vector.x, vector.y) == (1, 2)
+        tm.that((vector.x, vector.y), eq=(1, 2))
 
         with pytest.raises(m.ValidationError):
             adapter.validate_python({"x": "no-int", "y": 2})

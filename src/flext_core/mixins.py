@@ -17,17 +17,17 @@ class FlextMixins(FlextMixinsState):
 
     @property
     def settings(self) -> p.Settings:
-        """Return settings from this component's scoped runtime."""
+        """Settings from this component's scoped runtime."""
         return self._get_runtime().settings
 
     @property
     def container(self) -> p.Container:
-        """Return the container from the same runtime as context and settings."""
+        """Container from the same runtime as context and settings."""
         return self._get_runtime().container
 
     @property
     def context(self) -> p.Context:
-        """Return the context associated with this component."""
+        """Context associated with this component."""
         return self._get_runtime().context
 
     @property
@@ -37,7 +37,12 @@ class FlextMixins(FlextMixinsState):
 
     @classmethod
     def _get_or_create_logger(cls) -> p.Logger:
-        """Reuse one logger per concrete component class."""
+        """Reuse one logger per concrete component class.
+
+        Returns:
+            The component's cached logger.
+
+        """
         logger_name = f"{cls.__module__}.{cls.__name__}"
         with cls._cache_lock:
             if logger_name in cls._logger_cache:
@@ -49,7 +54,15 @@ class FlextMixins(FlextMixinsState):
 
     @contextmanager
     def track(self, operation_name: str) -> t.OperationMetricsStream:
-        """Track actual operation effects and always release the operation context."""
+        """Track operation effects and always release the operation context.
+
+        Yields:
+            The mutable operation metrics.
+
+        Raises:
+            EXC_BROAD_RUNTIME: If the tracked operation fails.
+
+        """
         stats_model = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
@@ -96,7 +109,12 @@ class FlextMixins(FlextMixinsState):
             FlextContext.apply_operation_name("")
 
     def _get_runtime(self) -> p.ServiceRuntime:
-        """Build the kernel runtime once, unless a service supplies its explicit graph."""
+        """Build the runtime once, unless a service supplies its explicit graph.
+
+        Returns:
+            The component's service runtime.
+
+        """
         if self._runtime is None:
             self._runtime = u.build_service_runtime(self)
         return self._runtime

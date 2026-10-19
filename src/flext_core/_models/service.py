@@ -82,7 +82,9 @@ class FlextModelsService:
         container: t.Port[p.Container | None] = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
-            description="Existing container whose public DI registrations the runtime preserves.",
+            description=(
+                "Existing container whose public DI registrations the runtime preserves."
+            ),
         )
         dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
             default=None,
@@ -110,7 +112,9 @@ class FlextModelsService:
         )
         handler: t.Port[p.ServiceOperationHandler] = FlextModelsPydantic.Field(
             exclude=True,
-            description="Original unbound operation, invoked with the provided service.",
+            description=(
+                "Original unbound operation, invoked with the provided service."
+            ),
         )
 
 

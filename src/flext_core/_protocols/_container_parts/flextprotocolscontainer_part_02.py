@@ -134,8 +134,10 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             self,
             *,
             subproject: str | None = None,
-            registration: flextprotocolscontainer_part_01.FlextProtocolsContainer.ServiceRegistrationSpec
-            | None = None,
+            registration: (
+                flextprotocolscontainer_part_01.FlextProtocolsContainer.ServiceRegistrationSpec
+                | None
+            ) = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""
             ...

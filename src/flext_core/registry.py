@@ -183,10 +183,12 @@ class FlextRegistry(s[bool], m.RegistryOptions):
                 catch=c.EXC_RUNTIME_TYPE,
                 op_name="validate plugin registration",
             )
-            if validated.failure:
-                return validated
-            if not validated.value:
-                return r[bool].fail_op("validate plugin registration", name)
+            if validated.failure or not validated.value:
+                return (
+                    validated
+                    if validated.failure
+                    else r[bool].fail_op("validate plugin registration", name)
+                )
         with self._lock:
             if scope == c.RegistrationScope.INSTANCE:
                 outcome = self.register(key.value, plugin)

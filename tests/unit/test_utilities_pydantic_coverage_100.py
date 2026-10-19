@@ -26,6 +26,9 @@ def _validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
     Returns:
         The validated label passed to the field factory.
 
+    Raises:
+        TypeError: If the validated label is not a string.
+
     """
     label = values["label"]
     if not isinstance(label, str):

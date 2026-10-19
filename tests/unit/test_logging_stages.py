@@ -537,7 +537,7 @@ class TestsFlextLoggingStages:
         """ERROR plus trace expands the original cause using native processors."""
         stream = io.StringIO()
         observed: list[p.LoggingRecord] = []
-        secret = "selected-sensitive-input"
+        sensitive_value = "selected-sensitive-input"
         selected = u.resolve_logging_settings(
             log_level=c.LogLevel.ERROR, trace=True, debug=False
         )
@@ -546,11 +546,11 @@ class TestsFlextLoggingStages:
             settings=m.StructlogOptions(
                 console_renderer=False,
                 observers=(observed.append,),
-                redacted_values=(secret,),
+                redacted_values=(sensitive_value,),
                 logger_factory=structlog.PrintLoggerFactory(file=stream),
             ),
         )
-        cause = ValueError(f"invalid credential {secret}")
+        cause = ValueError(f"invalid credential {sensitive_value}")
         original = RuntimeError("operation failed")
         try:
             try:
@@ -571,7 +571,7 @@ class TestsFlextLoggingStages:
         )
         tm.that(record.context["exception_type"], eq=type(original).__name__)
         tm.that(record.context["exception_message"], eq=str(original))
-        tm.that(stream.getvalue(), has="stack_trace", lacks=secret)
+        tm.that(stream.getvalue(), has="stack_trace", lacks=sensitive_value)
         tm.that(stream.getvalue(), has="ValueError", lacks='"locals"')
         tm.that(stream.getvalue(), lacks="filtered detail")
         tm.that(original.__cause__ is cause, eq=True)
@@ -582,7 +582,7 @@ class TestsFlextLoggingStages:
         cause = ValueError("business cause")
         original = RuntimeError("business failure")
 
-        def capture(event: p.LoggingRecord) -> None:
+        def capture(_event: p.LoggingRecord) -> None:
             raise hook_error
 
         u.configure_structlog(
@@ -592,7 +592,8 @@ class TestsFlextLoggingStages:
                 async_logging=False,
             )
         )
-        with pytest.raises(RuntimeError) as caught:
+
+        def log_business_failure() -> None:
             try:
                 try:
                     raise cause
@@ -600,6 +601,9 @@ class TestsFlextLoggingStages:
                     raise original from cause
             except RuntimeError as error:
                 _ = u.failure("operation failed", exception=error)
+
+        with pytest.raises(RuntimeError) as caught:
+            log_business_failure()
         tm.that(caught.value is original, eq=True)
         tm.that(original.__cause__ is cause, eq=True)
         tm.that(original.__context__ is hook_error, eq=True)
@@ -650,14 +654,23 @@ class TestsFlextLoggingStages:
         self,
     ) -> None:
         """Outside except, a failed sink never replaces a saved exception tuple."""
+
+        def fail_with_cause(
+            original: ValueError | KeyboardInterrupt, cause: LookupError
+        ) -> None:
+            raise original from cause
+
+        def fail_again(original: ValueError | KeyboardInterrupt) -> None:
+            raise original
+
         for original in (
             ValueError("saved business failure"),
             KeyboardInterrupt("saved interrupt"),
         ):
             cause = LookupError("original cause")
             try:
-                raise original from cause
-            except BaseException:
+                fail_with_cause(original, cause)
+            except (ValueError, KeyboardInterrupt):
                 saved_tb = original.__traceback__
                 saved: t.LoggingExceptionInfo = type(original), original, saved_tb
                 resolved = u.resolve_logging_exception_info(True)
@@ -668,8 +681,8 @@ class TestsFlextLoggingStages:
                 tm.that(resolved[2] is saved[2], eq=True)
                 tm.that(u.resolve_logging_exception_info(False), eq=None)
             try:
-                raise original
-            except BaseException:
+                fail_again(original)
+            except (ValueError, KeyboardInterrupt):
                 discarded_tb = original.__traceback__
             tm.that(discarded_tb is saved_tb, eq=False)
             stream = io.StringIO()
@@ -704,7 +717,7 @@ class TestsFlextLoggingStages:
         structured, console = io.StringIO(), io.StringIO()
         observed: list[p.LoggingRecord] = []
         declared_key = "ClientSecret"
-        secret = "mixed-case-sensitive-payload"
+        sensitive_value = "mixed-case-sensitive-payload"
         options = m.StructlogOptions(
             log_level=logging.DEBUG,
             redacted_keys=(declared_key,),
@@ -716,7 +729,8 @@ class TestsFlextLoggingStages:
         )
         u.configure_structlog(settings=options)
         payload = dict.fromkeys(
-            (declared_key, declared_key.casefold(), declared_key.swapcase()), secret
+            (declared_key, declared_key.casefold(), declared_key.swapcase()),
+            sensitive_value,
         )
         tm.ok(
             u.log(
@@ -733,13 +747,13 @@ class TestsFlextLoggingStages:
             observed[0], from_attributes=True
         ).model_dump_json()
         for text in (structured.getvalue(), console.getvalue(), dumped):
-            tm.that(text, lacks=secret, has="public")
+            tm.that(text, lacks=sensitive_value, has="public")
 
     def test_invalid_policy_and_unbound_selected_handler_have_no_emission(self) -> None:
         """Validation rejects selected incomplete composition before effects."""
         original = u.logging_settings()
         stream = io.StringIO()
-        with pytest.raises(ValueError):
+        with pytest.raises(m.ValidationError, match="logging_profile"):
             _ = u.resolve_logging_settings(logging_profile="unbound-presentation")
         with pytest.raises(ValueError, match="ProcessorFormatter"):
             u.configure_structlog(
@@ -785,6 +799,15 @@ class TestsFlextLoggingStages:
         with pytest.raises(ValueError, match="closed file") as teardown:
             u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
         tm.that(teardown.value is first.value, eq=True)
+
+    @staticmethod
+    def assert_blocked_pipe_outcome(outcome: p.LogResult | ValueError) -> None:
+        """Validate the public outcome after a blocked writer recovers."""
+        if isinstance(outcome, ValueError):
+            tm.that(str(outcome), eq="I/O operation on stopped async log writer")
+            tm.that(outcome.__traceback__ is not None, eq=True)
+        else:
+            tm.that(outcome.success, eq=True)
 
     @staticmethod
     def exercise_blocked_pipe_shutdown() -> None:
@@ -842,15 +865,7 @@ class TestsFlextLoggingStages:
                     msg = "Public logging did not recover after the pipe drained"
                     raise TimeoutError(msg)
                 tm.that(len(emitted), eq=1)
-                outcome = emitted[0]
-                if isinstance(outcome, ValueError):
-                    tm.that(
-                        str(outcome),
-                        eq="I/O operation on stopped async log writer",
-                    )
-                    tm.that(outcome.__traceback__ is not None, eq=True)
-                else:
-                    tm.that(outcome.success, eq=True)
+                TestsFlextLoggingStages.assert_blocked_pipe_outcome(emitted[0])
                 u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
             reader.join(timeout=c.DEFAULT_TIMEOUT_SECONDS)
             if reader.is_alive():
