@@ -19,7 +19,7 @@ class FlextConstantsEnforcementFixActions:
     _PYDANTIC_SYMBOLS_TO_REPLACE: Final[t.JsonDict] = {
         "BaseModel": "m.BaseModel",
         "ConfigDict": "m.ConfigDict",
-        "Field": "u.Field",
+        "Field": "m.Field",
         "PrivateAttr": "m.PrivateAttr",
         "TypeAdapter": "m.TypeAdapter",
         "computed_field": "u.computed_field",

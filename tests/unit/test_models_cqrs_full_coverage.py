@@ -29,45 +29,67 @@ class TestsFlextCoreModelsCqrs:
         """Test pagination applies documented defaults."""
         page = m.Pagination()
 
-        assert page.page == c.DEFAULT_RETRY_DELAY_SECONDS
+        assert page.page == c.FIRST_PAGE_INDEX
         assert page.size == c.DEFAULT_PAGE_SIZE
 
     @staticmethod
-    @pytest.mark.parametrize(("page", "size"), [(1, 10), (3, 11), (2, 50), (10, 100)])
+    @pytest.mark.parametrize(
+        ("page", "size"),
+        [
+            (c.FIRST_PAGE_INDEX, c.MIN_PAGE_SIZE),
+            (c.FIRST_PAGE_INDEX + 2, c.DEFAULT_PAGE_SIZE),
+            (c.FIRST_PAGE_INDEX + 1, c.MAX_PAGE_SIZE),
+            (c.FIRST_PAGE_INDEX + 9, c.DEFAULT_PAGE_SIZE),
+        ],
+    )
     def test_pagination_limit_equals_size(page: int, size: int) -> None:
         """Test pagination limit equals size."""
         assert m.Pagination(page=page, size=size).limit == size
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("page", "size", "expected_offset"),
-        [(1, 10, 0), (2, 10, 10), (3, 11, 22), (5, 20, 80)],
+        ("completed_pages", "size"),
+        [
+            (0, c.MIN_PAGE_SIZE),
+            (1, c.DEFAULT_PAGE_SIZE),
+            (2, c.MAX_PAGE_SIZE),
+            (4, c.DEFAULT_PAGE_SIZE),
+        ],
     )
     def test_pagination_offset_is_derived_from_page_and_size(
-        page: int,
+        completed_pages: int,
         size: int,
-        expected_offset: int,
     ) -> None:
         """Test pagination offset is derived from page and size."""
-        assert m.Pagination(page=page, size=size).offset == expected_offset
+        pagination = m.Pagination(page=c.FIRST_PAGE_INDEX + completed_pages, size=size)
+        assert pagination.offset == completed_pages * size
 
     @staticmethod
     def test_pagination_exposes_computed_fields_in_dump() -> None:
         """Test pagination exposes computed fields in dump."""
-        dumped = m.Pagination(page=2, size=20).model_dump()
+        dumped = m.Pagination(
+            page=c.FIRST_PAGE_INDEX + 1,
+            size=c.DEFAULT_PAGE_SIZE,
+        ).model_dump()
 
-        assert dumped["limit"] == 20
-        assert dumped["offset"] == 20
+        assert dumped["limit"] == c.DEFAULT_PAGE_SIZE
+        assert dumped["offset"] == c.DEFAULT_PAGE_SIZE
 
     @staticmethod
-    @pytest.mark.parametrize("size", [c.MAX_PAGE_SIZE + 1, 5000])
-    def test_pagination_rejects_size_above_maximum(size: int) -> None:
-        """Test pagination rejects size above maximum."""
+    @pytest.mark.parametrize(
+        "size",
+        [c.MIN_PAGE_SIZE - 1, c.MAX_PAGE_SIZE + 1, c.MAX_PAGE_SIZE + 2],
+    )
+    def test_pagination_rejects_size_outside_configured_bounds(size: int) -> None:
+        """Configured pagination bounds reject values on either side."""
         with pytest.raises(m.ValidationError):
             m.Pagination(size=size)
 
     @staticmethod
-    @pytest.mark.parametrize(("page", "size"), [(0, 10), (1, 0), (-1, 10)])
+    @pytest.mark.parametrize(
+        ("page", "size"),
+        [(0, c.MIN_PAGE_SIZE), (c.FIRST_PAGE_INDEX, 0), (-1, c.MIN_PAGE_SIZE)],
+    )
     def test_pagination_rejects_non_positive_bounds(page: int, size: int) -> None:
         """Test pagination rejects non positive bounds."""
         with pytest.raises(m.ValidationError):
@@ -82,7 +104,7 @@ class TestsFlextCoreModelsCqrs:
         query = m.Query()
 
         assert isinstance(query.pagination, m.Pagination)
-        assert query.pagination.page == c.DEFAULT_RETRY_DELAY_SECONDS
+        assert query.pagination.page == c.FIRST_PAGE_INDEX
         assert query.pagination.size == c.DEFAULT_PAGE_SIZE
         assert query.message_type == "query"
 
@@ -90,13 +112,16 @@ class TestsFlextCoreModelsCqrs:
     def test_query_coerces_pagination_mapping_including_stringified_ints() -> None:
         """Test query coerces pagination mapping including stringified ints."""
         query = m.Query.model_validate({
-            "pagination": {"page": "4", "size": "20"},
+            "pagination": {
+                "page": str(c.FIRST_PAGE_INDEX + 3),
+                "size": str(c.DEFAULT_PAGE_SIZE),
+            },
             "filters": {},
         })
 
         assert isinstance(query.pagination, m.Pagination)
-        assert query.pagination.page == 4
-        assert query.pagination.size == 20
+        assert query.pagination.page == c.FIRST_PAGE_INDEX + 3
+        assert query.pagination.size == c.DEFAULT_PAGE_SIZE
 
     @staticmethod
     def test_query_uses_default_pagination_when_none_supplied() -> None:
@@ -104,19 +129,16 @@ class TestsFlextCoreModelsCqrs:
         query = m.Query.model_validate({"pagination": None, "filters": {}})
 
         assert isinstance(query.pagination, m.Pagination)
-        assert query.pagination.page == c.DEFAULT_RETRY_DELAY_SECONDS
+        assert query.pagination.page == c.FIRST_PAGE_INDEX
 
     @staticmethod
-    def test_query_falls_back_to_default_pagination_on_invalid_input() -> None:
-        """Test query falls back to default pagination on invalid input."""
-        query = m.Query.model_validate({
-            "pagination": {"size": c.MAX_PAGE_SIZE + 1},
-            "filters": {},
-        })
-
-        # Invalid pagination is a recoverable condition: the query keeps a
-        # valid default Pagination rather than propagating the error.
-        assert query.pagination.size == c.DEFAULT_PAGE_SIZE
+    def test_query_rejects_invalid_pagination() -> None:
+        """Invalid explicit pagination retains its native validation failure."""
+        with pytest.raises(m.ValidationError):
+            m.Query.model_validate({
+                "pagination": {"size": c.MAX_PAGE_SIZE + 1},
+                "filters": {},
+            })
 
     @staticmethod
     def test_query_subclass_pagination_override_is_honored() -> None:
@@ -127,13 +149,13 @@ class TestsFlextCoreModelsCqrs:
                 pass
 
         query = CustomQuery.model_validate({
-            "pagination": {"page": 1, "size": 9},
+            "pagination": {"page": c.FIRST_PAGE_INDEX, "size": c.MIN_PAGE_SIZE},
             "filters": {},
         })
 
         assert type(query.pagination) is CustomQuery.Pagination
-        assert query.pagination.page == 1
-        assert query.pagination.size == 9
+        assert query.pagination.page == c.FIRST_PAGE_INDEX
+        assert query.pagination.size == c.MIN_PAGE_SIZE
 
     # ------------------------------------------------------------------ #
     # Command / Event identity                                           #

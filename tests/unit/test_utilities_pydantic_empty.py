@@ -27,22 +27,22 @@ class TestsFlextUtilitiesPydanticEmpty:
     type _NonEmptyAlias = _NonEmptyValues[int]
 
     class _Item(m.ArbitraryTypesModel):
-        name: str = u.Field(default="item", description="Item name.")
+        name: str = m.Field(default="item", description="Item name.")
 
     class _Defaults(m.ArbitraryTypesModel):
-        json_mapping: t.JsonMapping = u.Field(
+        json_mapping: t.JsonMapping = m.Field(
             default_factory=u.empty(TypeForm(t.JsonMapping)),
             description="Read-only JSON mapping contract.",
         )
-        mutable_json_mapping: t.MutableJsonMapping = u.Field(
+        mutable_json_mapping: t.MutableJsonMapping = m.Field(
             default_factory=u.empty(TypeForm(t.MutableJsonMapping)),
             description="Mutable JSON mapping contract.",
         )
-        str_sequence: t.StrSequence = u.Field(
+        str_sequence: t.StrSequence = m.Field(
             default_factory=u.empty(TypeForm(t.StrSequence)),
             description="Read-only string sequence contract.",
         )
-        items: t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item] = u.Field(
+        items: t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item] = m.Field(
             default_factory=u.empty(
                 contract_factory=lambda: TypeForm(
                     t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item]
@@ -51,15 +51,15 @@ class TestsFlextUtilitiesPydanticEmpty:
             validate_default=True,
             description="Mutable sequence of a forward-referenced model.",
         )
-        frozen_tags: AbstractSet[str] = u.Field(
+        frozen_tags: AbstractSet[str] = m.Field(
             default_factory=u.empty(TypeForm(AbstractSet[str])),
             description="Read-only set contract.",
         )
-        mutable_tags: MutableSet[str] = u.Field(
+        mutable_tags: MutableSet[str] = m.Field(
             default_factory=u.empty(TypeForm(MutableSet[str])),
             description="Mutable set contract.",
         )
-        modules: t.MutableMappingKV[str, ModuleType] = u.Field(
+        modules: t.MutableMappingKV[str, ModuleType] = m.Field(
             default_factory=u.empty(TypeForm(t.MutableMappingKV[str, ModuleType])),
             description="Mapping of an arbitrary, JSON-unrepresentable element.",
         )

@@ -151,7 +151,9 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def handler_metadata(
-        candidate: p.RegisterableService | p.DispatchableHandler,
+        candidate: p.RegisterableService
+        | p.DispatchableHandler
+        | p.ResolvedHandlerCallable,
         *,
         name: str,
     ) -> p.DecoratorConfig | None:

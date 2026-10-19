@@ -41,17 +41,17 @@ from tests import u
 
 
 class TestsFlextBadAnyField(m.ArbitraryTypesModel):
-    data: Annotated[typing.Any, u.Field(description="Intentionally Any.")] = None
+    data: Annotated[typing.Any, m.Field(description="Intentionally Any.")] = None
 
 
 class TestsFlextBadBareCollection(m.ArbitraryTypesModel):
-    items: list[str] = u.Field(default_factory=list, description="Bare list.")
+    items: list[str] = m.Field(default_factory=list, description="Bare list.")
 
 
 class TestsFlextBadMutableDefault(m.ArbitraryTypesModel):
     items: Annotated[
         MutableSequence[str],
-        u.Field(description="Mutable default list."),
+        m.Field(description="Mutable default list."),
     ] = ["x"]
 
 
@@ -62,14 +62,14 @@ class TestsFlextBadMissingDesc(m.ArbitraryTypesModel):
 class TestsFlextBadInlineUnion(m.ArbitraryTypesModel):
     value: Annotated[
         str | int | float | bool | bytes,
-        u.Field(description="Five-arm inline union."),
+        m.Field(description="Five-arm inline union."),
     ] = ""
 
 
 class TestsFlextBadFrozen(m.ImmutableValueModel):
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
 
-    payload: Annotated[str, u.Field(description="Data payload.")] = ""
+    payload: Annotated[str, m.Field(description="Data payload.")] = ""
 
 
 class TestsFlextBadAccessors(FlextModelsNamespace):

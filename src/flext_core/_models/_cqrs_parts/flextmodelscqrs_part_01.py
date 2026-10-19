@@ -41,13 +41,14 @@ class FlextModelsCqrs:
                 description="Page number (1-based indexing)",
                 examples=[1, 2, 10, 100],
             ),
-        ] = c.DEFAULT_RETRY_DELAY_SECONDS
+        ] = c.FIRST_PAGE_INDEX
         size: Annotated[
             t.PositiveInt,
             Field(
+                ge=c.MIN_PAGE_SIZE,
                 le=c.MAX_PAGE_SIZE,
-                description="Number of items per page (max 1000)",
-                examples=[10, 20, 50, 100],
+                description="Number of items per page within the configured bounds",
+                examples=[c.MIN_PAGE_SIZE, c.DEFAULT_PAGE_SIZE, c.MAX_PAGE_SIZE],
             ),
         ] = c.DEFAULT_PAGE_SIZE
 
@@ -61,7 +62,7 @@ class FlextModelsCqrs:
         @property
         def offset(self) -> int:
             """Offset from page and size."""
-            return (self.page - 1) * self.size
+            return (self.page - c.FIRST_PAGE_INDEX) * self.size
 
 
 __all__: list[str] = ["FlextModelsCqrs"]

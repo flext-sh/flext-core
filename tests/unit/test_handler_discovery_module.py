@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from re import escape
 from time import monotonic
+from types import ModuleType
 from typing import TYPE_CHECKING
 
 import pytest
@@ -74,6 +75,68 @@ class TestsFlextHandlerDiscovery:
                 tuple(expected.middleware),
             ),
         )
+
+    @staticmethod
+    def test_variadic_declaration_preserves_original_call_signature() -> None:
+        """Discovery retains arguments without certifying message dispatchability."""
+
+        def operation(
+            request: p.Routable,
+            /,
+            *suffixes: str,
+            prefix: str,
+            **labels: str,
+        ) -> p.Result[str]:
+            return r[str].ok(
+                f"{prefix}:{u.resolve_message_route(request)}:{','.join(suffixes)}:"
+                f"{labels['label']}"
+            )
+
+        decorated = h.handler(command=m.Command)(operation)
+        module = ModuleType("variadic_handlers")
+        module.operation = decorated
+        found = h.Discovery.scan_module(module)[0][1]
+        request = m.Command()
+        expected = f"start:{u.resolve_message_route(request)}:a,b:end"
+        tm.that(decorated is operation)
+        tm.that(found is operation)
+        tm.that(
+            tm.ok(decorated(request, "a", "b", prefix="start", label="end")),
+            eq=expected,
+        )
+        tm.that(
+            tm.ok(found(request, "a", "b", prefix="start", label="end")), eq=expected
+        )
+
+    @staticmethod
+    def test_callable_admission_does_not_certify_foreign_return_payload() -> None:
+        """The actual dispatcher rejects a foreign callable's unsupported output."""
+        module = ModuleType("foreign_handlers")
+        received: t.MutableSequenceOf[p.Routable] = []
+
+        def operation(request: p.Routable) -> ModuleType:
+            received.append(request)
+            return module
+
+        setattr(operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command))
+        module.operation = operation
+        found = h.Discovery.scan_module(module)[0][1]
+        tm.that(found is operation)
+        tm.that(received, empty=True)
+        dispatcher = u.build_dispatcher()
+        report = tm.ok(
+            dispatcher.register_handlers((
+                m.HandlerRegistration(
+                    handler=found, message_type=c.DEFAULT_COMMAND_TYPE
+                ),
+            ))
+        )
+        tm.that(report.registered[0].handler is operation)
+        request = m.Command()
+        outcome = dispatcher.dispatch(request)
+        tm.that(outcome.failure)
+        tm.that(outcome.error, contains=c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE)
+        tm.that(received[0] is request)
 
     @staticmethod
     @pytest.mark.parametrize("timeout", [0.0, 1.0, 30.0])

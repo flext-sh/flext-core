@@ -29,18 +29,18 @@ class TestsFlextCleanModels:
 
                 model_config: ClassVar[m.ConfigDict] = m.ConfigDict(extra="forbid")
 
-                name: Annotated[str, u.Field(description="Entity display name.")] = ""
+                name: Annotated[str, m.Field(description="Entity display name.")] = ""
                 tags: Annotated[
                     t.StrSequence,
-                    u.Field(description="Tag collection."),
-                ] = u.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
+                    m.Field(description="Tag collection."),
+                ] = m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
                 metadata: Annotated[
                     t.StrMapping,
-                    u.Field(description="Attribute map."),
-                ] = u.Field(default_factory=u.empty(TypeForm(t.StrMapping)))
+                    m.Field(description="Attribute map."),
+                ] = m.Field(default_factory=u.empty(TypeForm(t.StrMapping)))
                 aliased_value: Annotated[
                     t.Core.Tests.CentralizedUnion,
-                    u.Field(description="Value declared through a t.* alias."),
+                    m.Field(description="Value declared through a t.* alias."),
                 ] = None
 
             class GoodFrozenValue(m.FrozenValueModel):
@@ -51,7 +51,7 @@ class TestsFlextCleanModels:
                     extra="forbid",
                 )
 
-                id: Annotated[str, u.Field(description="Opaque value identifier.")]
+                id: Annotated[str, m.Field(description="Opaque value identifier.")]
 
 
 class TestsFlextCleanConstants:
