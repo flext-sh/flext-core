@@ -1,4 +1,20 @@
 rules:
+  - id: core-assert-predicate-check
+    phase: contract-normalization
+    pattern: 'assert ${predicate}'
+    goal: |-
+      if not (${predicate}):
+          raise AssertionError
+    arguments: {}
+    unshadowed_builtins: [AssertionError]
+  - id: core-assert-message-check
+    phase: contract-normalization
+    pattern: 'assert ${predicate}, ${message}'
+    goal: |-
+      if not (${predicate}):
+          raise AssertionError((${message}))
+    arguments: {}
+    unshadowed_builtins: [AssertionError]
   - id: core-json-serialization-owner
     phase: contract-normalization
     pattern: '${receiver}.normalize_to_json_value'

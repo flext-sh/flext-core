@@ -104,9 +104,10 @@ class TestsFlextHandlerDiscovery:
             tm.ok(decorated(request, "a", "b", prefix="start", label="end")),
             eq=expected,
         )
-        tm.that(
-            tm.ok(found(request, "a", "b", prefix="start", label="end")), eq=expected
-        )
+        result = found(request, "a", "b", prefix="start", label="end")
+        if not isinstance(result, p.ResultView):
+            pytest.fail("Discovered handler did not preserve its result contract")
+        tm.that(tm.ok(result), eq=expected)
 
     @staticmethod
     def test_callable_admission_does_not_certify_foreign_return_payload() -> None:
@@ -149,7 +150,7 @@ class TestsFlextHandlerDiscovery:
     def test_unsupported_middleware_fails_before_application() -> None:
         """Requested middleware requires an actual executor capability."""
         with pytest.raises(ValueError, match="middleware execution is not supported"):
-            h.handler(command=m.Command, middleware=(p.Middleware,))
+            h.handler(command=m.Command, middleware=(u.Tests.Middleware,))
 
     @staticmethod
     def test_negative_priority_fails_at_the_pydantic_boundary() -> None:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests import u
+from tests import tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -16,6 +16,27 @@ if TYPE_CHECKING:
 
 class TestsFlextCoreUtilitiesConfig:
     """u.config_load / config_merge / config_env_override contract tests."""
+
+    @staticmethod
+    def test_yaml_load_preserves_mapping_payload(tmp_path: Path) -> None:
+        """The YAML boundary returns mappings without changing native values."""
+        path = tmp_path / "mapping.yaml"
+        path.write_text("enabled: true\nitems: [1, null]\n", encoding="utf-8")
+
+        result = u.Yaml.yaml_safe_load(path)
+
+        tm.that(tm.ok(result), eq={"enabled": True, "items": [1, None]})
+
+    @staticmethod
+    def test_yaml_load_rejects_non_mapping_payload(tmp_path: Path) -> None:
+        """A valid YAML sequence still violates the mapping ingress contract."""
+        path = tmp_path / "sequence.yaml"
+        path.write_text("- first\n- second\n", encoding="utf-8")
+
+        result = u.Yaml.yaml_safe_load(path)
+
+        tm.that(result.failure, eq=True)
+        tm.that(result.error, eq=f"YAML top level is not a mapping: {path}")
 
     @staticmethod
     def test_config_load_parses_toml_mapping(tmp_path: Path) -> None:

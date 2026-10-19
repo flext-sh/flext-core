@@ -30,6 +30,7 @@ class TestsFlextCorePydanticDeclarations:
         class Defaults(m.BaseModel):
             required: str = m.Field(description="Required value")
             defaulted: int = m.Field(default=3, description="Default value")
+            nullable: str | None = m.Field(default=None, description="Nullable value")
             generated: t.VariadicTuple[str] = m.Field(
                 default_factory=tuple, description="Factory value"
             )
@@ -47,11 +48,13 @@ class TestsFlextCorePydanticDeclarations:
         })
         tm.that(payload.required, eq="present")
         tm.that(payload.defaulted, eq=3)
+        tm.that(payload.nullable is None, eq=True)
         tm.that(payload.generated, eq=())
         tm.that(payload.aliased, eq="alias")
         tm.that(payload.model_dump(by_alias=True)["output"], eq="alias")
         constructed = Defaults(required="constructor")
         tm.that(constructed.defaulted, eq=3)
+        tm.that(constructed.nullable is None, eq=True)
         tm.that(constructed.generated, eq=())
         with pytest.raises(m.ValidationError):
             Payload.model_validate({"input": {"value": "alias"}})

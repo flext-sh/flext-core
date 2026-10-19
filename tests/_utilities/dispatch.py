@@ -7,11 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_tests import h, r, s, u
 
 from tests import m, p, t
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class TestsFlextUtilitiesDispatchMixin:
@@ -56,7 +59,8 @@ class TestsFlextUtilitiesDispatchMixin:
 
         @override
         @h.handler(command=m.Command, priority=200)
-        def create(self, _request: p.Routable) -> p.Result[str]:
+        def create(self, request: p.CommandRoutable) -> p.Result[str]:
+            _ = request
             return r[str].ok("overridden")
 
     class PrivateHandlerService(s):
@@ -93,7 +97,8 @@ class TestsFlextUtilitiesDispatchMixin:
         """Observe any routable publication through the existing capability protocol."""
 
         def can_handle(self, message_type: type) -> bool:
-            return isinstance(message_type, type)
+            _ = message_type
+            return True
 
         def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
             self.handled.append(u.resolve_message_route(message))
@@ -105,6 +110,17 @@ class TestsFlextUtilitiesDispatchMixin:
         @override
         def handle(self, message: t.JsonPayload) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok(message)
+
+    class Middleware:
+        """Forward the original model through the middleware contract."""
+
+        def process[TResult](
+            self,
+            command: p.Model,
+            next_handler: Callable[[p.Model], p.Result[TResult]],
+        ) -> p.Result[TResult]:
+            """Return the next handler's result without replacing its payload."""
+            return next_handler(command)
 
 
 __all__: list[str] = ["TestsFlextUtilitiesDispatchMixin"]

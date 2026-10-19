@@ -114,10 +114,10 @@ class TestsFlextCoreUtilitiesSettings:
         """Test register factory reports success and resolvable service."""
         container = FlextContainer()
         container.clear()
-
-        def build_settings_summary() -> p.RegisterableService:
-            return {
-                "env_file": FlextSettings.resolve_env_file(),
+        expected_env_file = FlextSettings.resolve_env_file()
+        expected_summary = m.ConfigMap(
+            root={
+                "env_file": expected_env_file,
                 "log_level": str(
                     u.resolve_effective_log_level(
                         trace=False,
@@ -126,6 +126,10 @@ class TestsFlextCoreUtilitiesSettings:
                     ),
                 ),
             }
+        )
+
+        def build_settings_summary() -> p.ServiceValue:
+            return expected_summary
 
         success_result = u.register_factory(
             container,
@@ -137,9 +141,15 @@ class TestsFlextCoreUtilitiesSettings:
         tm.ok(success_result)
         tm.that(success_result.value, eq=True)
         tm.ok(resolved_summary)
+        summary = resolved_summary.value
+        tm.that(summary is expected_summary, eq=True)
+        assert isinstance(summary, p.HasModelDump)
         tm.that(
-            resolved_summary.value,
-            eq={"env_file": c.ENV_FILE_DEFAULT, "log_level": c.LogLevel.WARNING},
+            summary.model_dump(mode="json"),
+            eq={
+                "env_file": expected_env_file,
+                "log_level": str(c.LogLevel.WARNING),
+            },
         )
 
     @staticmethod
@@ -149,7 +159,7 @@ class TestsFlextCoreUtilitiesSettings:
         container.clear()
         error_message = "factory exploded"
 
-        def failing_factory() -> p.RegisterableService:
+        def failing_factory() -> p.ServiceValue:
             raise RuntimeError(error_message)
 
         failure_result = u.register_factory(

@@ -124,6 +124,15 @@ class TestsNormalizationBoundaries:
             })
 
     @staticmethod
+    def test_registration_guard_preserves_model_and_bound_callable() -> None:
+        """Registration values pass the guard boundary without losing identity."""
+        model = m.ConfigMap(root={"plugin": "guard"})
+        services: tuple[p.RegisterableService, ...] = (model, model.model_dump)
+        for service in services:
+            value: p.GuardInput = service
+            tm.that(u.normalize_registerable_service(value) is service, eq=True)
+
+    @staticmethod
     def test_timestamp_validator_preserves_aware_timezone() -> None:
         """Naive timestamps gain UTC while aware timestamps retain identity."""
         naive = datetime(2025, 1, 1, tzinfo=UTC).replace(tzinfo=None)

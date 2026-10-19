@@ -1,70 +1,86 @@
-[create_and_service_methods]
-dispatcher.protocol: True
-create.shared.protocol: True
-create.default.protocol: True
-create.explicit.protocol: True
-create.auto_false.protocol: True
-create.auto_true.protocol: True
-decorated_handler.type: 'Ex12CommandA'
+[explicit_discovery]
+dispatcher.identity: True
 execute.success: True
+discovery.callable_identity: True
+dispatch.model_identity: True
+dispatch.result_payload: True
+rediscovery.no_new_entries: True
+rediscovery.exact_skipped: True
+rediscovery.model_identity: True
+create_from_callable.payload: True
 
-[summary_and_mixins]
-summary.ok.success: True
-summary.ok.failure: False
-summary.fail.success: False
-summary.fail.failure: True
-mixin.ok.unwrap_or: True
-mixin.fail.error: True
-mixin.fail.error_code: True
-ensure_result.raw: True
-ensure_result.existing: True
-to_dict.none: ConfigMap
-to_dict.mapping: ConfigMap
-to_dict.basemodel: dict
-generate_id.len: 36
-generate_prefixed_id: True
-generate_datetime_utc.type: 'datetime'
+[atomic_bindings]
+register_handler.success: True
+register_handler.id_present: True
+binding.duplicate_exact: True
+binding.metadata_conflict: True
+batch.conflict: True
+batch.no_partial_route: True
+batch.original_preserved: True
+binding.exact_registered: True
+binding.dispatch: True
+dispatch.failure: True
+dispatch.cause: True
 
-[registration_and_dispatch]
-register_handler.a.success: True
-register_handler.a.id_present: True
-register_handler.duplicate.success: True
-register_handler.b.success: True
-register_handler.mode.success: True
-create_from_callable.handle_success: True
-register_handlers.success: True
-register_handlers.registered_len: 3
-register_handlers.errors_len: 0
-dispatch.a.success: True
-dispatch.a.value: True
-dispatch.b.success: True
-dispatch.b.value: True
+[plugin_lifecycle]
+plugin.register: True
+plugin.duplicate: True
+plugin.identity: True
+plugin.list: True
+plugin.conflict: True
+plugin.conflict_preserves_identity: True
+plugin.unregister: True
+plugin.missing: True
+plugin.remove_missing: True
+plugin.reregister: True
+plugin.replacement_identity: True
+plugin.cleanup: True
+plugin.register: True
+plugin.duplicate: True
+plugin.identity: True
+plugin.list: True
+plugin.conflict: True
+plugin.conflict_preserves_identity: True
+plugin.unregister: True
+plugin.missing: True
+plugin.remove_missing: True
+plugin.reregister: True
+plugin.replacement_identity: True
+plugin.cleanup: True
 
-[bindings_and_plugins]
-register_bindings.success: True
-register_bindings.registered_len: 2
-register_plugin.ok: True
-register_plugin.dup: True
-register_plugin.empty_name: True
-register_plugin.validated: True
-register_plugin.validate_fail: True
-register_plugin.validate_exc: True
-fetch_plugin.ok: True
-fetch_plugin.missing: True
-list_plugins.transports: list
-unregister_plugin.ok: True
-unregister_plugin.missing: True
-register_class_plugin.ok: True
-register_class_plugin.dup: True
-register_class_plugin.empty_name: True
-fetch_class_plugin.ok: True
-fetch_class_plugin.missing: True
-list_class_plugins.auth: list
-unregister_class_plugin.ok: True
-unregister_class_plugin.missing: True
+[plugin_validation]
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.false: True
+validation.accepted: True
+validation.cleanup: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+plugin.invalid_key: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.failure: True
+validation.cause: True
+validation.no_registration: True
+validation.false: True
+validation.accepted: True
+validation.cleanup: True
 
-[register_method_and_tracking]
-register.service.plain: True
-register.service.meta_dict: True
-register.service.meta_model: True
-register.service.bad: True
+[explicit_sharing]
+service.shared_registry: True
+service.shared_payload: True
+service.isolated: True
+service.cleanup: True
+service.removal_visible: True
+register.service: True
+register.invalid: True

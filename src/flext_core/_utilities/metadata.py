@@ -55,7 +55,7 @@ class FlextUtilitiesMetadata:
                 decoded = adapter.validate_json(text)
             except ValidationError:
                 decoded = text
-            if isinstance(decoded, dict | list):
+            if isinstance(decoded, (dict, list)):
                 cleaned = redact(decoded)
                 if cleaned != decoded:
                     text = adapter.dump_json(cleaned).decode()

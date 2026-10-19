@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, TypeAliasType
+from typing import TYPE_CHECKING, Annotated, Literal, TypeAliasType
 
 import pytest
 
@@ -166,5 +166,90 @@ class TestsFlextBeartypeEngineAnnotations(
         class Host:
             type LazyAlias = LazyResolvableType | str
 
+        with pytest.raises(NameError) as native:
+            _ = Host.LazyAlias.__value__
+        assert native.value.name == "LazyResolvableType"
+
         assert u.resolve_type_alias_value(Host.LazyAlias, owner=Host) is None
         assert u.alias_contains_any(Host.LazyAlias, owner=Host) is False
+        deferred = u.deferred_alias(Host.LazyAlias, owner=Host)
+        assert deferred is not None
+        assert deferred.module == Host.__module__
+        assert deferred.qualname == f"{Host.__qualname__}.LazyAlias"
+        assert deferred.unavailable_imports == ("LazyResolvableType",)
+
+        with pytest.raises(NameError) as still_lazy:
+            _ = Host.LazyAlias.__value__
+        assert still_lazy.value.name == native.value.name
+
+    @staticmethod
+    def test_local_alias_rejects_a_shadowed_static_import_guard(tmp_path: Path) -> None:
+        """A local flag with the same name is not typing's static-only guard."""
+        with invalid_annotations(tmp_path) as source:
+            owner = source.shadowed_guard_owner()
+            if not isinstance(owner, type):
+                pytest.fail("Source fixture did not declare a class owner")
+            alias = vars(owner)["LazyAlias"]
+            if not isinstance(alias, TypeAliasType):
+                pytest.fail("Source fixture did not declare a native type alias")
+            assert u.deferred_alias(alias, owner=owner) is None
+            with pytest.raises(NameError) as native:
+                _ = alias.__value__
+            with pytest.raises(NameError) as resolved:
+                u.resolve_type_alias_value(alias, owner=owner)
+            assert resolved.value.name == native.value.name == "GuardedPath"
+
+    @staticmethod
+    def test_local_alias_rejects_a_copied_owner_with_forged_qualname() -> None:
+        """An alias binding and a copied qualname do not prove a declaration."""
+
+        class Host:
+            type LazyAlias = LazyResolvableType | str
+
+        class Copied:
+            LazyAlias = Host.LazyAlias
+
+        Copied.__qualname__ = Host.__qualname__
+        assert u.deferred_alias(Host.LazyAlias, owner=Copied) is None
+        with pytest.raises(NameError) as raised:
+            u.resolve_type_alias_value(Host.LazyAlias, owner=Copied)
+        assert raised.value.name == "LazyResolvableType"
+
+    @staticmethod
+    def test_local_alias_requires_the_exact_owner_binding() -> None:
+        """A homonymous native declaration cannot authenticate another alias."""
+
+        class Host:
+            type LazyAlias = LazyResolvableType | str
+
+        class Other:
+            type LazyAlias = LazyResolvableType | str
+
+        Other.__qualname__ = Host.__qualname__
+        assert u.deferred_alias(Host.LazyAlias, owner=Other) is None
+        with pytest.raises(NameError) as raised:
+            u.resolve_type_alias_value(Host.LazyAlias, owner=Other)
+        assert raised.value.name == "LazyResolvableType"
+
+    @staticmethod
+    def test_local_alias_without_owner_keeps_its_native_name_error() -> None:
+        """Source discovery never substitutes for a missing local class owner."""
+
+        class Host:
+            type LazyAlias = LazyResolvableType | str
+
+        with pytest.raises(NameError) as raised:
+            u.resolve_type_alias_value(Host.LazyAlias)
+        assert raised.value.name == "LazyResolvableType"
+
+    @staticmethod
+    def test_local_alias_payload_strings_are_not_static_import_dependencies() -> None:
+        """Literal values and Annotated metadata remain data, not type lookups."""
+
+        class Host:
+            type Label = Literal["LazyResolvableType"]
+            type Labeled = Annotated[str, "LazyResolvableType"]
+
+        for alias in (Host.Label, Host.Labeled):
+            assert u.deferred_alias(alias, owner=Host) is None
+            assert u.resolve_type_alias_value(alias, owner=Host) is alias.__value__

@@ -121,7 +121,10 @@ class FlextUtilitiesBeartypeTypeAliases:
 
     @staticmethod
     def _runtime_origin(
-        binding: FlextProtocolsBase.AttributeProbe, hint: str | ForwardRef
+        binding: FlextTypingBase.TypeFormSpecifier
+        | FlextProtocolsBase.AttributeProbe
+        | None,
+        hint: str | ForwardRef,
     ) -> type | TypeAliasType:
         """Require an exact runtime type or alias for the outer binding.
 

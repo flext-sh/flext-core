@@ -362,7 +362,7 @@ class TestsFlextCoreContext:
     @staticmethod
     def test_clone_deep_copies_nested_scope_values() -> None:
         """Mutation of the original nested payload does not affect its clone."""
-        payload: t.MutableMappingKV[str, t.JsonPayload] = {"state": "original"}
+        payload: t.JsonDict = {"state": "original"}
         context = FlextContext()
         context.set("nested", payload)
         cloned = context.clone()

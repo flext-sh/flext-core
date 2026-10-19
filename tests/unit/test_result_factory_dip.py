@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextResult
-from tests import e, m, p, r, tm
+from tests import e, m, p, r, tm, u
 
 
 class TestsFlextCoreResultFactoryDip:
@@ -227,9 +227,10 @@ class TestsFlextCoreResultFactoryDip:
     @staticmethod
     def test_fail_from_exception_redacts_sensitive_error_data_keys() -> None:
         """Test fail from exception redacts sensitive error data keys."""
+        password, token = u.generate_id(), u.generate_id()
         exc = e.OperationError(
             "denied",
-            context={"password": "s3cret", "host": "db.example", "token": "t0k"},
+            context={"password": password, "host": "db.example", "token": token},
         )
         result: p.Result[int] = r[int].fail(None, exception=exc)
         tm.fail(result, has="")
@@ -237,8 +238,8 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(result.error_data.get("host"), eq="db.example")
         assert "password" not in result.error_data
         assert "token" not in result.error_data
-        assert "s3cret" not in str(result.error_data)
-        assert "t0k" not in str(result.error_data)
+        assert password not in str(result.error_data)
+        assert token not in str(result.error_data)
 
     @staticmethod
     def test_fail_op_wraps_exception_and_stays_concrete_result() -> None:
@@ -282,23 +283,33 @@ class TestsFlextCoreResultFactoryDip:
     @staticmethod
     def test_fail_explicit_error_data_redacts_sensitive_keys() -> None:
         """Test fail explicit error data redacts sensitive keys."""
+        password, token = u.generate_id(), u.generate_id()
         result: p.Result[int] = r[int].fail(
             "denied",
-            error_data={"password": "s3cret", "host": "db.example", "token": "t0k"},
+            error_data={"password": password, "host": "db.example", "token": token},
         )
         tm.fail(result, has="denied")
         assert result.error_data is not None
         tm.that(result.error_data.get("host"), eq="db.example")
         assert "password" not in result.error_data
         assert "token" not in result.error_data
+        assert password not in str(result.error_data)
+        assert token not in str(result.error_data)
 
     @staticmethod
     def test_fail_explicit_error_data_wins_but_still_redacts_with_exception() -> None:
         """Test fail explicit error data wins but still redacts with exception."""
-        exc = e.OperationError("x", context={"password": "v" + "0" * 8, "host": "h"})
+        exception_password, password, api_key = (
+            u.generate_id(),
+            u.generate_id(),
+            u.generate_id(),
+        )
+        exc = e.OperationError(
+            "x", context={"password": exception_password, "host": "h"}
+        )
         result: p.Result[int] = r[int].fail(
             "denied",
-            error_data={"password": "v" + "1" * 8, "host": "kept", "api_key": "k"},
+            error_data={"password": password, "host": "kept", "api_key": api_key},
             exception=exc,
         )
         tm.fail(result, has="denied")
@@ -306,3 +317,5 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(result.error_data.get("host"), eq="kept")
         assert "password" not in result.error_data
         assert "api_key" not in result.error_data
+        for secret in (exception_password, password, api_key):
+            assert secret not in str(result.error_data)

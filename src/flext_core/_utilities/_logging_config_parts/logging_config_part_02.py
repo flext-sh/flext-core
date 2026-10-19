@@ -152,6 +152,16 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             observer(record)
         return sanitized
 
+    @staticmethod
+    def _format_exception(exc_info: t.LoggingExceptionInfo) -> str:
+        """Render native exception information without expanding its traceback.
+
+        Returns:
+            The exception type and message.
+
+        """
+        return f"{exc_info[0].__name__}: {exc_info[1]}"
+
     @classmethod
     def _build_structlog_processors(
         cls,
@@ -187,7 +197,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             ExceptionRenderer(
                 ExceptionDictTransformer(show_locals=False, max_frames=sys.maxsize)
                 if trace
-                else lambda info: f"{info[0].__name__}: {info[1]}"
+                else cls._format_exception
             ),
             partial(cls._observe_event, options=options),
         ))

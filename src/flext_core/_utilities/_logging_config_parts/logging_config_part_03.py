@@ -82,7 +82,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         selected = current.clone(**overrides)
         level = cls.resolve_effective_log_level(
             log_level=c.LogLevel(
-                str(logging.getLevelName(cls.level_number(selected.log_level)))
+                logging.getLevelName(cls.level_number(selected.log_level))
             ),
             debug=selected.debug,
             trace=selected.trace,
@@ -152,7 +152,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         elif options.log_level is not None:
             selected = cls.resolve_logging_settings(
                 runtime_settings=selected,
-                log_level=str(logging.getLevelName(options.log_level)),
+                log_level=logging.getLevelName(options.log_level),
             )
         native_handlers = cls._validated_native_handlers(options)
         threshold = cls.level_number(selected.log_level)
