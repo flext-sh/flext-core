@@ -34,6 +34,7 @@ class FlextProtocolsPydantic:
     type ValidationInfo = pydantic.ValidationInfo
     type ValidatorFunctionWrapHandler = pydantic.ValidatorFunctionWrapHandler
 
+    @runtime_checkable
     class ModelField(Protocol):
         """Declared field annotation consumed by schema and protocol generators."""
 
@@ -43,6 +44,7 @@ class FlextProtocolsPydantic:
         @property
         def frozen(self) -> bool | None: ...
 
+    @runtime_checkable
     class ModelType(FlextProtocolsBase.ModuleOwned, Protocol):
         """Native class metadata; instance operations remain on Model."""
 

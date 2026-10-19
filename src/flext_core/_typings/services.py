@@ -21,7 +21,6 @@ from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import BinaryIO, TextIO, TypeAliasType
 
-from structlog.typing import Processor
 
 from flext_core import c
 from flext_core._typings import FlextTypesPydantic, FlextTypingBase
@@ -120,7 +119,6 @@ class FlextTypesServices:
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
     type LoggingWriteCompletion = Future[int]
-    type LoggingProcessor = Processor
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType

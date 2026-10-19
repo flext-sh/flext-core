@@ -10,13 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeIs
-
-from flext_core._protocols import FlextProtocolsContainer
 from flext_core._typings import FlextTypesServices, FlextTypingBase
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class FlextUtilitiesChecker:
@@ -25,23 +19,6 @@ class FlextUtilitiesChecker:
     Extracts type introspection and compatibility logic from h
     to simplify handler initialization and provide reusable type checking.
     """
-
-    @staticmethod
-    def _is_module_export_callable(
-        value: Callable[..., FlextTypesServices.ModuleExport]
-        | FlextProtocolsContainer.GuardInput
-        | None,
-    ) -> TypeIs[Callable[..., FlextTypesServices.ModuleExport]]:
-        """Narrow value to a callable returning module exports.
-
-        Excludes ``type`` objects (classes are callable but are not the
-        bound/free functions we expect as handle methods).
-
-        Returns:
-            The resulting ``TypeIs[Callable[..., ts.ModuleExport]]``.
-
-        """
-        return callable(value) and not isinstance(value, type)
 
     @staticmethod
     def _is_subclass_of(

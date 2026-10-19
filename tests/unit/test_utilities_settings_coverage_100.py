@@ -127,13 +127,10 @@ class TestsFlextCoreUtilitiesSettings:
             }
         )
 
-        def build_settings_summary() -> p.ServiceValue:
-            return expected_summary
-
         success_result = u.register_factory(
             container,
             "settings_summary",
-            build_settings_summary,
+            lambda: expected_summary,
         )
         resolved_summary = container.resolve("settings_summary", type_cls=m.ConfigMap)
 

@@ -288,3 +288,6 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         if self.logging_settings().trace:
             return self._log(c.LogLevel.DEBUG, message, *args, **kwargs)
         return r[bool].ok(value=True)
+
+
+__all__: t.StrTuple = ("FlextBoundLogger",)
