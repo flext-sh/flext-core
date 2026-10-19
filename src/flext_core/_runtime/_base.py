@@ -7,54 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, t
-from flext_core._typings import FlextTypingBase
-
-if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsLogging
-    from flext_core._typings import FlextTypesServices
+from flext_core import c, p, t
+from flext_core._utilities import FlextUtilitiesBase
 
 
-class FlextRuntimeBase:
+class FlextRuntimeBase(FlextUtilitiesBase):
     """Foundational runtime helpers shared by higher runtime namespaces."""
-
-    Metadata: ClassVar[type[FlextProtocolsLogging.Metadata] | None] = None
-
-    @classmethod
-    def _require_metadata_model(cls) -> type[FlextProtocolsLogging.Metadata]:
-        """Return the bound metadata model class or raise a runtime contract error.
-
-        Returns:
-            The bound metadata model class or raise a runtime contract error.
-
-        Raises:
-            RuntimeError: If ``metadata_cls is None``.
-
-        """
-        metadata_cls = cls.Metadata
-        if metadata_cls is None:
-            msg = c.ERR_RUNTIME_METADATA_MODEL_NOT_BOUND
-            raise RuntimeError(msg)
-        return metadata_cls
-
-    @staticmethod
-    def create_instance[T](class_type: type[T]) -> T:
-        """Create an instance through ``object.__new__`` with type validation.
-
-        Returns:
-            The resulting ``T``.
-
-        Raises:
-            TypeError: If object.__new__ did not return instance of.
-
-        """
-        instance = object.__new__(class_type)
-        if not isinstance(instance, class_type):
-            msg = f"object.__new__ did not return instance of {class_type.__name__}"
-            raise TypeError(msg)
-        return instance
 
     @staticmethod
     def ensure_utc_datetime(value: datetime | None) -> datetime | None:
@@ -98,7 +57,9 @@ class FlextRuntimeBase:
         return "".join(ch for ch in text.lower() if ch.isalnum())
 
     @staticmethod
-    def to_scalar(item: FlextTypesServices.GuardInput | None) -> FlextTypingBase.Scalar:
+    def to_scalar(
+        item: p.GuardInput | None,
+    ) -> t.Scalar:
         """Coerce any runtime value to ``t.Scalar``.
 
         Returns:

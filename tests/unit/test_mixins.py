@@ -177,7 +177,7 @@ class TestsFlextMixins:
     def test_constructor_rejects_invalid_bootstrap_value(
         self,
         field_name: str,
-        bad_value: t.GuardInput,
+        bad_value: p.GuardInput,
     ) -> None:
         """Test constructor rejects invalid bootstrap value."""
         with pytest.raises(c.ValidationError):

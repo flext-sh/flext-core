@@ -1,8 +1,10 @@
-"""Shared public-metadata redaction at the JSON boundary."""
+"""Shared public-metadata redaction at the JSON boundary.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
-
-import json
 
 from pydantic import ValidationError
 
@@ -41,7 +43,7 @@ class FlextUtilitiesMetadata:
             if isinstance(decoded, dict | list):
                 cleaned = redact(decoded)
                 if cleaned != decoded:
-                    text = json.dumps(cleaned, ensure_ascii=False)
+                    text = adapter.dump_json(cleaned).decode()
             for secret in values:
                 if secret:
                     text = text.replace(secret, replacement or "")
@@ -64,3 +66,6 @@ class FlextUtilitiesMetadata:
             }
 
         return mapping(value)
+
+
+__all__: list[str] = ["FlextUtilitiesMetadata"]

@@ -16,7 +16,6 @@ from collections.abc import Hashable, MutableSequence
 from typing import Annotated, override
 
 from pydantic import Field
-from typing_extensions import TypeForm
 
 from flext_core._models import (
     FlextModelsBase,
@@ -62,9 +61,8 @@ class FlextModelsEntity:
         # class variable; a specifier inside ``Annotated`` metadata synthesizes
         # a REQUIRED ``__init__`` parameter (verified against plain pydantic).
         domain_events: MutableSequence[FlextModelsDomainEvent.DomainEvent] = Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(MutableSequence[FlextModelsDomainEvent.DomainEvent]),
-            ),
+            default_factory=list[FlextModelsDomainEvent.DomainEvent],
+            validate_default=True,
             description="List of uncommitted domain events for event sourcing",
         )
 

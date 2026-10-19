@@ -39,6 +39,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
         """Compare accumulated results against the ``.expected`` golden file."""
         actual = "\n".join(self._results).strip() + "\n"
         expected_path = self.caller_file.with_suffix(".expected")
+        actual_path = self.caller_file.with_suffix(".actual")
         checks = sum(
             1
             for line in self._results
@@ -47,6 +48,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
         if expected_path.exists():
             expected = expected_path.read_text(encoding="utf-8")
             if actual == expected:
+                actual_path.unlink(missing_ok=True)
                 pass_template = m.Examples.TEMPLATE_BY_KIND[
                     m.Examples.OutputKind.SUCCESS
                 ]
@@ -58,7 +60,6 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
                     ),
                 )
                 return
-            actual_path = self.caller_file.with_suffix(".actual")
             _ = actual_path.write_text(actual, encoding="utf-8")
             fail_template = m.Examples.TEMPLATE_BY_KIND[m.Examples.OutputKind.FAIL]
             _ = sys.stdout.write(

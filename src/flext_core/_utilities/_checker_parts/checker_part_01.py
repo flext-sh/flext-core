@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, TypeIs
 
+from flext_core._protocols import FlextProtocolsContainer
 from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ class FlextUtilitiesChecker:
     @staticmethod
     def _is_module_export_callable(
         value: Callable[..., FlextTypesServices.ModuleExport]
-        | FlextTypesServices.GuardInput
+        | FlextProtocolsContainer.GuardInput
         | None,
     ) -> TypeIs[Callable[..., FlextTypesServices.ModuleExport]]:
         """Narrow value to a callable returning module exports.

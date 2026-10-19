@@ -10,11 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import TypeAliasType
+
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.utilities import FlextUtilitiesBeartypeConf
-from tests import c, t, u
+from tests import c, t, tm, u
+from tests.unit._enforcement_support import invalid_annotations
 
 _FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
 
@@ -42,8 +46,6 @@ class TestsFlextCoreBeartypeEngineConfig:
     @pytest.mark.parametrize(
         ("hint", "expected"),
         [
-            (object, True),
-            (list[object], True),
             (str | int, False),
             (str, False),
             (None, False),
@@ -58,18 +60,35 @@ class TestsFlextCoreBeartypeEngineConfig:
         """``contains_any`` is True exactly when a hint admits any value."""
         assert u.contains_any(hint) is expected
 
+    @pytest.mark.parametrize("alias_name", ["ObjectAlias", "NestedObjectAlias"])
+    @staticmethod
+    def test_contains_any_detects_unrestricted_source_hints(
+        tmp_path: Path, alias_name: str
+    ) -> None:
+        """Unrestricted native hints enter only through explicit source fixtures."""
+        with invalid_annotations(tmp_path) as source:
+            alias = getattr(source.InvalidTypes, alias_name)
+            if not isinstance(alias, TypeAliasType):
+                pytest.fail("Invalid source fixture is not a native alias")
+            tm.that(u.contains_any(alias.__value__), eq=True)
+
     @pytest.mark.parametrize(
-        ("alias", "expected"),
-        [(t.AnyAlias, True), (t.NestedAnyAlias, True), (t.CleanAlias, False)],
+        ("alias_name", "expected"),
+        [("AnyAlias", True), ("NestedAnyAlias", True), ("CleanAlias", False)],
     )
     @staticmethod
     def test_alias_contains_any_unwraps_type_alias(
-        alias: t.TypeHintSpecifier | None,
+        tmp_path: Path,
+        alias_name: str,
         *,
         expected: bool,
     ) -> None:
         """``alias_contains_any`` follows a PEP 695 alias to its underlying value."""
-        assert u.alias_contains_any(alias) is expected
+        with invalid_annotations(tmp_path) as source:
+            alias = getattr(source.InvalidTypes, alias_name)
+            if not isinstance(alias, TypeAliasType):
+                pytest.fail("Source fixture did not declare a native type alias")
+            tm.that(u.alias_contains_any(alias), eq=expected)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),

@@ -73,7 +73,7 @@ class FlextUtilitiesMapperAccess(mapper_access_part_01.FlextUtilitiesMapperAcces
 
     @staticmethod
     def _get_raw(
-        data: p.AccessibleData | t.ConfigModelInput,
+        data: p.AccessibleData | p.ConfigModelInput,
         key: str,
     ) -> t.JsonPayload | t.JsonValue:
         """Get raw values without DSL conversion.

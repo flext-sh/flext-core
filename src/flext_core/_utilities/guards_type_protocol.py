@@ -6,17 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
+from flext_core._protocols import FlextProtocolsContainer
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeProtocolSpecsMixin,
     FlextUtilitiesGuardsTypeProtocolStringMixin,
 )
-
-if TYPE_CHECKING:
-    from flext_core.typings import ProtocolGuardInput
 
 
 class FlextUtilitiesGuardsTypeProtocol(
@@ -32,7 +28,7 @@ class FlextUtilitiesGuardsTypeProtocol(
 
     @staticmethod
     def matches_type(
-        value: ProtocolGuardInput,
+        value: FlextProtocolsContainer.ProtocolGuardInput,
         type_spec: str
         | type
         | t.VariadicTuple[type]

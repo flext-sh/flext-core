@@ -8,40 +8,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Mapping
 from typing import TypeVar
 
-from flext_core._protocols import (
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsResult,
-    FlextProtocolsService,
-    FlextProtocolsSettings,
-)
 from flext_core._typings import (
     FlextTypesCore,
     FlextTypesLazy,
     FlextTypesPydantic,
     FlextTypesServices,
-    FlextTypesTypeAdapters,
     FlextTypingBase,
     FlextTypingConfig,
-    FlextTypingContainers,
-    FlextTypingProjectMetadata,
 )
 
 
 class FlextTypes(
     FlextTypingBase,
     FlextTypingConfig,
-    FlextTypingContainers,
     FlextTypesCore,
     FlextTypesLazy,
     FlextTypesServices,
-    FlextTypesTypeAdapters,
-    FlextTypingProjectMetadata,
 ):
     """Type system foundation for FLEXT ecosystem.
 
@@ -58,30 +43,11 @@ type JsonMapping = Mapping[str, FlextTypesPydantic.JsonValue]
 
 type JsonDict = dict[str, FlextTypesPydantic.JsonValue]
 
-type ConfigModelInput = FlextProtocolsResult.HasModelDump | JsonMapping
-
 T = TypeVar("T")
 
 
 type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
 
 type ModuleGlobals = FlextTypesLazy.ModuleGlobals
-
-type ProtocolGuardInput = (
-    t.JsonPayload
-    | t.TypeHintSpecifier
-    | Callable[..., t.JsonPayload]
-    | FlextProtocolsContainer.Container
-    | FlextProtocolsContext.Context
-    | FlextProtocolsHandler.Dispatcher
-    | FlextProtocolsHandler.Handle
-    | FlextProtocolsHandler.Middleware
-    | FlextProtocolsLogging.Logger
-    | FlextProtocolsResult.Result[t.JsonPayload]
-    | FlextProtocolsSettings.Settings
-    | FlextProtocolsService.Service[t.JsonPayload]
-    | None
-)
-
 
 __all__: list[str] = ["FlextTypes", "t"]

@@ -8,15 +8,11 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_core import FlextContainer, FlextSettings
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, p, tm, u
 
 
 class TestsFlextCoreUtilitiesSettings:
@@ -119,7 +115,7 @@ class TestsFlextCoreUtilitiesSettings:
         container = FlextContainer()
         container.clear()
 
-        def build_settings_summary() -> t.RegisterableService:
+        def build_settings_summary() -> p.RegisterableService:
             return {
                 "env_file": FlextSettings.resolve_env_file(),
                 "log_level": str(
@@ -153,7 +149,7 @@ class TestsFlextCoreUtilitiesSettings:
         container.clear()
         error_message = "factory exploded"
 
-        def failing_factory() -> t.RegisterableService:
+        def failing_factory() -> p.RegisterableService:
             raise RuntimeError(error_message)
 
         failure_result = u.register_factory(

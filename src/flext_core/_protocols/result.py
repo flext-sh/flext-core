@@ -8,12 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_checkable
 
+from flext_core import t
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
 
     from flext_core import m
-    from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
 _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
@@ -21,6 +22,10 @@ _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
+
+    type ModelInput = t.ModelInput[FlextProtocolsResult.HasModelDump]
+    type ConfigModelInput = t.ConfigModelInput[FlextProtocolsResult.HasModelDump]
+    type MetadataInput = t.MetadataInput[FlextProtocolsResult.HasModelDump]
 
     @runtime_checkable
     class ResultView(Protocol[_ResultViewT_co]):
@@ -31,7 +36,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
+        def error_data(self) -> t.JsonMapping | None: ...
         @property
         def success(self) -> bool: ...
         @property
@@ -48,7 +53,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
+        def error_data(self) -> t.JsonMapping | None: ...
         @property
         def exception(self) -> BaseException | None: ...
         @property
@@ -65,7 +70,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> FlextTypingBase.JsonMapping | None: ...
+        def error_data(self) -> t.JsonMapping | None: ...
         @property
         def success(self) -> bool: ...
         @property
@@ -112,10 +117,16 @@ class FlextProtocolsResult:
 
         def map[U](self, func: Callable[[T], U]) -> FlextProtocolsResult.Result[U]: ...
 
-        def flow_through(
+        @overload
+        def flow_through(self) -> FlextProtocolsResult.Result[T]: ...
+
+        @overload
+        def flow_through[U](
             self,
-            *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
-        ) -> FlextProtocolsResult.Result[T]: ...
+            first: Callable[[T | U], FlextProtocolsResult.Result[U]],
+            /,
+            *funcs: Callable[[T | U], FlextProtocolsResult.Result[U]],
+        ) -> FlextProtocolsResult.Result[T | U]: ...
 
         def map_error(
             self,
@@ -160,7 +171,7 @@ class FlextProtocolsResult:
 
     @runtime_checkable
     class Result[T](ResultState[T], ResultOps[T], Protocol):
-        """Structural railway result contract; invariant payload."""
+        """Covariant structural railway interface over result operations and state."""
 
     @runtime_checkable
     class SuccessCheckable(Protocol):
@@ -191,84 +202,7 @@ class FlextProtocolsResult:
             *,
             mode: str = "python",
             exclude: set[str] | None = None,
-        ) -> FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]: ...
-
-    @runtime_checkable
-    class ResultFactoryMinimal(Protocol):
-        """Minimal factory contract satisfied by result mixin classes.
-
-        This is a subset of ``ResultFactory`` containing only the methods
-        required by ``copy_result`` and ``ok_result``. Mixin classes
-        (``FlextResultTransforms``, ``FlextResultComposition``,
-        ``FlextResultConstruction``) structurally satisfy this via
-        inheritance from ``FlextResultConstruction``.
-        """
-
-        @classmethod
-        def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
-
-        @classmethod
-        def fail(
-            cls,
-            error: str | None,
-            *,
-            error_code: str | None = None,
-            error_data: FlextTypingBase.JsonMapping | None = None,
-            exception: BaseException | None = None,
-        ) -> FlextTypingBase.UnconstrainedValue: ...
-
-        @classmethod
-        def ok(
-            cls, value: FlextTypingBase.UnconstrainedValue
-        ) -> FlextTypingBase.UnconstrainedValue: ...
-
-        @classmethod
-        def create_success[V](cls, value: V) -> FlextProtocolsResult.Result[V]: ...
-
-    @runtime_checkable
-    class ResultFactory(Protocol):
-        """Structural factory contract for the concrete result family."""
-
-        @classmethod
-        def require_error(cls, source: FlextProtocolsResult.FailureLike) -> str: ...
-
-        @classmethod
-        def ok(
-            cls, value: FlextTypingBase.UnconstrainedValue
-        ) -> FlextTypingBase.UnconstrainedValue: ...
-
-        @classmethod
-        def fail(
-            cls,
-            error: str | None,
-            *,
-            error_code: str | None = None,
-            error_data: FlextTypingBase.JsonMapping | None = None,
-            exception: BaseException | None = None,
-        ) -> FlextTypingBase.UnconstrainedValue: ...
-
-        @classmethod
-        def from_result[V](
-            cls, source: FlextProtocolsResult.Result[V]
-        ) -> FlextTypingBase.UnconstrainedValue: ...
-
-        @classmethod
-        def from_validation(
-            cls,
-            data: FlextTypingBase.UnconstrainedValue,
-            model: type[FlextTypingBase.UnconstrainedValue],
-        ) -> FlextTypingBase.UnconstrainedValue: ...
-
-        @classmethod
-        def failed_result(cls, result: FlextTypingBase.UnconstrainedValue) -> bool: ...
-
-        @classmethod
-        def successful_result(
-            cls, result: FlextTypingBase.UnconstrainedValue
-        ) -> bool: ...
-
-        @classmethod
-        def create_success[V](cls, value: V) -> FlextProtocolsResult.Result[V]: ...
+        ) -> t.MappingKV[str, t.JsonPayload | None]: ...
 
 
 __all__: list[str] = ["FlextProtocolsResult"]

@@ -12,17 +12,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
-from typing import Annotated
+from pathlib import Path
 
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, m, t, u
-
-# Deliberate broad-annotation fixture: the enforcement engine under test must
-# detect this exact runtime type, so it is exposed as a type alias usable
-# inside an annotation.
-type _ANY_TYPE = t.UnconstrainedValue
+from tests import c, m, u
+from tests.unit._enforcement_support import invalid_annotations
 
 
 def _hard_violation(
@@ -61,6 +57,20 @@ class TestsFlextCoreEnforcementReports:
         assert report.empty
         assert len(report) == 0
         assert report.messages == []
+
+    @staticmethod
+    def test_report_validates_round_trip_and_rejects_invalid_or_mutated_state() -> None:
+        """Public reports validate their payload and preserve frozen state."""
+        report = m.Report(violations=(_hard_violation(message="validated"),))
+        restored = m.Report.model_validate_json(report.model_dump_json())
+        assert restored == report
+        assert restored.messages == ["validated"]
+        with pytest.raises(m.ValidationError):
+            m.Report.model_validate({"violations": ({"message": "incomplete"},)})
+        with pytest.raises(m.ValidationError):
+            m.Report.model_validate({"unexpected": True})
+        with pytest.raises(m.ValidationError):
+            report.violations = ()
 
     @staticmethod
     def test_nonempty_report_exposes_messages_via_public_protocol() -> None:
@@ -142,13 +152,13 @@ class TestsFlextCoreEnforcementReports:
     # --- check() report contents ---------------------------------------
 
     @staticmethod
-    def test_check_flags_any_typed_field_with_rule_metadata() -> None:
+    def test_check_flags_any_typed_field_with_rule_metadata(tmp_path: Path) -> None:
         """Test check flags any typed field with rule metadata."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = u.check(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
+            report = u.check(target)
 
         assert any(
             violation.rule_id == "ENFORCE-039" or "no_any" in violation.message
@@ -156,13 +166,13 @@ class TestsFlextCoreEnforcementReports:
         )
 
     @staticmethod
-    def test_check_messages_embed_bracketed_rule_identifiers() -> None:
+    def test_check_messages_embed_bracketed_rule_identifiers(tmp_path: Path) -> None:
         """Test check messages embed bracketed rule identifiers."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = u.check(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
+            report = u.check(target)
 
         assert report.violations
         assert all(
@@ -185,13 +195,13 @@ class TestsFlextCoreEnforcementReports:
         assert all(violation.layer != "namespace" for violation in report.violations)
 
     @staticmethod
-    def test_check_model_construction_flags_any_field() -> None:
+    def test_check_model_construction_flags_any_field(tmp_path: Path) -> None:
         """Test check model construction flags any field."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = FlextUtilitiesEnforcement.check_model_construction(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            if not isinstance(target, type) or not issubclass(target, m.BaseModel):
+                pytest.fail("Invalid source fixture did not declare a native model")
+            report = FlextUtilitiesEnforcement.check_model_construction(target)
 
         assert report.violations
         assert any("no_any" in violation.message for violation in report.violations)
@@ -316,13 +326,13 @@ class TestsFlextCoreEnforcementReports:
         assert caught[0].category is c.FlextSmellViolation
 
     @staticmethod
-    def test_emit_of_checked_report_carries_layer_tag_and_fix() -> None:
+    def test_emit_of_checked_report_carries_layer_tag_and_fix(tmp_path: Path) -> None:
         """Test emit of checked report carries layer tag and fix."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = u.check(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
+            report = u.check(target)
         assert report.violations
 
         with pytest.warns(c.FlextMroViolation) as caught:

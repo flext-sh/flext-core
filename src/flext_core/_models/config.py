@@ -100,14 +100,14 @@ class FlextModelsConfig:
             ),
         ] = ()
         wrapper_class_factory: Annotated[
-            t.LoggerWrapperFactory | None,
+            p.LoggerWrapperFactory | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the bound-logger wrapper class.",
             ),
         ] = None
         logger_factory: Annotated[
-            t.LoggerFactory | None,
+            p.OutputLoggerFactory | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the logger.",

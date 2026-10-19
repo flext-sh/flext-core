@@ -16,11 +16,23 @@ import inspect
 import sys
 from collections.abc import Sequence
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, overload, override
 
-from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
+from typing_extensions import TypeForm
+
+from flext_core import (
+    FlextContext,
+    FlextSettings,
+    FlextUtilitiesLogging,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 from flext_core._container_parts import FlextContainerTestingOps
-from flext_core._models import FlextContext
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
@@ -113,8 +125,8 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         return logger
 
     @staticmethod
-    def _matches_service_type[T: t.RegisterableService](
-        value: t.RegisterableService,
+    def _matches_service_type[T: p.RegisterableService](
+        value: p.RegisterableService,
         expected: type[T],
     ) -> TypeGuard[T]:
         """Narrow a resolved service through its structural runtime type.
@@ -176,7 +188,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             _ = self.resource(name, resource)
 
     @override
-    def bind(self, name: str, impl: t.RegisterableService) -> Self:
+    def bind(self, name: str, impl: p.RegisterableService) -> Self:
         """Bind a concrete service instance or value.
 
         Returns:
@@ -189,7 +201,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         )
 
     @override
-    def factory(self, name: str, impl: t.FactoryCallable) -> Self:
+    def factory(self, name: str, impl: p.FactoryCallable) -> Self:
         """Bind a factory callable invoked on every resolve.
 
         Returns:
@@ -202,7 +214,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         )
 
     @override
-    def resource(self, name: str, impl: t.ResourceCallable) -> Self:
+    def resource(self, name: str, impl: p.ResourceCallable) -> Self:
         """Bind a resource factory invoked on every resolve.
 
         Returns:
@@ -216,30 +228,29 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     @staticmethod
     def _resolve_callable(
-        callable_obj: t.FactoryCallable,
+        callable_obj: p.FactoryCallable,
         kind: str,
-    ) -> p.Result[t.RegisterableService]:
+    ) -> p.Result[p.RegisterableService]:
         """Invoke a factory/resource callable and validate what it produced.
 
         Returns:
-            The resulting ``p.Result[t.RegisterableService]``.
+            The resulting ``p.Result[p.RegisterableService]``.
 
         """
         try:
-            resolved = callable_obj()
-            _ = u.normalize_registerable_service(resolved)
+            resolved = u.normalize_registerable_service(callable_obj())
         except c.EXC_BROAD_RUNTIME as exc:
-            return r[t.RegisterableService].from_result(
+            return r[p.RegisterableService].from_result(
                 e.fail_operation(
                     f"resolve {kind}",
                     exc,
-                    result_type=r[t.RegisterableService],
+                    result_type=r[p.RegisterableService],
                 ),
             )
-        return r[t.RegisterableService].ok(resolved)
+        return r[p.RegisterableService].ok(resolved)
 
     @overload
-    def resolve[T: t.RegisterableService](
+    def resolve[T: p.RegisterableService](
         self,
         name: str,
         *,
@@ -252,15 +263,15 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         name: str,
         *,
         type_cls: None = None,
-    ) -> p.Result[t.RegisterableService]: ...
+    ) -> p.Result[p.RegisterableService]: ...
 
     @override
-    def resolve[T: t.RegisterableService](
+    def resolve[T: p.RegisterableService](
         self,
         name: str,
         *,
         type_cls: type[T] | None = None,
-    ) -> p.Result[T] | p.Result[t.RegisterableService]:
+    ) -> p.Result[T] | p.Result[p.RegisterableService]:
         """Resolve a registered service, factory or resource by name.
 
         Args:
@@ -276,11 +287,11 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         """
         match self._registrations.get(name):
             case None:
-                return r[t.RegisterableService].from_result(
+                return r[p.RegisterableService].from_result(
                     e.fail_not_found("service", name),
                 )
             case m.ServiceRegistration() as record:
-                result = r[t.RegisterableService].ok(record.service)
+                result = r[p.RegisterableService].ok(record.service)
             case m.FactoryRegistration() as record:
                 result = self._resolve_callable(record.factory, "factory")
             case record:
@@ -582,7 +593,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         """
         module_symbols = vars(caller_module)
         for factory_name, factory_config in u.scan_module(caller_module):
-            impl = cast("t.FactoryCallable", module_symbols[factory_name])
+            impl = u.type_adapter(TypeForm(p.FactoryCallable)).validate_python(
+                module_symbols[factory_name]
+            )
             _ = instance.factory(factory_config.name, impl)
 
     def _apply_explicit_bootstrap(

@@ -10,7 +10,6 @@ import ast
 import builtins
 import inspect
 import sys
-import textwrap
 from types import ModuleType
 from typing import TypeAliasType
 
@@ -114,28 +113,48 @@ def guarded_imports(scopes: tuple[ast.Module | ast.ClassDef, ...]) -> set[str]:
 
 
 def _deferred_module(
-    alias: TypeAliasType, owner: ModuleType | type
-) -> ModuleType | None:
-    """Return the loaded defining module of ``alias`` when provable.
+    alias: TypeAliasType, path: tuple[str, ...] | None = None
+) -> tuple[ModuleType, tuple[type, ...]] | None:
+    """Authenticate the native module and an optional lexical declaration path.
 
     Returns:
-        The resulting ``ModuleType | None``.
+        The defining module and its proven class owners, or None.
 
     """
-    if vars(owner).get(alias.__name__) is not alias:
-        return None
     module_name = alias.__module__
     module = sys.modules.get(module_name) if module_name is not None else None
     if module is None or not isinstance(vars(module).get("__file__"), str):
         return None
-    return module
+    owners: list[type] = []
+    scope: ModuleType | type = module
+    if path is not None:
+        for position, name in enumerate(path[:-1], start=1):
+            value = vars(scope).get(name)
+            if (
+                not isinstance(value, type)
+                or value.__module__ != module.__name__
+                or value.__qualname__ != ".".join(path[:position])
+            ):
+                return None
+            owners.append(value)
+            scope = value
+        if vars(scope).get(path[-1]) is not alias:
+            return None
+    return module, tuple(owners)
 
 
 def _declaration_entry(
     alias: TypeAliasType,
-    owner: ModuleType | type,
+    module: ModuleType,
     source_tree: ast.Module,
-) -> tuple[ast.TypeAlias, tuple[ast.Module | ast.ClassDef, ...]] | None:
+) -> (
+    tuple[
+        ast.TypeAlias,
+        tuple[ast.Module | ast.ClassDef, ...],
+        tuple[ModuleType | type, ...],
+    ]
+    | None
+):
     """Resolve the unique declaring entry of ``alias`` in the owner source.
 
     Returns:
@@ -147,27 +166,28 @@ def _declaration_entry(
 
     """
     candidates = tuple(
-        entry
+        (entry, (context[0], *context[1]))
         for entry in declarations(source_tree)
         if entry[0][-1:] == (alias.__name__,)
-        and (
-            isinstance(owner, ModuleType)
-            or entry[0][-2:] == (owner.__name__, alias.__name__)
-        )
+        and (context := _deferred_module(alias, entry[0])) is not None
+        and context[0] is module
     )
     if not candidates:
         return None
     if len(candidates) != 1:
         msg = f"Ambiguous type alias declaration: {alias.__module__}.{alias.__name__}"
         raise ValueError(msg)
-    path, declaration, scopes = candidates[0]
+    (path, declaration, scopes), owners = candidates[0]
     if any(
-        alias.__name__ in bound_names(node) and node is not declaration.name
-        for node in scope_nodes(scopes[-1])
+        name in bound_names(node) and node is not binding
+        for name, binding, scope in zip(
+            path, (*scopes[1:], declaration.name), scopes, strict=True
+        )
+        for node in scope_nodes(scope)
     ):
         msg = f"Ambiguous type alias binding: {alias.__module__}.{'.'.join(path)}"
         raise ValueError(msg)
-    return declaration, scopes
+    return declaration, scopes, owners
 
 
 def _unavailable_names(
@@ -194,8 +214,9 @@ def deferred_alias(
     *,
     owner: ModuleType | type,
 ) -> FlextModelsEnforcement.DeferredAlias | None:
-    """Prove deferral from the explicitly supplied declaring owner.
+    """Prove deferral from the alias's authenticated lexical declaration.
 
+    The requesting owner may consume an alias declared in another module.
     Ambiguous declaration or binding failures propagate from the declaration
     resolver.
 
@@ -203,24 +224,25 @@ def deferred_alias(
         The resulting ``me.DeferredAlias | None``.
 
     """
-    module = _deferred_module(alias, owner)
-    if module is None:
+    context = _deferred_module(alias)
+    if context is None:
         return None
-    source_lines, source_start = inspect.getsourcelines(owner)
-    source_tree = ast.parse(
-        textwrap.dedent("".join(source_lines)),
-        filename=inspect.getfile(owner),
-    )
-    entry = _declaration_entry(alias, owner, source_tree)
+    module = context[0]
+    source_tree = parse_module(module)
+    entry = _declaration_entry(alias, module, source_tree)
     if entry is None:
         return None
-    declaration, scopes = entry
+    declaration, scopes, owners = entry
+    owner = owners[-1]
     available = set(vars(builtins)) | set(vars(module))
-    available.update(vars(owner))
-    available.update(item.__name__ for item in getattr(owner, "__type_params__", ()))
+    for lexical_owner in owners[1:]:
+        available.update(vars(lexical_owner))
+        available.update(
+            item.__name__ for item in vars(lexical_owner).get("__type_params__", ())
+        )
     available.update(item.__name__ for item in alias.__type_params__)
     missing = _unavailable_names(declaration, available)
-    guarded = guarded_imports((parse_module(module),)) | guarded_imports(scopes)
+    guarded = guarded_imports((source_tree,)) | guarded_imports(scopes)
     if not missing or not missing <= guarded:
         return None
     return FlextModelsEnforcement.DeferredAlias(
@@ -229,7 +251,7 @@ def deferred_alias(
         if isinstance(owner, type)
         else alias.__name__,
         file_path=inspect.getfile(module),
-        line_number=source_start + declaration.lineno - 1,
+        line_number=declaration.lineno,
         unavailable_imports=tuple(sorted(missing)),
     )
 

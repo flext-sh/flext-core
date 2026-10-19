@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 from typing_extensions import TypeForm
 
-from flext_core import FlextResult, c, t
+from flext_core import FlextResult, c, p, t
 from flext_core._models import FlextModelsCollections
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._utilities import (
@@ -41,19 +41,19 @@ class FlextUtilitiesGuards(
     """Unified guard utilities: type narrowing + chk/guard validation engines."""
 
     @staticmethod
-    def _in_list(value: t.GuardInput, container: t.JsonList) -> bool:
+    def _in_list(value: p.GuardInput, container: t.JsonList) -> bool:
         return value in container
 
     @staticmethod
-    def _not_in_list(value: t.GuardInput, container: t.JsonList) -> bool:
+    def _not_in_list(value: p.GuardInput, container: t.JsonList) -> bool:
         return value not in container
 
     _EQUALITY_OPS: ClassVar[
-        t.MappingKV[str, Callable[[t.GuardInput, t.GuardInput], bool]]
+        t.MappingKV[str, Callable[[p.GuardInput, p.GuardInput], bool]]
     ] = {"eq": operator.eq, "ne": operator.ne}
 
     _MEMBERSHIP_OPS: ClassVar[
-        t.MappingKV[str, Callable[[t.GuardInput, t.JsonList], bool]]
+        t.MappingKV[str, Callable[[p.GuardInput, t.JsonList], bool]]
     ] = {"in_": _in_list, "not_in": _not_in_list}
 
     _NUMERIC_OPS: ClassVar[Mapping[str, Callable[[t.Numeric, float], bool]]] = {
@@ -71,7 +71,7 @@ class FlextUtilitiesGuards(
     }
 
     @staticmethod
-    def _resolve_numeric(value: t.GuardInput) -> t.Numeric:
+    def _resolve_numeric(value: p.GuardInput) -> t.Numeric:
         """Extract numeric value (raw for numbers, len for sized types).
 
         Returns:
@@ -100,7 +100,7 @@ class FlextUtilitiesGuards(
         return not (guard_spec.ends is not None and not value.endswith(guard_spec.ends))
 
     @staticmethod
-    def _check_iterable_contains(value: t.GuardInput, contains: t.GuardInput) -> bool:
+    def _check_iterable_contains(value: p.GuardInput, contains: p.GuardInput) -> bool:
         """Check if iterable value contains the target (strings handled upstream).
 
         Returns:
@@ -117,7 +117,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_equality_ops(
-        value: t.GuardInput,
+        value: p.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
         """Apply the equality op dict against ``guard_spec``.
@@ -134,7 +134,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_membership_ops(
-        value: t.GuardInput,
+        value: p.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
         """Apply the membership op dict against ``guard_spec``.
@@ -156,7 +156,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_numeric_ops(
-        value: t.GuardInput,
+        value: p.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
         check_val: t.Numeric,
     ) -> bool:
@@ -184,7 +184,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_contains_op(
-        value: t.GuardInput,
+        value: p.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
         """Apply the ``contains`` constraint against ``guard_spec``.
@@ -204,7 +204,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_spec_ops(
-        value: t.GuardInput,
+        value: p.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
         check_val: t.Numeric,
     ) -> bool:
@@ -229,9 +229,9 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def chk(
-        value: t.GuardInput,
+        value: p.GuardInput,
         spec: FlextModelsCollections.GuardCheckSpec | None = None,
-        **criteria: t.GuardInput,
+        **criteria: p.GuardInput,
     ) -> bool:
         """Check one value against a guard spec merged with inline criteria.
 
@@ -251,7 +251,7 @@ class FlextUtilitiesGuards(
             criteria_spec = FlextModelsCollections.GuardCheckSpec.model_validate(
                 criteria,
             )
-            criteria_update: t.MutableMappingKV[str, t.GuardInput | None] = {
+            criteria_update: t.MutableMappingKV[str, p.GuardInput | None] = {
                 field_name: getattr(criteria_spec, field_name)
                 for field_name in criteria_spec.model_fields_set
             }
@@ -265,7 +265,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_none_type_constraints(
-        value: t.GuardInput,
+        value: p.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
     ) -> bool:
         """Validate none/is_/not_ constraints independently of emptiness checks.
@@ -284,7 +284,7 @@ class FlextUtilitiesGuards(
 
     @staticmethod
     def _check_special_constraints(
-        value: t.GuardInput,
+        value: p.GuardInput,
         guard_spec: FlextModelsCollections.GuardCheckSpec,
         check_val: t.Numeric,
     ) -> bool:
@@ -301,11 +301,11 @@ class FlextUtilitiesGuards(
         return not (guard_spec.empty is False and check_val == 0)
 
     @staticmethod
-    def _to_container_or_str(value: t.JsonPayload) -> t.JsonValue:
+    def _to_container_or_str[ValueT](value: ValueT) -> ValueT | str:
         """Normalize a value to Container: pass through if already, else str().
 
         Returns:
-            The resulting ``t.JsonValue``.
+            The original accepted value, otherwise its native string form.
 
         """
         return value if FlextUtilitiesGuards.container_value(value) else str(value)
@@ -345,7 +345,14 @@ class FlextUtilitiesGuards(
         *,
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
-    ) -> t.JsonValue | bool | FlextProtocolsResult.Result[t.JsonValue]:
+    ) -> (
+        t.JsonValue
+        | t.Scalar
+        | t.JsonList
+        | t.JsonMapping
+        | bool
+        | FlextProtocolsResult.Result[t.JsonValue]
+    ):
         """Validate a value into a verdict, value, default, or failure.
 
         An exception raised by the validator counts as a validation failure.
@@ -359,8 +366,8 @@ class FlextUtilitiesGuards(
                 instead of ``False``.
 
         Returns:
-            The validated value, the default, the boolean verdict, or the
-            failed ``p.Result``.
+            The validated value, the already-admitted native scalar/container
+            default, the boolean verdict, or the failed ``p.Result``.
 
         """
         fail_msg = "Guard validation failed"

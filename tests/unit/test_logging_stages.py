@@ -138,13 +138,13 @@ class TestsFlextLoggingStages:
     def test_ordered_stages_preserve_nested_values_and_render(self) -> None:
         """Stages share an event in order and the final renderer emits it."""
         stream = io.StringIO()
-        observed: list[t.LoggingEvent] = []
+        observed: list[p.LoggingEvent] = []
 
         def first(
             logger: p.OutputLogger,
             method_name: str,
-            event_dict: t.LoggingEvent,
-        ) -> t.LoggingEvent:
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
             _ = logger, method_name
             event_dict["stage_order"] = ["first"]
             observed.append(dict(event_dict))
@@ -153,8 +153,8 @@ class TestsFlextLoggingStages:
         def second(
             logger: p.OutputLogger,
             method_name: str,
-            event_dict: t.LoggingEvent,
-        ) -> t.LoggingEvent:
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
             _ = logger, method_name
             tm.that(event_dict["stage_order"], eq=["first"])
             event_dict["stage_order"] = ["first", "second"]
@@ -191,8 +191,8 @@ class TestsFlextLoggingStages:
         def fail_first(
             logger: p.OutputLogger,
             method_name: str,
-            event_dict: t.LoggingEvent,
-        ) -> t.LoggingEvent:
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
             _ = logger, method_name, event_dict
             visited.append("first")
             raise failure
@@ -200,8 +200,8 @@ class TestsFlextLoggingStages:
         def later(
             logger: p.OutputLogger,
             method_name: str,
-            event_dict: t.LoggingEvent,
-        ) -> t.LoggingEvent:
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
             _ = logger, method_name
             visited.append("later")
             return event_dict
@@ -234,14 +234,14 @@ class TestsFlextLoggingStages:
 
     def test_exception_context_reaches_stage(self) -> None:
         """Native SDK stages receive causal metadata and the original exception."""
-        observed: list[t.LoggingEvent] = []
+        observed: list[p.LoggingEvent] = []
         stream = io.StringIO()
 
         def observe(
             logger: p.OutputLogger,
             method_name: str,
-            event_dict: t.LoggingEvent,
-        ) -> t.LoggingEvent:
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
             _ = logger, method_name
             observed.append(dict(event_dict))
             return event_dict
@@ -281,7 +281,7 @@ class TestsFlextLoggingStages:
         """An untyped registration cannot hide its native invocation error."""
         stream = io.StringIO()
 
-        def invalid_stage() -> t.LoggingEvent:
+        def invalid_stage() -> p.LoggingEvent:
             return {}
 
         options = m.StructlogOptions.model_validate({
@@ -311,8 +311,8 @@ class TestsFlextLoggingStages:
         def observe(
             logger: p.OutputLogger,
             method_name: str,
-            event_dict: t.LoggingEvent,
-        ) -> t.LoggingEvent:
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
             _ = logger, method_name
             observed.append(str(event_dict["event"]))
             return event_dict
@@ -805,7 +805,7 @@ class TestsFlextLoggingStages:
                     )
                 )
                 logger = u.create_module_logger("tests.logging.async.blocked")
-                emitted: list[t.LogResult | ValueError] = []
+                emitted: list[p.LogResult | ValueError] = []
 
                 def emit() -> None:
                     try:

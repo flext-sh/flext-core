@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, TypeIs
 from pydantic import BaseModel as PydanticBaseModel
 
 from flext_core import t
+from flext_core._protocols import FlextProtocolsContainer
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,7 +25,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def has_model_dump(
-        value: t.GuardInput
+        value: FlextProtocolsContainer.GuardInput
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsBase.Model
         | t.JsonValue
@@ -53,7 +54,9 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def object_tuple(
-        value: t.GuardInput | Callable[[t.JsonValue], bool] | None,
+        value: FlextProtocolsContainer.GuardInput
+        | Callable[[t.JsonValue], bool]
+        | None,
     ) -> TypeIs[t.VariadicTuple[t.JsonValue]]:
         """Narrow value to a container tuple.
 
@@ -65,7 +68,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def pydantic_model(
-        value: t.GuardInput
+        value: FlextProtocolsContainer.GuardInput
         | FlextProtocolsBase.Model
         | t.JsonValue
         | PydanticBaseModel

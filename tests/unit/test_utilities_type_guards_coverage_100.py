@@ -33,10 +33,10 @@ class TestsFlextCoreUtilitiesTypeGuards:
             tags=("ldap", "prod"),
             started_at=datetime(2026, 5, 5, 12, 0, tzinfo=UTC),
         )
-        normalized_payload = u.normalize_to_metadata(envelope)
-        normalized_repository_root = u.normalize_to_metadata(repository_root)
-        normalized_retry_window = u.normalize_to_metadata(None)
-        normalized_modes = u.normalize_to_metadata({"delta", "full"})
+        normalized_payload = u.normalize_to_json_value(envelope)
+        normalized_repository_root = u.normalize_to_json_value(repository_root)
+        normalized_retry_window = u.normalize_to_json_value(None)
+        normalized_modes = u.normalize_to_json_value({"delta", "full"})
 
         metadata: t.JsonDict = {
             "payload": normalized_payload,
@@ -68,7 +68,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         assert u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0])
         assert u.chk(payload["command_name"], gt="alpha", none=False, empty=False)
         tm.that(metadata["repository_root"], eq=str(repository_root))
-        tm.that(metadata["retry_window"], eq="")
+        tm.that(metadata["retry_window"] is None, eq=True)
         assert isinstance(payload["started_at"], str)
         tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)
         tm.that(set(normalized_modes), eq={"delta", "full"})

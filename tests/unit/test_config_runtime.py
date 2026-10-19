@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from flext_core import FlextConfig, FlextSettings, config, settings
+from flext_core import FlextConfig, FlextCore, FlextSettings, config, settings
 from tests import m, tm
 
 if TYPE_CHECKING:
@@ -40,27 +38,17 @@ class TestsFlextCoreConfigSettingsCanonical:
         assert isinstance(settings.model_dump(), dict)
 
     @staticmethod
-    def test_settings_config_composition_preserves_public_contract() -> None:
-        """The settings-first diamond retains validation and frozen config state."""
+    def test_custom_runtime_settings_preserve_frozen_config_and_defaults() -> None:
+        """Runtime overrides do not merge or mutate the independent config owner."""
+        configuration = config.model_dump()
+        default_debug = settings.debug
+        customized = settings.clone(debug=not default_debug)
+        facade = FlextCore(runtime_settings=customized)
 
-        class ComposedConfig(FlextSettings, FlextConfig):
-            pass
-
-        composed = ComposedConfig.fetch_global()
-        assert isinstance(composed, FlextSettings)
-        assert isinstance(composed, FlextConfig)
-        assert ComposedConfig.fetch_global() is composed
-        assert composed.model_dump()["debug"] == composed.debug
-        tm.rejects_assignment(
-            composed,
-            "debug",
-            not composed.debug,
-            expected=m.ValidationError,
-        )
-        with ComposedConfig.singleton_disabled(), pytest.raises(m.ValidationError):
-            ComposedConfig(debug=False, trace=True)
-        ComposedConfig.reset_for_testing()
-        assert ComposedConfig.fetch_global() is not composed
+        tm.that(facade.settings.debug, eq=customized.debug)
+        tm.that(settings.debug, eq=default_debug)
+        tm.that(config.model_dump(), eq=configuration)
+        tm.rejects_assignment(config, "anything", "mutated", expected=m.ValidationError)
 
     @staticmethod
     def test_config_subclasses_keep_independent_singletons(

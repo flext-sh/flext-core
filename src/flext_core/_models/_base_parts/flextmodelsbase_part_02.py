@@ -18,14 +18,11 @@ from datetime import datetime
 from typing import Annotated, ClassVar, dataclass_transform, override
 
 from pydantic import ConfigDict
-from typing_extensions import TypeForm
 
-from flext_core import c
+from flext_core import c, p, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._base_parts import flextmodelsbase_part_01
-from flext_core._runtime import FlextRuntimeMetadataValidation
-from flext_core._typings import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesGenerators
+from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesPydantic
 
 
 class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
@@ -96,7 +93,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
             ),
         ] = None
         tags: Annotated[
-            FlextTypingBase.StrSequence,
+            t.StrSequence,
             FlextModelsPydantic.Field(
                 description=(
                     "Normalized labels used to classify and filter this metadata."
@@ -105,31 +102,32 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
                 examples=[["billing", "critical"]],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.StrSequence)
-            )
+            default=(),
+            validate_default=True,
         )
         attributes: Annotated[
-            FlextTypingBase.JsonMapping,
-            FlextModelsPydantic.BeforeValidator(
-                FlextRuntimeMetadataValidation.validate_metadata_attributes
-            ),
+            t.JsonMapping,
             FlextModelsPydantic.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.JsonMapping)
-            )
+            default_factory=dict,
+            validate_default=True,
         )
         metadata_value: Annotated[
-            FlextTypingBase.Scalar | None,
+            t.Scalar | None,
             FlextModelsPydantic.Field(
                 default=None, description="Scalar metadata value."
             ),
         ] = None
+
+        @FlextModelsPydantic.field_validator("attributes", mode="before")
+        @classmethod
+        def validate_metadata_attributes(cls, value: p.MetadataInput) -> t.JsonMapping:
+            """Validate attributes through the canonical metadata boundary."""
+            return FlextUtilitiesPydantic.validate_metadata_attributes(value)
 
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""
@@ -151,8 +149,8 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         def __eq__(self, other: object) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
-            self_dump: FlextTypingBase.JsonMapping = self.model_dump()
-            other_dump: FlextTypingBase.JsonMapping = other.model_dump()
+            self_dump: t.JsonMapping = self.model_dump()
+            other_dump: t.JsonMapping = other.model_dump()
             return self_dump == other_dump
 
         def __hash__(self) -> int:
@@ -177,7 +175,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         """Mixin for unique identifiers."""
 
         unique_id: Annotated[
-            FlextTypingBase.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(description="Unique identifier", frozen=False),
         ] = FlextModelsPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
 

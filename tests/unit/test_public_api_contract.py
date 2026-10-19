@@ -14,11 +14,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+
 import pytest
 
 import flext_core
 from flext_core import FlextMroViolation, FlextSettings
-from tests import e, p, r, t
+from tests import e, p, r, t, tm
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: t.VariadicTuple[str] = (
@@ -37,7 +40,6 @@ _FACADES: t.VariadicTuple[str] = (
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
-    "FlextRuntime",
     "FlextService",
     "FlextSettings",
     "FlextTypes",
@@ -291,5 +293,56 @@ class TestsFlextCorePublicApiContract:
         assert hasattr(flext_core.core, "container")
         assert hasattr(flext_core.core, "registry")
         assert hasattr(flext_core.core, "dispatcher")
-        assert hasattr(flext_core.core, "config")
         assert hasattr(flext_core.core, "settings")
+
+    @staticmethod
+    def test_facade_registry_keeps_instance_plugins_between_accesses() -> None:
+        """Repeated public registry access preserves instance registrations."""
+        facade = flext_core.FlextCore()
+        plugin = "public-registry-plugin"
+        tm.ok(facade.registry.register_plugin("public-api", "plugin", plugin))
+        tm.that(
+            facade.registry.fetch_plugin("public-api", "plugin").unwrap(), eq=plugin
+        )
+        tm.that(facade.registry is facade.registry, eq=True)
+        tm.that(facade.registry.dispatcher is facade.dispatcher, eq=True)
+
+    @staticmethod
+    def test_facade_registry_uses_custom_runtime_without_leaking_to_siblings() -> None:
+        """Registry bindings reach the facade container, never a sibling runtime."""
+        custom_settings = FlextSettings.fetch_global().clone()
+        custom_settings.debug = not custom_settings.debug
+        facade = flext_core.FlextCore(runtime_settings=custom_settings)
+        sibling = flext_core.FlextCore()
+        binding = "public-api-runtime-binding"
+        tm.ok(facade.registry.register(binding, "registered-value"))
+        tm.that(facade.container.resolve(binding).unwrap(), eq="registered-value")
+        tm.that(sibling.container.has(binding), eq=False)
+        tm.that(facade.settings.debug, eq=custom_settings.debug)
+        tm.that(facade.registry.dispatcher is facade.dispatcher, eq=True)
+
+    @staticmethod
+    def test_concurrent_registry_access_preserves_plugin_lifecycle() -> None:
+        """Concurrent first access shares one registry and all plugin ownership."""
+        facade = flext_core.FlextCore()
+        barrier = Barrier(4)
+
+        def register(index: int) -> p.Registry:
+            barrier.wait()
+            registry = facade.registry
+            registry.register_plugin("concurrent-api", str(index), str(index)).unwrap()
+            return registry
+
+        with ThreadPoolExecutor(max_workers=barrier.parties) as executor:
+            registries = tuple(executor.map(register, range(barrier.parties)))
+
+        tm.that(all(registry is facade.registry for registry in registries), eq=True)
+        for index in range(barrier.parties):
+            name = str(index)
+            tm.that(
+                facade.registry.fetch_plugin("concurrent-api", name).unwrap(), eq=name
+            )
+            tm.ok(facade.registry.unregister_plugin("concurrent-api", name))
+            tm.that(
+                facade.registry.fetch_plugin("concurrent-api", name).failure, eq=True
+            )

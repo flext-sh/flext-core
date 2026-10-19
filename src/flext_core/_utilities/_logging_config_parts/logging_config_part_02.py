@@ -38,12 +38,12 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
     def level_based_context_filter(
         logger: p.OutputLogger | None,
         method_name: str,
-        event_dict: t.LoggingEvent,
-    ) -> t.LoggingEvent:
+        event_dict: p.LoggingEvent,
+    ) -> p.LoggingEvent:
         """Filter level-tagged context using the native severity mapping."""
         level_hierarchy = logging.getLevelNamesMapping()
         current_level = level_hierarchy[method_name.upper()]
-        filtered_dict: t.LoggingEvent = {}
+        filtered_dict: p.LoggingEvent = {}
         for key, value in event_dict.items():
             if not key.startswith("_level_"):
                 filtered_dict[key] = value
@@ -64,8 +64,8 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
     def drop_below_threshold(
         logger: p.OutputLogger | None,
         method_name: str,
-        event_dict: t.LoggingEvent,
-    ) -> t.LoggingEvent:
+        event_dict: p.LoggingEvent,
+    ) -> p.LoggingEvent:
         """Apply the elected threshold before native enrichment and hooks."""
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
@@ -77,8 +77,8 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
     def _exception_metadata(
         logger: p.OutputLogger,
         method_name: str,
-        event: t.LoggingEvent,
-    ) -> t.LoggingEvent:
+        event: p.LoggingEvent,
+    ) -> p.LoggingEvent:
         """Keep causal metadata before the native processor consumes exc_info."""
         info = FlextUtilitiesLoggingConfig.resolve_logging_exception_info(
             event.get("exc_info")
@@ -94,10 +94,10 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
     def _observe_event(
         logger: p.OutputLogger,
         method_name: str,
-        event: t.LoggingEvent,
+        event: p.LoggingEvent,
         *,
         options: p.StructlogOptions,
-    ) -> t.LoggingEvent:
+    ) -> p.LoggingEvent:
         """Sanitize the SDK boundary, then notify typed subscribers once."""
         original_exception = event.pop("_original_exception", None)
 
@@ -110,7 +110,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             "level": str(event["level"]),
             "context": dict(event),
         })
-        sanitized: t.LoggingEvent = dict(
+        sanitized: p.LoggingEvent = dict(
             FlextUtilitiesMetadata.redact_metadata(
                 record.context,
                 keys=tuple(
@@ -179,9 +179,9 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
     def _resolve_logger_factory(
         cls,
         *,
-        logger_factory: t.LoggerFactory,
+        logger_factory: p.OutputLoggerFactory | None,
         async_logging: bool,
-    ) -> t.LoggerFactory | None:
+    ) -> p.OutputLoggerFactory | None:
         """Keep the selected native factory or the acknowledged stderr writer."""
         owner = logging_config_part_01.FlextUtilitiesLoggingConfig
         if (

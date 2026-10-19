@@ -13,7 +13,7 @@ from flext_core._protocols._context_parts import flextprotocolscontext_part_01
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import m, p, t
+    from flext_core import p, t
 
 
 class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext):
@@ -38,7 +38,7 @@ class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext)
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[t.JsonMapping]:
+        ) -> AbstractContextManager[p.MutableRootDict[t.JsonPayload]]:
             """Create a timed operation scope."""
             ...
 
@@ -85,14 +85,14 @@ class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext)
             ...
 
         @staticmethod
-        def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
+        def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
             """Resolve a named service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
             service_name: str,
-            service: t.RegisterableService,
+            service: p.RegisterableService,
         ) -> p.Result[bool]:
             """Register a named service through the configured container."""
             ...
@@ -141,7 +141,7 @@ class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext)
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[m.ConfigMap]:
+        ) -> AbstractContextManager[p.MutableRootDict[t.JsonPayload]]:
             """Create a timed operation scope."""
             ...
 

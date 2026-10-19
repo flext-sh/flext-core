@@ -8,19 +8,16 @@ from __future__ import annotations
 
 import typing
 from collections.abc import MutableSequence
+from pathlib import Path
 from types import MappingProxyType
 from typing import Annotated
 
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, m, t, u
-from tests.unit._enforcement_support import messages
+from tests import c, m, t, tm, u
+from tests.unit._enforcement_support import invalid_annotations, messages
 
-# Deliberate broad-annotation fixtures: the enforcement engine under test must
-# detect these exact runtime types, so they are exposed as type aliases usable
-# inside annotations.
-type _ANY_TYPE = t.UnconstrainedValue
 type _BARE_DICT_TYPE = t.MappingKV[str, str]
 
 
@@ -28,13 +25,60 @@ class TestsFlextEnforcementModels:
     """Tests for ``FlextEnforcementModels``."""
 
     @staticmethod
-    def test_any_field_detected() -> None:
+    def test_fix_action_defaults_are_independent_validated_json_mappings() -> None:
+        """Cold-imported fix contracts retain fresh defaults and JSON validation."""
+        first = m.EnforcementFixAction(kind="manual", target="native-default")
+        second = m.EnforcementFixAction(kind="manual", target="native-default")
+
+        tm.that(first.params, eq={})
+        tm.that(second.params, eq={})
+        tm.that(first.params is not second.params, truth=True)
+        restored = m.EnforcementFixAction.model_validate_json(first.model_dump_json())
+        tm.that(restored, eq=first)
+        with pytest.raises(m.ValidationError):
+            m.EnforcementFixAction.model_validate({
+                "kind": "manual",
+                "target": "native-default",
+                "params": {"unsupported": Path("not-json")},
+            })
+
+    @staticmethod
+    def test_context_defaults_are_independent_readonly_contract_values() -> None:
+        """Bootstrap defaults validate without sharing context collection state."""
+        first_export = m.ContextExport()
+        second_export = m.ContextExport()
+        first_state = m.ContextRuntimeState()
+        second_state = m.ContextRuntimeState()
+
+        assert first_export.data == second_export.data == {}
+        assert first_export.data is not second_export.data
+        assert first_export.statistics == second_export.statistics == {}
+        assert first_export.statistics is not second_export.statistics
+        assert (
+            first_state.statistics.operations
+            == second_state.statistics.operations
+            == {}
+        )
+        assert (
+            first_state.statistics.operations is not second_state.statistics.operations
+        )
+        assert first_state.hooks == second_state.hooks == {}
+        assert first_state.hooks is not second_state.hooks
+        assert first_state.scope_vars == second_state.scope_vars == {}
+        assert first_state.scope_vars is not second_state.scope_vars
+        for model in (m.ContextExport, m.ContextStatistics, m.ContextRuntimeState):
+            assert not messages(
+                u.check(model), fragment="no_raw_collections_field_default"
+            )
+
+    @staticmethod
+    def test_any_field_detected(tmp_path: Path) -> None:
         """Test any field detected."""
-
-        class _M(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        assert messages(u.check(_M), fragment="Any")
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
+            tm.that(bool(messages(u.check(target), fragment="Any")), eq=True)
 
     @staticmethod
     def test_typed_field_passes() -> None:
@@ -87,6 +131,53 @@ class TestsFlextEnforcementModels:
             )
 
         assert not messages(u.check(_M), fragment="read-only field contract")
+
+    @staticmethod
+    def test_mutable_sequence_alias_nested_owner_defaults_pass() -> None:
+        """An unresolved element does not change the declared mutable origin."""
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: t.MutableSequenceOf[_M.Value] = m.Field(
+                default_factory=list,
+                validate_default=True,
+                description="Mutable sequence of nested values.",
+            )
+
+        assert not messages(u.check(_M), fragment="read-only field contract")
+        first = _M()
+        second = _M()
+        assert first.items == second.items == []
+        assert first.items is not second.items
+        value = _M.Value()
+        first.items.append(value)
+        assert first.items == [value]
+        assert second.items == []
+        provided: t.MutableSequenceOf[_M.Value] = [value]
+        assert _M(items=provided).items == provided
+        with pytest.raises(m.ValidationError):
+            _M.model_validate({"items": 42})
+
+    @staticmethod
+    def test_annotated_mutable_sequence_alias_nested_owner_passes() -> None:
+        """Annotated metadata leaves the bound outer alias and defaults intact."""
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: Annotated[
+                t.MutableSequenceOf[_M.Value],
+                m.Field(description="Annotated mutable sequence of nested values."),
+            ] = m.Field(default_factory=list, validate_default=True)
+
+        assert not messages(u.check(_M), fragment="read-only field contract")
+        first = _M()
+        second = _M()
+        assert first.items == second.items == []
+        assert first.items is not second.items
 
     @staticmethod
     def test_mutable_mapping_forward_ref_dict_factory_passes() -> None:
@@ -144,6 +235,22 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             items: Annotated[t.StrSequence, m.Field(description="d")] = m.Field(
                 default_factory=list
+            )
+
+        assert messages(u.check(_M), fragment="read-only field contract")
+
+    @staticmethod
+    def test_sequence_alias_nested_owner_list_factory_detected() -> None:
+        """A genuinely read-only origin remains rejected before element resolution."""
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: t.SequenceOf[_M.Value] = m.Field(
+                default_factory=list,
+                validate_default=True,
+                description="Read-only sequence of nested values.",
             )
 
         assert messages(u.check(_M), fragment="read-only field contract")

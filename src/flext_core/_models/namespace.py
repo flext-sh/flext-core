@@ -10,14 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from flext_core import c
-from flext_core._typings import FlextTypingBase
+from flext_core import c, t
 from flext_core._utilities import FlextUtilitiesEnforcement
-
-if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesPydantic
 
 
 class FlextModelsNamespace:
@@ -28,7 +22,7 @@ class FlextModelsNamespace:
     per-layer wrapper methods, no hardcoded dispatch.
     """
 
-    def __init_subclass__(cls, **kwargs: FlextTypesPydantic.JsonValue) -> None:
+    def __init_subclass__(cls, **kwargs: t.JsonValue) -> None:
         """Enforce namespace governance on every facade subclass.
 
         Layer-independent rules (``class_prefix``, ``no_accessor_methods``,
@@ -45,4 +39,4 @@ class FlextModelsNamespace:
         FlextUtilitiesEnforcement.run_layer(cls, layer)
 
 
-__all__: FlextTypingBase.MutableSequenceOf[str] = ["FlextModelsNamespace"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsNamespace"]

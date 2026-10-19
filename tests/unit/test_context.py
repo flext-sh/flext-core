@@ -1,4 +1,4 @@
-"""Behavior contract for FlextContext — pure Pydantic v2 model + contextvar facade.
+"""Behavior contract for the public operational context facade.
 
 Tests exercise the PUBLIC surface only: instance scope store (set/get/has/keys/
 values/items/remove/clear/merge/clone/export), metadata I/O, and the class-level
@@ -12,10 +12,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Iterator
+from contextvars import copy_context
+from typing import override
 
 import pytest
+import structlog.contextvars
 
-from flext_core import FlextContext
+from flext_core import FlextContext, c, h, m, p, r, t, u
 from tests import tm
 
 
@@ -23,6 +26,13 @@ class TestsFlextCoreContext:
     """Contract: scope store + metadata + process-global contextvar operations."""
 
     pytestmark = pytest.mark.usefixtures("_isolate_process_context")
+
+    class CorrelationHandler(h[str, str]):
+        """Handler returning the identifier selected by public call scoping."""
+
+        @override
+        def handle(self, message: str) -> p.Result[str]:
+            return r[str].ok(FlextContext.ensure_correlation_id())
 
     @staticmethod
     @pytest.fixture
@@ -336,3 +346,200 @@ class TestsFlextCoreContext:
             FlextContext.export_full_context(),
             empty=True,
         )
+
+    @staticmethod
+    def test_public_factory_retains_context_identity_and_metadata_isolation() -> None:
+        """Clones remain public contexts with independent metadata updates."""
+        context = FlextContext.create(seed="original")
+        tm.that(isinstance(context, FlextContext), eq=True)
+        context.apply_metadata("source", "original")
+        cloned = context.clone()
+        cloned.apply_metadata("source", "cloned")
+        tm.that(isinstance(cloned, FlextContext), eq=True)
+        tm.ok(context.resolve_metadata("source"), eq="original")
+        tm.ok(cloned.resolve_metadata("source"), eq="cloned")
+
+    @staticmethod
+    def test_clone_deep_copies_nested_scope_values() -> None:
+        """Mutation of the original nested payload does not affect its clone."""
+        payload: t.MutableMappingKV[str, t.JsonPayload] = {"state": "original"}
+        context = FlextContext()
+        context.set("nested", payload)
+        cloned = context.clone()
+        payload["state"] = "changed"
+        tm.ok(context.get("nested"), eq={"state": "changed"})
+        tm.ok(cloned.get("nested"), eq={"state": "original"})
+
+    @staticmethod
+    def test_metadata_snapshots_detach_nested_caller_values() -> None:
+        """Caller mutations cannot change metadata in either public context."""
+        roles: list[t.JsonValue] = ["reader"]
+        payload: t.JsonDict = {"roles": roles}
+        context = FlextContext()
+        context.apply_metadata("actor", payload)
+        cloned = context.clone()
+
+        roles.append("admin")
+        payload["source"] = "changed"
+
+        tm.ok(context.resolve_metadata("actor"), eq={"roles": ["reader"]})
+        tm.ok(cloned.resolve_metadata("actor"), eq={"roles": ["reader"]})
+
+    @staticmethod
+    def test_context_and_utility_proxies_share_structlog_storage() -> None:
+        """Public context and utility writes are visible to structlog and each other."""
+        FlextContext.apply_correlation_id("public-context")
+        tm.that(
+            structlog.contextvars.get_contextvars()[c.ContextKey.CORRELATION_ID],
+            eq="public-context",
+        )
+        token = u.CORRELATION_ID.set("utility-context")
+        tm.that(FlextContext.resolve_correlation_id(), eq="utility-context")
+        u.CORRELATION_ID.reset(token)
+        tm.that(FlextContext.resolve_correlation_id(), eq="public-context")
+        _ = structlog.contextvars.bind_contextvars(**{
+            c.ContextKey.CORRELATION_ID: "structlog-context"
+        })
+        tm.that(FlextContext.resolve_correlation_id(), eq="structlog-context")
+
+    @staticmethod
+    def test_proxy_factories_restore_shared_values_and_defaults() -> None:
+        """All proxy factories retain structlog-backed reset and default semantics."""
+        string = u.create_str_proxy("context_string_probe", default="default")
+        timestamp = u.create_datetime_proxy("context_timestamp_probe")
+        mapping = u.create_dict_proxy("context_mapping_probe")
+        now = u.generate_datetime_utc()
+        try:
+            tm.that(string.get(), eq="default")
+            string_token = string.set("changed")
+            timestamp_token = timestamp.set(now)
+            mapping_token = mapping.set({"source": "context"})
+            tm.that(u.create_str_proxy("context_string_probe").get(), eq="changed")
+            tm.that(timestamp.get(), eq=now)
+            tm.that(mapping.get(), eq={"source": "context"})
+            string.reset(string_token)
+            timestamp.reset(timestamp_token)
+            mapping.reset(mapping_token)
+            tm.that(string.get(), eq="default")
+            tm.that(timestamp.get(), none=True)
+            tm.that(mapping.get(), none=True)
+        finally:
+            structlog.contextvars.unbind_contextvars(
+                "context_string_probe",
+                "context_timestamp_probe",
+                "context_mapping_probe",
+            )
+
+    @staticmethod
+    def test_nested_correlation_restores_parent_after_exception() -> None:
+        """A failing nested scope restores both shared correlation identifiers."""
+        FlextContext.apply_correlation_id("outer")
+        parent_token = u.PARENT_CORRELATION_ID.set("ancestor")
+        try:
+            with (
+                pytest.raises(ValueError, match="nested failure"),
+                FlextContext.new_correlation("inner"),
+            ):
+                tm.that(u.PARENT_CORRELATION_ID.get(), eq="outer")
+                msg = "nested failure"
+                raise ValueError(msg)
+            tm.that(FlextContext.resolve_correlation_id(), eq="outer")
+            tm.that(u.PARENT_CORRELATION_ID.get(), eq="ancestor")
+        finally:
+            u.PARENT_CORRELATION_ID.reset(parent_token)
+
+    @staticmethod
+    def test_contextvars_are_isolated_in_a_copied_execution_context() -> None:
+        """A copied execution context cannot overwrite the calling context's state."""
+        FlextContext.apply_correlation_id("outer")
+        isolated = copy_context()
+        isolated.run(FlextContext.apply_correlation_id, "isolated")
+        tm.that(isolated.run(FlextContext.resolve_correlation_id), eq="isolated")
+        tm.that(FlextContext.resolve_correlation_id(), eq="outer")
+
+    @staticmethod
+    def test_timing_and_service_scopes_restore_values_on_failure() -> None:
+        """Timing still finalizes metrics and restores outer shared values on errors."""
+        FlextContext.apply_operation_name("outer-operation")
+        metrics: p.MutableRootDict[t.JsonPayload] = m.ConfigMap(root={})
+        with FlextContext.service_context("outer-service", "outer-version"):
+            with (
+                pytest.raises(ValueError, match="timed failure"),
+                FlextContext.service_context("inner-service", "inner-version"),
+                FlextContext.timed_operation("inner-operation") as metrics,
+            ):
+                tm.that(FlextContext.resolve_operation_name(), eq="inner-operation")
+                msg = "timed failure"
+                raise ValueError(msg)
+            tm.that(FlextContext.resolve_operation_name(), eq="outer-operation")
+            tm.that(
+                FlextContext.export_full_context()[c.ContextKey.SERVICE_NAME],
+                eq="outer-service",
+            )
+            tm.that(
+                FlextContext.export_full_context()[c.ContextKey.SERVICE_VERSION],
+                eq="outer-version",
+            )
+            tm.that(c.MetadataKey.END_TIME in metrics.root, eq=True)
+            tm.that(c.MetadataKey.DURATION_SECONDS in metrics.root, eq=True)
+
+    @staticmethod
+    def test_handler_call_scopes_correlation_through_the_public_context() -> None:
+        """Handler invocation uses the elected context without model class bindings."""
+        FlextContext.apply_correlation_id("outer-handler")
+        result = TestsFlextCoreContext.CorrelationHandler()("message")
+        active = result.unwrap()
+        tm.that(bool(active), eq=True)
+        tm.that(active != "outer-handler", eq=True)
+        tm.that(FlextContext.resolve_correlation_id(), eq="outer-handler")
+
+    @staticmethod
+    def test_runtime_scope_resolution_copies_state_and_preserves_hooks() -> None:
+        """Extending scopes preserves metadata, hooks and independent variable storage."""
+
+        def on_event(value: t.Scalar) -> t.JsonPayload:
+            return value
+
+        metadata = m.Metadata(attributes={"source": "runtime"})
+        state = u.create_context_runtime(metadata)
+        state = m.ContextRuntimeState.model_validate({
+            "metadata": state.metadata,
+            "scope_vars": state.scope_vars,
+            "hooks": {"event": (on_event,)},
+        })
+        updated, variable = u.resolve_context_scope_var(state, "custom")
+        tm.that("custom" in state.scope_vars, eq=False)
+        tm.that(updated.scope_vars["custom"] is variable, eq=True)
+        tm.that(updated.metadata is state.metadata, eq=True)
+        tm.that(updated.hooks["event"][0]("payload"), eq="payload")
+        repeated, existing = u.resolve_context_scope_var(updated, "custom")
+        tm.that(repeated is updated, eq=True)
+        tm.that(existing is variable, eq=True)
+        other = u.create_context_runtime(metadata)
+        tm.that(
+            other.scope_vars[c.ContextScope.GLOBAL]
+            is state.scope_vars[c.ContextScope.GLOBAL],
+            eq=False,
+        )
+        values = m.ConfigMap(root={"source": "first"})
+        token = variable.set(values)
+        try:
+            tm.that(updated.scope_vars["custom"].get() is values, eq=True)
+        finally:
+            variable.reset(token)
+
+    @staticmethod
+    def test_runtime_operation_updates_preserve_original_counters() -> None:
+        """Counter updates are immutable and derive initial values from their owner."""
+        state = u.create_context_runtime()
+        updated = u.update_context_operation(state, "set")
+        tm.that(updated.statistics.sets, eq=state.statistics.sets + 1)
+        tm.that(updated.statistics.gets, eq=state.statistics.gets)
+        tm.that(updated.metadata is state.metadata, eq=True)
+        tm.that(u.update_context_operation(state, "unknown") is state, eq=True)
+        tracked: p.ContextRuntimeState = m.ContextRuntimeState(
+            statistics=m.ContextStatistics(operations={"custom": 4})
+        )
+        incremented = u.update_context_operation(tracked, "custom")
+        tm.that(incremented.statistics.operations["custom"], eq=5)
+        tm.that(tracked.statistics.operations["custom"], eq=4)

@@ -7,9 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from threading import RLock
 from typing import Annotated, ClassVar
-
-from typing_extensions import TypeForm
 
 from flext_core import p, t
 from flext_core._models import (
@@ -24,6 +23,12 @@ from flext_core._utilities import FlextUtilitiesPydantic
 class FlextModelsRegistry:
     """Registry model namespace for handler registration aggregates."""
 
+    class RegistryServiceState(FlextModelsBase.ArbitraryTypesModel):
+        """Instance-owned synchronized registry access for composed services."""
+
+        _registry: p.Registry | None = FlextModelsPydantic.PrivateAttr(None)
+        _registry_lock: p.Lock = FlextModelsPydantic.PrivateAttr(default_factory=RLock)
+
     class RegistryOptions(FlextModelsBase.ArbitraryTypesModel):
         """Validated runtime dependency and plugin ownership of a registry."""
 
@@ -32,9 +37,9 @@ class FlextModelsRegistry:
             description="Explicit runtime shared by registration and execution.",
         )
         _registered_keys: set[str] = FlextModelsPydantic.PrivateAttr(
-            default_factory=FlextModelsPydantic.empty(TypeForm(set[str])),
+            default_factory=set[str],
         )
-        _class_plugin_storage: ClassVar[dict[str, t.RegisterableService]] = {}
+        _class_plugin_storage: ClassVar[dict[str, p.RegisterableService]] = {}
 
     class RegistrySummary(FlextModelsEntity.Value):
         """Aggregated outcome for batch handler registration tracking."""
@@ -47,9 +52,8 @@ class FlextModelsRegistry:
                 ),
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(MutableSequence[FlextModelsHandler.RegistrationDetails]),
-            ),
+            default_factory=list[FlextModelsHandler.RegistrationDetails],
+            validate_default=True,
         )
         skipped: Annotated[
             t.StrSequence,
@@ -60,7 +64,8 @@ class FlextModelsRegistry:
                 examples=[["CreateUserCommand", "UpdateUserCommand"]],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(t.StrSequence)),
+            default=(),
+            validate_default=True,
         )
         errors: Annotated[
             MutableSequence[str],
@@ -69,7 +74,8 @@ class FlextModelsRegistry:
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(MutableSequence[str])),
+            default_factory=list[str],
+            validate_default=True,
         )
 
         @FlextUtilitiesPydantic.computed_field

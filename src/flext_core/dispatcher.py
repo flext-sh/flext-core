@@ -21,7 +21,7 @@ class FlextDispatcher:
         """Initialize an isolated route store and its publication lock."""
         self.logger = u.fetch_logger(__name__)
         self._lock = Lock()
-        self._routes: t.MappingKV[str | None, tuple[t.DispatcherRouteEntry, ...]] = (
+        self._routes: t.MappingKV[str | None, tuple[p.DispatcherRouteEntry, ...]] = (
             MappingProxyType({})
         )
 
@@ -67,7 +67,7 @@ class FlextDispatcher:
         try:
             for message in events:
                 route = u.resolve_message_route(message)
-                invoked: list[t.DispatchableHandler] = []
+                invoked: list[p.DispatchableHandler] = []
                 subscribers = sorted(
                     (
                         (key, entry)
@@ -104,7 +104,7 @@ class FlextDispatcher:
 
     def register_handler(
         self,
-        handler: t.DispatchableHandler,
+        handler: p.DispatchableHandler,
         *,
         message_type: t.RegistryBindingKey | None = None,
         is_event: bool = False,
@@ -127,7 +127,7 @@ class FlextDispatcher:
         command handler or expose a partially registered batch to readers.
         """
         prepared: list[
-            tuple[str | None, t.DispatcherRouteEntry, p.HandlerRegistration]
+            tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]
         ] = []
         try:
             for binding in bindings:
@@ -136,7 +136,7 @@ class FlextDispatcher:
                         "register handlers", "Invalid handler registration"
                     )
                 handler = binding.handler
-                resolved: t.RoutedHandlerCallable
+                resolved: p.RoutedHandlerCallable
                 match handler:
                     case p.DispatchMessage():
                         resolved = handler.dispatch_message

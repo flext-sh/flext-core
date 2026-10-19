@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import c, m, p, r, t, u
+from examples import c, m, p, r, u
 from examples.ex_12_registry_flow import ExamplesFlextRegistryFlow
 from examples.ex_12_registry_support import RegistryLookup
 
@@ -68,11 +68,11 @@ class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
         self.section("plugin_validation")
         cause = RuntimeError("Plugin validation rejected the payload")
 
-        def rejected(_plugin: t.RegisterableService) -> p.Result[bool]:
+        def rejected(_plugin: p.RegisterableService) -> p.Result[bool]:
             """Return a domain failure carrying the original cause."""
             return r[bool].fail(str(cause), exception=cause)
 
-        def raised(_plugin: t.RegisterableService) -> p.Result[bool]:
+        def raised(_plugin: p.RegisterableService) -> p.Result[bool]:
             """Raise a real validation failure at the public registration boundary."""
             raise cause
 

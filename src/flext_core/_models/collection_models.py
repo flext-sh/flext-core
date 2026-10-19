@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
+from flext_core import t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsCollections:
@@ -52,7 +52,7 @@ class FlextModelsCollections:
             ),
         ] = False
         map_keys: Annotated[
-            FlextTypingBase.StrMapping | None,
+            t.StrMapping | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Optional rename map applied to keys.",
@@ -77,7 +77,7 @@ class FlextModelsCollections:
         """Specification for guard conditions used in collection filters."""
 
         eq: Annotated[
-            FlextTypingBase.JsonValue | None,
+            t.JsonValue | None,
             FlextModelsPydantic.Field(
                 default=None,
                 title="Equals",
@@ -85,7 +85,7 @@ class FlextModelsCollections:
             ),
         ] = None
         ne: Annotated[
-            FlextTypingBase.JsonValue | None,
+            t.JsonValue | None,
             FlextModelsPydantic.Field(
                 default=None,
                 title="Not Equals",
@@ -152,7 +152,7 @@ class FlextModelsCollections:
             ),
         ] = None
         in_: Annotated[
-            FlextTypingBase.JsonList | None,
+            t.JsonList | None,
             FlextModelsPydantic.Field(
                 default=None,
                 title="In Values",
@@ -160,7 +160,7 @@ class FlextModelsCollections:
             ),
         ] = None
         not_in: Annotated[
-            FlextTypingBase.JsonList | None,
+            t.JsonList | None,
             FlextModelsPydantic.Field(
                 default=None,
                 title="Not In Values",
@@ -211,4 +211,4 @@ class FlextModelsCollections:
         ] = None
 
 
-__all__: FlextTypingBase.MutableSequenceOf[str] = ["FlextModelsCollections"]
+__all__: t.MutableSequenceOf[str] = ["FlextModelsCollections"]

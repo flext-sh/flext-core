@@ -87,10 +87,10 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
     def log(
         cls,
         message: str,
-        *args: t.LogValue,
+        *args: p.LogValue,
         level: str | None = None,
-        **context: t.LogValue,
-    ) -> t.LogResult:
+        **context: p.LogValue,
+    ) -> p.LogResult:
         """Emit an ordinary event through the elected Core composition."""
         return cls._direct_logger().log(
             level if level is not None else c.LogLevel.INFO, message, *args, **context
@@ -98,22 +98,22 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
     @classmethod
     def debug(
-        cls, message: str, *args: t.LogValue, **context: t.LogValue
-    ) -> t.LogResult:
+        cls, message: str, *args: p.LogValue, **context: p.LogValue
+    ) -> p.LogResult:
         """Emit a DEBUG event without allocating a consumer-owned logger."""
         return cls.log(message, *args, level=c.LogLevel.DEBUG, **context)
 
     @classmethod
     def trace(
-        cls, message: str, *args: t.LogValue, **context: t.LogValue
-    ) -> t.LogResult:
+        cls, message: str, *args: p.LogValue, **context: p.LogValue
+    ) -> p.LogResult:
         """Emit opt-in high-volume detail at DEBUG, never another severity."""
         return cls._direct_logger().trace(message, *args, **context)
 
     @classmethod
     def warning(
-        cls, message: str, *args: t.LogValue, **context: t.LogValue
-    ) -> t.LogResult:
+        cls, message: str, *args: p.LogValue, **context: p.LogValue
+    ) -> p.LogResult:
         """Emit a WARNING event through the same pipeline."""
         return cls.log(message, *args, level=c.LogLevel.WARNING, **context)
 
@@ -121,10 +121,10 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
     def failure(
         cls,
         message: str,
-        *args: t.LogValue,
+        *args: p.LogValue,
         exception: BaseException | None = None,
-        **context: t.LogValue,
-    ) -> t.LogResult:
+        **context: p.LogValue,
+    ) -> p.LogResult:
         """Emit ERROR with original causal data; trace only changes its detail."""
         if exception is not None:
             context["exception"] = exception

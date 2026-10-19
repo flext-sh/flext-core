@@ -13,8 +13,7 @@ from datetime import datetime
 from typing import Annotated
 
 from flext_core import c, t
-from flext_core._models import FlextModelsEntity
-from flext_core._utilities import FlextUtilitiesPydantic
+from flext_core._models import FlextModelsEntity, FlextModelsPydantic
 
 
 class FlextModelsContextTokens:
@@ -34,7 +33,7 @@ class FlextModelsContextTokens:
 
         key: Annotated[
             t.NonEmptyStr,
-            FlextUtilitiesPydantic.Field(
+            FlextModelsPydantic.Field(
                 pattern=c.PATTERN_IDENTIFIER_WITH_UNDERSCORE,
                 description="Context variable key (alphanumeric, underscore)",
                 examples=["correlation_id", "service_name", "user_id"],
@@ -42,7 +41,7 @@ class FlextModelsContextTokens:
         ]
         previous_value: Annotated[
             t.JsonPayload | datetime | None,
-            FlextUtilitiesPydantic.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Previous value before set operation",
             ),
@@ -62,14 +61,14 @@ class FlextModelsContextTokens:
 
         key: Annotated[
             t.NonEmptyStr,
-            FlextUtilitiesPydantic.Field(
+            FlextModelsPydantic.Field(
                 description="Unique key for the context variable",
                 examples=["user_id", "request_id", "session_id"],
             ),
         ]
         old_value: Annotated[
             t.JsonPayload | None,
-            FlextUtilitiesPydantic.Field(
+            FlextModelsPydantic.Field(
                 default=None,
                 description="Previous value before set operation",
             ),

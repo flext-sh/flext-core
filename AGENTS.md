@@ -16,13 +16,15 @@ dependency graph)
 ## Overview
 
 Enterprise Foundation Framework (Python 3.13 + Clean Architecture). Defines the facade
-alphabet every other `flext-*` package composes via MRO. Depends on nothing; must never
-import another `flext-*` package. No public `api.py` — this package _is_ the foundation.
+alphabet every other `flext-*` package composes via MRO. Must never import another
+`flext-*` package. Its public `api.py` composes registry and dispatcher services through
+pure cooperative MRO and exposes `core = FlextCore.fetch_global()`.
 
 ## Structure
 
 ```text
 src/flext_core/
+├── api.py services/                                           # FlextCore facade and service owners
 ├── constants.py models.py protocols.py typings.py utilities.py  # facet roots (c/t/p/m/u)
 ├── result.py exceptions.py mixins.py handlers.py decorators.py  # r / e / x / h / d
 ├── service.py container.py context.py dispatcher.py registry.py # DI + CQRS (s)
@@ -42,6 +44,7 @@ src/flext_core/
 | `FlextResult` (`r`)    | class | `result.py`    | railway result (ADR-001) |
 | `FlextContainer`       | class | `container.py` | DI container             |
 | `FlextService` (`s`)   | class | `service.py`   | Pydantic service runtime |
+| `FlextCore` (`core`)   | class | `api.py`       | MRO execution facade     |
 
 ## Conventions (specific to this package)
 

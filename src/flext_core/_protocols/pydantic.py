@@ -19,7 +19,7 @@ from pydantic_core import PydanticUndefinedType
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
+    from flext_core import t
 
 
 class FlextProtocolsPydantic:
@@ -38,7 +38,7 @@ class FlextProtocolsPydantic:
         """Declared field annotation consumed by schema and protocol generators."""
 
         @property
-        def annotation(self) -> FlextTypingBase.TypeFormSpecifier | None: ...
+        def annotation(self) -> t.TypeFormSpecifier | None: ...
 
         @property
         def frozen(self) -> bool | None: ...
@@ -89,37 +89,12 @@ class FlextProtocolsPydantic:
         ) -> CallT: ...
 
     @runtime_checkable
-    class FieldFactory(Protocol):
-        """Receiver-free native field metadata factory for model declarations.
+    class UnsetPrivateAttribute(Protocol):
+        """Native private descriptor created without a default or factory."""
 
-        Declares the polymorphic call contract ``pydantic.Field`` exposes so a
-        checker resolves each ``m.Field(...)`` call site without a first-class
-        reference to the overloaded native function.
-        """
-
-        @overload
-        def __call__[DefaultT](
-            self,
-            default: DefaultT,
-            *,
-            default_factory: Callable[[], DefaultT]
-            | Callable[[Mapping[str, FlextProtocolsBase.AttributeProbe]], DefaultT]
-            | PydanticUndefinedType
-            | None = ...,
-            alias: str | PydanticUndefinedType | None = ...,
-            **kwargs: FlextProtocolsBase.AttributeProbe,
-        ) -> DefaultT: ...
-
-        @overload
-        def __call__(
-            self,
-            *,
-            default_factory: Callable[..., FlextProtocolsBase.AttributeProbe]
-            | PydanticUndefinedType
-            | None = ...,
-            alias: str | PydanticUndefinedType | None = ...,
-            **kwargs: FlextProtocolsBase.AttributeProbe,
-        ) -> FlextTypingBase.UnconstrainedValue: ...
+        def get_default(
+            self, *, call_default_factory: bool = False
+        ) -> PydanticUndefinedType: ...
 
     @runtime_checkable
     class PrivateAttrFactory(Protocol):
@@ -130,18 +105,26 @@ class FlextProtocolsPydantic:
             self,
             default: PrivateT,
             *,
-            default_factory: Callable[..., PrivateT] | None = ...,
+            default_factory: None = ...,
             init: Literal[False] = ...,
         ) -> PrivateT: ...
+
+        @overload
+        def __call__[FactoryT](
+            self,
+            *,
+            default_factory: Callable[[], FactoryT]
+            | Callable[[Mapping[str, FlextProtocolsBase.AttributeProbe]], FactoryT],
+            init: Literal[False] = ...,
+        ) -> FactoryT: ...
 
         @overload
         def __call__(
             self,
             *,
-            default_factory: Callable[..., FlextProtocolsBase.AttributeProbe]
-            | None = ...,
+            default_factory: None = ...,
             init: Literal[False] = ...,
-        ) -> FlextTypingBase.UnconstrainedValue: ...
+        ) -> FlextProtocolsPydantic.UnsetPrivateAttribute: ...
 
 
 __all__: tuple[str, ...] = ("FlextProtocolsPydantic",)

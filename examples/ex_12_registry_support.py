@@ -28,10 +28,10 @@ def amount_handler(message: p.Routable) -> p.Result[t.JsonPayload]:
     return r[t.JsonPayload].ok(message.amount)
 
 
-class RegistryLookup(s[t.RegisterableService], m.Examples.RegistryLookupOptions):
+class RegistryLookup(s[p.RegisterableService], m.Examples.RegistryLookupOptions):
     """Consume a registry supplied explicitly by the example composition root."""
 
     @override
-    def execute(self) -> p.Result[t.RegisterableService]:
+    def execute(self) -> p.Result[p.RegisterableService]:
         """Resolve the requested plugin without constructing another registry."""
         return self.registry.fetch_plugin(self.category, self.plugin_name)

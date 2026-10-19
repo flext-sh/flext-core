@@ -6,18 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated
 
 from pydantic import BeforeValidator, Field
-from typing_extensions import TypeForm
 
 from flext_core import t
-from flext_core._models import (
-    FlextModelsBase,
-    FlextModelsContainers,
-    FlextModelsEntity,
-    FlextModelsPydantic,
-)
+from flext_core._models import FlextModelsBase, FlextModelsContainers, FlextModelsEntity
 from flext_core._models._context import FlextModelsContextData
 
 
@@ -25,7 +20,6 @@ class FlextModelsContextExport:
     """Namespace for context export models."""
 
     class ContextExport(
-        FlextModelsContextData.SerializableDataValidatorMixin,
         FlextModelsEntity.Value,
     ):
         """Typed snapshot returned by export_snapshot."""
@@ -35,15 +29,21 @@ class FlextModelsContextExport:
         # ``default_factory`` default-ness only from the specifier call
         # assigned to the class variable; a specifier inside ``Annotated``
         # metadata synthesizes a REQUIRED ``__init__`` parameter.
-        data: t.MappingKV[str, t.JsonPayload] = Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(t.MappingKV[str, t.JsonPayload]),
+        data: Annotated[
+            t.MappingKV[str, t.JsonPayload],
+            BeforeValidator(
+                FlextModelsContextData.ContextData.validate_dict_serializable
             ),
+        ] = Field(
+            default_factory=lambda: MappingProxyType[str, t.JsonPayload]({}),
+            validate_default=True,
             description="All context data from all scopes",
         )
         metadata: Annotated[
             FlextModelsBase.Metadata | FlextModelsContainers.Dict | None,
-            BeforeValidator(FlextModelsContextData.normalize_metadata_before),
+            BeforeValidator(
+                FlextModelsContextData.ContextData.validate_metadata_before
+            ),
             Field(
                 default=None,
                 description="Context metadata (creation info, source, etc.)",
@@ -52,14 +52,11 @@ class FlextModelsContextExport:
         statistics: Annotated[
             t.JsonMapping,
             BeforeValidator(
-                lambda v: (
-                    FlextModelsContextData.normalize_to_mapping(v)
-                    if v is not None
-                    else {}
-                ),
+                FlextModelsContextData.ContextData.validate_dict_serializable
             ),
         ] = Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(t.JsonMapping)),
+            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+            validate_default=True,
             description="Usage statistics (operation counts, timing info)",
         )
 

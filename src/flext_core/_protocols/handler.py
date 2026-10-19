@@ -12,17 +12,40 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core import c, t
-    from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsResult
+    from flext_core._protocols import FlextProtocolsContainer
 
 
 class FlextProtocolsHandler:
     """Protocols for CQRS handlers and message routing."""
+
+    type HandlerCallable = t.HandlerCallable[
+        FlextProtocolsResult.ResultView[t.ScalarOrModel]
+    ]
+    type DispatchableHandler = t.DispatchableHandler[
+        FlextProtocolsHandler.DispatchMessage
+        | FlextProtocolsHandler.Handle
+        | FlextProtocolsHandler.Execute
+        | FlextProtocolsHandler.AutoDiscoverableHandler,
+        FlextProtocolsBase.Routable,
+        FlextProtocolsResult.ResultView[t.JsonPayload],
+    ]
+    type ResolvedHandlerCallable = t.ResolvedHandlerCallable[
+        FlextProtocolsResult.ResultView[t.JsonPayload]
+    ]
+    type RoutedHandlerCallable = t.RoutedHandlerCallable[
+        FlextProtocolsBase.Routable,
+        FlextProtocolsResult.ResultView[t.JsonPayload],
+    ]
+    type DispatcherRouteEntry = t.DispatcherRouteEntry[
+        FlextProtocolsHandler.DispatchableHandler,
+        FlextProtocolsHandler.RoutedHandlerCallable,
+    ]
 
     # FLEXT: annotations remain structural; concrete models are construction-only.
     @runtime_checkable
@@ -248,7 +271,7 @@ class FlextProtocolsHandler:
         """Immutable registration capability accepted by the dispatcher."""
 
         @property
-        def handler(self) -> t.DispatchableHandler: ...
+        def handler(self) -> FlextProtocolsHandler.DispatchableHandler: ...
 
         @property
         def message_type(self) -> t.RegistryBindingKey | None: ...
@@ -292,7 +315,7 @@ class FlextProtocolsHandler:
 
         def register_handler(
             self,
-            handler: t.DispatchableHandler,
+            handler: FlextProtocolsHandler.DispatchableHandler,
             *,
             message_type: t.RegistryBindingKey | None = None,
             is_event: bool = False,
@@ -328,7 +351,7 @@ class FlextProtocolsHandler:
 
         def register_handler(
             self,
-            handler: t.DispatchableHandler,
+            handler: FlextProtocolsHandler.DispatchableHandler,
             *,
             message_type: t.RegistryBindingKey | None = None,
             is_event: bool = False,

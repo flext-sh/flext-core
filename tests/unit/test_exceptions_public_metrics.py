@@ -24,6 +24,29 @@ class TestsFlextCoreExceptionsPublicMetrics:
     pytestmark = pytest.mark.usefixtures("_isolated_metrics")
 
     @staticmethod
+    def test_model_defaults_are_independent_and_copy_updated() -> None:
+        """Default validation keeps independent metrics values at the public boundary."""
+        first = m.ExceptionMetricsState()
+        second = m.ExceptionMetricsState()
+        snapshot = m.ExceptionMetricsSnapshot()
+
+        assert first.exception_counts == second.exception_counts == {}
+        assert first.exception_counts is not second.exception_counts
+        assert snapshot.exception_counts is not first.exception_counts
+        updated = first.record_exception(ValueError)
+        assert updated.exception_counts == {ValueError.__qualname__: 1}
+        assert first.exception_counts == second.exception_counts == {}
+
+    @staticmethod
+    def test_invalid_metrics_preserve_native_validation_error() -> None:
+        """Invalid public input must escape as the original Pydantic error."""
+        with pytest.raises(m.ValidationError) as caught:
+            m.ExceptionMetricsState.model_validate({"exception_counts": {"bad": "x"}})
+
+        assert caught.value.errors()[0]["loc"] == ("exception_counts", "bad")
+        assert caught.value.errors()[0]["type"] == "int_type"
+
+    @staticmethod
     @pytest.fixture
     def _isolated_metrics() -> Iterator[None]:
         """Guarantee each test observes a clean, isolated metrics state."""

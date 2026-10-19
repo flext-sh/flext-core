@@ -57,15 +57,15 @@ class FlextUtilitiesModel:
         return dumped
 
     @staticmethod
-    def _settings_base() -> t.SettingsClass:
+    def _settings_base() -> p.SettingsType:
         """Resolve FlextSettings lazily to avoid runtime import cycles.
 
         Returns:
-            The resulting ``t.SettingsClass``.
+            The resulting ``p.SettingsType``.
 
         """
         settings_module = import_module("flext_core")
-        settings_cls: t.SettingsClass = settings_module.FlextSettings
+        settings_cls: p.SettingsType = settings_module.FlextSettings
         return settings_cls
 
     @staticmethod

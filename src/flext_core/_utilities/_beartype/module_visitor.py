@@ -27,7 +27,7 @@ _MODULE_EXEMPT_FILES: frozenset[str] = frozenset({
 })
 
 
-def _is_synthetic_parametrized_type(value: FlextTypingBase.UnconstrainedValue) -> bool:
+def _is_synthetic_parametrized_type(value: type) -> bool:
     """Return True for synthetic ``Foo[int]`` specializations.
 
     Pydantic generic BaseModel subclasses leak parameterized specializations
@@ -39,20 +39,16 @@ def _is_synthetic_parametrized_type(value: FlextTypingBase.UnconstrainedValue) -
         True for synthetic ``Foo[int]`` specializations.
 
     """
-    return isinstance(value, type) and "[" in getattr(value, "__qualname__", "")
+    return "[" in value.__qualname__
 
 
-def _is_module_alias_candidate(
-    name: str, value: FlextTypingBase.UnconstrainedValue
-) -> bool:
+def _is_module_alias_candidate(name: str, value: type) -> bool:
     """Return True when a module-level symbol looks like a compat alias.
 
     Returns:
         True when a module-level symbol looks like a compat alias.
 
     """
-    if not isinstance(value, type):
-        return False
     if _is_synthetic_parametrized_type(value):
         return False
     if not name[:1].isupper() or name.isupper():
@@ -158,7 +154,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
         candidates = tuple(
             (name, value)
             for name, value in vars(module).items()
-            if _is_module_alias_candidate(name, value)
+            if isinstance(value, type) and _is_module_alias_candidate(name, value)
         )
         if not candidates:
             return _NO_VIOLATION

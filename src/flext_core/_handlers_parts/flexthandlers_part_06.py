@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, override
 
-from flext_core import c, m, p, r, t
+from flext_core import FlextContext, c, m, p, r, t
 from flext_core._handlers_parts import flexthandlers_part_01, flexthandlers_part_05
 
 if TYPE_CHECKING:
@@ -123,8 +123,8 @@ class FlextHandlers[MessageT_contra, ResultT](
         if not self._auto_context_scope:
             return self.handle(message)
         operation_name = f"{self.__class__.__qualname__}.handle"
-        with self._context_type.new_correlation():
-            self._context_type.apply_operation_name(operation_name)
+        with FlextContext.new_correlation():
+            FlextContext.apply_operation_name(operation_name)
             return self.handle(message)
 
 

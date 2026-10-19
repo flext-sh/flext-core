@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextRuntime, c, m, t
+from flext_core import c, m, t
 
 
 class FlextExceptionsTemplate:
@@ -26,10 +26,7 @@ class FlextExceptionsTemplate:
 
         """
         payload: t.JsonDict = (
-            {
-                key: FlextRuntime.normalize_to_metadata(value)
-                for key, value in params.model_dump(exclude_none=True).items()
-            }
+            params.model_dump(mode="json", exclude_none=True)
             if params is not None
             else {}
         )
@@ -43,11 +40,9 @@ class FlextExceptionsTemplate:
                 )
                 and field_help
             }
-        payload |= {
-            key: FlextRuntime.normalize_to_metadata(value)
-            for key, value in values.items()
-            if value is not None
-        }
+        payload |= m.ConfigMap.model_validate({
+            key: value for key, value in values.items() if value is not None
+        }).model_dump(mode="json")
         return m.ConfigMap.model_validate(payload)
 
     @staticmethod

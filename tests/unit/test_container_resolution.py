@@ -13,7 +13,7 @@ import pytest
 from tests import m, tm, u
 
 if TYPE_CHECKING:
-    from tests import p, t
+    from tests import p
 
 
 class TestsFlextContainerResolution:
@@ -31,13 +31,13 @@ class TestsFlextContainerResolution:
     ) -> None:
         """Test service retrieval using fixtures."""
         clean_container.bind(scenario.name, scenario.service)
-        result: p.Result[t.RegisterableService] = clean_container.resolve(scenario.name)
+        result: p.Result[p.RegisterableService] = clean_container.resolve(scenario.name)
         u.Tests.assert_success(result, expected_value=scenario.service)
 
     @staticmethod
     def test_get_nonexistent_service(clean_container: p.Container) -> None:
         """Test getting non-existent service using fixtures."""
-        result: p.Result[t.RegisterableService] = clean_container.resolve("nonexistent")
+        result: p.Result[p.RegisterableService] = clean_container.resolve("nonexistent")
         u.Tests.assert_failure(result, expected_error="not found")
 
     @staticmethod
@@ -46,7 +46,7 @@ class TestsFlextContainerResolution:
         factory_result = {"created": "by_factory"}
         factory = u.Tests.create_factory(factory_result)
         clean_container.factory("factory_service", factory)
-        result: p.Result[t.RegisterableService] = clean_container.resolve(
+        result: p.Result[p.RegisterableService] = clean_container.resolve(
             "factory_service",
         )
         u.Tests.assert_success(result, expected_value=factory_result)
@@ -56,12 +56,12 @@ class TestsFlextContainerResolution:
         """Test that factory is called each time get() is invoked using fixtures."""
         factory, get_count = u.Tests.create_counting_factory("service_value")
         clean_container.factory("factory_service", factory)
-        result1: p.Result[t.RegisterableService] = clean_container.resolve(
+        result1: p.Result[p.RegisterableService] = clean_container.resolve(
             "factory_service",
         )
         _ = u.Tests.assert_success(result1)
         tm.that(get_count(), eq=1, msg="Factory must be called once after first get()")
-        result2: p.Result[t.RegisterableService] = clean_container.resolve(
+        result2: p.Result[p.RegisterableService] = clean_container.resolve(
             "factory_service",
         )
         _ = u.Tests.assert_success(result2)

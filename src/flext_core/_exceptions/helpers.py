@@ -6,15 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
 from typing import TYPE_CHECKING
-
-from pydantic import ValidationError
 
 from flext_core import c
 from flext_core._models import FlextModelsBase
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._runtime import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
     from flext_core._typings import FlextTypesServices, FlextTypingBase
@@ -39,27 +35,21 @@ class FlextExceptionsHelpers:
             The resulting ``tuple[tuple[str, tb.JsonValue], ...]``.
 
         """
+        from flext_core import m
+
         entries: list[tuple[str, FlextTypingBase.JsonValue]] = []
         source_values = (context, extra_kwargs)
         for source_value in source_values:
             if source_value is None:
                 continue
-            try:
-                source_mapping = (
-                    FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
-                        source_value,
-                    )
-                )
-            except c.EXC_PYDANTIC_TYPE_VALUE:
-                continue
-            if not source_mapping:
-                continue
+            source_mapping = m.ConfigMap.model_validate(
+                source_value.model_dump(mode="json")
+                if isinstance(source_value, FlextProtocolsResult.HasModelDump)
+                else source_value
+            ).model_dump(mode="json")
             for key, value in source_mapping.items():
                 if value is not None:
-                    entries.append((
-                        key,
-                        FlextRuntimeMetadataValidation.normalize_to_metadata(value),
-                    ))
+                    entries.append((key, value))
         return tuple(entries)
 
     @staticmethod
@@ -75,32 +65,15 @@ class FlextExceptionsHelpers:
             The resulting ``FlextModelsBase.Metadata | None``.
 
         """
-        metadata: FlextModelsBase.Metadata | None = None
-        if value is not None:
-            try:
-                metadata = FlextModelsBase.Metadata.model_validate(
-                    value,
-                    from_attributes=True,
-                )
-            except (ValidationError, TypeError):
-                if isinstance(value, (Mapping, FlextProtocolsResult.HasModelDump)):
-                    try:
-                        validation = FlextRuntimeMetadataValidation
-                        attrs_map = validation.normalize_metadata_input_mapping(
-                            value,
-                        )
-                    except c.EXC_PYDANTIC_TYPE_VALUE:
-                        attrs_map = None
-                    if attrs_map is not None:
-                        attrs = {
-                            key: item
-                            for key, item in attrs_map.items()
-                            if item is not None
-                        }
-                        metadata = FlextModelsBase.Metadata.model_validate({
-                            c.FIELD_ATTRIBUTES: attrs,
-                        })
-        return metadata
+        if value is None or isinstance(value, FlextModelsBase.Metadata):
+            return value
+        return FlextModelsBase.Metadata.model_validate({
+            c.FIELD_ATTRIBUTES: (
+                value.model_dump(mode="json")
+                if isinstance(value, FlextProtocolsResult.HasModelDump)
+                else value
+            )
+        })
 
     @staticmethod
     def safe_optional_str(

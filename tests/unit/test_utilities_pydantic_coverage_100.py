@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from operator import itemgetter
 from typing import Annotated, ClassVar
 
 import pytest
@@ -28,11 +27,25 @@ def _validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
         The validated label passed to the field factory.
 
     """
-    return str(values["label"])
+    label = values["label"]
+    if not isinstance(label, str):
+        msg = "Validated label must be a string"
+        raise TypeError(msg)
+    return label
 
 
 class TestsFlextUtilitiesPydantic:
     """Tests for ``FlextUtilitiesPydantic``."""
+
+    @staticmethod
+    def test_unset_factories_expose_native_metadata() -> None:
+        """An omitted value produces metadata, not a contextual field value."""
+        metadata = u.Field(description="Native field metadata")
+        tm.that(metadata.annotation is None, eq=True)
+        private = u.PrivateAttr()
+        tm.that(isinstance(private, p.UnsetPrivateAttribute), eq=True)
+        undefined = private.get_default()
+        tm.that(private.get_default(call_default_factory=True) is undefined, eq=True)
 
     class _FieldFactoryContract(m.BaseModel):
         """Required fields and typed factories through both public facades."""
@@ -42,11 +55,31 @@ class TestsFlextUtilitiesPydantic:
         label: str = u.Field(min_length=1)
         echo: str = m.Field(default_factory=_validated_label)
         model_values: t.MutableStrMapping = m.Field(
-            default_factory=m.empty(TypeForm(t.MutableStrMapping)),
+            default_factory=u.empty(TypeForm(t.MutableStrMapping)),
         )
         utility_values: t.MutableStrMapping = u.Field(
             default_factory=u.empty(TypeForm(t.MutableStrMapping)),
         )
+
+    class _RequiredFieldContract(m.BaseModel):
+        """Native required declarations remain typed through both facades."""
+
+        model_label: str = m.Field(min_length=1)
+        utility_label: str = u.Field(min_length=1)
+
+    @staticmethod
+    def test_required_fields_preserve_annotations_and_validation() -> None:
+        """Metadata declarations are required, not descriptor-valued defaults."""
+        model = TestsFlextUtilitiesPydantic._RequiredFieldContract(
+            model_label="model",
+            utility_label="utility",
+        )
+        model_label: str = model.model_label
+        utility_label: str = model.utility_label
+        assert model_label == "model"
+        assert utility_label == "utility"
+        with pytest.raises(m.ValidationError):
+            TestsFlextUtilitiesPydantic._RequiredFieldContract.model_validate({})
 
     @staticmethod
     def test_field_factories_receive_validated_data_and_keep_required_fields() -> None:
@@ -75,7 +108,7 @@ class TestsFlextUtilitiesPydantic:
 
         model_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=m.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
         ] = m.Field(description="Model collection with an annotation-owned factory.")
         utility_values: Annotated[
             t.MutableStrMapping,
@@ -105,7 +138,7 @@ class TestsFlextUtilitiesPydantic:
 
         model_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=m.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
         ] = m.Field(default_factory=None)
         utility_values: Annotated[
             t.MutableStrMapping,
@@ -160,12 +193,12 @@ class TestsFlextUtilitiesPydantic:
     class _PrivateAttrContract(FlextModels.BaseModel):
         label: str
         _model_values: list[str] = FlextModels.PrivateAttr(
-            default_factory=FlextModels.empty(TypeForm(list[str])),
+            default_factory=list[str],
         )
         _utility_values: list[str] = u.PrivateAttr(
             default_factory=u.empty(TypeForm(list[str])),
         )
-        _label_copy: str = FlextModels.PrivateAttr(default_factory=itemgetter("label"))
+        _label_copy: str = FlextModels.PrivateAttr(default_factory=_validated_label)
         _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
 
         def record_model(self, value: str) -> None:

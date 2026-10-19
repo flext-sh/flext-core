@@ -6,12 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated, ClassVar, Self
 
-from typing_extensions import TypeForm
-
+from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
@@ -50,7 +49,7 @@ class FlextModelsErrors:
             ),
         ] = None
         error_data: Annotated[
-            FlextTypingBase.JsonMapping | FlextTypesServices.ConfigModelInput | None,
+            t.JsonMapping | p.ConfigModelInput | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Structured error payload attached to the failure.",
@@ -118,20 +117,19 @@ class FlextModelsErrors:
         """Validated public snapshot for exception metric exports."""
 
         total_exceptions: Annotated[
-            FlextTypingBase.NonNegativeInt,
+            t.NonNegativeInt,
             FlextModelsPydantic.Field(
                 description="Total recorded exception occurrences.",
             ),
         ] = 0
         exception_counts: Annotated[
-            FlextTypingBase.IntMapping,
+            t.IntMapping,
             FlextModelsPydantic.Field(
                 description="Per-exception occurrence totals keyed by type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.IntMapping),
-            ),
+            default_factory=lambda: MappingProxyType[str, int]({}),
+            validate_default=True,
         )
         exception_counts_summary: Annotated[
             str,
@@ -140,7 +138,7 @@ class FlextModelsErrors:
             ),
         ] = ""
         unique_exception_types: Annotated[
-            FlextTypingBase.NonNegativeInt,
+            t.NonNegativeInt,
             FlextModelsPydantic.Field(
                 description="Number of unique exception types recorded.",
             ),
@@ -152,14 +150,14 @@ class FlextModelsErrors:
             """Whether the metrics snapshot contains recorded exceptions."""
             return self.total_exceptions > 0
 
-        def to_config_map(self) -> FlextTypingBase.JsonMapping:
+        def to_config_map(self) -> t.JsonMapping:
             """Expose the snapshot through the canonical flat config contract.
 
             Returns:
                 The resulting ``t.JsonMapping``.
 
             """
-            payload: FlextTypingBase.JsonDict = {
+            payload: t.JsonDict = {
                 "total_exceptions": self.total_exceptions,
                 "exception_counts_summary": self.exception_counts_summary,
                 "unique_exception_types": self.unique_exception_types,
@@ -172,14 +170,13 @@ class FlextModelsErrors:
         """Copy-updated runtime state for exception counters."""
 
         exception_counts: Annotated[
-            FlextTypingBase.IntMapping,
+            t.IntMapping,
             FlextModelsPydantic.Field(
                 description="Recorded counts keyed by exception type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.IntMapping),
-            ),
+            default_factory=lambda: MappingProxyType[str, int]({}),
+            validate_default=True,
         )
 
         @FlextUtilitiesPydantic.computed_field

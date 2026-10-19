@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._protocols.service import FlextProtocolsService
 
 
 class FlextModelsService:
@@ -62,7 +61,7 @@ class FlextModelsService:
                 "Settings source cloned once into the elected container scope."
             ),
         )
-        settings_type: t.SkipJsonSchema[t.SettingsClass | None] = (
+        settings_type: t.SkipJsonSchema[p.SettingsType | None] = (
             FlextModelsPydantic.Field(
                 default=None,
                 exclude=True,
@@ -109,11 +108,9 @@ class FlextModelsService:
         request: t.ModelClass[t.BaseModelType] | None = FlextModelsPydantic.Field(
             description="Pydantic request model, or None for an input-less operation.",
         )
-        handler: t.Port[FlextProtocolsService.ServiceOperationHandler] = (
-            FlextModelsPydantic.Field(
-                exclude=True,
-                description="Original unbound operation, invoked with the provided service.",
-            )
+        handler: t.Port[p.ServiceOperationHandler] = FlextModelsPydantic.Field(
+            exclude=True,
+            description="Original unbound operation, invoked with the provided service.",
         )
 
 

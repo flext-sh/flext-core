@@ -15,10 +15,10 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 
 from flext_core import FlextResult, c, p, t
 from flext_core._models import FlextModelsContainers
-from flext_core._runtime import FlextRuntimeMetadata
 from flext_core._utilities import (
     FlextUtilitiesCollectionIter,
     FlextUtilitiesCollectionMerge,
+    FlextUtilitiesPydantic,
 )
 
 
@@ -48,7 +48,7 @@ class FlextUtilitiesCollection(
         for key, item in raw_source.items():
             if item is None:
                 continue
-            normalized[key] = FlextRuntimeMetadata.normalize_to_metadata(item)
+            normalized[key] = FlextUtilitiesPydantic.normalize_to_json_value(item)
         return normalized
 
     @staticmethod

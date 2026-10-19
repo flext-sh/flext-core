@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from flext_core import t
 from flext_core._models import FlextModelsPydantic
-from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsEnforcementModelBase(FlextModelsPydantic.BaseModel):
@@ -38,12 +38,10 @@ class FlextModelsEnforcementBase:
     class Report(FlextModelsEnforcementModelBase):
         """Aggregated violation report returned by a check or runner."""
 
-        violations: FlextTypingBase.SequenceOf[
-            FlextModelsEnforcementBase.Violation
-        ] = ()
+        violations: t.SequenceOf[FlextModelsEnforcementBase.Violation] = ()
 
         @property
-        def messages(self) -> FlextTypingBase.StrSequence:
+        def messages(self) -> t.StrSequence:
             """Plain messages for text emission."""
             return [violation.message for violation in self.violations]
 
@@ -79,7 +77,7 @@ class FlextModelsEnforcementBase:
             """
             return self.messages[index]
 
-        def __contains__(self, fragment: FlextTypingBase.Scalar | None) -> bool:
+        def __contains__(self, fragment: t.Scalar | None) -> bool:
             """Search message text with ``fragment in report``.
 
             Returns:
@@ -90,5 +88,7 @@ class FlextModelsEnforcementBase:
                 return False
             return any(fragment in message for message in self.messages)
 
+
+FlextModelsEnforcementBase.Report.model_rebuild()
 
 __all__: list[str] = ["FlextModelsEnforcementBase", "FlextModelsEnforcementModelBase"]

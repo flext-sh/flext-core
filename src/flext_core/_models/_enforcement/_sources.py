@@ -6,17 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated, Literal
 
 from pydantic import Field
-from typing_extensions import TypeForm
 
-from flext_core._models import FlextModelsPydantic
 from flext_core._models._enforcement import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
-from flext_core._typings import FlextTypingBase
+from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
@@ -65,9 +64,10 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         kind: Literal["transformer", "rope", "manual"]
         target: str
         params: FlextTypingBase.JsonMapping = Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.JsonMapping)
-            ),
+            default_factory=lambda: MappingProxyType[
+                str, FlextTypesPydantic.JsonValue
+            ]({}),
+            validate_default=True,
         )
         safe: bool = True
 

@@ -1,7 +1,7 @@
 """Handler execution helper extracted from FlextDispatcher.
 
 Encapsulates the success/failure pipeline that runs a resolved
-``t.RoutedHandlerCallable`` against a routable message and adapts the
+``p.RoutedHandlerCallable`` against a routable message and adapts the
 return value (``r[T]`` or raw payload) to the dispatcher's canonical
 ``r[t.JsonPayload]`` contract. Exposed through the utility facade and consumed
 by ``FlextDispatcher``.
@@ -114,7 +114,7 @@ class FlextUtilitiesDispatcherExecute:
     @staticmethod
     def execute_dispatcher_handler(
         *,
-        resolved_handler: t.RoutedHandlerCallable,
+        resolved_handler: p.RoutedHandlerCallable,
         message: p.Routable,
         route_name: str,
         logger: p.Logger,

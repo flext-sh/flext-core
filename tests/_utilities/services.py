@@ -38,10 +38,13 @@ class TestsFlextUtilitiesServicesMixin:
     class CountingService(s[int]):
         """Service whose only collaborator is the ``p.Tests.Counter`` port."""
 
-        counter: t.Port[p.Tests.Counter] = m.Field(
-            exclude=True,
-            description="Counter port the service advances.",
-        )
+        counter: Annotated[
+            t.Port[p.Tests.Counter],
+            m.Field(
+                exclude=True,
+                description="Counter port the service advances.",
+            ),
+        ]
 
         @override
         def execute(self) -> p.Result[int]:

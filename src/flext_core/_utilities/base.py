@@ -20,5 +20,15 @@ class FlextUtilitiesBase:
     # Runtime/model bootstrap consumers cannot depend on the composed facade.
     type_adapter = PydanticTypeAdapter
 
+    @staticmethod
+    def create_instance[T](class_type: type[T]) -> T:
+        """Allocate through the native constructor without invoking initialization.
+
+        Returns:
+            The instance allocated by Python for the requested class.
+
+        """
+        return object.__new__(class_type)
+
 
 __all__: list[str] = ["FlextUtilitiesBase"]

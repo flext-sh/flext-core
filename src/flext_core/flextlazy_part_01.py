@@ -65,7 +65,9 @@ class FlextLazyPart01:
                 t.MutableMappingKV[str, str | tuple[str, str]],
             ],
         ] = {}
-        self.install_cache: t.MutableMappingKV[str, tuple[int, int, int, bool]] = {}
+        self.install_cache: t.MutableMappingKV[
+            str, tuple[tuple[int, int, int, bool], t.LazyExportHooks]
+        ] = {}
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
         self._activating_core_beartype = False
 

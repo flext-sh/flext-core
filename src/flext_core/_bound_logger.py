@@ -77,7 +77,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         return self
 
     @property
-    def _context(self) -> t.LoggingContext:
+    def _context(self) -> p.LoggingContext:
         """Context mapping for BindableLogger protocol compliance."""
         return structlog.get_context(self._native)
 
@@ -96,7 +96,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         """Replace bound context without mutating this logger."""
         return self.__class__(self.name, context=context)
 
-    def exception(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
+    def exception(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit native exception context and preserve selected failures."""
         if args and isinstance(args[0], BaseException):
             kw["exception"], args = args[0], args[1:]
@@ -109,9 +109,9 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         exception: BaseException | None,
         exc_info: bool,
         context: t.MappingKV[str, t.JsonPayload | Exception],
-    ) -> t.LoggingEvent:
+    ) -> p.LoggingEvent:
         """Adapt causal data to native exc_info without formatting a stack."""
-        result: t.LoggingEvent = {
+        result: p.LoggingEvent = {
             k: self._to_container_value(v) for k, v in context.items()
         }
         if exception is not None:
@@ -132,7 +132,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         """Unbind keys while ignoring missing values."""
         return self.unbind(*keys, safe=True)
 
-    def warning(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
+    def warning(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit WARNING through the native pipeline."""
         return self._log(c.LogLevel.WARNING, msg, *args, **kw)
 
@@ -140,9 +140,9 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         self,
         level: t.LogLevel | str,
         event: str,
-        *args: t.LogValue,
-        **context: t.LogValue,
-    ) -> t.LogResult:
+        *args: p.LogValue,
+        **context: p.LogValue,
+    ) -> p.LogResult:
         """Emit once, preserving original business identity and saved traceback."""
         exception = context.get("exception")
         exc_info = context.get("exc_info", False)
@@ -154,7 +154,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
             if selected_info is not None:
                 business_info = selected_info
             level_str = str(logging.getLevelName(self.level_number(level))).lower()
-            native_context: t.LoggingEvent = dict(
+            native_context: p.LoggingEvent = dict(
                 self.to_container_context({
                     key: value
                     for key, value in context.items()
@@ -176,19 +176,19 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
             raise
         return r[bool].ok(value=True)
 
-    def critical(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
+    def critical(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit CRITICAL through the native pipeline."""
         return self._log(c.LogLevel.CRITICAL, msg, *args, **kw)
 
-    def debug(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
+    def debug(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit DEBUG through the native pipeline."""
         return self._log(c.LogLevel.DEBUG, msg, *args, **kw)
 
-    def error(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
+    def error(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit ERROR through the native pipeline."""
         return self._log(c.LogLevel.ERROR, msg, *args, **kw)
 
-    def info(self, msg: str, *args: t.LogValue, **kw: t.LogValue) -> t.LogResult:
+    def info(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit ordinary INFO through the native pipeline."""
         return self._log(c.LogLevel.INFO, msg, *args, **kw)
 
@@ -196,18 +196,18 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         self,
         level: str,
         message: str,
-        *args: t.LogValue,
-        **context: t.LogValue,
-    ) -> t.LogResult:
+        *args: p.LogValue,
+        **context: p.LogValue,
+    ) -> p.LogResult:
         """Emit at the requested standard severity."""
         return self._log(level, message, *args, **context)
 
     def trace(
         self,
         message: str,
-        *args: t.LogValue,
-        **kwargs: t.LogValue,
-    ) -> t.LogResult:
+        *args: p.LogValue,
+        **kwargs: p.LogValue,
+    ) -> p.LogResult:
         """Emit opt-in high-volume diagnostics at DEBUG."""
         if self.logging_settings().trace:
             return self._log(c.LogLevel.DEBUG, message, *args, **kwargs)
