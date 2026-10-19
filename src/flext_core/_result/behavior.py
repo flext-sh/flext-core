@@ -6,40 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NoReturn, Self, TypeIs, override
+from typing import TYPE_CHECKING, NoReturn, Self, override
 
 from flext_core import c
-from flext_core._protocols import FlextProtocolsResult
 from flext_core._result import FlextResultBase
 
 if TYPE_CHECKING:
     from types import TracebackType
-
-    from flext_core import t
-
-_RESULT_FACTORY_CONTRACT: t.VariadicTuple[str] = (
-    "create_success",
-    "require_error",
-    "fail",
-    "from_result",
-    "from_validation",
-    "failed_result",
-    "successful_result",
-)
-
-
-def _is_result_factory(
-    cls: type,
-) -> TypeIs[type[FlextProtocolsResult.ResultFactory]]:
-    """Narrow a class to the result factory contract after member validation.
-
-    Returns:
-        The resulting ``TypeIs[type[prt.ResultFactory]]``.
-
-    """
-    return all(
-        callable(getattr(cls, member, None)) for member in _RESULT_FACTORY_CONTRACT
-    )
 
 
 class FlextResultBehavior[T](FlextResultBase[T]):
@@ -83,22 +56,9 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         return self._exception
 
     @classmethod
-    def _factory(cls) -> type[FlextProtocolsResult.ResultFactory]:
-        """Return the concrete result class after structural factory validation.
-
-        Returns:
-            The concrete result class implementing the factory contract.
-
-        Raises:
-            TypeError: If the class does not implement the result factory
-                contract.
-
-        """
-        factory_cls: type = cls
-        if not _is_result_factory(factory_cls):
-            msg = f"{cls.__name__} does not implement the result factory contract"
-            raise TypeError(msg)
-        return factory_cls
+    def _factory(cls) -> type[Self]:
+        """Expose the original class identity to the native contract cutover."""
+        return cls
 
     def __enter__(self) -> Self:
         return self

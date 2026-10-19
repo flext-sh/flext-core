@@ -40,6 +40,9 @@ class FlextConstantsErrorsRuntimeSettings:
     ERR_RUNTIME_SEQUENCE_INVALID_TYPE: Final[str] = (
         "Invalid type in Sequence: {type_name}"
     )
+    ERR_RUNTIME_CONTAINER_INVALID_TYPE: Final[str] = (
+        "Unsupported runtime container value: {type_name}"
+    )
     ERR_RUNTIME_BATCH_VALIDATION_FAILED: Final[str] = (
         "Batch validation failed: {errors}"
     )

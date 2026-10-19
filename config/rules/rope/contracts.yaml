@@ -36,3 +36,17 @@ rules:
     ownership_transfer:
       - flext_core._runtime._container
       - FlextRuntimeContainer.normalize_to_container
+  - id: core-result-payload-construction
+    phase: contract-normalization
+    pattern: '${helper}(${factory}(), ${payload})'
+    goal: '${helper}(${payload})'
+    arguments:
+      helper: name=flext_core._result.construction.ok_result
+      factory: name=flext_core._result.behavior.FlextResultBehavior._factory
+  - id: core-result-copy-construction
+    phase: contract-normalization
+    pattern: '${helper}(${factory}(), ${source})'
+    goal: '${helper}(${source})'
+    arguments:
+      helper: name=flext_core._result.construction.copy_result
+      factory: name=flext_core._result.behavior.FlextResultBehavior._factory

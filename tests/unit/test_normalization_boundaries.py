@@ -117,10 +117,13 @@ class TestsNormalizationBoundaries:
 
     @staticmethod
     def test_scope_preserves_injected_composition(clean_container: p.Container) -> None:
-        tm.ok(clean_container.bind("shared-service", "inherited"))
+        tm.that(
+            clean_container.bind("shared-service", "inherited") is clean_container,
+            eq=True,
+        )
         scope = clean_container.scope()
         tm.that(tm.ok(scope.resolve("shared-service")), eq="inherited")
-        tm.ok(scope.bind("scoped-service", "isolated"))
+        tm.that(scope.bind("scoped-service", "isolated") is scope, eq=True)
         assert clean_container.resolve("scoped-service").is_failure
 
     @staticmethod

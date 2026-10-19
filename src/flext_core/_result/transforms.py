@@ -88,7 +88,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         if self.failure:
             return cast("p.Result[U]", self._fail_with_metadata())
         try:
-            return copy_result(self._factory(), func(self._payload))
+            return copy_result(func(self._payload))
         except c.EXC_BROAD_RUNTIME as exc:
             return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
 
@@ -107,7 +107,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         for func in funcs:
             if current.success:
                 try:
-                    current = copy_result(self._factory(), func(current.value))
+                    current = copy_result(func(current.value))
                 except c.EXC_BROAD_RUNTIME as exc:
                     current = factory.fail(str(exc), exception=exc)
             else:
@@ -177,7 +177,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         """
         if self.success:
             try:
-                return ok_result(self._factory(), func(self._payload))
+                return ok_result(func(self._payload))
             except c.EXC_BROAD_RUNTIME as exc:
                 return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
         return cast("p.Result[U]", self._fail_with_metadata())

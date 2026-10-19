@@ -6,14 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, cast
+from typing import TYPE_CHECKING, Self
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 
 from flext_core import c, p
-from flext_core._protocols import FlextProtocolsResult
 from flext_core._result import FlextResultBase, FlextResultBehavior
-from flext_core._utilities.metadata import FlextUtilitiesMetadata
+from flext_core._utilities import FlextUtilitiesMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,9 +23,8 @@ if TYPE_CHECKING:
 class FlextResultConstruction[T](FlextResultBehavior[T]):
     """Factory methods for the concrete result facade.
 
-    Contracts are typed as ``p.Result`` (abstract). Instances are built only via
-    ``create_success``/``create_failure`` — never by importing the public
-    ``FlextResult`` facade.
+    Contracts are typed as ``p.Result``. Payload-changing operations construct
+    the public result family at the point of use, after its MRO is complete.
     """
 
     @staticmethod
@@ -51,7 +49,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
-        return ok_result(cls._factory(), value)
+        return ok_result(value)
 
     @classmethod
     def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[T]:
@@ -116,10 +114,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         metadata = getattr(exception, "metadata", None)
         raw_attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
         if raw_attributes is not None:
-            try:
-                payload = cls.validate_error_data(raw_attributes)
-            except ValidationError:
-                payload = None
+            payload = cls.validate_error_data(raw_attributes)
         correlation_id = getattr(exception, "correlation_id", None)
         if isinstance(correlation_id, str) and correlation_id:
             if payload is None:
@@ -135,7 +130,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
-        return copy_result(cls._factory(), source)
+        return copy_result(source)
 
     @classmethod
     def create_from_callable[V](
@@ -153,19 +148,15 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
+        from flext_core import r
+
         try:
             value = func()
             if value is None:
-                return cast(
-                    "p.Result[V]",
-                    cls.fail("Callable returned None", error_code=error_code),
-                )
-            return ok_result(cls._factory(), value)
+                return r[V].fail("Callable returned None", error_code=error_code)
+            return ok_result(value)
         except c.EXC_BROAD_RUNTIME as exc:
-            return cast(
-                "p.Result[V]",
-                cls.fail(str(exc), error_code=error_code, exception=exc),
-            )
+            return r[V].fail(str(exc), error_code=error_code, exception=exc)
 
     @classmethod
     def _filter_sensitive_error_data(
@@ -214,6 +205,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[T]``.
 
         """
+        from flext_core import r
+
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
@@ -223,14 +216,11 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             else cls._extract_exception_error_data(exception),
             exception,
         )
-        return cast(
-            "p.Result[T]",
-            cls.create_failure(
-                error_msg,
-                resolved_error_code,
-                resolved_error_data,
-                exception,
-            ),
+        return r[T].create_failure(
+            error_msg,
+            resolved_error_code,
+            resolved_error_data,
+            exception,
         )
 
     @classmethod
@@ -272,14 +262,16 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[ModelT]``.
 
         """
+        from flext_core import r
+
         try:
             validated: ModelT = model.model_validate(data)
-            return ok_result(cls._factory(), validated)
+            return ok_result(validated)
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return cast("p.Result[ModelT]", cls.fail(str(exc), exception=exc))
+            return r[ModelT].fail(str(exc), exception=exc)
 
     @staticmethod
-    def successful_result(obj: p.AttributeProbe) -> bool:
+    def successful_result[ValueT](obj: ValueT) -> bool:
         """Check whether an object is a successful result instance.
 
         Returns:
@@ -289,7 +281,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
-    def failed_result(obj: p.AttributeProbe) -> bool:
+    def failed_result[ValueT](obj: ValueT) -> bool:
         """Check whether an object is a failed result instance.
 
         Returns:
@@ -299,42 +291,37 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return isinstance(obj, FlextResultBase) and not obj.success
 
 
-def ok_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](
-    cls: type[InstanceT],
-    value: V,
-) -> p.Result[V]:
-    """Build a successful result of the ``cls`` result family carrying ``value``.
+def ok_result[V](value: V) -> p.Result[V]:
+    """Build a public result whose payload contract is exactly ``V``.
 
     Returns:
         The resulting ``p.Result[V]``.
 
     """
-    return cls.create_success(value)
+    from flext_core import r
+
+    return r[V].create_success(value)
 
 
-def copy_result[V, InstanceT: FlextProtocolsResult.ResultFactoryMinimal](
-    cls: type[InstanceT],
-    source: p.Result[V],
-) -> p.Result[V]:
-    """Copy any abstract result into the ``cls`` result family.
+def copy_result[V](source: p.Result[V]) -> p.Result[V]:
+    """Copy payload and failure state into the public result family.
 
     Returns:
         The resulting ``p.Result[V]``.
 
     """
+    from flext_core import r
+
     if source.success:
         try:
-            return ok_result(cls, source.value)
+            return ok_result(source.value)
         except ValueError as exc:
-            return cast("p.Result[V]", cls.fail(str(exc)))
-    return cast(
-        "p.Result[V]",
-        cls.fail(
-            cls.require_error(source),
-            error_code=source.error_code,
-            error_data=source.error_data,
-            exception=source.exception,
-        ),
+            return r[V].fail(str(exc), exception=exc)
+    return r[V].fail(
+        source.error or "",
+        error_code=source.error_code,
+        error_data=source.error_data,
+        exception=source.exception,
     )
 
 
