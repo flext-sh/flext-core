@@ -55,14 +55,17 @@ class TestsFlextTypeAliasResolution:
         payload = m.ConfigMap(root={"bootstrap": "value"})
         failure = m.ResultFailureSpec(error_data=payload)
         assert failure.error_data is payload
-        event = u.type_adapter(TypeForm(p.LoggingEvent)).validate_python({
+        event = u.type_adapter(
+            TypeForm(p.LoggingEvent), config=m.ArbitraryTypesModel.model_config
+        ).validate_python({
             "payload": payload,
             "event": "bootstrap",
         })
         assert event["payload"] is payload
         assert event["event"] == "bootstrap"
         overrides = u.type_adapter(
-            TypeForm(p.SettingsOverridesMapping)
+            TypeForm(p.SettingsOverridesMapping),
+            config=m.ArbitraryTypesModel.model_config,
         ).validate_python({
             "payload": payload,
         })
@@ -97,8 +100,8 @@ class TestsFlextTypeAliasResolution:
         assert not u.alias_contains_any(alias)
 
     @staticmethod
-    def test_declared_static_only_alias_stays_lazy() -> None:
-        """Test declared static only alias stays lazy."""
+    def test_declared_static_only_alias_propagates_missing_runtime_dependency() -> None:
+        """Alias inspection cannot resolve a dependency absent from runtime."""
         alias = TestsFlextTypeAliasDeclarations.LegalTypes.Deferred
 
         with pytest.raises(NameError) as raised:
@@ -106,9 +109,12 @@ class TestsFlextTypeAliasResolution:
 
         assert raised.value.name == "DeferredPath"
         owner = TestsFlextTypeAliasDeclarations.LegalTypes
-        assert u.resolve_type_alias_value(alias, owner=owner) is None
-        assert not u.alias_contains_any(alias, owner=owner)
-        assert u.unwrap_type_alias(alias, owner=owner) is alias
+        with pytest.raises(NameError, match="DeferredPath"):
+            u.resolve_type_alias_value(alias, owner=owner)
+        with pytest.raises(NameError, match="DeferredPath"):
+            u.alias_contains_any(alias, owner=owner)
+        with pytest.raises(NameError, match="DeferredPath"):
+            u.unwrap_type_alias(alias, owner=owner)
 
     @staticmethod
     def test_report_accounts_for_each_deferred_alias_rule() -> None:
@@ -193,7 +199,8 @@ class TestsFlextTypeAliasResolution:
         )
         assert deferred.unavailable_imports == ("DeferredPath",)
         assert u.deferred(alias, owner=Consumer) == (deferred,)
-        assert u.resolve_type_alias_value(alias, owner=Consumer) is None
+        with pytest.raises(NameError, match="DeferredPath"):
+            u.resolve_type_alias_value(alias, owner=Consumer)
         assert Consumer(value=1).value == 1
         report = u.check(Consumer)
         assert not report.complete

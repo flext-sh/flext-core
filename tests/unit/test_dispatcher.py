@@ -215,9 +215,7 @@ class TestsFlextCoreDispatcher:
             tm.that(result.failure)
 
     @staticmethod
-    def test_explicit_binding_preserves_callable_and_rejects_contradictory_metadata() -> (
-        None
-    ):
+    def test_explicit_binding_preserves_callable_and_rejects_conflict() -> None:
         """Explicit bindings retain identity and reject contradictory metadata."""
         dispatcher = u.build_dispatcher()
 

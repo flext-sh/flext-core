@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from abc import ABC
 from typing import TYPE_CHECKING
 
 from flext_core._result import FlextResultComposition
@@ -14,7 +15,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextResultUnwrap[T](FlextResultComposition[T]):
+class FlextResultUnwrap[T](FlextResultComposition[T], ABC):
     """Value extraction helpers for results.
 
     Provides the terminal operations of the railway: ``unwrap`` (raises on
@@ -25,9 +26,8 @@ class FlextResultUnwrap[T](FlextResultComposition[T]):
     def unwrap(self) -> T:
         """Return the success payload.
 
-        Raises:
-            BaseException: The original exception carried by a failure.
-            RuntimeError: If a logical failure has no original exception.
+        The value property propagates a failure's original exception, or raises
+        RuntimeError when a logical failure carries no original exception.
 
         """
         return self.value

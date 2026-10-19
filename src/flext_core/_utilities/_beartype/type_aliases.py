@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import ast
 import builtins
-from collections import ChainMap
-from types import ModuleType
+import inspect
+from types import ModuleType, UnionType
 from typing import (
     Annotated,
     ForwardRef,
@@ -20,8 +20,7 @@ from typing import (
     get_origin,
 )
 
-from pydantic._internal._model_construction import unpack_lenient_weakvaluedict
-from pydantic._internal._namespace_utils import NamespacesTuple, NsResolver
+from pydantic import BaseModel
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
@@ -33,26 +32,139 @@ class FlextUtilitiesBeartypeTypeAliases:
     """Own typed alias resolution; unexpected evaluation errors escape unchanged."""
 
     @staticmethod
+    def _declaring_namespace(
+        owner: ModuleType | type,
+    ) -> FlextTypingBase.MappingKV[str, FlextProtocolsBase.AttributeProbe]:
+        """Read public module and class declarations without private model state.
+
+        Returns:
+            The declaring namespace, including enclosing class declarations.
+
+        Raises:
+            TypeError: If the owner has no inspectable defining module.
+
+        """
+        namespace: dict[str, FlextProtocolsBase.AttributeProbe] = dict(vars(builtins))
+        if isinstance(owner, ModuleType):
+            namespace.update(vars(owner))
+            return namespace
+        module = inspect.getmodule(owner)
+        if module is None:
+            msg = f"Annotation owner has no defining module: {owner!r}"
+            raise TypeError(msg)
+        namespace.update(vars(module))
+        enclosing: FlextProtocolsBase.AttributeProbe = module
+        for name in owner.__qualname__.split(".")[:-1]:
+            if name == "<locals>":
+                break
+            enclosing = getattr(enclosing, name)
+            if isinstance(enclosing, type):
+                namespace.update(vars(enclosing))
+        namespace.update(vars(owner))
+        namespace[owner.__name__] = owner
+        return namespace
+
+    @staticmethod
+    def _model_annotation_origin(
+        hint: str | ForwardRef,
+        owner: ModuleType | type,
+    ) -> tuple[bool, type | TypeAliasType | None]:
+        """Use Pydantic's public resolved fields for captured local declarations.
+
+        Returns:
+            Whether a resolved field matched, and its exact outer contract.
+
+        """
+        if not isinstance(owner, type) or not issubclass(owner, BaseModel):
+            return False, None
+        source = hint.__forward_arg__ if isinstance(hint, ForwardRef) else hint
+        declarations = inspect.get_annotations(owner, eval_str=False)
+        for name, field in owner.model_fields.items():
+            if declarations.get(name) != source or isinstance(
+                field.annotation, (str, ForwardRef)
+            ):
+                continue
+            origin = get_origin(field.annotation)
+            if origin in {Union, UnionType}:
+                return True, None
+            return True, FlextUtilitiesBeartypeTypeAliases._runtime_origin(
+                field.annotation, hint
+            )
+        return False, None
+
+    @staticmethod
+    def _outer_binding(
+        expression: ast.expr,
+        namespace: FlextTypingBase.MappingKV[str, FlextProtocolsBase.AttributeProbe],
+        hint: str | ForwardRef,
+    ) -> FlextProtocolsBase.AttributeProbe:
+        """Resolve one dotted outer binding without evaluating the annotation.
+
+        Returns:
+            The binding selected from the declaring namespace.
+
+        Raises:
+            TypeError: If the expression has no named outer contract.
+
+        """
+        attributes: list[str] = []
+        while isinstance(expression, ast.Attribute):
+            attributes.insert(0, expression.attr)
+            expression = expression.value
+        if not isinstance(expression, ast.Name):
+            msg = f"Annotation has no named outer contract: {hint!r}"
+            raise TypeError(msg)
+        binding = namespace[expression.id]
+        for attribute in attributes:
+            binding = getattr(binding, attribute)
+        return binding
+
+    @staticmethod
+    def _runtime_origin(
+        binding: FlextProtocolsBase.AttributeProbe, hint: str | ForwardRef
+    ) -> type | TypeAliasType:
+        """Require an exact runtime type or alias for the outer binding.
+
+        Returns:
+            The runtime type or its declared alias.
+
+        Raises:
+            TypeError: If the binding has no exact runtime origin.
+
+        """
+        if isinstance(binding, (type, TypeAliasType)):
+            return binding
+        origin = get_origin(binding)
+        if isinstance(origin, type):
+            return origin
+        msg = f"Annotation outer binding is not a type or alias: {hint!r}"
+        raise TypeError(msg)
+
+    @staticmethod
     def declared_origin(
         hint: str | ForwardRef,
         *,
         owner: ModuleType | type | None,
     ) -> type | TypeAliasType | None:
-        """Look up the outer contract; known unions are not exact mutable origins."""
+        """Look up the outer contract; unions are not exact mutable origins.
+
+        Returns:
+            The exact outer type or alias, or None for a union.
+
+        Raises:
+            TypeError: If an Annotated contract does not declare metadata.
+            ValueError: If the declaring namespace is absent.
+
+        """
         if owner is None:
             msg = f"Declaring namespace required for annotation {hint!r}"
             raise ValueError(msg)
-        resolver = NsResolver(
-            parent_namespace=unpack_lenient_weakvaluedict(
-                getattr(owner, "__pydantic_parent_namespace__", None),
-            ),
+        matched, model_origin = (
+            FlextUtilitiesBeartypeTypeAliases._model_annotation_origin(hint, owner)
         )
-        if isinstance(owner, ModuleType):
-            namespaces = NamespacesTuple(vars(owner), {})
-        else:
-            with resolver.push(owner):
-                namespaces = resolver.types_namespace
-        namespace = ChainMap(namespaces.locals, namespaces.globals, vars(builtins))
+        if matched:
+            return model_origin
+        namespace = FlextUtilitiesBeartypeTypeAliases._declaring_namespace(owner)
         node = ast.parse(
             hint.__forward_arg__ if isinstance(hint, ForwardRef) else hint,
             mode="eval",
@@ -64,16 +176,9 @@ class FlextUtilitiesBeartypeTypeAliases:
             if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
                 return None
             expression = node.value if isinstance(node, ast.Subscript) else node
-            attributes: list[str] = []
-            while isinstance(expression, ast.Attribute):
-                attributes.insert(0, expression.attr)
-                expression = expression.value
-            if not isinstance(expression, ast.Name):
-                msg = f"Annotation has no named outer contract: {hint!r}"
-                raise TypeError(msg)
-            binding: FlextProtocolsBase.AttributeProbe = namespace[expression.id]
-            for attribute in attributes:
-                binding = getattr(binding, attribute)
+            binding = FlextUtilitiesBeartypeTypeAliases._outer_binding(
+                expression, namespace, hint
+            )
             if isinstance(node, ast.Subscript) and (
                 binding is Optional or binding is Union
             ):
@@ -84,13 +189,7 @@ class FlextUtilitiesBeartypeTypeAliases:
                     raise TypeError(msg)
                 node = node.slice.elts[0]
                 continue
-            if isinstance(binding, (type, TypeAliasType)):
-                return binding
-            origin = get_origin(binding)
-            if isinstance(origin, type):
-                return origin
-            msg = f"Annotation outer binding is not a type or alias: {hint!r}"
-            raise TypeError(msg)
+            return FlextUtilitiesBeartypeTypeAliases._runtime_origin(binding, hint)
 
     @staticmethod
     def resolve(

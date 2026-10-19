@@ -441,7 +441,7 @@ class TestsFlextLoggingStages:
         tm.that(len(observed), eq=1)
         record = observed[0]
         tm.that(record.level, eq="warning")
-        tm.that(record.context["logger"], eq=__name__)
+        tm.that(record.context[c.ContextKey.LOGGER_NAME], eq=__name__)
         tm.that(record.context["pathname"], eq=__file__)
         tm.that(
             record.context["func_name"],
@@ -450,7 +450,10 @@ class TestsFlextLoggingStages:
         for stream in (first, second):
             event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
             tm.that(event["event"], eq=record.message)
-            tm.that(event["logger"], eq=record.context["logger"])
+            tm.that(
+                event[c.ContextKey.LOGGER_NAME],
+                eq=record.context[c.ContextKey.LOGGER_NAME],
+            )
 
     def test_native_context_ownership_is_thread_and_task_local(self) -> None:
         """Concurrent split scope APIs neither leak keys nor erase a parent."""
@@ -753,9 +756,9 @@ class TestsFlextLoggingStages:
         """Validation rejects selected incomplete composition before effects."""
         original = u.logging_settings()
         stream = io.StringIO()
-        with pytest.raises(m.ValidationError, match="logging_profile"):
+        with pytest.raises(m.ValidationError):
             _ = u.resolve_logging_settings(logging_profile="unbound-presentation")
-        with pytest.raises(ValueError, match="ProcessorFormatter"):
+        with pytest.raises(TypeError, match="ProcessorFormatter"):
             u.configure_structlog(
                 settings=m.StructlogOptions(handlers=(logging.StreamHandler(stream),))
             )

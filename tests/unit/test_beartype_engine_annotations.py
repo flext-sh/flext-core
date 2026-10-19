@@ -160,11 +160,13 @@ class TestsFlextBeartypeEngineAnnotations(
                 tm.that(u.alias_contains_any(alias.__value__), eq=expected)
 
     @staticmethod
-    def test_alias_inspection_uses_explicit_owner_for_static_only_names() -> None:
-        """Explicit owner context proves a local static-only alias deferral."""
+    def test_alias_inspection_rejects_unbound_static_only_names() -> None:
+        """An explicit owner cannot supply a dependency absent at runtime."""
 
         class Host:
             type LazyAlias = LazyResolvableType | str
 
-        assert u.resolve_type_alias_value(Host.LazyAlias, owner=Host) is None
-        assert u.alias_contains_any(Host.LazyAlias, owner=Host) is False
+        with pytest.raises(NameError, match="LazyResolvableType"):
+            u.resolve_type_alias_value(Host.LazyAlias, owner=Host)
+        with pytest.raises(NameError, match="LazyResolvableType"):
+            u.alias_contains_any(Host.LazyAlias, owner=Host)

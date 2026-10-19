@@ -248,9 +248,9 @@ class TestsFlextCoreResultFactoryDip:
         tm.fail(failed, has="connect failed")
         tm.fail(failed, has="db down")
         assert failed.exception is cause
-        assert isinstance(failed, FlextResult)
         assert r.failed_result(failed)
         assert not r.successful_result(failed)
+        assert isinstance(failed, FlextResult)
 
     @staticmethod
     def test_fail_op_with_string_reason_has_no_exception() -> None:
@@ -270,14 +270,14 @@ class TestsFlextCoreResultFactoryDip:
         ok_result: p.Result[_Sample] = r.from_validation({"name": "ada"}, _Sample)
         tm.ok(ok_result)
         tm.that(ok_result.unwrap().name, eq="ada")
-        assert isinstance(ok_result, FlextResult)
         assert r.successful_result(ok_result)
+        assert isinstance(ok_result, FlextResult)
 
         bad: p.Result[_Sample] = r.from_validation({"name": 1}, _Sample)
         tm.fail(bad)
         assert bad.exception is not None
-        assert isinstance(bad, FlextResult)
         assert r.failed_result(bad)
+        assert isinstance(bad, FlextResult)
 
     @staticmethod
     def test_fail_explicit_error_data_redacts_sensitive_keys() -> None:

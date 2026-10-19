@@ -17,8 +17,7 @@ from typing import Annotated, ClassVar, Literal
 import pytest
 from typing_extensions import TypeForm
 
-from flext_core import m
-from tests import TestsFlextModels, p, t, tm, u
+from tests import m, p, t, tm, u
 
 
 class TestsFlextCorePydanticDeclarations:
@@ -59,7 +58,7 @@ class TestsFlextCorePydanticDeclarations:
         with pytest.raises(m.ValidationError):
             Payload.model_validate({"required": "present", "aliased": "wrong route"})
 
-    class _DetailedPayload(TestsFlextModels.Tests.PublicPayload):
+    class _DetailedPayload(m.Tests.PublicPayload):
         """Subclass-only data must respect the declared serialization boundary."""
 
         detail: str
@@ -70,9 +69,7 @@ class TestsFlextCorePydanticDeclarations:
         item: Annotated[
             p.Tests.PublicPayload,
             m.GetPydanticSchema(
-                lambda _source, handler: handler.generate_schema(
-                    TestsFlextModels.Tests.PublicPayload
-                ),
+                lambda _source, handler: handler.generate_schema(m.Tests.PublicPayload),
             ),
         ]
 
@@ -98,7 +95,7 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(box.model_dump_json(), has='"visits":"2 visits"')
         payload: p.Tests.PublicPayload
         for payload in (
-            TestsFlextModels.Tests.PublicPayload.model_validate({
+            m.Tests.PublicPayload.model_validate({
                 "rawName": "alice",
                 "visits": 2,
             }),
@@ -143,7 +140,7 @@ class TestsFlextCorePydanticDeclarations:
         )
         tm.that(
             schema["$defs"]["PublicPayload"],
-            eq=TestsFlextModels.Tests.PublicPayload.model_json_schema(mode=mode),
+            eq=m.Tests.PublicPayload.model_json_schema(mode=mode),
         )
 
     class _VectorInput(m.BaseModel):

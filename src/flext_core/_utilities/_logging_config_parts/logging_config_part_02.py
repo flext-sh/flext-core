@@ -26,9 +26,7 @@ from structlog.stdlib import PositionalArgumentsFormatter, add_log_level
 from structlog.tracebacks import ExceptionDictTransformer
 
 from flext_core import c, m, p, t
-from flext_core._utilities._logging_config_parts import (
-    logging_config_part_01,
-)
+from flext_core._utilities._logging_config_parts import logging_config_part_01
 from flext_core._utilities.metadata import FlextUtilitiesMetadata
 
 
@@ -168,9 +166,6 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             The ordered native processors.
 
         """
-        from flext_core._bound_logger import FlextBoundLogger
-        from flext_core._utilities.logging import FlextUtilitiesLogging
-
         processors: t.MutableSequenceOf[t.LoggingProcessor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
@@ -180,8 +175,8 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             TimeStamper(fmt="iso"),
             CallsiteParameterAdder(
                 additional_ignores=[
-                    FlextBoundLogger.__module__,
-                    FlextUtilitiesLogging.__module__,
+                    "flext_core._bound_logger",
+                    "flext_core._utilities.logging",
                 ]
             ),
             StackInfoRenderer(),
@@ -203,5 +198,6 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         else:
             processors.append(JSONRenderer())
         return processors
+
 
 __all__: list[str] = ["FlextUtilitiesLoggingConfig"]

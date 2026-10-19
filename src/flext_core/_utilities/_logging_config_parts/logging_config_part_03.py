@@ -38,20 +38,16 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         _ = trace
         return c.LogLevel.DEBUG if debug and not log_level_explicit else log_level
 
-    @staticmethod
-    def logging_settings() -> p.LoggingSettings:
+    @classmethod
+    def logging_settings(cls) -> p.LoggingSettings:
         """Return the elected application provider, or the actual Core settings."""
-        selected = (
-            logging_config_part_01.FlextUtilitiesLoggingConfig.selected_logging_settings()
-        )
+        selected = cls.selected_logging_settings()
         return selected if selected is not None else FlextSettings.fetch_global()
 
-    @staticmethod
-    def logging_options() -> p.StructlogOptions:
+    @classmethod
+    def logging_options(cls) -> p.StructlogOptions:
         """Return the active composition for scoped lifecycle restoration."""
-        selected = (
-            logging_config_part_01.FlextUtilitiesLoggingConfig.selected_logging_options()
-        )
+        selected = cls.selected_logging_options()
         return selected if selected is not None else m.StructlogOptions()
 
     @classmethod

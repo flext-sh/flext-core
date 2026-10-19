@@ -83,7 +83,8 @@ class FlextModelsService:
             default=None,
             exclude=True,
             description=(
-                "Existing container whose public DI registrations the runtime preserves."
+                "Existing container whose public DI registrations "
+                "the runtime preserves."
             ),
         )
         dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(

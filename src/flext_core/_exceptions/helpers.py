@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c
-from flext_core._models import FlextModelsBase
+from flext_core._models import FlextModelsBase, FlextModelsContainers
 from flext_core._protocols import FlextProtocolsResult
 
 if TYPE_CHECKING:
@@ -35,14 +35,12 @@ class FlextExceptionsHelpers:
             The resulting ``tuple[tuple[str, tb.JsonValue], ...]``.
 
         """
-        from flext_core import m
-
         entries: list[tuple[str, FlextTypingBase.JsonValue]] = []
         source_values = (context, extra_kwargs)
         for source_value in source_values:
             if source_value is None:
                 continue
-            source_mapping = m.ConfigMap.model_validate(
+            source_mapping = FlextModelsContainers.ConfigMap.model_validate(
                 source_value.model_dump(mode="json")
                 if isinstance(source_value, FlextProtocolsResult.HasModelDump)
                 else source_value
