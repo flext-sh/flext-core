@@ -80,7 +80,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
                     exc_val.add_note(
                         f"Logging also failed: {type(logging_error).__name__}"
                     )
-                    raise exc_val.with_traceback(_exc_tb) from logging_error
+                    raise exc_val.with_traceback(_exc_tb) from exc_val.__cause__
                 raise
 
     @classmethod

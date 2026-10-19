@@ -67,6 +67,9 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
         self._native = structlog.wrap_logger(
             None,
+            processors=None,
+            wrapper_class=None,
+            context_class=None,
             logger_factory_args=(name,),
             cache_logger_on_first_use=False,
             **resolved_context,
@@ -190,7 +193,9 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
                 business_error.add_note(
                     f"Logging also failed: {type(logging_error).__name__}"
                 )
-                raise business_error.with_traceback(business_info[2]) from logging_error
+                raise business_error.with_traceback(
+                    business_info[2]
+                ) from business_error.__cause__
             raise
         return r[bool].ok(value=True)
 
@@ -203,7 +208,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         selected_info: t.LoggingExceptionInfo | None,
     ) -> None:
         """Prepare one event and emit it through the native pipeline."""
-        level_str = str(logging.getLevelName(self.level_number(level))).lower()
+        level_str = logging.getLevelName(self.level_number(level)).lower()
         native_context: p.LoggingEvent = dict(
             self.to_container_context({
                 key: value
