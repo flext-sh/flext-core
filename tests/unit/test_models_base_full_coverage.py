@@ -16,7 +16,7 @@ from typing import Annotated
 
 import pytest
 
-from tests import c, m, t, tm
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreModelsBaseFullCoverage:
@@ -61,11 +61,13 @@ class TestsFlextCoreModelsBaseFullCoverage:
     @staticmethod
     @pytest.mark.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
     def test_metadata_attributes_non_mapping_rejected(
-        bad_value: t.Scalar | list[str],
+        bad_value: t.Scalar | t.SequenceOf[str],
     ) -> None:
         """Test metadata attributes non mapping rejected."""
-        with pytest.raises(TypeError, match="attributes must be dict-like"):
+        with pytest.raises(c.ValidationError) as failure:
             m.Metadata.model_validate({"attributes": bad_value})
+        tm.that(failure.value.errors()[0]["loc"], eq=("attributes",))
+        tm.that(failure.value.errors()[0]["type"], eq="dict_type")
 
     @staticmethod
     def test_metadata_attributes_broken_dump_object_rejected() -> None:
@@ -79,8 +81,8 @@ class TestsFlextCoreModelsBaseFullCoverage:
     def test_metadata_defaults_are_populated() -> None:
         """Test metadata defaults are populated."""
         model = m.Metadata()
-        assert model.created_at.tzinfo == UTC
-        assert model.version == "1.0.0"
+        assert model.created_at.tzinfo == u.configured_timezone()
+        assert model.version == c.METADATA_SCHEMA_VERSION_DEFAULT
         assert not model.tags
         assert isinstance(model.tags, tuple)
         assert model.created_by is None
@@ -135,27 +137,27 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_identifiable_blank_unique_id_rejected(self) -> None:
         """Test identifiable blank unique id rejected."""
-        with pytest.raises(
-            c.ValidationError,
-            match="String should have at least 1 character",
-        ):
+        with pytest.raises(c.ValidationError) as failure:
             self._Identifiable(unique_id="   ")
+        tm.that(failure.value.errors()[0]["type"], eq="string_too_short")
 
     # --- TimestampableMixin ----------------------------------------------
 
-    def test_timestampable_normalizes_to_utc(self) -> None:
-        """Test timestampable normalizes to utc."""
+    def test_timestampable_normalizes_to_configured_timezone(self) -> None:
+        """Timestamp normalization follows the configured timezone owner."""
         moment = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
         model = self._Timestampable(created_at=moment, updated_at=moment)
-        assert model.created_at.tzinfo == UTC
+        assert model.created_at.tzinfo == u.configured_timezone()
 
     def test_timestampable_serializes_timestamps_as_iso_strings(self) -> None:
         """Test timestampable serializes timestamps as iso strings."""
         moment = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
         model = self._Timestampable(created_at=moment)
         dumped = model.model_dump(mode="json")
-        assert dumped["created_at"] == moment.isoformat()
-        assert dumped["updated_at"] is None
+        serialized = dumped["created_at"]
+        assert isinstance(serialized, str)
+        assert datetime.fromisoformat(serialized) == moment
+        assert dumped.get("updated_at") is None
 
     def test_timestampable_rejects_updated_before_created(self) -> None:
         """Test timestampable rejects updated before created."""
@@ -167,8 +169,8 @@ class TestsFlextCoreModelsBaseFullCoverage:
     # --- TimestampedModel -------------------------------------------------
 
     @staticmethod
-    def test_timestamped_model_defaults_to_utc_now() -> None:
-        """Test timestamped model defaults to utc now."""
+    def test_timestamped_model_defaults_to_configured_timezone() -> None:
+        """Default timestamps use the runtime's configured timezone."""
         model = m.TimestampedModel()
-        assert model.created_at.tzinfo == UTC
+        assert model.created_at.tzinfo == u.configured_timezone()
         assert model.updated_at is None

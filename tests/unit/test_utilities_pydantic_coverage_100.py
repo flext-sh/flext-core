@@ -45,7 +45,7 @@ class TestsFlextUtilitiesPydantic:
         """An omitted value produces metadata, not a contextual field value."""
         metadata = u.Field(description="Native field metadata")
         tm.that(metadata.annotation is None, eq=True)
-        private = u.PrivateAttr()
+        private = m.PrivateAttr()
         tm.that(isinstance(private, p.UnsetPrivateAttribute), eq=True)
         undefined = private.get_default()
         tm.that(private.get_default(call_default_factory=True) is undefined, eq=True)
@@ -198,11 +198,11 @@ class TestsFlextUtilitiesPydantic:
         _model_values: list[str] = FlextModels.PrivateAttr(
             default_factory=list[str],
         )
-        _utility_values: list[str] = u.PrivateAttr(
+        _utility_values: list[str] = m.PrivateAttr(
             default_factory=u.empty(TypeForm(list[str])),
         )
         _label_copy: str = FlextModels.PrivateAttr(default_factory=_validated_label)
-        _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
+        _reader: Callable[[str], str] = m.PrivateAttr(default_factory=_input_reader)
 
         def record_model(self, value: str) -> None:
             """Append to the core-model private history."""

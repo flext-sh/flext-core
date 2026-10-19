@@ -20,7 +20,7 @@ class FlextConstantsEnforcementFixActions:
         "BaseModel": "m.BaseModel",
         "ConfigDict": "m.ConfigDict",
         "Field": "u.Field",
-        "PrivateAttr": "u.PrivateAttr",
+        "PrivateAttr": "m.PrivateAttr",
         "TypeAdapter": "m.TypeAdapter",
         "computed_field": "u.computed_field",
         "field_serializer": "u.field_serializer",
