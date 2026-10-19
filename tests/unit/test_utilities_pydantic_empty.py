@@ -43,7 +43,11 @@ class TestsFlextUtilitiesPydanticEmpty:
             description="Read-only string sequence contract.",
         )
         items: t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item] = u.Field(
-            default_factory=list[TestsFlextUtilitiesPydanticEmpty._Item],
+            default_factory=u.empty(
+                contract_factory=lambda: TypeForm(
+                    t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item]
+                ),
+            ),
             validate_default=True,
             description="Mutable sequence of a forward-referenced model.",
         )
@@ -171,11 +175,40 @@ class TestsFlextUtilitiesPydanticEmpty:
             TestsFlextUtilitiesPydanticEmpty._Item.model_validate({"unexpected": True})
 
     @staticmethod
+    def test_contract_factory_resolves_after_declaration() -> None:
+        """A supplied type can be bound after declaring the default factory."""
+        contract: TypeForm[t.MutableSequenceOf[int]]
+        factory = u.empty(contract_factory=lambda: contract)
+        contract = TypeForm(t.MutableSequenceOf[int])
+
+        first = factory()
+        first.append(1)
+
+        tm.that(first, eq=[1])
+        tm.that(factory(), eq=[])
+
+    @staticmethod
+    def test_contract_factory_keeps_full_collection_constraints() -> None:
+        """Deferred type resolution never erases a non-empty collection bound."""
+        factory = u.empty(
+            contract_factory=lambda: TypeForm(
+                TestsFlextUtilitiesPydanticEmpty._NonEmptyAlias
+            ),
+        )
+
+        with pytest.raises(m.ValidationError):
+            factory()
+
+    @staticmethod
     @pytest.mark.parametrize(
         "factory",
         [
             pytest.param(u.empty(TypeForm(int)), id="scalar"),
             pytest.param(u.empty(TypeForm(str)), id="text"),
+            pytest.param(
+                u.empty(contract_factory=lambda: TypeForm(int)),
+                id="deferred-scalar",
+            ),
             pytest.param(u.empty(TypeForm(_Item)), id="model"),
         ],
     )

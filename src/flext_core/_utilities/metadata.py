@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import json
-
 from pydantic import ValidationError
 
 from flext_core import t
@@ -45,7 +43,7 @@ class FlextUtilitiesMetadata:
             if isinstance(decoded, dict | list):
                 cleaned = redact(decoded)
                 if cleaned != decoded:
-                    text = json.dumps(cleaned, ensure_ascii=False)
+                    text = adapter.dump_json(cleaned).decode()
             for secret in values:
                 if secret:
                     text = text.replace(secret, replacement or "")

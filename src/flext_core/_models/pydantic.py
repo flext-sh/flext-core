@@ -68,12 +68,11 @@ class FlextModelsPydantic:
 
     # Preserve the native field declaration and its dataclass-transform identity.
     # Runtime access remains receiver-free through the staticmethod descriptor.
-    if TYPE_CHECKING:
-        from pydantic import Field
+    Field = staticmethod(pydantic.Field)
 
+    if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
     else:
-        Field = staticmethod(pydantic.Field)
         PrivateAttr = staticmethod(pydantic.PrivateAttr)
 
     @dataclass_transform(
@@ -233,7 +232,9 @@ class FlextModelsPydantic:
     # ``u.type_adapter`` constructs the adapter this type describes.
     type FieldInfo = pydantic.fields.FieldInfo
     type FieldSerializationInfo = pydantic.FieldSerializationInfo
-    type TypeAdapter[T] = pydantic.TypeAdapter[T]
+
+    class TypeAdapter[T](pydantic.TypeAdapter[T]):
+        """Native schema adapter constructor preserving its generic value type."""
 
     # Annotation marker that wraps a callable schema hook.
     GetPydanticSchema = GetPydanticSchema

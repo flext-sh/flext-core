@@ -10,9 +10,10 @@ import inspect
 import types as _types_mod
 from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
 from types import UnionType
-from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
+from typing import TYPE_CHECKING, ForwardRef, TypeAliasType, Union, get_args, get_origin
 
 from flext_core import c
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeTypeAliases
 from flext_core._utilities._beartype._helpers_parts import helpers_part_02
 
 # Import directly from base modules to avoid a circular load through the public
@@ -87,6 +88,8 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
     def allows_mutable_default_factory(
         hint: FlextTypingBase.TypeFormSpecifier | None,
         factory: type | Callable[..., FlextProtocolsBase.AttributeProbe] | None,
+        *,
+        owner: _types_mod.ModuleType | type | None = None,
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         mk = h.mutable_default_factory_kind(factory)
@@ -98,30 +101,14 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
             exp = MutableSet
         else:
             return False
-        norm = h.unwrap_annotated(hint)
+        if isinstance(hint, (str, ForwardRef)):
+            hint = FlextUtilitiesBeartypeTypeAliases.declared_origin(hint, owner=owner)
+        norm = h.unwrap_annotated(hint, owner=owner)
         if norm is None:
             return False
-        if isinstance(norm, str):
-            en = exp.__name__
-            return bool(en) and (
-                norm == en
-                or norm.startswith((
-                    f"{en}[",
-                    f"{en}Of[",
-                    f"{en}KV[",
-                    f"typing.{en}[",
-                    f"typing.{en}Of[",
-                    f"typing.{en}KV[",
-                    f"collections.abc.{en}[",
-                    f"collections.abc.{en}Of[",
-                    f"collections.abc.{en}KV[",
-                    f"FlextTypingBase.{en}Of[",
-                    f"FlextTypingBase.{en}KV[",
-                ))
-            )
         org = get_origin(norm)
         if isinstance(org, TypeAliasType):
-            resolved = h.resolve_type_alias_value(org)
+            resolved = h.resolve_type_alias_value(org, owner=owner)
             if resolved is None:
                 return False
             org = get_origin(resolved) or resolved

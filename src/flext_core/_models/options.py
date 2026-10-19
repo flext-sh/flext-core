@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
+from flext_core import t
 from flext_core._models import FlextModelsPydantic
 
 

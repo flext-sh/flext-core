@@ -6,8 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
+import builtins
+from collections import ChainMap
 from types import ModuleType
-from typing import Annotated, TypeAliasType, get_args, get_origin
+from typing import Annotated, ForwardRef, TypeAliasType, get_args, get_origin
+
+from pydantic._internal._model_construction import unpack_lenient_weakvaluedict
+from pydantic._internal._namespace_utils import NamespacesTuple, NsResolver
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
@@ -17,6 +23,60 @@ from flext_core._utilities._beartype import FlextUtilitiesBeartypeModuleSource
 
 class FlextUtilitiesBeartypeTypeAliases:
     """Own typed alias resolution; unexpected evaluation errors escape unchanged."""
+
+    @staticmethod
+    def declared_origin(
+        hint: str | ForwardRef,
+        *,
+        owner: ModuleType | type | None,
+    ) -> type | TypeAliasType:
+        """Look up the outer contract without evaluating its element expression."""
+        if owner is None:
+            msg = f"Declaring namespace required for annotation {hint!r}"
+            raise ValueError(msg)
+        resolver = NsResolver(
+            parent_namespace=unpack_lenient_weakvaluedict(
+                getattr(owner, "__pydantic_parent_namespace__", None),
+            ),
+        )
+        if isinstance(owner, ModuleType):
+            namespaces = NamespacesTuple(vars(owner), {})
+        else:
+            with resolver.push(owner):
+                namespaces = resolver.types_namespace
+        namespace = ChainMap(namespaces.locals, namespaces.globals, vars(builtins))
+        node = ast.parse(
+            hint.__forward_arg__ if isinstance(hint, ForwardRef) else hint,
+            mode="eval",
+        ).body
+        while True:
+            if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                node = ast.parse(node.value, mode="eval").body
+                continue
+            expression = node.value if isinstance(node, ast.Subscript) else node
+            attributes: list[str] = []
+            while isinstance(expression, ast.Attribute):
+                attributes.insert(0, expression.attr)
+                expression = expression.value
+            if not isinstance(expression, ast.Name):
+                msg = f"Annotation has no named outer contract: {hint!r}"
+                raise TypeError(msg)
+            binding: FlextProtocolsBase.AttributeProbe = namespace[expression.id]
+            for attribute in attributes:
+                binding = getattr(binding, attribute)
+            if binding is Annotated and isinstance(node, ast.Subscript):
+                if not isinstance(node.slice, ast.Tuple):
+                    msg = f"Annotated contract requires metadata: {hint!r}"
+                    raise TypeError(msg)
+                node = node.slice.elts[0]
+                continue
+            if isinstance(binding, (type, TypeAliasType)):
+                return binding
+            origin = get_origin(binding)
+            if isinstance(origin, type):
+                return origin
+            msg = f"Annotation outer binding is not a type or alias: {hint!r}"
+            raise TypeError(msg)
 
     @staticmethod
     def resolve(

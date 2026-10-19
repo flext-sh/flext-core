@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import ClassVar, override
 
-from pydantic import ConfigDict, JsonValue
+from pydantic import ConfigDict
 
 from flext_core import c
 from flext_core._models import FlextModelsPydantic
@@ -27,13 +27,13 @@ class FlextModelsBase:
     class EnforcedModel(FlextModelsPydantic.BaseModel):
         """Base model that enforces architectural rules on subclasses."""
 
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_CONFIG_FORBID)
+
         @classmethod
         @override
-        def __pydantic_init_subclass__(
-            cls,
-            **kwargs: JsonValue,
-        ) -> None:
-            super().__pydantic_init_subclass__(**kwargs)
+        def __pydantic_on_complete__(cls) -> None:
+            """Enforce resolved field contracts at the native schema boundary."""
+            super().__pydantic_on_complete__()
             FlextUtilitiesEnforcement.run(cls)
 
     class ManagedModel(EnforcedModel):
@@ -41,7 +41,6 @@ class FlextModelsBase:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
-            extra=c.EXTRA_CONFIG_FORBID,
         )
 
     class EnumManagedModel(ManagedModel):

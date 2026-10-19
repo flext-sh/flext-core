@@ -19,6 +19,7 @@ from typing import (
     TypeAliasType,
     get_args,
     get_origin,
+    overload,
 )
 
 from pydantic import (
@@ -281,27 +282,56 @@ class FlextUtilitiesPydantic(
             c.FIELD_ATTRIBUTES: {} if attributes is None else dict(attributes)
         })
 
+    @overload
     @staticmethod
-    def empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]:
+    def empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]: ...
+
+    @overload
+    @staticmethod
+    def empty[ContractT](
+        *,
+        contract_factory: Callable[[], TypeForm[ContractT]],
+    ) -> Callable[[], ContractT]: ...
+
+    @staticmethod
+    def empty[ContractT](
+        contract: TypeForm[ContractT] | None = None,
+        *,
+        contract_factory: Callable[[], TypeForm[ContractT]] | None = None,
+    ) -> Callable[[], ContractT]:
         """Build a lazy factory that validates a fresh empty input in full.
 
         Only the outer collection shape selects the JSON seed. The cached
         adapter retains the original contract, including aliases, element types
         and constraints; no JSON schema is requested for arbitrary element types.
-        Caller-local forward references must be resolved before invoking this
-        factory, or left to a model field's native default validation instead.
+        ``contract_factory`` resolves a type after its enclosing declaration
+        exists. Exactly one contract source is required. Resolution and adapter
+        construction happen on the first value, never while declaring a field.
 
         Returns:
             A zero-argument factory with independent validated collection values.
 
         """
+        resolve_contract: Callable[[], TypeForm[ContractT]]
+        if contract_factory is None:
+            if contract is None:
+                msg = "empty requires a collection contract or contract_factory"
+                raise TypeError(msg)
+            fixed_contract = contract
+            resolve_contract = lambda: fixed_contract
+        elif contract is None:
+            resolve_contract = contract_factory
+        else:
+            msg = "empty accepts either contract or contract_factory, not both"
+            raise TypeError(msg)
         adapter: t.ValueAdapter[ContractT] | None = None
         seed = b""
 
         def factory() -> ContractT:
             nonlocal adapter, seed
             if adapter is None:
-                current: t.TypeFormSpecifier = contract
+                resolved_contract = resolve_contract()
+                current: t.TypeFormSpecifier = resolved_contract
                 while True:
                     origin = get_origin(current)
                     if origin is Annotated:
@@ -318,7 +348,7 @@ class FlextUtilitiesPydantic(
                 ):
                     msg = (
                         "empty default requires a collection contract; "
-                        f"got {contract!r}"
+                        f"got {resolved_contract!r}"
                     )
                     raise TypeError(msg)
                 if issubclass(resolved, Mapping):
@@ -328,11 +358,11 @@ class FlextUtilitiesPydantic(
                 else:
                     msg = (
                         "empty default requires a collection contract; "
-                        f"got {contract!r}"
+                        f"got {resolved_contract!r}"
                     )
                     raise TypeError(msg)
                 native_adapter = FlextUtilitiesBase.type_adapter(
-                    contract,
+                    resolved_contract,
                     config=_models.FlextModelsBase.ArbitraryTypesModel.model_config,
                 )
                 adapter = native_adapter

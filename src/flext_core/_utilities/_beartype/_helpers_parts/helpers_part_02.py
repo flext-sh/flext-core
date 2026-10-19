@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get
 
 from flext_core import c
 from flext_core._typings import FlextTypingBase
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeTypeAliases
 from flext_core._utilities._beartype._helpers_parts import helpers_part_01
 
 if TYPE_CHECKING:
@@ -23,15 +24,23 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelper
     @staticmethod
     def unwrap_annotated(
         hint: FlextTypingBase.TypeFormSpecifier | None,
+        *,
+        owner: _types_mod.ModuleType | type | None = None,
     ) -> FlextTypingBase.TypeFormSpecifier | None:
         h = FlextUtilitiesBeartypeHelpers
         current = hint
         while current is not None:
-            current = h.unwrap_type_alias(current)
+            current = h.unwrap_type_alias(current, owner=owner)
             match current:
                 case ForwardRef():
                     current = current.__forward_arg__
                 case str():
+                    if owner is not None:
+                        current = FlextUtilitiesBeartypeTypeAliases.declared_origin(
+                            current,
+                            owner=owner,
+                        )
+                        continue
                     stripped = current.strip()
                     annotated_arg = next(
                         (

@@ -133,6 +133,53 @@ class TestsFlextEnforcementModels:
         assert not messages(u.check(_M), fragment="read-only field contract")
 
     @staticmethod
+    def test_mutable_sequence_alias_nested_owner_defaults_pass() -> None:
+        """An unresolved element does not change the declared mutable origin."""
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: t.MutableSequenceOf[_M.Value] = m.Field(
+                default_factory=list,
+                validate_default=True,
+                description="Mutable sequence of nested values.",
+            )
+
+        assert not messages(u.check(_M), fragment="read-only field contract")
+        first = _M()
+        second = _M()
+        assert first.items == second.items == []
+        assert first.items is not second.items
+        value = _M.Value()
+        first.items.append(value)
+        assert first.items == [value]
+        assert second.items == []
+        provided: t.MutableSequenceOf[_M.Value] = [value]
+        assert _M(items=provided).items == provided
+        with pytest.raises(m.ValidationError):
+            _M.model_validate({"items": 42})
+
+    @staticmethod
+    def test_annotated_mutable_sequence_alias_nested_owner_passes() -> None:
+        """Annotated metadata leaves the bound outer alias and defaults intact."""
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: Annotated[
+                t.MutableSequenceOf[_M.Value],
+                m.Field(description="Annotated mutable sequence of nested values."),
+            ] = m.Field(default_factory=list, validate_default=True)
+
+        assert not messages(u.check(_M), fragment="read-only field contract")
+        first = _M()
+        second = _M()
+        assert first.items == second.items == []
+        assert first.items is not second.items
+
+    @staticmethod
     def test_mutable_mapping_forward_ref_dict_factory_passes() -> None:
         """Test mutable mapping forward ref dict factory passes."""
 
@@ -188,6 +235,22 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             items: Annotated[t.StrSequence, m.Field(description="d")] = m.Field(
                 default_factory=list
+            )
+
+        assert messages(u.check(_M), fragment="read-only field contract")
+
+    @staticmethod
+    def test_sequence_alias_nested_owner_list_factory_detected() -> None:
+        """A genuinely read-only origin remains rejected before element resolution."""
+
+        class _M(m.ArbitraryTypesModel):
+            class Value(m.ContractModel):
+                name: Annotated[str, m.Field(description="Value name")] = "x"
+
+            items: t.SequenceOf[_M.Value] = m.Field(
+                default_factory=list,
+                validate_default=True,
+                description="Read-only sequence of nested values.",
             )
 
         assert messages(u.check(_M), fragment="read-only field contract")

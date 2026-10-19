@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+from functools import partial
 from typing import Annotated, get_args, get_origin
 
 from pydantic.fields import FieldInfo
@@ -61,6 +62,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         info: FieldInfo,
         *,
         declared_annotation: FlextTypingBase.TypeHintSpecifier | None = None,
+        owner: type | None = None,
     ) -> FlextTypingBase.StrMapping | None:
         """Run field-shape checks in canonical order and return the first hit.
 
@@ -72,7 +74,10 @@ class FlextUtilitiesBeartypeFieldVisitor:
             FlextUtilitiesBeartypeFieldVisitor._check_forbid_any,
             FlextUtilitiesBeartypeFieldVisitor._check_bare_collection,
             FlextUtilitiesBeartypeFieldVisitor._check_mutable_default,
-            FlextUtilitiesBeartypeFieldVisitor._check_raw_default_factory,
+            partial(
+                FlextUtilitiesBeartypeFieldVisitor._check_raw_default_factory,
+                owner=owner,
+            ),
             FlextUtilitiesBeartypeFieldVisitor._check_str_none_empty,
         )
         for check in checks:
@@ -150,6 +155,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
     def _check_raw_default_factory(
         params: FlextModelsEnforcement.FieldShapeParams,
         info: FieldInfo,
+        *,
+        owner: type | None = None,
     ) -> FlextTypingBase.StrMapping | None:
         """Check the forbid_raw_default_factory flag against the factory.
 
@@ -163,6 +170,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
             and not FlextUtilitiesBeartypeHelpers.allows_mutable_default_factory(
                 info.annotation,
                 info.default_factory,
+                owner=owner,
             )
         ):
             return None
@@ -228,11 +236,20 @@ class FlextUtilitiesBeartypeFieldVisitor:
         """
         if params.require_description:
             return cls._field_description_violation(model_type, name, info)
+        owner = next(
+            (
+                base
+                for base in model_type.__mro__
+                if name in vars(base).get("__annotations__", {})
+            ),
+            model_type,
+        )
         declared_annotation = vars(model_type).get("__annotations__", {}).get(name)
         return cls._field_violation(
             params,
             info,
             declared_annotation=declared_annotation,
+            owner=owner,
         )
 
     @classmethod
