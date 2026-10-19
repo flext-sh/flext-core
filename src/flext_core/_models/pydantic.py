@@ -14,9 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from functools import partialmethod
-from typing import TYPE_CHECKING, ClassVar, Literal, dataclass_transform, overload
+from typing import TYPE_CHECKING, ClassVar, dataclass_transform
 
 import pydantic
 import pydantic.fields
@@ -37,16 +35,10 @@ from pydantic import (
     ValidateAs,
     WrapSerializer,
     WrapValidator,
-    field_validator,
-    model_validator,
 )
-from pydantic_core import PydanticUndefined, PydanticUndefinedType
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
-from flext_core._utilities.base import FlextUtilitiesBase
-
-if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
+from flext_core._typings.native_export import FlextTypingNativeExport
 
 
 class FlextModelsPydantic:
@@ -60,15 +52,9 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
-    type FieldValidatorCallable = (
-        Callable[..., FlextProtocolsBase.AttributeProbe]
-        | classmethod[type, ..., FlextProtocolsBase.AttributeProbe]
-        | staticmethod[..., FlextProtocolsBase.AttributeProbe]
-        | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
-    )
-
     # Preserve the native overloads and field-specifier identity without a wrapper.
-    Field = FlextUtilitiesBase.StaticExport(pydantic.Field)
+    Field = FlextTypingNativeExport(pydantic.Field)
+    FieldInfo = pydantic.fields.FieldInfo
 
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
@@ -102,85 +88,7 @@ class FlextModelsPydantic:
         """Canonical settings configuration exported through the models facade."""
 
     SkipValidation = SkipValidation
-    # ``field_validator`` must re-export pydantic's real overload surface. A
-    # plain-attr re-export resolves in mypy but pyright binds it as a method
-    # (the first positional ``field: str`` swallows the facade class), and a
-    # ``staticmethod(...)`` wrap collapses pydantic's overloads to the first
-    # (wrap-only) in both checkers. The stacked ``@overload @staticmethod``
-    # declarations below mirror pydantic's exact overload set for both
-    # checkers, while the runtime branch keeps pydantic's own function object
-    # (byte-for-byte the previous binding). This models-layer declaration is
-    # the single validator owner: the utilities facade re-exports the runtime
-    # function only, and the ENFORCE map routes every consumer to ``m.*``.
-    if TYPE_CHECKING:
-
-        @overload
-        @staticmethod
-        def field_validator[ValidatorT: FieldValidatorCallable](
-            field: str,
-            /,
-            *fields: str,
-            mode: Literal["wrap"],
-            check_fields: bool | None = ...,
-            json_schema_input_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType
-            | None = ...,
-        ) -> Callable[[ValidatorT], ValidatorT]: ...
-
-        @overload
-        @staticmethod
-        def field_validator[ValidatorT: FieldValidatorCallable](
-            field: str,
-            /,
-            *fields: str,
-            mode: Literal["before", "plain"],
-            check_fields: bool | None = ...,
-            json_schema_input_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType
-            | None = ...,
-        ) -> Callable[[ValidatorT], ValidatorT]: ...
-
-        @overload
-        @staticmethod
-        def field_validator[ValidatorT: FieldValidatorCallable](
-            field: str,
-            /,
-            *fields: str,
-            mode: Literal["after"] = ...,
-            check_fields: bool | None = ...,
-        ) -> Callable[[ValidatorT], ValidatorT]: ...
-
-        @staticmethod
-        def field_validator[ValidatorT: FieldValidatorCallable](
-            field: str,
-            /,
-            *fields: str,
-            mode: Literal["wrap", "before", "plain", "after"] = "after",
-            check_fields: bool | None = None,
-            json_schema_input_type: FlextTypingBase.TypeHintSpecifier
-            | PydanticUndefinedType
-            | None = PydanticUndefined,
-        ) -> Callable[[ValidatorT], ValidatorT]:
-            """Delegate to pydantic's ``field_validator`` (type-checking only).
-
-            Returns:
-                The resulting pydantic decorator factory.
-
-            """
-            decorator_factory: Callable[
-                ...,
-                Callable[[ValidatorT], ValidatorT],
-            ] = field_validator
-            return decorator_factory(
-                field,
-                *fields,
-                mode=mode,
-                check_fields=check_fields,
-                json_schema_input_type=json_schema_input_type,
-            )
-
-    else:
-        field_validator = field_validator
+    field_validator = FlextTypingNativeExport(pydantic.field_validator)
     # Why (abstraction boundary): ENFORCE-070 makes flext-core the sole owner of
     # pydantic, and the tier-whitelist gate rejects a bare ``pydantic`` import in
     # every downstream project. A name that this facade does not re-export
@@ -190,7 +98,7 @@ class FlextModelsPydantic:
     # model-level counterpart of ``field_validator`` above, and its absence alone
     # forced bare pydantic imports across 32 downstream modules.
     # Re-export native decorators with their complete upstream overload sets.
-    model_validator = model_validator
+    model_validator = FlextTypingNativeExport(pydantic.model_validator)
     field_serializer: ClassVar[FlextProtocolsBase.FieldSerializerFactory] = (
         pydantic.field_serializer
     )
@@ -224,7 +132,6 @@ class FlextModelsPydantic:
 
     # Types of the pydantic final classes and protocols: annotation-only names.
     # ``u.type_adapter`` constructs the adapter this type describes.
-    type FieldInfo = pydantic.fields.FieldInfo
     type FieldSerializationInfo = pydantic.FieldSerializationInfo
 
     type TypeAdapter[T] = pydantic.TypeAdapter[T]

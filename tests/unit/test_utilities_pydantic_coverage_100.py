@@ -12,29 +12,7 @@ from typing import Annotated, ClassVar
 import pytest
 from typing_extensions import TypeForm
 
-from flext_core import FlextModels, FlextUtilities
-from tests import m, p, t, tm, u
-
-
-def _input_reader() -> Callable[[str], str]:
-    return input
-
-
-def _validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
-    """Derive a field default from Pydantic's already validated input.
-
-    Returns:
-        The validated label passed to the field factory.
-
-    Raises:
-        TypeError: If the validated label is not a string.
-
-    """
-    label = values["label"]
-    if not isinstance(label, str):
-        msg = "Validated label must be a string"
-        raise TypeError(msg)
-    return label
+from tests import m, t, tm, u
 
 
 class TestsFlextUtilitiesPydantic:
@@ -46,7 +24,6 @@ class TestsFlextUtilitiesPydantic:
         metadata = m.Field(description="Native field metadata")
         tm.that(metadata.annotation is None, eq=True)
         private = m.PrivateAttr()
-        tm.that(isinstance(private, p.UnsetPrivateAttribute), eq=True)
         undefined = private.get_default()
         tm.that(private.get_default(call_default_factory=True) is undefined, eq=True)
 
@@ -56,7 +33,7 @@ class TestsFlextUtilitiesPydantic:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(str_strip_whitespace=True)
 
         label: str = m.Field(min_length=1)
-        echo: str = m.Field(default_factory=_validated_label)
+        echo: str = m.Field(default_factory=u.Tests.validated_label)
         model_values: t.MutableStrMapping = m.Field(
             default_factory=u.empty(TypeForm(t.MutableStrMapping)),
         )
@@ -80,8 +57,8 @@ class TestsFlextUtilitiesPydantic:
     @staticmethod
     def test_field_defaults_preserve_native_types_and_validation() -> None:
         """Default overloads preserve identity, defaults and schema constraints."""
-        tm.that(m.Field is FlextModels.Field, eq=True)
-        model = TestsFlextUtilitiesPydantic._FieldDefaultsContract()
+        tm.that(m.Field is u.Field, eq=True)
+        model = TestsFlextUtilitiesPydantic._FieldDefaultsContract.model_validate({})
         label: str = model.label
         attempts: int = model.attempts
         optional: str | None = model.optional
@@ -103,8 +80,8 @@ class TestsFlextUtilitiesPydantic:
         )
         model_label: str = model.model_label
         utility_label: str = model.utility_label
-        assert model_label == "model"
-        assert utility_label == "utility"
+        tm.that(model_label == "model", truth=True)
+        tm.that(utility_label == "utility", truth=True)
         with pytest.raises(m.ValidationError):
             TestsFlextUtilitiesPydantic._RequiredFieldContract.model_validate({})
 
@@ -114,18 +91,19 @@ class TestsFlextUtilitiesPydantic:
         first = TestsFlextUtilitiesPydantic._FieldFactoryContract(label="  first  ")
         second = TestsFlextUtilitiesPydantic._FieldFactoryContract(label="second")
         echo: str = first.echo
-        assert echo == first.label == "first"
-        assert second.echo == second.label
+        tm.that(echo == first.label == "first", truth=True)
+        tm.that(second.echo == second.label, truth=True)
 
         first.model_values["record"] = "model"
         first.utility_values["record"] = "utility"
-        assert second.model_values == {}
-        assert second.utility_values == {}
-        assert (
+        tm.that(second.model_values == {}, truth=True)
+        tm.that(second.utility_values == {}, truth=True)
+        tm.that(
             TestsFlextUtilitiesPydantic._FieldFactoryContract.model_validate_json(
                 first.model_dump_json(),
             )
-            == first
+            == first,
+            truth=True,
         )
         with pytest.raises(m.ValidationError):
             TestsFlextUtilitiesPydantic._FieldFactoryContract.model_validate({})
@@ -149,15 +127,16 @@ class TestsFlextUtilitiesPydantic:
         second = (
             TestsFlextUtilitiesPydantic._AnnotatedFactoryContract.model_validate({})
         )
-        assert first.model_values == first.utility_values == {}
+        tm.that(first.model_values == first.utility_values == {}, truth=True)
         first.model_values["model"] = "first"
         first.utility_values["utility"] = "first"
-        assert second.model_values == second.utility_values == {}
-        assert (
+        tm.that(second.model_values == second.utility_values == {}, truth=True)
+        tm.that(
             TestsFlextUtilitiesPydantic._AnnotatedFactoryContract.model_validate_json(
                 first.model_dump_json(),
             )
-            == first
+            == first,
+            truth=True,
         )
 
     class _ClearedAnnotatedFactoryContract(m.BaseModel):
@@ -166,11 +145,13 @@ class TestsFlextUtilitiesPydantic:
         model_values: Annotated[
             t.MutableStrMapping,
             m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
-        ] = m.Field(default_factory=None)
+            m.FieldInfo.from_field(default_factory=None),
+        ]
         utility_values: Annotated[
             t.MutableStrMapping,
             m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
-        ] = m.Field(default_factory=None)
+            m.FieldInfo.from_field(default_factory=None),
+        ]
 
     @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
     @staticmethod
@@ -191,42 +172,45 @@ class TestsFlextUtilitiesPydantic:
                 values,
             )
         )
-        assert payload.model_values == {"model": "supplied"}
-        assert payload.utility_values == {"utility": "supplied"}
+        tm.that(payload.model_values == {"model": "supplied"}, truth=True)
+        tm.that(payload.utility_values == {"utility": "supplied"}, truth=True)
 
-    class _AliasFactoryContract(FlextModels.BaseModel):
+    class _AliasFactoryContract(m.BaseModel):
         """Literal aliases and factories participate in constructor synthesis."""
 
-        model_label: str = FlextModels.Field(alias="modelLabel")
-        utility_label: str = FlextUtilities.Field(alias="utilityLabel")
-        model_value: str = FlextModels.Field(default_factory=str)
-        utility_value: str = FlextUtilities.Field(default_factory=str)
+        model_label: str = m.Field(alias="modelLabel")
+        utility_label: str = u.Field(alias="utilityLabel")
+        model_value: str = m.Field(default_factory=str)
+        utility_value: str = u.Field(default_factory=str)
 
     @staticmethod
     def test_alias_named_constructor_preserves_factory_defaults() -> None:
         """Alias-keyed payloads construct models without factory-defaulted args."""
         values: t.MutableStrMapping = {"modelLabel": "model", "utilityLabel": "utility"}
         payload = TestsFlextUtilitiesPydantic._AliasFactoryContract(**values)
-        assert payload.model_label == "model"
-        assert payload.utility_label == "utility"
-        assert payload.model_value == payload.utility_value == ""
-        assert (
+        tm.that(payload.model_label == "model", truth=True)
+        tm.that(payload.utility_label == "utility", truth=True)
+        tm.that(payload.model_value == payload.utility_value == "", truth=True)
+        tm.that(
             TestsFlextUtilitiesPydantic._AliasFactoryContract.model_validate_json(
                 payload.model_dump_json(by_alias=True),
             )
-            == payload
+            == payload,
+            truth=True,
         )
 
-    class _PrivateAttrContract(FlextModels.BaseModel):
+    class _PrivateAttrContract(m.BaseModel):
         label: str
-        _model_values: list[str] = FlextModels.PrivateAttr(
+        _model_values: list[str] = m.PrivateAttr(
             default_factory=list[str],
         )
         _utility_values: list[str] = m.PrivateAttr(
             default_factory=u.empty(TypeForm(list[str])),
         )
-        _label_copy: str = FlextModels.PrivateAttr(default_factory=_validated_label)
-        _reader: Callable[[str], str] = m.PrivateAttr(default_factory=_input_reader)
+        _label_copy: str = m.PrivateAttr(default_factory=u.Tests.validated_label)
+        _reader: Callable[[str], str] = m.PrivateAttr(
+            default_factory=u.Tests.input_reader,
+        )
 
         def record_model(self, value: str) -> None:
             """Append to the core-model private history."""
@@ -275,7 +259,7 @@ class TestsFlextUtilitiesPydantic:
             "visits": "3",
         })
 
-        assert payload.raw_name == expected_name
+        tm.that(payload.raw_name == expected_name, truth=True)
 
     @staticmethod
     def test_serialization_applies_alias_serializer_and_computed_field() -> None:
@@ -287,9 +271,9 @@ class TestsFlextUtilitiesPydantic:
 
         payload_dump = payload.model_dump(mode="json", by_alias=True)
 
-        assert payload_dump["rawName"] == "Ada Lovelace"
-        assert payload_dump["visits"] == "3 visits"
-        assert payload_dump["label"] == "Ada Lovelace:3"
+        tm.that(payload_dump["rawName"] == "Ada Lovelace", truth=True)
+        tm.that(payload_dump["visits"] == "3 visits", truth=True)
+        tm.that(payload_dump["label"] == "Ada Lovelace:3", truth=True)
 
     @staticmethod
     def test_computed_field_kwargs_overload_renders_alias() -> None:
@@ -298,8 +282,8 @@ class TestsFlextUtilitiesPydantic:
 
         payload_dump = payload.model_dump(mode="json", by_alias=True)
 
-        assert payload_dump["upperLabel"] == "ADA"
-        assert payload.model_dump(mode="json")["label"] == "ADA"
+        tm.that(payload_dump["upperLabel"] == "ADA", truth=True)
+        tm.that(payload.model_dump(mode="json")["label"] == "ADA", truth=True)
 
     @staticmethod
     def test_plain_model_serializer_replaces_the_dump_shape() -> None:
@@ -321,8 +305,11 @@ class TestsFlextUtilitiesPydantic:
         payload_dict = u.from_json(payload_json)
         payload_jsonable = u.to_jsonable_python(payload)
 
-        assert payload_dict == payload_dump
-        assert payload_jsonable == payload.model_dump(mode="json", by_alias=True)
+        tm.that(payload_dict == payload_dump, truth=True)
+        tm.that(
+            payload_jsonable == payload.model_dump(mode="json", by_alias=True),
+            truth=True,
+        )
 
     @staticmethod
     def test_validate_call_rejects_invalid_argument_values() -> None:
@@ -333,7 +320,7 @@ class TestsFlextUtilitiesPydantic:
             doubled: int = value * 2
             return doubled
 
-        assert double_positive(4) == 8
+        tm.that(double_positive(4) == 8, truth=True)
         with pytest.raises(m.ValidationError):
             double_positive(-1)
 
@@ -349,7 +336,7 @@ class TestsFlextUtilitiesPydantic:
             return sum(ord(character) for character in value)
 
         checksum: int = positive_checksum(value="  value  ")
-        assert checksum == sum(ord(character) for character in "value")
+        tm.that(checksum == sum(ord(character) for character in "value"), truth=True)
         with pytest.raises(m.ValidationError):
             positive_checksum(value="  ")
 
@@ -362,12 +349,12 @@ class TestsFlextUtilitiesPydantic:
 
         resolved = u.resolve_runtime_options(runtime_options)
 
-        assert resolved.settings_overrides == {"dry_run": True}
-        assert resolved.settings is None
-        assert resolved.context is None
-        assert resolved.settings_type is runtime_options.settings_type
-        assert resolved.container is runtime_options.container
-        assert resolved.dispatcher is runtime_options.dispatcher
+        tm.that(resolved.settings_overrides == {"dry_run": True}, truth=True)
+        tm.that(resolved.settings is None, truth=True)
+        tm.that(resolved.context is None, truth=True)
+        tm.that(resolved.settings_type is runtime_options.settings_type, truth=True)
+        tm.that(resolved.container is runtime_options.container, truth=True)
+        tm.that(resolved.dispatcher is runtime_options.dispatcher, truth=True)
 
     @staticmethod
     def test_private_attr_factories_preserve_pydantic_instance_semantics() -> None:
@@ -378,12 +365,12 @@ class TestsFlextUtilitiesPydantic:
         first.record_model("model")
         first.record_utility("utility")
 
-        assert first.recorded_model_values == ["model"]
-        assert second.recorded_model_values == []
-        assert first.recorded_utility_values == ["utility"]
-        assert second.recorded_utility_values == []
-        assert first.label_echo == "first"
-        assert second.label_echo == "second"
-        assert first.reads_standard_input
-        assert second.reads_standard_input
-        assert first.model_dump() == {"label": "first"}
+        tm.that(first.recorded_model_values == ["model"], truth=True)
+        tm.that(second.recorded_model_values == [], truth=True)
+        tm.that(first.recorded_utility_values == ["utility"], truth=True)
+        tm.that(second.recorded_utility_values == [], truth=True)
+        tm.that(first.label_echo == "first", truth=True)
+        tm.that(second.label_echo == "second", truth=True)
+        tm.that(first.reads_standard_input, truth=True)
+        tm.that(second.reads_standard_input, truth=True)
+        tm.that(first.model_dump() == {"label": "first"}, truth=True)

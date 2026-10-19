@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from types import MappingProxyType, ModuleType
@@ -49,6 +50,33 @@ class TestsNormalizationBoundaries:
         """Unsupported native values fail at JSON admission."""
         with pytest.raises(ValueError, match="Unable to serialize unknown type"):
             u.normalize_to_json_value(type)
+
+    @staticmethod
+    @pytest.mark.parametrize("tuple_items", [False, True])
+    def test_json_payload_preserves_mapping_inside_nested_sequences(
+        tuple_items: bool,
+    ) -> None:
+        """Mapping payloads must not materialize the abstract model union arm."""
+        items: list[t.MetadataMapping] = [{"locations": ()}]
+        parsed = m.ConfigMap.model_validate({
+            "issues": tuple(items) if tuple_items else items,
+        })
+        issues = parsed["issues"]
+        assert isinstance(issues, (tuple, list))
+        assert isinstance(issues[0], Mapping), type(issues[0]).__name__
+        assert u.normalize_to_json_mapping(parsed) == {"issues": [{"locations": []}]}
+
+    @staticmethod
+    def test_json_payload_preserves_nested_model_identity() -> None:
+        """Existing model values retain identity and serialize their real fields."""
+        model = m.Metadata(attributes={"source": "publication"})
+        parsed = m.ConfigMap.model_validate({"items": [model]})
+        items = parsed["items"]
+        assert isinstance(items, (tuple, list))
+        assert items[0] is model
+        assert u.normalize_to_json_mapping(parsed) == {
+            "items": [model.model_dump(mode="json")],
+        }
 
     @staticmethod
     def test_native_adapter_is_constructible_through_the_model_provider() -> None:

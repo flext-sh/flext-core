@@ -58,7 +58,7 @@ class FlextTypesServices:
         FlextTypingBase.Scalar
         | Path
         | FlextTypesPydantic.JsonValue
-        | FlextTypesPydantic.BaseModelType
+        | FlextTypesPydantic.InstanceOf[FlextTypesPydantic.BaseModelType]
     )
     type JsonPayloadCollectionValue = (
         JsonPayloadLeaf
