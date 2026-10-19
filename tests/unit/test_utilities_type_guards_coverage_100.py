@@ -33,10 +33,10 @@ class TestsFlextCoreUtilitiesTypeGuards:
             tags=("ldap", "prod"),
             started_at=datetime(2026, 5, 5, 12, 0, tzinfo=UTC),
         )
-        normalized_payload = u.normalize_to_metadata(envelope)
-        normalized_repository_root = u.normalize_to_metadata(repository_root)
-        normalized_retry_window = u.normalize_to_metadata(None)
-        normalized_modes = u.normalize_to_metadata({"delta", "full"})
+        normalized_payload = u.normalize_to_json_value(envelope)
+        normalized_repository_root = u.normalize_to_json_value(repository_root)
+        normalized_retry_window = u.normalize_to_json_value(None)
+        normalized_modes = u.normalize_to_json_value({"delta", "full"})
 
         metadata: t.JsonDict = {
             "payload": normalized_payload,

@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, TypeIs
 
 from flext_core import c, t
 from flext_core._protocols import (
+    FlextProtocolsBase,
     FlextProtocolsContainer,
     FlextProtocolsContext,
     FlextProtocolsHandler,
@@ -81,6 +82,21 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
     @staticmethod
     def result_like(value: FlextProtocolsContainer.ProtocolGuardInput) -> bool:
         return isinstance(value, FlextProtocolsResult.Result)
+
+    @staticmethod
+    def result_view(
+        value: FlextProtocolsBase.AttributeProbe,
+    ) -> TypeIs[FlextProtocolsResult.ResultView[FlextProtocolsBase.AttributeProbe]]:
+        """Refine an opaque SDK value to the native read-only result shape.
+
+        Uses static protocol inspection, without reading properties or checking
+        payload/domain contents. It does not require the full railway protocol.
+
+        Returns:
+            Whether the opaque value satisfies the native read-only protocol.
+
+        """
+        return isinstance(value, FlextProtocolsResult.ResultView)
 
     @classmethod
     def _check_protocol(

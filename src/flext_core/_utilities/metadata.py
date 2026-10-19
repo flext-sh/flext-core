@@ -7,19 +7,11 @@ import json
 from pydantic import ValidationError
 
 from flext_core import t
-from flext_core._utilities import (
-    FlextUtilitiesPydantic,
-    FlextUtilitiesTypingAdapterJson,
-)
+from flext_core._utilities import FlextUtilitiesTypingAdapterJson
 
 
 class FlextUtilitiesMetadata:
     """Sanitize structured diagnostics without creating another logging engine."""
-
-    @staticmethod
-    def normalize_to_metadata[T](val: T) -> t.JsonValue:
-        """Serialize metadata values without inventing text for unsupported inputs."""
-        return FlextUtilitiesPydantic.normalize_to_json_value(val)
 
     @staticmethod
     def redact_metadata(

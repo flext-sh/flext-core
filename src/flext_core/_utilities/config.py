@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 import tomllib
+from collections.abc import Mapping
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, cast
 
@@ -29,9 +30,6 @@ from flext_core.result import r
 
 if TYPE_CHECKING:
     from flext_core import p
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 
 class FlextUtilitiesConfig:
@@ -253,9 +251,7 @@ class FlextUtilitiesConfig:
         merged: FlextTypingBase.JsonDict = dict(base)
         for key, value in override.items():
             current = merged.get(key)
-            if FlextUtilitiesGuardsTypeCore.mapping(
-                current,
-            ) and FlextUtilitiesGuardsTypeCore.mapping(value):
+            if isinstance(current, Mapping) and isinstance(value, Mapping):
                 nested: FlextTypingBase.JsonValue = dict(
                     FlextUtilitiesConfig.config_merge(current, value),
                 )
@@ -281,7 +277,7 @@ class FlextUtilitiesConfig:
         """
         if isinstance(value, str):
             return FlextUtilitiesConfig._expand_str(value, env)
-        if FlextUtilitiesGuardsTypeCore.mapping(value):
+        if isinstance(value, Mapping):
             return {
                 key: FlextUtilitiesConfig.config_env_override(item, env)
                 for key, item in value.items()

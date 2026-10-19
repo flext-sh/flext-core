@@ -17,6 +17,7 @@ from collections.abc import Hashable, Mapping
 from datetime import datetime
 from typing import Annotated, ClassVar, dataclass_transform, override
 
+import flext_core
 from pydantic import ConfigDict
 from pydantic_core import to_jsonable_python
 from typing_extensions import TypeForm
@@ -105,9 +106,8 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
                 examples=[["billing", "critical"]],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.StrSequence)
-            )
+            default=(),
+            validate_default=True,
         )
         attributes: Annotated[
             FlextTypingBase.JsonMapping,
@@ -117,9 +117,10 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
                 examples=[{"source": "api", "priority": "high"}],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.JsonMapping)
-            )
+            default_factory=lambda: flext_core.u.empty(
+                TypeForm(FlextTypingBase.JsonMapping),
+            )(),
+            validate_default=True,
         )
         metadata_value: Annotated[
             FlextTypingBase.Scalar | None,

@@ -20,9 +20,19 @@ from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, overload, override
 
 from typing_extensions import TypeForm
 
-from flext_core import FlextSettings, FlextUtilitiesLogging, c, e, m, p, r, t, u
+from flext_core import (
+    FlextContext,
+    FlextSettings,
+    FlextUtilitiesLogging,
+    c,
+    e,
+    m,
+    p,
+    r,
+    t,
+    u,
+)
 from flext_core._container_parts import FlextContainerTestingOps
-from flext_core._models import FlextContext
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
@@ -228,8 +238,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
         """
         try:
-            resolved = callable_obj()
-            _ = u.normalize_registerable_service(resolved)
+            resolved = u.normalize_registerable_service(callable_obj())
         except c.EXC_BROAD_RUNTIME as exc:
             return r[p.RegisterableService].from_result(
                 e.fail_operation(

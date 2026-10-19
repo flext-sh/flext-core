@@ -12,18 +12,28 @@ rules:
     ownership_transfer:
       - flext_core._runtime._metadata
       - FlextRuntimeMetadata.normalize_to_json_value
-  - id: core-metadata-serialization-owner
+  - id: core-metadata-json-call
     phase: contract-normalization
-    pattern: '${receiver}.normalize_to_metadata'
-    goal: 'u.normalize_to_metadata'
+    pattern: '${normalizer}(${value})'
+    goal: 'u.normalize_to_json_value(${value})'
     arguments:
-      receiver: name=flext_core.runtime.FlextRuntime
+      normalizer: name=flext_core._runtime._metadata.FlextRuntimeMetadata.normalize_to_metadata
+    call_target: normalizer
+    explicit_arguments: true
     imports: *core_utilities
     bindings:
-      u.normalize_to_metadata: flext_core._utilities.metadata.FlextUtilitiesMetadata.normalize_to_metadata
-    ownership_transfer:
-      - flext_core._runtime._metadata
-      - FlextRuntimeMetadata.normalize_to_metadata
+      u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
+  - id: core-metadata-json-keyword
+    phase: contract-normalization
+    pattern: '${normalizer}(val=${value})'
+    goal: 'u.normalize_to_json_value(value=${value})'
+    arguments:
+      normalizer: name=flext_core._runtime._metadata.FlextRuntimeMetadata.normalize_to_metadata
+    call_target: normalizer
+    explicit_arguments: true
+    imports: *core_utilities
+    bindings:
+      u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
   - id: core-container-payload-owner
     phase: contract-normalization
     pattern: '${receiver}.normalize_to_container'
@@ -36,17 +46,3 @@ rules:
     ownership_transfer:
       - flext_core._runtime._container
       - FlextRuntimeContainer.normalize_to_container
-  - id: core-result-payload-construction
-    phase: contract-normalization
-    pattern: '${helper}(${factory}(), ${payload})'
-    goal: '${helper}(${payload})'
-    arguments:
-      helper: name=flext_core._result.construction.ok_result
-      factory: name=flext_core._result.behavior.FlextResultBehavior._factory
-  - id: core-result-copy-construction
-    phase: contract-normalization
-    pattern: '${helper}(${factory}(), ${source})'
-    goal: '${helper}(${source})'
-    arguments:
-      helper: name=flext_core._result.construction.copy_result
-      factory: name=flext_core._result.behavior.FlextResultBehavior._factory

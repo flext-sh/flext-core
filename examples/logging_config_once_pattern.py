@@ -55,7 +55,7 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
         """
         super().model_post_init(__context)
         normalized_db_config: t.JsonMapping = {
-            key: u.normalize_to_metadata(value)
+            key: u.normalize_to_json_value(value)
             for key, value in self.db_config.root.items()
         }
         self.logger.info("Database configuration loaded", **normalized_db_config)
@@ -90,7 +90,8 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
             },
         )
         normalized_settings = {
-            key: u.normalize_to_metadata(value) for key, value in settings.root.items()
+            key: u.normalize_to_json_value(value)
+            for key, value in settings.root.items()
         }
         self.logger.info("Migration configuration loaded", **normalized_settings)
 
@@ -124,7 +125,7 @@ def main() -> None:
     if result.success:
         db_service.logger.info(
             "Database query successful",
-            result=u.normalize_to_metadata(result.value),
+            result=u.normalize_to_json_value(result.value),
         )
     migration_service = ExamplesFlextMigrationService(
         input_dir="/data/input",
@@ -136,7 +137,7 @@ def main() -> None:
     if result.success:
         migration_service.logger.info(
             "Migration successful",
-            result=u.normalize_to_metadata(result.value),
+            result=u.normalize_to_json_value(result.value),
         )
     observations = (
         "Configuration is logged once when the service is initialized",

@@ -6,13 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated, Literal
 
 from pydantic import Discriminator, Field
-from typing_extensions import TypeForm
 
 from flext_core import c
-from flext_core._models import FlextModelsPydantic
 from flext_core._models._enforcement import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
@@ -115,9 +114,8 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
         alias_renames: FlextTypingBase.StrMapping = Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.StrMapping)
-            ),
+            default_factory=lambda: MappingProxyType[str, str]({}),
+            validate_default=True,
         )
 
     class LibraryImportParams(FlextModelsEnforcementModelBase):
@@ -148,9 +146,8 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
 
         kind: Literal["method_shape"] = "method_shape"
         forbidden_prefixes: FlextTypingBase.StrMapping = Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.StrMapping)
-            ),
+            default_factory=lambda: MappingProxyType[str, str]({}),
+            validate_default=True,
         )
         """Forbidden name prefix → the replacement it suggests."""
         require_static_or_classmethod: bool = False

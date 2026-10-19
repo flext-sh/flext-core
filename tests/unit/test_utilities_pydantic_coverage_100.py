@@ -41,11 +41,11 @@ class TestsFlextUtilitiesPydantic:
     def test_unset_factories_expose_native_metadata() -> None:
         """An omitted value produces metadata, not a contextual field value."""
         metadata = u.Field(description="Native field metadata")
-        assert metadata.annotation is None
+        tm.that(metadata.annotation is None, eq=True)
         private = u.PrivateAttr()
-        assert isinstance(private, p.UnsetPrivateAttribute)
+        tm.that(isinstance(private, p.UnsetPrivateAttribute), eq=True)
         undefined = private.get_default()
-        assert private.get_default(call_default_factory=True) is undefined
+        tm.that(private.get_default(call_default_factory=True) is undefined, eq=True)
 
     class _FieldFactoryContract(m.BaseModel):
         """Required fields and typed factories through both public facades."""
@@ -55,7 +55,7 @@ class TestsFlextUtilitiesPydantic:
         label: str = u.Field(min_length=1)
         echo: str = m.Field(default_factory=_validated_label)
         model_values: t.MutableStrMapping = m.Field(
-            default_factory=m.empty(TypeForm(t.MutableStrMapping)),
+            default_factory=u.empty(TypeForm(t.MutableStrMapping)),
         )
         utility_values: t.MutableStrMapping = u.Field(
             default_factory=u.empty(TypeForm(t.MutableStrMapping)),
@@ -88,7 +88,7 @@ class TestsFlextUtilitiesPydantic:
 
         model_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=m.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
         ] = m.Field(description="Model collection with an annotation-owned factory.")
         utility_values: Annotated[
             t.MutableStrMapping,
@@ -118,7 +118,7 @@ class TestsFlextUtilitiesPydantic:
 
         model_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=m.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
         ] = m.Field(default_factory=None)
         utility_values: Annotated[
             t.MutableStrMapping,
@@ -173,7 +173,7 @@ class TestsFlextUtilitiesPydantic:
     class _PrivateAttrContract(FlextModels.BaseModel):
         label: str
         _model_values: list[str] = FlextModels.PrivateAttr(
-            default_factory=FlextModels.empty(TypeForm(list[str])),
+            default_factory=list[str],
         )
         _utility_values: list[str] = u.PrivateAttr(
             default_factory=u.empty(TypeForm(list[str])),

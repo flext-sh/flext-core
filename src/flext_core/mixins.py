@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 
-from flext_core import c, m, p, t, u
+from flext_core import FlextContext, c, m, p, t, u
 from flext_core._models import FlextMixins as FlextMixinsState
 
 
@@ -59,10 +59,10 @@ class FlextMixins(FlextMixinsState):
         stats = stats_model.root
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
-            with self._context_type.timed_operation(operation_name) as metrics:
+            with FlextContext.timed_operation(operation_name) as metrics:
                 metrics_map: t.MutableMappingKV[str, t.JsonPayload] = {
                     key: u.normalize_to_container(value)
-                    for key, value in metrics.items()
+                    for key, value in metrics.root.items()
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
@@ -93,7 +93,7 @@ class FlextMixins(FlextMixinsState):
                     self._operation_stats[operation_name] = stats_model
         finally:
             _ = u.clear_scope(c.ContextScope.OPERATION)
-            self._context_type.apply_operation_name("")
+            FlextContext.apply_operation_name("")
 
     def _get_runtime(self) -> p.ServiceRuntime:
         """Build the kernel runtime once, unless a service supplies its explicit graph."""

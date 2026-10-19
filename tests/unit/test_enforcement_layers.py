@@ -24,7 +24,7 @@ from typing import (
 
 import pytest
 
-from tests import m, t, u
+from tests import m, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
 
@@ -113,10 +113,13 @@ class TestsFlextCoreEnforcementLayers:
         """The native checker rejects invalid aliases loaded from source."""
         with invalid_annotations(tmp_path) as source:
             target = source.InvalidTypes
-            assert isinstance(target, type)
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a types namespace")
             report = u.check(target, layer="types")
-            assert ("Types", "alias_any") in (
-                TestsFlextCoreEnforcementLayers._rule_tags(report)
+            tm.that(
+                ("Types", "alias_any")
+                in TestsFlextCoreEnforcementLayers._rule_tags(report),
+                eq=True,
             )
 
     @staticmethod

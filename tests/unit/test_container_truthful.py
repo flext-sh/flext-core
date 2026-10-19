@@ -10,8 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 import sys
 import types
+from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -120,6 +123,87 @@ class TestsFlextCoreContainerTruthful:
 
         tm.ok(scoped.resolve("mode"), eq="scoped")
         tm.ok(clean_container.resolve("mode"), eq="parent")
+
+    @staticmethod
+    def test_mapping_registration_keeps_input_and_serializes_its_payload(
+        clean_container: p.Container,
+    ) -> None:
+        """Registration normalizes a validated copy without altering caller data."""
+        instant = datetime.now(UTC)
+        path = Path("registered-payload")
+        payload = {"created": instant, "path": path}
+        _ = clean_container.bind("mapping-payload", payload)
+        value = tm.ok(clean_container.resolve("mapping-payload"))
+
+        tm.that(isinstance(value, p.Model), eq=True)
+        if isinstance(value, p.Model):
+            tm.that(
+                value.model_dump(mode="json"),
+                eq=u.normalize_to_json_value(payload),
+            )
+        tm.that(payload["created"] is instant, eq=True)
+        tm.that(payload["path"] is path, eq=True)
+
+    @staticmethod
+    def test_sequence_registration_serializes_a_list_root(
+        clean_container: p.Container,
+    ) -> None:
+        """The registry model port admits list output, not only named fields."""
+        instant = datetime.now(UTC)
+        path = Path("sequence-payload")
+        payload = ["entry", path, instant]
+        _ = clean_container.bind("sequence-payload", payload)
+        value = tm.ok(clean_container.resolve("sequence-payload"))
+
+        tm.that(isinstance(value, p.Model), eq=True)
+        if isinstance(value, p.Model):
+            tm.that(
+                value.model_dump(mode="json"),
+                eq=u.normalize_to_json_value(payload),
+            )
+        tm.that(payload[1] is path, eq=True)
+        tm.that(payload[2] is instant, eq=True)
+
+    @staticmethod
+    def test_registered_model_member_preserves_its_public_fields(
+        clean_container: p.Container,
+    ) -> None:
+        """A nested Pydantic value retains its own validated serialization."""
+        metadata = m.Metadata()
+        _ = clean_container.bind("model-payload", {"metadata": metadata})
+        value = tm.ok(clean_container.resolve("model-payload"))
+
+        tm.that(isinstance(value, p.Model), eq=True)
+        if isinstance(value, p.Model):
+            tm.that(
+                value.model_dump(mode="json"),
+                eq={"metadata": metadata.model_dump(mode="json")},
+            )
+
+    @staticmethod
+    def test_set_normalization_uses_json_without_an_order_contract() -> None:
+        """Set values become JSON arrays without inventing an ordering rule."""
+        payload = frozenset({"first", "second"})
+        normalized = u.normalize_to_container(payload)
+
+        tm.that(isinstance(normalized, list), eq=True)
+        if isinstance(normalized, list):
+            tm.that(set(normalized), eq=payload)
+
+    @staticmethod
+    def test_null_normalization_keeps_the_pydantic_json_value() -> None:
+        """An admitted JSON null is data, never an implicit empty string."""
+        tm.that(u.normalize_to_container(None) is None, eq=True)
+
+    @staticmethod
+    def test_unsupported_container_value_is_not_silently_stringified() -> None:
+        """Opaque runtime objects fail instead of becoming misleading text."""
+        payload = types.ModuleType("unsupported-payload")
+        message = c.ERR_RUNTIME_CONTAINER_INVALID_TYPE.format(
+            type_name=type(payload).__name__,
+        )
+        with pytest.raises(TypeError, match=re.escape(message)):
+            _ = u.normalize_to_container(payload)
 
     def test_auto_registration_without_imported_caller_raises(
         self,

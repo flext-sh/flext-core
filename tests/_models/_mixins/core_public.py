@@ -7,11 +7,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import ClassVar, Self
+from typing import Annotated, ClassVar, Self
 
-from typing_extensions import TypeForm
-
-from flext_core import m, u
+from flext_core import m
 from tests import t
 
 
@@ -21,14 +19,12 @@ class TestsFlextModelsCorePublicMixin:
     class RegistryQuery(m.Query):
         """A routed query used alongside the canonical command in registry tests."""
 
-        query_type: str = "registry-query"
+        query_type: str | None = "registry-query"
 
     class HandlerObservations(m.ManagedModel):
         """Owned effects recorded by an actual capability-based test handler."""
 
-        handled: t.MutableSequenceOf[str] = u.Field(
-            default_factory=u.empty(TypeForm(t.MutableSequenceOf[str])),
-        )
+        handled: t.MutableSequenceOf[str] = m.Field(default_factory=list)
 
     class BinaryContract(m.ContractModel):
         """Binary contract exercising the public JSON persistence boundary."""
@@ -119,9 +115,9 @@ class TestsFlextModelsCorePublicMixin:
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(populate_by_name=True)
 
-        raw_name: str = u.Field(alias="rawName")
+        raw_name: Annotated[str, m.Field(alias="rawName")]
         visits: int = 0
-        _events: list[str] = u.PrivateAttr(default_factory=u.empty(TypeForm(list[str])))
+        _events: list[str] = m.PrivateAttr(default_factory=list)
 
         @m.field_validator("raw_name")
         @classmethod
@@ -133,12 +129,12 @@ class TestsFlextModelsCorePublicMixin:
             self._events.append("validated")
             return self
 
-        @u.computed_field
+        @m.computed_field
         @property
         def label(self) -> str:
             return f"{self.raw_name}:{self.visits}"
 
-        @u.field_serializer("visits")
+        @m.field_serializer("visits")
         @staticmethod
         def serialize_visits(value: int) -> str:
             return f"{value} visits"
@@ -158,7 +154,7 @@ class TestsFlextModelsCorePublicMixin:
 
         name: str
 
-        @u.model_serializer
+        @m.model_serializer
         def serialize(self) -> str:
             return self.name
 

@@ -12,19 +12,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Annotated
 
-from typing_extensions import TypeForm
-
+import flext_core
 from flext_core import c, p, t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsContainers,
     FlextModelsPydantic,
 )
-from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesGuardsTypeCore
 
 
 class FlextModelsContainer:
@@ -40,7 +37,7 @@ class FlextModelsContainer:
                     "Timestamp when service was registered (configured timezone)"
                 ),
             ),
-        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
+        ] = FlextModelsPydantic.Field(default_factory=lambda: flext_core.u.now())
         metadata: Annotated[
             FlextModelsBase.Metadata | FlextModelsContainers.ConfigMap | None,
             FlextModelsPydantic.Field(
@@ -51,8 +48,12 @@ class FlextModelsContainer:
 
         @FlextModelsPydantic.field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata_model_input(cls, value: p.MetadataInput) -> p.Metadata:
+        def validate_metadata_model_input(
+            cls, value: p.MetadataInput
+        ) -> p.Metadata | None:
             """Keep existing metadata identity and validate raw registration attributes."""
+            if value is None:
+                return None
             if isinstance(value, FlextModelsBase.Metadata):
                 return value
             return FlextModelsBase.Metadata.model_validate({
@@ -71,42 +72,31 @@ class FlextModelsContainer:
             FlextModelsPydantic.Field(..., description="Service identifier/name"),
         ]
         service: Annotated[
-            p.RegisterableService,
+            t.Port[p.RegisterableService],
             FlextModelsPydantic.Field(
                 ...,
                 description="Service instance (protocols, models, callables)",
+                exclude=True,
             ),
         ]
         tags: Annotated[
             t.StrSequence,
-            FlextModelsPydantic.Field(description="Service tags for categorization"),
-        ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(t.StrSequence)),
-        )
+            FlextModelsPydantic.Field(
+                description="Service tags for categorization", validate_default=True
+            ),
+        ] = ()
+
+        @FlextModelsPydantic.field_validator("service", mode="before")
+        @classmethod
+        def _validate_service(cls, value: p.GuardInput) -> p.RegisterableService:
+            """Apply the utility-owned admission at the native field boundary."""
+            return flext_core.u.normalize_registerable_service(value)
 
         @FlextModelsPydantic.computed_field
         @property
         def service_type(self) -> str:
             """Type name of the registered service, derived from the service."""
-            return FlextUtilitiesGuardsTypeCore.type_name(self.service)
-
-        @FlextModelsPydantic.field_validator("service", mode="before")
-        @classmethod
-        def validate_service(
-            cls,
-            value: p.RegisterableService,
-        ) -> (
-            p.RegisterableService
-            | FlextModelsContainers.ConfigMap
-            | FlextModelsContainers.ObjectList
-        ):
-            if isinstance(value, Mapping):
-                return FlextModelsContainers.ConfigMap.model_validate(value)
-            if isinstance(value, Sequence) and not isinstance(
-                value, c.STR_BINARY_TYPES
-            ):
-                return FlextModelsContainers.ObjectList.model_validate(value)
-            return value
+            return type(self.service).__name__
 
     class FactoryRegistration(RegistrationEnvelope):
         """Model for factory registry entries.

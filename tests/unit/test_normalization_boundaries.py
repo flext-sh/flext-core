@@ -34,12 +34,10 @@ class TestsNormalizationBoundaries:
             u.to_jsonable_python(value), strict=True
         )
         tm.that(u.normalize_to_json_value(value), eq=expected)
-        tm.that(u.normalize_to_metadata(value), eq=expected)
 
     @staticmethod
     def test_json_null_and_container_blank_are_distinct() -> None:
-        assert u.normalize_to_json_value(None) is None
-        assert u.normalize_to_metadata(None) is None
+        tm.that(u.normalize_to_json_value(None) is None, eq=True)
         tm.that(u.normalize_to_container(None), eq="")
         tm.that(u.normalize_to_container([None]), eq=[None])
 
@@ -47,13 +45,11 @@ class TestsNormalizationBoundaries:
     def test_json_serialization_rejects_unknown_input() -> None:
         with pytest.raises(ValueError):
             u.normalize_to_json_value(type)
-        with pytest.raises(ValueError):
-            u.normalize_to_metadata(type)
 
     @staticmethod
     def test_container_preserves_models_and_unwraps_root_payloads() -> None:
         model = m.Metadata(attributes={"source": "native"})
-        assert u.normalize_to_container(model) is model
+        tm.that(u.normalize_to_container(model) is model, eq=True)
         tm.that(
             u.normalize_to_container(m.ConfigMap(root={"key": Path("relative")})),
             eq={"key": str(Path("relative"))},
@@ -75,14 +71,16 @@ class TestsNormalizationBoundaries:
         scalar = m.ServiceRegistration(
             name="scalar", service="payload", metadata=metadata
         )
-        assert scalar.metadata is metadata
+        tm.that(scalar.metadata is metadata, eq=True)
         mapping = m.ServiceRegistration.model_validate({
             "name": "mapping",
             "service": {"nested": [None]},
             "metadata": {"tag": "value"},
         })
-        assert isinstance(mapping.service, m.ConfigMap)
-        assert isinstance(mapping.metadata, m.Metadata)
+        if not isinstance(mapping.service, m.ConfigMap):
+            pytest.fail("Mapping service must follow the ConfigMap contract")
+        if not isinstance(mapping.metadata, m.Metadata):
+            pytest.fail("Registration attributes must follow the Metadata contract")
         tm.that(mapping.service.model_dump(mode="json"), eq={"nested": [None]})
         tm.that(mapping.metadata.attributes, eq={"tag": "value"})
         with pytest.raises(m.ValidationError):
@@ -97,8 +95,8 @@ class TestsNormalizationBoundaries:
         aware = naive.replace(tzinfo=timezone(timedelta(hours=3)))
         normalized = m.TimestampedModel.model_validate({"created_at": naive})
         preserved = m.TimestampedModel.model_validate({"created_at": aware})
-        assert normalized.created_at.tzinfo is UTC
-        assert preserved.created_at is aware
+        tm.that(normalized.created_at.tzinfo is UTC, eq=True)
+        tm.that(preserved.created_at is aware, eq=True)
 
     @staticmethod
     def test_invalid_pagination_does_not_become_a_default() -> None:
@@ -124,7 +122,7 @@ class TestsNormalizationBoundaries:
         scope = clean_container.scope()
         tm.that(tm.ok(scope.resolve("shared-service")), eq="inherited")
         tm.that(scope.bind("scoped-service", "isolated") is scope, eq=True)
-        assert clean_container.resolve("scoped-service").is_failure
+        tm.that(clean_container.resolve("scoped-service").failure, eq=True)
 
     @staticmethod
     @pytest.mark.parametrize("trace", [False, True])

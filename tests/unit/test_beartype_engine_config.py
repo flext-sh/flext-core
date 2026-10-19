@@ -17,7 +17,7 @@ import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
 from flext_core.utilities import FlextUtilitiesBeartypeConf
-from tests import c, t, u
+from tests import c, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
 _FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
@@ -68,8 +68,9 @@ class TestsFlextCoreBeartypeEngineConfig:
         """Unrestricted native hints enter only through explicit source fixtures."""
         with invalid_annotations(tmp_path) as source:
             alias = getattr(source.InvalidTypes, alias_name)
-            assert isinstance(alias, TypeAliasType)
-            assert u.contains_any(alias.__value__)
+            if not isinstance(alias, TypeAliasType):
+                pytest.fail("Invalid source fixture is not a native alias")
+            tm.that(u.contains_any(alias.__value__), eq=True)
 
     @pytest.mark.parametrize(
         ("alias_name", "expected"),
@@ -85,8 +86,9 @@ class TestsFlextCoreBeartypeEngineConfig:
         """``alias_contains_any`` follows a PEP 695 alias to its underlying value."""
         with invalid_annotations(tmp_path) as source:
             alias = getattr(source.InvalidTypes, alias_name)
-            assert isinstance(alias, TypeAliasType)
-            assert u.alias_contains_any(alias) is expected
+            if not isinstance(alias, TypeAliasType):
+                pytest.fail("Source fixture did not declare a native type alias")
+            tm.that(u.alias_contains_any(alias), eq=expected)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),

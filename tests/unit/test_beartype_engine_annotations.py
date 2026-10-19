@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, TypeAliasType
 import pytest
 
 import tests.utilities
-from tests import t, u
+from tests import t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
 if TYPE_CHECKING:
@@ -69,8 +69,9 @@ class TestsFlextBeartypeEngineAnnotations(
         """Invalid annotations are source inputs, never owned type declarations."""
         with invalid_annotations(tmp_path) as source:
             alias = getattr(source.InvalidTypes, alias_name)
-            assert isinstance(alias, TypeAliasType)
-            assert u.contains_any(alias.__value__)
+            if not isinstance(alias, TypeAliasType):
+                pytest.fail("Invalid source fixture is not a native alias")
+            tm.that(u.contains_any(alias.__value__), eq=True)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -151,11 +152,12 @@ class TestsFlextBeartypeEngineAnnotations(
         """alias_contains_any detects Any inside a resolved type-alias value."""
         with invalid_annotations(tmp_path) as source:
             if alias_name is None:
-                assert u.alias_contains_any(None) is expected
+                tm.that(u.alias_contains_any(None), eq=expected)
             else:
                 alias = getattr(source.InvalidTypes, alias_name)
-                assert isinstance(alias, TypeAliasType)
-                assert u.alias_contains_any(alias.__value__) is expected
+                if not isinstance(alias, TypeAliasType):
+                    pytest.fail("Source fixture did not declare a native type alias")
+                tm.that(u.alias_contains_any(alias.__value__), eq=expected)
 
     @staticmethod
     def test_alias_inspection_uses_explicit_owner_for_static_only_names() -> None:

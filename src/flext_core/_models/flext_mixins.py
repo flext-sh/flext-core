@@ -10,10 +10,8 @@ import threading
 from collections.abc import MutableMapping
 from typing import ClassVar
 
-from typing_extensions import TypeForm
-
-from flext_core import FlextContainer, p, t
-from flext_core._models import FlextContext, FlextModelsBase, FlextModelsPydantic
+from flext_core import p, t
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
 
 class FlextMixins(FlextModelsBase.ArbitraryTypesModel):
@@ -46,15 +44,11 @@ class FlextMixins(FlextModelsBase.ArbitraryTypesModel):
     _runtime: p.ServiceRuntime | None = FlextModelsPydantic.PrivateAttr(None)
     _operation_stats: MutableMapping[str, p.MutableRootDict[t.JsonPayload]] = (
         FlextModelsPydantic.PrivateAttr(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(MutableMapping[str, p.MutableRootDict[t.JsonPayload]])
-            ),
+            default_factory=dict[str, p.MutableRootDict[t.JsonPayload]],
         )
     )
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
     _cache_lock: ClassVar[p.Lock] = threading.Lock()
-    _container_type: ClassVar[p.ContainerType] = FlextContainer
-    _context_type: ClassVar[p.ContextType] = FlextContext
     _auto_context_scope: ClassVar[bool] = True
 
 

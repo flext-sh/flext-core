@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated
-
-from typing_extensions import TypeForm
 
 from flext_core import c, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
@@ -56,11 +55,7 @@ class FlextModelsContextScope:
         operations: Annotated[
             t.JsonMapping,
             FlextModelsPydantic.BeforeValidator(
-                lambda v: (
-                    FlextModelsContextData.normalize_to_mapping(v)
-                    if v is not None
-                    else {}
-                ),
+                FlextModelsContextData.ContextData.validate_dict_serializable,
             ),
             FlextModelsPydantic.Field(
                 description=(
@@ -69,7 +64,8 @@ class FlextModelsContextScope:
                 ),
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(TypeForm(t.JsonMapping)),
+            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+            validate_default=True,
         )
 
 

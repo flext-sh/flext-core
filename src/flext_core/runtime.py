@@ -6,15 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._runtime import FlextRuntimeContainer
+from flext_core._runtime import FlextRuntimeBase
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
-class FlextRuntime(FlextRuntimeContainer):
+class FlextRuntime(FlextRuntimeBase, FlextUtilitiesPydantic):
     """Expose runtime normalization and validation helpers.
 
-    The ``_runtime`` family package owns the implementation; this facade
-    publishes the composed namespace consumed as ``FlextRuntime`` by the
-    other flext-core modules and downstream packages.
+    Runtime primitives and Pydantic normalization retain their existing
+    owners; this namespace adds no implementations or compatibility methods.
     """
 
 

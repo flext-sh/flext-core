@@ -29,6 +29,19 @@ class TestsFlextCoreServiceBootstrap:
         def execute(self) -> p.Result[bool]:
             return r[bool].ok(value=True)
 
+    class ContextConfiguredService(ConcreteTestService):
+        """Service electing its collaborators through the typed bootstrap hook."""
+
+        @classmethod
+        @override
+        def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+            source = FlextContainer.shared().scope()
+            source.bind("context.selected", "declared-container")
+            return m.RuntimeBootstrapOptions(
+                context=FlextContext.create(source="declared-context"),
+                container=source,
+            )
+
     # --- Service execution contract ------------------------------------
 
     def test_execute_returns_successful_result_with_payload(self) -> None:
@@ -102,6 +115,17 @@ class TestsFlextCoreServiceBootstrap:
         service = self.ConcreteTestService(initial_context=context)
 
         tm.that(service.context is context, eq=True)
+
+    def test_typed_bootstrap_hook_elects_context_and_container(self) -> None:
+        """Custom context/container selection uses public options, not private hooks."""
+        service = self.ContextConfiguredService()
+        tm.ok(service.context.get("source"), eq="declared-context")
+        tm.ok(service.container.resolve("context.selected"), eq="declared-container")
+        tm.that(service.container.context is service.context, eq=True)
+        seeded = FlextContext.create(source="instance-context")
+        explicit = self.ContextConfiguredService(initial_context=seeded)
+        tm.that(explicit.context is seeded, eq=True)
+        tm.ok(explicit.container.resolve("context.selected"), eq="declared-container")
 
     def test_settings_seed_rejects_a_non_settings_value(self) -> None:
         """A runtime settings seed that is not ``p.Settings`` fails validation."""

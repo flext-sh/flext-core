@@ -11,11 +11,12 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, Literal
 
+import flext_core
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import TypeForm
 
 from flext_core import c, t
-from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._models import FlextModelsBase
 from flext_core._models._cqrs_parts import flextmodelscqrs_part_01
 from flext_core._utilities import FlextUtilitiesGenerators
 
@@ -97,9 +98,10 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
         ] = Field(
-            default_factory=FlextModelsPydantic.empty(
+            default_factory=lambda: flext_core.u.empty(
                 TypeForm(t.MappingKV[str, t.Scalar]),
-            ),
+            )(),
+            validate_default=True,
         )
         pagination: Annotated[
             flextmodelscqrs_part_01.FlextModelsCqrs.Pagination,
@@ -241,17 +243,19 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
             t.MappingKV[str, t.Scalar],
             Field(description="Event payload data"),
         ] = Field(
-            default_factory=FlextModelsPydantic.empty(
+            default_factory=lambda: flext_core.u.empty(
                 TypeForm(t.MappingKV[str, t.Scalar]),
-            ),
+            )(),
+            validate_default=True,
         )
         metadata: Annotated[
             t.MappingKV[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
         ] = Field(
-            default_factory=FlextModelsPydantic.empty(
+            default_factory=lambda: flext_core.u.empty(
                 TypeForm(t.MappingKV[str, t.Scalar]),
-            ),
+            )(),
+            validate_default=True,
         )
 
     type FlextMessage = t.MessageUnion[Command, Query, Event]

@@ -49,6 +49,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
+        cls.reject_banned_result_parameterization()
         return ok_result(value)
 
     @classmethod
@@ -130,6 +131,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
+        cls.reject_banned_result_parameterization()
         return copy_result(source)
 
     @classmethod
@@ -150,6 +152,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         """
         from flext_core import r
 
+        cls.reject_banned_result_parameterization()
         try:
             value = func()
             if value is None:
@@ -207,6 +210,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         """
         from flext_core import r
 
+        cls.reject_banned_result_parameterization()
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)

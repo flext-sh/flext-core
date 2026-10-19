@@ -14,8 +14,7 @@ from collections.abc import Callable, Mapping
 from typing import ClassVar, TypeGuard
 
 from flext_core import FlextResult, c, p, t
-from flext_core._runtime import FlextRuntimeMetadata
-from flext_core._utilities import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore, FlextUtilitiesPydantic
 
 
 class FlextUtilitiesCollectionMerge:
@@ -45,7 +44,7 @@ class FlextUtilitiesCollectionMerge:
         if FlextUtilitiesCollectionMerge._is_json_mapping(
             current_val,
         ) and FlextUtilitiesCollectionMerge._is_json_mapping(value):
-            result[key] = FlextRuntimeMetadata.normalize_to_metadata({
+            result[key] = FlextUtilitiesPydantic.normalize_to_json_value({
                 **current_val,
                 **value,
             })
@@ -119,7 +118,7 @@ class FlextUtilitiesCollectionMerge:
             if FlextUtilitiesCollectionMerge._is_json_list(
                 current_val,
             ) and FlextUtilitiesCollectionMerge._is_json_list(value):
-                result[key] = FlextRuntimeMetadata.normalize_to_metadata([
+                result[key] = FlextUtilitiesPydantic.normalize_to_json_value([
                     *current_val,
                     *value,
                 ])

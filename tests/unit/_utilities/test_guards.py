@@ -11,10 +11,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Iterator, Mapping
+from datetime import UTC, datetime
+from pathlib import Path
+from types import MappingProxyType
+from typing import override
+
 import pytest
 
-from flext_core import m, p, t
-from tests import u
+from flext_core import p, t
+from tests import m, r, tm, u
 
 
 class TestsFlextCoreGuards:
@@ -24,6 +30,184 @@ class TestsFlextCoreGuards:
         """Minimal real Pydantic model used to probe model-exclusion behavior."""
 
         value: int = 1
+
+    @staticmethod
+    def test_mapping_view_preserves_integer_keys_and_opaque_values() -> None:
+        """The inspection view neither requires JSON nor reconstructs a mapping."""
+
+        class Handle:
+            """Opaque SDK value with no domain or serialization contract."""
+
+        handle = Handle()
+        mapping = {1: handle}
+        subject: p.AttributeProbe = mapping
+        if not u.mapping_view(subject):
+            pytest.fail("native mapping rejected")
+        tm.that(subject is mapping, truth=True)
+        tm.that(1 in subject, truth=True)
+        tm.that(subject[1] is handle, truth=True)
+        tm.that(u.mapping_view(handle), truth=False)
+        tm.that(u.mapping_view([handle]), truth=False)
+
+    @staticmethod
+    def test_mapping_view_does_not_iterate_or_normalize_lookup_errors() -> None:
+        """Guarding adds no iteration, membership, length or item-access effects."""
+        events: list[str] = []
+        failure = LookupError("original item failure")
+
+        class NativeMapping(Mapping[p.AttributeProbe, p.AttributeProbe]):
+            @override
+            def __contains__(self, key: p.AttributeProbe) -> bool:
+                events.append("contains")
+                return key == 1
+
+            @override
+            def __getitem__(self, key: p.AttributeProbe) -> p.AttributeProbe:
+                events.append("getitem")
+                raise failure
+
+            @override
+            def __iter__(self) -> Iterator[p.AttributeProbe]:
+                events.append("iter")
+                message = "unexpected mapping iteration"
+                raise AssertionError(message)
+
+            @override
+            def __len__(self) -> int:
+                events.append("len")
+                return 1
+
+        mapping = NativeMapping()
+        subject: p.AttributeProbe = mapping
+        if not u.mapping_view(subject):
+            pytest.fail("native mapping rejected")
+        tm.that(subject is mapping, truth=True)
+        tm.that(events, eq=[])
+        tm.that(1 in subject, truth=True)
+        with pytest.raises(LookupError) as raised:
+            subject[1]
+        tm.that(raised.value is failure, truth=True)
+        tm.that(events, eq=["contains", "getitem"])
+
+    @staticmethod
+    def test_result_view_inspection_does_not_evaluate_payload_properties() -> None:
+        """A read-only result needs no railway operations or eager property access."""
+        events: list[str] = []
+        failure = RuntimeError("original payload failure")
+
+        class ReadOnlyResult:
+            @property
+            def error(self) -> str | None:
+                return None
+
+            @property
+            def error_code(self) -> str | None:
+                return None
+
+            @property
+            def error_data(self) -> t.JsonMapping | None:
+                return None
+
+            @property
+            def exception(self) -> BaseException | None:
+                return None
+
+            @property
+            def failure(self) -> bool:
+                return False
+
+            @property
+            def success(self) -> bool:
+                events.append("success")
+                return True
+
+            @property
+            def value(self) -> p.AttributeProbe:
+                events.append("value")
+                raise failure
+
+        result = ReadOnlyResult()
+        subject: p.AttributeProbe = result
+        if not u.result_view(subject):
+            pytest.fail("native read-only result rejected")
+        tm.that(subject is result, truth=True)
+        tm.that(events, eq=[])
+        tm.that(subject.success, truth=True)
+        with pytest.raises(RuntimeError) as raised:
+            _ = subject.value
+        tm.that(raised.value is failure, truth=True)
+        tm.that(events, eq=["success", "value"])
+
+    @staticmethod
+    def test_subclass_view_refines_runtime_classes_without_calling_factories() -> None:
+        """Native class inspection preserves identity and never calls a factory."""
+        events: list[str] = []
+
+        class Base:
+            """Native runtime base for the SDK class view."""
+
+        class Child(Base):
+            """Valid native subclass."""
+
+        class Unrelated:
+            """A runtime class outside the requested hierarchy."""
+
+        def factory() -> Base:
+            events.append("factory")
+            return Base()
+
+        cases: tuple[tuple[p.AttributeProbe, bool], ...] = (
+            (Base, True),
+            (Child, True),
+            (Unrelated, False),
+            (Base(), False),
+            (factory, False),
+        )
+        for candidate, expected in cases:
+            if u.subclass_view(candidate, Base):
+                tm.that(expected, truth=True)
+                instance = candidate()
+                tm.that(type(instance) is candidate, truth=True)
+                tm.that(candidate is Base or candidate is Child, truth=True)
+            else:
+                tm.that(expected, truth=False)
+        tm.that(events, eq=[])
+
+    @staticmethod
+    def test_subclass_view_preserves_native_class_check_exceptions() -> None:
+        """An exceptional native subclass check escapes unchanged."""
+        failure = TypeError("original subclass failure")
+
+        class NativeClassCheck(type):
+            @override
+            def __subclasscheck__(cls, subclass: type[p.AttributeProbe]) -> bool:
+                raise failure
+
+        class Base(metaclass=NativeClassCheck):
+            """Native base with an observable subclass-check failure."""
+
+        with pytest.raises(TypeError) as raised:
+            u.subclass_view(str, Base)
+        tm.that(raised.value is failure, truth=True)
+
+    @staticmethod
+    def test_result_view_accepts_full_results_without_changing_result_like() -> None:
+        """Full railway results retain native payload identity and both predicates."""
+
+        class Handle:
+            """Opaque SDK value with no serialization contract."""
+
+        handle = Handle()
+        result = r[p.AttributeProbe].ok(handle)
+        subject: p.AttributeProbe = result
+        if not u.result_view(subject):
+            pytest.fail("native full result rejected")
+        tm.that(subject is result, truth=True)
+        tm.that(subject.value is handle, truth=True)
+        tm.that(u.result_like(r[str].ok("value")), truth=True)
+        tm.that(u.result_like(False), truth=False)
+        tm.that(u.result_view(handle), truth=False)
+        tm.that(u.result_view(True), truth=False)
 
     # ------------------------------------------------------------------
     # matches_type — string specs
@@ -159,6 +343,35 @@ class TestsFlextCoreGuards:
     def test_all_container_mapping_values_accepts_json_values() -> None:
         mapping: t.JsonDict = {"a": 1, "b": [2, 3], "c": {"d": "e"}}
         assert u.all_container_mapping_values(mapping) is True
+        path = Path("native-payload")
+        timestamp = datetime(2026, 1, 2, tzinfo=UTC)
+        native = {1: (path, timestamp)}
+        tm.that(u.all_container_mapping_values(native), truth=True)
+        tm.that(u.container_value(native), truth=True)
+        tm.that(u.container_value((((((path,),),),),)), truth=True)
+        tm.that(u.container_value((path, None)), truth=False)
+        tm.that(u.container_value({1: None}), truth=False)
+        tm.that(native[1][0] is path, truth=True)
+        tm.that(native[1][1] is timestamp, truth=True)
+        observed: list[t.JsonValue] = []
+
+        def reject(value: t.JsonValue) -> bool:
+            observed.append(value)
+            return False
+
+        result = u.guard("rejected", reject, default=timestamp)
+        tm.that(result is timestamp, truth=True)
+        sequence_default = (1, "native")
+        mapping_default = MappingProxyType({"native": 1})
+        tm.that(
+            u.guard("sequence", reject, default=sequence_default) is sequence_default,
+            truth=True,
+        )
+        tm.that(
+            u.guard("mapping", reject, default=mapping_default) is mapping_default,
+            truth=True,
+        )
+        tm.that(observed, eq=["rejected", "sequence", "mapping"])
 
     # ------------------------------------------------------------------
     # scalar / primitive
@@ -211,6 +424,36 @@ class TestsFlextCoreGuards:
         assert u.mapping([1, 2]) is False
         assert u.list_value([1, 2]) is True
         assert u.list_value((1, 2)) is False
+        counter = u.Tests.MemoryCounter()
+        service = u.Tests.CountingService(counter=counter)
+        registry: p.GuardInput = {"service": service}
+        tm.that(u.mapping(registry), truth=True)
+        tm.that(u.dict_like(registry), truth=True)
+        tm.that(u.list_value([service]), truth=True)
+        tm.that(u.list_like([service]), truth=True)
+        tm.that(u.container_value(registry), truth=False)
+        tm.that(service.counter is counter, truth=True)
+        tm.that(service.execute().unwrap(), eq=1)
+        tm.that(service.execute().unwrap(), eq=2)
+        tm.that("counter" in service.model_dump(), truth=False)
+        first = m.Tests.HandlerObservations()
+        second = m.Tests.HandlerObservations()
+        tm.that(type(first.handled) is list, truth=True)
+        tm.that(first.handled, eq=[])
+        tm.that(first.handled is second.handled, truth=False)
+        first.handled.append("first")
+        tm.that(second.handled, eq=[])
+        with pytest.raises(m.ValidationError):
+            m.Tests.PublicPayload.model_validate({})
+        payload = m.Tests.PublicPayload.model_validate({
+            "rawName": " alice ",
+            "visits": 2,
+        })
+        tm.that(payload.model_dump(), eq={
+            "raw_name": "Alice",
+            "visits": "2 visits",
+            "label": "Alice:2",
+        })
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -277,6 +520,31 @@ class TestsFlextCoreGuards:
         assert u.dict_non_empty({"k": 1}) is True
         assert u.dict_non_empty({}) is False
         assert u.dict_non_empty(None) is False
+        events: list[str] = []
+        failure = RuntimeError("original mapping truth failure")
+
+        class NativeMapping(Mapping[str, int]):
+            def __bool__(self) -> bool:
+                events.append("bool")
+                raise failure
+
+            @override
+            def __getitem__(self, key: str) -> int:
+                raise failure
+
+            @override
+            def __iter__(self) -> Iterator[str]:
+                raise failure
+
+            @override
+            def __len__(self) -> int:
+                raise failure
+
+        native = NativeMapping()
+        with pytest.raises(RuntimeError) as raised:
+            u.dict_non_empty(native)
+        tm.that(raised.value is failure, truth=True)
+        tm.that(events, eq=["bool"])
 
     # ------------------------------------------------------------------
     # instance_of / in_ / type_name
@@ -314,7 +582,7 @@ class TestsFlextCoreGuards:
 
     @staticmethod
     def test_type_name_returns_runtime_qualname() -> None:
-        assert u.type_name("x") == "str"
-        assert u.type_name(1) == "int"
-        assert u.type_name([1]) == "list"
-        assert u.type_name(None) == "NoneType"
+        tm.that(u.type_name("x") == "str", truth=True)
+        tm.that(u.type_name(1) == "int", truth=True)
+        tm.that(u.type_name([1]) == "list", truth=True)
+        tm.that(u.type_name(None) == "NoneType", truth=True)

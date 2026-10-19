@@ -6,9 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from types import MappingProxyType
 from typing import Annotated, ClassVar, Self
-
-from typing_extensions import TypeForm
 
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsResult
@@ -130,9 +129,8 @@ class FlextModelsErrors:
                 description="Per-exception occurrence totals keyed by type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.IntMapping),
-            ),
+            default_factory=lambda: MappingProxyType[str, int]({}),
+            validate_default=True,
         )
         exception_counts_summary: Annotated[
             str,
@@ -178,9 +176,8 @@ class FlextModelsErrors:
                 description="Recorded counts keyed by exception type name.",
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(FlextTypingBase.IntMapping),
-            ),
+            default_factory=lambda: MappingProxyType[str, int]({}),
+            validate_default=True,
         )
 
         @FlextUtilitiesPydantic.computed_field

@@ -10,12 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_core import FlextResult
-from tests import e, m, p, r, t, tm
+from tests import e, m, p, r, tm
 
 
 class TestsFlextCoreResultFactoryDip:
@@ -93,36 +91,91 @@ class TestsFlextCoreResultFactoryDip:
         assert isinstance(fail_result, p.SuccessCheckable)
 
     @staticmethod
-    def test_flow_through_normalizes_foreign_success_onto_facade() -> None:
-        """Test flow through normalizes foreign success onto facade."""
+    def test_flow_through_normalizes_returned_success_onto_facade() -> None:
+        """Normalize actual Result callbacks without claiming a partial interface."""
 
-        def foreign_step(value: int) -> p.Result[int]:
-            return cast("p.Result[int]", _ForeignResult(value=value + 1))
+        def first_step(value: int) -> p.Result[int]:
+            return r[int].ok(value + 1)
 
         def facade_step(value: int) -> p.Result[int]:
             return r[int].ok(value * 10)
 
-        final: p.Result[int] = r[int].ok(3).flow_through(foreign_step, facade_step)
+        final: p.Result[int] = r[int].ok(3).flow_through(first_step, facade_step)
         tm.ok(final, eq=40)
-        assert isinstance(final, FlextResult)
+        tm.that(isinstance(final, FlextResult), eq=True)
 
     @staticmethod
-    def test_flow_through_normalizes_foreign_failure_onto_facade() -> None:
-        """Test flow through normalizes foreign failure onto facade."""
+    def test_flow_through_normalizes_returned_failure_onto_facade() -> None:
+        """Copy failure metadata and stop before invoking another actual step."""
 
-        def foreign_fail(_value: int) -> p.Result[int]:
-            return cast(
-                "p.Result[int]",
-                _ForeignResult(error="foreign-stop", error_code="E_FOREIGN"),
-            )
+        def first_fail(_value: int) -> p.Result[int]:
+            return r[int].fail("step-stop", error_code="E_STEP")
 
         def unreachable(_value: int) -> p.Result[int]:
-            return r[int].ok(999)
+            pytest.fail("A failed flow must not invoke another step")
 
-        final: p.Result[int] = r[int].ok(1).flow_through(foreign_fail, unreachable)
-        tm.fail(final, has="foreign-stop")
-        tm.that(final.error_code, eq="E_FOREIGN")
-        assert isinstance(final, FlextResult)
+        final: p.Result[int] = r[int].ok(1).flow_through(first_fail, unreachable)
+        tm.fail(final, has="step-stop")
+        tm.that(final.error_code, eq="E_STEP")
+        tm.that(isinstance(final, FlextResult), eq=True)
+
+    @staticmethod
+    @pytest.mark.parametrize("failed", [False, True])
+    def test_empty_flow_preserves_original_identity(failed: bool) -> None:
+        """A zero-step flow neither reconstructs state nor invokes a callback."""
+        source: p.Result[int] = r[int].fail("stopped") if failed else r[int].ok(3)
+        result: p.Result[int] = source.flow_through()
+        tm.that(result is source, eq=True)
+
+    @staticmethod
+    def test_union_aware_flow_can_transform_the_payload() -> None:
+        """Every step accepts both the initial and subsequent payload domain."""
+
+        def to_text(value: int | str) -> p.Result[str]:
+            return r[str].ok(str(value))
+
+        def decorate(value: int | str) -> p.Result[str]:
+            return r[str].ok(f"[{value}]")
+
+        result: p.Result[int | str] = r[int].ok(3).flow_through(to_text, decorate)
+        tm.ok(result, eq="[3]")
+
+    @staticmethod
+    def test_widening_recovery_preserves_success_identity() -> None:
+        """Union returns need no reconstruction or cast of successful state."""
+
+        def recover(_message: str) -> str:
+            pytest.fail("A successful result must not run its recovery callback")
+
+        def lash(_message: str) -> p.Result[str]:
+            pytest.fail("A successful result must not run its lash callback")
+
+        source: p.Result[int] = r[int].ok(3)
+        recovered: p.Result[int | str] = source.recover(recover)
+        lashed: p.Result[int | str] = source.lash(lash)
+        tm.that(recovered is source, eq=True)
+        tm.that(lashed is source, eq=True)
+
+    @staticmethod
+    def test_widening_lash_keeps_callback_normalization_and_failure_metadata() -> None:
+        """Changing the observed domain preserves the existing normalization."""
+        cause = ValueError("original")
+        callback_result: p.Result[str] = r[str].fail(
+            "mapped",
+            error_code="E_MAPPED",
+            error_data={"kind": "step"},
+            exception=cause,
+        )
+
+        def callback(_message: str) -> p.Result[str]:
+            return callback_result
+
+        result: p.Result[int | str] = r[int].fail("input").lash(callback)
+        tm.fail(result, has="mapped")
+        tm.that(result is not callback_result, eq=True)
+        tm.that(result.error_code, eq=callback_result.error_code)
+        tm.that(result.error_data, eq=callback_result.error_data)
+        tm.that(result.exception is cause, eq=True)
 
     @staticmethod
     def test_empty_fail_combinators_stay_failed_results() -> None:
@@ -145,7 +198,7 @@ class TestsFlextCoreResultFactoryDip:
     @staticmethod
     def test_from_failure_rebuilds_foreign_failure_like() -> None:
         """Test from failure rebuilds foreign failure like."""
-        foreign = _ForeignResult(
+        foreign = m.Tests.FailureEnvelope(
             error="foreign-fail",
             error_code="E_FOREIGN",
             error_data={"k": 1},
@@ -253,26 +306,3 @@ class TestsFlextCoreResultFactoryDip:
         tm.that(result.error_data.get("host"), eq="kept")
         assert "password" not in result.error_data
         assert "api_key" not in result.error_data
-
-
-class _ForeignResult(m.ArbitraryTypesModel):
-    """Foreign result-like shape returned by a ``flow_through`` step."""
-
-    value: int | None = m.Field(default=None, description="Success payload.")
-    error: str | None = m.Field(default=None, description="Failure message.")
-    error_code: str | None = m.Field(default=None, description="Failure code.")
-    error_data: t.JsonMapping | None = m.Field(
-        default=None,
-        description="Failure metadata.",
-    )
-    exception: Exception | None = m.Field(default=None, description="Failure cause.")
-
-    @property
-    def success(self) -> bool:
-        """Success iff no failure message is carried."""
-        return self.error is None
-
-    @property
-    def failure(self) -> bool:
-        """Failure iff a failure message is carried."""
-        return self.error is not None

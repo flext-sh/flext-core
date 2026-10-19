@@ -10,12 +10,12 @@ from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, FlextRuntime, c, m, t
+from flext_core import FlextResult, c, m, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesCollection,
-    FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesMapperExtract,
+    FlextUtilitiesPydantic,
 )
 
 if TYPE_CHECKING:
@@ -59,8 +59,8 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         """
         if not normalize:
             return step
-        normalized = FlextRuntime.normalize_to_metadata(step)
-        if FlextUtilitiesGuardsTypeCore.mapping(normalized):
+        normalized = FlextUtilitiesPydantic.normalize_to_json_value(step)
+        if isinstance(normalized, Mapping):
             return dict(normalized)
         return step
 
@@ -253,7 +253,10 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         """
         resolved = options if options is not None else (m.TransformOptions())
         coerced: t.JsonMapping = (
-            {k: FlextRuntime.normalize_to_metadata(v) for k, v in source.root.items()}
+            {
+                k: FlextUtilitiesPydantic.normalize_to_json_value(v)
+                for k, v in source.root.items()
+            }
             if isinstance(source, m.ConfigMap)
             else source
         )

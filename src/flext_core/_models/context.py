@@ -14,7 +14,6 @@ from flext_core._models._context import (
     FlextModelsContextData,
     FlextModelsContextExport,
     FlextModelsContextMetadata,
-    FlextModelsContextProxyVar,
     FlextModelsContextTokens,
 )
 from flext_core._models._context._scope import FlextModelsContextScope
@@ -22,7 +21,6 @@ from flext_core._models._context._scope import FlextModelsContextScope
 
 class FlextModelsContext(
     FlextModelsContextTokens,
-    FlextModelsContextProxyVar,
     FlextModelsContextData,
     FlextModelsContextExport,
     FlextModelsContextScope,
@@ -31,7 +29,7 @@ class FlextModelsContext(
     """Context management pattern container — MRO facade.
 
     Composes all context model namespaces. Nested classes accessible via
-    FlextModels.* aliases (e.g. m.ContextData, m.StructlogProxyContextVar).
+    FlextModels.* aliases (e.g. m.ContextData and m.StructlogProxyToken).
     """
 
 

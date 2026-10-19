@@ -15,8 +15,6 @@ import time
 from collections.abc import MutableSequence
 from typing import Annotated, ClassVar
 
-from typing_extensions import TypeForm
-
 from flext_core import c, p, t
 from flext_core._models import (
     FlextModelsBase,
@@ -179,14 +177,9 @@ class FlextModelsHandler:
             FlextModelsPydantic.Field(
                 description="Stack of nested execution contexts.",
             ),
-            # Why the quoted forward reference: the module binding
-            # ``FlextModelsHandler`` does not exist while this class body executes,
-            # and class scopes do not chain for runtime name lookup. The empty
-            # default resolves only the container, never the deferred element.
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsPydantic.empty(
-                TypeForm(MutableSequence["FlextModelsHandler.ExecutionContext"]),
-            ),
+            default_factory=lambda: list[FlextModelsHandler.ExecutionContext](),
+            validate_default=True,
         )
 
         @FlextModelsPydantic.computed_field

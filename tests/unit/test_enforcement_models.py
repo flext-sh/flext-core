@@ -15,7 +15,7 @@ from typing import Annotated
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations, messages
 
 type _BARE_DICT_TYPE = t.MappingKV[str, str]
@@ -25,12 +25,42 @@ class TestsFlextEnforcementModels:
     """Tests for ``FlextEnforcementModels``."""
 
     @staticmethod
+    def test_context_defaults_are_independent_readonly_contract_values() -> None:
+        """Bootstrap defaults validate without sharing context collection state."""
+        first_export = m.ContextExport()
+        second_export = m.ContextExport()
+        first_state = m.ContextRuntimeState()
+        second_state = m.ContextRuntimeState()
+
+        assert first_export.data == second_export.data == {}
+        assert first_export.data is not second_export.data
+        assert first_export.statistics == second_export.statistics == {}
+        assert first_export.statistics is not second_export.statistics
+        assert (
+            first_state.statistics.operations
+            == second_state.statistics.operations
+            == {}
+        )
+        assert (
+            first_state.statistics.operations is not second_state.statistics.operations
+        )
+        assert first_state.hooks == second_state.hooks == {}
+        assert first_state.hooks is not second_state.hooks
+        assert first_state.scope_vars == second_state.scope_vars == {}
+        assert first_state.scope_vars is not second_state.scope_vars
+        for model in (m.ContextExport, m.ContextStatistics, m.ContextRuntimeState):
+            assert not messages(
+                u.check(model), fragment="no_raw_collections_field_default"
+            )
+
+    @staticmethod
     def test_any_field_detected(tmp_path: Path) -> None:
         """Test any field detected."""
         with invalid_annotations(tmp_path) as source:
             target = source.BadModel
-            assert isinstance(target, type)
-            assert messages(u.check(target), fragment="Any")
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
+            tm.that(bool(messages(u.check(target), fragment="Any")), eq=True)
 
     @staticmethod
     def test_typed_field_passes() -> None:

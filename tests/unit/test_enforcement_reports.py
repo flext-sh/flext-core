@@ -142,7 +142,8 @@ class TestsFlextCoreEnforcementReports:
         """Test check flags any typed field with rule metadata."""
         with invalid_annotations(tmp_path) as source:
             target = source.BadModel
-            assert isinstance(target, type)
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
             report = u.check(target)
 
         assert any(
@@ -155,7 +156,8 @@ class TestsFlextCoreEnforcementReports:
         """Test check messages embed bracketed rule identifiers."""
         with invalid_annotations(tmp_path) as source:
             target = source.BadModel
-            assert isinstance(target, type)
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
             report = u.check(target)
 
         assert report.violations
@@ -183,8 +185,8 @@ class TestsFlextCoreEnforcementReports:
         """Test check model construction flags any field."""
         with invalid_annotations(tmp_path) as source:
             target = source.BadModel
-            assert isinstance(target, type)
-            assert issubclass(target, m.BaseModel)
+            if not isinstance(target, type) or not issubclass(target, m.BaseModel):
+                pytest.fail("Invalid source fixture did not declare a native model")
             report = FlextUtilitiesEnforcement.check_model_construction(target)
 
         assert report.violations
@@ -314,7 +316,8 @@ class TestsFlextCoreEnforcementReports:
         """Test emit of checked report carries layer tag and fix."""
         with invalid_annotations(tmp_path) as source:
             target = source.BadModel
-            assert isinstance(target, type)
+            if not isinstance(target, type):
+                pytest.fail("Invalid source fixture did not declare a model class")
             report = u.check(target)
         assert report.violations
 

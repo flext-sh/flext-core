@@ -11,33 +11,17 @@ from types import MethodType
 
 from flext_core import c, m, p, r, t
 from flext_core._models import FlextModelsNamespace
-from flext_core._utilities import FlextUtilitiesMetadata, FlextUtilitiesModelOptions
+from flext_core._utilities import FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(
     FlextUtilitiesModelOptions,
-    FlextUtilitiesMetadata,
     FlextModelsNamespace,
 ):
     """Runtime DSL: dispatcher, registry, and service-runtime construction.
 
-    Metadata boundaries and namespace enforcement compose from their own declared
-    owners, independently of the service-runtime builders.
+    Namespace enforcement composes independently of the service-runtime builders.
     """
-
-    @staticmethod
-    def create_instance[T](class_type: type[T]) -> T:
-        """Allocate a scope without invoking its composition constructor again."""
-        return object.__new__(class_type)
-
-    @staticmethod
-    def normalize_to_container[T](val: T) -> t.RuntimeData:
-        """Retain ordinary models and the container's explicit blank-input policy."""
-        if val is None:
-            return ""
-        if isinstance(val, m.BaseModel) and not isinstance(val, m.RootModel):
-            return val
-        return FlextUtilitiesMetadata.normalize_to_metadata(val)
 
     @classmethod
     def build_dispatcher(cls) -> p.Dispatcher:

@@ -1,8 +1,7 @@
 """Core scalar and container type guards.
 
-Provides type narrowing functions for scalar values, containers, flexible
-values, and common validation patterns. All methods use TypeIs for proper
-type inference and return boolean for guard patterns.
+Provides scalar narrowing, SDK shape inspection and native container predicates.
+Shape classification does not establish JSON or domain-content validity.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,13 +10,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, TypeGuard, TypeIs, cast
+from typing import TypeGuard, TypeIs
 
 from flext_core import c, t
-from flext_core._protocols import FlextProtocolsContainer
-
-if TYPE_CHECKING:
-    from pydantic import BaseModel as PydanticBaseModel
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsContainer
 
 
 class FlextUtilitiesGuardsTypeCore:
@@ -30,37 +26,19 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def _object_sequence(
-        value: FlextProtocolsContainer.GuardInput
-        | t.JsonPayload
-        | t.JsonValue
-        | PydanticBaseModel,
-    ) -> TypeIs[Sequence[t.JsonPayload]]:
-        """Check if value is a sequence (list or tuple).
+        value: FlextProtocolsBase.AttributeProbe,
+    ) -> TypeGuard[Sequence[FlextProtocolsBase.AttributeProbe]]:
+        """Inspect a native list/tuple shape without validating its contents.
 
         Returns:
-            The resulting ``TypeIs[Sequence[t.JsonPayload]]``.
+            Whether the opaque SDK value is a native list or tuple.
 
         """
         return isinstance(value, c.SEQUENCE_PAIR_TYPES)
 
     @staticmethod
-    def _object_mapping(
-        value: FlextProtocolsContainer.GuardInput
-        | t.JsonPayload
-        | t.JsonValue
-        | PydanticBaseModel,
-    ) -> TypeIs[Mapping[str, t.JsonPayload]]:
-        """Check if value is a mapping type.
-
-        Returns:
-            The resulting ``TypeIs[Mapping[str, t.JsonPayload]]``.
-
-        """
-        return isinstance(value, Mapping)
-
-    @staticmethod
-    def _all_container_sequence(
-        value: t.SequenceOf[t.JsonValue | t.JsonPayload],
+    def _all_container_sequence[ItemT](
+        value: Sequence[ItemT],
     ) -> bool:
         """Check if all items in sequence are valid containers.
 
@@ -74,8 +52,8 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def all_container_mapping_values(
-        value: t.MappingKV[str, t.JsonValue | t.JsonPayload],
+    def all_container_mapping_values[KeyT, ValueT](
+        value: Mapping[KeyT, ValueT],
     ) -> bool:
         """Check if all values in mapping are valid containers.
 
@@ -96,9 +74,7 @@ class FlextUtilitiesGuardsTypeCore:
             The resulting ``bool``.
 
         """
-        return bool(
-            isinstance(value, Mapping) and cast("dict[str, t.JsonPayload]", value)
-        )
+        return bool(FlextUtilitiesGuardsTypeCore.mapping_view(value) and value)
 
     @staticmethod
     def empty_value(
@@ -119,20 +95,15 @@ class FlextUtilitiesGuardsTypeCore:
         return False
 
     @staticmethod
-    def container_value(
-        value: FlextProtocolsContainer.GuardInput
-        | t.JsonPayload
-        | t.JsonValue
-        | PydanticBaseModel
-        | None,
-    ) -> TypeIs[t.JsonValue]:
-        """Check if value is a valid container (recursive validation).
+    def container_value[ValueT](value: ValueT) -> bool:
+        """Check recursive native container capability without asserting JSON.
 
-        Containers are scalars, paths, or JSON-compatible collections whose
-        members recursively satisfy the metadata contract.
+        Scalars (including datetime), paths, lists, tuples and mapping values
+        retain their native behavior. None is rejected at every depth; mapping
+        keys are not inspected. Accepted data is not converted or narrowed.
 
         Returns:
-            The resulting ``TypeIs[t.JsonValue]``.
+            Whether all values recursively satisfy the native container predicate.
 
         """
         if value is None:
@@ -141,18 +112,18 @@ class FlextUtilitiesGuardsTypeCore:
             return True
         if FlextUtilitiesGuardsTypeCore._object_sequence(value):
             return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
-        if FlextUtilitiesGuardsTypeCore._object_mapping(value):
+        if FlextUtilitiesGuardsTypeCore.mapping_view(value):
             return FlextUtilitiesGuardsTypeCore.all_container_mapping_values(value)
         return False
 
     @staticmethod
     def list_value(
         value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
-    ) -> TypeIs[t.JsonList]:
-        """Check if value is a list.
+    ) -> bool:
+        """Classify a native list without validating its items as JSON.
 
         Returns:
-            The resulting ``TypeIs[t.JsonList]``.
+            Whether the value is a native list.
 
         """
         return isinstance(value, list)
@@ -160,14 +131,44 @@ class FlextUtilitiesGuardsTypeCore:
     @staticmethod
     def mapping(
         value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
-    ) -> TypeIs[t.JsonMapping]:
-        """Check if value is a mapping type.
+    ) -> bool:
+        """Classify a native mapping without validating its keys or values.
 
         Returns:
-            The resulting ``TypeIs[t.JsonMapping]``.
+            Whether the value is a native mapping.
 
         """
         return isinstance(value, Mapping)
+
+    @staticmethod
+    def mapping_view(
+        value: FlextProtocolsBase.AttributeProbe,
+    ) -> TypeIs[
+        Mapping[FlextProtocolsBase.AttributeProbe, FlextProtocolsBase.AttributeProbe]
+    ]:
+        """Refine an opaque SDK value to its native read-only mapping shape.
+
+        Does not inspect keys or contents, require string keys, or validate JSON
+        or domain data. Membership and item access retain their native behavior.
+
+        Returns:
+            Whether the opaque value is a native mapping.
+
+        """
+        return isinstance(value, Mapping)
+
+    @staticmethod
+    def subclass_view[BaseT](
+        candidate: FlextProtocolsBase.AttributeProbe,
+        base: type[BaseT],
+    ) -> TypeGuard[type[BaseT]]:
+        """Inspect an opaque SDK value as a native subclass without constructing it.
+
+        Returns:
+            Whether the value is a runtime class derived from the given base.
+
+        """
+        return isinstance(candidate, type) and issubclass(candidate, base)
 
     @staticmethod
     def primitive(
@@ -209,33 +210,25 @@ class FlextUtilitiesGuardsTypeCore:
         return type(value).__qualname__
 
     @staticmethod
-    def _has_dict_protocol(
-        obj: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
-    ) -> bool:
-        return isinstance(obj, Mapping)
-
-    @staticmethod
     def dict_like(
         value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
-    ) -> TypeIs[Mapping[str, t.JsonPayload]]:
-        """Check if value behaves like a mapping accepted by FLEXT containers.
+    ) -> bool:
+        """Classify the native mapping shape without claiming payload validity.
 
         Returns:
-            The resulting ``TypeIs[Mapping[str, t.JsonPayload]]``.
+            Whether the value is a native mapping.
 
         """
-        if isinstance(value, Mapping):
-            return True
-        return FlextUtilitiesGuardsTypeCore._has_dict_protocol(value)
+        return isinstance(value, Mapping)
 
     @staticmethod
     def list_like(
         value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
-    ) -> TypeIs[Sequence[t.JsonPayload]]:
-        """Check if value behaves like a non-string object sequence.
+    ) -> bool:
+        """Classify native lists/tuples without validating their items as JSON.
 
         Returns:
-            The resulting ``TypeIs[Sequence[t.JsonPayload]]``.
+            Whether the value is a native non-string list or tuple.
 
         """
         return isinstance(value, c.SEQUENCE_PAIR_TYPES) and not isinstance(

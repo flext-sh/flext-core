@@ -301,11 +301,11 @@ class FlextUtilitiesGuards(
         return not (guard_spec.empty is False and check_val == 0)
 
     @staticmethod
-    def _to_container_or_str(value: t.JsonPayload) -> t.JsonValue:
+    def _to_container_or_str[ValueT](value: ValueT) -> ValueT | str:
         """Normalize a value to Container: pass through if already, else str().
 
         Returns:
-            The resulting ``t.JsonValue``.
+            The original accepted value, otherwise its native string form.
 
         """
         return value if FlextUtilitiesGuards.container_value(value) else str(value)
@@ -345,7 +345,14 @@ class FlextUtilitiesGuards(
         *,
         default: t.Scalar | t.JsonList | t.JsonMapping | None = None,
         return_value: bool = False,
-    ) -> t.JsonValue | bool | FlextProtocolsResult.Result[t.JsonValue]:
+    ) -> (
+        t.JsonValue
+        | t.Scalar
+        | t.JsonList
+        | t.JsonMapping
+        | bool
+        | FlextProtocolsResult.Result[t.JsonValue]
+    ):
         """Validate a value into a verdict, value, default, or failure.
 
         An exception raised by the validator counts as a validation failure.
@@ -359,8 +366,8 @@ class FlextUtilitiesGuards(
                 instead of ``False``.
 
         Returns:
-            The validated value, the default, the boolean verdict, or the
-            failed ``p.Result``.
+            The validated value, the already-admitted native scalar/container
+            default, the boolean verdict, or the failed ``p.Result``.
 
         """
         fail_msg = "Guard validation failed"

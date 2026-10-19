@@ -229,7 +229,7 @@ class FlextTypesServices:
         | Enum
         | frozenset[str]
         | GenericAlias
-        | FlextTypesPydantic.JsonValue
+        | FlextTypesServices.JsonPayload
         | ModuleType
         | T
         | tuple[FlextTypesPydantic.JsonValue, ...]

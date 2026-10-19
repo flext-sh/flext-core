@@ -81,7 +81,8 @@ class TestsFlextCoreModelsBaseFullCoverage:
         model = m.Metadata()
         assert model.created_at.tzinfo == UTC
         assert model.version == "1.0.0"
-        assert model.tags == []
+        assert not model.tags
+        assert isinstance(model.tags, tuple)
         assert model.created_by is None
         assert model.attributes == {}
 
