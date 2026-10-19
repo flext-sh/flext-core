@@ -12,14 +12,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import typing
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
+from pathlib import Path
+from typing import TYPE_CHECKING, TypeAliasType
 
 import pytest
 
 import tests.utilities
 from tests import t, u
+from tests.unit._enforcement_support import invalid_annotations
 
 if TYPE_CHECKING:
     from pathlib import PurePath as LazyResolvableType
@@ -33,11 +34,6 @@ class TestsFlextBeartypeEngineAnnotations(
     @pytest.mark.parametrize(
         ("hint", "expected"),
         [
-            (typing.Any, True),
-            (Mapping[str, typing.Any], True),
-            (Mapping[str, t.SequenceOf[typing.Any]], True),
-            (str | typing.Any, True),
-            (typing.Any | None, True),
             (str, False),
             (int, False),
             (str | None, False),
@@ -55,6 +51,26 @@ class TestsFlextBeartypeEngineAnnotations(
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
         assert u.contains_any(hint) is expected
+
+    @pytest.mark.parametrize(
+        "alias_name",
+        [
+            "BareAnyAlias",
+            "NestedAnyAlias",
+            "NestedAnySequenceAlias",
+            "AnyAlias",
+            "OptionalAnyAlias",
+        ],
+    )
+    @staticmethod
+    def test_contains_any_rejects_invalid_source_hints(
+        tmp_path: Path, alias_name: str
+    ) -> None:
+        """Invalid annotations are source inputs, never owned type declarations."""
+        with invalid_annotations(tmp_path) as source:
+            alias = getattr(source.InvalidTypes, alias_name)
+            assert isinstance(alias, TypeAliasType)
+            assert u.contains_any(alias.__value__)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -117,22 +133,29 @@ class TestsFlextBeartypeEngineAnnotations(
         assert u.matches_str_none_union(hint) is expected
 
     @pytest.mark.parametrize(
-        ("alias_value", "expected"),
+        ("alias_name", "expected"),
         [
-            (t.AnyAlias.__value__, True),
-            (t.NestedAnyAlias.__value__, True),
-            (t.CleanAlias.__value__, False),
+            ("AnyAlias", True),
+            ("NestedAnyAlias", True),
+            ("CleanAlias", False),
             (None, False),
         ],
     )
     @staticmethod
     def test_alias_contains_any_unwraps_alias_values(
-        alias_value: t.TypeHintSpecifier | None,
+        tmp_path: Path,
+        alias_name: str | None,
         *,
         expected: bool,
     ) -> None:
         """alias_contains_any detects Any inside a resolved type-alias value."""
-        assert u.alias_contains_any(alias_value) is expected
+        with invalid_annotations(tmp_path) as source:
+            if alias_name is None:
+                assert u.alias_contains_any(None) is expected
+            else:
+                alias = getattr(source.InvalidTypes, alias_name)
+                assert isinstance(alias, TypeAliasType)
+                assert u.alias_contains_any(alias.__value__) is expected
 
     @staticmethod
     def test_alias_inspection_uses_explicit_owner_for_static_only_names() -> None:

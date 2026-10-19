@@ -60,7 +60,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         params: FlextModelsEnforcement.FieldShapeParams,
         info: FieldInfo,
         *,
-        declared_annotation: FlextTypingBase.UnconstrainedValue | None = None,
+        declared_annotation: FlextTypingBase.TypeHintSpecifier | None = None,
     ) -> FlextTypingBase.StrMapping | None:
         """Run field-shape checks in canonical order and return the first hit.
 
@@ -197,7 +197,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
     def _check_inline_union(
         cls,
         params: FlextModelsEnforcement.FieldShapeParams,
-        declared_annotation: FlextTypingBase.UnconstrainedValue | None,
+        declared_annotation: FlextTypingBase.TypeHintSpecifier | None,
     ) -> FlextTypingBase.StrMapping | None:
         """Check the forbid_inline_union flag against the declared annotation.
 

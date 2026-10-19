@@ -9,22 +9,35 @@ from __future__ import annotations
 from importlib import import_module
 from types import MethodType
 
-from flext_core import FlextRuntime, c, m, p, r, t
+from flext_core import c, m, p, r, t
 from flext_core._models import FlextModelsNamespace
-from flext_core._utilities import FlextUtilitiesModelOptions
+from flext_core._utilities import FlextUtilitiesMetadata, FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(
     FlextUtilitiesModelOptions,
-    FlextRuntime,
+    FlextUtilitiesMetadata,
     FlextModelsNamespace,
 ):
     """Runtime DSL: dispatcher, registry, and service-runtime construction.
 
-    The facade receives the runtime metadata helpers (``u.normalize_to_metadata``)
-    and namespace enforcement through this declared owner: the facade generator
-    composes only classes the ``_utilities`` family declares.
+    Metadata boundaries and namespace enforcement compose from their own declared
+    owners, independently of the service-runtime builders.
     """
+
+    @staticmethod
+    def create_instance[T](class_type: type[T]) -> T:
+        """Allocate a scope without invoking its composition constructor again."""
+        return object.__new__(class_type)
+
+    @staticmethod
+    def normalize_to_container[T](val: T) -> t.RuntimeData:
+        """Retain ordinary models and the container's explicit blank-input policy."""
+        if val is None:
+            return ""
+        if isinstance(val, m.BaseModel) and not isinstance(val, m.RootModel):
+            return val
+        return FlextUtilitiesMetadata.normalize_to_metadata(val)
 
     @classmethod
     def build_dispatcher(cls) -> p.Dispatcher:
@@ -91,8 +104,8 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def registry_same_value(
-        previous: t.RegisterableService | t.DispatchableHandler,
-        candidate: t.RegisterableService | t.DispatchableHandler,
+        previous: p.RegisterableService | p.DispatchableHandler,
+        candidate: p.RegisterableService | p.DispatchableHandler,
     ) -> bool:
         """Compare collaborators by identity, immutable scalars by type and value."""
         return (
@@ -136,7 +149,7 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def handler_metadata(
-        candidate: t.RegisterableService | t.DispatchableHandler,
+        candidate: p.RegisterableService | p.DispatchableHandler,
         *,
         name: str,
     ) -> p.DecoratorConfig | None:

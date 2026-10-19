@@ -62,7 +62,7 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             ...
 
         @overload
-        def resolve[T: t.RegisterableService](
+        def resolve[T: FlextProtocolsContainer.RegisterableService](
             self,
             name: str,
             *,
@@ -75,7 +75,9 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             name: str,
             *,
             type_cls: None = None,
-        ) -> FlextProtocolsResult.Result[t.RegisterableService]: ...
+        ) -> FlextProtocolsResult.Result[
+            FlextProtocolsContainer.RegisterableService
+        ]: ...
 
         def snapshot(self) -> m.ConfigMap:
             """Return the merged settings exposed by this container."""
@@ -89,15 +91,21 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             """List all registered services."""
             ...
 
-        def bind(self, name: str, impl: t.RegisterableService) -> Self:
+        def bind(
+            self, name: str, impl: FlextProtocolsContainer.RegisterableService
+        ) -> Self:
             """Bind a concrete service instance or value."""
             ...
 
-        def factory(self, name: str, impl: t.FactoryCallable) -> Self:
+        def factory(
+            self, name: str, impl: FlextProtocolsContainer.FactoryCallable
+        ) -> Self:
             """Bind a factory callable."""
             ...
 
-        def resource(self, name: str, impl: t.ResourceCallable) -> Self:
+        def resource(
+            self, name: str, impl: FlextProtocolsContainer.ResourceCallable
+        ) -> Self:
             """Bind a lifecycle-managed resource factory."""
             ...
 

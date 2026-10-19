@@ -42,7 +42,6 @@ from pydantic import (
     AliasChoices,
     AliasPath,
     BeforeValidator,
-    ConfigDict,
     Discriminator,
     FailFast,
     GetPydanticSchema,
@@ -58,27 +57,9 @@ from pydantic import (
     model_validator,
 )
 from pydantic_core import PydanticUndefined, PydanticUndefinedType
-from pydantic_settings import (
-    BaseSettings as _PydanticBaseSettings,
-    SettingsConfigDict as _PydanticSettingsConfigDict,
-)
 from typing_extensions import TypeForm
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
-
-# Preserve the imported config type before declaring its facade mirror.
-_PydanticConfigDict = ConfigDict
-
-# Contract for the class-member shapes ``field_validator`` decorates: the
-# function shapes and the ``classmethod``/``staticmethod``/``partialmethod``
-# descriptors pydantic auto-wraps. Mirrors pydantic's validator-callable union
-# (``pydantic.functional_validators`` ``_V2*`` bounds) without private imports.
-type _FieldValidatorCallable = (
-    Callable[..., FlextProtocolsBase.AttributeProbe]
-    | classmethod[type, ..., FlextProtocolsBase.AttributeProbe]
-    | staticmethod[..., FlextProtocolsBase.AttributeProbe]
-    | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
-)
 
 
 class FlextModelsPydantic:
@@ -91,6 +72,13 @@ class FlextModelsPydantic:
         BaseModel: Pydantic v2 base for all data models with validation
         RootModel: Container model for single validated values/collections
     """
+
+    type FieldValidatorCallable = (
+        Callable[..., FlextProtocolsBase.AttributeProbe]
+        | classmethod[type, ..., FlextProtocolsBase.AttributeProbe]
+        | staticmethod[..., FlextProtocolsBase.AttributeProbe]
+        | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
+    )
 
     # Static type resolves the polymorphic factory contract (protocols layer);
     # runtime binds the native pydantic functions byte-for-byte.
@@ -223,7 +211,7 @@ class FlextModelsPydantic:
     class BaseModel(pydantic.BaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
-    class BaseSettings(_PydanticBaseSettings):
+    class BaseSettings(pydantic_settings.BaseSettings):
         """Canonical BaseSettings exported through the FLEXT models facade."""
 
     class EnvSettingsSource(pydantic_settings.EnvSettingsSource):
@@ -239,10 +227,10 @@ class FlextModelsPydantic:
     class RootModel[RootValueT](pydantic.RootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 
-    class ConfigDict(_PydanticConfigDict, total=False):
+    class ConfigDict(pydantic.ConfigDict, total=False):
         """Canonical model configuration exported through the models facade."""
 
-    class SettingsConfigDict(_PydanticSettingsConfigDict, total=False):
+    class SettingsConfigDict(pydantic_settings.SettingsConfigDict, total=False):
         """Canonical settings configuration exported through the models facade."""
 
     SkipValidation = SkipValidation
@@ -260,7 +248,7 @@ class FlextModelsPydantic:
 
         @overload
         @staticmethod
-        def field_validator[ValidatorT: _FieldValidatorCallable](
+        def field_validator[ValidatorT: FieldValidatorCallable](
             field: str,
             /,
             *fields: str,
@@ -273,7 +261,7 @@ class FlextModelsPydantic:
 
         @overload
         @staticmethod
-        def field_validator[ValidatorT: _FieldValidatorCallable](
+        def field_validator[ValidatorT: FieldValidatorCallable](
             field: str,
             /,
             *fields: str,
@@ -286,7 +274,7 @@ class FlextModelsPydantic:
 
         @overload
         @staticmethod
-        def field_validator[ValidatorT: _FieldValidatorCallable](
+        def field_validator[ValidatorT: FieldValidatorCallable](
             field: str,
             /,
             *fields: str,
@@ -295,7 +283,7 @@ class FlextModelsPydantic:
         ) -> Callable[[ValidatorT], ValidatorT]: ...
 
         @staticmethod
-        def field_validator[ValidatorT: _FieldValidatorCallable](
+        def field_validator[ValidatorT: FieldValidatorCallable](
             field: str,
             /,
             *fields: str,

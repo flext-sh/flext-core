@@ -12,17 +12,18 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from contextlib import AbstractContextManager
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import (
-    FlextProtocolsBase,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsLogging,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
-)
-from flext_core._typings import FlextTypesPydantic, FlextTypesServices, FlextTypingBase
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsSettings
+
+if TYPE_CHECKING:
+    from flext_core import t
+    from flext_core._protocols import (
+        FlextProtocolsContainer,
+        FlextProtocolsContext,
+        FlextProtocolsLogging,
+        FlextProtocolsResult,
+    )
 
 
 class FlextProtocolsService:
@@ -37,7 +38,7 @@ class FlextProtocolsService:
             service: FlextProtocolsBase.Base,
             /,
             *requests: FlextProtocolsBase.Base,
-        ) -> FlextProtocolsResult.Result[FlextTypesServices.JsonPayload]: ...
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
 
     @runtime_checkable
     class ServiceOperation(Protocol):
@@ -52,7 +53,7 @@ class FlextProtocolsService:
         @property
         def request(
             self,
-        ) -> FlextTypesServices.ModelClass[FlextTypesPydantic.BaseModelType] | None: ...
+        ) -> t.ModelClass[t.BaseModelType] | None: ...
 
         @property
         def handler(self) -> FlextProtocolsService.ServiceOperationHandler: ...
@@ -91,9 +92,9 @@ class FlextProtocolsService:
         surface so consumers depend on the abstraction instead of the concrete.
         """
 
-        settings_type: FlextTypesServices.SettingsClass | None
+        settings_type: FlextProtocolsSettings.SettingsType | None
         runtime_settings: FlextProtocolsSettings.Settings | None
-        settings_overrides: FlextTypingBase.ScalarMapping | None
+        settings_overrides: t.ScalarMapping | None
         initial_context: FlextProtocolsContext.Context | None
 
         @property
@@ -119,7 +120,7 @@ class FlextProtocolsService:
         def track(
             self,
             operation_name: str,
-        ) -> AbstractContextManager[Mapping[str, FlextTypesServices.JsonPayload]]:
+        ) -> AbstractContextManager[Mapping[str, t.JsonPayload]]:
             """Track operation performance with timing and context cleanup."""
             ...
 

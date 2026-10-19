@@ -16,6 +16,7 @@ from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsContainer,
     FlextProtocolsContext,
+    FlextProtocolsHandler,
     FlextProtocolsLogging,
 )
 from flext_core._typings import FlextTypesServices
@@ -70,7 +71,7 @@ class FlextDecoratorsBase:
         cls,
         first_arg: FlextProtocolsLogging.Logger | _LoggerCarrier | None = None,
         *,
-        func: FlextTypesServices.DispatchableHandler | None = None,
+        func: FlextProtocolsHandler.DispatchableHandler | None = None,
         func_module: str | None = None,
     ) -> FlextProtocolsLogging.Logger:
         """Resolve the logger associated with the decorated call.

@@ -16,6 +16,7 @@ from flext_core.flextlazy_part_01 import FlextLazyPart01
 if TYPE_CHECKING:
     from collections.abc import Mapping, MutableMapping, Sequence
 
+    from flext_core import t
     from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
@@ -170,7 +171,7 @@ class FlextLazy(FlextLazyPart01):
         *,
         publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
-    ) -> None:
+    ) -> t.LazyExportHooks:
         """Install __getattr__/__dir__/__all__ and publish _LAZY_IMPORTS.
 
         The normalized map is published into the module globals as
@@ -181,6 +182,9 @@ class FlextLazy(FlextLazyPart01):
         module-level literal or inline call — satisfy that contract from
         the single owner.
 
+        Returns:
+            The installed PEP 562 hooks, reused for identical installation inputs.
+
         """
         pre_signature: tuple[int, int, int, bool] = (
             id(module_globals),
@@ -188,8 +192,9 @@ class FlextLazy(FlextLazyPart01):
             0 if public_exports is None else id(public_exports),
             publish_all,
         )
-        if self.install_cache.get(module_name) == pre_signature:
-            return
+        cached = self.install_cache.get(module_name)
+        if cached is not None and cached[0] == pre_signature:
+            return cached[1]
 
         normalized = self._norm_map(module_name, lazy_imports)
         for name in normalized:
@@ -204,6 +209,9 @@ class FlextLazy(FlextLazyPart01):
         def _module_getattr(name: str) -> ModuleGlobalValue:
             return self.get(name, normalized, module_globals, module_name)
 
+        def _module_dir() -> list[str]:
+            return list(names)
+
         module_globals["__getattr__"] = _module_getattr
         # Synthetic consumer namespaces (plain dicts that never enter
         # sys.modules) install the dict-level ``__getattr__`` above; the
@@ -211,12 +219,14 @@ class FlextLazy(FlextLazyPart01):
         target = sys.modules.get(module_name)
         if target is not None:
             vars(target)["__getattr__"] = _module_getattr
-        module_globals["__dir__"] = lambda: list(names)
+        module_globals["__dir__"] = _module_dir
         if publish_all:
             module_globals["__all__"] = names
 
         self.cleanup(module_name, normalized)
-        self.install_cache[module_name] = pre_signature
+        hooks = (_module_getattr, _module_dir)
+        self.install_cache[module_name] = (pre_signature, hooks)
+        return hooks
 
 
 __all__: list[str] = ["FlextLazy"]

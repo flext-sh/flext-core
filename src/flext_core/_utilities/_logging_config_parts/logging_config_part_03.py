@@ -14,7 +14,6 @@ import logging
 import structlog
 
 from flext_core import FlextSettings, c, m, p, t
-from flext_core._runtime import FlextRuntimeBase
 from flext_core._utilities._logging_config_parts import (
     logging_config_part_01,
     logging_config_part_02,
@@ -22,6 +21,18 @@ from flext_core._utilities._logging_config_parts import (
 
 
 class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingConfig):
+    @staticmethod
+    def resolve_effective_log_level(
+        *,
+        trace: bool,
+        debug: bool,
+        log_level: t.LogLevel,
+        log_level_explicit: bool = True,
+    ) -> t.LogLevel:
+        """Keep trace detail independent of the configured logging threshold."""
+        _ = trace
+        return c.LogLevel.DEBUG if debug and not log_level_explicit else log_level
+
     @staticmethod
     def logging_settings() -> p.LoggingSettings:
         """Return the elected application provider, or the actual Core settings."""
@@ -48,7 +59,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         current = (
             runtime_settings if runtime_settings is not None else cls.logging_settings()
         )
-        overrides: t.MutableMappingKV[str, t.SettingsOverride | None] = {
+        overrides: t.MutableMappingKV[str, p.SettingsOverride | None] = {
             key: value
             for key, value in (
                 ("log_level", log_level),
@@ -59,7 +70,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
             if value is not None
         }
         selected = current.clone(**overrides)
-        level = FlextRuntimeBase.resolve_effective_log_level(
+        level = cls.resolve_effective_log_level(
             log_level=c.LogLevel(
                 str(logging.getLevelName(cls.level_number(selected.log_level)))
             ),

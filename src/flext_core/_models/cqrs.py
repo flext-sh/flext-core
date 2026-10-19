@@ -11,13 +11,12 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from typing_extensions import TypeForm
 
 from flext_core import c, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._cqrs_parts import flextmodelscqrs_part_01
-from flext_core._runtime import FlextRuntimeMetadata
 from flext_core._utilities import FlextUtilitiesGenerators
 
 # NOTE (multi-agent): mro-i6nq.12 — consolidated _cqrs_parts/part_01..02 (one
@@ -151,13 +150,11 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
                 "Pagination",
                 flextmodelscqrs_part_01.FlextModelsCqrs.Pagination,
             )
-            normalized_input = FlextRuntimeMetadata.normalize_model_input_mapping(v)
-            if normalized_input is None:
+            if v is None:
                 return pagination_cls()
-            try:
-                return pagination_cls.model_validate(normalized_input)
-            except ValidationError:
-                return pagination_cls()
+            return pagination_cls.model_validate(
+                v.model_dump(mode="json") if isinstance(v, BaseModel) else v
+            )
 
     class Handler(FlextModelsBase.ArbitraryTypesModel):
         """Handler configuration model."""

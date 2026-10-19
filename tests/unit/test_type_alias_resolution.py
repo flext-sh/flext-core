@@ -10,14 +10,63 @@ import ast
 import warnings
 
 import pytest
+from typing_extensions import TypeForm
 
-from tests import c, m, u
+from tests import c, m, p, u
 from tests.fixtures import type_aliases
 from tests.fixtures.type_aliases import TestsFlextTypeAliasDeclarations
 
 
 class TestsFlextTypeAliasResolution:
     """Tests for ``TypeAliasResolution``."""
+
+    @staticmethod
+    def test_registration_ports_validate_without_declaration_rebuild() -> None:
+        """Specialized service aliases resolve during native model validation."""
+        payload = m.ConfigMap(root={"bootstrap": "value"})
+        service = m.ServiceRegistration(name="bootstrap", service=payload)
+        assert service.service is payload
+
+        def factory() -> p.ServiceValue:
+            return payload
+
+        registration = m.ServiceRegistrationSpec(
+            services={"bootstrap": payload},
+            factories={"factory": factory},
+            resources={"resource": factory},
+        )
+        assert registration.services is not None
+        assert registration.services["bootstrap"] is payload
+        assert registration.factories is not None
+        assert registration.factories["factory"]() is payload
+        assert registration.resources is not None
+        assert registration.resources["resource"]() is payload
+        assert (
+            m.FactoryRegistration(name="factory", factory=factory).factory() is payload
+        )
+        assert (
+            m.ResourceRegistration(name="resource", factory=factory).factory()
+            is payload
+        )
+
+    @staticmethod
+    def test_model_and_logging_ports_resolve_at_validation_boundary() -> None:
+        """Protocol-bearing input aliases remain runtime-valid Pydantic inputs."""
+        payload = m.ConfigMap(root={"bootstrap": "value"})
+        failure = m.ResultFailureSpec(error_data=payload)
+        assert failure.error_data is payload
+        event = u.type_adapter(TypeForm(p.LoggingEvent)).validate_python({
+            "payload": payload,
+            "event": "bootstrap",
+        })
+        assert event["payload"] is payload
+        assert event["event"] == "bootstrap"
+        overrides = u.type_adapter(
+            TypeForm(p.SettingsOverridesMapping)
+        ).validate_python({
+            "payload": payload,
+        })
+        assert overrides["payload"] is payload
 
     @staticmethod
     def test_source_inspection_keeps_parser_and_alias_contracts_distinct() -> None:
@@ -69,7 +118,10 @@ class TestsFlextTypeAliasResolution:
 
         assert not report.complete
         assert report.deferred
-        expected = {f"{target.__qualname__}.{name}" for name in ("Deferred", "Nested")}
+        expected = {
+            f"{target.__qualname__}.{name}"
+            for name in ("Deferred", "Nested", "Factory")
+        }
         assert {item.location for item in report.deferred} == expected
         assert all(item.tag == "alias_any" for item in report.deferred)
         assert all(
@@ -106,7 +158,7 @@ class TestsFlextTypeAliasResolution:
         alias = TestsFlextTypeAliasDeclarations.unbound()
 
         with pytest.raises(NameError) as raised:
-            u.resolve_type_alias_value(alias)
+            u.resolve_type_alias_value(alias, owner=m.ArbitraryTypesModel)
 
         assert raised.value.name == "DeferredPath"
 
@@ -121,17 +173,46 @@ class TestsFlextTypeAliasResolution:
         assert raised.value.name == "DeferredPath"
 
     @staticmethod
-    def test_unrelated_owner_context_cannot_prove_a_deferral() -> None:
-        """Test unrelated owner context cannot prove a deferral."""
+    def test_consumer_context_preserves_the_foreign_alias_declaration() -> None:
+        """The consuming model is not the lexical owner of an imported alias."""
         alias = TestsFlextTypeAliasDeclarations.LegalTypes.Deferred
 
-        with pytest.raises(NameError) as raised:
-            u.resolve_type_alias_value(
-                alias,
-                owner=TestsFlextTypeAliasDeclarations.InvalidTypes,
+        class Consumer(m.ArbitraryTypesModel):
+            value: int = m.Field(default=0, description="Consumer-owned field")
+            factory: TestsFlextTypeAliasDeclarations.LegalTypes.Factory | None = (
+                m.Field(
+                    default=None, description="Foreign alias consumed by this model"
+                )
             )
 
-        assert raised.value.name == "DeferredPath"
+        deferred = u.deferred_alias(alias, owner=Consumer)
+        assert deferred is not None
+        assert deferred.module == type_aliases.__name__
+        assert deferred.qualname == (
+            f"{TestsFlextTypeAliasDeclarations.LegalTypes.__qualname__}.Deferred"
+        )
+        assert deferred.unavailable_imports == ("DeferredPath",)
+        assert u.deferred(alias, owner=Consumer) == (deferred,)
+        assert u.resolve_type_alias_value(alias, owner=Consumer) is None
+        assert Consumer(value=1).value == 1
+        report = u.check(Consumer)
+        assert not report.complete
+        assert any(item.alias == deferred for item in report.deferred)
+
+    @staticmethod
+    def test_equal_alias_names_do_not_replace_runtime_identity() -> None:
+        """Only the exact alias binding can authenticate its defining AST path."""
+        owner = TestsFlextTypeAliasDeclarations.OtherScope
+        alias = owner.Deferred
+        assert u.resolve_type_alias_value(alias, owner=m.ArbitraryTypesModel) is int
+        assert u.deferred_alias(alias, owner=m.ArbitraryTypesModel) is None
+        assert (
+            u.deferred_alias(
+                TestsFlextTypeAliasDeclarations.LegalTypes.Deferred,
+                owner=owner,
+            )
+            is not None
+        )
 
     @staticmethod
     def test_guarded_import_in_other_scope_does_not_hide_missing_name() -> None:
@@ -147,9 +228,20 @@ class TestsFlextTypeAliasResolution:
         with pytest.raises(AttributeError) as raised:
             u.alias_contains_any(
                 TestsFlextTypeAliasDeclarations.InvalidAttributeTypes.Invalid,
+                owner=m.ArbitraryTypesModel,
             )
 
         assert raised.value.name == "Value"
+
+    @staticmethod
+    def test_foreign_broken_alias_keeps_its_causal_name_error() -> None:
+        """A consumer context cannot normalize an unguarded alias failure."""
+        with pytest.raises(NameError) as raised:
+            u.resolve_type_alias_value(
+                TestsFlextTypeAliasDeclarations.InvalidTypes.Invalid,
+                owner=m.ArbitraryTypesModel,
+            )
+        assert raised.value.name == "Absent"
 
     @staticmethod
     def test_check_does_not_turn_an_invalid_alias_into_an_empty_report() -> None:

@@ -58,7 +58,7 @@ def string_union_members(declared: str) -> int:
     )
 
 
-def declared_union_members(annotation: t.UnconstrainedValue | None) -> int:
+def declared_union_members(annotation: t.TypeHintSpecifier | None) -> int:
     """Count union arms from declaration syntax without expanding aliases.
 
     Returns:

@@ -60,7 +60,7 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             description="Explicit command bus retained by this scope; otherwise a fresh bus is built.",
         )
         services: Annotated[
-            t.MappingKV[str, t.RegisterableService] | None,
+            p.ServiceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Services",
@@ -69,7 +69,7 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             ),
         ] = None
         factories: Annotated[
-            t.MappingKV[str, t.FactoryCallable] | None,
+            p.FactoryMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Factories",
@@ -78,7 +78,7 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             ),
         ] = None
         resources: Annotated[
-            t.MappingKV[str, t.ResourceCallable] | None,
+            p.ResourceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Resources",

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import typing
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import (
     ClassVar,
     Final,
@@ -24,11 +25,7 @@ from typing import (
 import pytest
 
 from tests import m, t, u
-
-# Deliberate broad-annotation fixture: the layered checker under test must
-# detect this exact runtime type, so it is exposed as a type alias usable
-# inside an annotation.
-type _ANY_TYPE = t.UnconstrainedValue
+from tests.unit._enforcement_support import invalid_annotations
 
 
 def _non_runtime_decorator(cls: type) -> type:
@@ -112,17 +109,21 @@ class TestsFlextCoreEnforcementLayers:
         return _PProtocols
 
     @staticmethod
-    def _types_any_alias() -> type:
-        class _TTypes:
-            type BadAlias = _ANY_TYPE
-
-        return _TTypes
+    def test_source_any_alias_is_flagged(tmp_path: Path) -> None:
+        """The native checker rejects invalid aliases loaded from source."""
+        with invalid_annotations(tmp_path) as source:
+            target = source.InvalidTypes
+            assert isinstance(target, type)
+            report = u.check(target, layer="types")
+            assert ("Types", "alias_any") in (
+                TestsFlextCoreEnforcementLayers._rule_tags(report)
+            )
 
     @staticmethod
     def _utilities_instance_method() -> type:
         # Built dynamically: the offending shape is an instance method, which a
         # ``class`` body would see rewritten to ``@staticmethod`` by ``make fix``.
-        def _run(_self: t.UnconstrainedValue) -> None:
+        def _run[SelfT](_self: SelfT) -> None:
             return None
 
         return type("_UUtilities", (), {"run": _run})
@@ -249,7 +250,6 @@ class TestsFlextCoreEnforcementLayers:
                 "Protocols",
                 "proto_not_runtime",
             ),
-            ("_types_any_alias", "types", "Types", "alias_any"),
             (
                 "_utilities_instance_method",
                 "utilities",

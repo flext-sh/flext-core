@@ -350,7 +350,7 @@ class_stem_override = "XmlAPI"
     @staticmethod
     def test_constant_placement_governs_enforce_079(
         name: str,
-        body: t.MutableMappingKV[str, t.UnconstrainedValue],
+        body: t.MappingKV[str, t.StrMapping | frozenset[str] | None],
         module_override: str | None,
         *,
         expect_enforce_079: bool,

@@ -23,19 +23,18 @@ from flext_core._protocols import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core.typings import ProtocolGuardInput
-
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
     _protocol_specs_cache: (
-        t.MappingKV[str, Callable[[ProtocolGuardInput], bool]] | None
+        t.MappingKV[str, Callable[[FlextProtocolsContainer.ProtocolGuardInput], bool]]
+        | None
     ) = None
     _protocol_type_map_cache: MappingProxyType[type, str] | None = None
 
     @classmethod
     def _get_protocol_specs(
         cls,
-    ) -> t.MappingKV[str, Callable[[ProtocolGuardInput], bool]]:
+    ) -> t.MappingKV[str, Callable[[FlextProtocolsContainer.ProtocolGuardInput], bool]]:
         if cls._protocol_specs_cache is None:
             cls._protocol_specs_cache = MappingProxyType({
                 c.Directory.CONFIG.value: lambda v: isinstance(
@@ -74,15 +73,19 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
         return cls._protocol_type_map_cache
 
     @staticmethod
-    def context(value: ProtocolGuardInput) -> TypeIs[FlextProtocolsContext.Context]:
+    def context(
+        value: FlextProtocolsContainer.ProtocolGuardInput,
+    ) -> TypeIs[FlextProtocolsContext.Context]:
         return isinstance(value, FlextProtocolsContext.Context)
 
     @staticmethod
-    def result_like(value: ProtocolGuardInput) -> bool:
+    def result_like(value: FlextProtocolsContainer.ProtocolGuardInput) -> bool:
         return isinstance(value, FlextProtocolsResult.Result)
 
     @classmethod
-    def _check_protocol(cls, value: ProtocolGuardInput, name: str) -> bool:
+    def _check_protocol(
+        cls, value: FlextProtocolsContainer.ProtocolGuardInput, name: str
+    ) -> bool:
         if name == c.FIELD_CONTEXT:
             return cls.context(value)
         matched = False

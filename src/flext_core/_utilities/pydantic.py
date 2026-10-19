@@ -24,6 +24,7 @@ from pydantic import (
 )
 from pydantic_core import from_json, to_json, to_jsonable_python
 
+from flext_core import t
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsPydantic
 from flext_core._utilities import (
@@ -69,6 +70,13 @@ class FlextUtilitiesPydantic(
     from_json = staticmethod(from_json)
     to_json = to_json
     to_jsonable_python = to_jsonable_python
+
+    @staticmethod
+    def normalize_to_json_value[T](value: T) -> t.JsonValue:
+        """Serialize with the native SDK, then validate the JSON value contract."""
+        return FlextUtilitiesTypingAdapterJson.json_value_adapter().validate_python(
+            to_jsonable_python(value), strict=True
+        )
 
 
 __all__: tuple[str, ...] = ("FlextUtilitiesPydantic",)

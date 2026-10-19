@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from threading import RLock
 from typing import Annotated, ClassVar
 
 from typing_extensions import TypeForm
@@ -24,6 +25,12 @@ from flext_core._utilities import FlextUtilitiesPydantic
 class FlextModelsRegistry:
     """Registry model namespace for handler registration aggregates."""
 
+    class RegistryServiceState(FlextModelsBase.ArbitraryTypesModel):
+        """Instance-owned synchronized registry access for composed services."""
+
+        _registry: p.Registry | None = FlextModelsPydantic.PrivateAttr(None)
+        _registry_lock: p.Lock = FlextModelsPydantic.PrivateAttr(default_factory=RLock)
+
     class RegistryOptions(FlextModelsBase.ArbitraryTypesModel):
         """Validated runtime dependency and plugin ownership of a registry."""
 
@@ -34,7 +41,7 @@ class FlextModelsRegistry:
         _registered_keys: set[str] = FlextModelsPydantic.PrivateAttr(
             default_factory=FlextModelsPydantic.empty(TypeForm(set[str])),
         )
-        _class_plugin_storage: ClassVar[dict[str, t.RegisterableService]] = {}
+        _class_plugin_storage: ClassVar[dict[str, p.RegisterableService]] = {}
 
     class RegistrySummary(FlextModelsEntity.Value):
         """Aggregated outcome for batch handler registration tracking."""

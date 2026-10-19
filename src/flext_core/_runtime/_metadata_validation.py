@@ -7,19 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 from typing_extensions import TypeForm
 
-from flext_core import c
-from flext_core._protocols import FlextProtocolsResult
+from flext_core import c, p, t
 from flext_core._runtime import FlextRuntimeMetadata
-from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesBase
-
-if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesServices
 
 
 class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
@@ -27,8 +21,8 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
 
     @staticmethod
     def normalize_metadata_input_mapping(
-        value: FlextTypesServices.MetadataInput | FlextTypesServices.JsonPayload,
-    ) -> FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None] | None:
+        value: p.MetadataInput | t.JsonPayload,
+    ) -> t.MappingKV[str, t.JsonPayload | None] | None:
         """Normalize mapping-like metadata input while preserving explicit None.
 
         Returns:
@@ -49,22 +43,22 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
                 )
                 for key, item in value.items()
             }
-        if not isinstance(value, FlextProtocolsResult.HasModelDump):
+        if not isinstance(value, p.HasModelDump):
             raise TypeError(c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
         dumped = value.model_dump(mode="json")
         return {
             key: None
             if item is None
-            else FlextUtilitiesBase.type_adapter(
-                TypeForm(FlextTypingBase.JsonValue)
-            ).validate_python(item)
+            else FlextUtilitiesBase.type_adapter(TypeForm(t.JsonValue)).validate_python(
+                item
+            )
             for key, item in dumped.items()
         }
 
     @staticmethod
     def validate_metadata_attributes(
-        value: FlextTypesServices.MetadataInput,
-    ) -> FlextTypingBase.JsonMapping:
+        value: p.MetadataInput,
+    ) -> t.JsonMapping:
         """Normalize and validate metadata attributes input.
 
         Returns:
@@ -87,20 +81,16 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
                 raise ValueError(
                     c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key),
                 )
-        validated_metadata: FlextTypingBase.JsonMapping = (
-            FlextUtilitiesBase.type_adapter(
-                Mapping[str, FlextTypingBase.JsonValue]
-            ).validate_python({
-                key: item
-                for key, item in normalized_mapping.items()
-                if item is not None
-            })
-        )
+        validated_metadata: t.JsonMapping = FlextUtilitiesBase.type_adapter(
+            Mapping[str, t.JsonValue]
+        ).validate_python({
+            key: item for key, item in normalized_mapping.items() if item is not None
+        })
         return validated_metadata
 
     @staticmethod
     def validate_metadata_model_input[TModel: BaseModel](
-        value: FlextTypesServices.MetadataInput,
+        value: p.MetadataInput,
         metadata_model: type[TModel],
     ) -> TModel:
         """Normalize metadata-like input into the provided metadata model.
@@ -114,9 +104,9 @@ class FlextRuntimeMetadataValidation(FlextRuntimeMetadata):
         if isinstance(value, metadata_model):
             return value
         if isinstance(value, Mapping):
-            raw_mapping_obj: FlextTypingBase.MappingKV[
+            raw_mapping_obj: t.MappingKV[
                 str,
-                FlextTypesServices.JsonPayload | None,
+                t.JsonPayload | None,
             ] = value
         else:
             raw_mapping_obj = value.model_dump(mode="json")

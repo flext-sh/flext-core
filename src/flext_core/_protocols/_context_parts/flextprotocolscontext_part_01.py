@@ -117,14 +117,14 @@ class FlextProtocolsContext:
         """Protocol for the service-scoped context namespace."""
 
         @staticmethod
-        def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
+        def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
             """Resolve a service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
             service_name: str,
-            service: t.RegisterableService,
+            service: p.RegisterableService,
         ) -> p.Result[bool]:
             """Register a service through the configured container."""
             ...

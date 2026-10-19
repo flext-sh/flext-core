@@ -46,7 +46,7 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def resolve_logging_exception_info(
-        value: t.LoggingEventValue | None,
+        value: p.LoggingEventValue | None,
     ) -> t.LoggingExceptionInfo | None:
         """Resolve native exception inputs once, retaining a saved traceback."""
         if value is True:

@@ -136,10 +136,11 @@ class FlextModelsProjectMetadataFields:
 
         @field_validator("include", mode="before")
         @classmethod
-        def _validate_include_path(
-            cls, value: FlextTypingBase.UnconstrainedValue
-        ) -> FlextTypingBase.UnconstrainedValue:
+        def _validate_include_path[ValueT](
+            cls, value: ValueT
+        ) -> ValueT | PurePosixPath:
             if value is None or not isinstance(value, (str, PurePosixPath)):
+                # The native field validator still owns rejection of non-path input.
                 return value
             rendered = str(value)
             path = PurePosixPath(rendered)

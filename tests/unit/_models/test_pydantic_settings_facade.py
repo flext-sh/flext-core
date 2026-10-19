@@ -12,11 +12,28 @@ from __future__ import annotations
 
 from typing import override
 
-from tests import m, u
+from flext_core import FlextModels
+from tests import m, tm, u
 
 
 class TestsFlextCorePydanticSettingsFacade:
     """Behavioral contract for the wide pydantic-settings facade exports."""
+
+    @staticmethod
+    def test_public_settings_preset_round_trips_json() -> None:
+        """The public preset validates settings rather than a config mapping."""
+        instance = FlextModels.BaseSettings()
+        restored = FlextModels.BaseSettings.model_validate_json(
+            instance.model_dump_json()
+        )
+        tm.that(restored.model_dump(), eq=instance.model_dump())
+
+    @staticmethod
+    def test_native_settings_alias_accepts_the_public_preset() -> None:
+        """The native annotation accepts the original settings instance."""
+        instance = FlextModels.BaseSettings()
+        adapter = u.type_adapter(FlextModels.PydanticBaseSettings)
+        tm.that(adapter.validate_python(instance) is instance, eq=True)
 
     class _TopicSettings(m.BaseSettings):
         """Settings model whose customise hook is annotated through the facade."""

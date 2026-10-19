@@ -11,31 +11,32 @@ from types import ModuleType
 
 from flext_core._typings import FlextTypingBase
 
-type FlextLazyModuleGlobalValue = (
-    FlextTypingBase.JsonValue
-    | FlextTypingBase.LazyImportMap
-    | FlextTypingBase.StrSequence
-    | ModuleType
-    | type
-    | Callable[
-        ...,
-        FlextTypingBase.JsonValue
-        | FlextTypingBase.StrSequence
-        | ModuleType
-        | type
-        | None,
-    ]
-    | None
-)
-
 
 class FlextTypesLazy:
     """Typing namespace for package-level lazy export internals."""
 
-    type ModuleGlobalValue = FlextLazyModuleGlobalValue
+    type ModuleGlobalValue = (
+        FlextTypingBase.JsonValue
+        | FlextTypingBase.LazyImportMap
+        | FlextTypingBase.StrSequence
+        | ModuleType
+        | type
+        | Callable[
+            ...,
+            FlextTypingBase.JsonValue
+            | FlextTypingBase.StrSequence
+            | ModuleType
+            | type
+            | None,
+        ]
+        | None
+    )
+    type LazyExportHooks = tuple[
+        Callable[[str], ModuleGlobalValue], Callable[[], list[str]]
+    ]
     type ModuleGlobals = MutableMapping[
         str,
-        FlextLazyModuleGlobalValue | Callable[..., FlextLazyModuleGlobalValue],
+        ModuleGlobalValue | Callable[..., ModuleGlobalValue],
     ]
 
 

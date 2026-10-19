@@ -13,18 +13,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Hashable
+from collections.abc import Hashable, Mapping
 from datetime import datetime
 from typing import Annotated, ClassVar, dataclass_transform, override
 
 from pydantic import ConfigDict
+from pydantic_core import to_jsonable_python
 from typing_extensions import TypeForm
 
-from flext_core import c
+from flext_core import c, p
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._base_parts import flextmodelsbase_part_01
-from flext_core._runtime import FlextRuntimeMetadataValidation
-from flext_core._typings import FlextTypingBase
+from flext_core._typings import FlextTypesAnnotateds, FlextTypingBase
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
@@ -111,9 +111,6 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         )
         attributes: Annotated[
             FlextTypingBase.JsonMapping,
-            FlextModelsPydantic.BeforeValidator(
-                FlextRuntimeMetadataValidation.validate_metadata_attributes
-            ),
             FlextModelsPydantic.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
@@ -130,6 +127,28 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
                 default=None, description="Scalar metadata value."
             ),
         ] = None
+
+        @FlextModelsPydantic.field_validator("attributes", mode="before")
+        @classmethod
+        def validate_metadata_attributes(
+            cls, value: p.MetadataInput
+        ) -> FlextTypingBase.JsonMapping:
+            """Normalize attributes with native serialization before field validation."""
+            if value is None:
+                return {}
+            normalized = to_jsonable_python(
+                value.model_dump(mode="json")
+                if isinstance(value, p.HasModelDump)
+                else value
+            )
+            if not isinstance(normalized, Mapping):
+                raise TypeError(c.ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE)
+            for key in normalized:
+                if key.startswith("_"):
+                    raise ValueError(
+                        c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key)
+                    )
+            return {key: item for key, item in normalized.items() if item is not None}
 
     class ContractModel(StrictModel):
         """Immutable base model with strict validation."""
@@ -177,7 +196,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         """Mixin for unique identifiers."""
 
         unique_id: Annotated[
-            FlextTypingBase.NonEmptyStr,
+            FlextTypesAnnotateds.NonEmptyStr,
             FlextModelsPydantic.Field(description="Unique identifier", frozen=False),
         ] = FlextModelsPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
 

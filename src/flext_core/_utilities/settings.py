@@ -46,7 +46,7 @@ class FlextUtilitiesSettings:
     def register_factory(
         container: p.Container,
         name: str,
-        factory: t.FactoryCallable,
+        factory: p.FactoryCallable,
     ) -> p.Result[bool]:
         """Register factory in DI container, verifying resolution succeeds.
 

@@ -12,17 +12,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import warnings
-from typing import Annotated
+from pathlib import Path
 
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, m, t, u
-
-# Deliberate broad-annotation fixture: the enforcement engine under test must
-# detect this exact runtime type, so it is exposed as a type alias usable
-# inside an annotation.
-type _ANY_TYPE = t.UnconstrainedValue
+from tests import c, m, u
+from tests.unit._enforcement_support import invalid_annotations
 
 
 def _hard_violation(
@@ -142,13 +138,12 @@ class TestsFlextCoreEnforcementReports:
     # --- check() report contents ---------------------------------------
 
     @staticmethod
-    def test_check_flags_any_typed_field_with_rule_metadata() -> None:
+    def test_check_flags_any_typed_field_with_rule_metadata(tmp_path: Path) -> None:
         """Test check flags any typed field with rule metadata."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = u.check(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            assert isinstance(target, type)
+            report = u.check(target)
 
         assert any(
             violation.rule_id == "ENFORCE-039" or "no_any" in violation.message
@@ -156,13 +151,12 @@ class TestsFlextCoreEnforcementReports:
         )
 
     @staticmethod
-    def test_check_messages_embed_bracketed_rule_identifiers() -> None:
+    def test_check_messages_embed_bracketed_rule_identifiers(tmp_path: Path) -> None:
         """Test check messages embed bracketed rule identifiers."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = u.check(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            assert isinstance(target, type)
+            report = u.check(target)
 
         assert report.violations
         assert all(
@@ -185,13 +179,13 @@ class TestsFlextCoreEnforcementReports:
         assert all(violation.layer != "namespace" for violation in report.violations)
 
     @staticmethod
-    def test_check_model_construction_flags_any_field() -> None:
+    def test_check_model_construction_flags_any_field(tmp_path: Path) -> None:
         """Test check model construction flags any field."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = FlextUtilitiesEnforcement.check_model_construction(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            assert isinstance(target, type)
+            assert issubclass(target, m.BaseModel)
+            report = FlextUtilitiesEnforcement.check_model_construction(target)
 
         assert report.violations
         assert any("no_any" in violation.message for violation in report.violations)
@@ -316,13 +310,12 @@ class TestsFlextCoreEnforcementReports:
         assert caught[0].category is c.FlextSmellViolation
 
     @staticmethod
-    def test_emit_of_checked_report_carries_layer_tag_and_fix() -> None:
+    def test_emit_of_checked_report_carries_layer_tag_and_fix(tmp_path: Path) -> None:
         """Test emit of checked report carries layer tag and fix."""
-
-        class _WithAny(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        report = u.check(_WithAny)
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            assert isinstance(target, type)
+            report = u.check(target)
         assert report.violations
 
         with pytest.warns(c.FlextMroViolation) as caught:

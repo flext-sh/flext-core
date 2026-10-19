@@ -18,8 +18,6 @@ if TYPE_CHECKING:
     from flext_core import t
 
 
-# NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): interfaces
-# describe canonical model identities without transporting mappings or copies.
 class FlextProtocolsProjectMetadata:
     """Protocols for project metadata consumed across FLEXT layers."""
 

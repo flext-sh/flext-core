@@ -10,7 +10,7 @@ from typing import Annotated, Self
 
 from typing_extensions import TypeForm
 
-from flext_core import FlextResult, m, p, t, u
+from flext_core import FlextResult, m, p, t
 from flext_core._utilities import FlextUtilitiesBase
 
 
@@ -101,7 +101,9 @@ class FlextContextScopeOps(m.ManagedModel):
         if key not in self.metadata.attributes:
             return FlextResult[t.JsonPayload].fail(f"Metadata key '{key}' not found")
         raw_value: t.JsonValue = self.metadata.attributes[key]
-        return FlextResult[t.JsonPayload].ok(u.normalize_to_container(raw_value))
+        if raw_value is None:
+            return FlextResult[t.JsonPayload].fail(f"Metadata key '{key}' has no value")
+        return FlextResult[t.JsonPayload].ok(raw_value)
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Set a metadata value by key."""

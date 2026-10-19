@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import typing
 from collections.abc import MutableSequence
+from pathlib import Path
 from types import MappingProxyType
 from typing import Annotated
 
@@ -15,12 +16,8 @@ import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, m, t, u
-from tests.unit._enforcement_support import messages
+from tests.unit._enforcement_support import invalid_annotations, messages
 
-# Deliberate broad-annotation fixtures: the enforcement engine under test must
-# detect these exact runtime types, so they are exposed as type aliases usable
-# inside annotations.
-type _ANY_TYPE = t.UnconstrainedValue
 type _BARE_DICT_TYPE = t.MappingKV[str, str]
 
 
@@ -28,13 +25,12 @@ class TestsFlextEnforcementModels:
     """Tests for ``FlextEnforcementModels``."""
 
     @staticmethod
-    def test_any_field_detected() -> None:
+    def test_any_field_detected(tmp_path: Path) -> None:
         """Test any field detected."""
-
-        class _M(m.ArbitraryTypesModel):
-            data: Annotated[_ANY_TYPE, m.Field(description="d")] = None
-
-        assert messages(u.check(_M), fragment="Any")
+        with invalid_annotations(tmp_path) as source:
+            target = source.BadModel
+            assert isinstance(target, type)
+            assert messages(u.check(target), fragment="Any")
 
     @staticmethod
     def test_typed_field_passes() -> None:

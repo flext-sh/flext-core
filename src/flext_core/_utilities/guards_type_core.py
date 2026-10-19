@@ -14,6 +14,7 @@ from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, TypeGuard, TypeIs, cast
 
 from flext_core import c, t
+from flext_core._protocols import FlextProtocolsContainer
 
 if TYPE_CHECKING:
     from pydantic import BaseModel as PydanticBaseModel
@@ -29,7 +30,10 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def _object_sequence(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel,
+        value: FlextProtocolsContainer.GuardInput
+        | t.JsonPayload
+        | t.JsonValue
+        | PydanticBaseModel,
     ) -> TypeIs[Sequence[t.JsonPayload]]:
         """Check if value is a sequence (list or tuple).
 
@@ -41,7 +45,10 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def _object_mapping(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel,
+        value: FlextProtocolsContainer.GuardInput
+        | t.JsonPayload
+        | t.JsonValue
+        | PydanticBaseModel,
     ) -> TypeIs[Mapping[str, t.JsonPayload]]:
         """Check if value is a mapping type.
 
@@ -82,7 +89,7 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def dict_non_empty(value: t.GuardInput | None) -> bool:
+    def dict_non_empty(value: FlextProtocolsContainer.GuardInput | None) -> bool:
         """Check if value is a non-empty mapping.
 
         Returns:
@@ -94,7 +101,9 @@ class FlextUtilitiesGuardsTypeCore:
         )
 
     @staticmethod
-    def empty_value(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> bool:
+    def empty_value(
+        value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue | None,
+    ) -> bool:
         """Check whether a FLEXT value is absent or an empty text/container.
 
         Returns:
@@ -111,7 +120,11 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def container_value(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue | PydanticBaseModel | None,
+        value: FlextProtocolsContainer.GuardInput
+        | t.JsonPayload
+        | t.JsonValue
+        | PydanticBaseModel
+        | None,
     ) -> TypeIs[t.JsonValue]:
         """Check if value is a valid container (recursive validation).
 
@@ -134,7 +147,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def list_value(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue,
+        value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.JsonList]:
         """Check if value is a list.
 
@@ -146,7 +159,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def mapping(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue,
+        value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.JsonMapping]:
         """Check if value is a mapping type.
 
@@ -158,7 +171,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def primitive(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue,
+        value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[t.Primitives]:
         """Check if value is a primitive type (c.PRIMITIVES_TYPES).
 
@@ -170,7 +183,10 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def scalar(
-        value: t.GuardInput | t.Scalar | t.JsonPayload | t.JsonValue,
+        value: FlextProtocolsContainer.GuardInput
+        | t.Scalar
+        | t.JsonPayload
+        | t.JsonValue,
     ) -> TypeIs[t.Scalar]:
         """Check if value is a scalar type (str, int, float, bool, datetime).
 
@@ -181,7 +197,9 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, c.SCALAR_TYPES)
 
     @staticmethod
-    def type_name(value: t.GuardInput | t.JsonPayload | t.JsonValue | None) -> str:
+    def type_name(
+        value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue | None,
+    ) -> str:
         """Return the concrete runtime type name for any FLEXT payload value.
 
         Returns:
@@ -191,12 +209,14 @@ class FlextUtilitiesGuardsTypeCore:
         return type(value).__qualname__
 
     @staticmethod
-    def _has_dict_protocol(obj: t.GuardInput | t.JsonPayload | t.JsonValue) -> bool:
+    def _has_dict_protocol(
+        obj: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
+    ) -> bool:
         return isinstance(obj, Mapping)
 
     @staticmethod
     def dict_like(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue,
+        value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[Mapping[str, t.JsonPayload]]:
         """Check if value behaves like a mapping accepted by FLEXT containers.
 
@@ -210,7 +230,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def list_like(
-        value: t.GuardInput | t.JsonPayload | t.JsonValue,
+        value: FlextProtocolsContainer.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> TypeIs[Sequence[t.JsonPayload]]:
         """Check if value behaves like a non-string object sequence.
 
@@ -224,7 +244,7 @@ class FlextUtilitiesGuardsTypeCore:
         )
 
     @staticmethod
-    def string_non_empty(value: t.GuardInput) -> TypeGuard[str]:
+    def string_non_empty(value: FlextProtocolsContainer.GuardInput) -> TypeGuard[str]:
         """Check if value is a non-empty string (after stripping whitespace).
 
         Returns:
@@ -234,7 +254,9 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def instance_of[T](value: t.GuardInput | T, type_cls: type[T]) -> bool:
+    def instance_of[T](
+        value: FlextProtocolsContainer.GuardInput | T, type_cls: type[T]
+    ) -> bool:
         """Check if value is instance of type class (handles generics).
 
         Returns:
@@ -244,7 +266,10 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, getattr(type_cls, "__origin__", None) or type_cls)
 
     @staticmethod
-    def in_(value: t.GuardInput, container: t.GuardInput) -> bool:
+    def in_(
+        value: FlextProtocolsContainer.GuardInput,
+        container: FlextProtocolsContainer.GuardInput,
+    ) -> bool:
         """Check if value is in container, handling TypeError gracefully.
 
         Returns:

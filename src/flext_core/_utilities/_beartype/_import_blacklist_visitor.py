@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from types import ModuleType
 
 from flext_core import c, t
 from flext_core._models import FlextModelsEnforcement
@@ -80,8 +81,8 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
                     (
                         {"import": name, "origin": origin, "file": filename}
                         for name, value in vars(module).items()
-                        if cls._is_private_family_import(
-                            value,
+                        if isinstance(value, type)
+                        and cls._is_private_family_import(
                             origin
                             := FlextUtilitiesBeartypeHelpers.object_module_name_for(
                                 value
@@ -150,9 +151,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         return None
 
     @staticmethod
-    def _family_base_exempt(
-        value: type, target: type, module: t.UnconstrainedValue
-    ) -> bool:
+    def _family_base_exempt(value: type, target: type, module: ModuleType) -> bool:
         """Return True when the tier import is an exempt family base or lazy member.
 
         Returns:
@@ -173,7 +172,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         )
 
     @staticmethod
-    def _is_lazy_published_member(module: t.UnconstrainedValue, value: type) -> bool:
+    def _is_lazy_published_member(module: ModuleType, value: type) -> bool:
         """Return True when the module publishes the lazy export contract.
 
         *value* must be one of its lazy-published family members. The catalog
@@ -241,7 +240,6 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
 
     @staticmethod
     def _is_private_family_import(
-        value: t.UnconstrainedValue,
         origin: str,
         package: str,
         *,
@@ -254,8 +252,6 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
 
         """
         families = c.ENFORCEMENT_PRIVATE_FAMILY_PACKAGES
-        if not isinstance(value, type):
-            return False
         if not origin.startswith("flext_"):
             return False
         if not families.intersection(origin.split(".")):

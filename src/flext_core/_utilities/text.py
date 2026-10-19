@@ -20,6 +20,11 @@ class FlextUtilitiesText:
     """Low-level text normalization helpers for CQRS utilities."""
 
     @staticmethod
+    def normalize_alnum(text: str) -> str:
+        """Return lowercase alphanumeric text for identifier comparisons."""
+        return "".join(character for character in text.lower() if character.isalnum())
+
+    @staticmethod
     def format_app_id(name: str) -> str:
         """Format application ID by normalizing name to lowercase with hyphens.
 

@@ -219,7 +219,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         )
 
     @staticmethod
-    def prop(key: str) -> Callable[[t.ConfigModelInput], t.JsonPayload | t.JsonValue]:
+    def prop(key: str) -> Callable[[p.ConfigModelInput], t.JsonPayload | t.JsonValue]:
         """Return an accessor function that extracts the named property from an object.
 
         Returns:
@@ -227,7 +227,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
         """
 
-        def accessor(obj: t.ConfigModelInput) -> t.JsonPayload | t.JsonValue:
+        def accessor(obj: p.ConfigModelInput) -> t.JsonPayload | t.JsonValue:
             result = FlextUtilitiesMapper._get_raw(obj, key)
             return result if result is not None else ""
 

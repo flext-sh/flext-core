@@ -92,7 +92,7 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
             return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD
             )
-        handle_method_raw: FlextTypesServices.GuardInput | None = getattr(
+        handle_method_raw: p.GuardInput | None = getattr(
             handler_class,
             c.MethodName.HANDLE,
             None,

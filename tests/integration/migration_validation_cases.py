@@ -6,9 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import io
-import time
-from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
 from flext_core import FlextContainer
@@ -20,20 +17,18 @@ if TYPE_CHECKING:
     from tests import p
 
 
-def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
-    """Capture stdout until the expected observable message is emitted.
+def capture_output[T](
+    emit: Callable[[], T], capture: p.Tests.OutputCapture, *, contains: str
+) -> T:
+    """Check native captured output without assuming a configured logging sink.
 
     Returns:
         The resulting ``T``.
 
     """
-    stream = io.StringIO()
-    with redirect_stdout(stream):
-        result = emit()
-        deadline = time.monotonic() + 0.25
-        while time.monotonic() < deadline and contains not in stream.getvalue():
-            time.sleep(0.01)
-    tm.that(stream.getvalue(), has=contains)
+    result = emit()
+    captured = capture.readouterr()
+    tm.that(captured.out + captured.err, has=contains)
     return result
 
 
@@ -41,7 +36,7 @@ class TestsFlextFlextMigrationApplicationCase:
     """Exercise the public application composition contract."""
 
     @staticmethod
-    def test_application_functionality_works() -> None:
+    def test_application_functionality_works(capfd: p.Tests.OutputCapture) -> None:
         """Verify application functionality works correctly."""
 
         class ApplicationExample:
@@ -66,8 +61,9 @@ class TestsFlextFlextMigrationApplicationCase:
                 return r[t.JsonMapping].ok(processed)
 
         app = ApplicationExample()
-        result = capture_stdout(
+        result = capture_output(
             lambda: app.process_data({"key": "value"}),
+            capfd,
             contains="Processing data",
         )
         tm.that(result.success, eq=True)

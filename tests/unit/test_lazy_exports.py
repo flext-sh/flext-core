@@ -15,6 +15,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 import pytest
+from flext_tests import tm
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
 from tests import u
@@ -203,7 +204,7 @@ class TestsFlextCoreLazyExports:
             "    assert issubclass(package.t, t)\n"
             "    assert issubclass(package.p, p)\n"
             "    assert issubclass(package.m, m)\n"
-            "assert get_args(t.SettingsClass.__value__) == (p.SettingsType,)\n"
+            "assert isinstance(FlextSettings, p.SettingsType)\n"
             "for operation in ('register_plugin', 'unregister_plugin', "
             "'fetch_plugin', 'list_plugins'):\n"
             "    method = getattr(p.Registry, operation)\n"
@@ -399,14 +400,21 @@ class TestsFlextCoreLazyExports:
         lazy_map = {"Alpha": (module_name, "Alpha")}
 
         # Act — installing twice with identical inputs must not break resolution
-        install_lazy_exports("test_lazy_pkg", module_globals, lazy_map)
-        install_lazy_exports("test_lazy_pkg", module_globals, lazy_map)
+        getattr_hook, dir_hook = install_lazy_exports(
+            "test_lazy_pkg", module_globals, lazy_map
+        )
+        repeated_getattr, repeated_dir = install_lazy_exports(
+            "test_lazy_pkg", module_globals, lazy_map
+        )
 
         # Assert
         getattr_fn = module_globals["__getattr__"]
         assert callable(getattr_fn)
         assert getattr_fn("Alpha") is alpha_cls
         assert module_globals["__all__"] == ("Alpha",)
+        tm.that(getattr_hook is repeated_getattr is getattr_fn, eq=True)
+        tm.that(dir_hook is repeated_dir is module_globals["__dir__"], eq=True)
+        tm.that(dir_hook(), eq=["Alpha"])
 
     @staticmethod
     def test_get_resolves_symbol_and_caches_into_module_globals(

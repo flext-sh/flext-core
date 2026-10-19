@@ -35,7 +35,7 @@ class FlextModelsHandler:
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True)
         )
-        handler: t.Port[t.DispatchableHandler] = FlextModelsPydantic.Field(
+        handler: t.Port[p.DispatchableHandler] = FlextModelsPydantic.Field(
             description="Original handler whose identity owns the binding",
             exclude=True,
         )

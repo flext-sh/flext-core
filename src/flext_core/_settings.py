@@ -1,7 +1,7 @@
 """FlextSettings — flat, self-contained settings foundation (layer-0 SSOT).
 
-ONE base class, no MRO field-mixins, zero imports from ``c``/``t``/``p``/``m``/
-``u`` (only stdlib + pydantic-settings). ``FlextSettings`` carries the per-class
+ONE base class, no MRO field-mixins and no composed facade imports. Override
+annotations use the lower settings protocol owner. ``FlextSettings`` carries the per-class
 singleton lifecycle, the canonical helper API (``fetch_global``/``clone``/
 ``update_global``/``reset_for_testing``/``resolve_env_file``), the namespace
 registry, and the five universal runtime fields every FLEXT app shares.
@@ -42,6 +42,7 @@ from pydantic_settings import (
 )
 
 from flext_core._constants import FlextConstantsEnvironment, FlextConstantsSettings
+from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -271,13 +272,15 @@ class FlextSettings(BaseSettings):
     _instance: ClassVar[Self | None] = None
     _app_namespace: ClassVar[str | None] = None
 
-    def __init_subclass__(cls, **kwargs: t.SettingsOverride | None) -> None:
+    def __init_subclass__(
+        cls, **kwargs: FlextProtocolsSettings.SettingsOverride | None
+    ) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
         _ = kwargs
         super().__init_subclass__()
         cls._instance = None
 
-    def __new__(cls, **kwargs: t.SettingsOverride | None) -> Self:
+    def __new__(cls, **kwargs: FlextProtocolsSettings.SettingsOverride | None) -> Self:
         """Singleton factory; unknown kwargs are ignored by consumer factories.
 
         Raises:
@@ -347,8 +350,8 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def _merge_overrides(
-        cls, current: Self, **overrides: t.SettingsOverride | None
-    ) -> t.MutableMappingKV[str, t.SettingsOverride | None]:
+        cls, current: Self, **overrides: FlextProtocolsSettings.SettingsOverride | None
+    ) -> t.MutableMappingKV[str, FlextProtocolsSettings.SettingsOverride | None]:
         """Merge partial nested-model overrides onto the current state.
 
         Returns:
@@ -356,7 +359,9 @@ class FlextSettings(BaseSettings):
 
         """
         cls._validate_overrides(**overrides)
-        merged: t.MutableMappingKV[str, t.SettingsOverride | None] = {}
+        merged: t.MutableMappingKV[
+            str, FlextProtocolsSettings.SettingsOverride | None
+        ] = {}
         for field_name, override_value in overrides.items():
             current_value = getattr(current, field_name, None)
             if isinstance(current_value, BaseModel) and isinstance(
@@ -373,7 +378,9 @@ class FlextSettings(BaseSettings):
             merged[field_name] = override_value
         return merged
 
-    def clone(self, **overrides: t.SettingsOverride | None) -> Self:
+    def clone(
+        self, **overrides: FlextProtocolsSettings.SettingsOverride | None
+    ) -> Self:
         """Deep copy with optional field overrides + re-validation.
 
         Returns:
@@ -391,7 +398,9 @@ class FlextSettings(BaseSettings):
             return type(copied).model_validate(copied, from_attributes=True)
 
     @classmethod
-    def update_global(cls, **overrides: t.SettingsOverride | None) -> Self:
+    def update_global(
+        cls, **overrides: FlextProtocolsSettings.SettingsOverride | None
+    ) -> Self:
         """Replace the singleton via ``model_copy(update=…)`` + revalidate.
 
         Returns:
@@ -410,7 +419,9 @@ class FlextSettings(BaseSettings):
         return validated
 
     @classmethod
-    def _validate_overrides(cls, **overrides: t.SettingsOverride | None) -> None:
+    def _validate_overrides(
+        cls, **overrides: FlextProtocolsSettings.SettingsOverride | None
+    ) -> None:
         """Reject override keys that are not declared model fields.
 
         Raises:

@@ -78,11 +78,11 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
         )
 
     @staticmethod
-    def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
+    def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
         """Resolve a named service from the global container.
 
         Returns:
-            The resulting ``p.Result[t.RegisterableService]``.
+            The resulting ``p.Result[p.RegisterableService]``.
 
         """
         return FlextContext.resolve_container().resolve(service_name)
@@ -90,7 +90,7 @@ class FlextContext(FlextContextScopeOps, m.ManagedModel):
     @staticmethod
     def register_service(
         service_name: str,
-        service: t.RegisterableService,
+        service: p.RegisterableService,
     ) -> p.Result[bool]:
         """Register a named service in the global container.
 

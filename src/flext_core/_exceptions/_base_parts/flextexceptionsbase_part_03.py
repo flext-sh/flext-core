@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, ClassVar
 from flext_core import c, m
 from flext_core._exceptions import FlextExceptionsHelpers
 from flext_core._exceptions._base_parts import FlextBaseErrorStateMixin
-from flext_core._runtime import FlextRuntimeMetadataValidation
 from flext_core._typings import FlextTypingBase
 
 if TYPE_CHECKING:
@@ -147,28 +146,9 @@ class FlextExceptionsBase:
                 The resulting ``MutableMapping``.
 
             """
-            combined_extra: MutableMapping[
-                str, FlextTypesServices.JsonPayload | None
-            ] = {}
-            try:
-                merged_kwargs_map = (
-                    FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
-                        merged_kwargs,
-                    )
-                )
-            except c.EXC_PYDANTIC_TYPE_VALUE:
-                merged_kwargs_map = None
-            if merged_kwargs_map:
-                combined_extra.update({
-                    key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
-                    for key, value in merged_kwargs_map.items()
-                    if value is not None
-                })
-            combined_extra.update({
-                key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
-                for key, value in extra_kwargs.items()
-            })
-            return combined_extra
+            return dict(
+                FlextExceptionsHelpers.build_context_map(merged_kwargs, extra_kwargs)
+            )
 
         @staticmethod
         def _extract_declared_remaining(
@@ -184,21 +164,10 @@ class FlextExceptionsBase:
                 The resulting ``tuple``.
 
             """
-            remaining_extra: FlextTypingBase.MutableJsonMapping = {}
-            if combined_extra:
-                remaining_extra.update({
-                    key: FlextRuntimeMetadataValidation.normalize_to_metadata(value)
-                    for key, value in combined_extra.items()
-                    if value is not None
-                })
-            preserved_metadata_raw = remaining_extra.pop(c.FIELD_METADATA, None)
-            preserved_metadata = (
-                FlextRuntimeMetadataValidation.normalize_to_metadata(
-                    preserved_metadata_raw
-                )
-                if preserved_metadata_raw is not None
-                else None
+            remaining_extra = FlextExceptionsHelpers.build_context_map(
+                combined_extra, {}
             )
+            preserved_metadata = remaining_extra.pop(c.FIELD_METADATA, None)
             correlation_id_raw = remaining_extra.pop(
                 c.ContextKey.CORRELATION_ID,
                 None,
@@ -230,17 +199,11 @@ class FlextExceptionsBase:
                 remaining_extra,
                 keys=declared_param_keys,
             )
-            for key, value in resolved_named.items():
-                if value is None:
-                    continue
-                normalized_value = FlextRuntimeMetadataValidation.normalize_to_metadata(
-                    value
+            param_values.update(
+                FlextExceptionsHelpers.build_param_map(
+                    None, resolved_named, keys=declared_param_keys
                 )
-                param_values[key] = (
-                    normalized_value
-                    if isinstance(normalized_value, c.SCALAR_TYPES)
-                    else str(normalized_value)
-                )
+            )
             return param_values
 
         @staticmethod
@@ -252,12 +215,12 @@ class FlextExceptionsBase:
         ) -> None:
             """Attach declared field values and help text to the context map."""
             resolved_fields = declaredparams_cls.__pydantic_fields__
+            ctx.update(
+                FlextExceptionsHelpers.build_param_map(
+                    resolved, {}, keys=declared_param_keys
+                )
+            )
             for key in declared_param_keys:
-                attr_val = getattr(resolved, key, None)
-                if attr_val is not None:
-                    ctx[key] = FlextRuntimeMetadataValidation.normalize_to_metadata(
-                        attr_val
-                    )
                 field_info = resolved_fields.get(key)
                 if field_info is None:
                     continue

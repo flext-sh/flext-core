@@ -20,7 +20,7 @@ class TestsFlextUtilitiesDispatchMixin:
     @staticmethod
     def handler_module(
         name: str,
-        **members: t.RegisterableService | t.DispatchableHandler,
+        **members: p.RegisterableService | p.DispatchableHandler,
     ) -> t.RegistryModule:
         """Build an actual module for the public discovery API, without import patches."""
         module = ModuleType(name)

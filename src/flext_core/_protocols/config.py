@@ -13,12 +13,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols.result import FlextProtocolsResult
-
 if TYPE_CHECKING:
     from pathlib import Path
 
     from flext_core import t
+    from flext_core._protocols import FlextProtocolsResult
 
 
 class FlextProtocolsConfig:

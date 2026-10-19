@@ -10,10 +10,13 @@ from typing import Self
 
 from pydantic import BaseModel, PrivateAttr
 
-from flext_core import c
-from flext_core._runtime import FlextRuntimeMetadata
-from flext_core._typings import FlextTypesServices, FlextTypingBase
-from flext_core.typings import JsonDict
+from flext_core import c, t
+from flext_core._protocols import FlextProtocolsResult
+from flext_core._typings import FlextTypingBase
+from flext_core._utilities import (
+    FlextUtilitiesPydantic,
+    FlextUtilitiesTypingAdapterJson,
+)
 
 
 class FlextResultBase[T](BaseModel):
@@ -33,7 +36,7 @@ class FlextResultBase[T](BaseModel):
     success: bool = True
     error: str | None = None
     error_code: str | None = None
-    error_data: JsonDict | None = None
+    error_data: t.JsonDict | None = None
 
     _payload: T = PrivateAttr()
     _exception: BaseException | None = PrivateAttr(default=None)
@@ -60,7 +63,7 @@ class FlextResultBase[T](BaseModel):
         cls,
         error: str,
         error_code: str | None,
-        error_data: JsonDict | None,
+        error_data: t.JsonDict | None,
         exception: BaseException | None,
     ) -> Self:
         """Build a failed result from already-normalized failure state.
@@ -119,9 +122,9 @@ class FlextResultBase[T](BaseModel):
     @staticmethod
     def validate_error_data(
         error_data: FlextTypingBase.JsonMapping
-        | FlextTypesServices.ConfigModelInput
+        | FlextProtocolsResult.ConfigModelInput
         | None,
-    ) -> JsonDict | None:
+    ) -> t.JsonDict | None:
         """Validate and normalize error data into a plain JSON mapping.
 
         Args:
@@ -132,10 +135,16 @@ class FlextResultBase[T](BaseModel):
             normalizes to ``None``.
 
         """
-        normalized = FlextRuntimeMetadata.normalize_model_input_mapping(error_data)
-        if normalized is None:
+        if error_data is None:
             return None
-        return dict(normalized)
+        payload = (
+            error_data.model_dump(mode="json")
+            if isinstance(error_data, FlextProtocolsResult.HasModelDump)
+            else error_data
+        )
+        return FlextUtilitiesTypingAdapterJson.json_dict_adapter().validate_python(
+            FlextUtilitiesPydantic.normalize_to_json_value(payload), strict=True
+        )
 
 
 __all__: list[str] = ["FlextResultBase"]

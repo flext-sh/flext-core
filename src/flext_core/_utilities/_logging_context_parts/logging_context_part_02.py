@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing_extensions import TypeForm
 
-from flext_core import FlextRuntime, t
+from flext_core import FlextRuntime, p, t
 from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesGuardsTypeModel
 from flext_core._utilities._logging_context_parts import logging_context_part_01
 
@@ -20,7 +20,7 @@ class FlextUtilitiesLoggingContext(
     logging_context_part_01.FlextUtilitiesLoggingContext
 ):
     @staticmethod
-    def _to_container_value(value: t.LogValue | t.JsonValue) -> t.JsonValue:
+    def _to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
         """Adapt owned values only at the native logging SDK boundary."""
         if isinstance(value, BaseException):
             return str(value)
@@ -34,7 +34,7 @@ class FlextUtilitiesLoggingContext(
 
     @staticmethod
     def to_container_context(
-        context: t.MappingKV[str, t.LogValue | t.JsonValue],
+        context: t.MappingKV[str, p.LogValue | t.JsonValue],
     ) -> t.JsonMapping:
         """Serialize owned fields once before entering the native processor chain."""
         return {

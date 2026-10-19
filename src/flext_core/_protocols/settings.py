@@ -6,17 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
-
-if TYPE_CHECKING:
-    from flext_core import t
+from flext_core import t
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 
 class FlextProtocolsSettings:
     """Protocols for configurable components and settings."""
+
+    type SettingsOverride = t.SettingsOverride[FlextProtocolsBase.Model]
+    type SettingsOverridesMapping = t.SettingsOverridesMapping[FlextProtocolsBase.Model]
 
     @runtime_checkable
     class Configurable(FlextProtocolsBase.Base, Protocol):
@@ -56,7 +56,7 @@ class FlextProtocolsSettings:
         def model_copy(
             self,
             *,
-            update: t.SettingsOverridesMapping | None = None,
+            update: FlextProtocolsSettings.SettingsOverridesMapping | None = None,
             deep: bool = False,
         ) -> Self:
             """Create a copy of the model, optionally updating fields or deep copying.
@@ -71,7 +71,9 @@ class FlextProtocolsSettings:
             """
             ...
 
-        def clone(self, **overrides: t.SettingsOverride | None) -> Self:
+        def clone(
+            self, **overrides: FlextProtocolsSettings.SettingsOverride | None
+        ) -> Self:
             """Create a deep copy with optional field overrides.
 
             This is the canonical way for containers and services to obtain an
@@ -87,7 +89,9 @@ class FlextProtocolsSettings:
             ...
 
         @classmethod
-        def update_global(cls, **overrides: t.SettingsOverride | None) -> Self:
+        def update_global(
+            cls, **overrides: FlextProtocolsSettings.SettingsOverride | None
+        ) -> Self:
             """Replace the per-class singleton via Pydantic-2 ``model_copy(update=…)``.
 
             Pure Pydantic-2 mutation — no ``setattr``, no ``__setattr__``

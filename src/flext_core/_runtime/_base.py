@@ -7,23 +7,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from flext_core import c, t
-from flext_core._typings import FlextTypingBase
-
-if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsLogging
-    from flext_core._typings import FlextTypesServices
+from flext_core import c, p, t
 
 
 class FlextRuntimeBase:
     """Foundational runtime helpers shared by higher runtime namespaces."""
 
-    Metadata: ClassVar[type[FlextProtocolsLogging.Metadata] | None] = None
+    Metadata: ClassVar[type[p.Metadata] | None] = None
 
     @classmethod
-    def _require_metadata_model(cls) -> type[FlextProtocolsLogging.Metadata]:
+    def _require_metadata_model(cls) -> type[p.Metadata]:
         """Return the bound metadata model class or raise a runtime contract error.
 
         Returns:
@@ -98,7 +93,9 @@ class FlextRuntimeBase:
         return "".join(ch for ch in text.lower() if ch.isalnum())
 
     @staticmethod
-    def to_scalar(item: FlextTypesServices.GuardInput | None) -> FlextTypingBase.Scalar:
+    def to_scalar(
+        item: p.GuardInput | None,
+    ) -> t.Scalar:
         """Coerce any runtime value to ``t.Scalar``.
 
         Returns:

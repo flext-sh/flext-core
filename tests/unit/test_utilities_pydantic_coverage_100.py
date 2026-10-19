@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from operator import itemgetter
 from typing import Annotated, ClassVar
 
 import pytest
@@ -28,11 +27,25 @@ def _validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
         The validated label passed to the field factory.
 
     """
-    return str(values["label"])
+    label = values["label"]
+    if not isinstance(label, str):
+        msg = "Validated label must be a string"
+        raise TypeError(msg)
+    return label
 
 
 class TestsFlextUtilitiesPydantic:
     """Tests for ``FlextUtilitiesPydantic``."""
+
+    @staticmethod
+    def test_unset_factories_expose_native_metadata() -> None:
+        """An omitted value produces metadata, not a contextual field value."""
+        metadata = u.Field(description="Native field metadata")
+        assert metadata.annotation is None
+        private = u.PrivateAttr()
+        assert isinstance(private, p.UnsetPrivateAttribute)
+        undefined = private.get_default()
+        assert private.get_default(call_default_factory=True) is undefined
 
     class _FieldFactoryContract(m.BaseModel):
         """Required fields and typed factories through both public facades."""
@@ -165,7 +178,7 @@ class TestsFlextUtilitiesPydantic:
         _utility_values: list[str] = u.PrivateAttr(
             default_factory=u.empty(TypeForm(list[str])),
         )
-        _label_copy: str = FlextModels.PrivateAttr(default_factory=itemgetter("label"))
+        _label_copy: str = FlextModels.PrivateAttr(default_factory=_validated_label)
         _reader: Callable[[str], str] = u.PrivateAttr(default_factory=_input_reader)
 
         def record_model(self, value: str) -> None:

@@ -95,7 +95,7 @@ class FlextHandlers[MessageT_contra, ResultT](
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> t.SequenceOf[tuple[str, t.ResolvedHandlerCallable, p.DecoratorConfig]]:
+        ) -> t.SequenceOf[tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -115,7 +115,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             """
             handlers: list[
-                tuple[str, t.ResolvedHandlerCallable, p.DecoratorConfig]
+                tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]
             ] = []
             for name, func in vars(module).items():
                 if name.startswith("_") or not callable(func):

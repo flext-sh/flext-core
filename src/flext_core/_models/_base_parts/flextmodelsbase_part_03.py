@@ -12,13 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self
 
 from flext_core import c
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._base_parts import flextmodelsbase_part_02
-from flext_core._runtime import FlextRuntimeMetadataValidation
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesGenerators
 
@@ -31,9 +30,6 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
 
         created_at: Annotated[
             datetime,
-            FlextModelsPydantic.AfterValidator(
-                FlextRuntimeMetadataValidation.ensure_utc_datetime
-            ),
             FlextModelsPydantic.Field(
                 description="Creation timestamp (configured timezone)",
                 frozen=True,
@@ -41,14 +37,21 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
         ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
         updated_at: Annotated[
             datetime | None,
-            FlextModelsPydantic.AfterValidator(
-                FlextRuntimeMetadataValidation.ensure_utc_datetime
-            ),
             FlextModelsPydantic.Field(
                 default=None,
                 description="Last update timestamp (configured timezone)",
             ),
         ] = None
+
+        @FlextModelsPydantic.field_validator("created_at", "updated_at", mode="after")
+        @classmethod
+        def ensure_utc_datetime(cls, value: datetime | None) -> datetime | None:
+            """Attach UTC only to naive inputs; retain an aware input's timezone."""
+            return (
+                value.replace(tzinfo=UTC)
+                if value is not None and value.tzinfo is None
+                else value
+            )
 
         # No ``staticmethod`` wrapper: pydantic 2.13 silently drops a
         # ``staticmethod``-wrapped serializer from ``__pydantic_decorators__``

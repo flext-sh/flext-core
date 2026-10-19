@@ -29,16 +29,30 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     @property
     def dispatcher(self) -> p.Dispatcher:
-        """Return the dispatcher used by the same runtime as plugin registration."""
+        """Dispatcher used by the same runtime as plugin registration."""
         return self.registry_runtime.dispatcher
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Validate the explicitly supplied runtime."""
+        """Validate the explicitly supplied runtime.
+
+        Returns:
+            Result[bool]: The result of the validation.
+
+        """
         return r[bool].ok(isinstance(self.registry_runtime, p.ServiceRuntime))
 
-    def register(self, name: str, service: t.RegisterableService) -> p.Result[bool]:
-        """Bind a collaborator unchanged, rejecting conflicting registrations."""
+    def register(self, name: str, service: p.RegisterableService) -> p.Result[bool]:
+        """Bind a collaborator unchanged, rejecting conflicting registrations.
+
+        Args:
+            name: The name under which to register the service.
+            service: The service instance to register.
+
+        Returns:
+            A ``p.Result[bool]`` indicating the success of the registration.
+
+        """
         if self.container.has(name):
             existing = self.container.resolve(name)
             if existing.failure:
@@ -58,9 +72,18 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     def register_handler(
         self,
-        handler: t.DispatchableHandler,
+        handler: p.DispatchableHandler,
     ) -> p.Result[p.RegistrationDetails]:
-        """Register one handler through the canonical atomic batch owner."""
+        """Register one handler through the canonical atomic batch owner.
+
+        Args:
+            handler: The dispatchable handler to register.
+
+        Returns:
+            A ``p.Result[p.RegistrationDetails]`` containing the registration details or
+              an error if registration failed.
+
+        """
         outcome = self.dispatcher.register_handlers((
             m.HandlerRegistration(handler=handler),
         ))
@@ -72,18 +95,36 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     def register_handlers(
         self,
-        handlers: t.SequenceOf[t.DispatchableHandler],
+        handlers: t.SequenceOf[p.DispatchableHandler],
     ) -> p.Result[p.RegistrySummary]:
-        """Register every handler atomically without discarding failure metadata."""
+        """Register every handler atomically without discarding failure metadata.
+
+        Args:
+            handlers: A sequence of dispatchable handlers to register.
+
+        Returns:
+            A ``p.Result[p.RegistrySummary]`` containing the summary of the registration
+              process or an error if registration failed.
+
+        """
         return self._register_batch(
             tuple(m.HandlerRegistration(handler=handler) for handler in handlers)
         )
 
     def register_bindings(
         self,
-        bindings: t.MappingKV[t.RegistryBindingKey, t.DispatchableHandler],
+        bindings: t.MappingKV[t.RegistryBindingKey, p.DispatchableHandler],
     ) -> p.Result[p.RegistrySummary]:
-        """Bind each declared message route through the dispatcher itself."""
+        """Bind each declared message route through the dispatcher itself.
+
+        Args:
+            bindings: A mapping of message types to dispatchable handlers.
+
+        Returns:
+            A ``p.Result[p.RegistrySummary]`` containing the summary of the registration
+              process or an error if registration failed.
+
+        """
         return self._register_batch(
             tuple(
                 m.HandlerRegistration(handler=handler, message_type=message_type)
@@ -115,12 +156,24 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         self,
         category: str,
         name: str,
-        plugin: t.RegisterableService,
+        plugin: p.RegisterableService,
         *,
-        validate: Callable[[t.RegisterableService], p.Result[bool]] | None = None,
+        validate: Callable[[p.RegisterableService], p.Result[bool]] | None = None,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
     ) -> p.Result[bool]:
-        """Store the original plugin, never its string or serialized projection."""
+        """Store the original plugin, never its string or serialized projection.
+
+        Args:
+            category: The category of the plugin to register.
+            name: The name of the plugin to register.
+            plugin: The plugin instance to register.
+            validate: An optional callable to validate the plugin before registration.
+            scope: The registration scope, either INSTANCE or CLASS.
+
+        Returns:
+            A ``p.Result[bool]`` indicating the success of the registration.
+
+        """
         key = u.registry_plugin_key(category, name)
         if key.failure:
             return r[bool].from_failure(key)
@@ -158,11 +211,22 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         name: str,
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[t.RegisterableService]:
-        """Fetch the unchanged collaborator from the selected registry scope."""
+    ) -> p.Result[p.RegisterableService]:
+        """Fetch the unchanged collaborator from the selected registry scope.
+
+        Args:
+            category: The category of the plugin to fetch.
+            name: The name of the plugin to fetch.
+            scope: The registration scope, either INSTANCE or CLASS.
+
+        Returns:
+            A ``p.Result[p.RegisterableService]`` containing the requested plugin or an
+              error if not found.
+
+        """
         key = u.registry_plugin_key(category, name)
         if key.failure:
-            return r[t.RegisterableService].from_failure(key)
+            return r[p.RegisterableService].from_failure(key)
         with self._lock:
             if scope == c.RegistrationScope.INSTANCE:
                 if key.value not in self._registered_keys:
@@ -170,7 +234,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
                 return self.container.resolve(key.value)
             if key.value not in self._class_plugin_storage:
                 return e.fail_not_found(category, name)
-            return r[t.RegisterableService].ok(self._class_plugin_storage[key.value])
+            return r[p.RegisterableService].ok(self._class_plugin_storage[key.value])
 
     def list_plugins(
         self,
@@ -178,7 +242,17 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
     ) -> p.Result[t.StrSequence]:
-        """List registered names deterministically in one category."""
+        """List registered names deterministically in one category.
+
+        Args:
+            category: The category of the plugins to list.
+            scope: The registration scope, either INSTANCE or CLASS.
+
+        Returns:
+            A ``p.Result[t.StrSequence]`` containing the list of registered plugin
+              names.
+
+        """
         key_prefix = u.registry_plugin_key(category)
         if key_prefix.failure:
             return r[t.StrSequence].from_failure(key_prefix)
@@ -206,7 +280,17 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
     ) -> p.Result[bool]:
-        """Remove storage before ownership, allowing a new registration afterward."""
+        """Remove storage before ownership, allowing a new registration afterward.
+
+        Args:
+            category: The category of the plugin to unregister.
+            name: The name of the plugin to unregister.
+            scope: The registration scope, either INSTANCE or CLASS.
+
+        Returns:
+            A ``p.Result[bool]`` indicating the success of the unregistration.
+
+        """
         key = u.registry_plugin_key(category, name)
         if key.failure:
             return r[bool].from_failure(key)

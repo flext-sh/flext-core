@@ -11,7 +11,8 @@ from typing import Annotated, ClassVar, Self
 from typing_extensions import TypeForm
 
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core._protocols import FlextProtocolsResult
+from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
@@ -50,7 +51,7 @@ class FlextModelsErrors:
             ),
         ] = None
         error_data: Annotated[
-            FlextTypingBase.JsonMapping | FlextTypesServices.ConfigModelInput | None,
+            FlextTypingBase.JsonMapping | FlextProtocolsResult.ConfigModelInput | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Structured error payload attached to the failure.",

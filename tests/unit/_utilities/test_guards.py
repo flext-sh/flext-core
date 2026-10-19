@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import m, t
+from flext_core import m, p, t
 from tests import u
 
 
@@ -266,7 +266,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_string_non_empty_requires_non_blank_string(
-        value: t.GuardInput,
+        value: p.GuardInput,
         *,
         expected: bool,
     ) -> None:
@@ -299,8 +299,8 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_in_membership_only_for_true_containers(
-        value: t.GuardInput,
-        container: t.GuardInput,
+        value: p.GuardInput,
+        container: p.GuardInput,
         *,
         expected: bool,
     ) -> None:

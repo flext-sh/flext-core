@@ -1,0 +1,38 @@
+rules:
+  - id: core-json-serialization-owner
+    phase: contract-normalization
+    pattern: '${receiver}.normalize_to_json_value'
+    goal: 'u.normalize_to_json_value'
+    arguments:
+      receiver: name=flext_core.runtime.FlextRuntime
+    imports: &core_utilities
+      u: from flext_core import u
+    bindings:
+      u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
+    ownership_transfer:
+      - flext_core._runtime._metadata
+      - FlextRuntimeMetadata.normalize_to_json_value
+  - id: core-metadata-serialization-owner
+    phase: contract-normalization
+    pattern: '${receiver}.normalize_to_metadata'
+    goal: 'u.normalize_to_metadata'
+    arguments:
+      receiver: name=flext_core.runtime.FlextRuntime
+    imports: *core_utilities
+    bindings:
+      u.normalize_to_metadata: flext_core._utilities.metadata.FlextUtilitiesMetadata.normalize_to_metadata
+    ownership_transfer:
+      - flext_core._runtime._metadata
+      - FlextRuntimeMetadata.normalize_to_metadata
+  - id: core-container-payload-owner
+    phase: contract-normalization
+    pattern: '${receiver}.normalize_to_container'
+    goal: 'u.normalize_to_container'
+    arguments:
+      receiver: name=flext_core.runtime.FlextRuntime
+    imports: *core_utilities
+    bindings:
+      u.normalize_to_container: flext_core._utilities.model_runtime.FlextUtilitiesModelRuntime.normalize_to_container
+    ownership_transfer:
+      - flext_core._runtime._container
+      - FlextRuntimeContainer.normalize_to_container

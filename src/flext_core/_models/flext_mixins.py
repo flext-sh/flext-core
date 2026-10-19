@@ -12,38 +12,44 @@ from typing import ClassVar
 
 from typing_extensions import TypeForm
 
-from flext_core import FlextContainer, m, p, t, u
-from flext_core._models import FlextContext
+from flext_core import FlextContainer, p, t
+from flext_core._models import FlextContext, FlextModelsBase, FlextModelsPydantic
 
 
-class FlextMixins(m.ArbitraryTypesModel):
+class FlextMixins(FlextModelsBase.ArbitraryTypesModel):
     """Own service runtime inputs and state without operational behavior."""
 
-    settings_type: t.SkipJsonSchema[t.SettingsClass | None] = m.Field(
+    settings_type: t.SkipJsonSchema[p.SettingsType | None] = FlextModelsPydantic.Field(
         None,
         validate_default=True,
         exclude=True,
         description="FlextSettings class used to initialize the service runtime.",
     )
-    runtime_settings: t.Port[p.Settings | None] = m.Field(
+    runtime_settings: t.Port[p.Settings | None] = FlextModelsPydantic.Field(
         None,
         exclude=True,
         description="Pre-built settings instance used directly for the runtime.",
     )
-    settings_overrides: t.SkipJsonSchema[t.ScalarMapping | None] = m.Field(
-        None,
-        validate_default=True,
-        exclude=True,
-        description="Settings overrides applied at instantiation.",
+    settings_overrides: t.SkipJsonSchema[t.ScalarMapping | None] = (
+        FlextModelsPydantic.Field(
+            None,
+            validate_default=True,
+            exclude=True,
+            description="Settings overrides applied at instantiation.",
+        )
     )
-    initial_context: t.Port[p.Context | None] = m.Field(
+    initial_context: t.Port[p.Context | None] = FlextModelsPydantic.Field(
         None,
         exclude=True,
         description="Initial context for the service scope.",
     )
-    _runtime: p.ServiceRuntime | None = u.PrivateAttr(None)
-    _operation_stats: MutableMapping[str, m.ConfigMap] = u.PrivateAttr(
-        default_factory=u.empty(TypeForm(MutableMapping[str, m.ConfigMap])),
+    _runtime: p.ServiceRuntime | None = FlextModelsPydantic.PrivateAttr(None)
+    _operation_stats: MutableMapping[str, p.MutableRootDict[t.JsonPayload]] = (
+        FlextModelsPydantic.PrivateAttr(
+            default_factory=FlextModelsPydantic.empty(
+                TypeForm(MutableMapping[str, p.MutableRootDict[t.JsonPayload]])
+            ),
+        )
     )
     _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
     _cache_lock: ClassVar[p.Lock] = threading.Lock()

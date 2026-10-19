@@ -139,10 +139,10 @@ class Ex04DispatchDsl:
 
         """
         dispatcher = u.build_dispatcher()
-        _ = dispatcher.register_handler(ExamplesFlextCreateUserHandler())
-        _ = dispatcher.register_handler(_GetUserHandler())
-        _ = dispatcher.register_handler(_DeleteUserHandler())
-        _ = dispatcher.register_handler(_PingHandler())
+        dispatcher.register_handler(ExamplesFlextCreateUserHandler()).unwrap()
+        dispatcher.register_handler(_GetUserHandler()).unwrap()
+        dispatcher.register_handler(_DeleteUserHandler()).unwrap()
+        dispatcher.register_handler(_PingHandler()).unwrap()
         return dispatcher
 
     @classmethod
@@ -166,7 +166,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
     @override
     def exercise(self) -> None:
         """Exercise handler registration, dispatching, auto-discovery, and events."""
-        dispatcher = Ex04DispatchDsl.build_dispatcher()
+        dispatcher = u.build_dispatcher()
 
         self._exercise_register_and_dispatch(dispatcher)
         self._exercise_auto_discovery(dispatcher)

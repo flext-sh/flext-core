@@ -8,10 +8,14 @@ from __future__ import annotations
 
 from types import ModuleType
 
-from flext_core._typings import FlextTypesPydantic, FlextTypingBase
+from flext_core._typings import (
+    FlextTypesAnnotateds,
+    FlextTypesPydantic,
+    FlextTypingBase,
+)
 
 
-class FlextTypesCore:
+class FlextTypesCore(FlextTypesAnnotateds):
     """Type aliases for core scalar/container foundations."""
 
     type TextOrBinaryContent = (

@@ -194,7 +194,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         error: str | None,
         *,
         error_code: str | None = None,
-        error_data: t.JsonMapping | t.ConfigModelInput | None = None,
+        error_data: t.JsonMapping | p.ConfigModelInput | None = None,
         exception: BaseException | None = None,
     ) -> p.Result[T]:
         """Build a failed result, resolving codes and redacting error data.
@@ -259,7 +259,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
     @classmethod
     def from_validation[ModelT: BaseModel](
         cls: type[Self],
-        data: t.ModelInput,
+        data: p.ModelInput,
         model: t.ModelClass[ModelT],
     ) -> p.Result[ModelT]:
         """Validate data against a model, turning validation errors into failures.

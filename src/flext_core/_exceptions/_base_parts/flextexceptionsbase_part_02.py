@@ -11,8 +11,8 @@ import uuid
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, m
+from flext_core._exceptions import FlextExceptionsHelpers
 from flext_core._exceptions._base_parts import FlextBaseErrorMetadataMixin
-from flext_core._runtime import FlextRuntimeMetadataValidation
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -89,21 +89,9 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         for source_value in (options.merged_kwargs, options.context, extra_kwargs):
             if source_value is None:
                 continue
-            try:
-                source_dict = (
-                    FlextRuntimeMetadataValidation.normalize_metadata_input_mapping(
-                        source_value,
-                    )
-                )
-            except c.EXC_PYDANTIC_TYPE_VALUE:
-                continue
-            if not source_dict:
-                continue
-            for key, value in source_dict.items():
-                if value is not None:
-                    final_kwargs_dict[key] = (
-                        FlextRuntimeMetadataValidation.normalize_to_metadata(value)
-                    )
+            final_kwargs_dict.update(
+                FlextExceptionsHelpers.build_context_map(source_value, {})
+            )
         final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"

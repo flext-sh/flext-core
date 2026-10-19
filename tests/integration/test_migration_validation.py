@@ -17,7 +17,7 @@ import pytest
 
 from flext_core import FlextContainer, FlextService
 from tests import m, p, r, t, tm, u
-from tests.integration.migration_validation_cases import capture_stdout
+from tests.integration.migration_validation_cases import capture_output
 
 _EXPECTED_DOUBLED_VALUE = 42
 _OBSERVED_VALUE = 5
@@ -226,12 +226,13 @@ class TestsFlextCoreMigrationValidation:
     # --------------------------------------------------------------- logger
 
     @staticmethod
-    def test_logger_emits_structured_message() -> None:
+    def test_logger_emits_structured_message(capfd: p.Tests.OutputCapture) -> None:
         """The logging DSL produces observable output for the given message."""
         logger = u.fetch_logger(__name__)
 
-        _ = capture_stdout(
+        _ = capture_output(
             lambda: logger.info("migration probe message"),
+            capfd,
             contains="migration probe message",
         )
 

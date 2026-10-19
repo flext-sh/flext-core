@@ -85,14 +85,14 @@ class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext)
             ...
 
         @staticmethod
-        def fetch_service(service_name: str) -> p.Result[t.RegisterableService]:
+        def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
             """Resolve a named service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
             service_name: str,
-            service: t.RegisterableService,
+            service: p.RegisterableService,
         ) -> p.Result[bool]:
             """Register a named service through the configured container."""
             ...

@@ -14,21 +14,12 @@ from typing import TYPE_CHECKING, Literal, TypeGuard, cast
 from pydantic import BaseModel
 from typing_extensions import TypeForm
 
-from flext_core import c
-from flext_core._models import FlextModelsContainers, FlextModelsPydantic
-from flext_core._protocols import (
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsSettings,
-)
+from flext_core import c, p, t
 from flext_core._runtime import FlextRuntimeMetadataValidation
-from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesGuardsTypeCore
 
 if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsBase
-    from flext_core._typings import FlextTypesServices
+    from flext_core import m
 
 
 class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
@@ -36,8 +27,8 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
     @staticmethod
     def _is_registerable_runtime_service(
-        value: FlextTypesServices.RegisterableService | FlextTypesServices.GuardInput,
-    ) -> TypeGuard[FlextTypesServices.RegisterableService]:
+        value: p.GuardInput,
+    ) -> TypeGuard[p.RegisterableService]:
         """Narrow runtime service values accepted by the dependency container.
 
         Returns:
@@ -47,19 +38,20 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         return callable(value) or isinstance(
             value,
             (
-                FlextProtocolsLogging.Logger,
-                FlextProtocolsSettings.Settings,
-                FlextProtocolsContext.Context,
-                FlextProtocolsHandler.Dispatcher,
+                p.Model,
+                p.Logger,
+                p.Settings,
+                p.Context,
+                p.Dispatcher,
             ),
         )
 
     @staticmethod
-    def _normalize_payload_item(
-        item: FlextProtocolsBase.AttributeProbe,
+    def _normalize_payload_item[T](
+        item: T,
         *,
         container_kind: Literal["mapping", "sequence"],
-    ) -> FlextTypesServices.JsonPayload:
+    ) -> t.JsonPayload:
         """Normalize one container item to its canonical payload form.
 
         Returns:
@@ -69,7 +61,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             TypeError: Always.
 
         """
-        normalized_item: FlextTypesServices.JsonPayload
+        normalized_item: t.JsonPayload
         match item:
             case datetime():
                 normalized_item = (
@@ -79,26 +71,19 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
                 normalized_item = str(item)
             case tuple():
                 normalized_item = FlextRuntimeContainer.normalize_to_metadata(
-                    cast("FlextTypesServices.JsonPayload", item),
+                    cast("t.JsonPayload", item),
                 )
             case dict():
                 normalized_item = FlextUtilitiesBase.type_adapter(
-                    TypeForm(FlextTypingBase.JsonDict)
+                    TypeForm(t.JsonDict)
                 ).validate_python(item)
             case list():
                 normalized_item = list(
                     FlextUtilitiesBase.type_adapter(
-                        TypeForm(FlextTypingBase.JsonList)
+                        TypeForm(t.JsonList)
                     ).validate_python(item),
                 )
-            case (
-                bool()
-                | int()
-                | float()
-                | str()
-                | None
-                | FlextModelsPydantic.BaseModel()
-            ):
+            case bool() | int() | float() | str() | None | m.BaseModel():
                 normalized_item = item
             case _:
                 err_template = (
@@ -112,17 +97,13 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
     @staticmethod
     def normalize_registerable_service(
-        value: FlextTypesServices.RegisterableService | FlextTypesServices.GuardInput,
-    ) -> (
-        FlextTypesServices.RegisterableService
-        | FlextModelsContainers.ConfigMap
-        | FlextModelsContainers.ObjectList
-    ):
+        value: p.GuardInput,
+    ) -> p.RegisterableService | m.ConfigMap | m.ObjectList:
         """Normalize container registration payloads to canonical runtime types.
 
         Returns:
-            The resulting ``ts.RegisterableService | FlextModelsContainers.ConfigMap |
-                FlextModelsContainers.ObjectList``.
+            The resulting ``ts.RegisterableService | m.ConfigMap |
+                m.ObjectList``.
 
         Raises:
             ValueError: Always.
@@ -130,10 +111,10 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
         """
         if isinstance(value, Mapping):
             mapping_value = cast(
-                "dict[str, FlextTypesServices.JsonPayload]",
+                "dict[str, t.JsonPayload]",
                 value,
             )
-            return FlextModelsContainers.ConfigMap(
+            return m.ConfigMap(
                 root={
                     key_s: FlextRuntimeContainer._normalize_payload_item(
                         item,
@@ -144,10 +125,10 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         if isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
             sequence_value = cast(
-                "FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]",
+                "t.SequenceOf[t.JsonPayload]",
                 value,
             )
-            return FlextModelsContainers.ObjectList(
+            return m.ObjectList(
                 root=[
                     FlextRuntimeContainer._normalize_payload_item(
                         item,
@@ -187,34 +168,32 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
 
     @staticmethod
     def normalize_to_container(
-        val: FlextTypesServices.JsonPayload
-        | FlextTypingBase.Scalar
+        val: t.JsonPayload
+        | t.Scalar
         | Path
-        | FlextModelsContainers.ConfigMap
-        | FlextModelsContainers.Dict
-        | AbstractSet[FlextTypingBase.Scalar],
-    ) -> FlextTypesServices.RuntimeData:
+        | m.ConfigMap
+        | m.Dict
+        | AbstractSet[t.Scalar],
+    ) -> t.RuntimeData:
         """Normalize any value to RuntimeData.
 
         Returns:
             The resulting ``ts.RuntimeData``.
 
         """
-        normalized_data: FlextTypesServices.RuntimeData
+        normalized_data: t.RuntimeData
         if val is None:
             normalized_data = ""
         elif isinstance(
             val,
-            (FlextModelsContainers.ConfigMap, FlextModelsContainers.Dict),
+            (m.ConfigMap, m.Dict),
         ):
             normalized_data = FlextRuntimeContainer._normalize_dict_entries(
                 list(val.root.items()),
             )
-        elif isinstance(val, FlextModelsContainers.ObjectList):
+        elif isinstance(val, m.ObjectList):
             normalized_data = list(
-                FlextUtilitiesBase.type_adapter(
-                    TypeForm(FlextTypingBase.JsonList)
-                ).validate_python([
+                FlextUtilitiesBase.type_adapter(TypeForm(t.JsonList)).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(v) for v in val.root
                 ]),
             )
@@ -230,9 +209,7 @@ class FlextRuntimeContainer(FlextRuntimeMetadataValidation):
             )
         elif isinstance(val, Sequence) and not isinstance(val, c.STR_BYTES_TYPES):
             normalized_data = list(
-                FlextUtilitiesBase.type_adapter(
-                    TypeForm(FlextTypingBase.JsonList)
-                ).validate_python([
+                FlextUtilitiesBase.type_adapter(TypeForm(t.JsonList)).validate_python([
                     FlextRuntimeContainer.normalize_to_json_value(item_raw)
                     for item_raw in val
                 ]),

@@ -50,12 +50,13 @@ class FlextMixins(FlextMixinsState):
     @contextmanager
     def track(self, operation_name: str) -> t.OperationMetricsStream:
         """Track actual operation effects and always release the operation context."""
-        stats = self._operation_stats.get(
+        stats_model = self._operation_stats.get(
             operation_name,
             m.ConfigMap(
                 root={"operation_count": 0, "error_count": 0, "total_duration_ms": 0.0}
             ),
         )
+        stats = stats_model.root
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with self._context_type.timed_operation(operation_name) as metrics:
@@ -89,7 +90,7 @@ class FlextMixins(FlextMixinsState):
                     metrics_map["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
                         metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]
-                    self._operation_stats[operation_name] = stats
+                    self._operation_stats[operation_name] = stats_model
         finally:
             _ = u.clear_scope(c.ContextScope.OPERATION)
             self._context_type.apply_operation_name("")

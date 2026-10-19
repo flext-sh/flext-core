@@ -68,7 +68,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         assert u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0])
         assert u.chk(payload["command_name"], gt="alpha", none=False, empty=False)
         tm.that(metadata["repository_root"], eq=str(repository_root))
-        tm.that(metadata["retry_window"], eq="")
+        tm.that(metadata["retry_window"] is None, eq=True)
         assert isinstance(payload["started_at"], str)
         tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)
         tm.that(set(normalized_modes), eq={"delta", "full"})

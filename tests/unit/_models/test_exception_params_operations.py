@@ -103,7 +103,7 @@ class TestsFlextCoreExceptionParamsOperations:
     @staticmethod
     def test_strict_typing_rejects_wrong_type(
         model_cls: type[m.ParamsModel],
-        payload: t.MappingKV[str, t.UnconstrainedValue],
+        payload: t.JsonMapping,
     ) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate(payload)
@@ -111,7 +111,7 @@ class TestsFlextCoreExceptionParamsOperations:
     @staticmethod
     def test_assignment_revalidates_field_type() -> None:
         params = m.ValidationErrorParams(field="email")
-        wrong_value: t.UnconstrainedValue = 123
+        wrong_value = 123
         tm.rejects_assignment(params, "field", wrong_value, expected=c.ValidationError)
 
     @pytest.mark.parametrize(

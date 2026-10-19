@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, TypeAliasType
 
 if TYPE_CHECKING:
@@ -21,13 +22,12 @@ class TestsFlextTypeAliasDeclarations:
         type Deferred = DeferredPath | str
         type Resolved = int | str
         type Nested = tuple[Deferred, ...]
+        type Factory = Callable[[], Deferred]
 
     class OtherScope:
-        """An unrelated guarded declaration cannot prove another class's deferral.
+        """A homonymous alias keeps an independent native declaration identity."""
 
-        The guarded ``PurePath as Absent`` import lives at module scope under
-        ``TYPE_CHECKING``; it never proves a deferral inside this class scope.
-        """
+        type Deferred = int
 
     class InvalidTypes:
         """A missing name without a guarded import retains its NameError."""

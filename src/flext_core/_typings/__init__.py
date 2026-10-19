@@ -17,13 +17,10 @@ if TYPE_CHECKING:
     from flext_core._typings.annotateds import FlextTypesAnnotateds
     from flext_core._typings.base import FlextTypingBase
     from flext_core._typings.config import FlextTypingConfig
-    from flext_core._typings.containers import FlextTypingContainers
     from flext_core._typings.core import FlextTypesCore
     from flext_core._typings.lazy import FlextTypesLazy
-    from flext_core._typings.project_metadata import FlextTypingProjectMetadata
     from flext_core._typings.pydantic import FlextTypesPydantic
     from flext_core._typings.services import FlextTypesServices
-    from flext_core._typings.typeadapters import FlextTypesTypeAdapters
 
 
 __all__: tuple[str, ...] = (
@@ -32,11 +29,8 @@ __all__: tuple[str, ...] = (
     "FlextTypesLazy",
     "FlextTypesPydantic",
     "FlextTypesServices",
-    "FlextTypesTypeAdapters",
     "FlextTypingBase",
     "FlextTypingConfig",
-    "FlextTypingContainers",
-    "FlextTypingProjectMetadata",
     "_base_parts",
 )
 
@@ -49,12 +43,8 @@ install_lazy_exports(
         "FlextTypesLazy": ".lazy",
         "FlextTypesPydantic": ".pydantic",
         "FlextTypesServices": ".services",
-        "FlextTypesTypeAdapters": ".typeadapters",
         "FlextTypingBase": ".base",
         "FlextTypingConfig": ".config",
-        "FlextTypingContainers": ".containers",
-        "FlextTypingProjectMetadata": ".project_metadata",
-        "_base_parts": "._base_parts",
     }),
     public_exports=__all__,
 )
