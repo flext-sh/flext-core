@@ -435,14 +435,16 @@ class TestsFlextCoreContext:
         """A failing nested scope restores both shared correlation identifiers."""
         FlextContext.apply_correlation_id("outer")
         parent_token = u.PARENT_CORRELATION_ID.set("ancestor")
-        try:
-            with (
-                pytest.raises(ValueError, match="nested failure"),
-                FlextContext.new_correlation("inner"),
-            ):
+
+        def fail_nested_scope() -> None:
+            with FlextContext.new_correlation("inner"):
                 tm.that(u.PARENT_CORRELATION_ID.get(), eq="outer")
                 msg = "nested failure"
                 raise ValueError(msg)
+
+        try:
+            with pytest.raises(ValueError, match="nested failure"):
+                fail_nested_scope()
             tm.that(FlextContext.resolve_correlation_id(), eq="outer")
             tm.that(u.PARENT_CORRELATION_ID.get(), eq="ancestor")
         finally:
@@ -462,15 +464,20 @@ class TestsFlextCoreContext:
         """Timing still finalizes metrics and restores outer shared values on errors."""
         FlextContext.apply_operation_name("outer-operation")
         metrics: p.MutableRootDict[t.JsonPayload] = m.ConfigMap(root={})
-        with FlextContext.service_context("outer-service", "outer-version"):
+
+        def fail_timed_scope() -> None:
+            nonlocal metrics
             with (
-                pytest.raises(ValueError, match="timed failure"),
                 FlextContext.service_context("inner-service", "inner-version"),
                 FlextContext.timed_operation("inner-operation") as metrics,
             ):
                 tm.that(FlextContext.resolve_operation_name(), eq="inner-operation")
                 msg = "timed failure"
                 raise ValueError(msg)
+
+        with FlextContext.service_context("outer-service", "outer-version"):
+            with pytest.raises(ValueError, match="timed failure"):
+                fail_timed_scope()
             tm.that(FlextContext.resolve_operation_name(), eq="outer-operation")
             tm.that(
                 FlextContext.export_full_context()[c.ContextKey.SERVICE_NAME],
@@ -495,7 +502,7 @@ class TestsFlextCoreContext:
 
     @staticmethod
     def test_runtime_scope_resolution_copies_state_and_preserves_hooks() -> None:
-        """Extending scopes preserves metadata, hooks and independent variable storage."""
+        """Extended scopes retain metadata, hooks and independent storage."""
 
         def on_event(value: t.Scalar) -> t.JsonPayload:
             return value

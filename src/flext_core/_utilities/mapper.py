@@ -14,6 +14,7 @@ from flext_core import FlextResult, c, m, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesCollection,
+    FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesMapperExtract,
     FlextUtilitiesPydantic,
 )

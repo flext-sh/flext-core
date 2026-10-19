@@ -16,6 +16,21 @@ class FlextUtilitiesMetadata:
     """Sanitize structured diagnostics without creating another logging engine."""
 
     @staticmethod
+    def _redact_text_values(
+        text: str, values: t.StrSequence, replacement: str | None
+    ) -> str:
+        """Replace nonempty sensitive values in a textual payload.
+
+        Returns:
+            The text with all declared values redacted.
+
+        """
+        for secret in values:
+            if secret:
+                text = text.replace(secret, replacement or "")
+        return text
+
+    @staticmethod
     def redact_metadata(
         value: t.JsonMapping,
         *,
@@ -44,10 +59,7 @@ class FlextUtilitiesMetadata:
                 cleaned = redact(decoded)
                 if cleaned != decoded:
                     text = adapter.dump_json(cleaned).decode()
-            for secret in values:
-                if secret:
-                    text = text.replace(secret, replacement or "")
-            return text
+            return FlextUtilitiesMetadata._redact_text_values(text, values, replacement)
 
         def redact(item: t.JsonValue) -> t.JsonValue:
             if isinstance(item, dict):

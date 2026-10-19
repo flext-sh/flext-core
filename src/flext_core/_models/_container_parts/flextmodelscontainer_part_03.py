@@ -57,7 +57,10 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
         dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
-            description="Explicit command bus retained by this scope; otherwise a fresh bus is built.",
+            description=(
+                "Explicit command bus retained by this scope; "
+                "otherwise a fresh bus is built."
+            ),
         )
         services: Annotated[
             p.ServiceMap | None,

@@ -93,11 +93,21 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         return self.__class__(self.name, context=structlog.get_context(bound_logger))
 
     def new(self, **context: t.JsonPayload) -> Self:
-        """Replace bound context without mutating this logger."""
+        """Replace bound context without mutating this logger.
+
+        Returns:
+            A logger bound to the replacement context.
+
+        """
         return self.__class__(self.name, context=context)
 
     def exception(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
-        """Emit native exception context and preserve selected failures."""
+        """Emit native exception context and preserve selected failures.
+
+        Returns:
+            The native logging result.
+
+        """
         if args and isinstance(args[0], BaseException):
             kw["exception"], args = args[0], args[1:]
         kw.setdefault("exc_info", True)
@@ -110,7 +120,12 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         exc_info: bool,
         context: t.MappingKV[str, t.JsonPayload | Exception],
     ) -> p.LoggingEvent:
-        """Adapt causal data to native exc_info without formatting a stack."""
+        """Adapt causal data to native exc_info without formatting a stack.
+
+        Returns:
+            The event with its original causal data.
+
+        """
         result: p.LoggingEvent = {
             k: self._to_container_value(v) for k, v in context.items()
         }
@@ -129,11 +144,21 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         return self.__class__(self.name, context=structlog.get_context(bound_logger))
 
     def try_unbind(self, *keys: str) -> Self:
-        """Unbind keys while ignoring missing values."""
+        """Unbind keys while ignoring missing values.
+
+        Returns:
+            A logger without the selected context keys.
+
+        """
         return self.unbind(*keys, safe=True)
 
     def warning(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
-        """Emit WARNING through the native pipeline."""
+        """Emit WARNING through the native pipeline.
+
+        Returns:
+            The native logging result.
+
+        """
         return self._log(c.LogLevel.WARNING, msg, *args, **kw)
 
     def _log(
@@ -143,53 +168,89 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         *args: p.LogValue,
         **context: p.LogValue,
     ) -> p.LogResult:
-        """Emit once, preserving original business identity and saved traceback."""
+        """Emit once, preserving original business identity and saved traceback.
+
+        Returns:
+            A successful logging result after native emission.
+
+        """
         exception = context.get("exception")
         exc_info = context.get("exc_info", False)
-        business_info = self.resolve_logging_exception_info(True)
+        business_info = self.resolve_logging_exception_info(value=True)
         try:
             selected_info = self.resolve_logging_exception_info(
                 exception if isinstance(exception, BaseException) else exc_info
             )
             if selected_info is not None:
                 business_info = selected_info
-            level_str = str(logging.getLevelName(self.level_number(level))).lower()
-            native_context: p.LoggingEvent = dict(
-                self.to_container_context({
-                    key: value
-                    for key, value in context.items()
-                    if key not in {"exc_info", "exception"}
-                })
-            )
-            if selected_info is not None:
-                native_context["exc_info"] = selected_info
-            if args:
-                native_context["positional_args"] = args
-            getattr(self.logger, level_str)(event, **native_context)
+            self._emit_native(level, event, args, context, selected_info)
         except BaseException as logging_error:
             if business_info is not None and business_info[1] is not logging_error:
                 business_error = business_info[1]
                 business_error.add_note(
                     f"Logging also failed: {type(logging_error).__name__}"
                 )
-                raise business_error.with_traceback(business_info[2])
+                raise business_error.with_traceback(business_info[2]) from logging_error
             raise
         return r[bool].ok(value=True)
 
+    def _emit_native(
+        self,
+        level: t.LogLevel | str,
+        event: str,
+        args: tuple[p.LogValue, ...],
+        context: t.MappingKV[str, p.LogValue],
+        selected_info: t.LoggingExceptionInfo | None,
+    ) -> None:
+        """Prepare one event and emit it through the native pipeline."""
+        level_str = str(logging.getLevelName(self.level_number(level))).lower()
+        native_context: p.LoggingEvent = dict(
+            self.to_container_context({
+                key: value
+                for key, value in context.items()
+                if key not in {"exc_info", "exception"}
+            })
+        )
+        if selected_info is not None:
+            native_context["exc_info"] = selected_info
+        if args:
+            native_context["positional_args"] = args
+        getattr(self.logger, level_str)(event, **native_context)
+
     def critical(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
-        """Emit CRITICAL through the native pipeline."""
+        """Emit CRITICAL through the native pipeline.
+
+        Returns:
+            The native logging result.
+
+        """
         return self._log(c.LogLevel.CRITICAL, msg, *args, **kw)
 
     def debug(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
-        """Emit DEBUG through the native pipeline."""
+        """Emit DEBUG through the native pipeline.
+
+        Returns:
+            The native logging result.
+
+        """
         return self._log(c.LogLevel.DEBUG, msg, *args, **kw)
 
     def error(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
-        """Emit ERROR through the native pipeline."""
+        """Emit ERROR through the native pipeline.
+
+        Returns:
+            The native logging result.
+
+        """
         return self._log(c.LogLevel.ERROR, msg, *args, **kw)
 
     def info(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
-        """Emit ordinary INFO through the native pipeline."""
+        """Emit ordinary INFO through the native pipeline.
+
+        Returns:
+            The native logging result.
+
+        """
         return self._log(c.LogLevel.INFO, msg, *args, **kw)
 
     def log(
@@ -199,7 +260,12 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         *args: p.LogValue,
         **context: p.LogValue,
     ) -> p.LogResult:
-        """Emit at the requested standard severity."""
+        """Emit at the requested standard severity.
+
+        Returns:
+            The native logging result.
+
+        """
         return self._log(level, message, *args, **context)
 
     def trace(
@@ -208,7 +274,12 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         *args: p.LogValue,
         **kwargs: p.LogValue,
     ) -> p.LogResult:
-        """Emit opt-in high-volume diagnostics at DEBUG."""
+        """Emit opt-in high-volume diagnostics at DEBUG.
+
+        Returns:
+            The logging result, including disabled-trace success.
+
+        """
         if self.logging_settings().trace:
             return self._log(c.LogLevel.DEBUG, message, *args, **kwargs)
         return r[bool].ok(value=True)

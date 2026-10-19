@@ -93,7 +93,12 @@ class ExamplesFlextRegistryFlow(ExamplesFlextShared):
         self.audit_check("binding.metadata_conflict", contradictory.failure)
 
         def conflicting_handler(_message: p.Routable) -> t.JsonPayload:
-            """Represent a distinct callable competing for an occupied route."""
+            """Represent a distinct callable competing for an occupied route.
+
+            Returns:
+                A payload identifying the conflicting handler.
+
+            """
             return "conflicting handler"
 
         failed = registry.register_bindings({
@@ -124,7 +129,12 @@ class ExamplesFlextRegistryFlow(ExamplesFlextShared):
         cause = RuntimeError("Handler rejected the command")
 
         def failed_handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
-            """Preserve the original domain failure through dispatch."""
+            """Preserve the original domain failure through dispatch.
+
+            Returns:
+                The result carrying the original cause.
+
+            """
             return r[t.JsonPayload].fail(str(cause), exception=cause)
 
         failed_registry = u.build_registry()

@@ -51,7 +51,9 @@ class TestsFlextProtocols(FlextTestsProtocols):
             """Only the request capability consumed by the dispatch operation."""
 
             @property
-            def command_name(self) -> str: ...
+            def command_name(self) -> str:
+                """Expose the name consumed by the dispatch operation."""
+                ...
 
         @runtime_checkable
         class PublicPayload(FlextTestsProtocols.Base, Protocol):

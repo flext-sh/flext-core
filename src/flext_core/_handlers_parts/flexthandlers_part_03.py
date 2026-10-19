@@ -40,12 +40,16 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         Args:
             command: The command type this handler processes
-            priority: Higher priorities are discovered first; the model owns the default.
+            priority: Higher priorities are discovered first; the model owns
+                the default.
             timeout: Non-None policies are rejected until the executor supports them.
             middleware: Nonempty policies are rejected until the executor supports them.
 
         Returns:
             A declaration decorator that returns the original callable unchanged.
+
+        Raises:
+            ValueError: If timeout or middleware execution is requested.
 
         Example:
             >>> @FlextHandlers.handler(command=m.Command)
@@ -67,6 +71,9 @@ class FlextHandlers[MessageT_contra, ResultT](
 
             Returns:
                 The resulting ``Callable[PHandler, TResult]``.
+
+            Raises:
+                ValueError: If the callable already declares handler metadata.
 
             """
             if hasattr(func, c.HANDLER_ATTR):

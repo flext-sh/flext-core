@@ -1,8 +1,8 @@
 """FlextSettings — flat, self-contained settings foundation (layer-0 SSOT).
 
 ONE base class, no MRO field-mixins and no composed facade imports. Override
-annotations use the lower settings protocol owner. ``FlextSettings`` carries the per-class
-singleton lifecycle, the canonical helper API (``fetch_global``/``clone``/
+annotations use the lower settings protocol owner. ``FlextSettings`` carries the
+per-class singleton lifecycle, the canonical helper API (``fetch_global``/``clone``/
 ``update_global``/``reset_for_testing``/``resolve_env_file``), the namespace
 registry, and the five universal runtime fields every FLEXT app shares.
 

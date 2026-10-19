@@ -204,11 +204,14 @@ class TestsFlextCoreResultExceptionFailures:
     ) -> None:
         """Extraction retains the actual cause, producer traceback and metadata."""
         cause = LookupError("original cause")
-        try:
+
+        def fail_producer() -> None:
             msg = "capture failed"
             raise kind(msg) from cause
-        except BaseException as caught:
-            original = caught
+
+        with pytest.raises(kind) as caught:
+            fail_producer()
+        original = caught.value
         producer = tm.not_none(original.__traceback__)
         failure: p.Result[int] = r[int].fail(
             "selected observer failed",

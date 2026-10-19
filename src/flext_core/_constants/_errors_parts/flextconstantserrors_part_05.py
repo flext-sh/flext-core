@@ -109,7 +109,8 @@ class FlextConstantsErrorsRuntimeSettings:
     )
     ERR_SERVICE_OPERATION_REQUEST: Final[str] = (
         "must take a request Protocol with a Pydantic model declared in operation "
-        "metadata. Fix: annotate with p.Request and declare h.handler(command=m.Request)."
+        "metadata. Fix: annotate with p.Request and declare "
+        "h.handler(command=m.Request)."
     )
     ERR_SERVICE_OPERATION_RESULT: Final[str] = (
         "must return p.Result. Fix: annotate the return as p.Result[...]."

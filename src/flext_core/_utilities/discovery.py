@@ -248,41 +248,63 @@ class FlextUtilitiesDiscovery:
                     "An input-less operation cannot declare a command model.",
                 )
             return None
-        for param in params:
-            if param.name not in annotations:
-                raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
-            annotation = annotations[param.name]
-            contract = FlextUtilitiesDiscovery._resolve(func, where, annotation)
-            if not is_protocol(contract):
-                raise error(
-                    where,
-                    annotation,
-                    c.ERR_SERVICE_OPERATION_REQUEST,
-                )
-            if metadata is None:
-                raise error(
-                    where,
-                    annotation,
-                    "Request operation requires typed h.handler(command=m.Request) metadata.",
-                )
-            request = metadata.command
-            if not issubclass(request, BaseModel):
-                raise error(
-                    where,
-                    annotation,
-                    "Handler command metadata must declare a Pydantic request model.",
-                )
-            missing = get_protocol_members(contract) - (
-                request.model_fields.keys() | set(dir(request))
+        param = params[0]
+        if param.name not in annotations:
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
+        annotation = annotations[param.name]
+        contract = FlextUtilitiesDiscovery._resolve(func, where, annotation)
+        if not is_protocol(contract):
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
+        if metadata is None:
+            raise error(
+                where,
+                annotation,
+                "Request operation requires typed "
+                "h.handler(command=m.Request) metadata.",
             )
-            if missing:
-                raise error(
-                    where,
-                    annotation,
-                    f"Request model does not satisfy Protocol members: {', '.join(sorted(missing))}.",
-                )
-            return request
-        raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
+        request = metadata.command
+        if not issubclass(request, BaseModel):
+            raise error(
+                where,
+                annotation,
+                "Handler command metadata must declare a Pydantic request model.",
+            )
+        missing = get_protocol_members(contract) - (
+            request.model_fields.keys() | set(dir(request))
+        )
+        if missing:
+            raise error(
+                where,
+                annotation,
+                "Request model does not satisfy Protocol members: "
+                f"{', '.join(sorted(missing))}.",
+            )
+        return request
+
+    @staticmethod
+    def _annotation_node(
+        annotation: t.TypeHintSpecifier,
+        where: tuple[type, str, str],
+        *,
+        subscript: bool,
+    ) -> ast.expr:
+        """Parse a source annotation and select its requested outer node.
+
+        Returns:
+            The annotation expression to resolve.
+
+        """
+        error = FlextUtilitiesDiscovery._error
+        if not isinstance(annotation, str):
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_EVALUATED)
+        node = ast.parse(annotation, mode="eval").body
+        if isinstance(node, ast.Constant) and isinstance(node.value, str):
+            node = ast.parse(node.value, mode="eval").body
+        if not subscript:
+            return node
+        if not isinstance(node, ast.Subscript):
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_RESULT)
+        return node.value
 
     @staticmethod
     def _resolve(
@@ -305,15 +327,9 @@ class FlextUtilitiesDiscovery:
 
         """
         error = FlextUtilitiesDiscovery._error
-        if not isinstance(annotation, str):
-            raise error(where, annotation, c.ERR_SERVICE_OPERATION_EVALUATED)
-        node = ast.parse(annotation, mode="eval").body
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            node = ast.parse(node.value, mode="eval").body
-        if subscript:
-            if not isinstance(node, ast.Subscript):
-                raise error(where, annotation, c.ERR_SERVICE_OPERATION_RESULT)
-            node = node.value
+        node = FlextUtilitiesDiscovery._annotation_node(
+            annotation, where, subscript=subscript
+        )
         parts: list[str] = []
         while isinstance(node, ast.Attribute):
             parts.insert(0, node.attr)

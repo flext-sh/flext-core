@@ -25,7 +25,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
 
     @staticmethod
     def test_model_defaults_are_independent_and_copy_updated() -> None:
-        """Default validation keeps independent metrics values at the public boundary."""
+        """Default validation keeps independent public metrics values."""
         first = m.ExceptionMetricsState()
         second = m.ExceptionMetricsState()
         snapshot = m.ExceptionMetricsSnapshot()

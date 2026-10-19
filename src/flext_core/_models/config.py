@@ -288,7 +288,9 @@ class FlextModelsConfig:
             default=None,
             exclude=True,
             repr=False,
-            description="Original local-only cause; never serialized into logging context.",
+            description=(
+                "Original local-only cause; never serialized into logging context."
+            ),
         )
 
 

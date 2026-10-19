@@ -20,10 +20,14 @@ class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
         payload = m.Metadata(attributes={"owner": self.rand_str(6)})
         replacement = m.Metadata(attributes={"owner": self.rand_str(6)})
         for scope in (c.RegistrationScope.INSTANCE, c.RegistrationScope.CLASS):
-            registered = registry.register_plugin(category, name, payload, scope=scope)
-            duplicate = registry.register_plugin(category, name, payload, scope=scope)
-            self.audit_check("plugin.register", registered.value)
-            self.audit_check("plugin.duplicate", duplicate.value)
+            self.audit_check(
+                "plugin.register",
+                registry.register_plugin(category, name, payload, scope=scope).value,
+            )
+            self.audit_check(
+                "plugin.duplicate",
+                registry.register_plugin(category, name, payload, scope=scope).value,
+            )
             self.audit_check(
                 "plugin.identity",
                 registry.fetch_plugin(category, name, scope=scope).value is payload,

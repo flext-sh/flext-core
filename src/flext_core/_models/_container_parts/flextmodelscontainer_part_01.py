@@ -54,7 +54,12 @@ class FlextModelsContainer:
         def validate_metadata_model_input(
             cls, value: p.MetadataInput
         ) -> p.Metadata | None:
-            """Keep existing metadata identity and validate raw registration attributes."""
+            """Keep metadata identity and validate raw registration attributes.
+
+            Returns:
+                The validated metadata or None.
+
+            """
             if value is None:
                 return None
             if isinstance(value, FlextModelsBase.Metadata):
@@ -68,7 +73,7 @@ class FlextModelsContainer:
             })
 
     class ServiceRegistration(RegistrationEnvelope):
-        """Service registry entry whose payload follows the declared service contract."""
+        """Service registry entry following the declared service contract."""
 
         name: Annotated[
             t.NonEmptyStr,
@@ -92,7 +97,12 @@ class FlextModelsContainer:
         @FlextModelsPydantic.field_validator("service", mode="before")
         @classmethod
         def _validate_service(cls, value: p.GuardInput) -> p.RegisterableService:
-            """Apply the utility-owned admission at the native field boundary."""
+            """Apply the utility-owned admission at the native field boundary.
+
+            Returns:
+                The admitted service.
+
+            """
             return flext_core.u.normalize_registerable_service(value)
 
         @FlextModelsPydantic.computed_field

@@ -46,7 +46,12 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
         @FlextModelsPydantic.field_validator("created_at", "updated_at", mode="after")
         @classmethod
         def ensure_utc_datetime(cls, value: datetime | None) -> datetime | None:
-            """Attach UTC only to naive inputs; retain an aware input's timezone."""
+            """Attach UTC only to naive inputs; retain an aware input's timezone.
+
+            Returns:
+                The timezone-aware timestamp or None.
+
+            """
             return (
                 value.replace(tzinfo=UTC)
                 if value is not None and value.tzinfo is None

@@ -23,7 +23,7 @@ class TestsFlextHandlerDiscovery:
     @staticmethod
     @pytest.mark.parametrize("priority", [0, 1, 10, 100])
     def test_declared_metadata_and_original_callable(priority: int) -> None:
-        """The decorator and scanner preserve the function and its explicit declaration."""
+        """Decorator and scanner preserve callable identity and declaration."""
         outcome = r[str].ok("created")
 
         def operation(_request: p.Routable) -> p.Result[str]:
@@ -44,7 +44,7 @@ class TestsFlextHandlerDiscovery:
     @staticmethod
     @pytest.mark.parametrize("explicit_empty", [False, True])
     def test_defaults_come_from_the_model_owner(*, explicit_empty: bool) -> None:
-        """Default expectations are derived, never frozen to today's configured values."""
+        """Defaults are derived, never frozen to today's configured values."""
 
         def operation(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("created")
@@ -78,18 +78,18 @@ class TestsFlextHandlerDiscovery:
     @pytest.mark.parametrize("timeout", [0.0, 1.0, 30.0])
     def test_unsupported_timeout_fails_before_application(timeout: float) -> None:
         """The executor never accepts a policy it cannot implement."""
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="timeout execution is not supported"):
             h.handler(command=m.Command, timeout=timeout)
 
     @staticmethod
     def test_unsupported_middleware_fails_before_application() -> None:
-        """Any requested middleware requires an executor capability, not silent success."""
-        with pytest.raises(ValueError):
+        """Requested middleware requires an actual executor capability."""
+        with pytest.raises(ValueError, match="middleware execution is not supported"):
             h.handler(command=m.Command, middleware=(p.Middleware,))
 
     @staticmethod
     def test_negative_priority_fails_at_the_pydantic_boundary() -> None:
-        """The declared nonnegative invariant is validated by its model, not custom code."""
+        """The model validates the declared nonnegative priority invariant."""
 
         def operation(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("created")
@@ -102,7 +102,7 @@ class TestsFlextHandlerDiscovery:
     def test_stacked_declarations_leave_original_metadata_unchanged(
         command: type,
     ) -> None:
-        """Identical and conflicting second declarations both fail without replacement."""
+        """Repeated declarations fail without replacing the original metadata."""
 
         @h.handler(command=m.Command)
         def operation(_request: p.Routable) -> p.Result[str]:
@@ -110,13 +110,13 @@ class TestsFlextHandlerDiscovery:
 
         module = u.Tests.handler_module("single_declaration", operation=operation)
         original = h.Discovery.scan_module(module)[0][2]
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="metadata is already declared"):
             h.handler(command=command)(operation)
         tm.that(h.Discovery.scan_module(module)[0][2] is original)
 
     @staticmethod
     def test_module_filters_private_plain_scalar_and_native_members() -> None:
-        """An unrelated imported builtin has no metadata dictionary and is simply ignored."""
+        """Unrelated builtins without metadata are ignored."""
 
         @h.handler(command=m.Command)
         def operation(_request: p.Routable) -> p.Result[str]:
@@ -139,7 +139,7 @@ class TestsFlextHandlerDiscovery:
 
     @staticmethod
     def test_module_priority_and_alias_name_order_are_deterministic() -> None:
-        """Order depends on declared priority then export name, not insertion or function name."""
+        """Declared priority then export name determine discovery order."""
 
         @h.handler(command=m.Command, priority=10)
         def tied(_request: p.Routable) -> p.Result[str]:
@@ -165,7 +165,7 @@ class TestsFlextHandlerDiscovery:
         "payload", [None, 7, "plain", [1], m.ConfigMap(root={"native": 1})]
     )
     def test_discovery_preserves_raw_payload_identity(payload: t.JsonPayload) -> None:
-        """Discovery must not stringify, serialize, wrap, or execute the original function."""
+        """Discovery neither transforms nor executes the original function."""
 
         @h.handler(command=m.Command)
         def operation(_request: p.Routable) -> t.JsonPayload:
@@ -179,7 +179,7 @@ class TestsFlextHandlerDiscovery:
     @staticmethod
     @pytest.mark.parametrize("failure", [False, True])
     def test_result_identity_cause_and_no_late_module_lookup(*, failure: bool) -> None:
-        """Saved handlers survive replacement/removal without resolving a module by name."""
+        """Saved handlers survive replacement without a module-name lookup."""
         cause = RuntimeError("handler operation failed")
         outcome = (
             r[str].fail("original failure", exception=cause)
@@ -211,7 +211,7 @@ class TestsFlextHandlerDiscovery:
     def test_malformed_metadata_fails_before_registration(
         invalid: t.JsonPayload,
     ) -> None:
-        """Foreign metadata is rejected instead of being treated as an absent handler."""
+        """Foreign metadata is rejected rather than treated as absent."""
 
         def operation(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("created")
@@ -224,7 +224,7 @@ class TestsFlextHandlerDiscovery:
 
     @staticmethod
     def test_injected_unsupported_policy_is_rejected_by_discovery() -> None:
-        """A structurally valid data model cannot silently activate unsupported execution."""
+        """Valid metadata cannot activate unsupported execution policies."""
 
         def operation(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("created")
@@ -232,7 +232,7 @@ class TestsFlextHandlerDiscovery:
         setattr(
             operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command, timeout=1.0)
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="timeout execution is not supported"):
             h.Discovery.scan_module(
                 u.Tests.handler_module("unsupported_handlers", operation=operation)
             )
@@ -251,7 +251,7 @@ class TestsFlextHandlerDiscovery:
         service_type: type,
         names: t.StrSequence,
     ) -> None:
-        """Class scanning includes inheritance/private/static/class methods, without plain ones."""
+        """Class scanning includes inherited and decorated descriptors only."""
         first = h.Discovery.scan_class(service_type)
         second = h.Discovery.scan_class(service_type)
         tm.that(tuple(name for name, _ in first), eq=names)
@@ -262,7 +262,7 @@ class TestsFlextHandlerDiscovery:
 
     @staticmethod
     def test_class_metadata_and_request_forwarding_are_observable() -> None:
-        """An instance executes its declared operation, while MRO respects the override."""
+        """Instances execute declared operations and honor MRO overrides."""
         metadata = dict(h.Discovery.scan_class(u.Tests.HandlerService))
         tm.that(metadata["create"].command is m.Command)
         tm.that(metadata["delete"].command is m.Event)
@@ -277,7 +277,7 @@ class TestsFlextHandlerDiscovery:
 
     @staticmethod
     def test_empty_inputs_do_not_construct_a_service() -> None:
-        """Discovery is explicit introspection, never bootstrap or implicit execution."""
+        """Discovery introspects without bootstrap or implicit execution."""
         tm.that(
             h.Discovery.scan_module(u.Tests.handler_module("empty_handlers", value=1)),
             empty=True,
