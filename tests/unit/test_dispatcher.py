@@ -67,7 +67,7 @@ class TestsFlextCoreDispatcher:
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
             received.append(message)
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         if registered:
             tm.ok(dispatcher.register_handler(handler, message_type="known"))
@@ -88,7 +88,7 @@ class TestsFlextCoreDispatcher:
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
             received.append(message)
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         tm.that(u.build_dispatcher().register_handler(handler).failure)
         tm.that(received, empty=True)
@@ -104,7 +104,7 @@ class TestsFlextCoreDispatcher:
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
             received.append(message)
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         tm.ok(dispatcher.register_handler(handler, message_type="event", is_event=True))
         first = m.Event(event_type="event", aggregate_id="dispatcher")
@@ -243,11 +243,11 @@ class TestsFlextCoreDispatcher:
 
         def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("first")
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         def second(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("second")
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         report = tm.ok(
             dispatcher.register_handlers(
@@ -278,7 +278,7 @@ class TestsFlextCoreDispatcher:
 
         def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("first")
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         def failed(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("failed")
@@ -286,7 +286,7 @@ class TestsFlextCoreDispatcher:
 
         def later(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("later")
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         tm.ok(
             dispatcher.register_handlers(
@@ -315,7 +315,7 @@ class TestsFlextCoreDispatcher:
 
         def later(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("later")
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("first")
@@ -324,7 +324,7 @@ class TestsFlextCoreDispatcher:
                     later, message_type="snapshot", is_event=True
                 )
             )
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         tm.ok(
             dispatcher.register_handler(first, message_type="snapshot", is_event=True)
@@ -372,7 +372,7 @@ class TestsFlextCoreDispatcher:
 
         def explicit(_message: p.Routable) -> p.Result[t.JsonPayload]:
             observed.append(tuple(auto.handled))
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
         auto_binding = m.HandlerRegistration(handler=auto, is_event=True)
         explicit_binding = m.HandlerRegistration(

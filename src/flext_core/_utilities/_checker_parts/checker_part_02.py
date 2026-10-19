@@ -18,6 +18,7 @@ from flext_core import FlextResult, c, p
 from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities._checker_parts import checker_part_01
 
+
 class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
     @classmethod
     def _extract_message_type_from_parameter(

@@ -102,7 +102,7 @@ class TestsFlextUtilitiesDispatchMixin:
 
         def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
             self.handled.append(u.resolve_message_route(message))
-            return r[t.JsonPayload].ok(True)
+            return r[t.JsonPayload].ok(value=True)
 
     class Handler(h[t.JsonPayload, t.JsonPayload]):
         """Simple handler used by public registry scenarios."""

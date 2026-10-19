@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities import (
@@ -23,7 +23,6 @@ if TYPE_CHECKING:
         _mapper_access_parts as _mapper_access_parts,
         _mapper_extract_parts as _mapper_extract_parts,
         _parser_targets_parts as _parser_targets_parts,
-        metadata as metadata,
     )
     from flext_core._utilities._beartype import (
         FlextUtilitiesBeartypeAliasVisitor,
@@ -39,7 +38,6 @@ if TYPE_CHECKING:
         FlextUtilitiesBeartypeModuleSource,
         FlextUtilitiesBeartypeModuleVisitor,
         FlextUtilitiesBeartypeTypeAliases,
-        _placeholder as _placeholder,
         alias_first_violation,
         bound_names,
         declarations,
@@ -208,7 +206,7 @@ __all__: tuple[str, ...] = (
     "scope_nodes",
 )
 
-install_lazy_exports(
+__getattr__ = install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -262,9 +260,9 @@ install_lazy_exports(
         "FlextUtilitiesLoggingContext": ".logging_context",
         "FlextUtilitiesLoggingStream": "._logging_config_parts.logging_stream",
         "FlextUtilitiesMapper": ".mapper",
-        "FlextUtilitiesMetadata": ".metadata",
         "FlextUtilitiesMapperAccess": ".mapper_access",
         "FlextUtilitiesMapperExtract": ".mapper_extract",
+        "FlextUtilitiesMetadata": ".metadata",
         "FlextUtilitiesModel": ".model",
         "FlextUtilitiesModelOptions": ".model_options",
         "FlextUtilitiesModelRuntime": ".model_runtime",
@@ -303,4 +301,4 @@ install_lazy_exports(
         "scope_nodes": "._beartype._module_source_scan",
     }),
     public_exports=__all__,
-)
+)[0]

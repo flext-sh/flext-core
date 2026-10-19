@@ -6,13 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Generator,
-    Iterator,
-    MutableMapping,
-    Set as AbstractSet,
-)
+from collections.abc import Callable, Generator, MutableMapping, Set as AbstractSet
 from concurrent.futures import Future
 from datetime import date, time, tzinfo
 from enum import Enum
@@ -20,7 +14,6 @@ from logging import Formatter, Handler, LogRecord
 from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import BinaryIO, TextIO, TypeAliasType
-
 
 from flext_core import c
 from flext_core._typings import FlextTypesPydantic, FlextTypingBase

@@ -130,6 +130,7 @@ class TestsFlextCoreResultExceptionFailures:
     @staticmethod
     @pytest.mark.parametrize("tuple_issues", [False, True])
     def test_fail_serializes_publication_issues_and_preserves_exception(
+        *,
         tuple_issues: bool,
     ) -> None:
         """Plain nested issue payloads retain data and the original failure."""
@@ -156,9 +157,9 @@ class TestsFlextCoreResultExceptionFailures:
                 "pending_files": ["src/package/__init__.py"],
             },
         )
-        assert result.failure
-        assert result.exception is original
-        assert result.error_data == {
+        tm.fail(result)
+        tm.that(result.exception is original, eq=True)
+        expected: t.JsonDict = {
             "phase": "lazy-init",
             "completed": True,
             "issues": [
@@ -175,9 +176,12 @@ class TestsFlextCoreResultExceptionFailures:
             "written_files": ["src/independent/__init__.py"],
             "pending_files": ["src/package/__init__.py"],
         }
-        with pytest.raises(ValueError) as raised:
+        tm.that(result.error_data, eq=expected)
+        with pytest.raises(
+            ValueError, match="source changed during publication"
+        ) as raised:
             result.unwrap()
-        assert raised.value is original
+        tm.that(raised.value is original, eq=True)
 
     @staticmethod
     def test_fail_enriches_error_data_from_exception_metadata() -> None:
@@ -252,6 +256,7 @@ class TestsFlextCoreResultExceptionFailures:
     @pytest.mark.parametrize("use_property", [False, True])
     @pytest.mark.parametrize("kind", [ValueError, OSError, KeyboardInterrupt])
     def test_failure_terminals_preserve_native_identity_and_result_context(
+        *,
         use_property: bool,
         kind: type[BaseException],
     ) -> None:
@@ -298,6 +303,7 @@ class TestsFlextCoreResultExceptionFailures:
     @staticmethod
     @pytest.mark.parametrize("use_property", [False, True])
     def test_logical_failure_terminal_retains_structured_context(
+        *,
         use_property: bool,
     ) -> None:
         """A failure without a native cause still exposes its full result context."""
@@ -317,6 +323,7 @@ class TestsFlextCoreResultExceptionFailures:
     @pytest.mark.parametrize("use_property", [False, True])
     @pytest.mark.parametrize("explicit_data", [False, True])
     def test_failure_metadata_is_private_before_native_traceback_rendering(
+        *,
         use_property: bool,
         explicit_data: bool,
     ) -> None:

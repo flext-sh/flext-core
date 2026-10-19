@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._beartype import (
@@ -102,7 +102,7 @@ __all__: tuple[str, ...] = (
     "scope_nodes",
 )
 
-install_lazy_exports(
+__getattr__ = install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -136,4 +136,4 @@ install_lazy_exports(
         "scope_nodes": "._module_source_scan",
     }),
     public_exports=__all__,
-)
+)[0]

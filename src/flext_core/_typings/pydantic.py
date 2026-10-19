@@ -17,10 +17,8 @@ from collections.abc import Sequence
 
 import pydantic
 import pydantic_core
-from pydantic import json_schema as pydantic_json_schema
+from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
-
-type JsonValue = pydantic.JsonValue
 
 
 class FlextTypesPydantic:
@@ -184,4 +182,4 @@ class FlextTypesPydantic:
     type Port[P] = pydantic_json_schema.SkipJsonSchema[P]
 
 
-__all__: list[str] = ["FlextTypesPydantic"]
+__all__: list[str] = ["FlextTypesPydantic", "JsonValue"]

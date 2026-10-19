@@ -130,7 +130,6 @@ class TestsFlextModelsCorePublicMixin:
             return self
 
         @m.computed_field
-        @property
         def label(self) -> str:
             return f"{self.raw_name}:{self.visits}"
 
@@ -145,7 +144,6 @@ class TestsFlextModelsCorePublicMixin:
         raw: str
 
         @m.computed_field(alias="upperLabel", description="Uppercase label")
-        @property
         def label(self) -> str:
             return self.raw.upper()
 
