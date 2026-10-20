@@ -44,6 +44,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
         tm.that(transformed.failure is True, truth=True)
         tm.that(transformed.error, none=False)
+        tm.not_none(transformed.error)
         tm.that("bad_mapped" in transformed.error, truth=True)
         tm.that(transformed.error_code, eq="E1")
 
@@ -77,7 +78,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
         tm.that(result.failure is True, truth=True)
         tm.that(result.error, none=False)
-        tm.that("stop" in result.error, truth=True)
+        tm.that("stop" in str(result.error), truth=True)
         tm.that(visited, eq=[1])
 
     @staticmethod
@@ -102,7 +103,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
         tm.that(result.failure is True, truth=True)
         tm.that(result.error, none=False)
-        tm.that("Callable returned None" in result.error, truth=True)
+        tm.that("Callable returned None" in str(result.error), truth=True)
 
     @staticmethod
     def test_create_from_callable_captures_raised_exception() -> None:
@@ -116,7 +117,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
         tm.that(result.failure is True, truth=True)
         tm.that(result.error, none=False)
-        tm.that("boom" in result.error, truth=True)
+        tm.that("boom" in str(result.error), truth=True)
 
     @staticmethod
     def test_create_from_callable_wraps_value_on_success() -> None:
@@ -141,7 +142,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
         tm.that(result.failure is True, truth=True)
         tm.that(result.error, none=False)
-        tm.that("cannot be None" in result.error, truth=True)
+        tm.that("cannot be None" in str(result.error), truth=True)
 
     @staticmethod
     def test_with_resource_returns_value_and_runs_cleanup() -> None:

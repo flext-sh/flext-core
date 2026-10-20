@@ -59,7 +59,9 @@ class FlextUtilitiesConversion:
         return str_value
 
     @staticmethod
-    def to_str(value: t.JsonPayload | None, *, default: str | None = None) -> str:
+    def to_str(
+        value: t.JsonPayload | t.StrictValue | None, *, default: str | None = None
+    ) -> str:
         """Convert value to string, formatting floats as integers when possible.
 
         Returns:

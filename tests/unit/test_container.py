@@ -141,9 +141,9 @@ class TestsFlextCoreContainer:
             registration=m.ServiceRegistrationSpec(settings=injected),
         )
 
-        tm.that(scoped.settings is injected, eq=True)
-        tm.that(clean_container.settings is parent_settings, eq=True)
-        tm.that(scoped.settings is not parent_settings, eq=True)
+        tm.ok(scoped.settings is injected)
+        tm.ok(clean_container.settings is parent_settings)
+        tm.ok(scoped.settings is not parent_settings)
 
     @staticmethod
     def test_scope_inherits_parent_registrations(

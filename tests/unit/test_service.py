@@ -149,6 +149,7 @@ class TestsFlextService(FlextTestsCase):
         settings = m.Tests.ServiceUserService().settings
 
         tm.that(isinstance(settings, FlextTestsSettings), truth=True)
+        assert isinstance(settings, FlextTestsSettings)
         tm.that(isinstance(settings.Tests, m.BaseModel), truth=True)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:

@@ -127,7 +127,7 @@ class TestsFlextCoreDispatcher:
             ),
             eq=True,
         )
-        tm.that(tm.ok(dispatcher.publish(())), eq=True)
+        tm.ok(tm.ok(dispatcher.publish(())))
 
     @staticmethod
     def test_composed_dispatchers_do_not_share_routes() -> None:
@@ -177,7 +177,7 @@ class TestsFlextCoreDispatcher:
         tm.that(len(repeat.skipped), eq=1)
         tm.that(dispatcher.register_handler(other.handle, message_type="bound").failure)
         message = m.Command(command_type="bound")
-        tm.that(tm.ok(dispatcher.dispatch(message)), eq=True)
+        tm.ok(tm.ok(dispatcher.dispatch(message)))
         tm.that(original.handled, eq=[message.command_type])
         tm.that(other.handled, empty=True)
 

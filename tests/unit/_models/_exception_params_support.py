@@ -12,7 +12,7 @@ from tests import m
 class TestsFlextModelsExceptionParamsSupport:
     """Shared exception parameter model lists."""
 
-    ALL_PARAMS_MODELS = [
+    ALL_PARAMS_MODELS = (
         m.ValidationErrorParams,
         m.ConfigurationErrorParams,
         m.ConnectionErrorParams,
@@ -26,9 +26,9 @@ class TestsFlextModelsExceptionParamsSupport:
         m.TypeErrorParams,
         m.OperationErrorParams,
         m.AttributeAccessErrorParams,
-    ]
+    )
 
-    ALL_PARAMS_IDS = [
+    ALL_PARAMS_IDS = (
         "validation",
         "configuration",
         "connection",
@@ -42,4 +42,4 @@ class TestsFlextModelsExceptionParamsSupport:
         "type-error",
         "operation",
         "attribute-access",
-    ]
+    )

@@ -35,7 +35,7 @@ class TestsFlextCoreUtilitiesConfig:
 
         result = u.Yaml.yaml_safe_load(path)
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq=f"YAML top level is not a mapping: {path}")
 
     @staticmethod
@@ -46,7 +46,7 @@ class TestsFlextCoreUtilitiesConfig:
 
         result = u.config_load(path)
 
-        tm.that(result.success, result.error, truth=True)
+        tm.that(result.success, truth=True)
         tm.that(result.value, eq={"a": 1, "s": {"b": "x"}})
 
     @staticmethod

@@ -50,7 +50,7 @@ class TestsFlextCoreMapper:
 
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("missing" in result.error, truth=True)
+        tm.that("missing" in str(result.error), truth=True)
 
     @staticmethod
     def test_extract_required_missing_key_fails() -> None:
@@ -58,7 +58,7 @@ class TestsFlextCoreMapper:
 
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("not found" in result.error, truth=True)
+        tm.that("not found" in str(result.error), truth=True)
 
     @staticmethod
     def test_extract_honors_custom_separator() -> None:

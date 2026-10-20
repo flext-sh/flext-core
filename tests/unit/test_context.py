@@ -62,9 +62,9 @@ class TestsFlextCoreContext:
     def test_has_reflects_presence_of_key() -> None:
         """Reflect key absence and presence through the public query."""
         ctx = FlextContext()
-        tm.that(ctx.has("k"), eq=False)
+        tm.fail(ctx.has("k"))
         ctx.set("k", "v")
-        tm.that(ctx.has("k"), eq=True)
+        tm.ok(ctx.has("k"))
 
     @staticmethod
     def test_remove_key_makes_subsequent_get_fail() -> None:
@@ -79,7 +79,7 @@ class TestsFlextCoreContext:
         """Leave the scope unchanged when removing an absent key."""
         ctx = FlextContext()
         ctx.remove("never-added")
-        tm.that(ctx.has("never-added"), eq=False)
+        tm.fail(ctx.has("never-added"))
 
     @staticmethod
     def test_clear_removes_every_stored_key() -> None:
@@ -110,7 +110,7 @@ class TestsFlextCoreContext:
         ctx = FlextContext()
         ctx.set("existing", "x")
         merged = ctx.merge({"added": "y"})
-        tm.that(merged is ctx, eq=True)
+        tm.ok(merged is ctx)
         tm.ok(ctx.get("added"), eq="y")
         tm.ok(ctx.get("existing"), eq="x")
 
@@ -124,7 +124,7 @@ class TestsFlextCoreContext:
 
         merged = ctx.merge(other)
 
-        tm.that(merged is ctx, eq=True)
+        tm.ok(merged is ctx)
         tm.ok(ctx.get("existing"), eq="x")
         tm.ok(ctx.get("added"), eq="y")
 
@@ -172,7 +172,7 @@ class TestsFlextCoreContext:
         """Return the same context when dictionary export is disabled."""
         ctx = FlextContext()
         ctx.set("a", 1)
-        tm.that(ctx.export(as_dict=False) is ctx, eq=True)
+        tm.ok(ctx.export(as_dict=False) is ctx)
 
     @staticmethod
     def test_create_with_initial_values_seeds_the_context_scope() -> None:
@@ -351,11 +351,11 @@ class TestsFlextCoreContext:
     def test_public_factory_retains_context_identity_and_metadata_isolation() -> None:
         """Clones remain public contexts with independent metadata updates."""
         context = FlextContext.create(seed="original")
-        tm.that(isinstance(context, FlextContext), eq=True)
+        tm.ok(isinstance(context, FlextContext))
         context.apply_metadata("source", "original")
         cloned = context.clone()
         cloned.apply_metadata("source", "cloned")
-        tm.that(isinstance(cloned, FlextContext), eq=True)
+        tm.ok(isinstance(cloned, FlextContext))
         tm.ok(context.resolve_metadata("source"), eq="original")
         tm.ok(cloned.resolve_metadata("source"), eq="cloned")
 
@@ -487,8 +487,8 @@ class TestsFlextCoreContext:
                 FlextContext.export_full_context()[c.ContextKey.SERVICE_VERSION],
                 eq="outer-version",
             )
-            tm.that(c.MetadataKey.END_TIME in metrics.root, eq=True)
-            tm.that(c.MetadataKey.DURATION_SECONDS in metrics.root, eq=True)
+            tm.ok(c.MetadataKey.END_TIME in metrics.root)
+            tm.ok(c.MetadataKey.DURATION_SECONDS in metrics.root)
 
     @staticmethod
     def test_handler_call_scopes_correlation_through_the_public_context() -> None:
@@ -496,8 +496,8 @@ class TestsFlextCoreContext:
         FlextContext.apply_correlation_id("outer-handler")
         result = TestsFlextCoreContext.CorrelationHandler()("message")
         active = result.unwrap()
-        tm.that(bool(active), eq=True)
-        tm.that(active != "outer-handler", eq=True)
+        tm.ok(bool(active))
+        tm.ok(active != "outer-handler")
         tm.that(FlextContext.resolve_correlation_id(), eq="outer-handler")
 
     @staticmethod
@@ -515,13 +515,13 @@ class TestsFlextCoreContext:
             "hooks": {"event": (on_event,)},
         })
         updated, variable = u.resolve_context_scope_var(state, "custom")
-        tm.that("custom" in state.scope_vars, eq=False)
-        tm.that(updated.scope_vars["custom"] is variable, eq=True)
-        tm.that(updated.metadata is state.metadata, eq=True)
+        tm.fail("custom" in state.scope_vars)
+        tm.ok(updated.scope_vars["custom"] is variable)
+        tm.ok(updated.metadata is state.metadata)
         tm.that(updated.hooks["event"][0]("payload"), eq="payload")
         repeated, existing = u.resolve_context_scope_var(updated, "custom")
-        tm.that(repeated is updated, eq=True)
-        tm.that(existing is variable, eq=True)
+        tm.ok(repeated is updated)
+        tm.ok(existing is variable)
         other = u.create_context_runtime(metadata)
         tm.that(
             other.scope_vars[c.ContextScope.GLOBAL]
@@ -531,7 +531,7 @@ class TestsFlextCoreContext:
         values = m.ConfigMap(root={"source": "first"})
         token = variable.set(values)
         try:
-            tm.that(updated.scope_vars["custom"].get() is values, eq=True)
+            tm.ok(updated.scope_vars["custom"].get() is values)
         finally:
             variable.reset(token)
 
@@ -542,8 +542,8 @@ class TestsFlextCoreContext:
         updated = u.update_context_operation(state, "set")
         tm.that(updated.statistics.sets, eq=state.statistics.sets + 1)
         tm.that(updated.statistics.gets, eq=state.statistics.gets)
-        tm.that(updated.metadata is state.metadata, eq=True)
-        tm.that(u.update_context_operation(state, "unknown") is state, eq=True)
+        tm.ok(updated.metadata is state.metadata)
+        tm.ok(u.update_context_operation(state, "unknown") is state)
         tracked: p.ContextRuntimeState = m.ContextRuntimeState(
             statistics=m.ContextStatistics(operations={"custom": 4})
         )

@@ -37,8 +37,8 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
             FlextSettings.reset_for_testing()
             defaults = FlextSettings()
             tm.that(defaults.log_level, eq="INFO")
-            tm.that(defaults.debug, eq=False)
-            tm.that(defaults.trace, eq=False)
+            tm.fail(defaults.debug)
+            tm.fail(defaults.trace)
             tm.that(defaults.timezone, eq="UTC")
 
             FlextSettings.reset_for_testing()
@@ -49,7 +49,7 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
             with u.Tests.env_vars_context({"FLEXT_ENV_FILE": str(env_file)}):
                 from_dotenv = FlextSettings()
                 tm.that(from_dotenv.log_level, eq="WARNING")
-                tm.that(from_dotenv.debug, eq=True)
+                tm.ok(from_dotenv.debug)
 
             FlextSettings.reset_for_testing()
             with u.Tests.env_vars_context({
@@ -59,8 +59,8 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
             }):
                 from_env = FlextSettings()
                 tm.that(from_env.log_level, eq="DEBUG")
-                tm.that(from_env.debug, eq=True)
-                tm.that(from_env.trace, eq=True)
+                tm.ok(from_env.debug)
+                tm.ok(from_env.trace)
 
             FlextSettings.reset_for_testing()
             explicit = FlextSettings(
@@ -70,7 +70,7 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
                 timezone="America/Sao_Paulo",
             )
             tm.that(explicit.log_level, eq="ERROR")
-            tm.that(explicit.debug, eq=True)
-            tm.that(explicit.trace, eq=False)
+            tm.ok(explicit.debug)
+            tm.fail(explicit.trace)
             tm.that(explicit.timezone, eq="America/Sao_Paulo")
         FlextSettings.reset_for_testing()

@@ -194,8 +194,7 @@ class TestsFlextCoreServiceOperations:
     class KeywordOnlyService(s[bool]):
         """Operation with a keyword-only request."""
 
-        @staticmethod
-        def send(*, request: m.Tests.DispatchRequest) -> p.Result[bool]:
+        def send(self, *, request: m.Tests.DispatchRequest) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -207,8 +206,8 @@ class TestsFlextCoreServiceOperations:
     class DefaultRequestService(s[bool]):
         """Operation whose request has a default."""
 
-        @staticmethod
         def send(
+            self,
             request: m.Tests.DispatchRequest | None = None,
         ) -> p.Result[bool]:
             """Send an optional request.
@@ -244,8 +243,7 @@ class TestsFlextCoreServiceOperations:
     class UnionRequestService(s[bool]):
         """Operation whose request annotation is not a dotted name."""
 
-        @staticmethod
-        def send(request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
+        def send(self, request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -281,8 +279,7 @@ class TestsFlextCoreServiceOperations:
     class MissingMetadataService(s[bool]):
         """A Protocol request without its explicit schema association."""
 
-        @staticmethod
-        def send(request: p.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -295,8 +292,7 @@ class TestsFlextCoreServiceOperations:
         """A quoted t alias resolves to the same Protocol without eval."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        @staticmethod
-        def send(request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -309,8 +305,7 @@ class TestsFlextCoreServiceOperations:
         """A model annotation cannot replace the public Protocol contract."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        @staticmethod
-        def send(request: m.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -323,22 +318,21 @@ class TestsFlextCoreServiceOperations:
         """The explicit schema must provide every consumed Protocol member."""
 
         @h.handler(command=m.Value)
-        @staticmethod
-        def send(request: p.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
                 The requested command name in a successful result.
 
             """
+            # mismatched metadata path
             return r[str].ok(request.command_name)
 
     class NonModelMetadataService(s[bool]):
         """A metadata command class is not necessarily a request model."""
 
         @h.handler(command=str)
-        @staticmethod
-        def send(request: p.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -351,8 +345,7 @@ class TestsFlextCoreServiceOperations:
         """An input-less operation cannot consume declared command metadata."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        @staticmethod
-        def send() -> p.Result[str]:
+        def send(self) -> p.Result[str]:
             """Report readiness.
 
             Returns:
@@ -374,7 +367,7 @@ class TestsFlextCoreServiceOperations:
                 ("status", "Report readiness.", None),
             ],
         )
-        tm.that(operations[0].handler is self.CommandService.dispatch, eq=True)
+        tm.ok(operations[0].handler is self.CommandService.dispatch)
 
     @pytest.mark.parametrize(
         ("service_type", "defect"),
@@ -406,14 +399,14 @@ class TestsFlextCoreServiceOperations:
     def test_quoted_protocol_alias_uses_explicit_model_metadata(self) -> None:
         """Quoted aliases do not turn the annotation into a model lookup route."""
         (operation,) = u.service_operations(self.AliasedRequestService)
-        tm.that(operation.request is m.Tests.DispatchRequest, eq=True)
-        tm.that(operation.handler is self.AliasedRequestService.send, eq=True)
+        tm.ok(operation.request is m.Tests.DispatchRequest)
+        tm.ok(operation.handler is self.AliasedRequestService.send)
 
     def test_discovery_is_cached_per_class(self) -> None:
         """A second call returns the same operations for the same class."""
         first = u.service_operations(self.CommandService)
 
-        tm.that(u.service_operations(self.CommandService) is first, eq=True)
+        tm.ok(u.service_operations(self.CommandService) is first)
 
     def test_override_of_a_parent_operation_is_not_a_collision(self) -> None:
         """A subclass overriding its parent's operation keeps one operation."""
@@ -426,7 +419,7 @@ class TestsFlextCoreServiceOperations:
 
     def test_malformed_service_class_is_created_without_error(self) -> None:
         """Discovery is lazy: class creation never checks operation shape."""
-        tm.that(self.UndocumentedService().status().unwrap(), eq=True)
+        tm.ok(self.UndocumentedService().status().unwrap())
 
     # --- Failures --------------------------------------------------------
 
@@ -458,7 +451,7 @@ class TestsFlextCoreServiceOperations:
         message = str(raised.value)
         tm.that(message, has=f"{service_type.__qualname__}.{operation} ")
         tm.that(message, has=f"(module {__name__}, annotation ")
-        tm.that(message.endswith(defect), eq=True)
+        tm.ok(message.endswith(defect))
 
     def test_type_checking_only_import_names_the_annotation(self) -> None:
         """An unbound request annotation is reported verbatim."""

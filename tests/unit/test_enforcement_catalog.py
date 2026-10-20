@@ -95,6 +95,7 @@ class TestsFlextEnforcementCatalog:
             tm.that(
                 isinstance(rule.source, m.EnforcementRuntimeWarningSource), truth=True
             )
+            assert isinstance(rule.source, m.EnforcementRuntimeWarningSource)
             module_name, _, class_name = rule.source.category.rpartition(".")
             category = getattr(importlib.import_module(module_name), class_name)
             tm.that(issubclass(category, Warning), truth=True)

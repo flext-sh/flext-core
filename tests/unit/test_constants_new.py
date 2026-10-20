@@ -74,11 +74,11 @@ class TestsFlextConstantsNew:
         Callers serialize these members to strings and compare against raw wire
         tokens, so ``str(member) == member.value`` is a load-bearing contract.
         """
-        tm.that(issubclass(domain_enum, enum.StrEnum), eq=True)
+        tm.ok(issubclass(domain_enum, enum.StrEnum))
         members = list(domain_enum)
         tm.that(bool(members), eq=True, msg=f"{domain_enum.__name__} is empty")
         for member in members:
-            tm.that(isinstance(member, str), eq=True)
+            tm.ok(isinstance(member, str))
             tm.that(str(member), eq=member.value)
 
     @pytest.mark.parametrize(
@@ -104,9 +104,9 @@ class TestsFlextConstantsNew:
         """A token can never be simultaneously truthy and falsy."""
         truthy = set(c.PARSER_BOOLEAN_TRUTHY)
         falsy = set(c.PARSER_BOOLEAN_FALSY)
-        tm.that(bool(truthy), eq=True)
-        tm.that(bool(falsy), eq=True)
-        tm.that(truthy.isdisjoint(falsy), eq=True)
+        tm.ok(bool(truthy))
+        tm.ok(bool(falsy))
+        tm.ok(truthy.isdisjoint(falsy))
 
     @pytest.mark.parametrize(
         "token",
@@ -116,7 +116,7 @@ class TestsFlextConstantsNew:
     def test_boolean_tokens_are_lowercase_and_spaceless(token: str) -> None:
         """Validation token sets remain normalized (lowercase, no whitespace)."""
         tm.that(token, eq=token.lower())
-        tm.that(" " not in token, eq=True)
+        tm.ok(" " not in token)
 
     # -------------------------------------------------- identifier regex rules
     @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
@@ -130,7 +130,7 @@ class TestsFlextConstantsNew:
         Identifiers are accepted by core regex rules.
         """
         _ = raw_app_id
-        tm.that(bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)), eq=True)
+        tm.ok(bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)))
 
     @pytest.mark.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
     @staticmethod
@@ -175,7 +175,7 @@ class TestsFlextConstantsNew:
     @staticmethod
     def test_version_pattern_accepts_semver_and_pep440(version: str) -> None:
         """Version validation accepts published and normalized metadata forms."""
-        tm.that(bool(c.PATTERN_SEMVER_RE.fullmatch(version)), eq=True)
+        tm.ok(bool(c.PATTERN_SEMVER_RE.fullmatch(version)))
 
     @pytest.mark.parametrize(
         "version",
@@ -184,7 +184,7 @@ class TestsFlextConstantsNew:
     @staticmethod
     def test_version_pattern_rejects_incomplete_versions(version: str) -> None:
         """Version validation rejects incomplete prerelease and local segments."""
-        tm.that(bool(c.PATTERN_SEMVER_RE.fullmatch(version)), eq=False)
+        tm.fail(bool(c.PATTERN_SEMVER_RE.fullmatch(version)))
 
     @pytest.mark.parametrize(
         "distinguished_name",
@@ -199,7 +199,7 @@ class TestsFlextConstantsNew:
         distinguished_name: str,
     ) -> None:
         """LDAP DN validation accepts complete comma-delimited components."""
-        tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)), eq=True)
+        tm.ok(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)))
 
     @pytest.mark.parametrize(
         "distinguished_name",
@@ -210,10 +210,10 @@ class TestsFlextConstantsNew:
         distinguished_name: str,
     ) -> None:
         """LDAP DN validation rejects missing names, values, and components."""
-        tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)), eq=False)
+        tm.fail(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)))
 
     @staticmethod
     def test_ldap_dn_pattern_rejects_adversarial_component_chain() -> None:
         """LDAP DN validation rejects the CodeQL adversarial shape."""
         adversarial = "A=+" + ",A=+ " * 256 + ",A="
-        tm.that(bool(c.PATTERN_LDAP_DN_RE.fullmatch(adversarial)), eq=False)
+        tm.fail(bool(c.PATTERN_LDAP_DN_RE.fullmatch(adversarial)))

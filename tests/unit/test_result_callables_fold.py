@@ -40,14 +40,14 @@ class TestsFlextCoreResultCallablesFold:
     def test_ok_carries_value_as_success(*, value: bool | int | str) -> None:
         """ok() yields a success whose value is the wrapped payload."""
         result = r[bool | int | str].ok(value)
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=value)
 
     @staticmethod
     def test_fail_yields_failure_with_error() -> None:
         """fail() yields a failure carrying the given error message."""
         result: p.Result[int] = r[int].fail("boom")
-        tm.that(result.success, eq=False)
+        tm.fail(result.success)
         tm.that(result.error, eq="boom")
 
     @staticmethod

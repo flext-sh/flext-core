@@ -51,7 +51,7 @@ class TestsFlextServiceRegistrationSpecOwner:
             ),
         )
 
-        tm.that(container is clean_container, eq=True)
+        tm.ok(container is clean_container)
         tm.that(sorted(container.names()), eq=["factory", "resource", "service"])
         tm.ok(container.resolve("service"), eq="value")
         tm.ok(container.resolve("factory"), eq="factory-value")
@@ -90,4 +90,4 @@ class TestsFlextServiceRegistrationSpecOwner:
             "_norm_callable_reg",
         }
 
-        tm.that(behavior_names.isdisjoint(m.ServiceRegistrationSpec.__dict__), eq=True)
+        tm.ok(behavior_names.isdisjoint(m.ServiceRegistrationSpec.__dict__))

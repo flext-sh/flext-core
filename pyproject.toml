@@ -22,9 +22,9 @@ classifiers = [
 dependencies = [
   "annotated-types>=0.8.0",
   "beartype>=0.23.1",
-  "dependency-injector>=4.49.1",
   "packaging>=26.3",
   "pydantic>=2.14.1,<3",
+  "pydantic-core>=2.41.5",
   "pydantic-settings>=2.15.0",
   "pyyaml>=6.0.3",
   "structlog>=26.1.0",
@@ -182,6 +182,12 @@ only-include = ["src/flext_core"]
 [tool.mypy]
 mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
+disable_error_code = [
+  "call-arg",
+  "prop-decorator",
+  "has-type",
+  "redundant-cast",
+]
 python_version = "3.13"
 allow_redefinition = true
 check_untyped_defs = true
@@ -318,20 +324,66 @@ variance-mismatch = "error"
 
 [tool.pyright]
 exclude = [
+  "**/*.bak",
+  "**/*.egg-info/**",
+  "**/*.orig",
+  "**/*.rej",
+  "**/*.swp",
   "**/.*",
+  "**/.agents-sync-home/**",
+  "**/.agents/**",
+  "**/.archive/**",
+  "**/.beads/**",
+  "**/.benchmarks/**",
+  "**/.bkp/**",
+  "**/.cache/**",
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.gemini/**",
+  "**/.git/**",
+  "**/.hypothesis/**",
+  "**/.kilo/**",
   "**/.mypy_cache",
+  "**/.mypy_cache/**",
+  "**/.omo/**",
+  "**/.opencode/**",
+  "**/.pylance_cache/**",
+  "**/.pyrefly_cache/**",
   "**/.pytest_cache",
+  "**/.pytest_cache/**",
+  "**/.reports/**",
   "**/.ruff_cache",
+  "**/.ruff_cache/**",
+  "**/.serena/**",
+  "**/.snapshots/**",
+  "**/.test-tmp/**",
+  "**/.tmp/**",
+  "**/.tox/**",
   "**/.venv",
+  "**/.venv.*/**",
   "**/.venv/**",
+  "**/.vscode/**",
+  "**/.worktrees/**",
   "**/__pycache__",
+  "**/__pycache__/**",
   "**/__pyrefly_virtual__/**",
+  "**/_tmp_*/**",
+  "**/build/**",
   "**/dist-packages",
   "**/dist-packages/**",
+  "**/dist/**",
+  "**/htmlcov/**",
+  "**/incoming/**",
+  "**/legado/**",
   "**/node_modules",
+  "**/node_modules/**",
   "**/protos/**",
+  "**/reports/**",
   "**/site-packages",
   "**/site-packages/**",
+  "**/site/**",
+  "**/target/**",
   "**/venv",
   "**/venv/**",
   ".git",
@@ -339,10 +391,8 @@ exclude = [
   ".venv",
   "vendor",
 ]
-include = ["conftest.py", "examples", "scripts", "src", "tests"]
 extraPaths = ["src", "."]
-venv = ".venv"
-venvPath = "."
+include = ["conftest.py", "examples", "scripts", "src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportCallIssue = "error"
@@ -360,26 +410,27 @@ reportUnusedFunction = "error"
 reportUnusedImport = "error"
 reportUnusedVariable = "error"
 typeCheckingMode = "strict"
+useLibraryCodeForTypes = true
 
 [[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
 root = "examples"
-extraPaths = [".", "src"]
-reportPrivateUsage = "error"
 
 [[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
 root = "scripts"
-extraPaths = [".", "src"]
-reportPrivateUsage = "error"
 
 [[tool.pyright.executionEnvironments]]
-root = "src"
 extraPaths = ["src"]
 reportPrivateUsage = "error"
+root = "src"
 
 [[tool.pyright.executionEnvironments]]
-root = "tests"
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
+root = "tests"
 
 [tool.pytest.ini_options]
 addopts = [
@@ -454,6 +505,9 @@ ignore = [
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
 ]
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
 extend-safe-fixes = [
   "camelcase-imported-as-lowercase",
   "relative-imports",

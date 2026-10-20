@@ -157,7 +157,7 @@ class TestsFlextResultTraverseResource:
         """Test context manager protocol."""
         result = r[str].ok("value")
         with result as ctx_result:
-            tm.that(ctx_result is result, eq=True)
+            tm.ok(ctx_result is result)
             tm.that(ctx_result.value, eq="value")
 
     @staticmethod
@@ -245,5 +245,5 @@ class TestsFlextResultTraverseResource:
     def test_flow_through_empty() -> None:
         """Test flow_through with no functions."""
         result = r[int].ok(5)
-        tm.that(result.flow_through() is result, eq=True)
+        tm.ok(result.flow_through() is result)
         tm.that(result.value, eq=5)

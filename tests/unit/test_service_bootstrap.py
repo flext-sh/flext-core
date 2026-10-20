@@ -48,14 +48,14 @@ class TestsFlextCoreServiceBootstrap:
         """A concrete service returns its successful public payload."""
         result = self.ConcreteTestService().execute()
 
-        tm.that(result.success, eq=True)
-        tm.that(result.value, eq=True)
+        tm.ok(result.success)
+        tm.ok(result.value)
 
     def test_execute_result_unwraps_to_payload(self) -> None:
         """The service result unwraps to its public payload."""
         result = self.ConcreteTestService().execute()
 
-        tm.that(result.unwrap(), eq=True)
+        tm.ok(result.unwrap())
 
     # --- resolve_runtime_options ---------------------------------------
 
@@ -64,12 +64,12 @@ class TestsFlextCoreServiceBootstrap:
         """Missing bootstrap input resolves to options that inject nothing."""
         resolved = u.resolve_runtime_options()
         declared = m.RuntimeBootstrapOptions()
-        tm.that(resolved.settings is declared.settings, eq=True)
-        tm.that(resolved.settings_type is declared.settings_type, eq=True)
+        tm.ok(resolved.settings is declared.settings)
+        tm.ok(resolved.settings_type is declared.settings_type)
         tm.that(resolved.settings_overrides, eq=declared.settings_overrides)
-        tm.that(resolved.context is declared.context, eq=True)
-        tm.that(resolved.container is declared.container, eq=True)
-        tm.that(resolved.dispatcher is declared.dispatcher, eq=True)
+        tm.ok(resolved.context is declared.context)
+        tm.ok(resolved.container is declared.container)
+        tm.ok(resolved.dispatcher is declared.dispatcher)
 
     @staticmethod
     def test_resolve_returns_supplied_model_unchanged() -> None:
@@ -78,14 +78,14 @@ class TestsFlextCoreServiceBootstrap:
 
         resolved = u.resolve_runtime_options(options)
 
-        tm.that(resolved is options, eq=True)
+        tm.ok(resolved is options)
 
     @staticmethod
     def test_runtime_options_accepts_settings_class_contract() -> None:
         """Settings class validation uses its method-only class protocol."""
         options = m.RuntimeBootstrapOptions(settings_type=FlextSettings)
 
-        tm.that(options.settings_type is FlextSettings, eq=True)
+        tm.ok(options.settings_type is FlextSettings)
 
     def test_service_base_hook_decides_the_settings_type(self) -> None:
         """The hook of the service base supplies the runtime settings class."""
@@ -95,8 +95,9 @@ class TestsFlextCoreServiceBootstrap:
         resolved = u.resolve_runtime_options(service)
 
         tm.that(declared, none=False)
-        tm.that(resolved.settings_type is declared, eq=True)
-        tm.that(service.settings is declared.fetch_global(), eq=True)
+        tm.not_none(declared)
+        tm.ok(resolved.settings_type is declared)
+        tm.ok(service.settings is declared.fetch_global())
 
     def test_instance_seed_wins_over_the_hook(self) -> None:
         """A settings class seeded on the instance overrides the hook."""
@@ -104,8 +105,8 @@ class TestsFlextCoreServiceBootstrap:
 
         resolved = u.resolve_runtime_options(service)
 
-        tm.that(resolved.settings_type is FlextSettings, eq=True)
-        tm.that(type(service.settings) is FlextSettings, eq=True)
+        tm.ok(resolved.settings_type is FlextSettings)
+        tm.ok(type(service.settings) is FlextSettings)
 
     def test_context_seed_becomes_the_runtime_context(self) -> None:
         """An initial context seeded on the instance is the runtime context."""
@@ -113,17 +114,17 @@ class TestsFlextCoreServiceBootstrap:
 
         service = self.ConcreteTestService(initial_context=context)
 
-        tm.that(service.context is context, eq=True)
+        tm.ok(service.context is context)
 
     def test_typed_bootstrap_hook_elects_context_and_container(self) -> None:
         """Custom context/container selection uses public options, not private hooks."""
         service = self.ContextConfiguredService()
         tm.ok(service.context.get("source"), eq="declared-context")
         tm.ok(service.container.resolve("context.selected"), eq="declared-container")
-        tm.that(service.container.context is service.context, eq=True)
+        tm.ok(service.container.context is service.context)
         seeded = FlextContext.create(source="instance-context")
         explicit = self.ContextConfiguredService(initial_context=seeded)
-        tm.that(explicit.context is seeded, eq=True)
+        tm.ok(explicit.context is seeded)
         tm.ok(explicit.container.resolve("context.selected"), eq="declared-container")
 
     def test_settings_seed_rejects_a_non_settings_value(self) -> None:
@@ -140,10 +141,11 @@ class TestsFlextCoreServiceBootstrap:
         runtime = u.build_service_runtime(self.ConcreteTestService())
 
         tm.that(declared, none=False)
-        tm.that(runtime.settings is declared.fetch_global(), eq=True)
-        tm.that(runtime.context is runtime.container.context, eq=True)
-        tm.that(runtime.settings is runtime.container.settings, eq=True)
-        tm.that(runtime.dispatcher is runtime.container.dispatcher().unwrap(), eq=True)
+        tm.not_none(declared)
+        tm.ok(runtime.settings is declared.fetch_global())
+        tm.ok(runtime.context is runtime.container.context)
+        tm.ok(runtime.settings is runtime.container.settings)
+        tm.ok(runtime.dispatcher is runtime.container.dispatcher().unwrap())
 
     @staticmethod
     def test_logging_rebind_preserves_public_di_and_actual_provider_identity() -> None:
@@ -180,8 +182,8 @@ class TestsFlextCoreServiceBootstrap:
             pytest.fail("The rebound provider must implement the logging port")
         try:
             u.configure_structlog(runtime_settings=rebound.settings)
-            tm.that(u.logging_settings() is rebound.settings, eq=True)
-            tm.that(rebound.settings is rebound.container.settings, eq=True)
+            tm.ok(u.logging_settings() is rebound.settings)
+            tm.ok(rebound.settings is rebound.container.settings)
             tm.that(
                 rebound.container.resolve(c.Directory.CONFIG).unwrap()
                 is rebound.settings,
@@ -192,9 +194,9 @@ class TestsFlextCoreServiceBootstrap:
                 is selected_sink,
                 eq=True,
             )
-            tm.that(rebound.context is context, eq=True)
-            tm.that(rebound.dispatcher is dispatcher, eq=True)
-            tm.that(rebound.container.dispatcher().unwrap() is dispatcher, eq=True)
+            tm.ok(rebound.context is context)
+            tm.ok(rebound.dispatcher is dispatcher)
+            tm.ok(rebound.container.dispatcher().unwrap() is dispatcher)
             tm.that(initial.settings.log_level, eq=provider.log_level)
             tm.that(rebound.settings.log_level, eq=c.LogLevel.DEBUG)
         finally:

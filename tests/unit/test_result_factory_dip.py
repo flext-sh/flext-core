@@ -102,7 +102,7 @@ class TestsFlextCoreResultFactoryDip:
 
         final: p.Result[int] = r[int].ok(3).flow_through(first_step, facade_step)
         tm.ok(final, eq=40)
-        tm.that(isinstance(final, FlextResult), eq=True)
+        tm.ok(isinstance(final, FlextResult))
 
     @staticmethod
     def test_flow_through_normalizes_returned_failure_onto_facade() -> None:
@@ -117,7 +117,7 @@ class TestsFlextCoreResultFactoryDip:
         final: p.Result[int] = r[int].ok(1).flow_through(first_fail, unreachable)
         tm.fail(final, has="step-stop")
         tm.that(final.error_code, eq="E_STEP")
-        tm.that(isinstance(final, FlextResult), eq=True)
+        tm.ok(isinstance(final, FlextResult))
 
     @staticmethod
     @pytest.mark.parametrize("failed", [False, True])
@@ -125,7 +125,7 @@ class TestsFlextCoreResultFactoryDip:
         """A zero-step flow neither reconstructs state nor invokes a callback."""
         source: p.Result[int] = r[int].fail("stopped") if failed else r[int].ok(3)
         result: p.Result[int] = source.flow_through()
-        tm.that(result is source, eq=True)
+        tm.ok(result is source)
 
     @staticmethod
     def test_union_aware_flow_can_transform_the_payload() -> None:
@@ -153,8 +153,8 @@ class TestsFlextCoreResultFactoryDip:
         source: p.Result[int] = r[int].ok(3)
         recovered: p.Result[int | str] = source.recover(recover)
         lashed: p.Result[int | str] = source.lash(lash)
-        tm.that(recovered is source, eq=True)
-        tm.that(lashed is source, eq=True)
+        tm.ok(recovered is source)
+        tm.ok(lashed is source)
 
     @staticmethod
     def test_widening_lash_keeps_callback_normalization_and_failure_metadata() -> None:
@@ -172,10 +172,10 @@ class TestsFlextCoreResultFactoryDip:
 
         result: p.Result[int | str] = r[int].fail("input").lash(callback)
         tm.fail(result, has="mapped")
-        tm.that(result is not callback_result, eq=True)
+        tm.ok(result is not callback_result)
         tm.that(result.error_code, eq=callback_result.error_code)
         tm.that(result.error_data, eq=callback_result.error_data)
-        tm.that(result.exception is cause, eq=True)
+        tm.ok(result.exception is cause)
 
     @staticmethod
     def test_empty_fail_combinators_stay_failed_results() -> None:
@@ -235,11 +235,9 @@ class TestsFlextCoreResultFactoryDip:
         result: p.Result[int] = r[int].fail(None, exception=exc)
         tm.fail(result, has="")
         tm.that(result.error_data, none=False)
+        tm.not_none(result.error_data)
         tm.that(result.error_data.get("host"), eq="db.example")
-        tm.that("password" not in result.error_data, truth=True)
-        tm.that("token" not in result.error_data, truth=True)
-        tm.that(password not in str(result.error_data), truth=True)
-        tm.that(token not in str(result.error_data), truth=True)
+        _assert_redacted(result.error_data, password, token)
 
     @staticmethod
     def test_fail_op_wraps_exception_and_stays_concrete_result() -> None:
@@ -290,11 +288,9 @@ class TestsFlextCoreResultFactoryDip:
         )
         tm.fail(result, has="denied")
         tm.that(result.error_data, none=False)
+        tm.not_none(result.error_data)
         tm.that(result.error_data.get("host"), eq="db.example")
-        tm.that("password" not in result.error_data, truth=True)
-        tm.that("token" not in result.error_data, truth=True)
-        tm.that(password not in str(result.error_data), truth=True)
-        tm.that(token not in str(result.error_data), truth=True)
+        _assert_redacted(result.error_data, password, token)
 
     @staticmethod
     def test_fail_explicit_error_data_wins_but_still_redacts_with_exception() -> None:
@@ -314,8 +310,17 @@ class TestsFlextCoreResultFactoryDip:
         )
         tm.fail(result, has="denied")
         tm.that(result.error_data, none=False)
+        tm.not_none(result.error_data)
         tm.that(result.error_data.get("host"), eq="kept")
-        tm.that("password" not in result.error_data, truth=True)
-        tm.that("api_key" not in result.error_data, truth=True)
+        tm.that("password" not in str(result.error_data), truth=True)
+        tm.that("api_key" not in str(result.error_data), truth=True)
         for secret in (exception_password, password, api_key):
             tm.that(secret not in str(result.error_data), truth=True)
+
+
+def _assert_redacted(error_data: object, password: str, token: str) -> None:
+    text = str(error_data)
+    assert "password" not in text
+    assert "token" not in text
+    assert password not in text
+    assert token not in text

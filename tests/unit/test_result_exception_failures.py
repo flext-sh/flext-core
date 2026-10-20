@@ -42,8 +42,8 @@ class TestsFlextCoreResultExceptionFailures:
         """Test fail without exception exposes error and no exception."""
         result: p.Result[int] = r[int].fail(error_msg)
 
-        tm.that(result.failure, eq=True)
-        tm.that(result.success, eq=False)
+        tm.ok(result.failure)
+        tm.fail(result.success)
         tm.that(result.error, eq=expected_error)
         tm.that(result.exception, none=True)
 
@@ -54,9 +54,9 @@ class TestsFlextCoreResultExceptionFailures:
 
         result: p.Result[float] = r[float].fail("Division by zero", exception=exc)
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="Division by zero")
-        tm.that(result.exception is exc, eq=True)
+        tm.ok(result.exception is exc)
         tm.that(result.exception, is_=ZeroDivisionError)
 
     @staticmethod
@@ -66,9 +66,9 @@ class TestsFlextCoreResultExceptionFailures:
 
         result: p.Result[int] = r[int].fail(None, exception=exc)
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="")
-        tm.that(result.exception is exc, eq=True)
+        tm.ok(result.exception is exc)
 
     @staticmethod
     def test_fail_exposes_error_code_alongside_exception() -> None:
@@ -81,10 +81,10 @@ class TestsFlextCoreResultExceptionFailures:
             exception=exc,
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="Invalid input")
         tm.that(result.error_code, eq="INVALID_INPUT")
-        tm.that(result.exception is exc, eq=True)
+        tm.ok(result.exception is exc)
 
     @staticmethod
     def test_fail_exposes_error_data_mapping_alongside_exception() -> None:
@@ -98,13 +98,13 @@ class TestsFlextCoreResultExceptionFailures:
             exception=exc,
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="Validation failed")
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
             tm.that(result.error_data.get("field"), eq="email")
             tm.that(result.error_data.get("reason"), eq="invalid format")
-        tm.that(result.exception is exc, eq=True)
+        tm.ok(result.exception is exc)
 
     @staticmethod
     def test_fail_preserves_correlation_id_without_metadata_attributes() -> None:
@@ -119,7 +119,7 @@ class TestsFlextCoreResultExceptionFailures:
 
         result: p.Result[str] = r[str].fail(None, exception=CorrelationOnlyError())
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
             tm.that(
@@ -142,8 +142,8 @@ class TestsFlextCoreResultExceptionFailures:
                 "column": 0,
                 "code": "source-drift",
                 "message": str(original),
-                "locations": (),
-                "related_locations": (),
+                "locations": [],
+                "related_locations": [],
             }
         ]
         result: p.Result[tuple[Path, ...]] = r[tuple[Path, ...]].fail(
@@ -152,13 +152,13 @@ class TestsFlextCoreResultExceptionFailures:
             error_data={
                 "phase": "lazy-init",
                 "completed": True,
-                "issues": tuple(issues) if tuple_issues else issues,
+                "issues": tuple(issues) if tuple_issues else issues,  # type: ignore[dict-item]
                 "written_files": ["src/independent/__init__.py"],
                 "pending_files": ["src/package/__init__.py"],
             },
         )
         tm.fail(result)
-        tm.that(result.exception is original, eq=True)
+        tm.ok(result.exception is original)
         expected: t.JsonDict = {
             "phase": "lazy-init",
             "completed": True,
@@ -181,7 +181,7 @@ class TestsFlextCoreResultExceptionFailures:
             ValueError, match="source changed during publication"
         ) as raised:
             result.unwrap()
-        tm.that(raised.value is original, eq=True)
+        tm.ok(raised.value is original)
 
     @staticmethod
     def test_fail_enriches_error_data_from_exception_metadata() -> None:
@@ -203,7 +203,7 @@ class TestsFlextCoreResultExceptionFailures:
             exception=MetadataError(),
         )
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error_data, none=False)
         if result.error_data is not None:
             tm.that(result.error_data.get("field"), eq="email")
@@ -218,9 +218,9 @@ class TestsFlextCoreResultExceptionFailures:
 
         mapped: p.Result[int] = failure.map(lambda value: value + 1)
 
-        tm.that(mapped.failure, eq=True)
+        tm.ok(mapped.failure)
         tm.that(mapped.error, eq="bad")
-        tm.that(mapped.exception is exc, eq=True)
+        tm.ok(mapped.exception is exc)
 
     @staticmethod
     def test_flat_map_on_failure_short_circuits_and_keeps_exception() -> None:
@@ -230,8 +230,8 @@ class TestsFlextCoreResultExceptionFailures:
 
         chained: p.Result[int] = failure.flat_map(r[int].ok)
 
-        tm.that(chained.failure, eq=True)
-        tm.that(chained.exception is exc, eq=True)
+        tm.ok(chained.failure)
+        tm.ok(chained.exception is exc)
 
     @staticmethod
     def test_map_error_transforms_message_and_preserves_exception() -> None:
@@ -241,9 +241,9 @@ class TestsFlextCoreResultExceptionFailures:
 
         remapped: p.Result[int] = failure.map_error(lambda msg: msg.upper())
 
-        tm.that(remapped.failure, eq=True)
+        tm.ok(remapped.failure)
         tm.that(remapped.error, eq="BAD")
-        tm.that(remapped.exception is exc, eq=True)
+        tm.ok(remapped.exception is exc)
 
     @staticmethod
     def test_unwrap_or_returns_default_for_carried_failure() -> None:
@@ -281,8 +281,8 @@ class TestsFlextCoreResultExceptionFailures:
         with pytest.raises(kind) as raised:
             _ = failure.value if use_property else failure.unwrap()
 
-        tm.that(raised.value is original, eq=True)
-        tm.that(raised.value.__cause__ is cause, eq=True)
+        tm.ok(raised.value is original)
+        tm.ok(raised.value.__cause__ is cause)
         tm.that(
             any(
                 frame is producer.tb_frame and line == producer.tb_lineno
@@ -363,7 +363,7 @@ class TestsFlextCoreResultExceptionFailures:
         with pytest.raises(PrivateError) as raised:
             _ = failure.value if use_property else failure.unwrap()
         rendered = "".join(format_exception(raised.value))
-        tm.that(raised.value is original, eq=True)
+        tm.ok(raised.value is original)
         tm.that(rendered, lacks="nested-secret")
         tm.that(rendered, lacks="encoded-secret")
         tm.that(rendered, lacks="nested-private")
@@ -377,7 +377,7 @@ class TestsFlextCoreResultExceptionFailures:
 
         recovered: p.Result[int] = failure.recover(lambda _error: 7)
 
-        tm.that(recovered.success, eq=True)
+        tm.ok(recovered.success)
         tm.that(recovered.unwrap(), eq=7)
 
     @staticmethod
@@ -396,7 +396,7 @@ class TestsFlextCoreResultExceptionFailures:
 
         recovered: p.Result[UserModel] = failure.recover(lambda _error: fallback)
 
-        tm.that(recovered.success, eq=True)
+        tm.ok(recovered.success)
         tm.that(recovered.unwrap().name, eq="anon")
         tm.that(recovered.unwrap().age, eq=0)
 
@@ -405,6 +405,6 @@ class TestsFlextCoreResultExceptionFailures:
         """Test empty fail map stays failed without raising."""
         failure: p.Result[int] = r[int].fail(None, exception=ValueError("boom"))
         mapped: p.Result[int] = failure.map(lambda value: value + 1)
-        tm.that(mapped.failure, eq=True)
+        tm.ok(mapped.failure)
         tm.that(mapped.error, eq="")
-        tm.that(mapped.exception is failure.exception, eq=True)
+        tm.ok(mapped.exception is failure.exception)

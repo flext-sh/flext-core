@@ -257,7 +257,7 @@ class TestPackagedConfigWithUserPreferences:
             )()
 
             tm.that(inherited.model_dump(), eq=expected)
-            tm.that(module.GrandchildConfig.fetch_global() is inherited, eq=True)
+            tm.ok(module.GrandchildConfig.fetch_global() is inherited)
 
     @staticmethod
     def test_child_declared_file_order_overrides_its_parent(tmp_path: Path) -> None:

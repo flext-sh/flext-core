@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, overload, override
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
 from typing_extensions import TypeForm
 
@@ -68,7 +68,13 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _global_config: m.ContainerConfig
 
-    def __new__(cls, *, registration: p.ServiceRegistrationSpec | None = None) -> Self:
+    def __new__(
+        cls,
+        *,
+        registration: m.ServiceRegistrationSpec
+        | p.ServiceRegistrationSpec
+        | None = None,
+    ) -> Self:
         """Create or return the global singleton instance."""
         _ = registration
         if cls._global_instance is None:
@@ -81,7 +87,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def __init__(
         self,
         *,
-        registration: p.ServiceRegistrationSpec | None = None,
+        registration: m.ServiceRegistrationSpec
+        | p.ServiceRegistrationSpec
+        | None = None,
     ) -> None:
         """Initialize the singleton once; later calls apply the explicit spec."""
         if not self._initialized:
@@ -344,7 +352,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def initialize_registrations(
         self,
         *,
-        registration: p.ServiceRegistrationSpec | None = None,
+        registration: m.ServiceRegistrationSpec
+        | p.ServiceRegistrationSpec
+        | None = None,
     ) -> None:
         """Reset the registrations from a spec and register the core services.
 
@@ -359,20 +369,27 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             else m.ServiceRegistrationSpec()
         )
         self._registrations = {}
-        self._global_config = spec.container_config or m.ContainerConfig()
+        self._global_config = (
+            cast("m.ContainerConfig", spec.container_config)
+            if spec.container_config is not None
+            else m.ContainerConfig()
+        )
         overrides = spec.user_overrides
-        self._user_overrides = (
-            overrides
-            if isinstance(overrides, m.ConfigMap)
-            else m.ConfigMap(
+        if isinstance(overrides, m.ConfigMap):
+            self._user_overrides = overrides
+        elif isinstance(overrides, Mapping):
+            self._user_overrides = m.ConfigMap(
                 root={
-                    k: list(v)
-                    if isinstance(v, Sequence) and not isinstance(v, str | bytes)
-                    else v
-                    for k, v in (overrides or {}).items()
+                    k: (
+                        list(v)
+                        if isinstance(v, Sequence) and not isinstance(v, (str, bytes))
+                        else v
+                    )
+                    for k, v in overrides.items()
                 },
             )
-        )
+        else:
+            self._user_overrides = m.ConfigMap(root={})
         self._config = (
             spec.settings
             if spec.settings is not None
@@ -434,7 +451,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         self,
         *,
         subproject: str | None = None,
-        registration: p.ServiceRegistrationSpec | None = None,
+        registration: m.ServiceRegistrationSpec
+        | p.ServiceRegistrationSpec
+        | None = None,
     ) -> Self:
         """Create an isolated scope inheriting the public registrations.
 
@@ -600,7 +619,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     def _apply_explicit_bootstrap(
         self,
-        registration: p.ServiceRegistrationSpec,
+        registration: m.ServiceRegistrationSpec | p.ServiceRegistrationSpec,
     ) -> None:
         """Rebind explicitly selected core collaborators of an existing container."""
         if registration.settings is not None:

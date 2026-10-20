@@ -72,7 +72,7 @@ class TestsFlextCoreDecoratorsCombined:
         tm.that(outcome.failure, truth=True)
         tm.that(outcome.error_code, eq="COMBINED_FAIL")
         tm.that(outcome.error, none=False)
-        tm.that("boom" in outcome.error, truth=True)
+        tm.that("boom" in str(outcome.error), truth=True)
 
     @staticmethod
     def test_combined_preserves_wrapped_callable_name() -> None:
@@ -97,7 +97,7 @@ class TestsFlextCoreDecoratorsCombined:
 
         outcome = returns_result()
 
-        tm.that(outcome is original, eq=True)
+        tm.ok(outcome is original)
         tm.that(tm.ok(outcome), eq="already_wrapped")
 
     @staticmethod

@@ -22,10 +22,10 @@ class TestsFlextUtilitiesPydantic:
     def test_unset_factories_expose_native_metadata() -> None:
         """An omitted value produces metadata, not a contextual field value."""
         metadata = m.Field(description="Native field metadata")
-        tm.that(metadata.annotation is None, eq=True)
+        tm.ok(metadata.annotation is None)
         private = m.PrivateAttr()
         undefined = private.get_default()
-        tm.that(private.get_default(call_default_factory=True) is undefined, eq=True)
+        tm.ok(private.get_default(call_default_factory=True) is undefined)
 
     class _FieldFactoryContract(m.BaseModel):
         """Required fields and typed factories through both public facades."""
@@ -57,14 +57,14 @@ class TestsFlextUtilitiesPydantic:
     @staticmethod
     def test_field_defaults_preserve_native_types_and_validation() -> None:
         """Default overloads preserve identity, defaults and schema constraints."""
-        tm.that(m.Field is u.Field, eq=True)
+        tm.ok(m.Field is u.Field)
         model = TestsFlextUtilitiesPydantic._FieldDefaultsContract.model_validate({})
         label: str = model.label
         attempts: int = model.attempts
         optional: str | None = model.optional
         tm.that(label, eq="native")
         tm.that(attempts, eq=3)
-        tm.that(optional is None, eq=True)
+        tm.ok(optional is None)
         with pytest.raises(m.ValidationError):
             TestsFlextUtilitiesPydantic._FieldDefaultsContract.model_validate({
                 "label": "",

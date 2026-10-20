@@ -82,7 +82,7 @@ class FlextModelsBase:
     class FlexibleInternalModel(NormalizedModel):
         """Flexible internal model for domain logic."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore", strict=False)
 
     class ImmutableValueModel(ManagedModel):
         """Immutable value model for value objects."""
@@ -98,7 +98,7 @@ class FlextModelsBase:
     class FlexibleModel(ArbitraryTypesModel):
         """Model for dynamic configuration - allows extra fields."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore", strict=False)
 
     class DynamicModel(FlexibleModel):
         """Dynamic domain model preset with string whitespace normalization."""

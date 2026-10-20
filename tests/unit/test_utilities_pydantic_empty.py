@@ -86,7 +86,7 @@ class TestsFlextUtilitiesPydanticEmpty:
             default_value = getattr(defaults, name)
             reference_value = getattr(revalidated, name)
             tm.that(default_value, eq=reference_value)
-            tm.that(type(default_value) is type(reference_value), eq=True)
+            tm.ok(type(default_value) is type(reference_value))
 
     @staticmethod
     def test_mutable_defaults_are_fresh_per_instance() -> None:
@@ -161,8 +161,8 @@ class TestsFlextUtilitiesPydanticEmpty:
 
         tm.that(second, eq=[])
         tm.that(len(observed), eq=2)
-        tm.that(observed[0] is first, eq=True)
-        tm.that(observed[1] is second, eq=True)
+        tm.ok(observed[0] is first)
+        tm.ok(observed[1] is second)
 
     @staticmethod
     def test_resolved_model_element_contract_preserves_native_model_config() -> None:

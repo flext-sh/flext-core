@@ -65,8 +65,8 @@ class TestsFlextCoverageLoggings:
         if result is None:
             msg = "Expected result to not be None"
             raise AssertionError(msg)
-        tm.that(result.success, eq=True)
-        tm.that(result.value, eq=True)
+        tm.ok(result.success)
+        tm.ok(result.value)
         return result
 
     def assert_captured_log_success(
@@ -87,9 +87,9 @@ class TestsFlextCoverageLoggings:
             result = emit()
 
         output = stream.getvalue()
-        tm.that(contains in output, eq=True)
+        tm.ok(contains in output)
         for token in expected_tokens:
-            tm.that(token in output, eq=True)
+            tm.ok(token in output)
         return self.assert_log_result_success(result)
 
     @pytest.mark.parametrize(
@@ -128,7 +128,7 @@ class TestsFlextCoverageLoggings:
             lambda: logger.info("service ready"),
             contains="service ready",
         )
-        tm.that(result.value, eq=True)
+        tm.ok(result.value)
 
     def test_logging_interpolates_printf_arguments_once(self) -> None:
         """The native adapter retains the public printf-style call contract."""
@@ -138,7 +138,7 @@ class TestsFlextCoverageLoggings:
             lambda: logger.info("User %s logged in", "john"),
             contains="User john logged in",
         )
-        tm.that(result.value, eq=True)
+        tm.ok(result.value)
 
     def test_exception_logging_accepts_explicit_exception_and_context(self) -> None:
         """Test exception logging accepts explicit exception and context."""
@@ -162,7 +162,7 @@ class TestsFlextCoverageLoggings:
                 expected_tokens=("file_read",),
             )
 
-        tm.that(result.value, eq=True)
+        tm.ok(result.value)
 
     def test_logging_with_large_context_emits_context_tokens(self) -> None:
         """Test logging with large context emits context tokens."""
@@ -175,4 +175,4 @@ class TestsFlextCoverageLoggings:
             expected_tokens=("key_9", "value_9"),
         )
 
-        tm.that(result.value, eq=True)
+        tm.ok(result.value)

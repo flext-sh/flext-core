@@ -66,5 +66,5 @@ class TestsFlextFlextMigrationApplicationCase:
             capfd,
             contains="Processing data",
         )
-        tm.that(result.success, eq=True)
-        tm.that(result.value["processed"], eq=True)
+        tm.ok(result.success)
+        tm.ok(result.value["processed"])

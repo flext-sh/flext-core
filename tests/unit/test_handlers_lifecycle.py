@@ -93,7 +93,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         result = handler.execute(None)
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that(c.ERR_MESSAGE_CANNOT_BE_NONE in result.error, truth=True)
+        tm.that(c.ERR_MESSAGE_CANNOT_BE_NONE in str(result.error), truth=True)
 
     def test_validate_message_accepts_non_null_payload(self) -> None:
         """Test validate message accepts non null payload."""
@@ -125,7 +125,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         result = handler.dispatch_message("payload", c.HandlerMode.QUERY)
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("query" in result.error, truth=True)
+        tm.that("query" in str(result.error), truth=True)
 
     @pytest.mark.parametrize(
         ("label", "message"),

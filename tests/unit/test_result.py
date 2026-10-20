@@ -21,8 +21,8 @@ class TestsFlextCoreResult:
         """A successful result carries its value and reports success."""
         result: p.Result[int] = r[int].ok(42)
 
-        tm.that(result.success, eq=True)
-        tm.that(result.failure, eq=False)
+        tm.ok(result.success)
+        tm.fail(result.failure)
         tm.ok(result, eq=42)
 
     @staticmethod
@@ -30,8 +30,8 @@ class TestsFlextCoreResult:
         """A failed result carries its error message and reports failure."""
         result: p.Result[int] = r[int].fail("boom")
 
-        tm.that(result.success, eq=False)
-        tm.that(result.failure, eq=True)
+        tm.fail(result.success)
+        tm.ok(result.failure)
         tm.fail(result, has="boom")
 
     @staticmethod
@@ -91,8 +91,8 @@ class TestsFlextCoreResult:
     @staticmethod
     def test_bool_reflects_success() -> None:
         """Truthiness of a result mirrors its success state."""
-        tm.that(bool(r[int].ok(1)), eq=True)
-        tm.that(bool(r[int].fail("err")), eq=False)
+        tm.ok(bool(r[int].ok(1)))
+        tm.fail(bool(r[int].fail("err")))
 
     @staticmethod
     def test_map_transforms_success_value() -> None:
@@ -204,10 +204,10 @@ class TestsFlextCoreResult:
         ok_result: p.Result[int] = r[int].ok(1)
         fail_result: p.Result[int] = r[int].fail("e")
 
-        tm.that(r.successful_result(ok_result), eq=True)
-        tm.that(r.failed_result(ok_result), eq=False)
-        tm.that(r.failed_result(fail_result), eq=True)
-        tm.that(r.successful_result(fail_result), eq=False)
+        tm.ok(r.successful_result(ok_result))
+        tm.fail(r.failed_result(ok_result))
+        tm.ok(r.failed_result(fail_result))
+        tm.fail(r.successful_result(fail_result))
 
     @staticmethod
     def test_results_satisfy_success_checkable_protocol() -> None:

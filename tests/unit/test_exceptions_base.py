@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -74,7 +74,8 @@ class TestsFlextCoreExceptionsBase:
         error = e.ValidationError("bad", field="email")
         with pytest.raises(e.BaseError) as excinfo:
             raise error
-        raised: e.ValidationError = excinfo.value
+        raised = cast("e.ValidationError", excinfo.value)
+        assert isinstance(raised, e.ValidationError)
         tm.that(isinstance(raised, e.ValidationError), truth=True)
         tm.that(raised.field, eq="email")
         tm.that("bad" in str(raised), truth=True)
@@ -92,8 +93,12 @@ class TestsFlextCoreExceptionsBase:
         tm.that("boom" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.OPERATION_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["operation"], eq="register service")
-        tm.that(result.error_data["reason"], eq="boom")
+        tm.not_none(result.error_data)
+        tm.that(
+            cast("dict[str, object]", result.error_data)["operation"],
+            eq="register service",
+        )
+        tm.that(cast("dict[str, object]", result.error_data)["reason"], eq="boom")
 
     @staticmethod
     def test_fail_operation_message_carries_the_exception_notes() -> None:
@@ -103,9 +108,11 @@ class TestsFlextCoreExceptionsBase:
         result: p.Result[bool] = e.fail_operation("build docs", cause)
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("Aborted with 1 warnings in strict mode!" in result.error, truth=True)
         tm.that(
-            "WARNING: Doc file 'a.md' contains a link to 'b.md'" in result.error,
+            "Aborted with 1 warnings in strict mode!" in str(result.error), truth=True
+        )
+        tm.that(
+            "WARNING: Doc file 'a.md' contains a link to 'b.md'" in str(result.error),
             truth=True,
         )
 
@@ -120,7 +127,8 @@ class TestsFlextCoreExceptionsBase:
         tm.that(mapped.failure, truth=True)
         tm.that(mapped.error, eq=result.error)
         tm.that(result.exception, none=False)
-        with pytest.raises(type(result.exception)) as raised:
+        tm.not_none(result.exception)
+        with pytest.raises(type(result.exception)) as raised:  # type: ignore[arg-type]
             mapped.unwrap()
         tm.that(raised.value is result.exception, truth=True)
 
@@ -130,11 +138,17 @@ class TestsFlextCoreExceptionsBase:
         result: p.Result[bool] = e.fail_not_found("service", "command_bus")
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("Service 'command_bus' not found" in result.error, truth=True)
+        tm.that("Service 'command_bus' not found" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.NOT_FOUND_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["resource_type"], eq="service")
-        tm.that(result.error_data["resource_id"], eq="command_bus")
+        tm.not_none(result.error_data)
+        tm.that(
+            cast("dict[str, object]", result.error_data)["resource_type"], eq="service"
+        )
+        tm.that(
+            cast("dict[str, object]", result.error_data)["resource_id"],
+            eq="command_bus",
+        )
 
     @staticmethod
     def test_fail_type_mismatch_returns_structured_failure() -> None:
@@ -142,11 +156,15 @@ class TestsFlextCoreExceptionsBase:
         result: p.Result[bool] = e.fail_type_mismatch("Dispatcher", "str")
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("Dispatcher" in result.error, truth=True)
+        tm.that("Dispatcher" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.TYPE_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["expected_type"], eq="Dispatcher")
-        tm.that(result.error_data["actual_type"], eq="str")
+        tm.not_none(result.error_data)
+        tm.that(
+            cast("dict[str, object]", result.error_data)["expected_type"],
+            eq="Dispatcher",
+        )
+        tm.that(cast("dict[str, object]", result.error_data)["actual_type"], eq="str")
 
     @staticmethod
     def test_fail_type_mismatch_accepts_service_lookup_params() -> None:
@@ -161,11 +179,18 @@ class TestsFlextCoreExceptionsBase:
 
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("ldap3.Connection" in result.error, truth=True)
+        tm.that("ldap3.Connection" in str(result.error), truth=True)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["service_name"], eq="connection")
-        tm.that(result.error_data["expected_type"], eq="ldap3.Connection")
-        tm.that(result.error_data["actual_type"], eq="str")
+        tm.not_none(result.error_data)
+        tm.that(
+            cast("dict[str, object]", result.error_data)["service_name"],
+            eq="connection",
+        )
+        tm.that(
+            cast("dict[str, object]", result.error_data)["expected_type"],
+            eq="ldap3.Connection",
+        )
+        tm.that(cast("dict[str, object]", result.error_data)["actual_type"], eq="str")
 
     @pytest.mark.parametrize(
         ("field", "value", "cause"),
@@ -184,12 +209,13 @@ class TestsFlextCoreExceptionsBase:
         )
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that(f"validate {field}" in result.error, truth=True)
+        tm.that(f"validate {field}" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["field"], eq=field)
-        tm.that(result.error_data["value"], eq=value)
-        tm.that(result.error_data["cause"], eq=cause)
+        tm.not_none(result.error_data)
+        tm.that(cast("dict[str, object]", result.error_data)["field"], eq=field)
+        tm.that(cast("dict[str, object]", result.error_data)["value"], eq=value)
+        tm.that(cast("dict[str, object]", result.error_data)["cause"], eq=cause)
 
     @staticmethod
     def test_declarative_error_supports_public_auto_correlation() -> None:
@@ -200,5 +226,6 @@ class TestsFlextCoreExceptionsBase:
             options=m.ExceptionInitOptions(auto_correlation=True),
         )
         tm.that(error.correlation_id, none=False)
+        tm.not_none(error.correlation_id)
         tm.that(error.correlation_id.startswith("exc_"), truth=True)
         tm.that(error.field, eq="email")

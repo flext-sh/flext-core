@@ -37,8 +37,8 @@ class TestsFlextCoreMigrationValidation:
         """A successful result reports success and returns the wrapped value."""
         result: p.Result[str] = r[str].ok(value)
 
-        tm.that(result.success, eq=True)
-        tm.that(result.failure, eq=False)
+        tm.ok(result.success)
+        tm.fail(result.failure)
         tm.that(result.error, none=True)
         tm.that(result.value, eq=expected)
         tm.that(result.unwrap(), eq=expected)
@@ -48,8 +48,8 @@ class TestsFlextCoreMigrationValidation:
         """A failed result reports failure and preserves the error message."""
         result: p.Result[str] = r[str].fail("Invalid email format")
 
-        tm.that(result.failure, eq=True)
-        tm.that(result.success, eq=False)
+        tm.ok(result.failure)
+        tm.fail(result.success)
         tm.that(result.error, none=False)
         tm.that(tm.not_none(result.error), has="Invalid email format")
 
@@ -78,11 +78,11 @@ class TestsFlextCoreMigrationValidation:
     def test_map_transforms_success_and_skips_failure() -> None:
         """Map applies to a success value but leaves a failure untouched."""
         mapped_ok = r[str].ok("test_value").map(str.upper)
-        tm.that(mapped_ok.success, eq=True)
+        tm.ok(mapped_ok.success)
         tm.that(mapped_ok.value, eq="TEST_VALUE")
 
         mapped_fail = r[str].fail("orig").map(str.upper)
-        tm.that(mapped_fail.failure, eq=True)
+        tm.ok(mapped_fail.failure)
         tm.that(mapped_fail.error, eq="orig")
 
     @staticmethod
@@ -95,11 +95,11 @@ class TestsFlextCoreMigrationValidation:
             return r[int].ok(int(raw))
 
         chained_ok = r[str].ok("21").flat_map(parse).map(lambda n: n * 2)
-        tm.that(chained_ok.success, eq=True)
+        tm.ok(chained_ok.success)
         tm.that(chained_ok.value, eq=_EXPECTED_DOUBLED_VALUE)
 
         chained_fail = r[str].ok("abc").flat_map(parse)
-        tm.that(chained_fail.failure, eq=True)
+        tm.ok(chained_fail.failure)
         tm.that(chained_fail.error, none=False)
         tm.that(tm.not_none(chained_fail.error), has="not a number")
 
@@ -107,18 +107,18 @@ class TestsFlextCoreMigrationValidation:
     def test_map_error_transforms_only_the_failure_channel() -> None:
         """map_error rewrites a failure's error and leaves success alone."""
         rewritten: p.Result[str] = r[str].fail("bad").map_error(str.upper)
-        tm.that(rewritten.failure, eq=True)
+        tm.ok(rewritten.failure)
         tm.that(rewritten.error, eq="BAD")
 
         untouched: p.Result[str] = r[str].ok("keep").map_error(str.upper)
-        tm.that(untouched.success, eq=True)
+        tm.ok(untouched.success)
         tm.that(untouched.value, eq="keep")
 
     @staticmethod
     def test_recover_replaces_failure_with_fallback_value() -> None:
         """Recover converts a failure into a success using the error."""
         recovered = r[str].fail("e").recover(lambda _err: "fallback")
-        tm.that(recovered.success, eq=True)
+        tm.ok(recovered.success)
         tm.that(recovered.value, eq="fallback")
 
         preserved = r[str].ok("orig").recover(lambda _err: "fallback")
@@ -127,8 +127,8 @@ class TestsFlextCoreMigrationValidation:
     @staticmethod
     def test_filter_demotes_success_that_fails_predicate() -> None:
         """Filter keeps a passing value and rejects a failing one."""
-        tm.that(r[int].ok(4).filter(lambda n: n > 0).success, eq=True)
-        tm.that(r[int].ok(-1).filter(lambda n: n > 0).failure, eq=True)
+        tm.ok(r[int].ok(4).filter(lambda n: n > 0).success)
+        tm.ok(r[int].ok(-1).filter(lambda n: n > 0).failure)
 
     @staticmethod
     def test_tap_and_tap_error_observe_without_changing_outcome() -> None:
@@ -146,14 +146,14 @@ class TestsFlextCoreMigrationValidation:
         )
         tm.that(seen, eq=[_OBSERVED_VALUE])
         tm.that(errors, eq=["z"])
-        tm.that(fail_after.failure, eq=True)
+        tm.ok(fail_after.failure)
 
     # ------------------------------------------------------------ container
 
     @staticmethod
     def test_container_is_process_singleton() -> None:
         """FlextContainer() returns the same shared instance every call."""
-        tm.that(FlextContainer() is FlextContainer(), eq=True)
+        tm.ok(FlextContainer() is FlextContainer())
 
     @staticmethod
     def test_container_binds_and_resolves_registered_service() -> None:
@@ -169,7 +169,7 @@ class TestsFlextCoreMigrationValidation:
             type_cls=RegisteredService,
         )
 
-        tm.that(resolution.success, eq=True)
+        tm.ok(resolution.success)
         tm.that(resolution.value.name, eq="test")
 
     @staticmethod
@@ -177,7 +177,7 @@ class TestsFlextCoreMigrationValidation:
         """Resolving an unregistered key yields a failure, not an exception."""
         resolution = FlextContainer().resolve("migration_absent_key", type_cls=int)
 
-        tm.that(resolution.failure, eq=True)
+        tm.ok(resolution.failure)
         tm.that(resolution.error, none=False)
         tm.that(tm.not_none(resolution.error), has="migration_absent_key")
 
@@ -193,7 +193,7 @@ class TestsFlextCoreMigrationValidation:
                 return r[bool].ok(value=True)
 
         outcome = NoopService().execute()
-        tm.that(outcome.success, eq=True)
+        tm.ok(outcome.success)
         tm.that(outcome.error, none=True)
 
     @staticmethod
@@ -214,12 +214,12 @@ class TestsFlextCoreMigrationValidation:
         service = UserService()
 
         failure = service.create_user("", "alice@example.com")
-        tm.that(failure.failure, eq=True)
+        tm.ok(failure.failure)
         tm.that(failure.error, none=False)
         tm.that(tm.not_none(failure.error), has="required")
 
         success = service.create_user("alice", "alice@example.com")
-        tm.that(success.success, eq=True)
+        tm.ok(success.success)
         tm.that(success.value["username"], eq="alice")
         tm.that(success.value["email"], eq="alice@example.com")
 

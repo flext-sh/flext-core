@@ -24,6 +24,31 @@ from typing_extensions import TypeForm
 from tests import c, m, t, tm, u
 
 
+class TestsFlextCoreJsonPayload:
+    """Recursive runtime payloads remain typed instead of accepting any value."""
+
+    @staticmethod
+    def test_nested_models_survive_runtime_payload_validation() -> None:
+        """Containers admit validated models at every supported nesting depth."""
+        model = m.ConfigMap(root={"name": "sample"})
+        payload: t.JsonPayload = {"items": [{"model": model}]}
+        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
+            TypeForm(t.JsonPayload)
+        )
+
+        tm.that(adapter.validate_python(payload), eq=payload)
+
+    @staticmethod
+    def test_runtime_payload_rejects_unmodeled_values() -> None:
+        """An unconstrained value must not enter through an unrestricted branch."""
+        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
+            TypeForm(t.JsonPayload)
+        )
+
+        with pytest.raises(flext_tests.m.ValidationError):
+            adapter.validate_python(object())
+
+
 class TestsFlextCoreTypingsContainers:
     # ---- m.Dict: mapping read contract -------------------------------------
     """Tests for ``FlextCoreTypingsContainers``."""
@@ -33,7 +58,7 @@ class TestsFlextCoreTypingsContainers:
         """An empty m.Dict reports length 0 and is falsy."""
         d = m.Dict(root={})
         tm.that(len(d), eq=0)
-        tm.that(bool(d.root), eq=False)
+        tm.fail(bool(d.root))
 
     @staticmethod
     def test_dict_getitem_returns_stored_values() -> None:
@@ -109,7 +134,7 @@ class TestsFlextCoreTypingsContainers:
         """Pop removes the key and returns its value; default covers absence."""
         d = m.Dict(root={"a": 1, "b": 2})
         tm.that(d.pop("a"), eq=1)
-        tm.that("a" in d, eq=False)
+        tm.fail("a" in d)
         tm.that(d.pop("missing", "fallback"), eq="fallback")
 
     @staticmethod
@@ -141,7 +166,7 @@ class TestsFlextCoreTypingsContainers:
         """m.ConfigMap exposes configuration values by key."""
         cm = m.ConfigMap(root={"timeout": 30, "debug": False})
         tm.that(cm["timeout"], eq=30)
-        tm.that(cm["debug"], eq=False)
+        tm.fail(cm["debug"])
 
     @staticmethod
     def test_configmap_len_counts_entries() -> None:
@@ -172,12 +197,12 @@ class TestsFlextCoreTypingsContainers:
         """An empty m.ObjectList is falsy and has length 0."""
         ol = m.ObjectList(root=[])
         tm.that(len(ol), eq=0)
-        tm.that(bool(ol), eq=False)
+        tm.fail(bool(ol))
 
     @staticmethod
     def test_object_list_non_empty_is_truthy() -> None:
         """A populated m.ObjectList is truthy."""
-        tm.that(bool(m.ObjectList(root=["x"])), eq=True)
+        tm.ok(bool(m.ObjectList(root=["x"])))
 
     @staticmethod
     def test_object_list_model_dump_returns_list() -> None:
@@ -203,7 +228,7 @@ class TestsFlextCoreTypingsContainers:
         scalar: str | float | bool | datetime,
     ) -> None:
         """SCALAR_TYPES is an isinstance-usable tuple covering all scalar kinds."""
-        tm.that(isinstance(scalar, c.SCALAR_TYPES), eq=True)
+        tm.ok(isinstance(scalar, c.SCALAR_TYPES))
 
     @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     @staticmethod
@@ -211,7 +236,7 @@ class TestsFlextCoreTypingsContainers:
         nonscalar: list[str] | t.MappingKV[str, int] | tuple[str],
     ) -> None:
         """Container values are not members of the scalar runtime contract."""
-        tm.that(isinstance(nonscalar, c.SCALAR_TYPES), eq=False)
+        tm.fail(isinstance(nonscalar, c.SCALAR_TYPES))
 
     # ---- t tuple aliases: arity contract via validation --------------------
 

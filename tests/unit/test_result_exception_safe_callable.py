@@ -37,7 +37,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return a / b
 
         result: p.Result[float] = divide(10, 0)
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(
             result.error is not None and "division by zero" in result.error.lower(),
             eq=True,
@@ -54,7 +54,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return a + b
 
         result: p.Result[int] = add(5, 3)
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=8)
         tm.that(result.exception, none=True)
 
@@ -70,7 +70,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return value * 2
 
         mapped: p.Result[float] = divide(10, 2).map(double)
-        tm.that(mapped.success, eq=True)
+        tm.ok(mapped.success)
         tm.that(mapped.value, eq=10.0)
 
     @staticmethod
@@ -85,7 +85,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return r.ok(value + 1)
 
         chained: p.Result[float] = divide(10, 2).flat_map(bump)
-        tm.that(chained.success, eq=True)
+        tm.ok(chained.success)
         tm.that(chained.value, eq=6.0)
 
     @staticmethod
@@ -100,7 +100,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return value * 2
 
         mapped: p.Result[float] = divide(10, 0).map(double)
-        tm.that(mapped.failure, eq=True)
+        tm.ok(mapped.failure)
         tm.that(mapped.exception, is_=ZeroDivisionError)
 
     @staticmethod
@@ -125,7 +125,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
         failed = divide(10, 0)
         with pytest.raises(ZeroDivisionError) as raised:
             failed.unwrap()
-        tm.that(raised.value is failed.exception, eq=True)
+        tm.ok(raised.value is failed.exception)
 
     @staticmethod
     def test_safe_captures_value_error() -> None:
@@ -139,7 +139,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return int(value)
 
         result: p.Result[int] = parse_int("abc")
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=ValueError)
 
@@ -148,7 +148,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
         safe_len = r.safe(len)
 
         result: p.Result[int] = safe_len(self.BrokenSized())
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=TypeError)
 
@@ -169,7 +169,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             raise exception_type(msg)
 
         result: p.Result[int] = raise_boundary_error()
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=exception_type)
 
@@ -182,7 +182,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             raise RuntimeError(msg)
 
         result: p.Result[int] = r[int].create_from_callable(risky_operation)
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(
             result.error is not None and "operation failed" in result.error,
             eq=True,
@@ -198,7 +198,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return "success"
 
         result: p.Result[str] = r[str].create_from_callable(safe_operation)
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq="success")
         tm.that(result.exception, none=True)
 
@@ -210,7 +210,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return None
 
         result: p.Result[str] = r[str].create_from_callable(empty_operation)
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.exception, none=True)
 
     @staticmethod
@@ -225,6 +225,6 @@ class TestsFlextCoreResultExceptionSafeCallable(
             failing_operation,
             error_code="INVALID_VALUE",
         )
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error_code, eq="INVALID_VALUE")
         tm.that(result.exception, none=False)

@@ -95,7 +95,7 @@ class TestsFlextCoreTypingsAliases:
     @staticmethod
     def test_flext_core_hides_shared_generic_helpers(legacy_name: str) -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
-        tm.that(hasattr(flext_core, legacy_name), eq=False)
+        tm.fail(hasattr(flext_core, legacy_name))
 
     @staticmethod
     def test_primitives_types_membership() -> None:
@@ -169,4 +169,4 @@ class TestsFlextCoreTypingsAliases:
         value: p.AttributeProbe,
     ) -> None:
         """Every documented container/collection value is recognised by the tuple."""
-        tm.that(isinstance(value, c.CONTAINER_AND_COLLECTION_TYPES), eq=True)
+        tm.ok(isinstance(value, c.CONTAINER_AND_COLLECTION_TYPES))

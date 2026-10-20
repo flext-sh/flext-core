@@ -72,11 +72,11 @@ class TestsFlextCoreContainerProperties:
     @staticmethod
     def test_has_reflects_registration_state(container: FlextContainer) -> None:
         """``has`` is False before registration and True afterwards."""
-        tm.that(container.has("late"), eq=False)
+        tm.fail(container.has("late"))
 
         _ = container.bind("late", 1)
 
-        tm.that(container.has("late"), eq=True)
+        tm.ok(container.has("late"))
 
     @staticmethod
     def test_names_lists_registered_and_hides_internal(
@@ -122,7 +122,7 @@ class TestsFlextCoreContainerProperties:
 
         tm.ok(container.drop("temp"), eq=True)
 
-        tm.that(container.has("temp"), eq=False)
+        tm.fail(container.has("temp"))
         tm.fail(container.resolve("temp"), has="temp")
 
     @staticmethod
@@ -136,7 +136,7 @@ class TestsFlextCoreContainerProperties:
         container.clear()
 
         tm.that(list(container.names()), eq=[])
-        tm.that(container.has("a"), eq=False)
+        tm.fail(container.has("a"))
 
     # -- invariants --------------------------------------------------------
 

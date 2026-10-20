@@ -94,7 +94,7 @@ class TestsFlextHandlerDiscovery:
 
         decorated = h.handler(command=m.Command)(operation)
         module = ModuleType("variadic_handlers")
-        module.operation = decorated
+        module.__dict__["operation"] = decorated
         found = h.Discovery.scan_module(module)[0][1]
         request = m.Command()
         expected = f"start:{u.resolve_message_route(request)}:a,b:end"
@@ -120,7 +120,7 @@ class TestsFlextHandlerDiscovery:
             return module
 
         setattr(operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command))
-        module.operation = operation
+        module.__dict__["operation"] = operation
         found = h.Discovery.scan_module(module)[0][1]
         tm.that(found is operation)
         tm.that(received, empty=True)
@@ -262,9 +262,9 @@ class TestsFlextHandlerDiscovery:
 
         module = u.Tests.handler_module("unimported_handlers", operation=operation)
         saved = h.Discovery.scan_module(module)[0][1]
-        module.operation = replacement
+        module.operation = replacement  # type: ignore[attr-defined]
         tm.that(h.Discovery.scan_module(module)[0][1] is replacement)
-        del module.operation
+        del module.operation  # type: ignore[attr-defined]
         tm.that(h.Discovery.scan_module(module), empty=True)
         tm.that(saved is operation)
         tm.that(saved(m.Command()) is outcome)

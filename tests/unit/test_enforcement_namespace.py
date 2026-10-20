@@ -167,7 +167,9 @@ class TestsFlextCoreEnforcementNamespace:
                 package / "base.py",
             )
             tm.that(spec, none=False)
+            tm.not_none(spec)
             tm.that(spec.loader, none=False)
+            tm.not_none(spec.loader)
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)
@@ -214,7 +216,9 @@ class_stem_override = "XmlAPI"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
         spec = importlib.util.spec_from_file_location("xmlapi", module_path)
         tm.that(spec, none=False)
+        tm.not_none(spec)
         tm.that(spec.loader, none=False)
+        tm.not_none(spec.loader)
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         try:

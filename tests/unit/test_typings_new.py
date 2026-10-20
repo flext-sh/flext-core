@@ -28,7 +28,7 @@ class TestsFlextCoreTypingsNew:
     @staticmethod
     def test_adapter_factory_is_memoized() -> None:
         """Repeated factory calls return the identical cached adapter."""
-        tm.that(u.json_value_adapter() is u.json_value_adapter(), eq=True)
+        tm.ok(u.json_value_adapter() is u.json_value_adapter())
 
     @staticmethod
     def test_primitives_adapter_accepts_scalar_value() -> None:
@@ -107,7 +107,7 @@ class TestsFlextCoreTypingsNew:
         """str_sequence_adapter validates ordered string sequences."""
         adapter = u.str_sequence_adapter()
         tm.that(adapter.validate_python(["a", "b"]), eq=["a", "b"])
-        tm.that(adapter is u.str_sequence_adapter(), eq=True)
+        tm.ok(adapter is u.str_sequence_adapter())
         with pytest.raises(c.ValidationError):
             adapter.validate_python(["a", 1])
 
@@ -116,7 +116,7 @@ class TestsFlextCoreTypingsNew:
         """strict_str_tuple_adapter accepts only a real tuple of strings."""
         adapter = u.strict_str_tuple_adapter()
         tm.that(adapter.validate_python(("\n", "\r\n")), eq=("\n", "\r\n"))
-        tm.that(adapter is u.strict_str_tuple_adapter(), eq=True)
+        tm.ok(adapter is u.strict_str_tuple_adapter())
         with pytest.raises(c.ValidationError):
             adapter.validate_python(["\n"])
         with pytest.raises(c.ValidationError):
@@ -126,7 +126,7 @@ class TestsFlextCoreTypingsNew:
     def test_bool_adapter_accepts_bool() -> None:
         """bool_adapter validates boolean values."""
         flag = True
-        tm.that(u.bool_adapter().validate_python(flag), eq=True)
+        tm.ok(u.bool_adapter().validate_python(flag))
 
     @staticmethod
     def test_tiered_scalar_hierarchy_is_a_subset_chain() -> None:
@@ -134,5 +134,5 @@ class TestsFlextCoreTypingsNew:
         primitives = set(c.PRIMITIVES_TYPES)
         scalar = set(c.SCALAR_TYPES)
         container = set(c.CONTAINER_TYPES)
-        tm.that(primitives <= scalar, eq=True)
-        tm.that(scalar <= container, eq=True)
+        tm.ok(primitives <= scalar)
+        tm.ok(scalar <= container)

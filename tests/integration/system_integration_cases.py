@@ -41,7 +41,7 @@ class TestsFlextFlextSystemWorkflowCases:
 
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
         resultado_processamento = processar_dados_usuario(dados_teste)
-        tm.that(resultado_processamento.success, eq=True)
+        tm.ok(resultado_processamento.success)
         dados_finais = resultado_processamento.value
         tm.that(dados_finais, has="nome")
         tm.that(dados_finais, has="email")
@@ -51,7 +51,7 @@ class TestsFlextFlextSystemWorkflowCases:
         tm.that(dados_finais["email"], eq="processado_joao@exemplo.com")
         dados_invalidos = {"nome": "", "email": "joao@exemplo.com"}
         resultado_erro = processar_dados_usuario(dados_invalidos)
-        tm.that(resultado_erro.success, eq=False)
+        tm.fail(resultado_erro.success)
         tm.that(resultado_erro.error, none=False)
         tm.that(tm.not_none(resultado_erro.error), has="não pode estar vazio")
 
@@ -62,7 +62,7 @@ class TestsFlextFlextSystemWorkflowCases:
         resultado_recuperado = resultado_com_erro.lash(
             lambda _error: r[str].ok("valor_recuperado"),
         )
-        tm.that(resultado_recuperado.success, eq=True)
+        tm.ok(resultado_recuperado.success)
         tm.that(resultado_recuperado.value, eq="valor_recuperado")
 
         def operacao_1(data: str) -> p.Result[str]:
@@ -83,7 +83,7 @@ class TestsFlextFlextSystemWorkflowCases:
             .flat_map(operacao_2)
             .flat_map(operacao_3)
         )
-        tm.that(pipeline_sucesso.success, eq=True)
+        tm.ok(pipeline_sucesso.success)
         tm.that(pipeline_sucesso.value, eq="final_etapa2_etapa1_dados_iniciais")
         pipeline_falha = (
             r[str]
@@ -92,5 +92,5 @@ class TestsFlextFlextSystemWorkflowCases:
             .flat_map(operacao_2)
             .flat_map(operacao_3)
         )
-        tm.that(pipeline_falha.success, eq=False)
+        tm.fail(pipeline_falha.success)
         tm.that(pipeline_falha.error, eq="erro_na_etapa2")

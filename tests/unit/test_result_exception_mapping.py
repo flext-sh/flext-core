@@ -36,8 +36,8 @@ class TestsFlextCoreResultExceptionMapping:
 
         mapped: p.Result[int] = result.map(lambda value: value * 2)
 
-        tm.that(mapped.failure, eq=True)
-        tm.that(mapped.exception is exc, eq=True)
+        tm.ok(mapped.failure)
+        tm.ok(mapped.exception is exc)
 
     @staticmethod
     def test_map_on_success_transforms_value_without_exception() -> None:
@@ -46,7 +46,7 @@ class TestsFlextCoreResultExceptionMapping:
 
         mapped: p.Result[int] = result.map(lambda value: value * 2)
 
-        tm.that(mapped.success, eq=True)
+        tm.ok(mapped.success)
         tm.that(mapped.value, eq=10)
         tm.that(mapped.exception, none=True)
 
@@ -60,8 +60,8 @@ class TestsFlextCoreResultExceptionMapping:
             lambda value: value * 2,
         )
 
-        tm.that(mapped.failure, eq=True)
-        tm.that(mapped.exception is exc, eq=True)
+        tm.ok(mapped.failure)
+        tm.ok(mapped.exception is exc)
 
     @staticmethod
     def test_flat_map_on_failure_preserves_carried_exception() -> None:
@@ -73,8 +73,8 @@ class TestsFlextCoreResultExceptionMapping:
             lambda value: r[str].ok(str(value)),
         )
 
-        tm.that(flat_mapped.failure, eq=True)
-        tm.that(flat_mapped.exception is exc, eq=True)
+        tm.ok(flat_mapped.failure)
+        tm.ok(flat_mapped.exception is exc)
 
     @staticmethod
     def test_flat_map_on_success_binds_next_result() -> None:
@@ -85,7 +85,7 @@ class TestsFlextCoreResultExceptionMapping:
             lambda value: r[str].ok(str(value)),
         )
 
-        tm.that(flat_mapped.success, eq=True)
+        tm.ok(flat_mapped.success)
         tm.that(flat_mapped.value, eq="5")
         tm.that(flat_mapped.exception, none=True)
 
@@ -99,8 +99,8 @@ class TestsFlextCoreResultExceptionMapping:
             lambda value: r[int].ok(value + 1),
         ).flat_map(lambda value: r[str].ok(str(value)))
 
-        tm.that(flat_mapped.failure, eq=True)
-        tm.that(flat_mapped.exception is exc, eq=True)
+        tm.ok(flat_mapped.failure)
+        tm.ok(flat_mapped.exception is exc)
 
     @staticmethod
     def test_map_error_on_failure_transforms_message_keeping_exception() -> None:
@@ -110,9 +110,9 @@ class TestsFlextCoreResultExceptionMapping:
 
         altered: p.Result[int] = result.map_error(lambda error: f"transformed: {error}")
 
-        tm.that(altered.failure, eq=True)
-        tm.that(altered.exception is exc, eq=True)
-        tm.that(altered.error is not None and "transformed" in altered.error, eq=True)
+        tm.ok(altered.failure)
+        tm.ok(altered.exception is exc)
+        tm.ok(altered.error is not None and "transformed" in altered.error)
 
     @staticmethod
     def test_map_error_on_success_is_identity() -> None:
@@ -121,7 +121,7 @@ class TestsFlextCoreResultExceptionMapping:
 
         altered: p.Result[int] = result.map_error(lambda error: f"error: {error}")
 
-        tm.that(altered.success, eq=True)
+        tm.ok(altered.success)
         tm.that(altered.value, eq=42)
         tm.that(altered.exception, none=True)
 
@@ -133,7 +133,7 @@ class TestsFlextCoreResultExceptionMapping:
 
         recovered: p.Result[int] = result.lash(lambda _: r[int].ok(0))
 
-        tm.that(recovered.success, eq=True)
+        tm.ok(recovered.success)
         tm.that(recovered.value, eq=0)
 
     @staticmethod
@@ -150,8 +150,8 @@ class TestsFlextCoreResultExceptionMapping:
             ),
         )
 
-        tm.that(recovered.failure, eq=True)
-        tm.that(recovered.exception is recovery_exc, eq=True)
+        tm.ok(recovered.failure)
+        tm.ok(recovered.exception is recovery_exc)
 
     @pytest.mark.parametrize(
         "combinator",
@@ -216,6 +216,6 @@ class TestsFlextCoreResultExceptionMapping:
             case "tap_error":
                 result = r[int].fail("error").tap_error(reject_error)
 
-        tm.that(result.failure, eq=True)
-        tm.that(result.exception is exc, eq=True)
+        tm.ok(result.failure)
+        tm.ok(result.exception is exc)
         tm.that(result.error, eq=str(exc))

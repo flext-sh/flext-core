@@ -69,9 +69,9 @@ class TestsFlextLoggings:
         output = stream.getvalue()
 
         if expect_output:
-            tm.that(contains in output, eq=True)
+            tm.ok(contains in output)
             for token in expected_tokens:
-                tm.that(token in output, eq=True)
+                tm.ok(token in output)
         else:
             tm.that(output, eq="")
         return result
@@ -204,7 +204,7 @@ class TestsFlextLoggings:
             expect_output=expect_output,
         )
         tm.ok(result)
-        tm.that(result.value, eq=True)
+        tm.ok(result.value)
 
     @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_accepts_structured_kwargs_and_returns_success(
@@ -225,7 +225,7 @@ class TestsFlextLoggings:
             expect_output=expect_output,
         )
         tm.ok(result)
-        tm.that(result.value, eq=True)
+        tm.ok(result.value)
 
     def test_log_method_accepts_level_as_first_argument(self, logger: p.Logger) -> None:
         """Test log method accepts level as first argument."""
@@ -240,7 +240,7 @@ class TestsFlextLoggings:
                 expect_output=expect_output,
             )
             tm.ok(result)
-            tm.that(result.value, eq=True)
+            tm.ok(result.value)
 
     def test_exception_log_captures_inside_except_block(self, logger: p.Logger) -> None:
         """Test exception log captures inside except block."""
@@ -257,7 +257,7 @@ class TestsFlextLoggings:
                 contains=message,
             )
             tm.ok(result)
-            tm.that(result.value, eq=True)
+            tm.ok(result.value)
 
     @staticmethod
     def test_log_source_points_to_call_site_not_logging_internals(
@@ -271,7 +271,7 @@ class TestsFlextLoggings:
 
         output = stream.getvalue()
         tm.ok(result)
-        tm.that(marker in output, eq=True)
-        tm.that("tests/unit/test_loggings_full_coverage.py" in output, eq=True)
-        tm.that("_logging_context_parts" in output, eq=False)
-        tm.that("_loggings_parts" in output, eq=False)
+        tm.ok(marker in output)
+        tm.ok("tests/unit/test_loggings_full_coverage.py" in output)
+        tm.fail("_logging_context_parts" in output)
+        tm.fail("_loggings_parts" in output)

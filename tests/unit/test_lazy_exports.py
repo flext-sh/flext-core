@@ -9,13 +9,12 @@ from __future__ import annotations
 import importlib
 import shutil
 import sys
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
-from flext_tests import tm
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
 from tests import tm, u
@@ -99,7 +98,7 @@ class TestsFlextCoreLazyExports:
         # Assert — public contract: facade + alias resolve to the same object
         facade = getattr(module, facade_name)
         alias = getattr(module, alias_name)
-        tm.that(alias is facade, eq=True)
+        tm.ok(alias is facade)
 
     @staticmethod
     def test_root_package_resolves_primary_facades_via_aliases() -> None:
@@ -108,12 +107,12 @@ class TestsFlextCoreLazyExports:
         package = importlib.import_module("flext_core")
 
         # Assert — each short alias resolves to its full facade
-        tm.that(package.c is package.FlextConstants, eq=True)
-        tm.that(package.e is package.FlextExceptions, eq=True)
-        tm.that(package.m is package.FlextModels, eq=True)
-        tm.that(package.p is package.FlextProtocols, eq=True)
-        tm.that(package.t is package.FlextTypes, eq=True)
-        tm.that(package.u is package.FlextUtilities, eq=True)
+        tm.ok(package.c is package.FlextConstants)
+        tm.ok(package.e is package.FlextExceptions)
+        tm.ok(package.m is package.FlextModels)
+        tm.ok(package.p is package.FlextProtocols)
+        tm.ok(package.t is package.FlextTypes)
+        tm.ok(package.u is package.FlextUtilities)
         tm.that(
             {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__), eq=True
         )
@@ -186,6 +185,7 @@ class TestsFlextCoreLazyExports:
             "from flext_core import t, p, m",
             "from flext_cli import t, p, m",
             "from flext_infra import t, p, m",
+            "from flext_infra import u, t, p, m",
         ],
     )
     def test_cold_public_declarations_resolve_from_live_sources(
@@ -248,7 +248,7 @@ class TestsFlextCoreLazyExports:
 
         # Assert — no __all__ published, but __dir__ still lists the public name
         assert "__all__" not in module_globals
-        dir_fn = cast(Callable[[], list[str]], module_globals["__dir__"])
+        dir_fn = cast("Callable[[], list[str]]", module_globals["__dir__"])
         tm.that(callable(dir_fn), truth=True)
         tm.that(dir_fn(), eq=["Alpha"])
 
@@ -262,7 +262,7 @@ class TestsFlextCoreLazyExports:
 
         # Assert
         tm.that(module_globals["__all__"], eq=("Alpha",))
-        dir_fn = cast(Callable[[], list[str]], module_globals["__dir__"])
+        dir_fn = cast("Callable[[], list[str]]", module_globals["__dir__"])
         tm.that(callable(dir_fn), truth=True)
         tm.that(dir_fn(), eq=["Alpha"])
 
@@ -286,7 +286,7 @@ class TestsFlextCoreLazyExports:
 
         # Assert
         tm.that(module_globals["__all__"], eq=("Alpha",))
-        dir_fn = cast(Callable[[], list[str]], module_globals["__dir__"])
+        dir_fn = cast("Callable[[], list[str]]", module_globals["__dir__"])
         tm.that(callable(dir_fn), truth=True)
         tm.that(dir_fn(), eq=["Alpha"])
 
@@ -307,7 +307,7 @@ class TestsFlextCoreLazyExports:
         )
 
         # Act
-        getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+        getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
         tm.that(callable(getattr_fn), truth=True)
         resolved = getattr_fn("Alpha")
 
@@ -330,7 +330,7 @@ class TestsFlextCoreLazyExports:
         )
 
         # Act
-        getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+        getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
         tm.that(callable(getattr_fn), truth=True)
 
         # Assert
@@ -359,7 +359,7 @@ class TestsFlextCoreLazyExports:
             )
 
             # Act
-            getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+            getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)
 
             # Assert — resolves the attribute, and never required a
@@ -384,7 +384,7 @@ class TestsFlextCoreLazyExports:
             module_globals,
             {"Alpha": (module_name, "Alpha")},
         )
-        getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+        getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
         tm.that(callable(getattr_fn), truth=True)
 
         # Act / Assert
@@ -410,12 +410,12 @@ class TestsFlextCoreLazyExports:
         )
 
         # Assert
-        getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+        getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
         tm.that(callable(getattr_fn), truth=True)
         assert getattr_fn("Alpha") is alpha_cls
         tm.that(module_globals["__all__"], eq=("Alpha",))
-        tm.that(getattr_hook is repeated_getattr is getattr_fn, eq=True)
-        tm.that(dir_hook is repeated_dir is module_globals["__dir__"], eq=True)
+        tm.ok(getattr_hook is repeated_getattr is getattr_fn)
+        tm.ok(dir_hook is repeated_dir is module_globals["__dir__"])
         tm.that(dir_hook(), eq=["Alpha"])
 
     @staticmethod
@@ -593,7 +593,7 @@ class TestsFlextCoreLazyExports:
             module_globals,
             {"Alpha": (module_name, "Alpha")},
         )
-        getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+        getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
         tm.that(callable(getattr_fn), truth=True)
         getattr_fn("Alpha")
         tm.that(any(size > 0 for size in lazy.cache_stats.values()), truth=True)

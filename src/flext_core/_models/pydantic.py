@@ -14,10 +14,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, ClassVar, dataclass_transform
+from collections.abc import Callable
+from types import EllipsisType
+from typing import TYPE_CHECKING, ClassVar, dataclass_transform, overload
 
 import pydantic
-import pydantic.fields
 import pydantic_settings
 from pydantic import (
     AfterValidator,
@@ -36,6 +37,7 @@ from pydantic import (
     WrapSerializer,
     WrapValidator,
 )
+from typing_extensions import TypeForm
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
 from flext_core._typings.native_export import FlextTypingNativeExport
@@ -54,15 +56,7 @@ class FlextModelsPydantic:
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
     Field = FlextTypingNativeExport(pydantic.Field)
-    FieldInfo = pydantic.fields.FieldInfo
-
-    # Compatibility: older flext-infra code calls m.empty(contract_factory=...).
-    # Delegate to the canonical utility owner.
-    @staticmethod
-    def empty(*args: Any, **kwargs: Any) -> Any:
-        from flext_core._utilities.pydantic import FlextUtilitiesPydantic  # noqa: PLC0415
-
-        return FlextUtilitiesPydantic.empty(*args, **kwargs)
+    from pydantic.fields import FieldInfo
 
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
@@ -95,7 +89,6 @@ class FlextModelsPydantic:
     class SettingsConfigDict(pydantic_settings.SettingsConfigDict, total=False):
         """Canonical settings configuration exported through the models facade."""
 
-    SkipValidation = SkipValidation
     field_validator = FlextTypingNativeExport(pydantic.field_validator)
     # Why (abstraction boundary): ENFORCE-070 makes flext-core the sole owner of
     # pydantic, and the tier-whitelist gate rejects a bare ``pydantic`` import in
@@ -117,6 +110,34 @@ class FlextModelsPydantic:
         pydantic.computed_field
     )
 
+    @overload
+    @staticmethod
+    def empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]: ...
+
+    @overload
+    @staticmethod
+    def empty[ContractT](
+        *, contract_factory: Callable[[], TypeForm[ContractT]]
+    ) -> Callable[[], ContractT]: ...
+
+    @staticmethod
+    def empty[ContractT](
+        contract: TypeForm[ContractT] | EllipsisType = ...,
+        *,
+        contract_factory: Callable[[], TypeForm[ContractT]] | None = None,
+    ) -> Callable[[], ContractT]:
+        from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+
+        if contract_factory is None:
+            if isinstance(contract, EllipsisType):
+                msg = "empty requires a collection contract or contract_factory"
+                raise TypeError(msg)
+            return FlextUtilitiesPydantic.empty(contract)
+        if isinstance(contract, EllipsisType):
+            return FlextUtilitiesPydantic.empty(contract_factory=contract_factory)
+        msg = "empty accepts either contract or contract_factory, not both"
+        raise TypeError(msg)
+
     # Annotation constraints and tagged-union discrimination
     Discriminator = Discriminator
     StringConstraints = StringConstraints
@@ -132,6 +153,7 @@ class FlextModelsPydantic:
     PlainValidator = PlainValidator
     ValidateAs = ValidateAs
     WrapValidator = WrapValidator
+    SkipValidation = SkipValidation
 
     # Serializers
     PlainSerializer = PlainSerializer

@@ -53,21 +53,16 @@ class FlextTypesServices:
     ]
 
     type JsonPayloadLeaf = (
-        FlextTypingBase.Scalar
-        | Path
-        | FlextTypesPydantic.JsonValue
-        | FlextTypesPydantic.BaseModelInstance
+        FlextTypingBase.Scalar | Path | FlextTypesPydantic.BaseModelInstance
     )
+    # Reuse the canonical JSON graph, as required by recursive-type-alias;
+    # introducing namespace self-reference here breaks checker convergence.
     type JsonPayloadCollectionValue = (
-        JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, JsonPayloadCollectionValue]
-        | FlextTypingBase.SequenceOf[JsonPayloadCollectionValue]
+        FlextTypesServices.JsonPayloadLeaf
+        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
+        | FlextTypingBase.SequenceOf[FlextTypesPydantic.JsonValue]
     )
-    type JsonPayload = (
-        JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, JsonPayloadCollectionValue]
-        | FlextTypingBase.SequenceOf[JsonPayloadCollectionValue]
-    )
+    type JsonPayload = FlextTypesServices.JsonPayloadCollectionValue
     type OperationMetricsStream = Generator[FlextTypingBase.MappingKV[str, JsonPayload]]
     type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayloadLeaf | T
     type SettingsOverrideCollectionValue[T] = (
@@ -113,7 +108,9 @@ class FlextTypesServices:
         | tuple[FlextTypesServices.LogValue[T], ...]
     )
     type LoggingEvent[T] = MutableMapping[str, FlextTypesServices.LoggingEventValue[T]]
-    type LoggingContext[T] = dict[str, FlextTypesServices.LoggingEventValue[T]]
+    type LoggingContext[T] = FlextTypingBase.DictKV[
+        str, FlextTypesServices.LoggingEventValue[T]
+    ]
     type TextStream = TextIO
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
@@ -127,10 +124,10 @@ class FlextTypesServices:
     type ModelInput[T] = (
         FlextTypesPydantic.JsonValue
         | T
-        | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload]
+        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
     )
     type ConfigModelInput[T] = (
-        T | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload]
+        T | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
     )
     type MetadataInput[T] = (
         T | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None] | None
