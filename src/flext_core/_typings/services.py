@@ -58,8 +58,12 @@ class FlextTypesServices:
         | FlextTypesPydantic.JsonValue
         | FlextTypesPydantic.BaseModelInstance
     )
-    type JsonPayload = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelInstance
-    type OperationMetricsStream = Generator[FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]]
+    type JsonPayload = (
+        FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelInstance
+    )
+    type OperationMetricsStream = Generator[
+        FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
+    ]
     type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayload | T
     type SettingsOverrideCollectionValue[T] = (
         FlextTypesServices.SettingsOverrideLeaf[T]

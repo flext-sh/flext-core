@@ -20,7 +20,6 @@ from typing import TYPE_CHECKING, ClassVar, dataclass_transform, overload
 
 import pydantic
 import pydantic_settings
-from pydantic.fields import FieldInfo
 from pydantic import (
     AfterValidator,
     AliasChoices,
@@ -38,6 +37,7 @@ from pydantic import (
     WrapSerializer,
     WrapValidator,
 )
+from pydantic.fields import FieldInfo
 from typing_extensions import TypeForm
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
