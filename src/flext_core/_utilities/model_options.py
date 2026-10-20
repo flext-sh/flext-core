@@ -39,8 +39,8 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
         """
         match source:
             case None:
-                return m.RuntimeBootstrapOptions()  # type: ignore
-            case m.RuntimeBootstrapOptions():  # type: ignore
+                return m.RuntimeBootstrapOptions()
+            case m.RuntimeBootstrapOptions():
                 return source
             case p.MixinsInfrastructure():
                 declared = (
@@ -57,7 +57,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                     settings_overrides=source.settings_overrides,
                     context=source.initial_context,
                 )
-                return m.RuntimeBootstrapOptions.model_validate({  # type: ignore
+                return m.RuntimeBootstrapOptions.model_validate({
                     **dict(declared),
                     **{name: value for name, value in seeds if value is not None},
                 })

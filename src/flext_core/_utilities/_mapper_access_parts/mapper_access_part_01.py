@@ -37,10 +37,10 @@ class FlextUtilitiesMapperAccess:
             # Preserve nulls so the extraction contract decides fail/default policy.
             return None
         if isinstance(value, FlextModelsPydantic.BaseModel):
-            return value  # type: ignore
+            return value
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
-            return FlextRuntime.normalize_to_container(  # type: ignore
+            return FlextRuntime.normalize_to_container(
                 m.ConfigMap.model_validate(model_dump_attr()),
             )
         return FlextUtilitiesMapperAccess._normalize_payload_value(value)
@@ -130,7 +130,7 @@ class FlextUtilitiesMapperAccess:
         result: p.Result[t.JsonPayload]
         mapping_obj: t.MappingKV[str, t.JsonValue | t.JsonPayload] | None = None
         if isinstance(current, FlextModelsContainers.ConfigMap):
-            mapping_obj = current.root  # type: ignore
+            mapping_obj = current.root
         elif isinstance(current, Mapping):
             mapping_obj = current
         if mapping_obj is not None:

@@ -70,18 +70,18 @@ class FlextMixins(FlextMixinsState):
             ),
         )
         stats = stats_model.root
-        stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1  # type: ignore
+        stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with FlextContext.timed_operation(operation_name) as metrics:
-                metrics_map: t.MutableMappingKV[str, t.JsonPayload] = {  # type: ignore
-                    key: u.normalize_to_container(value)  # type: ignore[misc]
+                metrics_map: t.MutableMappingKV[str, t.JsonPayload] = {
+                    key: u.normalize_to_container(value)
                     for key, value in metrics.root.items()
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
-                    yield metrics_map  # type: ignore[misc]
+                    yield metrics_map
                     if "duration_ms" in metrics_map:
-                        total = u.to_float(stats.get("total_duration_ms", 0.0))  # type: ignore
+                        total = u.to_float(stats.get("total_duration_ms", 0.0))
                         stats["total_duration_ms"] = total + u.to_float(
                             metrics_map.get("duration_ms", 0.0)
                         )
@@ -89,21 +89,21 @@ class FlextMixins(FlextMixinsState):
                     self.logger.debug(
                         c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION, exc_info=exc
                     )
-                    stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1  # type: ignore
+                    stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
                     raise
                 finally:
-                    count = u.to_int(stats.get("operation_count", 1), default=1)  # type: ignore
-                    errors = u.to_int(stats.get("error_count", 0))  # type: ignore
+                    count = u.to_int(stats.get("operation_count", 1), default=1)
+                    errors = u.to_int(stats.get("error_count", 0))
                     stats["success_rate"] = (count - errors) / count
                     if count > 0:
                         stats["avg_duration_ms"] = (
-                            u.to_float(stats.get("total_duration_ms", 0.0)) / count  # type: ignore
+                            u.to_float(stats.get("total_duration_ms", 0.0)) / count
                         )
-                    metrics_map["error_count"] = stats["error_count"]  # type: ignore
+                    metrics_map["error_count"] = stats["error_count"]
                     metrics_map["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
-                        metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]  # type: ignore[assignment]
-                    self._operation_stats[operation_name] = stats_model  # type: ignore[assignment]
+                        metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]
+                    self._operation_stats[operation_name] = stats_model
         finally:
             _ = u.clear_scope(c.ContextScope.OPERATION)
             FlextContext.apply_operation_name("")

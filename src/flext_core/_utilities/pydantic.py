@@ -31,6 +31,8 @@ from pydantic import (
     WrapSerializer,
     WrapValidator,
     computed_field,
+    field_serializer,
+    model_serializer,
     validate_call,
     with_config,
 )
@@ -67,9 +69,13 @@ class FlextUtilitiesPydantic(
 
     if TYPE_CHECKING:
         computed_field: ClassVar[p.ComputedFieldFactory] = computed_field
+        field_serializer: ClassVar[p.FieldSerializerFactory] = field_serializer
+        model_serializer: ClassVar[p.ModelSerializerFactory] = model_serializer
         validate_call: ClassVar[p.ValidateCall] = validate_call
     else:
         computed_field = staticmethod(computed_field)
+        field_serializer = staticmethod(field_serializer)
+        model_serializer = staticmethod(model_serializer)
         validate_call = staticmethod(validate_call)
     with_config = staticmethod(with_config)
 

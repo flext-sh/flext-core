@@ -96,7 +96,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 else FlextRuntime.normalize_to_container(next_val)
             )
             index_result = FlextUtilitiesMapperExtract._extract_handle_array_index(
-                narrowed_for_index,  # type: ignore
+                narrowed_for_index,
                 array_match,
             )
             next_val, early_result = (
@@ -126,7 +126,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
             t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None
         ) = None
         if isinstance(data, FlextModelsPydantic.BaseModel):
-            seed_current = data  # type: ignore
+            seed_current = data
         elif isinstance(data, Mapping):
             seed_current = m.ConfigMap(
                 root={

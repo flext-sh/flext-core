@@ -37,7 +37,7 @@ class FlextUtilitiesHandler:
             The resulting ``p.HandlerRuntimeState``.
 
         """
-        return m.HandlerRuntimeState(  # type: ignore
+        return m.HandlerRuntimeState(
             execution_context=m.ExecutionContext(
                 handler_name=handler_name,
                 handler_mode=handler_mode,
@@ -97,7 +97,7 @@ class FlextUtilitiesHandler:
                     "push handler context",
                     validated.error,
                 )
-            execution_context: p.ExecutionContext = validated.unwrap()  # type: ignore
+            execution_context: p.ExecutionContext = validated.unwrap()
             pushed_context = execution_context
         return FlextResult.ok(
             state.model_copy(
@@ -116,13 +116,13 @@ class FlextUtilitiesHandler:
 
         """
         if not state.context_stack:
-            empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})  # type: ignore
+            empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
             return FlextResult.ok((state, empty_context))
         popped = state.context_stack[-1]
         next_state = state.model_copy(
             update={"context_stack": state.context_stack[:-1]},
         )
-        popped_context: p.RootDict[t.JsonPayload] = m.ConfigMap(  # type: ignore
+        popped_context: p.RootDict[t.JsonPayload] = m.ConfigMap(
             root={
                 "handler_name": popped.handler_name,
                 c.FIELD_HANDLER_MODE: popped.handler_mode,

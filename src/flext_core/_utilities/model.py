@@ -94,7 +94,7 @@ class FlextUtilitiesModel:
 
     @overload
     @staticmethod
-    def validate_value[TValue](  # type: ignore
+    def validate_value[TValue](
         target: type[TValue],
         data: t.JsonPayload,
         *,
@@ -106,7 +106,7 @@ class FlextUtilitiesModel:
 
     @overload
     @staticmethod
-    def validate_value[TValue](  # type: ignore
+    def validate_value[TValue](
         target: t.ValueAdapter[TValue],
         data: t.JsonPayload,
         *,
