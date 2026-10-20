@@ -23,7 +23,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem](
+    def filter[TItem](  # type: ignore
         items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
@@ -34,7 +34,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](
+    def filter[TItem, TMapped](  # type: ignore
         items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
@@ -45,7 +45,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem](
+    def filter[TItem](  # type: ignore
         items: t.VariadicTuple[TItem],
         predicate: Callable[[TItem], bool],
         *,
@@ -56,7 +56,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](
+    def filter[TItem, TMapped](  # type: ignore
         items: t.VariadicTuple[TItem],
         predicate: Callable[[TItem], bool],
         *,
@@ -67,7 +67,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem](
+    def filter[TItem](  # type: ignore
         items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
@@ -78,7 +78,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](
+    def filter[TItem, TMapped](  # type: ignore
         items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
@@ -150,7 +150,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: t.SequenceOf[TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> t.SequenceOf[TMapped]:
@@ -159,7 +159,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: t.VariadicTuple[TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> t.VariadicTuple[TMapped]:
@@ -168,7 +168,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: t.MappingKV[str, TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> t.MappingKV[str, TMapped]:
@@ -177,7 +177,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: set[TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> set[TMapped]:
@@ -186,7 +186,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: frozenset[TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> frozenset[TMapped]:

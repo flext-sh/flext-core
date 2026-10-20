@@ -325,7 +325,7 @@ class FlextSettings(BaseSettings):
                 cls._singleton_enabled = original
 
     @classmethod
-    def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
+    def fetch_global(cls, *, overrides: t.MappingKV[str, t.JsonValue] | None = None) -> Self:
         """Return the shared per-class singleton (lazy, thread-safe).
 
         With ``overrides`` return an isolated clone; the singleton is not
@@ -334,7 +334,7 @@ class FlextSettings(BaseSettings):
         instance = cls._initialized_instance()
         if overrides:
             if instance is not None:
-                return instance.clone(**overrides)
+                return instance.clone(**overrides)  # type: ignore
             with cls.singleton_disabled():
                 return cls.model_validate(dict(overrides))
         if instance is not None:

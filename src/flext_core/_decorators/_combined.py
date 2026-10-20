@@ -22,7 +22,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
 
     @overload
     @classmethod
-    def combined[**PCallback, TResult](
+    def combined[**PCallback, TResult](  # type: ignore
         cls,
         *,
         inject_deps: FlextTypingBase.StrMapping | None = None,
@@ -36,7 +36,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
 
     @overload
     @classmethod
-    def combined[**PCallback, TResult](
+    def combined[**PCallback, TResult](  # type: ignore
         cls,
         *,
         inject_deps: FlextTypingBase.StrMapping | None = None,

@@ -77,7 +77,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
     def flow_through(self: Self) -> p.Result[T]: ...
 
     @overload
-    def flow_through[U](
+    def flow_through[U](  # type: ignore
         self: Self,
         first: Callable[[T | U], p.Result[U]],
         /,

@@ -42,7 +42,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
     def logging_settings(cls) -> p.LoggingSettings:
         """Return the elected application provider, or the actual Core settings."""
         selected = cls.selected_logging_settings()
-        return selected if selected is not None else FlextSettings.fetch_global()
+        return selected if selected is not None else FlextSettings.fetch_global()  # type: ignore
 
     @classmethod
     def logging_options(cls) -> p.StructlogOptions:
