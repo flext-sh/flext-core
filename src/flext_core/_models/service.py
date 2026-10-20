@@ -68,7 +68,7 @@ class FlextModelsService:
                 description="FlextSettings class used to load runtime settings.",
             )
         )
-        settings_overrides: t.ScalarMapping | None = FlextModelsPydantic.Field(
+        settings_overrides: t.JsonMapping | None = FlextModelsPydantic.Field(
             default=None,
             description=(
                 "Key-value overrides applied on top of the loaded configuration."

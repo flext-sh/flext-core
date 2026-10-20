@@ -101,8 +101,10 @@ class FlextUtilitiesContext:
     OPERATION_START_TIME: ClassVar[p.ContextProxy[datetime]] = StructlogProxyContextVar[
         datetime
     ](c.ContextKey.OPERATION_START_TIME)
-    OPERATION_METADATA: ClassVar[p.ContextProxy[t.JsonMapping]] = (
-        StructlogProxyContextVar[t.JsonMapping](c.ContextKey.OPERATION_METADATA)
+    OPERATION_METADATA: ClassVar[p.ContextProxy[dict[str, t.JsonValue]]] = (
+        StructlogProxyContextVar[dict[str, t.JsonValue]](
+            c.ContextKey.OPERATION_METADATA
+        )
     )
 
     @staticmethod
@@ -129,15 +131,15 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def create_dict_proxy(
-        key: str, default: t.JsonMapping | None = None
-    ) -> p.ContextProxy[t.JsonMapping]:
+        key: str, default: dict[str, t.JsonValue] | None = None
+    ) -> p.ContextProxy[dict[str, t.JsonValue]]:
         """Create a mapping proxy over the shared structlog storage.
 
         Returns:
             The mapping context proxy.
 
         """
-        return FlextUtilitiesContext.StructlogProxyContextVar[t.JsonMapping](
+        return FlextUtilitiesContext.StructlogProxyContextVar[dict[str, t.JsonValue]](
             key, default
         )
 
@@ -233,7 +235,7 @@ class FlextUtilitiesContext:
     @contextmanager
     def timed_operation(
         operation_name: str | None = None,
-    ) -> Generator[p.MutableRootDict[t.JsonPayload]]:
+    ) -> Generator[FlextModelsContainers.ConfigMap]:
         """Scope operation timing and finalize the yielded metadata on exit.
 
         Yields:
@@ -242,7 +244,7 @@ class FlextUtilitiesContext:
         """
         start = FlextUtilitiesGenerators.generate_datetime_utc()
         perf = time.perf_counter()
-        payload: t.JsonMapping = {
+        payload: dict[str, t.JsonValue] = {
             str(c.MetadataKey.START_TIME): start.isoformat(),
             str(c.ContextKey.OPERATION_NAME): operation_name or "",
         }
@@ -393,7 +395,7 @@ class FlextUtilitiesContext:
         current = operations.get(operation)
         if isinstance(current, int):
             operations[operation] = current + 1
-            updates["operations"] = operations
+            updates["operations"] = dict(operations)
         if not updates:
             return state
         statistics = state.statistics.model_copy(update=updates)

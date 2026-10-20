@@ -28,7 +28,7 @@ class FlextMixins(FlextModelsBase.ArbitraryTypesModel):
         exclude=True,
         description="Pre-built settings instance used directly for the runtime.",
     )
-    settings_overrides: t.SkipJsonSchema[t.ScalarMapping | None] = (
+    settings_overrides: t.SkipJsonSchema[t.JsonMapping | None] = (
         FlextModelsPydantic.Field(
             default=None,
             validate_default=True,

@@ -49,7 +49,7 @@ class FlextProtocolsSettings:
             ...
 
         @classmethod
-        def fetch_global(cls, *, overrides: t.ScalarMapping | None = None) -> Self:
+        def fetch_global(cls, *, overrides: t.JsonMapping | None = None) -> Self:
             """Return the global singleton settings with overrides."""
             ...
 
@@ -116,7 +116,7 @@ class FlextProtocolsSettings:
         def fetch_global(
             cls,
             *,
-            overrides: t.ScalarMapping | None = None,
+            overrides: t.JsonMapping | None = None,
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...

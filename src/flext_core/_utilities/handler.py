@@ -15,7 +15,7 @@ import time
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextResult, FlextRuntime, c, m, p
 
@@ -122,11 +122,14 @@ class FlextUtilitiesHandler:
         next_state = state.model_copy(
             update={"context_stack": state.context_stack[:-1]},
         )
-        popped_context: p.RootDict[t.JsonPayload] = m.ConfigMap(
-            root={
-                "handler_name": popped.handler_name,
-                c.FIELD_HANDLER_MODE: popped.handler_mode,
-            },
+        popped_context: p.RootDict[t.JsonPayload] = cast(
+            p.RootDict[t.JsonPayload],
+            m.ConfigMap(
+                root={
+                    "handler_name": popped.handler_name,
+                    c.FIELD_HANDLER_MODE: popped.handler_mode.value,
+                },
+            ),
         )
         return FlextResult.ok((next_state, popped_context))
 

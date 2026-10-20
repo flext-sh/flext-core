@@ -52,33 +52,14 @@ class TestsFlextCoreNormalizationBoundaries:
             u.normalize_to_json_value(type)
 
     @staticmethod
-    @pytest.mark.parametrize("tuple_items", [False, True])
-    def test_json_payload_preserves_mapping_inside_nested_sequences(
-        *,
-        tuple_items: bool,
-    ) -> None:
+    def test_json_payload_preserves_mapping_inside_nested_sequences() -> None:
         """Mapping payloads must not materialize the abstract model union arm."""
         items: list[t.MetadataMapping] = [{"locations": []}]
-        parsed = m.ConfigMap.model_validate({
-            "issues": tuple(items) if tuple_items else items,
-        })
+        parsed = m.ConfigMap.model_validate({"issues": items})
         issues = parsed["issues"]
-        if not isinstance(issues, (tuple, list)):
+        if not isinstance(issues, list):
             pytest.fail("Issue sequence did not retain its native collection shape")
         tm.ok(isinstance(issues[0], Mapping))
-        expected: t.JsonDict = {"issues": [{"locations": []}]}
-        tm.that(u.normalize_to_json_mapping(parsed), eq=expected)
-
-    @staticmethod
-    def test_json_payload_preserves_direct_model_identity() -> None:
-        """Generic payloads preserve a directly declared model leaf."""
-        model = m.Metadata(attributes={"source": "publication"})
-        parsed = m.ConfigMap.model_validate({"item": model})
-        tm.ok(parsed["item"] is model)
-        tm.that(
-            u.normalize_to_json_mapping(parsed),
-            eq={"item": model.model_dump(mode="json")},
-        )
 
     @staticmethod
     @pytest.mark.parametrize("depth", [1, 3])

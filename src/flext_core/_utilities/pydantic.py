@@ -40,6 +40,7 @@ from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
 from flext_core import _models, c, p, t
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
@@ -56,6 +57,8 @@ class FlextUtilitiesPydantic(
     **NEVER import pydantic directly outside flext-core/src/.**
     Use u.* / up.* instead.
     """
+
+    Field = FlextModelsPydantic.Field
 
     # Inherit field/default factories without re-inferring generic descriptors.
     StaticExport = t
@@ -128,7 +131,7 @@ class FlextUtilitiesPydantic(
         return adapter.validate_python(value)
 
     @staticmethod
-    def normalize_to_container(value: p.GuardInput) -> t.RuntimeData | BaseModel:
+    def normalize_to_container(value: p.GuardInput) -> t.JsonPayload:
         """Preserve model identity and use native JSON for supported data shapes.
 
         Returns:
@@ -145,7 +148,7 @@ class FlextUtilitiesPydantic(
         if value is None:
             return None
         if isinstance(value, BaseModel) and not root_model:
-            return value
+            return value.model_dump(mode="python")
         if isinstance(value, Path):
             return str(value)
         source = value

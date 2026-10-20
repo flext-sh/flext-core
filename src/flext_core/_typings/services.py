@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — regenerate through `make gen` (source of truth: flext-infra templates)
 """FlextTypesServices - service, mapping, and runtime helper type aliases.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -19,7 +20,7 @@ from enum import Enum
 from logging import Formatter, Handler, LogRecord
 from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
-from typing import BinaryIO, TextIO, TypeAliasType
+from typing import Any, BinaryIO, TextIO, TypeAliasType
 
 from flext_core import c
 from flext_core._typings import FlextTypesPydantic, FlextTypingBase
@@ -28,20 +29,23 @@ from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
+    type JsonPayload = (
+        FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType | Path
+    )
+
     type ServiceLeaf[T] = (
-        FlextTypesPydantic.JsonValue | FlextTypingBase.Scalar | Path | T
+        FlextTypingBase.Scalar | FlextTypesPydantic.JsonValue | Path | T
     )
     type ServiceValue[T] = (
         FlextTypesServices.ServiceLeaf[T]
-        | FlextTypingBase.MappingKV[str, FlextTypesServices.ServiceLeaf[T]]
-        | FlextTypingBase.SequenceOf[FlextTypesServices.ServiceLeaf[T]]
+        | FlextTypingBase.JsonMapping
+        | FlextTypingBase.JsonList
     )
     type RegisterableService[T] = (
-        FlextTypesServices.ServiceValue[T]
-        | Callable[..., FlextTypesServices.ServiceValue[T]]
+        FlextTypesServices.ServiceValue[T] | Callable[..., Any]
     )
-    type FactoryCallable[T] = Callable[..., FlextTypesServices.ServiceValue[T]]
-    type ResourceCallable[T] = Callable[..., FlextTypesServices.ServiceValue[T]]
+    type FactoryCallable[T] = Callable[..., Any]
+    type ResourceCallable[T] = Callable[..., Any]
     type ServiceMap[T] = FlextTypingBase.MappingKV[
         str, FlextTypesServices.RegisterableService[T]
     ]
@@ -52,46 +56,34 @@ class FlextTypesServices:
         str, FlextTypesServices.ResourceCallable[T]
     ]
 
-    type JsonPayloadLeaf = (
-        FlextTypingBase.Scalar
-        | Path
-        | FlextTypesPydantic.JsonValue
-        | FlextTypesPydantic.BaseModelInstance
-        | None
-    )
-    type JsonPayload = FlextTypesPydantic.JsonValue | Path
-    type OperationMetricsStream = Generator[
-        FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
-    ]
+    type OperationMetricsStream = Generator[FlextTypingBase.JsonMapping]
+
     type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayload | T
     type SettingsOverrideCollectionValue[T] = (
         FlextTypesServices.SettingsOverrideLeaf[T]
-        | FlextTypingBase.MappingKV[str, FlextTypesServices.SettingsOverrideLeaf[T]]
-        | FlextTypingBase.SequenceOf[FlextTypesServices.SettingsOverrideLeaf[T]]
+        | FlextTypingBase.JsonMapping
+        | FlextTypingBase.JsonList
     )
     type SettingsOverride[T] = (
         FlextTypesServices.SettingsOverrideLeaf[T]
-        | FlextTypingBase.MappingKV[
-            str, FlextTypesServices.SettingsOverrideCollectionValue[T]
-        ]
-        | FlextTypingBase.SequenceOf[
-            FlextTypesServices.SettingsOverrideCollectionValue[T]
-        ]
+        | FlextTypingBase.JsonMapping
+        | FlextTypingBase.JsonList
     )
     type SettingsOverridesMapping[T] = FlextTypingBase.MappingKV[
-        str,
-        FlextTypesServices.SettingsOverride[T] | None,
+        str, FlextTypesServices.SettingsOverride[T] | None
     ]
+
     type RegistryDict[T] = MutableMapping[str, T]
     type DomainModelCarrier[T] = FlextTypesPydantic.BaseModelType | T
     type ScalarOrModel = FlextTypingBase.Scalar | FlextTypesPydantic.BaseModelType
     type ModelClass[T: FlextTypesPydantic.BaseModelType] = type[T]
-    type LogArgument[T] = FlextTypesServices.JsonPayload | T
+
     type LogLevel = c.LogLevel
     type LoggingTraceback = TracebackType
     type LoggingExceptionInfo = tuple[
         type[BaseException], BaseException, LoggingTraceback | None
     ]
+    type LogArgument[T] = FlextTypesServices.JsonPayload | T
     type LogValue[T] = (
         FlextTypesServices.LogArgument[T]
         | BaseException
@@ -110,16 +102,23 @@ class FlextTypesServices:
     type LoggingContext[T] = FlextTypingBase.DictKV[
         str, FlextTypesServices.LoggingEventValue[T]
     ]
+    type LoggingWriteCompletion = Future[int]
+
     type TextStream = TextIO
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
-    type LoggingWriteCompletion = Future[int]
-    type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
-    type MutableMetadataMapping = MutableMapping[str, JsonPayload]
-    type RuntimeData = JsonPayload
+
+    type MetadataMapping = FlextTypingBase.MappingKV[
+        str, FlextTypesServices.JsonPayload
+    ]
+    type MutableMetadataMapping = MutableMapping[str, FlextTypesServices.JsonPayload]
+    type RuntimeData = FlextTypesServices.JsonPayload
     type BootstrapInput = FlextTypesPydantic.BaseModelType | FlextTypingBase.JsonMapping
     type ServiceClass = type
-    type UserOverridesMapping = FlextTypingBase.MappingKV[str, JsonPayload]
+    type UserOverridesMapping = FlextTypingBase.MappingKV[
+        str, FlextTypesServices.JsonPayload
+    ]
+
     type ModelInput[T] = (
         FlextTypesPydantic.JsonValue
         | T
@@ -131,16 +130,15 @@ class FlextTypesServices:
     type MetadataInput[T] = (
         T | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None] | None
     )
-    type ContextHookCallable = Callable[[FlextTypingBase.Scalar], JsonPayload]
+
+    type ContextHookCallable = Callable[
+        [FlextTypingBase.Scalar], FlextTypesServices.JsonPayload
+    ]
     type ContextHookMap = FlextTypingBase.MappingKV[
-        str,
-        FlextTypingBase.SequenceOf[ContextHookCallable],
+        str, FlextTypingBase.SequenceOf[ContextHookCallable]
     ]
 
-    type HandlerCallable[T] = Callable[
-        ...,
-        FlextTypesPydantic.BaseModelType | T,
-    ]
+    type HandlerCallable[T] = Callable[..., FlextTypesPydantic.BaseModelType | T]
     type DispatchableHandler[T, RoutableT, ResultT] = (
         FlextTypesPydantic.BaseModelType
         | T
@@ -160,8 +158,7 @@ class FlextTypesServices:
         | None,
     ]
     type RoutedHandlerCallable[RoutableT, ResultT] = Callable[
-        [RoutableT],
-        FlextTypesServices.JsonPayload | ResultT | None,
+        [RoutableT], FlextTypesServices.JsonPayload | ResultT | None
     ]
     type DispatcherRouteEntry[HandlerT, CallableT] = tuple[
         HandlerT,
@@ -170,7 +167,11 @@ class FlextTypesServices:
         bool,
         int,
     ]
-    type RegistrablePlugin = ScalarOrModel | Callable[..., ScalarOrModel]
+
+    type RegistrablePlugin = (
+        FlextTypesServices.ScalarOrModel
+        | Callable[..., FlextTypesServices.ScalarOrModel]
+    )
     type SortableObjectType = str | int | float
     type ValueAdapter[T] = FlextTypesPydantic.TypeAdapter[T]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
@@ -181,36 +182,33 @@ class FlextTypesServices:
     type ConfigurationMapping = FlextTypingBase.MappingKV[str, FlextTypingBase.Scalar]
     type MutableConfigurationMapping = MutableMapping[str, FlextTypingBase.Scalar]
     type ScopedContainerRegistry = MutableMapping[
-        str,
-        FlextTypingBase.MutableJsonMapping,
+        str, FlextTypingBase.MutableJsonMapping
     ]
     type SettingsClass[T] = type[T]
+
     type LazyScalar = FlextTypingBase.Scalar | bytes | date | time
-    type LazyCollection = (
-        FlextTypingBase.MappingKV[str, LazyScalar]
-        | FlextTypingBase.SequenceOf[LazyScalar]
-    )
+    type LazyCollection = FlextTypingBase.JsonMapping | FlextTypingBase.JsonList
     type ModuleExportValue = FlextTypesPydantic.JsonValue | bytes | date | time
     type ModuleExport = (
-        ModuleExportValue
-        | LazyCollection
+        FlextTypesServices.ModuleExportValue
+        | FlextTypesServices.LazyCollection
         | ModuleType
         | type[BaseException | Enum]
-        | Callable[..., ModuleExportValue | LazyCollection]
+        | Callable[..., Any]
     )
-    type LazyGetattr = Callable[[str], ModuleExport]
+    type LazyGetattr = Callable[[str], FlextTypesServices.ModuleExport]
     type LazyDir = Callable[[], FlextTypingBase.SequenceOf[str]]
 
-    type ValidatorCallable = Callable[[ScalarOrModel], ScalarOrModel]
-
-    type MapperCallable = Callable[
-        [FlextTypesPydantic.JsonValue],
-        FlextTypesPydantic.JsonValue,
+    type ValidatorCallable = Callable[
+        [FlextTypesServices.ScalarOrModel], FlextTypesServices.ScalarOrModel
     ]
-    type MapperInput = MapperCallable | FlextTypesPydantic.JsonValue
+    type MapperCallable = Callable[
+        [FlextTypesPydantic.JsonValue], FlextTypesPydantic.JsonValue
+    ]
+    type MapperInput = FlextTypesServices.MapperCallable | FlextTypesPydantic.JsonValue
     type StrictValue = (
         FlextTypingBase.Scalar
-        | ConfigurationMapping
+        | FlextTypesServices.ConfigurationMapping
         | FlextTypingBase.JsonList
         | tuple[FlextTypesPydantic.JsonValue | FlextTypingBase.Scalar, ...]
     )

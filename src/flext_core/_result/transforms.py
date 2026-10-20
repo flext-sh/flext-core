@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Self, overload
 
 from pydantic import BaseModel
@@ -26,20 +26,10 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
     or results without changing the success/failure disposition.
     """
 
+    @abstractmethod
     def _as_result(self) -> p.Result[T]:
-        """Structural view of self as the abstract Result protocol.
-
-        Returns:
-            The resulting ``p.Result[T]``.
-
-        Raises:
-            TypeError: If this instance lacks the complete public result family.
-
-        """
-        if not isinstance(self, p.Result):
-            msg = "Result operations require the complete public result family"
-            raise TypeError(msg)
-        return self
+        """Require the complete public Result view from the composed MRO owner."""
+        raise NotImplementedError
 
     def filter(self: Self, predicate: Callable[[T], bool]) -> p.Result[T]:
         """Keep the result only when the predicate holds for the payload.

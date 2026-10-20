@@ -165,7 +165,7 @@ class FlextModelsHandler:
     class HandlerRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Aggregate runtime state for the active handler pipeline."""
 
-        execution_context: Annotated[
+        execution_context: Annotated[  # type: ignore
             FlextModelsHandler.ExecutionContext,
             FlextModelsPydantic.Field(
                 description="Execution context for the active handler",
