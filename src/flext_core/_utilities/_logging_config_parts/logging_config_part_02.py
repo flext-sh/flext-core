@@ -24,6 +24,7 @@ from structlog.processors import (
 )
 from structlog.stdlib import PositionalArgumentsFormatter, add_log_level
 from structlog.tracebacks import ExceptionDictTransformer
+from structlog.typing import Processor
 
 from flext_core import c, m, p, t
 from flext_core._utilities._logging_config_parts import logging_config_part_01
@@ -169,14 +170,14 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         console_renderer: bool,
         options: p.StructlogOptions,
         trace: bool,
-    ) -> t.SequenceOf[t.LoggingProcessor]:
+    ) -> t.SequenceOf[Processor]:
         """Compose one shared event pipeline and a native terminal renderer.
 
         Returns:
             The ordered native processors.
 
         """
-        processors: t.MutableSequenceOf[t.LoggingProcessor] = [
+        processors: t.MutableSequenceOf[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
             cls.drop_below_threshold,

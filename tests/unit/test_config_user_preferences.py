@@ -120,8 +120,8 @@ class TestPackagedConfigWithUserPreferences:
 
             config = module.SynthConfig.fetch_global()
 
-            assert config.greeting == "packaged"
-            assert config.level == 1
+            tm.that(config.greeting, eq="packaged")
+            tm.that(config.level, eq=1)
 
     @staticmethod
     def test_user_preferences_override_only_declared_keys(tmp_path: Path) -> None:
@@ -141,8 +141,8 @@ class TestPackagedConfigWithUserPreferences:
 
             config = module.SynthConfig.fetch_global()
 
-            assert config.greeting == "operator"
-            assert config.level == 7
+            tm.that(config.greeting, eq="operator")
+            tm.that(config.level, eq=7)
 
     @staticmethod
     def test_absent_user_config_keeps_packaged_defaults(tmp_path: Path) -> None:
@@ -159,8 +159,8 @@ class TestPackagedConfigWithUserPreferences:
 
             config = module.SynthConfig.fetch_global()
 
-            assert config.greeting == "packaged"
-            assert config.level == 3
+            tm.that(config.greeting, eq="packaged")
+            tm.that(config.level, eq=3)
 
     @staticmethod
     def test_namespaces_stay_isolated(tmp_path: Path) -> None:
@@ -176,8 +176,8 @@ class TestPackagedConfigWithUserPreferences:
             delta = _install_package(site, "synthpkg_delta", "greeting: packaged\n")
             epsilon = _install_package(site, "synthpkg_epsilon", "greeting: packaged\n")
 
-            assert delta.SynthConfig.fetch_global().greeting == "delta"
-            assert epsilon.SynthConfig.fetch_global().greeting == "packaged"
+            tm.that(delta.SynthConfig.fetch_global().greeting, eq="delta")
+            tm.that(epsilon.SynthConfig.fetch_global().greeting, eq="packaged")
 
     @staticmethod
     @pytest.mark.parametrize("layout", ["site-packages", "src", "member/src"])
@@ -208,10 +208,10 @@ class TestPackagedConfigWithUserPreferences:
                 )
             module = importlib.import_module("synthpkg_nested.declarations.owner")
             config = module.NestedConfig.fetch_global()
-            assert config.greeting == child.SynthConfig.fetch_global().greeting
-            assert config.greeting != parent.SynthConfig.fetch_global().greeting
-            assert module.NestedConfig.fetch_global() is config
-            assert config is not parent.SynthConfig.fetch_global()
+            tm.that(config.greeting, eq=child.SynthConfig.fetch_global().greeting)
+            tm.that(config.greeting, ne=parent.SynthConfig.fetch_global().greeting)
+            tm.that(module.NestedConfig.fetch_global() is config, truth=True)
+            tm.that(config is not parent.SynthConfig.fetch_global(), truth=True)
 
     @staticmethod
     @pytest.mark.parametrize("layout", ["site-packages", "src", "member/src"])
@@ -344,4 +344,4 @@ class TestPackagedConfigWithUserPreferences:
                 "greeting: packaged\n",
             )
 
-            assert module.SynthConfig.fetch_global().greeting == "explicit"
+            tm.that(module.SynthConfig.fetch_global().greeting, eq="explicit")

@@ -88,7 +88,7 @@ class TestsFlextContainerLifecycle:
 
         returned = container.bind("chained", "value")
 
-        assert returned is container
+        tm.that(returned is container, truth=True)
         tm.that(
             container.has("chained"),
             eq=True,

@@ -42,21 +42,21 @@ class TestsFlextCoreModelsBaseFullCoverage:
     def test_metadata_attributes_none_coerces_to_empty_mapping() -> None:
         """Test metadata attributes none coerces to empty mapping."""
         model = m.Metadata.model_validate({"attributes": None})
-        assert model.attributes == {}
+        tm.that(model.attributes, eq={})
 
     @staticmethod
     def test_metadata_attributes_accepts_plain_mapping() -> None:
         """Test metadata attributes accepts plain mapping."""
         model = m.Metadata.model_validate({"attributes": {"key": "value"}})
-        assert model.attributes == {"key": "value"}
+        tm.that(model.attributes, eq={"key": "value"})
 
     @staticmethod
     def test_metadata_attributes_accepts_t_dict_and_kwargs_mapping() -> None:
         """Test metadata attributes accepts t dict and kwargs mapping."""
         from_root = m.Metadata.model_validate({"attributes": m.Dict(root={"a": 1})})
         from_kwargs = m.Metadata(attributes={"b": 2})
-        assert from_root.attributes == {"a": 1}
-        assert from_kwargs.attributes == {"b": 2}
+        tm.that(from_root.attributes, eq={"a": 1})
+        tm.that(from_kwargs.attributes, eq={"b": 2})
 
     @staticmethod
     @pytest.mark.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
@@ -86,12 +86,12 @@ class TestsFlextCoreModelsBaseFullCoverage:
     def test_metadata_defaults_are_populated() -> None:
         """Test metadata defaults are populated."""
         model = m.Metadata()
-        assert model.created_at.tzinfo == u.configured_timezone()
-        assert model.version == c.METADATA_SCHEMA_VERSION_DEFAULT
-        assert not model.tags
-        assert isinstance(model.tags, tuple)
-        assert model.created_by is None
-        assert model.attributes == {}
+        tm.that(model.created_at.tzinfo, eq=u.configured_timezone())
+        tm.that(model.version, eq=c.METADATA_SCHEMA_VERSION_DEFAULT)
+        tm.that(model.tags, truth=False)
+        tm.that(isinstance(model.tags, tuple), truth=True)
+        tm.that(model.created_by, none=True)
+        tm.that(model.attributes, eq={})
 
     @staticmethod
     def test_metadata_is_frozen() -> None:
@@ -111,25 +111,25 @@ class TestsFlextCoreModelsBaseFullCoverage:
         """Test frozen value equal by value."""
         left = self._FrozenValue(name="item", count=1)
         right = self._FrozenValue(name="item", count=1)
-        assert left == right
-        assert hash(left) == hash(right)
+        tm.that(left, eq=right)
+        tm.that(hash(left), eq=hash(right))
 
     def test_frozen_value_differs_when_fields_differ(self) -> None:
         """Test frozen value differs when fields differ."""
         left = self._FrozenValue(name="item", count=1)
         other = self._FrozenValue(name="item", count=2)
-        assert left != other
+        tm.that(left, ne=other)
 
     def test_frozen_value_not_equal_to_foreign_type(self) -> None:
         """Test frozen value not equal to foreign type."""
-        assert self._FrozenValue(name="item", count=1) != "item"
+        tm.that(self._FrozenValue(name="item", count=1), ne="item")
 
     def test_frozen_value_is_hashable_in_set(self) -> None:
         """Test frozen value is hashable in set."""
         a = self._FrozenValue(name="x", count=1)
         b = self._FrozenValue(name="x", count=1)
         d = self._FrozenValue(name="y", count=2)
-        assert len({a, b, d}) == 2
+        tm.that(len({a, b, d}), eq=2)
 
     # --- IdentifiableMixin -----------------------------------------------
 
@@ -137,8 +137,8 @@ class TestsFlextCoreModelsBaseFullCoverage:
         """Test identifiable autogenerates unique id."""
         first = self._Identifiable()
         second = self._Identifiable()
-        assert first.unique_id != second.unique_id
-        assert len(first.unique_id) == 36
+        tm.that(first.unique_id, ne=second.unique_id)
+        tm.that(len(first.unique_id), eq=36)
 
     def test_identifiable_blank_unique_id_rejected(self) -> None:
         """Test identifiable blank unique id rejected."""
@@ -152,7 +152,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
         """Timestamp normalization follows the configured timezone owner."""
         moment = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
         model = self._Timestampable(created_at=moment, updated_at=moment)
-        assert model.created_at.tzinfo == u.configured_timezone()
+        tm.that(model.created_at.tzinfo, eq=u.configured_timezone())
 
     def test_timestampable_serializes_timestamps_as_iso_strings(self) -> None:
         """Test timestampable serializes timestamps as iso strings."""
@@ -160,9 +160,9 @@ class TestsFlextCoreModelsBaseFullCoverage:
         model = self._Timestampable(created_at=moment)
         dumped = model.model_dump(mode="json")
         serialized = dumped["created_at"]
-        assert isinstance(serialized, str)
-        assert datetime.fromisoformat(serialized) == moment
-        assert dumped.get("updated_at") is None
+        tm.that(isinstance(serialized, str), truth=True)
+        tm.that(datetime.fromisoformat(serialized), eq=moment)
+        tm.that(dumped.get("updated_at"), none=True)
 
     def test_timestampable_rejects_updated_before_created(self) -> None:
         """Test timestampable rejects updated before created."""
@@ -177,5 +177,5 @@ class TestsFlextCoreModelsBaseFullCoverage:
     def test_timestamped_model_defaults_to_configured_timezone() -> None:
         """Default timestamps use the runtime's configured timezone."""
         model = m.TimestampedModel()
-        assert model.created_at.tzinfo == u.configured_timezone()
-        assert model.updated_at is None
+        tm.that(model.created_at.tzinfo, eq=u.configured_timezone())
+        tm.that(model.updated_at, none=True)

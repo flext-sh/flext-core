@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from types import MappingProxyType, ModuleType
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from tests import p
 
 
-class TestsNormalizationBoundaries:
+class TestsFlextCoreNormalizationBoundaries:
     """Validate domain boundaries rather than preserving a retired facade."""
 
     @staticmethod
@@ -49,6 +50,54 @@ class TestsNormalizationBoundaries:
         """Unsupported native values fail at JSON admission."""
         with pytest.raises(ValueError, match="Unable to serialize unknown type"):
             u.normalize_to_json_value(type)
+
+    @staticmethod
+    @pytest.mark.parametrize("tuple_items", [False, True])
+    def test_json_payload_preserves_mapping_inside_nested_sequences(
+        *,
+        tuple_items: bool,
+    ) -> None:
+        """Mapping payloads must not materialize the abstract model union arm."""
+        items: list[t.MetadataMapping] = [{"locations": ()}]
+        parsed = m.ConfigMap.model_validate({
+            "issues": tuple(items) if tuple_items else items,
+        })
+        issues = parsed["issues"]
+        if not isinstance(issues, (tuple, list)):
+            pytest.fail("Issue sequence did not retain its native collection shape")
+        tm.that(isinstance(issues[0], Mapping), eq=True)
+        expected: t.JsonDict = {"issues": [{"locations": []}]}
+        tm.that(u.normalize_to_json_mapping(parsed), eq=expected)
+
+    @staticmethod
+    def test_json_payload_preserves_nested_model_identity() -> None:
+        """Existing model values retain identity and serialize their real fields."""
+        model = m.Metadata(attributes={"source": "publication"})
+        parsed = m.ConfigMap.model_validate({"items": [model]})
+        items = parsed["items"]
+        if not isinstance(items, (tuple, list)):
+            pytest.fail("Model sequence did not retain its native collection shape")
+        tm.that(items[0] is model, eq=True)
+        tm.that(
+            u.normalize_to_json_mapping(parsed),
+            eq={"items": [model.model_dump(mode="json")]},
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize("nested", [False, True])
+    def test_json_payload_rejects_non_string_mapping_keys(*, nested: bool) -> None:
+        """Validation rejects invalid keys before native JSON can stringify them."""
+        invalid = {1: "not a string key"}
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate({"issues": [invalid]} if nested else invalid)
+
+    @staticmethod
+    def test_json_payload_rejects_unsupported_nested_values() -> None:
+        """Unknown values cannot be accepted as empty abstract model instances."""
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate({
+                "issues": [{"invalid": ModuleType("invalid")}],
+            })
 
     @staticmethod
     def test_native_adapter_is_constructible_through_the_model_provider() -> None:

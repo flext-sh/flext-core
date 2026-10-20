@@ -59,19 +59,19 @@ class TestsFlextMixins:
         """Test container property satisfies container protocol."""
         service = self._service()
 
-        assert isinstance(service.container, p.Container)
+        tm.that(isinstance(service.container, p.Container), truth=True)
 
     def test_context_property_satisfies_context_protocol(self) -> None:
         """Test context property satisfies context protocol."""
         service = self._service()
 
-        assert isinstance(service.context, p.Context)
+        tm.that(isinstance(service.context, p.Context), truth=True)
 
     def test_logger_property_satisfies_logger_protocol(self) -> None:
         """Test logger property satisfies logger protocol."""
         service = self._service()
 
-        assert isinstance(service.logger, p.Logger)
+        tm.that(isinstance(service.logger, p.Logger), truth=True)
 
     def test_track_yields_metrics_mapping_with_operation_metadata(self) -> None:
         """Test track yields metrics mapping with operation metadata."""
@@ -80,9 +80,9 @@ class TestsFlextMixins:
         with service.track("load") as metrics:
             captured: Mapping[str, t.JsonPayload] = metrics
 
-        assert "operation_name" in captured
-        assert "start_time" in captured
-        assert captured["operation_count"] == 1
+        tm.that("operation_name" in captured, truth=True)
+        tm.that("start_time" in captured, truth=True)
+        tm.that(captured["operation_count"], eq=1)
 
     def test_track_increments_operation_count_across_invocations(self) -> None:
         """Test track increments operation count across invocations."""
@@ -93,8 +93,8 @@ class TestsFlextMixins:
         with service.track("load") as second:
             second_count = second["operation_count"]
 
-        assert first_count == 1
-        assert second_count == 2
+        tm.that(first_count, eq=1)
+        tm.that(second_count, eq=2)
 
     def test_track_returns_body_value_on_success(self) -> None:
         """Test track returns body value on success."""
@@ -104,7 +104,7 @@ class TestsFlextMixins:
             with service.track("compute"):
                 return "done"
 
-        assert run() == "done"
+        tm.that(run(), eq="done")
 
     def test_track_propagates_exception_raised_in_body(self) -> None:
         """Test track propagates exception raised in body."""
@@ -124,13 +124,13 @@ class TestsFlextMixins:
         with service.track("op") as metrics:
             recovered = metrics["operation_count"]
 
-        assert recovered == 2
+        tm.that(recovered, eq=2)
 
     def test_initial_context_defaults_to_none(self) -> None:
         """Test initial context defaults to none."""
         service = self._service()
 
-        assert service.initial_context is None
+        tm.that(service.initial_context, none=True)
 
     @staticmethod
     def test_contract_model_composition_preserves_validation() -> None:
@@ -149,9 +149,9 @@ class TestsFlextMixins:
         expected = (
             label.strip() if Options.model_config.get("str_strip_whitespace") else label
         )
-        assert service.options.label == expected
-        assert service.model_dump()["options"] == service.options.model_dump()
-        assert isinstance(service.settings, p.Settings)
+        tm.that(service.options.label, eq=expected)
+        tm.that(service.model_dump()["options"], eq=service.options.model_dump())
+        tm.that(isinstance(service.settings, p.Settings), truth=True)
         with pytest.raises(c.ValidationError):
             ComposedService.model_validate({"options": {"label": []}})
         tm.rejects_assignment(
@@ -168,7 +168,7 @@ class TestsFlextMixins:
 
         service.settings_overrides = overrides
 
-        assert service.settings_overrides == overrides
+        tm.that(service.settings_overrides, eq=overrides)
 
     @pytest.mark.parametrize(
         ("field_name", "bad_value"),
@@ -188,4 +188,4 @@ class TestsFlextMixins:
         """Test correlation id round trips through flext context."""
         FlextContext.apply_correlation_id("trace-42")
 
-        assert FlextContext.resolve_correlation_id() == "trace-42"
+        tm.that(FlextContext.resolve_correlation_id(), eq="trace-42")

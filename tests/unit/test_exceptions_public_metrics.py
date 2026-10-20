@@ -15,7 +15,7 @@ from collections.abc import Iterator, Sequence
 
 import pytest
 
-from tests import e, m
+from tests import e, m, tm
 
 
 class TestsFlextCoreExceptionsPublicMetrics:
@@ -30,12 +30,12 @@ class TestsFlextCoreExceptionsPublicMetrics:
         second = m.ExceptionMetricsState()
         snapshot = m.ExceptionMetricsSnapshot()
 
-        assert first.exception_counts == second.exception_counts == {}
-        assert first.exception_counts is not second.exception_counts
-        assert snapshot.exception_counts is not first.exception_counts
+        tm.that(first.exception_counts == second.exception_counts, eq={})
+        tm.that(first.exception_counts is not second.exception_counts, truth=True)
+        tm.that(snapshot.exception_counts is not first.exception_counts, truth=True)
         updated = first.record_exception(ValueError)
-        assert updated.exception_counts == {ValueError.__qualname__: 1}
-        assert first.exception_counts == second.exception_counts == {}
+        tm.that(updated.exception_counts, eq={ValueError.__qualname__: 1})
+        tm.that(first.exception_counts == second.exception_counts, eq={})
 
     @staticmethod
     def test_invalid_metrics_preserve_native_validation_error() -> None:
@@ -43,8 +43,8 @@ class TestsFlextCoreExceptionsPublicMetrics:
         with pytest.raises(m.ValidationError) as caught:
             m.ExceptionMetricsState.model_validate({"exception_counts": {"bad": "x"}})
 
-        assert caught.value.errors()[0]["loc"] == ("exception_counts", "bad")
-        assert caught.value.errors()[0]["type"] == "int_type"
+        tm.that(caught.value.errors()[0]["loc"], eq=("exception_counts", "bad"))
+        tm.that(caught.value.errors()[0]["type"], eq="int_type")
 
     @staticmethod
     @pytest.fixture
@@ -61,7 +61,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        assert isinstance(snapshot, m.ExceptionMetricsSnapshot)
+        tm.that(isinstance(snapshot, m.ExceptionMetricsSnapshot), truth=True)
 
     @staticmethod
     def test_cleared_state_reports_no_exceptions() -> None:
@@ -70,11 +70,11 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        assert snapshot.total_exceptions == 0
-        assert snapshot.unique_exception_types == 0
-        assert not snapshot.exception_counts_summary
-        assert snapshot.has_exceptions is False
-        assert dict(snapshot.exception_counts) == {}
+        tm.that(snapshot.total_exceptions, eq=0)
+        tm.that(snapshot.unique_exception_types, eq=0)
+        tm.that(snapshot.exception_counts_summary, truth=False)
+        tm.that(snapshot.has_exceptions is False, truth=True)
+        tm.that(dict(snapshot.exception_counts), eq={})
 
     @staticmethod
     def test_recording_one_exception_makes_metrics_non_empty() -> None:
@@ -84,10 +84,10 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        assert snapshot.total_exceptions == 1
-        assert snapshot.unique_exception_types == 1
-        assert snapshot.has_exceptions is True
-        assert snapshot.exception_counts[e.ValidationError.__qualname__] == 1
+        tm.that(snapshot.total_exceptions, eq=1)
+        tm.that(snapshot.unique_exception_types, eq=1)
+        tm.that(snapshot.has_exceptions is True, truth=True)
+        tm.that(snapshot.exception_counts[e.ValidationError.__qualname__], eq=1)
 
     @pytest.mark.parametrize(
         ("recorded", "expected_total", "expected_unique"),
@@ -121,8 +121,8 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        assert snapshot.total_exceptions == expected_total
-        assert snapshot.unique_exception_types == expected_unique
+        tm.that(snapshot.total_exceptions, eq=expected_total)
+        tm.that(snapshot.unique_exception_types, eq=expected_unique)
 
     @staticmethod
     def test_per_type_counts_are_keyed_by_qualified_name() -> None:
@@ -141,8 +141,8 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        assert snapshot.exception_counts[e.ValidationError.__qualname__] == 2
-        assert snapshot.exception_counts[e.FlextTimeoutError.__qualname__] == 3
+        tm.that(snapshot.exception_counts[e.ValidationError.__qualname__], eq=2)
+        tm.that(snapshot.exception_counts[e.FlextTimeoutError.__qualname__], eq=3)
 
     @staticmethod
     def test_summary_reports_name_and_count_for_each_type() -> None:
@@ -156,8 +156,8 @@ class TestsFlextCoreExceptionsPublicMetrics:
         summary = e.resolve_metrics_snapshot().exception_counts_summary
 
         # Assert
-        assert "ValidationError:2" in summary
-        assert "TimeoutError:1" in summary
+        tm.that("ValidationError:2" in summary, truth=True)
+        tm.that("TimeoutError:1" in summary, truth=True)
 
     @staticmethod
     def test_clear_metrics_resets_all_public_totals() -> None:
@@ -171,10 +171,10 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        assert snapshot.total_exceptions == 0
-        assert snapshot.unique_exception_types == 0
-        assert not snapshot.exception_counts_summary
-        assert snapshot.has_exceptions is False
+        tm.that(snapshot.total_exceptions, eq=0)
+        tm.that(snapshot.unique_exception_types, eq=0)
+        tm.that(snapshot.exception_counts_summary, truth=False)
+        tm.that(snapshot.has_exceptions is False, truth=True)
 
     @staticmethod
     def test_clear_metrics_is_idempotent() -> None:
@@ -188,7 +188,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        assert snapshot.total_exceptions == 0
+        tm.that(snapshot.total_exceptions, eq=0)
 
     @staticmethod
     def test_snapshot_is_a_stable_value_independent_of_later_recording() -> None:
@@ -202,8 +202,8 @@ class TestsFlextCoreExceptionsPublicMetrics:
         second = e.resolve_metrics_snapshot()
 
         # Assert — the earlier snapshot is a value, not a live view
-        assert first.total_exceptions == 1
-        assert second.total_exceptions == 2
+        tm.that(first.total_exceptions, eq=1)
+        tm.that(second.total_exceptions, eq=2)
 
     @staticmethod
     def test_resolve_metrics_exposes_flat_config_contract() -> None:
@@ -217,7 +217,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         config = e.resolve_metrics()
 
         # Assert
-        assert config["total_exceptions"] == 3
-        assert config["unique_exception_types"] == 2
-        assert config[f"exception_counts.{e.ValidationError.__qualname__}"] == 2
-        assert config[f"exception_counts.{e.FlextTimeoutError.__qualname__}"] == 1
+        tm.that(config["total_exceptions"], eq=3)
+        tm.that(config["unique_exception_types"], eq=2)
+        tm.that(config[f"exception_counts.{e.ValidationError.__qualname__}"], eq=2)
+        tm.that(config[f"exception_counts.{e.FlextTimeoutError.__qualname__}"], eq=1)

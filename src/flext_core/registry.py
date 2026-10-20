@@ -34,13 +34,13 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     @override
     def execute(self) -> p.Result[bool]:
-        """Validate the explicitly supplied runtime.
+        """Confirm the runtime already validated at construction.
 
         Returns:
             Result[bool]: The result of the validation.
 
         """
-        return r[bool].ok(isinstance(self.registry_runtime, p.ServiceRuntime))
+        return r[bool].ok(value=True)
 
     def register(self, name: str, service: p.RegisterableService) -> p.Result[bool]:
         """Bind a collaborator unchanged, rejecting conflicting registrations.

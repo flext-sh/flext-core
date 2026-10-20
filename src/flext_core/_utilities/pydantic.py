@@ -39,7 +39,6 @@ from typing_extensions import TypeForm
 
 from flext_core import _models, c, p, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._protocols import FlextProtocolsPydantic
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
@@ -59,15 +58,8 @@ class FlextUtilitiesPydantic(
     """
 
     # Inherit field/default factories without re-inferring generic descriptors.
+    StaticExport = t
     SkipValidation = SkipValidation
-
-    # Keep the models-layer overload set intact; staticmethod's generic
-    # constructor infers only its first arm. Runtime still uses the same factory.
-    if TYPE_CHECKING:
-        field_validator = FlextModelsPydantic.field_validator
-    else:
-        field_validator = staticmethod(FlextModelsPydantic.field_validator)
-        model_validator = staticmethod(FlextModelsPydantic.model_validator)
 
     AfterValidator = AfterValidator
     PlainValidator = PlainValidator
@@ -76,7 +68,7 @@ class FlextUtilitiesPydantic(
     WrapSerializer = WrapSerializer
 
     if TYPE_CHECKING:
-        validate_call: ClassVar[FlextProtocolsPydantic.ValidateCall] = validate_call
+        validate_call: ClassVar[p.ValidateCall] = validate_call
     else:
         validate_call = staticmethod(validate_call)
     with_config = staticmethod(with_config)

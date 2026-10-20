@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, m, u
+from tests import c, m, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
 
@@ -53,10 +53,10 @@ class TestsFlextCoreEnforcementReports:
         """Test empty report is falsy and reports zero length."""
         report = m.Report()
 
-        assert not report
-        assert report.empty
-        assert len(report) == 0
-        assert report.messages == []
+        tm.that(report, truth=False)
+        tm.that(report.empty, truth=True)
+        tm.that(len(report), eq=0)
+        tm.that(report.messages, eq=[])
 
     @staticmethod
     def test_report_validates_round_trip_and_rejects_invalid_or_mutated_state() -> None:
@@ -64,8 +64,8 @@ class TestsFlextCoreEnforcementReports:
         report = m.Report(violations=(_hard_violation(message="validated"),))
         payload = report.model_dump_json(round_trip=True)
         restored = m.Report.model_validate_json(payload)
-        assert restored.model_dump_json(round_trip=True) == payload
-        assert restored.messages == ["validated"]
+        tm.that(restored.model_dump_json(round_trip=True), eq=payload)
+        tm.that(restored.messages, eq=["validated"])
         with pytest.raises(m.ValidationError):
             m.Report.model_validate({"violations": ({"message": "incomplete"},)})
         with pytest.raises(m.ValidationError):
@@ -79,11 +79,11 @@ class TestsFlextCoreEnforcementReports:
         violation = _hard_violation(message="boom")
         report = m.Report(violations=[violation])
 
-        assert report
-        assert not report.empty
-        assert len(report) == 1
-        assert report[0] == "boom"
-        assert report.messages == ["boom"]
+        tm.that(report, truth=True)
+        tm.that(report.empty, truth=False)
+        tm.that(len(report), eq=1)
+        tm.that(report[0], eq="boom")
+        tm.that(report.messages, eq=["boom"])
         assert "boom" in report
 
     @staticmethod
@@ -101,8 +101,8 @@ class TestsFlextCoreEnforcementReports:
         second = _hard_violation(message="b")
         report = m.Report(violations=[first, second])
 
-        assert len(report) == 2
-        assert report.messages == ["a", "b"]
+        tm.that(len(report), eq=2)
+        tm.that(report.messages, eq=["a", "b"])
 
     # --- Violation model contract --------------------------------------
 
@@ -116,10 +116,10 @@ class TestsFlextCoreEnforcementReports:
             message="m",
         )
 
-        assert not violation.rule_id
-        assert not violation.agents_md_anchor
-        assert not violation.file_path
-        assert violation.line_number == 0
+        tm.that(violation.rule_id, truth=False)
+        tm.that(violation.agents_md_anchor, truth=False)
+        tm.that(violation.file_path, truth=False)
+        tm.that(violation.line_number, eq=0)
 
     @staticmethod
     def test_violation_is_frozen_and_rejects_mutation() -> None:
@@ -145,10 +145,10 @@ class TestsFlextCoreEnforcementReports:
 
         dumped = violation.model_dump()
 
-        assert dumped["qualname"] == "Pkg.Cls"
-        assert dumped["rule_id"] == "ENFORCE-001"
-        assert dumped["agents_md_anchor"] == "3.1"
-        assert dumped["message"] == "msg"
+        tm.that(dumped["qualname"], eq="Pkg.Cls")
+        tm.that(dumped["rule_id"], eq="ENFORCE-001")
+        tm.that(dumped["agents_md_anchor"], eq="3.1")
+        tm.that(dumped["message"], eq="msg")
 
     # --- check() report contents ---------------------------------------
 
@@ -161,9 +161,12 @@ class TestsFlextCoreEnforcementReports:
                 pytest.fail("Invalid source fixture did not declare a model class")
             report = u.check(target)
 
-        assert any(
-            violation.rule_id == "ENFORCE-039" or "no_any" in violation.message
-            for violation in report.violations
+        tm.that(
+            any(
+                violation.rule_id == "ENFORCE-039" or "no_any" in violation.message
+                for violation in report.violations
+            ),
+            truth=True,
         )
 
     @staticmethod
@@ -175,10 +178,13 @@ class TestsFlextCoreEnforcementReports:
                 pytest.fail("Invalid source fixture did not declare a model class")
             report = u.check(target)
 
-        assert report.violations
-        assert all(
-            "[" in violation.message and "]" in violation.message
-            for violation in report.violations
+        tm.that(report.violations, truth=True)
+        tm.that(
+            all(
+                "[" in violation.message and "]" in violation.message
+                for violation in report.violations
+            ),
+            truth=True,
         )
 
     @staticmethod
@@ -193,7 +199,10 @@ class TestsFlextCoreEnforcementReports:
 
         report = u.check(_make())
 
-        assert all(violation.layer != "namespace" for violation in report.violations)
+        tm.that(
+            all(violation.layer != "namespace" for violation in report.violations),
+            truth=True,
+        )
 
     @staticmethod
     def test_check_model_construction_flags_any_field(tmp_path: Path) -> None:
@@ -204,8 +213,11 @@ class TestsFlextCoreEnforcementReports:
                 pytest.fail("Invalid source fixture did not declare a native model")
             report = FlextUtilitiesEnforcement.check_model_construction(target)
 
-        assert report.violations
-        assert any("no_any" in violation.message for violation in report.violations)
+        tm.that(report.violations, truth=True)
+        tm.that(
+            any("no_any" in violation.message for violation in report.violations),
+            truth=True,
+        )
 
     # --- emit() warning/exception behaviour ----------------------------
 
@@ -222,13 +234,14 @@ class TestsFlextCoreEnforcementReports:
         with pytest.warns(c.FlextMroViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
-        assert len(caught) == 2
-        assert str(caught[0].message) == (
-            "\nX.Y violates FLEXT Model HARD rules:\n  - boom [ENFORCE-001]"
-            "\n\nFix: See AGENTS.md §3.1 and search for ENFORCE-001."
+        tm.that(len(caught), eq=2)
+        tm.that(
+            str(caught[0].message),
+            eq="\nX.Y violates FLEXT Model HARD rules:\n  - boom [ENFORCE-001]\n\nFix: See AGENTS.md §3.1 and search for ENFORCE-001.",
         )
-        assert str(caught[1].message).startswith(
-            "\nX.Z violates FLEXT Model HARD rules",
+        tm.that(
+            str(caught[1].message).startswith("\nX.Z violates FLEXT Model HARD rules"),
+            truth=True,
         )
 
     @staticmethod
@@ -250,10 +263,10 @@ class TestsFlextCoreEnforcementReports:
             with pytest.raises(TypeError) as excinfo:
                 FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.STRICT)
 
-        assert str(excinfo.value) == expected
-        assert len(recorded) == 1
+        tm.that(str(excinfo.value), eq=expected)
+        tm.that(len(recorded), eq=1)
         assert recorded[0].category is c.FlextMroViolation
-        assert str(recorded[0].message) == expected
+        tm.that(str(recorded[0].message), eq=expected)
 
     @staticmethod
     def test_emit_off_mode_is_silent() -> None:
@@ -264,7 +277,7 @@ class TestsFlextCoreEnforcementReports:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.OFF)
 
-        assert recorded == []
+        tm.that(recorded, eq=[])
 
     @pytest.mark.parametrize(
         "mode",
@@ -279,7 +292,7 @@ class TestsFlextCoreEnforcementReports:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.emit(m.Report(), mode=mode)
 
-        assert recorded == []
+        tm.that(recorded, eq=[])
 
     @pytest.mark.parametrize(
         ("rule_id", "anchor", "expected_fix"),
@@ -310,7 +323,7 @@ class TestsFlextCoreEnforcementReports:
         with pytest.warns(c.FlextMroViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
-        assert str(caught[0].message).endswith(expected_fix)
+        tm.that(str(caught[0].message).endswith(expected_fix), truth=True)
 
     @staticmethod
     def test_emit_uses_smell_category_for_code_smell_rules() -> None:
@@ -334,15 +347,18 @@ class TestsFlextCoreEnforcementReports:
             if not isinstance(target, type):
                 pytest.fail("Invalid source fixture did not declare a model class")
             report = u.check(target)
-        assert report.violations
+        tm.that(report.violations, truth=True)
 
         with pytest.warns(c.FlextMroViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
         texts = [str(entry.message) for entry in caught]
-        assert any(
-            "violates FLEXT Model HARD rules" in text
-            and "[no_any]" in text
-            and "Fix: See AGENTS.md § Model governance." in text
-            for text in texts
+        tm.that(
+            any(
+                "violates FLEXT Model HARD rules" in text
+                and "[no_any]" in text
+                and ("Fix: See AGENTS.md § Model governance." in text)
+                for text in texts
+            ),
+            truth=True,
         )

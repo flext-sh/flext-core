@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import pytest
 
-from tests import c, h, r, t, u
+from tests import c, h, r, t, tm, u
 
 if TYPE_CHECKING:
     from tests import m, p
@@ -198,7 +198,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
             settings=self._command_settings("can_handle"),
         )
 
-        assert handler.can_handle(message_type) is True
+        tm.that(handler.can_handle(message_type) is True, truth=True)
 
     def test_validate_message_reports_success_and_failure(self) -> None:
         """Test validate message reports success and failure."""

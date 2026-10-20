@@ -95,7 +95,7 @@ class FlextUtilitiesGuardsTypeCore:
         return False
 
     @staticmethod
-    def container_value[ValueT](value: ValueT) -> bool:
+    def container_value(value: FlextProtocolsBase.AttributeProbe) -> bool:
         """Check recursive native container capability without asserting JSON.
 
         Scalars (including datetime), paths, lists, tuples and mapping values

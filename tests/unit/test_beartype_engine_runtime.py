@@ -33,6 +33,7 @@ from beartype import BeartypeConf, BeartypeStrategy
 
 import flext_core
 import tests.utilities
+from tests import tm
 
 _FLEXT_CORE_ROOT: Path = Path(__file__).resolve().parents[2]
 
@@ -55,9 +56,9 @@ class TestsFlextCoreBeartypeEngineRuntime(
         conf = flext_core.u.build_beartype_conf()
 
         # Assert
-        assert isinstance(conf, BeartypeConf)
+        tm.that(isinstance(conf, BeartypeConf), truth=True)
         assert conf.strategy is BeartypeStrategy.O0
-        assert conf.violation_type is None
+        tm.that(conf.violation_type, none=True)
 
     @pytest.mark.parametrize(
         ("arg_literal", "expected_exc"),
@@ -104,7 +105,7 @@ class TestsFlextCoreBeartypeEngineRuntime(
 
         # Assert
         combined_output = result.stdout + result.stderr
-        assert result.outcome.raw_return_code == 0, combined_output
+        tm.that(result.outcome.raw_return_code, eq=0, msg=combined_output)
         assert f"runtime_exc {expected_exc}" in result.stdout
         assert "warning_count 0" in result.stdout
 
@@ -144,5 +145,5 @@ class TestsFlextCoreBeartypeEngineRuntime(
 
         # Assert: import must not silently succeed; stdout proves the success
         # print never executed.
-        assert result.outcome.raw_return_code != 0
+        tm.that(result.outcome.raw_return_code, ne=0)
         assert "unexpected_success" not in result.stdout

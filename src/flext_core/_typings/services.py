@@ -6,13 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Callable,
-    Generator,
-    Iterator,
-    MutableMapping,
-    Set as AbstractSet,
-)
+from collections.abc import Callable, Generator, MutableMapping, Set as AbstractSet
 from concurrent.futures import Future
 from datetime import date, time, tzinfo
 from enum import Enum
@@ -20,8 +14,6 @@ from logging import Formatter, Handler, LogRecord
 from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import BinaryIO, TextIO, TypeAliasType
-
-from structlog.typing import Processor
 
 from flext_core import c
 from flext_core._typings import FlextTypesPydantic, FlextTypingBase
@@ -58,12 +50,12 @@ class FlextTypesServices:
         FlextTypingBase.Scalar
         | Path
         | FlextTypesPydantic.JsonValue
-        | FlextTypesPydantic.BaseModelType
+        | FlextTypesPydantic.BaseModelInstance
     )
     type JsonPayloadCollectionValue = (
         JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, JsonPayloadLeaf]
-        | FlextTypingBase.SequenceOf[JsonPayloadLeaf]
+        | FlextTypingBase.MappingKV[str, JsonPayloadCollectionValue]
+        | FlextTypingBase.SequenceOf[JsonPayloadCollectionValue]
     )
     type JsonPayload = (
         JsonPayloadLeaf
@@ -120,7 +112,6 @@ class FlextTypesServices:
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
     type LoggingWriteCompletion = Future[int]
-    type LoggingProcessor = Processor
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
     type RuntimeData = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType

@@ -9,7 +9,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextConfig, FlextSettings
-from tests import c, m, u
+from tests import c, m, tm, u
 
 
 class TestsFlextCoreEnforcementTargetIdentity:
@@ -28,7 +28,10 @@ class TestsFlextCoreEnforcementTargetIdentity:
             {"__module__": "flext_core.synthetic"},
         )
 
-        assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
+        tm.that(
+            any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations),
+            truth=False,
+        )
 
     @staticmethod
     def test_settings_lineage_remains_valid() -> None:
@@ -39,7 +42,10 @@ class TestsFlextCoreEnforcementTargetIdentity:
             {"__module__": "flext_core.synthetic"},
         )
 
-        assert not any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
+        tm.that(
+            any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations),
+            truth=False,
+        )
 
     @staticmethod
     @pytest.mark.parametrize("lookalike_config", [False, True])
@@ -59,7 +65,10 @@ class TestsFlextCoreEnforcementTargetIdentity:
             {"__module__": "flext_core.synthetic"},
         )
 
-        assert any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations)
+        tm.that(
+            any(v.rule_id == "ENFORCE-042" for v in u.check(target).violations),
+            truth=True,
+        )
 
     @staticmethod
     @pytest.mark.parametrize("multiple_bases", [False, True])
@@ -93,7 +102,10 @@ class TestsFlextCoreEnforcementTargetIdentity:
         """Test declared facade with alias first remains valid."""
         target = type(c.__name__, (c,), {"__module__": c.__module__})
 
-        assert not any(
-            v.rule_id in {"ENFORCE-047", "ENFORCE-049"}
-            for v in u.check(target).violations
+        tm.that(
+            any(
+                v.rule_id in {"ENFORCE-047", "ENFORCE-049"}
+                for v in u.check(target).violations
+            ),
+            truth=False,
         )

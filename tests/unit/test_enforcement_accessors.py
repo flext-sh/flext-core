@@ -18,7 +18,7 @@ import pytest
 from typing_extensions import TypeForm
 
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests import m, u
+from tests import m, tm, u
 from tests.unit._enforcement_support import make_class, synthetic_method
 
 _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
@@ -40,10 +40,12 @@ class TestsFlextCoreEnforcementAccessors:
         accessor = [v for v in report.violations if _ACCESSOR_FRAGMENT in v.message]
 
         # Assert — the offending method is named and remediation is offered.
-        assert accessor, f"{prefix} should be flagged as a forbidden accessor"
+        tm.that(
+            accessor, f"{prefix} should be flagged as a forbidden accessor", truth=True
+        )
         message = accessor[0].message
-        assert f'"{prefix}"' in message
-        assert "fetch_" in message or "computed_field" in message
+        tm.that(f'"{prefix}"' in message, truth=True)
+        tm.that("fetch_" in message or "computed_field" in message, truth=True)
 
     @pytest.mark.parametrize("prefix", ["fetch_remote", "resolve_ref", "compute_total"])
     @staticmethod
@@ -60,7 +62,9 @@ class TestsFlextCoreEnforcementAccessors:
         ]
 
         # Assert
-        assert not messages, f"{prefix} is a domain verb and must not be flagged"
+        tm.that(
+            messages, f"{prefix} is a domain verb and must not be flagged", truth=False
+        )
 
     @staticmethod
     def test_accessor_violation_locates_the_owning_class() -> None:
@@ -74,8 +78,10 @@ class TestsFlextCoreEnforcementAccessors:
         )
 
         # Assert — public location fields point back at the target.
-        assert accessor.qualname == "FlextCoreAccessedGet"
-        assert accessor.message.startswith("FlextCoreAccessedGet.get_user")
+        tm.that(accessor.qualname, eq="FlextCoreAccessedGet")
+        tm.that(
+            accessor.message.startswith("FlextCoreAccessedGet.get_user"), truth=True
+        )
 
     @staticmethod
     def test_override_of_a_foreign_contract_keeps_its_name() -> None:
@@ -96,7 +102,11 @@ class TestsFlextCoreEnforcementAccessors:
         ]
 
         # Assert
-        assert not accessor, "an override of a foreign contract is not an accessor"
+        tm.that(
+            accessor,
+            "an override of a foreign contract is not an accessor",
+            truth=False,
+        )
 
     @staticmethod
     def test_accessor_is_judged_once_at_the_introducing_class() -> None:
@@ -120,8 +130,8 @@ class TestsFlextCoreEnforcementAccessors:
         ]
 
         # Assert — reported where the name is introduced, never re-reported.
-        assert on_base
-        assert not on_child
+        tm.that(on_base, truth=True)
+        tm.that(on_child, truth=False)
 
     @staticmethod
     def test_bare_collection_field_is_flagged() -> None:
@@ -138,7 +148,7 @@ class TestsFlextCoreEnforcementAccessors:
         messages = [v.message for v in u.check(_M).violations]
 
         # Assert
-        assert any("bare list" in msg for msg in messages)
+        tm.that(any("bare list" in msg for msg in messages), truth=True)
 
     @staticmethod
     def test_missing_field_description_names_the_field() -> None:
@@ -152,8 +162,12 @@ class TestsFlextCoreEnforcementAccessors:
         messages = [v.message for v in u.check(_M).violations]
 
         # Assert
-        assert any(
-            'Field "undoc"' in msg and "missing description" in msg for msg in messages
+        tm.that(
+            any(
+                'Field "undoc"' in msg and "missing description" in msg
+                for msg in messages
+            ),
+            truth=True,
         )
 
     @staticmethod
@@ -171,8 +185,8 @@ class TestsFlextCoreEnforcementAccessors:
         ]
 
         # Assert — flagged, and tagged with the catalog rule id callers can filter on.
-        assert inheritance
-        assert inheritance[0].rule_id == "ENFORCE-042"
+        tm.that(inheritance, truth=True)
+        tm.that(inheritance[0].rule_id, eq="ENFORCE-042")
 
     @staticmethod
     def test_settings_named_plain_class_is_not_a_settings_target() -> None:
@@ -188,7 +202,7 @@ class TestsFlextCoreEnforcementAccessors:
         ]
 
         # Assert
-        assert not inheritance
+        tm.that(inheritance, truth=False)
 
     @staticmethod
     def test_nested_settings_class_is_exempt_from_inheritance_rule() -> None:
@@ -209,7 +223,7 @@ class TestsFlextCoreEnforcementAccessors:
         ]
 
         # Assert
-        assert not inheritance
+        tm.that(inheritance, truth=False)
 
     @staticmethod
     def test_non_settings_class_is_not_flagged_for_inheritance() -> None:
@@ -223,7 +237,7 @@ class TestsFlextCoreEnforcementAccessors:
         ]
 
         # Assert
-        assert not inheritance
+        tm.that(inheritance, truth=False)
 
     @staticmethod
     def test_clean_class_yields_an_empty_report() -> None:
@@ -235,10 +249,10 @@ class TestsFlextCoreEnforcementAccessors:
         report = u.check(cls)
 
         # Assert — the Report public surface reports "nothing wrong".
-        assert report.empty
-        assert len(report) == 0
-        assert not report
-        assert list(report.messages) == []
+        tm.that(report.empty, truth=True)
+        tm.that(len(report), eq=0)
+        tm.that(report, truth=False)
+        tm.that(list(report.messages), eq=[])
 
     @staticmethod
     def test_direct_nested_class_is_a_namespace() -> None:
@@ -253,7 +267,9 @@ class TestsFlextCoreEnforcementAccessors:
                 pass
 
         # Act / Assert
-        assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_DirectHolder)
+        tm.that(
+            FlextUtilitiesBeartypeEngine.has_nested_namespace(_DirectHolder), truth=True
+        )
 
     @staticmethod
     def test_inherited_nested_class_is_a_namespace() -> None:
@@ -268,7 +284,7 @@ class TestsFlextCoreEnforcementAccessors:
             pass
 
         # Act / Assert — inheritance still exposes the nested namespace.
-        assert FlextUtilitiesBeartypeEngine.has_nested_namespace(_Empty)
+        tm.that(FlextUtilitiesBeartypeEngine.has_nested_namespace(_Empty), truth=True)
 
     @staticmethod
     def test_plain_class_is_not_a_namespace() -> None:
@@ -279,4 +295,4 @@ class TestsFlextCoreEnforcementAccessors:
             x: int = 1
 
         # Act / Assert
-        assert not FlextUtilitiesBeartypeEngine.has_nested_namespace(_Bare)
+        tm.that(FlextUtilitiesBeartypeEngine.has_nested_namespace(_Bare), truth=False)

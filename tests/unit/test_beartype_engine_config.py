@@ -30,18 +30,18 @@ class TestsFlextCoreBeartypeEngineConfig:
     def test_build_conf_returns_beartype_conf_instance() -> None:
         """The factory yields a real ``BeartypeConf`` callers can pass to beartype."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        assert isinstance(conf, BeartypeConf)
+        tm.that(isinstance(conf, BeartypeConf), truth=True)
 
     @staticmethod
     def test_default_mode_is_off() -> None:
         """flext_core ships with enforcement disabled by default."""
-        assert c.BEARTYPE_MODE is c.EnforcementMode.OFF
+        tm.that(c.BEARTYPE_MODE is c.EnforcementMode.OFF, truth=True)
 
     @staticmethod
     def test_disabled_mode_yields_no_op_strategy() -> None:
         """With mode OFF the conf uses the O0 (no-check) strategy."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        assert conf.strategy is BeartypeStrategy.O0
+        tm.that(conf.strategy is BeartypeStrategy.O0, truth=True)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -58,7 +58,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         expected: bool,
     ) -> None:
         """``contains_any`` is True exactly when a hint admits any value."""
-        assert u.contains_any(hint) is expected
+        tm.that(u.contains_any(hint) is expected, truth=True)
 
     @pytest.mark.parametrize("alias_name", ["ObjectAlias", "NestedObjectAlias"])
     @staticmethod
@@ -106,7 +106,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         expected: tuple[bool, str],
     ) -> None:
         """Parametrized collection origins map to the forbidden flag + name."""
-        assert u.has_forbidden_collection_origin(hint, _FORBIDDEN) == expected
+        tm.that(u.has_forbidden_collection_origin(hint, _FORBIDDEN), eq=expected)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -118,7 +118,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         expected: int,
     ) -> None:
         """Union member count ignores ``NoneType`` and non-unions score zero."""
-        assert u.count_union_members(hint) == expected
+        tm.that(u.count_union_members(hint), eq=expected)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -137,4 +137,4 @@ class TestsFlextCoreBeartypeEngineConfig:
         expected: bool,
     ) -> None:
         """Only the ``str | None`` shape matches; other unions do not."""
-        assert u.matches_str_none_union(hint) is expected
+        tm.that(u.matches_str_none_union(hint) is expected, truth=True)

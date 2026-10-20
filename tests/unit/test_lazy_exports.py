@@ -18,7 +18,7 @@ import pytest
 from flext_tests import tm
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
-from tests import u
+from tests import tm, u
 
 if TYPE_CHECKING:
     from tests import t
@@ -99,7 +99,7 @@ class TestsFlextCoreLazyExports:
         # Assert — public contract: facade + alias resolve to the same object
         facade = getattr(module, facade_name)
         alias = getattr(module, alias_name)
-        assert alias is facade
+        tm.that(alias is facade, eq=True)
 
     @staticmethod
     def test_root_package_resolves_primary_facades_via_aliases() -> None:
@@ -108,13 +108,13 @@ class TestsFlextCoreLazyExports:
         package = importlib.import_module("flext_core")
 
         # Assert — each short alias resolves to its full facade
-        assert package.c is package.FlextConstants
-        assert package.e is package.FlextExceptions
-        assert package.m is package.FlextModels
-        assert package.p is package.FlextProtocols
-        assert package.t is package.FlextTypes
-        assert package.u is package.FlextUtilities
-        assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
+        tm.that(package.c is package.FlextConstants, eq=True)
+        tm.that(package.e is package.FlextExceptions, eq=True)
+        tm.that(package.m is package.FlextModels, eq=True)
+        tm.that(package.p is package.FlextProtocols, eq=True)
+        tm.that(package.t is package.FlextTypes, eq=True)
+        tm.that(package.u is package.FlextUtilities, eq=True)
+        tm.that({"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__), eq=True)
 
     @staticmethod
     def test_cold_loader_does_not_execute_generated_child_initializer(
@@ -142,9 +142,9 @@ class TestsFlextCoreLazyExports:
             "assert 'flext_core._lazy_parts' not in sys.modules\n"
         )
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
-        assert result.success, result.error
-        assert result.value.outcome.raw_return_code == 0, result.value.stderr
-        assert result.value.stderr == ""
+        tm.that(result.success, truth=True, msg=result.error)
+        tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
+        tm.that(result.value.stderr, eq="")
 
     @staticmethod
     def test_fresh_root_supports_bootstrap_public_facade_dependency(
@@ -173,9 +173,9 @@ class TestsFlextCoreLazyExports:
             "assert FlextCli\n"
         )
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
-        assert result.success, result.error
-        assert result.value.outcome.raw_return_code == 0, result.value.stderr
-        assert result.value.stderr == ""
+        tm.that(result.success, truth=True, msg=result.error)
+        tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
+        tm.that(result.value.stderr, eq="")
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -215,9 +215,9 @@ class TestsFlextCoreLazyExports:
             "assert options.model_dump() == {'settings_overrides': None}\n"
         )
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=workspace)
-        assert result.success, result.error
-        assert result.value.outcome.raw_return_code == 0, result.value.stderr
-        assert result.value.stderr == ""
+        tm.that(result.success, truth=True, msg=result.error)
+        tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
+        tm.that(result.value.stderr, eq="")
 
     @staticmethod
     def test_model_facade_does_not_import_web_runtime() -> None:
@@ -233,8 +233,8 @@ class TestsFlextCoreLazyExports:
 
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=Path.cwd())
 
-        assert result.success, result.error
-        assert result.value.stdout == ""
+        tm.that(result.success, truth=True, msg=result.error)
+        tm.that(result.value.stdout, eq="")
 
     @staticmethod
     def test_install_without_publish_all_omits_dunder_all(
@@ -247,8 +247,8 @@ class TestsFlextCoreLazyExports:
         # Assert — no __all__ published, but __dir__ still lists the public name
         assert "__all__" not in module_globals
         dir_fn = module_globals["__dir__"]
-        assert callable(dir_fn)
-        assert dir_fn() == ["Alpha"]
+        tm.that(callable(dir_fn), truth=True)
+        tm.that(dir_fn(), eq=["Alpha"])
 
     @staticmethod
     def test_install_with_publish_all_publishes_dunder_all(
@@ -259,10 +259,10 @@ class TestsFlextCoreLazyExports:
         module_globals = _install_alpha(registered_alpha_module)
 
         # Assert
-        assert module_globals["__all__"] == ("Alpha",)
+        tm.that(module_globals["__all__"], eq=("Alpha",))
         dir_fn = module_globals["__dir__"]
-        assert callable(dir_fn)
-        assert dir_fn() == ["Alpha"]
+        tm.that(callable(dir_fn), truth=True)
+        tm.that(dir_fn(), eq=["Alpha"])
 
     @staticmethod
     def test_install_with_public_exports_filters_dunder_all(
@@ -283,10 +283,10 @@ class TestsFlextCoreLazyExports:
         )
 
         # Assert
-        assert module_globals["__all__"] == ("Alpha",)
+        tm.that(module_globals["__all__"], eq=("Alpha",))
         dir_fn = module_globals["__dir__"]
-        assert callable(dir_fn)
-        assert dir_fn() == ["Alpha"]
+        tm.that(callable(dir_fn), truth=True)
+        tm.that(dir_fn(), eq=["Alpha"])
 
         assert sys.modules[package_name].Alpha is alpha_cls
 
@@ -306,7 +306,7 @@ class TestsFlextCoreLazyExports:
 
         # Act
         getattr_fn = module_globals["__getattr__"]
-        assert callable(getattr_fn)
+        tm.that(callable(getattr_fn), truth=True)
         resolved = getattr_fn("Alpha")
 
         # Assert — lazy symbol resolves to the real class and is cached in globals
@@ -329,7 +329,7 @@ class TestsFlextCoreLazyExports:
 
         # Act
         getattr_fn = module_globals["__getattr__"]
-        assert callable(getattr_fn)
+        tm.that(callable(getattr_fn), truth=True)
 
         # Assert
         assert getattr_fn("Alpha") is alpha_cls
@@ -358,11 +358,11 @@ class TestsFlextCoreLazyExports:
 
             # Act
             getattr_fn = module_globals["__getattr__"]
-            assert callable(getattr_fn)
+            tm.that(callable(getattr_fn), truth=True)
 
             # Assert — resolves the attribute, and never required a
             # probed child submodule
-            assert getattr_fn("alias") == "resolved"
+            tm.that(getattr_fn("alias"), eq="resolved")
             assert "test_lazy_alias_pkg.alias" not in sys.modules
         finally:
             sys.modules.pop(target_name, None)
@@ -383,7 +383,7 @@ class TestsFlextCoreLazyExports:
             {"Alpha": (module_name, "Alpha")},
         )
         getattr_fn = module_globals["__getattr__"]
-        assert callable(getattr_fn)
+        tm.that(callable(getattr_fn), truth=True)
 
         # Act / Assert
         with pytest.raises(AttributeError, match="Missing"):
@@ -409,9 +409,9 @@ class TestsFlextCoreLazyExports:
 
         # Assert
         getattr_fn = module_globals["__getattr__"]
-        assert callable(getattr_fn)
+        tm.that(callable(getattr_fn), truth=True)
         assert getattr_fn("Alpha") is alpha_cls
-        assert module_globals["__all__"] == ("Alpha",)
+        tm.that(module_globals["__all__"], eq=("Alpha",))
         tm.that(getattr_hook is repeated_getattr is getattr_fn, eq=True)
         tm.that(dir_hook is repeated_dir is module_globals["__dir__"], eq=True)
         tm.that(dir_hook(), eq=["Alpha"])
@@ -536,9 +536,9 @@ class TestsFlextCoreLazyExports:
         )
 
         # Assert — module-group names map to the module; alias-groups keep target+attr
-        assert list(result) == ["Alpha", "Beta", "Zeta"]
-        assert result["Alpha"] == "pkg.mod"
-        assert result["Zeta"] == ("pkg.aliases", "ZetaImpl")
+        tm.that(list(result), eq=["Alpha", "Beta", "Zeta"])
+        tm.that(result["Alpha"], eq="pkg.mod")
+        tm.that(result["Zeta"], eq=("pkg.aliases", "ZetaImpl"))
 
     @staticmethod
     def test_normalize_map_resolves_relative_paths_against_module() -> None:
@@ -550,8 +550,8 @@ class TestsFlextCoreLazyExports:
         )
 
         # Assert
-        assert normalized["Rel"] == ("pkg.sub.child", "Rel")
-        assert normalized["Abs"] == "other.mod"
+        tm.that(normalized["Rel"], eq=("pkg.sub.child", "Rel"))
+        tm.that(normalized["Abs"], eq="other.mod")
 
     @staticmethod
     def test_merge_combines_child_and_local_with_local_precedence() -> None:
@@ -576,7 +576,7 @@ class TestsFlextCoreLazyExports:
 
         # Assert — child entry preserved, local wins on collision
         assert "ChildOnly" in merged
-        assert merged["Shared"] == ("local.mod", "SharedLocal")
+        tm.that(merged["Shared"], eq=("local.mod", "SharedLocal"))
 
     @staticmethod
     def test_reset_clears_caches_observed_via_cache_stats(
@@ -592,12 +592,12 @@ class TestsFlextCoreLazyExports:
             {"Alpha": (module_name, "Alpha")},
         )
         getattr_fn = module_globals["__getattr__"]
-        assert callable(getattr_fn)
+        tm.that(callable(getattr_fn), truth=True)
         getattr_fn("Alpha")
-        assert any(size > 0 for size in lazy.cache_stats.values())
+        tm.that(any(size > 0 for size in lazy.cache_stats.values()), truth=True)
 
         # Act
         lazy.reset()
 
         # Assert — all caches empty after reset
-        assert all(size == 0 for size in lazy.cache_stats.values())
+        tm.that(all(size == 0 for size in lazy.cache_stats.values()), truth=True)

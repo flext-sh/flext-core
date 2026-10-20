@@ -9,11 +9,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pydantic_core import to_jsonable_python
 from typing_extensions import TypeForm
 
 from flext_core import FlextRuntime, p, t
-from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesGuardsTypeModel
+from flext_core._models import FlextModelsBase
+from flext_core._utilities import FlextUtilitiesBase
 from flext_core._utilities._logging_context_parts import logging_context_part_01
 
 
@@ -22,7 +22,10 @@ class FlextUtilitiesLoggingContext(
 ):
     @staticmethod
     def _to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
-        """Adapt owned values only at the native logging SDK boundary.
+        """Admit ordinary fields before canonical JSON normalization.
+
+        Native exception triples belong to reserved ``exc_info`` and bypass
+        this boundary in the bound logger's native emission path.
 
         Returns:
             The JSON-compatible logging value.
@@ -30,17 +33,11 @@ class FlextUtilitiesLoggingContext(
         """
         if isinstance(value, BaseException):
             return str(value)
-        if isinstance(value, tuple):
-            return FlextUtilitiesBase.type_adapter(
-                TypeForm(t.JsonValue)
-            ).validate_python(to_jsonable_python(value), strict=True)
-        if FlextUtilitiesGuardsTypeModel.has_model_dump(value):
-            return FlextUtilitiesBase.type_adapter(
-                TypeForm(t.JsonValue)
-            ).validate_python(
-                value.model_dump(mode="json"),
-            )
-        return FlextRuntime.normalize_to_json_value(value)
+        admitted = FlextUtilitiesBase.type_adapter(
+            TypeForm(p.LogArgument),
+            config=FlextModelsBase.ArbitraryTypesModel.model_config,
+        ).validate_python(value)
+        return FlextRuntime.normalize_to_json_value(admitted)
 
     @staticmethod
     def to_container_context(

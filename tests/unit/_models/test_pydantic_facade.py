@@ -398,7 +398,9 @@ class TestsFlextCorePydanticDeclarations:
             "animal": {"kind": "dog", "bark": "woof"},
         })
 
-        assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
+        tm.that(
+            isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog), truth=True
+        )
         tm.that(pet.animal.bark, eq="woof")
 
         with pytest.raises(m.ValidationError):
@@ -472,7 +474,9 @@ class TestsFlextCorePydanticDeclarations:
 
         vector = adapter.validate_python({"x": 1, "y": 2})
 
-        assert isinstance(vector, TestsFlextCorePydanticDeclarations._Vector)
+        tm.that(
+            isinstance(vector, TestsFlextCorePydanticDeclarations._Vector), truth=True
+        )
         tm.that((vector.x, vector.y), eq=(1, 2))
 
         with pytest.raises(m.ValidationError):

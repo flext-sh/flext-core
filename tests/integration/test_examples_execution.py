@@ -77,7 +77,7 @@ class TestsFlextExamplesExecution:
         tm.that(stdout, lacks="FAIL")
         tm.that(stderr, lacks="Traceback")
         tm.that(stderr, lacks="FlextMroViolation")
-        assert re.search(r"\b\w*Warning:", stderr) is None, stderr
+        tm.that(re.search("\\b\\w*Warning:", stderr), none=True, msg=stderr)
 
         check_match = tm.not_none(_CHECK_COUNT_RE.search(stdout))
         tm.that(int(check_match.group(1)), gt=0)

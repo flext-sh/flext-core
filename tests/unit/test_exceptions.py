@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Final
 
 import pytest
 
-from tests import c, e, m
+from tests import c, e, m, tm
 
 if TYPE_CHECKING:
     from tests import p
@@ -49,8 +49,8 @@ class TestsFlextCoreExceptions:
         # Act / Assert — every typed error is reachable on the facade and is a
         # catchable member of the BaseError hierarchy.
         """Test facade exposes typed errors as base error subclasses."""
-        assert issubclass(subclass, e.BaseError)
-        assert issubclass(subclass, Exception)
+        tm.that(issubclass(subclass, e.BaseError), truth=True)
+        tm.that(issubclass(subclass, Exception), truth=True)
 
     @pytest.mark.parametrize(
         ("error", "expected_domain"),
@@ -70,9 +70,9 @@ class TestsFlextCoreExceptions:
     ) -> None:
         # Assert — the public routing domain is derived from the error code.
         """Test error domain routes typed errors."""
-        assert error.error_domain == expected_domain
-        assert error.matches_error_domain(expected_domain) is True
-        assert error.matches_error_domain("UNRELATED_DOMAIN") is False
+        tm.that(error.error_domain, eq=expected_domain)
+        tm.that(error.matches_error_domain(expected_domain) is True, truth=True)
+        tm.that(error.matches_error_domain("UNRELATED_DOMAIN") is False, truth=True)
 
     @staticmethod
     def test_error_message_property_exposes_message() -> None:
@@ -80,8 +80,8 @@ class TestsFlextCoreExceptions:
         """Test error message property exposes message."""
         error = e.ValidationError("field is required", field="name")
         # Assert — public message accessor and str formatting.
-        assert error.error_message == "field is required"
-        assert "field is required" in str(error)
+        tm.that(error.error_message, eq="field is required")
+        tm.that("field is required" in str(error), truth=True)
 
     @staticmethod
     def test_typed_error_raises_and_carries_public_fields() -> None:
@@ -96,9 +96,9 @@ class TestsFlextCoreExceptions:
         with pytest.raises(e.BaseError) as excinfo:
             raise e.NotFoundError(message, resource_type="user", resource_id="u-1")
         raised = excinfo.value
-        assert isinstance(raised, e.NotFoundError)
-        assert raised.resource_type == "user"
-        assert raised.resource_id == "u-1"
+        tm.that(isinstance(raised, e.NotFoundError), truth=True)
+        tm.that(raised.resource_type, eq="user")
+        tm.that(raised.resource_id, eq="u-1")
 
     @staticmethod
     def test_auto_correlation_generates_public_correlation_id() -> None:
@@ -110,8 +110,8 @@ class TestsFlextCoreExceptions:
             options=m.ExceptionInitOptions(auto_correlation=True),
         )
         # Assert — correlation id is generated and exposed publicly.
-        assert error.correlation_id is not None
-        assert error.correlation_id.startswith("exc_")
+        tm.that(error.correlation_id, none=False)
+        tm.that(error.correlation_id.startswith("exc_"), truth=True)
 
     @pytest.mark.parametrize(
         ("declared", "expected"),
@@ -130,8 +130,8 @@ class TestsFlextCoreExceptions:
             actual_type=declared,
         )
         # Assert
-        assert error.expected_type is expected
-        assert error.actual_type is expected
+        tm.that(error.expected_type is expected, truth=True)
+        tm.that(error.actual_type is expected, truth=True)
 
     @staticmethod
     def test_render_template_substitutes_provided_values() -> None:
@@ -139,7 +139,7 @@ class TestsFlextCoreExceptions:
         """Test render template substitutes provided values."""
         rendered = e.render_template("Hello {name} from {place}", name="A", place="B")
         # Assert
-        assert rendered == "Hello A from B"
+        tm.that(rendered, eq="Hello A from B")
 
     @staticmethod
     def test_render_template_fails_fast_on_missing_placeholder() -> None:
@@ -159,72 +159,72 @@ class TestsFlextCoreExceptions:
         e.record_exception(e.NotFoundError)
         snapshot = e.resolve_metrics_snapshot()
         # Assert — public snapshot reflects recorded occurrences.
-        assert snapshot.total_exceptions == 3
-        assert snapshot.has_exceptions is True
+        tm.that(snapshot.total_exceptions, eq=3)
+        tm.that(snapshot.has_exceptions is True, truth=True)
         # Act — clearing resets the observable totals.
         e.clear_metrics()
         cleared = e.resolve_metrics_snapshot()
         # Assert
-        assert cleared.total_exceptions == 0
-        assert cleared.has_exceptions is False
+        tm.that(cleared.total_exceptions, eq=0)
+        tm.that(cleared.has_exceptions is False, truth=True)
 
     @staticmethod
     def test_fail_conflict_returns_structured_failure() -> None:
         """Test fail conflict returns structured failure."""
         result: p.Result[bool] = e.fail_conflict("user", "u-1", "already active")
-        assert result.failure
-        assert result.error is not None
-        assert result.error_code == c.ErrorCode.ALREADY_EXISTS
-        assert result.error_data is not None
-        assert result.error_data["resource_type"] == "user"
-        assert result.error_data["resource_id"] == "u-1"
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
+        tm.that(result.error_code, eq=c.ErrorCode.ALREADY_EXISTS)
+        tm.that(result.error_data, none=False)
+        tm.that(result.error_data["resource_type"], eq="user")
+        tm.that(result.error_data["resource_id"], eq="u-1")
 
     @staticmethod
     def test_fail_auth_returns_structured_failure() -> None:
         """Test fail auth returns structured failure."""
         result: p.Result[bool] = e.fail_auth("ldap", "user1")
-        assert result.failure
-        assert result.error is not None
-        assert "authenticate user user1" in result.error
-        assert result.error_code == c.ErrorCode.AUTHENTICATION_ERROR
-        assert result.error_data is not None
-        assert result.error_data["auth_method"] == "ldap"
-        assert result.error_data["user_id"] == "user1"
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("authenticate user user1" in result.error, truth=True)
+        tm.that(result.error_code, eq=c.ErrorCode.AUTHENTICATION_ERROR)
+        tm.that(result.error_data, none=False)
+        tm.that(result.error_data["auth_method"], eq="ldap")
+        tm.that(result.error_data["user_id"], eq="user1")
 
     @staticmethod
     def test_fail_authz_returns_structured_failure() -> None:
         """Test fail authz returns structured failure."""
         result: p.Result[bool] = e.fail_authz("u-1", "admin.panel", "write")
-        assert result.failure
-        assert result.error is not None
-        assert result.error_code == c.ErrorCode.AUTHORIZATION_ERROR
-        assert result.error_data is not None
-        assert result.error_data["user_id"] == "u-1"
-        assert result.error_data["resource"] == "admin.panel"
-        assert result.error_data["permission"] == "write"
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
+        tm.that(result.error_code, eq=c.ErrorCode.AUTHORIZATION_ERROR)
+        tm.that(result.error_data, none=False)
+        tm.that(result.error_data["user_id"], eq="u-1")
+        tm.that(result.error_data["resource"], eq="admin.panel")
+        tm.that(result.error_data["permission"], eq="write")
 
     @staticmethod
     def test_fail_connection_returns_structured_failure() -> None:
         """Test fail connection returns structured failure."""
         result: p.Result[bool] = e.fail_connection("ldap.example.com")
-        assert result.failure
-        assert result.error is not None
-        assert "connect to ldap.example.com" in result.error
-        assert result.error_code == c.ErrorCode.CONNECTION_ERROR
-        assert result.error_data is not None
-        assert result.error_data["host"] == "ldap.example.com"
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("connect to ldap.example.com" in result.error, truth=True)
+        tm.that(result.error_code, eq=c.ErrorCode.CONNECTION_ERROR)
+        tm.that(result.error_data, none=False)
+        tm.that(result.error_data["host"], eq="ldap.example.com")
 
     @staticmethod
     def test_fail_timeout_returns_structured_failure() -> None:
         """Test fail timeout returns structured failure."""
         result: p.Result[bool] = e.fail_timeout(30.0, "fetch_users")
-        assert result.failure
-        assert result.error is not None
-        assert "fetch_users" in result.error
-        assert result.error_code == c.ErrorCode.TIMEOUT_ERROR
-        assert result.error_data is not None
-        assert result.error_data["operation"] == "fetch_users"
-        assert result.error_data["timeout_seconds"] == pytest.approx(30.0)
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("fetch_users" in result.error, truth=True)
+        tm.that(result.error_code, eq=c.ErrorCode.TIMEOUT_ERROR)
+        tm.that(result.error_data, none=False)
+        tm.that(result.error_data["operation"], eq="fetch_users")
+        tm.that(result.error_data["timeout_seconds"], eq=pytest.approx(30.0))
 
     @staticmethod
     def test_failure_result_short_circuits_map_and_recovers() -> None:
@@ -234,12 +234,12 @@ class TestsFlextCoreExceptions:
         # Act — map over a failure is a no-op; unwrap_or supplies the default.
         mapped = result.map(lambda _value: True)
         # Assert
-        assert mapped.failure
-        assert mapped.error == result.error
+        tm.that(mapped.failure, truth=True)
+        tm.that(mapped.error, eq=result.error)
         # unwrap_or on failure returns the default
         unwrap_default: Final[bool] = False
         default_result = result.unwrap_or(unwrap_default)
-        assert default_result is unwrap_default
+        tm.that(default_result is unwrap_default, truth=True)
 
     @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
     @staticmethod
@@ -248,7 +248,7 @@ class TestsFlextCoreExceptions:
     ) -> None:
         # Assert — enforcement violations are exposed on the facade and raise.
         """Test enforcement violations are raisable exception types."""
-        assert issubclass(violation, Exception)
+        tm.that(issubclass(violation, Exception), truth=True)
         message = "enforcement breach"
         with pytest.raises(violation):
             raise violation(message)

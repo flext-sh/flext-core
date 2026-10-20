@@ -28,14 +28,14 @@ class TestsFlextCoreConfigSettingsCanonical:
 
         S1: mutation raises.
         """
-        assert isinstance(config, FlextConfig)
+        tm.that(isinstance(config, FlextConfig), truth=True)
         tm.rejects_assignment(config, "anything", "mutated", expected=m.ValidationError)
 
     @staticmethod
     def test_settings_is_preinstantiated_usable_singleton() -> None:
         """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""
-        assert isinstance(settings, FlextSettings)
-        assert isinstance(settings.model_dump(), dict)
+        tm.that(isinstance(settings, FlextSettings), truth=True)
+        tm.that(isinstance(settings.model_dump(), dict), truth=True)
 
     @staticmethod
     def test_custom_runtime_settings_preserve_frozen_config_and_defaults() -> None:
@@ -45,7 +45,7 @@ class TestsFlextCoreConfigSettingsCanonical:
         customized = settings.clone(debug=not default_debug)
         facade = FlextCore(runtime_settings=customized)
 
-        tm.that(facade.settings.model_dump(), eq=customized.model_dump())
+        tm.that(facade.settings is customized, eq=True)
         tm.that(settings.debug, eq=default_debug)
         tm.that(config.model_dump(), eq=configuration)
         tm.rejects_assignment(config, "anything", "mutated", expected=m.ValidationError)
@@ -69,11 +69,11 @@ class TestsFlextCoreConfigSettingsCanonical:
 
         child = ChildConfig.fetch_global()
         sibling = SiblingConfig.fetch_global()
-        assert type(parent) is ParentConfig
-        assert type(child) is ChildConfig
-        assert type(sibling) is SiblingConfig
-        assert ChildConfig.fetch_global() is child
+        tm.that(type(parent) is ParentConfig, truth=True)
+        tm.that(type(child) is ChildConfig, truth=True)
+        tm.that(type(sibling) is SiblingConfig, truth=True)
+        tm.that(ChildConfig.fetch_global() is child, truth=True)
         ChildConfig.reset_for_testing()
-        assert ChildConfig.fetch_global() is not child
-        assert ParentConfig.fetch_global() is parent
-        assert SiblingConfig.fetch_global() is sibling
+        tm.that(ChildConfig.fetch_global() is not child, truth=True)
+        tm.that(ParentConfig.fetch_global() is parent, truth=True)
+        tm.that(SiblingConfig.fetch_global() is sibling, truth=True)

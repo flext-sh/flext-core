@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import t, u
+from tests import t, tm, u
 
 
 class TestsFlextCoreUtilitiesCoverage:
@@ -42,7 +42,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: int,
     ) -> None:
         """to_int coerces numeric inputs and falls back to default otherwise."""
-        assert u.to_int(value, default=default) == expected
+        tm.that(u.to_int(value, default=default), eq=expected)
 
     @pytest.mark.parametrize(
         ("value", "default", "expected"),
@@ -61,7 +61,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: float,
     ) -> None:
         """to_float coerces numeric inputs and falls back to default otherwise."""
-        assert u.to_float(value, default=default) == expected
+        tm.that(u.to_float(value, default=default), eq=expected)
 
     @pytest.mark.parametrize(
         ("value", "default", "expected"),
@@ -82,7 +82,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: bool,
     ) -> None:
         """to_bool reflects truthiness and uses default only for None."""
-        assert u.to_bool(value, default=default) is expected
+        tm.that(u.to_bool(value, default=default) is expected, truth=True)
 
     @pytest.mark.parametrize(
         ("value", "default", "expected"),
@@ -105,7 +105,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: int,
     ) -> None:
         """to_positive_int returns strictly positive ints, else the default."""
-        assert u.to_positive_int(value, default=default) == expected
+        tm.that(u.to_positive_int(value, default=default), eq=expected)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -117,12 +117,12 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: str,
     ) -> None:
         """to_str renders integral floats without decimals and keeps strings."""
-        assert u.to_str(value) == expected
+        tm.that(u.to_str(value), eq=expected)
 
     @staticmethod
     def test_to_str_uses_default_for_none() -> None:
         """to_str returns the supplied default when the value is None."""
-        assert u.to_str(None, default="fallback") == "fallback"
+        tm.that(u.to_str(None, default="fallback"), eq="fallback")
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -134,7 +134,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: str | None,
     ) -> None:
         """to_optional_str yields the string only when it is a non-empty str."""
-        assert u.to_optional_str(value) == expected
+        tm.that(u.to_optional_str(value), eq=expected)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -146,12 +146,12 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: list[str],
     ) -> None:
         """to_str_list normalizes scalars and sequences into lists of strings."""
-        assert u.to_str_list(value) == expected
+        tm.that(u.to_str_list(value), eq=expected)
 
     @staticmethod
     def test_to_str_list_uses_default_for_none() -> None:
         """to_str_list returns the provided default when value is None."""
-        assert u.to_str_list(None, default=["x"]) == ["x"]
+        tm.that(u.to_str_list(None, default=["x"]), eq=["x"])
 
     @pytest.mark.parametrize(
         ("values", "separator", "case", "expected"),
@@ -170,7 +170,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: str,
     ) -> None:
         """Join applies the separator and optional case transform."""
-        assert u.join(values, separator=separator, case=case) == expected
+        tm.that(u.join(values, separator=separator, case=case), eq=expected)
 
     @pytest.mark.parametrize(
         ("value", "case", "expected"),
@@ -188,7 +188,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: str,
     ) -> None:
         """Normalize converts to string then applies the optional case."""
-        assert u.normalize(value, case=case) == expected
+        tm.that(u.normalize(value, case=case), eq=expected)
 
     @pytest.mark.parametrize(
         ("name", "expected"),
@@ -205,7 +205,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: str,
     ) -> None:
         """format_app_id lowercases and replaces spaces/underscores with hyphens."""
-        assert u.format_app_id(name) == expected
+        tm.that(u.format_app_id(name), eq=expected)
 
     @pytest.mark.parametrize(
         ("text", "expected"),
@@ -217,7 +217,7 @@ class TestsFlextCoreUtilitiesCoverage:
         expected: str,
     ) -> None:
         """safe_string trims surrounding whitespace and returns the content."""
-        assert u.safe_string(text) == expected
+        tm.that(u.safe_string(text), eq=expected)
 
     @pytest.mark.parametrize("text", [None, "", "   ", "\t\n"])
     @staticmethod

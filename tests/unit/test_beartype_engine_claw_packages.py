@@ -18,7 +18,7 @@ from pathlib import Path
 
 import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeConf
-from tests import t
+from tests import t, tm
 
 _CLAW_INIT = (
     textwrap.dedent(
@@ -82,8 +82,8 @@ class TestsFlextCoreBeartypeEngineClawPackages(
         conf_b = FlextUtilitiesBeartypeConf.build_beartype_conf()
 
         # Assert: deterministic public value, safe to reuse across call sites.
-        assert conf_a == conf_b
-        assert hash(conf_a) == hash(conf_b)
+        tm.that(conf_a, eq=conf_b)
+        tm.that(hash(conf_a), eq=hash(conf_b))
 
     def test_claw_supports_pydantic_and_runtime_protocols(self, tmp_path: Path) -> None:
         """Claw-instrumented Pydantic models and runtime Protocols import cleanly."""
@@ -131,7 +131,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(
         )
 
         # Assert
-        assert result.outcome.raw_return_code == 0, result.stderr
+        tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
         assert "claw_import_ok" in result.stdout
 
     def test_claw_supports_recursive_aliases_in_synthetic_package(
@@ -170,7 +170,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(
         )
 
         # Assert: import succeeds and the aliased runtime value is intact.
-        assert result.outcome.raw_return_code == 0, result.stderr
+        tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
         assert "aliasprobe_value x" in result.stdout
 
     def test_checking_claw_enforces_typing_extensions_aliases(
@@ -249,7 +249,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(
         )
 
         # Assert: conforming calls pass and both aliases reject a wrong value.
-        assert result.outcome.raw_return_code == 0, result.stderr
+        tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
         assert "conforming_ok" in result.stdout
         assert "accepted" not in result.stdout, result.stdout
         assert "violation take_int" in result.stdout
@@ -280,5 +280,5 @@ class TestsFlextCoreBeartypeEngineClawPackages(
 
         # Assert: instrumentation succeeds and the public facade stays intact.
         combined_output = result.stdout + result.stderr
-        assert result.outcome.raw_return_code == 0, combined_output
+        tm.that(result.outcome.raw_return_code, eq=0, msg=combined_output)
         assert "flext_core_facade True" in combined_output

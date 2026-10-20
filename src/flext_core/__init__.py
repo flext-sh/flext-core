@@ -14,6 +14,7 @@ from flext_core.__version__ import __version__
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core import services as services
     from flext_core.__version__ import (
         FlextVersion,
         __author__,
@@ -140,24 +141,26 @@ __all__: tuple[str, ...] = (
     "r",
     "resolve_lazy_members",
     "s",
+    "services",
     "settings",
     "t",
     "u",
     "x",
 )
 
-install_lazy_exports(
+__getattr__ = install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextApi": ".api",
         "FlextBase": ".base",
+        "FlextBoundLogger": "._bound_logger",
         "FlextCli": ".cli",
         "FlextConfig": "._config",
         "FlextConstants": ".constants",
         "FlextConstantsEnforcement": ".constants",
         "FlextContainer": ".container",
         "FlextContext": ".context",
+        "FlextCore": ".api",
         "FlextCoreBeartypeBootstrap": "._beartype_bootstrap",
         "FlextDecorators": ".decorators",
         "FlextDispatcher": ".dispatcher",
@@ -177,10 +180,8 @@ install_lazy_exports(
         "FlextService": ".service",
         "FlextSettings": "._settings",
         "FlextStrictYamlConfigSource": ".config_sources",
-        "FlextCore": ".api",
         "FlextTypes": ".typings",
         "FlextUtilities": ".utilities",
-        "FlextBoundLogger": "._bound_logger",
         "FlextUtilitiesBeartypeConf": ".utilities",
         "FlextUtilitiesBeartypeEngine": ".utilities",
         "FlextUtilitiesEnforcement": ".utilities",
@@ -197,7 +198,6 @@ install_lazy_exports(
         "__title__": ".__version__",
         "__url__": ".__version__",
         "__version_info__": ".__version__",
-        "build_lazy_import_map": ".lazy",
         "c": ".constants",
         "cleanup_submodule_namespace": ".lazy",
         "config": "._config",
@@ -205,7 +205,6 @@ install_lazy_exports(
         "d": ".decorators",
         "e": ".exceptions",
         "h": ".handlers",
-        "install_lazy_exports": ".lazy",
         "lazy": ".lazy",
         "lazy_getattr": ".lazy",
         "lazy_member": ".lazy",
@@ -216,10 +215,11 @@ install_lazy_exports(
         "r": ".result",
         "resolve_lazy_members": ".lazy",
         "s": ".service",
+        "services": ".services",
         "settings": "._settings",
         "t": ".typings",
         "u": ".utilities",
         "x": ".mixins",
     }),
     public_exports=__all__,
-)
+)[0]

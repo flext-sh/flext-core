@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import override
 
+from typing_extensions import TypeForm
+
 from flext_core import FlextModels
 from tests import m, tm, u
 
@@ -32,7 +34,7 @@ class TestsFlextCorePydanticSettingsFacade:
     def test_native_settings_alias_accepts_the_public_preset() -> None:
         """The native annotation accepts the original settings instance."""
         instance = FlextModels.BaseSettings()
-        adapter = u.type_adapter(FlextModels.PydanticBaseSettings)
+        adapter = u.type_adapter(TypeForm(FlextModels.PydanticBaseSettings))
         tm.that(adapter.validate_python(instance) is instance, eq=True)
 
     class _TopicSettings(m.BaseSettings):
@@ -74,10 +76,10 @@ class TestsFlextCorePydanticSettingsFacade:
             topic_prefix: str = "unset"
 
         with u.Tests.env_vars_context(env_vars={"TOPIC_PREFIX": "from-env"}):
-            assert _EnvSettings().topic_prefix == "from-env"
-        assert _EnvSettings(topic_prefix="explicit").topic_prefix == "explicit"
+            tm.that(_EnvSettings().topic_prefix, eq="from-env")
+        tm.that(_EnvSettings(topic_prefix="explicit").topic_prefix, eq="explicit")
 
     def test_settings_override_annotated_through_alias_is_consulted(self) -> None:
         with u.Tests.env_vars_context(env_vars={"TOPIC": "from-env"}):
-            assert self._TopicSettings().topic == "default"
-            assert self._TopicSettings(topic="explicit").topic == "explicit"
+            tm.that(self._TopicSettings().topic, eq="default")
+            tm.that(self._TopicSettings(topic="explicit").topic, eq="explicit")

@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m, u
+from tests import m, tm, u
 from tests.unit._enforcement_support import make_class, messages, synthetic_method
 
 
@@ -26,16 +26,18 @@ class TestsFlextCoreEnforcement:
         report: m.Report = u.check(int)
 
         dumped = report.model_dump()
-        assert "violations" in dumped
-        assert isinstance(report.violations, list)
-        assert report.violations, "a builtin type must produce at least one finding"
+        tm.that("violations" in dumped, truth=True)
+        tm.that(isinstance(report.violations, list), truth=True)
+        tm.that(
+            report.violations, truth=True, msg="a builtin type must produce at least one finding"
+        )
 
     @staticmethod
     def test_compliant_flext_class_produces_no_violations() -> None:
         """A correctly prefixed, empty facade class is fully compliant."""
         compliant = make_class("FlextCoreWidget", {})
 
-        assert u.check(compliant).violations == []
+        tm.that(u.check(compliant).violations, eq=[])
 
     @pytest.mark.parametrize("builtin", [int, str, dict])
     @staticmethod
@@ -48,7 +50,7 @@ class TestsFlextCoreEnforcement:
             for v in report.violations
             if v.layer == "Namespace" and "missing project prefix" in v.message
         ]
-        assert prefix_findings
+        tm.that(prefix_findings, truth=True)
 
     @staticmethod
     def test_private_underscore_class_exempt_from_namespace_layer() -> None:
@@ -57,7 +59,10 @@ class TestsFlextCoreEnforcement:
         class _PrivateHelper:
             pass
 
-        assert all(v.layer != "Namespace" for v in u.check(_PrivateHelper).violations)
+        tm.that(
+            all(v.layer != "Namespace" for v in u.check(_PrivateHelper).violations),
+            eq=True,
+        )
 
     @pytest.mark.parametrize(
         ("class_name", "member"),
@@ -76,7 +81,7 @@ class TestsFlextCoreEnforcement:
         cls = make_class(class_name, {member: synthetic_method})
 
         report = u.check(cls)
-        assert messages(report, fragment=f'accessor method "{member}"')
+        tm.that(messages(report, fragment=f'accessor method "{member}"'), truth=True)
 
     @pytest.mark.parametrize("member", ["fetch_remote", "build_widget"])
     @staticmethod
@@ -85,7 +90,7 @@ class TestsFlextCoreEnforcement:
         cls = make_class("FlextCoreAccessedOk", {member: synthetic_method})
 
         report = u.check(cls)
-        assert not messages(report, fragment="accessor method")
+        tm.that(messages(report, fragment="accessor method"), truth=False)
 
     @pytest.mark.parametrize(
         ("class_name", "declares_settings_base", "expect_finding"),
@@ -114,19 +119,19 @@ class TestsFlextCoreEnforcement:
 
         report = u.check(cls)
         found = bool(messages(report, fragment="must inherit FlextSettings"))
-        assert found is expect_finding
+        tm.that(found is expect_finding, truth=True)
 
     @staticmethod
     def test_every_violation_carries_public_metadata() -> None:
         """Each finding exposes non-empty qualname, layer, severity and message."""
         report = u.check(int)
 
-        assert report.violations
+        tm.that(report.violations, truth=True)
         for violation in report.violations:
-            assert violation.qualname
-            assert violation.layer
-            assert violation.severity
-            assert violation.message
+            tm.that(violation.qualname, truth=True)
+            tm.that(violation.layer, truth=True)
+            tm.that(violation.severity, truth=True)
+            tm.that(violation.message, truth=True)
 
     @staticmethod
     def test_check_is_idempotent_for_same_target() -> None:
@@ -134,4 +139,4 @@ class TestsFlextCoreEnforcement:
         first = [v.message for v in u.check(str).violations]
         second = [v.message for v in u.check(str).violations]
 
-        assert first == second
+        tm.that(first, eq=second)

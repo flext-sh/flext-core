@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, ClassVar
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, u
+from tests import c, tm, u
 from tests.unit._enforcement_support import make_class
 
 if TYPE_CHECKING:
@@ -100,7 +100,9 @@ class TestsFlextCoreEnforcementNamespace:
 
         report = u.check(target)
 
-        assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
+        tm.that(
+            any(_PREFIX_FRAGMENT in v.message for v in report.violations), truth=False
+        )
 
     @staticmethod
     def test_flext_core_class_without_prefix_is_flagged_for_flext() -> None:
@@ -116,8 +118,8 @@ class TestsFlextCoreEnforcementNamespace:
         prefix_msgs = [
             v.message for v in report.violations if _PREFIX_FRAGMENT in v.message
         ]
-        assert prefix_msgs
-        assert all('"Flext"' in msg for msg in prefix_msgs)
+        tm.that(prefix_msgs, truth=True)
+        tm.that(all('"Flext"' in msg for msg in prefix_msgs), truth=True)
 
     @staticmethod
     def test_tests_module_class_with_composed_prefix_is_compliant() -> None:
@@ -130,7 +132,9 @@ class TestsFlextCoreEnforcementNamespace:
 
         report = u.check(target)
 
-        assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
+        tm.that(
+            any(_PREFIX_FRAGMENT in v.message for v in report.violations), truth=False
+        )
 
     @staticmethod
     def test_pydantic_generic_specialization_does_not_count_as_namespace_violation(
@@ -162,8 +166,8 @@ class TestsFlextCoreEnforcementNamespace:
                 "demo_pkg.base",
                 package / "base.py",
             )
-            assert spec is not None
-            assert spec.loader is not None
+            tm.that(spec, none=False)
+            tm.that(spec.loader, none=False)
             module = importlib.util.module_from_spec(spec)
             sys.modules[spec.name] = module
             spec.loader.exec_module(module)
@@ -173,9 +177,12 @@ class TestsFlextCoreEnforcementNamespace:
 
             # The pydantic-generated ``DemoServiceBase[bool]`` specialization must
             # not surface as an extra top-level class or backwards-compat alias.
-            assert not any(
-                "[bool]" in v.message or "backwards-compat" in v.message
-                for v in report.violations
+            tm.that(
+                any(
+                    "[bool]" in v.message or "backwards-compat" in v.message
+                    for v in report.violations
+                ),
+                truth=False,
             )
         finally:
             sys.path.remove(src_path)
@@ -206,8 +213,8 @@ class_stem_override = "XmlAPI"
         module_path = package / "__init__.py"
         module_path.write_text("class XmlAPIModels:\n    pass\n", encoding="utf-8")
         spec = importlib.util.spec_from_file_location("xmlapi", module_path)
-        assert spec is not None
-        assert spec.loader is not None
+        tm.that(spec, none=False)
+        tm.that(spec.loader, none=False)
         module = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = module
         try:
@@ -215,7 +222,10 @@ class_stem_override = "XmlAPI"
 
             report = u.check(module.XmlAPIModels)
 
-            assert not any(_PREFIX_FRAGMENT in v.message for v in report.violations)
+            tm.that(
+                any(_PREFIX_FRAGMENT in v.message for v in report.violations),
+                truth=False,
+            )
         finally:
             sys.modules.pop("xmlapi", None)
 
@@ -226,7 +236,7 @@ class_stem_override = "XmlAPI"
         Precondition: the namespace mode constant is WARN, so ``run_layer``
         surfaces violations as warnings rather than raising.
         """
-        assert c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.WARN
+        tm.that(c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.WARN, truth=True)
         bad = make_class(
             "FlextSyntheticConstants",
             {"ITEMS": ["a"], "__annotations__": {"ITEMS": list[str]}},
@@ -237,9 +247,9 @@ class_stem_override = "XmlAPI"
             FlextUtilitiesEnforcement.run_layer(bad, "constants")
 
         texts = [str(r.message) for r in recorded]
-        assert len(recorded) == 2
-        assert any("[const_mutable]" in text for text in texts)
-        assert any("[ENFORCE-079]" in text for text in texts)
+        tm.that(len(recorded), eq=2)
+        tm.that(any("[const_mutable]" in text for text in texts), truth=True)
+        tm.that(any("[ENFORCE-079]" in text for text in texts), truth=True)
 
     @staticmethod
     def test_run_layer_stays_silent_for_clean_class() -> None:
@@ -250,7 +260,7 @@ class_stem_override = "XmlAPI"
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.run_layer(target, "constants")
 
-        assert recorded == []
+        tm.that(recorded, eq=[])
 
     @staticmethod
     def test_run_layer_exempts_tests_qualified_classes() -> None:
@@ -267,7 +277,7 @@ class_stem_override = "XmlAPI"
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.run_layer(target, "constants")
 
-        assert recorded == []
+        tm.that(recorded, eq=[])
 
     @staticmethod
     def test_run_layer_skips_function_local_classes() -> None:
@@ -276,13 +286,13 @@ class_stem_override = "XmlAPI"
         class FlextLocalConstants:
             ITEMS: ClassVar[list[str]] = ["a"]  # violating shape, but function-local
 
-        assert "<locals>" in FlextLocalConstants.__qualname__
+        tm.that("<locals>" in FlextLocalConstants.__qualname__, truth=True)
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.run_layer(FlextLocalConstants, "constants")
 
-        assert recorded == []
+        tm.that(recorded, eq=[])
 
     @pytest.mark.parametrize(
         ("name", "body", "module_override", "expect_enforce_079"),
@@ -366,4 +376,4 @@ class_stem_override = "XmlAPI"
             v.rule_id == "ENFORCE-079" and "Constant 'GROUPS' declared" in v.message
             for v in report.violations
         )
-        assert emitted is expect_enforce_079
+        tm.that(emitted is expect_enforce_079, truth=True)

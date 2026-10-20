@@ -94,10 +94,9 @@ class TestsFlextCoreServiceBootstrap:
 
         resolved = u.resolve_runtime_options(service)
 
-        tm.that(declared is not None, eq=True)
+        tm.that(declared, none=False)
         tm.that(resolved.settings_type is declared, eq=True)
-        tm.that(isinstance(service.settings, FlextSettings), eq=True)
-        tm.that(type(service.settings) is declared, eq=True)
+        tm.that(service.settings is declared.fetch_global(), eq=True)
 
     def test_instance_seed_wins_over_the_hook(self) -> None:
         """A settings class seeded on the instance overrides the hook."""
@@ -140,7 +139,8 @@ class TestsFlextCoreServiceBootstrap:
 
         runtime = u.build_service_runtime(self.ConcreteTestService())
 
-        tm.that(type(runtime.settings) is declared, eq=True)
+        tm.that(declared, none=False)
+        tm.that(runtime.settings is declared.fetch_global(), eq=True)
         tm.that(runtime.context is runtime.container.context, eq=True)
         tm.that(runtime.settings is runtime.container.settings, eq=True)
         tm.that(runtime.dispatcher is runtime.container.dispatcher().unwrap(), eq=True)

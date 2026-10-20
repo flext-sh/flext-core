@@ -209,33 +209,17 @@ class TestsFlextResultTraverseResource:
         tm.that(success.error_data, none=True)
 
     @staticmethod
-    def test_error_data_property_accepts_model_dump_carrier() -> None:
-        """Result error_data accepts protocol carriers through runtime normalization."""
-        payload: t.JsonDict = {"alpha": 1, "beta": "two"}
-
-        class ModelDumpCarrier:
-            @staticmethod
-            def model_dump(
-                *,
-                mode: str = "python",
-                exclude: set[str] | None = None,
-            ) -> t.MappingKV[str, t.JsonPayload | None]:
-                _ = mode
-                return {
-                    key: value
-                    for key, value in payload.items()
-                    if exclude is None or key not in exclude
-                }
-
-        carrier: p.HasModelDump = ModelDumpCarrier()
-        tm.that(carrier.model_dump(), eq=payload)
-        tm.that(carrier.model_dump(exclude=set[str]()), eq=payload)
-        tm.that(carrier.model_dump(exclude={"alpha"}), eq={"beta": "two"})
-        tm.that(carrier.model_dump(exclude={"alpha", "beta"}), empty=True)
-        tm.that(carrier.model_dump(exclude={"absent"}), eq=payload)
-        result: p.Result[str] = r[str].fail("error", error_data=carrier)
-
-        expected = u.redact_metadata(payload, keys=tuple(c.SENSITIVE_ERROR_DATA_KEYS))
+    def test_error_data_keeps_a_snapshot_of_the_supplied_model() -> None:
+        """Result metadata retains the validated model's original values."""
+        metadata = m.ConfigMap(root={"alpha": 1, "beta": "two"})
+        result = r[str].fail("error", error_data=metadata)
+        protected = frozenset(key.casefold() for key in c.SENSITIVE_ERROR_DATA_KEYS)
+        expected = {
+            key: value
+            for key, value in metadata.root.items()
+            if key.casefold() not in protected
+        }
+        metadata.root["alpha"] = 3
         tm.that(result.error_data, eq=expected or None)
 
     @staticmethod

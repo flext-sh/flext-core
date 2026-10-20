@@ -50,7 +50,7 @@ class TestsFlextBeartypeEngineAnnotations(
         expected: bool,
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
-        assert u.contains_any(hint) is expected
+        tm.that(u.contains_any(hint) is expected, truth=True)
 
     @pytest.mark.parametrize(
         "alias_name",
@@ -91,7 +91,7 @@ class TestsFlextBeartypeEngineAnnotations(
         expected: tuple[bool, str],
     ) -> None:
         """Bare mutable collection origins are flagged with their name."""
-        assert u.has_forbidden_collection_origin(hint, self.FORBIDDEN) == expected
+        tm.that(u.has_forbidden_collection_origin(hint, self.FORBIDDEN), eq=expected)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -111,7 +111,7 @@ class TestsFlextBeartypeEngineAnnotations(
         expected: int,
     ) -> None:
         """count_union_members counts non-None members; 0 for non-unions."""
-        assert u.count_union_members(hint) == expected
+        tm.that(u.count_union_members(hint), eq=expected)
 
     @pytest.mark.parametrize(
         ("hint", "expected"),
@@ -131,7 +131,7 @@ class TestsFlextBeartypeEngineAnnotations(
         expected: bool,
     ) -> None:
         """Union matches iff both str and None are members."""
-        assert u.matches_str_none_union(hint) is expected
+        tm.that(u.matches_str_none_union(hint) is expected, truth=True)
 
     @pytest.mark.parametrize(
         ("alias_name", "expected"),
@@ -168,19 +168,19 @@ class TestsFlextBeartypeEngineAnnotations(
 
         with pytest.raises(NameError) as native:
             _ = Host.LazyAlias.__value__
-        assert native.value.name == "LazyResolvableType"
+        tm.that(native.value.name, eq="LazyResolvableType")
 
-        assert u.resolve_type_alias_value(Host.LazyAlias, owner=Host) is None
-        assert u.alias_contains_any(Host.LazyAlias, owner=Host) is False
+        tm.that(u.resolve_type_alias_value(Host.LazyAlias, owner=Host), none=True)
+        tm.that(u.alias_contains_any(Host.LazyAlias, owner=Host) is False, truth=True)
         deferred = u.deferred_alias(Host.LazyAlias, owner=Host)
-        assert deferred is not None
-        assert deferred.module == Host.__module__
-        assert deferred.qualname == f"{Host.__qualname__}.LazyAlias"
-        assert deferred.unavailable_imports == ("LazyResolvableType",)
+        tm.that(deferred, none=False)
+        tm.that(deferred.module, eq=Host.__module__)
+        tm.that(deferred.qualname, eq=f"{Host.__qualname__}.LazyAlias")
+        tm.that(deferred.unavailable_imports, eq=("LazyResolvableType",))
 
         with pytest.raises(NameError) as still_lazy:
             _ = Host.LazyAlias.__value__
-        assert still_lazy.value.name == native.value.name
+        tm.that(still_lazy.value.name, eq=native.value.name)
 
     @staticmethod
     def test_local_alias_rejects_a_shadowed_static_import_guard(tmp_path: Path) -> None:
@@ -192,12 +192,12 @@ class TestsFlextBeartypeEngineAnnotations(
             alias = vars(owner)["LazyAlias"]
             if not isinstance(alias, TypeAliasType):
                 pytest.fail("Source fixture did not declare a native type alias")
-            assert u.deferred_alias(alias, owner=owner) is None
+            tm.that(u.deferred_alias(alias, owner=owner), none=True)
             with pytest.raises(NameError) as native:
                 _ = alias.__value__
             with pytest.raises(NameError) as resolved:
                 u.resolve_type_alias_value(alias, owner=owner)
-            assert resolved.value.name == native.value.name == "GuardedPath"
+            tm.that(resolved.value.name, eq="GuardedPath")
 
     @staticmethod
     def test_local_alias_rejects_a_copied_owner_with_forged_qualname() -> None:
@@ -210,10 +210,10 @@ class TestsFlextBeartypeEngineAnnotations(
             LazyAlias = Host.LazyAlias
 
         Copied.__qualname__ = Host.__qualname__
-        assert u.deferred_alias(Host.LazyAlias, owner=Copied) is None
+        tm.that(u.deferred_alias(Host.LazyAlias, owner=Copied), none=True)
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(Host.LazyAlias, owner=Copied)
-        assert raised.value.name == "LazyResolvableType"
+        tm.that(raised.value.name, eq="LazyResolvableType")
 
     @staticmethod
     def test_local_alias_requires_the_exact_owner_binding() -> None:
@@ -226,10 +226,10 @@ class TestsFlextBeartypeEngineAnnotations(
             type LazyAlias = LazyResolvableType | str
 
         Other.__qualname__ = Host.__qualname__
-        assert u.deferred_alias(Host.LazyAlias, owner=Other) is None
+        tm.that(u.deferred_alias(Host.LazyAlias, owner=Other), none=True)
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(Host.LazyAlias, owner=Other)
-        assert raised.value.name == "LazyResolvableType"
+        tm.that(raised.value.name, eq="LazyResolvableType")
 
     @staticmethod
     def test_local_alias_without_owner_keeps_its_native_name_error() -> None:
@@ -240,7 +240,7 @@ class TestsFlextBeartypeEngineAnnotations(
 
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(Host.LazyAlias)
-        assert raised.value.name == "LazyResolvableType"
+        tm.that(raised.value.name, eq="LazyResolvableType")
 
     @staticmethod
     def test_local_alias_payload_strings_are_not_static_import_dependencies() -> None:
@@ -251,5 +251,8 @@ class TestsFlextBeartypeEngineAnnotations(
             type Labeled = Annotated[str, "LazyResolvableType"]
 
         for alias in (Host.Label, Host.Labeled):
-            assert u.deferred_alias(alias, owner=Host) is None
-            assert u.resolve_type_alias_value(alias, owner=Host) is alias.__value__
+            tm.that(u.deferred_alias(alias, owner=Host), none=True)
+            tm.that(
+                u.resolve_type_alias_value(alias, owner=Host) is alias.__value__,
+                truth=True,
+            )

@@ -17,10 +17,8 @@ from collections.abc import Sequence
 
 import pydantic
 import pydantic_core
-from pydantic import json_schema as pydantic_json_schema
+from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
-
-type JsonValue = pydantic.JsonValue
 
 
 class FlextTypesPydantic:
@@ -129,6 +127,8 @@ class FlextTypesPydantic:
     # single source of truth for the JSON type surface.
     type JsonValue = pydantic.JsonValue
     type BaseModelType = pydantic.BaseModel
+    # Payload unions admit existing models without constructing BaseModel from data.
+    type BaseModelInstance = pydantic.InstanceOf[pydantic.BaseModel]
     # PEP 695 aliases, never bare class-scope assignments: a bare
     # ``BaseModel = pydantic.BaseModel`` is a variable to mypy, so it is not
     # valid as a type and breaks isinstance narrowing (mypy [unreachable]).
@@ -182,4 +182,4 @@ class FlextTypesPydantic:
     type Port[P] = pydantic_json_schema.SkipJsonSchema[P]
 
 
-__all__: list[str] = ["FlextTypesPydantic"]
+__all__: list[str] = ["FlextTypesPydantic", "JsonValue"]

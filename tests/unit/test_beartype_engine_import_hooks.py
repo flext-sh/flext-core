@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 
 _FORBIDDEN_IMPORT = "from tests.constants import c"
 
@@ -102,10 +102,10 @@ class TestsFlextCoreBeartypeEngineImportHooks:
 
         violation = self._apply(probe)
 
-        assert violation is not None
-        assert violation["statement"] == _FORBIDDEN_IMPORT
-        assert violation["file"] == "sample.py"
-        assert violation["line"] == "1"
+        tm.that(violation, none=False)
+        tm.that(violation["statement"], eq=_FORBIDDEN_IMPORT)
+        tm.that(violation["file"], eq="sample.py")
+        tm.that(violation["line"], eq="1")
 
     def test_ignores_string_literal_that_merely_mentions_a_forbidden_import(
         self,
@@ -125,7 +125,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             + "\n",
         )
 
-        assert self._apply(probe) is None
+        tm.that(self._apply(probe), none=True)
 
     def test_ignores_forbidden_import_outside_wrapper_module(
         self,
@@ -148,7 +148,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             + "\n",
         )
 
-        assert self._apply(probe) is None
+        tm.that(self._apply(probe), none=True)
 
     def test_unrelated_shape_reports_no_violation_for_clean_class(
         self,
@@ -176,7 +176,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             probe,
         )
 
-        assert result is None
+        tm.that(result, none=True)
 
     def test_detection_is_idempotent_across_repeated_applications(
         self,
@@ -202,8 +202,8 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         first = self._apply(probe)
         second = self._apply(probe)
 
-        assert first == second
-        assert first is not None
+        tm.that(first, eq=second)
+        tm.that(first, none=False)
 
     @pytest.mark.parametrize("attempts", [2, 3])
     def test_string_literal_case_stays_clean_under_repeat(
@@ -225,4 +225,4 @@ class TestsFlextCoreBeartypeEngineImportHooks:
             + "\n",
         )
 
-        assert all(self._apply(probe) is None for _ in range(attempts))
+        tm.that(all(self._apply(probe) is None for _ in range(attempts)), truth=True)

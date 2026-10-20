@@ -15,7 +15,7 @@ from typing import ClassVar
 
 import pytest
 
-from tests import c, m, t
+from tests import c, m, t, tm
 
 
 class TestsFlextCoreEnforcementSources:
@@ -48,20 +48,21 @@ class TestsFlextCoreEnforcementSources:
         member: c.EnforcementSourceKind,
         value: str,
     ) -> None:
-        assert member.value == value
+        tm.that(member.value, eq=value)
 
     @staticmethod
     def test_source_kind_has_exactly_the_surviving_members() -> None:
-        assert {kind.value for kind in c.EnforcementSourceKind} == {
-            "flext_infra_rule",
-            "runtime_warning",
-            "beartype",
-            "code_smell",
-        }
+        tm.that(
+            {kind.value for kind in c.EnforcementSourceKind},
+            eq={"flext_infra_rule", "runtime_warning", "beartype", "code_smell"},
+        )
 
     @staticmethod
     def test_source_kind_dropped_the_minimal_ast_variant() -> None:
-        assert "minimal_ast" not in {kind.value for kind in c.EnforcementSourceKind}
+        tm.that(
+            "minimal_ast" not in {kind.value for kind in c.EnforcementSourceKind},
+            truth=True,
+        )
 
     # --- discriminator literals across every source model ---
 
@@ -74,7 +75,7 @@ class TestsFlextCoreEnforcementSources:
         expected_kind: str,
         source: m.BaseModel,
     ) -> None:
-        assert source.model_dump()["kind"] == expected_kind
+        tm.that(source.model_dump()["kind"], eq=expected_kind)
 
     @staticmethod
     def test_every_source_kind_enum_value_has_a_source_model() -> None:
@@ -82,20 +83,20 @@ class TestsFlextCoreEnforcementSources:
             source.model_dump()["kind"]
             for source in TestsFlextCoreEnforcementSources._SOURCE_CASES.values()
         }
-        assert model_kinds == {kind.value for kind in c.EnforcementSourceKind}
+        tm.that(model_kinds, eq={kind.value for kind in c.EnforcementSourceKind})
 
     # --- field-level public contract ---
 
     @staticmethod
     def test_infra_rule_source_keeps_declared_rule_ids() -> None:
         source = m.EnforcementInfraRuleSource(rule_ids=("ban-cast", "ban-any"))
-        assert tuple(source.rule_ids) == ("ban-cast", "ban-any")
+        tm.that(tuple(source.rule_ids), eq=("ban-cast", "ban-any"))
 
     @staticmethod
     def test_beartype_source_carries_runtime_tag() -> None:
         source = m.EnforcementBeartypeSource(tag="no_module_compat_alias")
-        assert source.kind == "beartype"
-        assert source.tag == "no_module_compat_alias"
+        tm.that(source.kind, eq="beartype")
+        tm.that(source.tag, eq="no_module_compat_alias")
 
     # --- validation error paths ---
 
@@ -136,10 +137,10 @@ class TestsFlextCoreEnforcementSources:
     @staticmethod
     def test_fix_action_defaults_safe_true_and_empty_params() -> None:
         action = m.EnforcementFixAction(kind="manual", target="remove_bypass")
-        assert action.kind == "manual"
-        assert action.target == "remove_bypass"
-        assert action.safe is True
-        assert dict(action.params) == {}
+        tm.that(action.kind, eq="manual")
+        tm.that(action.target, eq="remove_bypass")
+        tm.that(action.safe is True, truth=True)
+        tm.that(dict(action.params), eq={})
 
     # --- model_dump round-trip (public serialization contract) ---
 
@@ -153,9 +154,9 @@ class TestsFlextCoreEnforcementSources:
         source: m.BaseModel,
     ) -> None:
         dumped = source.model_dump()
-        assert dumped["kind"] == expected_kind
+        tm.that(dumped["kind"], eq=expected_kind)
         rebuilt = type(source).model_validate(dumped)
-        assert rebuilt == source
+        tm.that(rebuilt, eq=source)
 
     # --- discriminated-union dispatch through EnforcementRuleSpec ---
 
@@ -191,8 +192,8 @@ class TestsFlextCoreEnforcementSources:
             "severity": "HIGH",
             "source": source_payload,
         })
-        assert isinstance(spec.source, expected_type)
-        assert spec.source.kind == kind
+        tm.that(isinstance(spec.source, expected_type), truth=True)
+        tm.that(spec.source.kind, eq=kind)
 
     @staticmethod
     @pytest.mark.parametrize(

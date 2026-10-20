@@ -17,7 +17,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreHandlersValidationContext(
@@ -91,7 +91,7 @@ class TestsFlextCoreHandlersValidationContext(
 
         # Assert
         error = u.Tests.assert_failure(result, c.ERR_MESSAGE_CANNOT_BE_NONE)
-        assert c.ERR_MESSAGE_CANNOT_BE_NONE in error
+        tm.that(c.ERR_MESSAGE_CANNOT_BE_NONE in error, truth=True)
 
     @pytest.mark.parametrize("falsy_message", ["", None], ids=["empty_string", "none"])
     def test_validation_handler_rejects_falsy_message(
@@ -205,7 +205,7 @@ class TestsFlextCoreHandlersValidationContext(
 
         # Assert
         popped = u.Tests.assert_success(result)
-        assert isinstance(popped, m.ConfigMap)
+        tm.that(isinstance(popped, m.ConfigMap), truth=True)
 
     def test_pop_context_on_empty_stack_returns_empty_config_map(self) -> None:
         # Arrange
@@ -218,8 +218,8 @@ class TestsFlextCoreHandlersValidationContext(
 
         # Assert
         popped = u.Tests.assert_success(result)
-        assert isinstance(popped, m.ConfigMap)
-        assert popped.model_dump() == {}
+        tm.that(isinstance(popped, m.ConfigMap), truth=True)
+        tm.that(popped.model_dump(), eq={})
 
     def test_can_handle_accepts_arbitrary_type_for_flexible_handler(self) -> None:
         # Arrange
@@ -228,8 +228,8 @@ class TestsFlextCoreHandlersValidationContext(
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act & Assert
-        assert handler.can_handle(str) is True
-        assert handler.can_handle(int) is True
+        tm.that(handler.can_handle(str) is True, truth=True)
+        tm.that(handler.can_handle(int) is True, truth=True)
 
     @pytest.mark.parametrize(
         "handler_type",
@@ -253,8 +253,8 @@ class TestsFlextCoreHandlersValidationContext(
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act & Assert
-        assert handler.handler_name == f"Props {handler_type.title()}"
-        assert handler.mode.value == handler_type
+        tm.that(handler.handler_name, eq=f"Props {handler_type.title()}")
+        tm.that(handler.mode.value, eq=handler_type)
 
     def test_execute_validates_then_produces_processed_result(self) -> None:
         # Arrange

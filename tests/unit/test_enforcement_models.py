@@ -50,25 +50,27 @@ class TestsFlextEnforcementModels:
         first_state = m.ContextRuntimeState()
         second_state = m.ContextRuntimeState()
 
-        assert first_export.data == second_export.data == {}
-        assert first_export.data is not second_export.data
-        assert first_export.statistics == second_export.statistics == {}
-        assert first_export.statistics is not second_export.statistics
-        assert (
+        tm.that(first_export.data == second_export.data, eq={})
+        tm.that(first_export.data is not second_export.data, truth=True)
+        tm.that(first_export.statistics == second_export.statistics, eq={})
+        tm.that(first_export.statistics is not second_export.statistics, truth=True)
+        tm.that(
             first_state.statistics.operations
             == second_state.statistics.operations
-            == {}
+            == {},
+            truth=True,
         )
         assert (
             first_state.statistics.operations is not second_state.statistics.operations
         )
-        assert first_state.hooks == second_state.hooks == {}
-        assert first_state.hooks is not second_state.hooks
-        assert first_state.scope_vars == second_state.scope_vars == {}
-        assert first_state.scope_vars is not second_state.scope_vars
+        tm.that(first_state.hooks == second_state.hooks, eq={})
+        tm.that(first_state.hooks is not second_state.hooks, truth=True)
+        tm.that(first_state.scope_vars == second_state.scope_vars, eq={})
+        tm.that(first_state.scope_vars is not second_state.scope_vars, truth=True)
         for model in (m.ContextExport, m.ContextStatistics, m.ContextRuntimeState):
-            assert not messages(
-                u.check(model), fragment="no_raw_collections_field_default"
+            tm.that(
+                messages(u.check(model), fragment="no_raw_collections_field_default"),
+                truth=False,
             )
 
     @staticmethod
@@ -87,7 +89,7 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             name: Annotated[str, m.Field(description="d")] = "x"
 
-        assert not messages(u.check(_M), fragment="Any")
+        tm.that(messages(u.check(_M), fragment="Any"), truth=False)
 
     @staticmethod
     def test_bare_dict_detected() -> None:
@@ -96,7 +98,10 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             data: _BARE_DICT_TYPE = m.Field(default_factory=dict, description="d")
 
-        assert messages(u.check(_M), fragment="no_raw_collections_field_default")
+        tm.that(
+            messages(u.check(_M), fragment="no_raw_collections_field_default"),
+            truth=True,
+        )
 
     @staticmethod
     def test_bare_list_detected() -> None:
@@ -105,7 +110,10 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             items: list[str] = m.Field(default_factory=list, description="d")
 
-        assert messages(u.check(_M), fragment="no_raw_collections_field_default")
+        tm.that(
+            messages(u.check(_M), fragment="no_raw_collections_field_default"),
+            truth=True,
+        )
 
     @staticmethod
     def test_mapping_passes() -> None:
@@ -119,7 +127,10 @@ class TestsFlextEnforcementModels:
                 ),
             ] = m.Field(default_factory=lambda: MappingProxyType[str, str]({}))
 
-        assert not messages(u.check(_M), fragment="no_raw_collections_field_default")
+        tm.that(
+            messages(u.check(_M), fragment="no_raw_collections_field_default"),
+            truth=False,
+        )
 
     @staticmethod
     def test_mutable_sequence_list_factory_passes() -> None:
@@ -130,7 +141,7 @@ class TestsFlextEnforcementModels:
                 default_factory=list
             )
 
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
 
     @staticmethod
     def test_mutable_sequence_alias_nested_owner_defaults_pass() -> None:
@@ -146,18 +157,18 @@ class TestsFlextEnforcementModels:
                 description="Mutable sequence of nested values.",
             )
 
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
         first = _M()
         second = _M()
-        assert first.items == second.items == []
-        assert first.items is not second.items
+        tm.that(first.items == second.items, eq=[])
+        tm.that(first.items is not second.items, truth=True)
         value = _M.Value()
         first.items.append(value)
-        assert first.items == [value]
-        assert second.items == []
+        tm.that(first.items, eq=[value])
+        tm.that(second.items, eq=[])
         provided: t.MutableSequenceOf[_M.Value] = [value]
-        assert _M(items=provided).items == provided
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(_M(items=provided).items, eq=provided)
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
         with pytest.raises(m.ValidationError):
             _M.model_validate({"items": 42})
 
@@ -174,11 +185,11 @@ class TestsFlextEnforcementModels:
                 m.Field(description="Annotated mutable sequence of nested values."),
             ] = m.Field(default_factory=list, validate_default=True)
 
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
         first = _M()
         second = _M()
-        assert first.items == second.items == []
-        assert first.items is not second.items
+        tm.that(first.items == second.items, eq=[])
+        tm.that(first.items is not second.items, truth=True)
 
     @staticmethod
     def test_mutable_mapping_forward_ref_dict_factory_passes() -> None:
@@ -193,7 +204,7 @@ class TestsFlextEnforcementModels:
                 description="Mutable mapping contract.",
             )
 
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
 
     @staticmethod
     def test_mutable_mapping_kv_forward_ref_dict_factory_passes() -> None:
@@ -214,16 +225,16 @@ class TestsFlextEnforcementModels:
                 description="Mutable mapping KV contract.",
             )
 
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
         first = _M()
         second = _M()
-        assert first.items == second.items == {}
-        assert first.items is not second.items
+        tm.that(first.items == second.items, eq={})
+        tm.that(first.items is not second.items, truth=True)
         value = _M.Value()
         first.items["value"] = value
-        assert first.items == {"value": value}
-        assert second.items == {}
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(first.items, eq={"value": value})
+        tm.that(second.items, eq={})
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
 
     @staticmethod
     def test_mutable_collection_unions_keep_pre_and_post_completion_policy() -> None:
@@ -265,13 +276,13 @@ class TestsFlextEnforcementModels:
             )
 
         before = messages(u.check(_M), fragment="read-only field contract")
-        assert len(before) == 6
+        tm.that(len(before), eq=6)
         instance = _M()
-        assert instance.sequence_union == instance.sequence_optional == []
-        assert instance.sequence_typing_union == []
-        assert instance.mapping_union == instance.mapping_optional == {}
-        assert instance.mapping_typing_union == {}
-        assert messages(u.check(_M), fragment="read-only field contract") == before
+        tm.that(instance.sequence_union == instance.sequence_optional, eq=[])
+        tm.that(instance.sequence_typing_union, eq=[])
+        tm.that(instance.mapping_union == instance.mapping_optional, eq={})
+        tm.that(instance.mapping_typing_union, eq={})
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), eq=before)
 
     @staticmethod
     def test_mutable_json_mapping_alias_dict_factory_passes() -> None:
@@ -285,7 +296,7 @@ class TestsFlextEnforcementModels:
                 ),
             ] = m.Field(default_factory=dict)
 
-        assert not messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
 
     @staticmethod
     def test_sequence_list_factory_detected() -> None:
@@ -296,7 +307,7 @@ class TestsFlextEnforcementModels:
                 default_factory=list
             )
 
-        assert messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=True)
 
     @staticmethod
     def test_sequence_alias_nested_owner_list_factory_detected() -> None:
@@ -312,7 +323,7 @@ class TestsFlextEnforcementModels:
                 description="Read-only sequence of nested values.",
             )
 
-        assert messages(u.check(_M), fragment="read-only field contract")
+        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=True)
 
     @staticmethod
     def test_missing_description_detected() -> None:
@@ -321,7 +332,7 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             name: str = "test"
 
-        assert messages(u.check(_M), fragment="missing description")
+        tm.that(messages(u.check(_M), fragment="missing description"), truth=True)
 
     @staticmethod
     def test_description_present_passes() -> None:
@@ -330,7 +341,7 @@ class TestsFlextEnforcementModels:
         class _M(m.ArbitraryTypesModel):
             name: Annotated[str, m.Field(description="A name")] = "test"
 
-        assert not messages(u.check(_M), fragment="missing description")
+        tm.that(messages(u.check(_M), fragment="missing description"), truth=False)
 
     @staticmethod
     def test_v1_config_class_detected() -> None:
@@ -343,7 +354,7 @@ class TestsFlextEnforcementModels:
 
                 name: Annotated[str, m.Field(description="d")] = "x"
 
-        assert messages(u.check(_M), fragment="Pydantic v1")
+        tm.that(messages(u.check(_M), fragment="Pydantic v1"), truth=True)
 
     @staticmethod
     def test_flexible_internal_allows_ignore() -> None:
@@ -352,27 +363,36 @@ class TestsFlextEnforcementModels:
         class _M(m.FlexibleInternalModel):
             name: Annotated[str, m.Field(description="d")] = "x"
 
-        assert not messages(u.check(_M), fragment="extra")
+        tm.that(messages(u.check(_M), fragment="extra"), truth=False)
 
     @staticmethod
     def test_mode_default_is_warn() -> None:
         """Test mode default is warn."""
-        assert c.ENFORCEMENT_MODE is c.EnforcementMode.WARN
+        tm.that(c.ENFORCEMENT_MODE is c.EnforcementMode.WARN, truth=True)
 
     @staticmethod
     def test_enforcement_rules_loaded() -> None:
         """Test enforcement rules loaded."""
-        assert len(c.ENFORCEMENT_TAG_CATEGORY) > 0
-        assert all(
-            cat in c.EnforcementCategory for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
+        tm.that(len(c.ENFORCEMENT_TAG_CATEGORY) > 0, truth=True)
+        tm.that(
+            all(
+                cat in c.EnforcementCategory
+                for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
+            ),
+            truth=True,
         )
         # Every runtime rule row carries its own problem/fix text.
-        assert set(c.ENFORCEMENT_TAG_CATEGORY) <= set(c.ENFORCEMENT_RULES_TEXT)
+        tm.that(
+            set(c.ENFORCEMENT_TAG_CATEGORY) <= set(c.ENFORCEMENT_RULES_TEXT), truth=True
+        )
 
     @staticmethod
     def test_canonical_flext_core_class_satisfies_prefix_contract() -> None:
         """A correctly named ``flext_core`` class raises no class-prefix violation."""
-        assert not messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix")
+        tm.that(
+            messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix"),
+            truth=False,
+        )
 
     @pytest.mark.parametrize(
         ("module", "expect_prefix_violation"),
@@ -397,6 +417,6 @@ class TestsFlextEnforcementModels:
 
         hits = messages(u.check(misnamed), fragment="class_prefix")
 
-        assert bool(hits) is expect_prefix_violation
+        tm.that(bool(hits) is expect_prefix_violation, truth=True)
         if expect_prefix_violation:
-            assert any('prefix "Flext"' in message for message in hits)
+            tm.that(any('prefix "Flext"' in message for message in hits), truth=True)

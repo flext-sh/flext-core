@@ -453,8 +453,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
-BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -1038,6 +1038,21 @@ _activated-check: _builtin_require_environment
 
 
 
+check-pyright: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'check-pyright' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-check-pyright,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-check-pyright)
+
+.PHONY: _activated-check-pyright
+
+_activated-check-pyright: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-check-pyright,$(call RUN_PUBLIC,check-pyright))
+
+
+
+
 census: _builtin_require_workspace
 	@printf '==> %s | project=%s | profile=%s\n' 'census' "$(PROJECT_ROOT)" 'standalone'
 
@@ -1598,6 +1613,21 @@ _activated-mod: _builtin_require_environment
 
 
 
+mod-types: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'mod-types' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-mod-types,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod-types)
+
+.PHONY: _activated-mod-types
+
+_activated-mod-types: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-types,$(call RUN_PUBLIC,mod-types))
+
+
+
+
 mod-rules: _builtin_require_workspace
 	@printf '==> %s | project=%s | profile=%s\n' 'mod-rules' "$(PROJECT_ROOT)" 'standalone'
 
@@ -1786,6 +1816,10 @@ check:
 	@printf '  %-16s %s\n' 'check' 'Check the configured quality gates and projection conformance without writes.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make check to execute it.'
 
+check-pyright:
+	@printf '  %-16s %s\n' 'check-pyright' 'Run the complete configured Pyright analysis and retain its native gate receipt.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make check-pyright to execute it.'
+
 census:
 	@printf '  %-16s %s\n' 'census' 'Inventory constants, duplicate declarations and placement across every declared first-party project.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make census to execute it.'
@@ -1942,6 +1976,10 @@ mod:
 	@printf '  %-16s %s\n' 'mod' 'Apply the declared structural codemods; committed rule-test snapshots are verified, never rewritten.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod to execute it.'
 
+mod-types:
+	@printf '  %-16s %s\n' 'mod-types' 'Apply the declared source type-contract migrations through the native AST fixed point.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-types to execute it.'
+
 mod-rules:
 	@printf '  %-16s %s\n' 'mod-rules' 'Evaluate the declared AST and text rule catalogs across every governed project without rewriting sources; publish occurrence evidence by rule and repository.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-rules to execute it.'
@@ -2024,6 +2062,8 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'check' 'Check the configured quality gates and projection conformance without writes.';
 
+	@printf '  %-16s %s\n' 'check-pyright' 'Run the complete configured Pyright analysis and retain its native gate receipt.';
+
 	@printf '  %-16s %s\n' 'census' 'Inventory constants, duplicate declarations and placement across every declared first-party project.';
 
 	@printf '  %-16s %s\n' 'census-constants' 'Apply identity-proven constants consumer rewrites through the workspace census and publish its complete report.';
@@ -2101,6 +2141,8 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'project-new' 'Create a new project through the canonical scaffold service using explicitly declared identity inputs.';
 
 	@printf '  %-16s %s\n' 'mod' 'Apply the declared structural codemods; committed rule-test snapshots are verified, never rewritten.';
+
+	@printf '  %-16s %s\n' 'mod-types' 'Apply the declared source type-contract migrations through the native AST fixed point.';
 
 	@printf '  %-16s %s\n' 'mod-rules' 'Evaluate the declared AST and text rule catalogs across every governed project without rewriting sources; publish occurrence evidence by rule and repository.';
 
@@ -3012,6 +3054,8 @@ _builtin-examples: _builtin_require_environment
 	@timeout --signal=TERM --kill-after=5s "120s" $(UV_RUN) python -m examples.ex_12_flext_registry
 
 _builtin-check: _builtin_check_all
+_builtin-check-pyright: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) workspace capture-gate --repository-root "$(PROJECT_ROOT)" --gates "pyright"
 _builtin-test: _builtin_test_all
 _builtin-tests: _builtin_test_full_all
 _builtin-test-full: _builtin_test_full_all
@@ -3046,6 +3090,8 @@ _builtin-publication: _builtin_release_publish
 _builtin-gen: _builtin_gen_all
 _builtin-initialize: _builtin_gen_init
 _builtin-mod: _builtin_mod_apply
+_builtin-mod-types: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) refactor ast --repository-root "$(PROJECT_ROOT)" --rules "bind-typing-adapter-utilities,rewire-cli-json-mapping-adapter,rewire-cli-json-list-adapter,pydantic-field-positional-default,pydantic-unset-private-attribute,codegen-conform-state-request-workspace,codegen-conform-state-workspace-request,codegen-conform-state-request,codegen-conform-state-workspace,codegen-conform-state-workspace-only,codegen-conform-state-ports" --apply
 _builtin-mod-rules: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) refactor ast --repository-root "$(PROJECT_ROOT)"
 _builtin-mod-text: _builtin_mod_text

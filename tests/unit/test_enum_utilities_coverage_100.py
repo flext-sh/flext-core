@@ -106,16 +106,16 @@ class TestsFlextCoreEnumUtilities:
             tm.that(result.value, eq=scenario.expected_status)
         else:
             tm.fail(result)
-            assert scenario.expected_error is not None
-            assert result.error is not None
-            assert scenario.expected_error in result.error
+            tm.that(scenario.expected_error, none=False)
+            tm.that(result.error, none=False)
+            tm.that(scenario.expected_error in result.error, truth=True)
 
     def test_parsed_member_round_trips_into_enum_values(self) -> None:
         """A successfully parsed member's value is present in enum_values."""
         result = u.parse("pending", self.Status)
 
         tm.ok(result)
-        assert result.value.value in u.enum_values(self.Status)
+        tm.that(result.value.value in u.enum_values(self.Status), truth=True)
 
     def test_enum_values_returns_complete_value_set(self) -> None:
         """enum_values exposes exactly the declared member string values."""
@@ -127,8 +127,8 @@ class TestsFlextCoreEnumUtilities:
         """The returned value set is a frozenset and cannot be mutated."""
         values = u.enum_values(self.Status)
 
-        assert isinstance(values, frozenset)
-        assert not hasattr(values, "add")
+        tm.that(isinstance(values, frozenset), truth=True)
+        tm.that(hasattr(values, "add"), truth=False)
 
     def test_enum_values_is_idempotent(self) -> None:
         """Repeated calls return equal value sets regardless of internal caching."""
@@ -143,4 +143,4 @@ class TestsFlextCoreEnumUtilities:
         priority_values = u.enum_values(self.Priority)
 
         tm.that(priority_values, eq=frozenset({"low", "medium", "high"}))
-        assert status_values.isdisjoint(priority_values)
+        tm.that(status_values.isdisjoint(priority_values), truth=True)

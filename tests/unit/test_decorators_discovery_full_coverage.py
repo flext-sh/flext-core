@@ -15,7 +15,7 @@ import types
 
 import pytest
 
-from tests import d, p, r, u
+from tests import d, p, r, tm, u
 
 
 class TestsFlextDecoratorsDiscovery:
@@ -29,7 +29,7 @@ class TestsFlextDecoratorsDiscovery:
         """Test scan module with no factories returns empty list."""
         mod = types.ModuleType("empty_mod")
 
-        assert u.scan_module(mod) == []
+        tm.that(u.scan_module(mod), eq=[])
 
     @staticmethod
     def test_scan_module_ignores_undecorated_functions() -> None:
@@ -41,7 +41,7 @@ class TestsFlextDecoratorsDiscovery:
 
         mod.__dict__["plain"] = plain
 
-        assert u.scan_module(mod) == []
+        tm.that(u.scan_module(mod), eq=[])
 
     @staticmethod
     def test_scan_module_ignores_non_callable_attributes() -> None:
@@ -50,7 +50,7 @@ class TestsFlextDecoratorsDiscovery:
         mod.__dict__["some_string"] = "not callable"
         mod.__dict__["some_number"] = 42
 
-        assert u.scan_module(mod) == []
+        tm.that(u.scan_module(mod), eq=[])
 
     @staticmethod
     def test_scan_module_discovers_decorated_public_function() -> None:
@@ -65,10 +65,10 @@ class TestsFlextDecoratorsDiscovery:
 
         result = u.scan_module(mod)
 
-        assert len(result) == 1
+        tm.that(len(result), eq=1)
         attr_name, config = result[0]
-        assert attr_name == "build_service"
-        assert config.name == "my_service"
+        tm.that(attr_name, eq="build_service")
+        tm.that(config.name, eq="my_service")
 
     @staticmethod
     def test_scan_module_skips_private_names() -> None:
@@ -81,7 +81,7 @@ class TestsFlextDecoratorsDiscovery:
 
         mod.__dict__["_private_factory"] = _private_factory
 
-        assert u.scan_module(mod) == []
+        tm.that(u.scan_module(mod), eq=[])
 
     @pytest.mark.parametrize(
         ("singleton", "lazy"),
@@ -104,11 +104,10 @@ class TestsFlextDecoratorsDiscovery:
 
         ((_, config),) = u.scan_module(mod)
 
-        assert config.model_dump() == {
-            "name": "configured",
-            "singleton": singleton,
-            "lazy": lazy,
-        }
+        tm.that(
+            config.model_dump(),
+            eq={"name": "configured", "singleton": singleton, "lazy": lazy},
+        )
 
     @staticmethod
     def test_scan_module_returns_results_sorted_by_attribute_name() -> None:
@@ -128,7 +127,7 @@ class TestsFlextDecoratorsDiscovery:
 
         result = u.scan_module(mod)
 
-        assert [name for name, _ in result] == ["alpha", "zebra"]
+        tm.that([name for name, _ in result], eq=["alpha", "zebra"])
 
     @staticmethod
     def test_scan_module_returns_only_decorated_functions_from_mixed_module() -> None:
@@ -148,7 +147,7 @@ class TestsFlextDecoratorsDiscovery:
 
         result = u.scan_module(mod)
 
-        assert [name for name, _ in result] == ["decorated"]
+        tm.that([name for name, _ in result], eq=["decorated"])
 
     @staticmethod
     def test_scan_module_is_idempotent() -> None:
@@ -164,5 +163,5 @@ class TestsFlextDecoratorsDiscovery:
         first = u.scan_module(mod)
         second = u.scan_module(mod)
 
-        assert first == second
-        assert [name for name, _ in first] == ["build"]
+        tm.that(first, eq=second)
+        tm.that([name for name, _ in first], eq=["build"])

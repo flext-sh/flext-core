@@ -126,8 +126,8 @@ class TestsFlextCoreEnforcementLayers:
     def _utilities_instance_method() -> type:
         # Built dynamically: the offending shape is an instance method, which a
         # ``class`` body would see rewritten to ``@staticmethod`` by ``make fix``.
-        def _run[SelfT](_self: SelfT) -> None:
-            return None
+        def _run[SelfT](_self: SelfT) -> SelfT:
+            return _self
 
         return type("_UUtilities", (), {"run": _run})
 
@@ -228,10 +228,10 @@ class TestsFlextCoreEnforcementLayers:
         report = u.check(self._constants_mutable_list(), layer="constants")
 
         # Assert -- public contract: a typed Report with a list of violations.
-        assert isinstance(report, m.Report)
-        assert isinstance(report.violations, list)
-        assert all(isinstance(v.message, str) for v in report.violations)
-        assert all(isinstance(v.layer, str) for v in report.violations)
+        tm.that(isinstance(report, m.Report), truth=True)
+        tm.that(isinstance(report.violations, list), truth=True)
+        tm.that(all(isinstance(v.message, str) for v in report.violations), truth=True)
+        tm.that(all(isinstance(v.layer, str) for v in report.violations), truth=True)
 
     @pytest.mark.parametrize(
         ("build", "layer", "expected_layer", "rule_tag"),
@@ -276,7 +276,7 @@ class TestsFlextCoreEnforcementLayers:
         report = u.check(target, layer=layer)
 
         # Assert -- the specific layer/rule fires on the offending class.
-        assert (expected_layer, rule_tag) in self._rule_tags(report)
+        tm.that((expected_layer, rule_tag) in self._rule_tags(report), truth=True)
 
     @pytest.mark.parametrize(
         ("build", "layer", "rule_tag"),
@@ -307,7 +307,7 @@ class TestsFlextCoreEnforcementLayers:
         report = u.check(target, layer=layer)
 
         # Assert -- the rule stays silent for compliant input.
-        assert rule_tag not in {tag for _, tag in self._rule_tags(report)}
+        tm.that(rule_tag not in {tag for _, tag in self._rule_tags(report)}, truth=True)
 
     def test_layer_is_auto_detected_from_class_name(self) -> None:
         # Arrange -- a ``_CConstants``-named class carrying a constants violation.
@@ -318,7 +318,7 @@ class TestsFlextCoreEnforcementLayers:
         report = u.check(target)
 
         # Assert -- constants rules run without being told to.
-        assert ("Constants", "const_mutable") in self._rule_tags(report)
+        tm.that(("Constants", "const_mutable") in self._rule_tags(report), truth=True)
 
     def test_explicit_layer_overrides_auto_detection(self) -> None:
         # Arrange -- same constants violation, forced onto a different layer.
@@ -331,8 +331,8 @@ class TestsFlextCoreEnforcementLayers:
 
         # Assert -- the explicit layer gates which rules run.
         constants_hit = ("Constants", "const_mutable")
-        assert constants_hit not in forced_utilities
-        assert constants_hit in forced_constants
+        tm.that(constants_hit not in forced_utilities, truth=True)
+        tm.that(constants_hit in forced_constants, truth=True)
 
     def test_check_is_idempotent(self) -> None:
         # Arrange
@@ -344,7 +344,7 @@ class TestsFlextCoreEnforcementLayers:
         second = u.check(target, layer="constants")
 
         # Assert -- pure query: repeated checks yield the same violation set.
-        assert self._rule_tags(first) == self._rule_tags(second)
+        tm.that(self._rule_tags(first), eq=self._rule_tags(second))
 
     def test_compliant_class_reports_no_layer_violation(self) -> None:
         # Arrange -- a class clean for the constants layer.
@@ -355,4 +355,7 @@ class TestsFlextCoreEnforcementLayers:
         report = u.check(target, layer="constants")
 
         # Assert -- no Constants-layer rule fires.
-        assert not any(layer == "Constants" for layer, _ in self._rule_tags(report))
+        tm.that(
+            any(layer == "Constants" for layer, _ in self._rule_tags(report)),
+            truth=False,
+        )

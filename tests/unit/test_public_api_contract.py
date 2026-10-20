@@ -92,22 +92,24 @@ class TestsFlextCorePublicApiContract:
             public_exports=("Counter",),
         )
         resolver = namespace["__getattr__"]
-        assert callable(resolver)
+        tm.that(callable(resolver), truth=True)
         counter = resolver("Counter")
-        assert isinstance(counter, type)
-        assert counter.__name__ == "Counter"
+        tm.that(isinstance(counter, type), truth=True)
+        tm.that(counter.__name__, eq="Counter")
 
     @staticmethod
     @pytest.mark.parametrize("name", _FACADES)
     def test_named_facade_is_importable(name: str) -> None:
         """Every advertised facade is reachable from the package root."""
-        assert hasattr(flext_core, name), f"{name} not importable from flext_core"
+        tm.that(
+            hasattr(flext_core, name), truth=True, msg=f"{name} not importable from flext_core"
+        )
 
     @staticmethod
     def test_every_all_entry_resolves_to_an_object() -> None:
         """Each name published in ``__all__`` actually resolves via ``getattr``."""
         missing = [name for name in flext_core.__all__ if not hasattr(flext_core, name)]
-        assert not missing, f"Names in __all__ but not importable: {missing}"
+        tm.that(missing, truth=False, msg=f"Names in __all__ but not importable: {missing}")
 
     @staticmethod
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
@@ -119,7 +121,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         facade = getattr(flext_core, facade_name)
         # Assert
-        assert getattr(flext_core, alias) is facade
+        tm.that(getattr(flext_core, alias) is facade, truth=True)
 
     @staticmethod
     def test_ok_result_reports_success_and_yields_value() -> None:
@@ -127,11 +129,11 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         result = r.ok(5)
         # Assert
-        assert result.success is True
-        assert result.failure is False
-        assert bool(result) is True
-        assert result.value == 5
-        assert result.unwrap() == 5
+        tm.that(result.success is True, truth=True)
+        tm.that(result.failure is False, truth=True)
+        tm.that(bool(result) is True, truth=True)
+        tm.that(result.value, eq=5)
+        tm.that(result.unwrap(), eq=5)
 
     @staticmethod
     def test_fail_result_reports_failure_and_carries_error() -> None:
@@ -139,11 +141,11 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         result: p.Result[int] = r[int].fail("boom", error_code="E42")
         # Assert
-        assert result.success is False
-        assert result.failure is True
-        assert bool(result) is False
-        assert result.error == "boom"
-        assert result.error_code == "E42"
+        tm.that(result.success is False, truth=True)
+        tm.that(result.failure is True, truth=True)
+        tm.that(bool(result) is False, truth=True)
+        tm.that(result.error, eq="boom")
+        tm.that(result.error_code, eq="E42")
 
     @staticmethod
     def test_value_access_on_failure_raises() -> None:
@@ -167,15 +169,15 @@ class TestsFlextCorePublicApiContract:
     def test_unwrap_or_returns_default_on_failure_and_value_on_success() -> None:
         """``unwrap_or`` yields the wrapped value on success, the default on failure."""
         # Arrange / Act / Assert
-        assert r.ok(7).unwrap_or(99) == 7
-        assert r.fail("boom").unwrap_or(99) == 99
+        tm.that(r.ok(7).unwrap_or(99), eq=7)
+        tm.that(r.fail("boom").unwrap_or(99), eq=99)
 
     @staticmethod
     def test_unwrap_or_else_invokes_supplier_only_on_failure() -> None:
         """``unwrap_or_else`` computes the fallback from the supplier on failure."""
         # Arrange / Act / Assert
-        assert r.fail("boom").unwrap_or_else(lambda: 42) == 42
-        assert r.ok(1).unwrap_or_else(lambda: 42) == 1
+        tm.that(r.fail("boom").unwrap_or_else(lambda: 42), eq=42)
+        tm.that(r.ok(1).unwrap_or_else(lambda: 42), eq=1)
 
     @staticmethod
     def test_map_transforms_success_and_passes_failure_through() -> None:
@@ -184,9 +186,9 @@ class TestsFlextCorePublicApiContract:
         mapped: p.Result[int] = r.ok(3).map(lambda v: v * 2)
         passthrough: p.Result[int] = r[int].fail("boom").map(lambda v: v * 2)
         # Assert
-        assert mapped.value == 6
-        assert passthrough.failure is True
-        assert passthrough.error == "boom"
+        tm.that(mapped.value, eq=6)
+        tm.that(passthrough.failure is True, truth=True)
+        tm.that(passthrough.error, eq="boom")
 
     @staticmethod
     def test_map_is_chainable_and_composes() -> None:
@@ -194,7 +196,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         result: p.Result[int] = r.ok(2).map(lambda v: v + 1).map(lambda v: v * 10)
         # Assert
-        assert result.unwrap() == 30
+        tm.that(result.unwrap(), eq=30)
 
     @staticmethod
     def test_flat_map_chains_success_and_short_circuits_failure() -> None:
@@ -203,9 +205,9 @@ class TestsFlextCorePublicApiContract:
         chained = r[int].ok(3).flat_map(_increment_step)
         short = r[int].fail("boom").flat_map(_increment_step)
         # Assert
-        assert chained.value == 4
-        assert short.failure is True
-        assert short.error == "boom"
+        tm.that(chained.value, eq=4)
+        tm.that(short.failure is True, truth=True)
+        tm.that(short.error, eq="boom")
 
     @staticmethod
     def test_recover_converts_failure_into_success() -> None:
@@ -213,7 +215,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         recovered: p.Result[int] = r[int].fail("boom").recover(lambda _err: 7)
         # Assert
-        assert recovered.value == 7
+        tm.that(recovered.value, eq=7)
 
     @staticmethod
     def test_tap_observes_success_value_without_altering_result() -> None:
@@ -223,8 +225,8 @@ class TestsFlextCorePublicApiContract:
         # Act
         result: p.Result[int] = r.ok(9).tap(seen.append)
         # Assert
-        assert seen == [9]
-        assert result.value == 9
+        tm.that(seen, eq=[9])
+        tm.that(result.value, eq=9)
 
     @staticmethod
     def test_tap_error_observes_error_message_on_failure() -> None:
@@ -234,15 +236,15 @@ class TestsFlextCorePublicApiContract:
         # Act
         result: p.Result[int] = r[int].fail("bad").tap_error(seen.append)
         # Assert
-        assert seen == ["bad"]
-        assert result.failure is True
+        tm.that(seen, eq=["bad"])
+        tm.that(result.failure is True, truth=True)
 
     @staticmethod
     def test_result_repr_reflects_success_and_failure_state() -> None:
         """``repr`` distinguishes ok and fail results for debuggability."""
         # Arrange / Act / Assert
-        assert repr(r[int].ok(1)) == "r[T].ok(1)"
-        assert repr(r[int].fail("z")) == "r[T].fail('z')"
+        tm.that(repr(r[int].ok(1)), eq="r[T].ok(1)")
+        tm.that(repr(r[int].fail("z")), eq="r[T].fail('z')")
 
     @staticmethod
     @pytest.mark.parametrize("exc_name", ["MroViolation", "SmellViolation"])
@@ -252,7 +254,7 @@ class TestsFlextCorePublicApiContract:
         """Structured exception classes raise with, and preserve, their message."""
         # Arrange
         exc_type: type[Exception] = getattr(e, exc_name)
-        assert issubclass(exc_type, Exception)
+        tm.that(issubclass(exc_type, Exception), truth=True)
         message = "broken invariant"
         # Act / Assert
         with pytest.raises(exc_type, match="broken"):
@@ -264,8 +266,8 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         version = flext_core.__version__
         # Assert
-        assert isinstance(version, str)
-        assert version
+        tm.that(isinstance(version, str), truth=True)
+        tm.that(version, truth=True)
 
     @staticmethod
     def test_settings_facade_exposes_base_class() -> None:
@@ -273,27 +275,35 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         base = flext_core.FlextSettings
         # Assert
-        assert base is FlextSettings
+        tm.that(base is FlextSettings, truth=True)
 
     @staticmethod
     def test_exceptions_mro_violation_is_real_reference() -> None:
         """``FlextExceptions.MroViolation`` is the canonical violation class."""
-        assert flext_core.FlextExceptions.MroViolation is FlextMroViolation
+        tm.that(
+            flext_core.FlextExceptions.MroViolation is FlextMroViolation, truth=True
+        )
 
     @staticmethod
     def test_flextcore_facade_is_importable_and_singleton() -> None:
         """``FlextCore`` facade and ``core`` singleton are importable and functional."""
-        assert hasattr(flext_core, "FlextCore"), (
-            "FlextCore not importable from flext_core"
+        tm.that(
+            hasattr(flext_core, "FlextCore"),
+            truth=True,
+            msg="FlextCore not importable from flext_core",
         )
-        assert hasattr(flext_core, "core"), "core not importable from flext_core"
+        tm.that(
+            hasattr(flext_core, "core"),
+            truth=True,
+            msg="core not importable from flext_core",
+        )
         # The singleton should be an instance of FlextCore
-        assert isinstance(flext_core.core, flext_core.FlextCore)
+        tm.that(isinstance(flext_core.core, flext_core.FlextCore), truth=True)
         # core should have container access via MRO
-        assert hasattr(flext_core.core, "container")
-        assert hasattr(flext_core.core, "registry")
-        assert hasattr(flext_core.core, "dispatcher")
-        assert hasattr(flext_core.core, "settings")
+        tm.that(hasattr(flext_core.core, "container"), truth=True)
+        tm.that(hasattr(flext_core.core, "registry"), truth=True)
+        tm.that(hasattr(flext_core.core, "dispatcher"), truth=True)
+        tm.that(hasattr(flext_core.core, "settings"), truth=True)
 
     @staticmethod
     def test_facade_registry_keeps_instance_plugins_between_accesses() -> None:
@@ -318,7 +328,7 @@ class TestsFlextCorePublicApiContract:
         tm.ok(facade.registry.register(binding, "registered-value"))
         tm.that(facade.container.resolve(binding).unwrap(), eq="registered-value")
         tm.that(sibling.container.has(binding), eq=False)
-        tm.that(facade.settings.model_dump(), eq=custom_settings.model_dump())
+        tm.that(facade.settings is custom_settings, eq=True)
         tm.that(facade.registry.dispatcher is facade.dispatcher, eq=True)
 
     @staticmethod

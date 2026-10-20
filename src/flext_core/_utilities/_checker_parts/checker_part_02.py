@@ -11,14 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING, get_origin, get_type_hints
+from types import FunctionType, MethodType
+from typing import get_origin, get_type_hints
 
 from flext_core import FlextResult, c, p
 from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities._checker_parts import checker_part_01
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 
 class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
@@ -58,7 +56,7 @@ class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
     @classmethod
     def _get_method_signature(
         cls,
-        handle_method: Callable[..., FlextTypesServices.ModuleExport],
+        handle_method: FunctionType | MethodType,
     ) -> p.Result[inspect.Signature]:
         """Extract signature from handle method, wrapping errors in Result.
 
@@ -76,7 +74,7 @@ class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
     @classmethod
     def _get_type_hints_safe(
         cls,
-        handle_method: Callable[..., FlextTypesServices.ModuleExport],
+        handle_method: FunctionType | MethodType,
         handler_class: type,
     ) -> FlextTypingBase.MappingKV[str, FlextTypingBase.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error.
@@ -88,10 +86,15 @@ class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
         hints: FlextTypingBase.MappingKV[
             str, FlextTypingBase.TypeHintSpecifier | None
         ] = {}
+        function = (
+            handle_method.__func__
+            if isinstance(handle_method, MethodType)
+            else handle_method
+        )
         try:
             hints = get_type_hints(
-                handle_method,
-                globalns=handle_method.__globals__,
+                function,
+                globalns=function.__globals__,
                 localns=dict(vars(handler_class)),
             )
         except (NameError, AttributeError, TypeError):

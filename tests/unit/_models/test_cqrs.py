@@ -32,7 +32,7 @@ class TestsFlextCoreCqrs:
         command = m.Command()
 
         # Assert
-        assert command.message_type == "command"
+        tm.that(command.message_type, eq="command")
 
     @staticmethod
     def test_command_message_type_is_immutable() -> None:
@@ -53,7 +53,7 @@ class TestsFlextCoreCqrs:
         command = m.Command()
 
         # Assert
-        assert command.command_id.startswith("cmd_")
+        tm.that(command.command_id.startswith("cmd_"), truth=True)
 
     @staticmethod
     def test_command_identifiers_are_unique_per_instance() -> None:
@@ -62,7 +62,7 @@ class TestsFlextCoreCqrs:
         second = m.Command()
 
         # Assert
-        assert first.command_id != second.command_id
+        tm.that(first.command_id, ne=second.command_id)
 
     @staticmethod
     def test_command_accepts_explicit_identifier() -> None:
@@ -70,12 +70,12 @@ class TestsFlextCoreCqrs:
         command = m.Command(command_id="cmd-supplied")
 
         # Assert
-        assert command.command_id == "cmd-supplied"
+        tm.that(command.command_id, eq="cmd-supplied")
 
     @staticmethod
     def test_command_issuer_id_defaults_to_none() -> None:
         # Act / Assert
-        assert m.Command().issuer_id is None
+        tm.that(m.Command().issuer_id, none=True)
 
     @staticmethod
     def test_command_retains_supplied_issuer_id() -> None:
@@ -83,7 +83,7 @@ class TestsFlextCoreCqrs:
         command = m.Command(issuer_id="principal-42")
 
         # Assert
-        assert command.issuer_id == "principal-42"
+        tm.that(command.issuer_id, eq="principal-42")
 
     @staticmethod
     def test_command_dump_exposes_public_fields_only() -> None:
@@ -91,12 +91,15 @@ class TestsFlextCoreCqrs:
         dumped = m.Command(command_id="cmd-1").model_dump()
 
         # Assert
-        assert dumped == {
-            "message_type": "command",
-            "command_type": dumped["command_type"],
-            "command_id": "cmd-1",
-            "issuer_id": None,
-        }
+        tm.that(
+            dumped,
+            eq={
+                "message_type": "command",
+                "command_type": dumped["command_type"],
+                "command_id": "cmd-1",
+                "issuer_id": None,
+            },
+        )
 
     @staticmethod
     def test_command_subclass_extends_fields_and_inherits_contract() -> None:
@@ -108,9 +111,9 @@ class TestsFlextCoreCqrs:
         command = CreateItem(name="widget")
 
         # Assert
-        assert command.name == "widget"
-        assert command.message_type == "command"
-        assert command.command_id.startswith("cmd_")
+        tm.that(command.name, eq="widget")
+        tm.that(command.message_type, eq="command")
+        tm.that(command.command_id.startswith("cmd_"), truth=True)
 
     # ------------------------------------------------------------------ #
     # Query
@@ -118,7 +121,7 @@ class TestsFlextCoreCqrs:
     @staticmethod
     def test_query_message_type_discriminator_is_query() -> None:
         # Act / Assert
-        assert m.Query().message_type == "query"
+        tm.that(m.Query().message_type, eq="query")
 
     @staticmethod
     def test_query_message_type_is_immutable() -> None:
@@ -136,12 +139,12 @@ class TestsFlextCoreCqrs:
     @staticmethod
     def test_query_generates_prefixed_identifier_by_default() -> None:
         # Act / Assert
-        assert m.Query().query_id.startswith("query_")
+        tm.that(m.Query().query_id.startswith("query_"), truth=True)
 
     @staticmethod
     def test_query_filters_default_to_empty() -> None:
         # Act / Assert
-        assert dict(m.Query().filters) == {}
+        tm.that(dict(m.Query().filters), eq={})
 
     @staticmethod
     def test_query_retains_supplied_filters() -> None:
@@ -149,12 +152,12 @@ class TestsFlextCoreCqrs:
         query = m.Query(filters={"status": "active", "tenant": "acme"})
 
         # Assert
-        assert dict(query.filters) == {"status": "active", "tenant": "acme"}
+        tm.that(dict(query.filters), eq={"status": "active", "tenant": "acme"})
 
     @staticmethod
     def test_query_query_type_defaults_to_none() -> None:
         # Act / Assert
-        assert m.Query().query_type is None
+        tm.that(m.Query().query_type, none=True)
 
     @staticmethod
     def test_query_provides_default_pagination() -> None:
@@ -162,7 +165,7 @@ class TestsFlextCoreCqrs:
         query = m.Query()
 
         # Assert
-        assert query.pagination.page == 1
+        tm.that(query.pagination.page, eq=1)
 
     @staticmethod
     def test_query_coerces_pagination_mapping_into_model() -> None:
@@ -170,9 +173,9 @@ class TestsFlextCoreCqrs:
         query = m.Query.model_validate({"pagination": {"page": 2, "size": 5}})
 
         # Assert
-        assert query.pagination.page == 2
-        assert query.pagination.size == 5
-        assert query.pagination.offset == 5
+        tm.that(query.pagination.page, eq=2)
+        tm.that(query.pagination.size, eq=5)
+        tm.that(query.pagination.offset, eq=5)
 
     @pytest.mark.parametrize(
         "invalid_pagination",
@@ -195,9 +198,9 @@ class TestsFlextCoreCqrs:
         query = GetItem(item_id="7")
 
         # Assert
-        assert query.item_id == "7"
-        assert query.message_type == "query"
-        assert query.query_id.startswith("query_")
+        tm.that(query.item_id, eq="7")
+        tm.that(query.message_type, eq="query")
+        tm.that(query.query_id.startswith("query_"), truth=True)
 
     # ------------------------------------------------------------------ #
     # Pagination
@@ -208,8 +211,8 @@ class TestsFlextCoreCqrs:
         pagination = m.Pagination()
 
         # Assert
-        assert pagination.page == 1
-        assert pagination.offset == 0
+        tm.that(pagination.page, eq=1)
+        tm.that(pagination.offset, eq=0)
 
     @staticmethod
     def test_pagination_limit_mirrors_size() -> None:
@@ -217,7 +220,7 @@ class TestsFlextCoreCqrs:
         pagination = m.Pagination(size=25)
 
         # Assert
-        assert pagination.limit == 25
+        tm.that(pagination.limit, eq=25)
 
     @pytest.mark.parametrize(
         ("page", "size", "expected_offset"),
@@ -233,7 +236,7 @@ class TestsFlextCoreCqrs:
         pagination = m.Pagination(page=page, size=size)
 
         # Assert
-        assert pagination.offset == expected_offset
+        tm.that(pagination.offset, eq=expected_offset)
 
     @pytest.mark.parametrize(
         "invalid_kwargs",

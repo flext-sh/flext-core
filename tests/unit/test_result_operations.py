@@ -193,7 +193,7 @@ class TestsFlextResultOperations:
 
         filtered = result.filter(lambda x: x > 5)
 
-        assert filtered.success is expected_success
+        tm.that(filtered.success is expected_success, truth=True)
         if expected_success:
             tm.that(filtered.unwrap(), eq=value)
 
@@ -211,7 +211,7 @@ class TestsFlextResultOperations:
         expected: bool,
     ) -> None:
         """bool(result) is True for success and False for failure."""
-        assert bool(result) is expected
+        tm.that(bool(result) is expected, truth=True)
         tm.that(bool(result), eq=expected)
 
     # --- railway composition --------------------------------------------

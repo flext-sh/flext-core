@@ -19,6 +19,7 @@ import threading
 import traceback
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stderr
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
@@ -29,6 +30,7 @@ from tests import c, m, p, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from typing import Never
 
 
 class TestsFlextLoggingStages:
@@ -170,8 +172,9 @@ class TestsFlextLoggingStages:
         logger = u.create_module_logger("tests.logging.stages.ordered")
         payload: t.JsonDict = {"items": [1, {"enabled": True}], "empty": None}
 
+        failure = ValueError("active exception context")
         try:
-            _ = int("active exception context")
+            raise failure
         except ValueError:
             result = logger.info("ordered stages", payload=payload, exc_info=True)
         else:
@@ -278,6 +281,81 @@ class TestsFlextLoggingStages:
         """The options boundary rejects a noncallable stage."""
         with pytest.raises(ValidationError):
             _ = m.StructlogOptions.model_validate({"processing_stages": [1]})
+
+    @pytest.mark.parametrize("saved_tuple", [False, True])
+    def test_native_exception_admission_keeps_ordinary_fields_json(
+        self, *, saved_tuple: bool
+    ) -> None:
+        """Native causes retain identity while ordinary fields use canonical JSON."""
+        stream = io.StringIO()
+        observed: list[p.LoggingEvent] = []
+
+        def observe(
+            logger: p.OutputLogger,
+            method_name: str,
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
+            _ = logger, method_name
+            observed.append(dict(event_dict))
+            return event_dict
+
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                console_renderer=False,
+                processing_stages=(observe,),
+                logger_factory=structlog.PrintLoggerFactory(file=stream),
+            )
+        )
+        original = ValueError("saved native logging cause")
+        try:
+            raise original
+        except ValueError:
+            saved: t.LoggingExceptionInfo = (
+                type(original),
+                original,
+                original.__traceback__,
+            )
+        payload = m.ConfigMap(root={"items": [1, {"enabled": True}]})
+        source = Path(__file__)
+        tm.ok(
+            u.fetch_logger("native.exception.admission").error(
+                "native exception with JSON fields",
+                exc_info=saved if saved_tuple else original,
+                payload=payload,
+                sequence=(1, "two", False, None),
+                source=source,
+            )
+        )
+        info = tm.not_none(u.resolve_logging_exception_info(observed[0]["exc_info"]))
+        tm.that(info[0] is saved[0], eq=True)
+        tm.that(info[1] is saved[1], eq=True)
+        tm.that(info[2] is saved[2], eq=True)
+        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        tm.that(rendered["payload"], eq=payload.model_dump(mode="json"))
+        tm.that(rendered["sequence"], eq=[1, "two", False, None])
+        tm.that(rendered["source"], eq=str(source))
+        tm.that("exc_info" in rendered, eq=False)
+        tm.that(rendered["exception_message"], eq=str(original))
+
+    def test_exception_triple_is_not_an_ordinary_json_field(self) -> None:
+        """An unsupported exception tuple fails admission before any output."""
+        stream = io.StringIO()
+        observed: list[p.LoggingRecord] = []
+        u.configure_structlog(
+            settings=m.StructlogOptions(
+                console_renderer=False,
+                observers=(observed.append,),
+                logger_factory=structlog.PrintLoggerFactory(file=stream),
+            )
+        )
+        original = ValueError("not an ordinary JSON value")
+        saved: t.LoggingExceptionInfo = type(original), original, None
+        with pytest.raises(m.ValidationError):
+            _ = u.fetch_logger("native.exception.field").info(
+                "invalid JSON field", payload=saved
+            )
+        tm.that(observed, eq=[])
+        tm.that(stream.getvalue(), eq="")
 
     def test_invalid_callable_signature_raises_at_emission(self) -> None:
         """An untyped registration cannot hide its native invocation error."""
@@ -592,7 +670,8 @@ class TestsFlextLoggingStages:
         cause = ValueError("business cause")
         original = RuntimeError("business failure")
 
-        def capture(_event: p.LoggingRecord) -> None:
+        def capture(event: p.LoggingRecord) -> Never:
+            _ = event
             raise hook_error
 
         u.configure_structlog(
@@ -667,10 +746,10 @@ class TestsFlextLoggingStages:
 
         def fail_with_cause(
             original: ValueError | KeyboardInterrupt, cause: LookupError
-        ) -> None:
+        ) -> Never:
             raise original from cause
 
-        def fail_again(original: ValueError | KeyboardInterrupt) -> None:
+        def fail_again(original: ValueError | KeyboardInterrupt) -> Never:
             raise original
 
         for original in (
@@ -752,7 +831,7 @@ class TestsFlextLoggingStages:
                 "declared sensitive payload",
                 payload={
                     "nested": nested,
-                    "encoded": u.to_json(payload),
+                    "encoded": tm.ok(u.Cli.json_dumps(payload)),
                     "retained": "public",
                 },
             )

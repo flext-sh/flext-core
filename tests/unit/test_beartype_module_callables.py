@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, Never
 
 import pytest
 
-from tests import u
+from tests import tm, u
 
 if TYPE_CHECKING:
     from tests import p
@@ -103,7 +103,7 @@ class TestsFlextCoreBeartypeModuleCallables:
             del sys.modules[_PROBE_MODULE]
             _defined_here.__module__ = original_module_name
 
-        assert yielded == [_defined_here.__name__]
+        tm.that(yielded, eq=[_defined_here.__name__])
 
     @staticmethod
     def test_the_proxy_really_would_raise_on_resolution() -> None:

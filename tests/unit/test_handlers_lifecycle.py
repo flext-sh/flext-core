@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, override
 
 import pytest
 
-from tests import c, h, m, r, t, u
+from tests import c, h, m, r, t, tm, u
 
 if TYPE_CHECKING:
     from tests import p
@@ -23,8 +23,8 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         """Test default config exposes command mode and given name."""
         settings = u.Tests.create_handler_config("h_default", "Default Handler")
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler.mode == c.DEFAULT_HANDLER_MODE
-        assert handler.handler_name == "Default Handler"
+        tm.that(handler.mode, eq=c.DEFAULT_HANDLER_MODE)
+        tm.that(handler.handler_name, eq="Default Handler")
 
     def test_custom_config_exposes_requested_mode_and_name(self) -> None:
         """Test custom config exposes requested mode and name."""
@@ -37,8 +37,8 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
             ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler.mode == c.HandlerType.QUERY
-        assert handler.handler_name == "Query Handler"
+        tm.that(handler.mode, eq=c.HandlerType.QUERY)
+        tm.that(handler.handler_name, eq="Query Handler")
 
     @pytest.mark.parametrize(
         "scenario",
@@ -59,7 +59,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
             ),
         )
         handler = self.ConcreteTestHandler(settings=settings)
-        assert handler.mode == scenario.handler_mode
+        tm.that(handler.mode, eq=scenario.handler_mode)
 
     def test_handle_returns_processed_value_on_success(self) -> None:
         """Test handle returns processed value on success."""
@@ -91,14 +91,14 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         """Test execute fails when validation rejects message."""
         handler = self._concrete("h_exec_none", "Exec None Handler")
         result = handler.execute(None)
-        assert result.failure
-        assert result.error is not None
-        assert c.ERR_MESSAGE_CANNOT_BE_NONE in result.error
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
+        tm.that(c.ERR_MESSAGE_CANNOT_BE_NONE in result.error, truth=True)
 
     def test_validate_message_accepts_non_null_payload(self) -> None:
         """Test validate message accepts non null payload."""
         handler = self._concrete("h_val_ok", "Validate Ok Handler")
-        assert handler.validate_message("payload").unwrap() is True
+        tm.that(handler.validate_message("payload").unwrap() is True, truth=True)
 
     def test_validate_message_rejects_none(self) -> None:
         """Test validate message rejects none."""
@@ -109,7 +109,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
     def test_can_handle_accepts_supported_message_type(self) -> None:
         """Test can handle accepts supported message type."""
         handler = self._concrete("h_can", "Can Handle Handler")
-        assert handler.can_handle(str) is True
+        tm.that(handler.can_handle(str) is True, truth=True)
 
     def test_dispatch_runs_full_pipeline_on_success(self) -> None:
         """Test dispatch runs full pipeline on success."""
@@ -123,9 +123,9 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         """Test dispatch rejects pipeline mode incompatible with handler mode."""
         handler = self._concrete("h_disp_mode", "Dispatch Mode Handler")
         result = handler.dispatch_message("payload", c.HandlerMode.QUERY)
-        assert result.failure
-        assert result.error is not None
-        assert "query" in result.error
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("query" in result.error, truth=True)
 
     @pytest.mark.parametrize(
         ("label", "message"),
@@ -139,7 +139,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
     ) -> None:
         """Test validation accepts every non null payload shape."""
         handler = self._concrete(f"h_val_{label}", f"Validate {label} Handler")
-        assert handler.validate_message(message).unwrap() is True
+        tm.that(handler.validate_message(message).unwrap() is True, truth=True)
 
     def test_metadata_is_preserved_and_does_not_block_execution(self) -> None:
         """Test metadata is preserved and does not block execution."""

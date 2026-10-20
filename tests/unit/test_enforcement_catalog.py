@@ -10,7 +10,7 @@ import importlib
 
 import pytest
 
-from tests import c, m, u
+from tests import c, m, tm, u
 
 
 class TestsFlextEnforcementCatalog:
@@ -22,7 +22,7 @@ class TestsFlextEnforcementCatalog:
     @staticmethod
     def test_catalog_contains_at_least_one_rule() -> None:
         """Test catalog contains at least one rule."""
-        assert len(u.build_canonical_catalog().rules) > 0
+        tm.that(len(u.build_canonical_catalog().rules) > 0, truth=True)
 
     @staticmethod
     def test_catalog_is_frozen_and_rejects_mutation() -> None:
@@ -34,33 +34,33 @@ class TestsFlextEnforcementCatalog:
     @staticmethod
     def test_catalog_version_is_monotonic_positive_integer() -> None:
         """Test catalog version is monotonic positive integer."""
-        assert u.build_canonical_catalog().version >= 1
+        tm.that(u.build_canonical_catalog().version >= 1, truth=True)
 
     @staticmethod
     def test_all_rule_ids_are_unique() -> None:
         """Test all rule ids are unique."""
         ids = [rule.id for rule in u.build_canonical_catalog().rules]
-        assert len(ids) == len(set(ids))
+        tm.that(len(ids), eq=len(set(ids)))
 
     @staticmethod
     def test_all_rule_ids_match_enforce_nnn_format() -> None:
         """Test all rule ids match enforce nnn format."""
         for rule in u.build_canonical_catalog().rules:
-            assert c.PATTERN_ENFORCE_RULE_ID_RE.fullmatch(rule.id)
+            tm.that(c.PATTERN_ENFORCE_RULE_ID_RE.fullmatch(rule.id), truth=True)
 
     @staticmethod
     def test_by_id_returns_rule_when_present_and_none_when_missing() -> None:
         """Test by id returns rule when present and none when missing."""
         first = u.build_canonical_catalog().rules[0]
-        assert u.build_canonical_catalog().by_id(first.id) is first
-        assert u.build_canonical_catalog().by_id("ENFORCE-999") is None
+        tm.that(u.build_canonical_catalog().by_id(first.id) is first, truth=True)
+        tm.that(u.build_canonical_catalog().by_id("ENFORCE-999"), none=True)
 
     @staticmethod
     def test_enabled_rules_are_a_subset_of_all_rules() -> None:
         """Test enabled rules are a subset of all rules."""
         enabled = u.build_canonical_catalog().enabled_rules()
-        assert all(rule.enabled for rule in enabled)
-        assert len(enabled) <= len(u.build_canonical_catalog().rules)
+        tm.that(all(rule.enabled for rule in enabled), truth=True)
+        tm.that(len(enabled) <= len(u.build_canonical_catalog().rules), truth=True)
 
     @staticmethod
     def test_by_kind_returns_only_matching_source_kind() -> None:
@@ -68,10 +68,13 @@ class TestsFlextEnforcementCatalog:
         infra = u.build_canonical_catalog().by_kind(
             c.EnforcementSourceKind.FLEXT_INFRA_RULE,
         )
-        assert infra
-        assert all(
-            rule.source.kind == c.EnforcementSourceKind.FLEXT_INFRA_RULE.value
-            for rule in infra
+        tm.that(infra, truth=True)
+        tm.that(
+            all(
+                rule.source.kind == c.EnforcementSourceKind.FLEXT_INFRA_RULE.value
+                for rule in infra
+            ),
+            truth=True,
         )
 
     @staticmethod
@@ -79,7 +82,7 @@ class TestsFlextEnforcementCatalog:
         """Test catalog covers every declared source kind."""
         present = {rule.source.kind for rule in u.build_canonical_catalog().rules}
         expected = {member.value for member in c.EnforcementSourceKind}
-        assert expected <= present
+        tm.that(expected <= present, truth=True)
 
     @staticmethod
     def test_runtime_warning_categories_resolve_to_warning_classes() -> None:
@@ -87,12 +90,14 @@ class TestsFlextEnforcementCatalog:
         runtime = u.build_canonical_catalog().by_kind(
             c.EnforcementSourceKind.RUNTIME_WARNING,
         )
-        assert runtime
+        tm.that(runtime, truth=True)
         for rule in runtime:
-            assert isinstance(rule.source, m.EnforcementRuntimeWarningSource)
+            tm.that(
+                isinstance(rule.source, m.EnforcementRuntimeWarningSource), truth=True
+            )
             module_name, _, class_name = rule.source.category.rpartition(".")
             category = getattr(importlib.import_module(module_name), class_name)
-            assert issubclass(category, Warning)
+            tm.that(issubclass(category, Warning), truth=True)
 
     @staticmethod
     def test_fix_action_rules_match_declared_constants() -> None:
@@ -100,7 +105,7 @@ class TestsFlextEnforcementCatalog:
         catalog = u.build_canonical_catalog()
         rule_ids = {rule.id for rule in catalog.rules}
 
-        assert set(c.ENFORCEMENT_FIX_ACTIONS) <= rule_ids
+        tm.that(set(c.ENFORCEMENT_FIX_ACTIONS) <= rule_ids, truth=True)
 
     @staticmethod
     def test_declared_fix_actions_materialize_in_catalog() -> None:
@@ -112,13 +117,13 @@ class TestsFlextEnforcementCatalog:
             if rule.fix_action is not None
         }
 
-        assert set(materialized) == set(c.ENFORCEMENT_FIX_ACTIONS)
+        tm.that(set(materialized), eq=set(c.ENFORCEMENT_FIX_ACTIONS))
         for rule_id, fix_action in materialized.items():
             declared = c.ENFORCEMENT_FIX_ACTIONS[rule_id]
-            assert fix_action.kind == declared["kind"]
-            assert fix_action.target == declared["target"]
-            assert fix_action.params == declared["params"]
-            assert fix_action.safe is declared["safe"]
+            tm.that(fix_action.kind, eq=declared["kind"])
+            tm.that(fix_action.target, eq=declared["target"])
+            tm.that(fix_action.params, eq=declared["params"])
+            tm.that(fix_action.safe is declared["safe"], truth=True)
 
     @staticmethod
     def test_rule_spec_construction_rejects_invalid_id_format() -> None:
@@ -152,7 +157,9 @@ class TestsFlextEnforcementCatalog:
             severity=c.EnforcementRuleSeverity.HIGH,
             source=m.EnforcementInfraRuleSource(rule_ids=("ban-cast",)),
         )
-        assert infra_rule.source.kind == c.EnforcementSourceKind.FLEXT_INFRA_RULE.value
+        tm.that(
+            infra_rule.source.kind, eq=c.EnforcementSourceKind.FLEXT_INFRA_RULE.value
+        )
 
         beartype_rule = m.EnforcementRuleSpec(
             id="ENFORCE-902",
@@ -160,10 +167,10 @@ class TestsFlextEnforcementCatalog:
             severity=c.EnforcementRuleSeverity.LOW,
             source=m.EnforcementBeartypeSource(tag="no_module_compat_alias"),
         )
-        assert beartype_rule.source.kind == c.EnforcementSourceKind.BEARTYPE.value
+        tm.that(beartype_rule.source.kind, eq=c.EnforcementSourceKind.BEARTYPE.value)
 
     @staticmethod
     def test_every_rule_severity_is_an_enum_member() -> None:
         """Test every rule severity is an enum member."""
         for rule in u.build_canonical_catalog().rules:
-            assert isinstance(rule.severity, c.EnforcementRuleSeverity)
+            tm.that(isinstance(rule.severity, c.EnforcementRuleSeverity), truth=True)

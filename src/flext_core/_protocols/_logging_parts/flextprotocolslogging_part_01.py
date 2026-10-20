@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from structlog.types import BindableLogger
+from structlog.typing import Processor
 
 from flext_core._protocols import FlextProtocolsSettings
 from flext_core._protocols.base import FlextProtocolsBase
@@ -31,6 +32,7 @@ class FlextProtocolsLogging:
     type LoggingContext = FlextTypesServices.LoggingContext[FlextProtocolsBase.Model]
     type LogResult = FlextProtocolsResult.Result[bool]
 
+    @runtime_checkable
     class AsyncLogJob(Protocol):
         """Immutable work submitted to the native asynchronous stream."""
 
@@ -203,7 +205,7 @@ class FlextProtocolsLogging:
         def __init__(
             self,
             logger: FlextProtocolsLogging.OutputLogger,
-            processors: t.SequenceOf[t.LoggingProcessor],
+            processors: t.SequenceOf[Processor],
             context: FlextProtocolsLogging.LoggingContext,
         ) -> None: ...
 
@@ -314,6 +316,7 @@ class FlextProtocolsLogging:
         @property
         def model_fields_set(self) -> set[str]: ...
 
+    @runtime_checkable
     class LoggingRecord(Protocol):
         """Sanitized event snapshot, independent of destination presentation."""
 

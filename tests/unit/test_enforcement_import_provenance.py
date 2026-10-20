@@ -141,16 +141,23 @@ class TestsFlextEnforcementImportProvenance:
     def test_native_config_source_obeys_owner_and_layer_zero_boundary() -> None:
         """Core owns its native adapter; config ingress never imports its own tiers."""
         report = u.check(FlextStrictYamlConfigSource)
-        assert not any(item.rule_id == "ENFORCE-045" for item in report.violations)
-        assert not any(item.rule_id == "ENFORCE-070" for item in report.violations)
+        tm.that(
+            any(item.rule_id == "ENFORCE-045" for item in report.violations),
+            truth=False,
+        )
+        tm.that(
+            any(item.rule_id == "ENFORCE-070" for item in report.violations),
+            truth=False,
+        )
         module = importlib.import_module(FlextStrictYamlConfigSource.__module__)
         namespace = FlextStrictYamlConfigSource.__module__.split(".")[0]
         tree = ast.parse(inspect.getsource(module))
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
-                assert node.level == 0
-                assert (node.module or "").split(".")[0] != namespace
+                tm.that(node.level, eq=0)
+                tm.that((node.module or "").split(".")[0], ne=namespace)
             elif isinstance(node, ast.Import):
-                assert all(
-                    alias.name.split(".")[0] != namespace for alias in node.names
+                tm.that(
+                    all(alias.name.split(".")[0] != namespace for alias in node.names),
+                    truth=True,
                 )

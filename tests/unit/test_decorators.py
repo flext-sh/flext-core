@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextContainer
-from tests import c, d, e, r
+from tests import c, d, e, tm
 
 
 class TestsFlextCoreDecorators:
@@ -31,9 +31,8 @@ class TestsFlextCoreDecorators:
 
         outcome = compute()
 
-        assert isinstance(outcome, r)
-        assert outcome.success
-        assert outcome.value == "value"
+        tm.that(outcome.success, truth=True)
+        tm.that(outcome.value, eq="value")
 
     @pytest.mark.parametrize(
         ("raised", "message"),
@@ -57,11 +56,10 @@ class TestsFlextCoreDecorators:
 
         outcome = failing()
 
-        assert isinstance(outcome, r)
-        assert outcome.failure
-        assert outcome.error_code == "CUSTOM_CODE"
-        assert outcome.error is not None
-        assert message in outcome.error
+        tm.that(outcome.failure, truth=True)
+        tm.that(outcome.error_code, eq="CUSTOM_CODE")
+        tm.that(outcome.error, none=False)
+        tm.that(message in outcome.error, truth=True)
 
     @staticmethod
     def test_railway_defaults_error_code_when_omitted() -> None:
@@ -74,8 +72,8 @@ class TestsFlextCoreDecorators:
 
         outcome = failing()
 
-        assert outcome.failure
-        assert outcome.error_code == c.ErrorCode.OPERATION_ERROR.value
+        tm.that(outcome.failure, truth=True)
+        tm.that(outcome.error_code, eq=c.ErrorCode.OPERATION_ERROR.value)
 
     @staticmethod
     def test_retry_returns_value_on_first_success() -> None:
@@ -88,8 +86,8 @@ class TestsFlextCoreDecorators:
             calls += 1
             return "ok"
 
-        assert once() == "ok"
-        assert calls == 1
+        tm.that(once(), eq="ok")
+        tm.that(calls, eq=1)
 
     @staticmethod
     def test_retry_recovers_after_transient_failures() -> None:
@@ -105,8 +103,8 @@ class TestsFlextCoreDecorators:
                 raise RuntimeError(msg)
             return "recovered"
 
-        assert flaky() == "recovered"
-        assert attempts == 3
+        tm.that(flaky(), eq="recovered")
+        tm.that(attempts, eq=3)
 
     @staticmethod
     def test_retry_raises_timeout_error_when_exhausted() -> None:
@@ -120,8 +118,8 @@ class TestsFlextCoreDecorators:
         with pytest.raises(e.FlextTimeoutError) as excinfo:
             always_fails()
 
-        assert excinfo.value.operation == "always_fails"
-        assert "failed after 2 attempts" in str(excinfo.value)
+        tm.that(excinfo.value.operation, eq="always_fails")
+        tm.that("failed after 2 attempts" in str(excinfo.value), truth=True)
 
     @staticmethod
     def test_timeout_returns_value_when_within_budget() -> None:
@@ -131,7 +129,7 @@ class TestsFlextCoreDecorators:
         def quick() -> str:
             return "done"
 
-        assert quick() == "done"
+        tm.that(quick(), eq="done")
 
     @staticmethod
     def test_timeout_raises_timeout_error_when_exceeded() -> None:
@@ -144,7 +142,7 @@ class TestsFlextCoreDecorators:
         with pytest.raises(e.FlextTimeoutError) as excinfo:
             slow()
 
-        assert excinfo.value.operation == "slow"
+        tm.that(excinfo.value.operation, eq="slow")
 
     @staticmethod
     def test_inject_supplies_dependency_from_container() -> None:
@@ -155,7 +153,7 @@ class TestsFlextCoreDecorators:
         def add_one(*, dependency: int = 0) -> int:
             return dependency + 1
 
-        assert add_one() == 42
+        tm.that(add_one(), eq=42)
 
     @staticmethod
     def test_inject_does_not_override_explicit_argument() -> None:
@@ -166,7 +164,7 @@ class TestsFlextCoreDecorators:
         def echo(*, dependency: int = 0) -> int:
             return dependency
 
-        assert echo(dependency=99) == 99
+        tm.that(echo(dependency=99), eq=99)
 
     @staticmethod
     def test_deprecated_emits_warning_and_returns_value() -> None:
@@ -177,7 +175,7 @@ class TestsFlextCoreDecorators:
             return "still works"
 
         with pytest.warns(DeprecationWarning, match="use the replacement"):
-            assert legacy() == "still works"
+            tm.that(legacy(), eq="still works")
 
     @staticmethod
     def test_factory_returns_same_callable_that_still_runs() -> None:
@@ -188,8 +186,8 @@ class TestsFlextCoreDecorators:
 
         marked = d.factory("builder")(build)
 
-        assert marked is build
-        assert marked() == 7
+        tm.that(marked is build, truth=True)
+        tm.that(marked(), eq=7)
 
     @staticmethod
     def test_combined_railway_wraps_success_in_result() -> None:
@@ -201,9 +199,8 @@ class TestsFlextCoreDecorators:
 
         outcome = add(2, 3)
 
-        assert isinstance(outcome, r)
-        assert outcome.success
-        assert outcome.value == 5
+        tm.that(outcome.success, truth=True)
+        tm.that(outcome.value, eq=5)
 
     @staticmethod
     def test_combined_railway_reports_failure_with_error_code() -> None:
@@ -216,9 +213,8 @@ class TestsFlextCoreDecorators:
 
         outcome = boom()
 
-        assert isinstance(outcome, r)
-        assert outcome.failure
-        assert outcome.error_code == "COMBINED_ERR"
+        tm.that(outcome.failure, truth=True)
+        tm.that(outcome.error_code, eq="COMBINED_ERR")
 
     @staticmethod
     def test_combined_without_railway_returns_raw_value() -> None:
@@ -228,7 +224,7 @@ class TestsFlextCoreDecorators:
         def double(x: int) -> int:
             return x * 2
 
-        assert double(21) == 42
+        tm.that(double(21), eq=42)
 
     @staticmethod
     def test_log_operation_returns_value_and_propagates_errors() -> None:
@@ -238,7 +234,7 @@ class TestsFlextCoreDecorators:
         def succeed(x: int) -> int:
             return x + 1
 
-        assert succeed(4) == 5
+        tm.that(succeed(4), eq=5)
 
         @d.log_operation()
         def fail() -> int:
@@ -256,7 +252,7 @@ class TestsFlextCoreDecorators:
         def work() -> str:
             return "correlated"
 
-        assert work() == "correlated"
+        tm.that(work(), eq="correlated")
 
     @staticmethod
     def test_decorators_preserve_callable_name() -> None:
@@ -266,4 +262,4 @@ class TestsFlextCoreDecorators:
         def named_operation() -> int:
             return 1
 
-        assert named_operation.__name__ == "named_operation"
+        tm.that(named_operation.__name__, eq="named_operation")

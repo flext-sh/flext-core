@@ -39,7 +39,7 @@ class TestsFlextCoreLazyFailureContract:
             pytest.raises(ImportError, match="lazy import of") as caught,
         ):
             lazy_getattr("broken", {"broken": target}, {}, package)
-        assert isinstance(caught.value.__cause__, AttributeError)
+        tm.that(isinstance(caught.value.__cause__, AttributeError), truth=True)
         tm.that(str(caught.value), has=target)
 
     @staticmethod

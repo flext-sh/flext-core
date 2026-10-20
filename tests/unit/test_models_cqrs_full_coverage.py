@@ -15,7 +15,7 @@ from typing import cast
 
 import pytest
 
-from tests import c, m, t, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreModelsCqrs:
@@ -29,8 +29,8 @@ class TestsFlextCoreModelsCqrs:
         """Test pagination applies documented defaults."""
         page = m.Pagination()
 
-        assert page.page == c.FIRST_PAGE_INDEX
-        assert page.size == c.DEFAULT_PAGE_SIZE
+        tm.that(page.page, eq=c.FIRST_PAGE_INDEX)
+        tm.that(page.size, eq=c.DEFAULT_PAGE_SIZE)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -44,7 +44,7 @@ class TestsFlextCoreModelsCqrs:
     )
     def test_pagination_limit_equals_size(page: int, size: int) -> None:
         """Test pagination limit equals size."""
-        assert m.Pagination(page=page, size=size).limit == size
+        tm.that(m.Pagination(page=page, size=size).limit, eq=size)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -62,7 +62,7 @@ class TestsFlextCoreModelsCqrs:
     ) -> None:
         """Test pagination offset is derived from page and size."""
         pagination = m.Pagination(page=c.FIRST_PAGE_INDEX + completed_pages, size=size)
-        assert pagination.offset == completed_pages * size
+        tm.that(pagination.offset, eq=completed_pages * size)
 
     @staticmethod
     def test_pagination_exposes_computed_fields_in_dump() -> None:
@@ -72,8 +72,8 @@ class TestsFlextCoreModelsCqrs:
             size=c.DEFAULT_PAGE_SIZE,
         ).model_dump()
 
-        assert dumped["limit"] == c.DEFAULT_PAGE_SIZE
-        assert dumped["offset"] == c.DEFAULT_PAGE_SIZE
+        tm.that(dumped["limit"], eq=c.DEFAULT_PAGE_SIZE)
+        tm.that(dumped["offset"], eq=c.DEFAULT_PAGE_SIZE)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -103,10 +103,10 @@ class TestsFlextCoreModelsCqrs:
         """Test query defaults to a pagination instance."""
         query = m.Query()
 
-        assert isinstance(query.pagination, m.Pagination)
-        assert query.pagination.page == c.FIRST_PAGE_INDEX
-        assert query.pagination.size == c.DEFAULT_PAGE_SIZE
-        assert query.message_type == "query"
+        tm.that(isinstance(query.pagination, m.Pagination), truth=True)
+        tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX)
+        tm.that(query.pagination.size, eq=c.DEFAULT_PAGE_SIZE)
+        tm.that(query.message_type, eq="query")
 
     @staticmethod
     def test_query_coerces_pagination_mapping_including_stringified_ints() -> None:
@@ -119,17 +119,17 @@ class TestsFlextCoreModelsCqrs:
             "filters": {},
         })
 
-        assert isinstance(query.pagination, m.Pagination)
-        assert query.pagination.page == c.FIRST_PAGE_INDEX + 3
-        assert query.pagination.size == c.DEFAULT_PAGE_SIZE
+        tm.that(isinstance(query.pagination, m.Pagination), truth=True)
+        tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX + 3)
+        tm.that(query.pagination.size, eq=c.DEFAULT_PAGE_SIZE)
 
     @staticmethod
     def test_query_uses_default_pagination_when_none_supplied() -> None:
         """Test query uses default pagination when none supplied."""
         query = m.Query.model_validate({"pagination": None, "filters": {}})
 
-        assert isinstance(query.pagination, m.Pagination)
-        assert query.pagination.page == c.FIRST_PAGE_INDEX
+        tm.that(isinstance(query.pagination, m.Pagination), truth=True)
+        tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX)
 
     @staticmethod
     def test_query_rejects_invalid_pagination() -> None:
@@ -153,9 +153,9 @@ class TestsFlextCoreModelsCqrs:
             "filters": {},
         })
 
-        assert type(query.pagination) is CustomQuery.Pagination
-        assert query.pagination.page == c.FIRST_PAGE_INDEX
-        assert query.pagination.size == c.MIN_PAGE_SIZE
+        tm.that(type(query.pagination) is CustomQuery.Pagination, truth=True)
+        tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX)
+        tm.that(query.pagination.size, eq=c.MIN_PAGE_SIZE)
 
     # ------------------------------------------------------------------ #
     # Command / Event identity                                           #
@@ -165,28 +165,28 @@ class TestsFlextCoreModelsCqrs:
         """Test command has default type and generated id."""
         command = m.Command()
 
-        assert command.message_type == "command"
-        assert command.command_type == c.DEFAULT_COMMAND_TYPE
-        assert command.command_id.startswith("cmd_")
+        tm.that(command.message_type, eq="command")
+        tm.that(command.command_type, eq=c.DEFAULT_COMMAND_TYPE)
+        tm.that(command.command_id.startswith("cmd_"), truth=True)
 
     @staticmethod
     def test_command_generates_unique_ids() -> None:
         """Test command generates unique ids."""
-        assert m.Command().command_id != m.Command().command_id
+        tm.that(m.Command().command_id, ne=m.Command().command_id)
 
     @staticmethod
     def test_command_accepts_explicit_type() -> None:
         """Test command accepts explicit type."""
-        assert m.Command(command_type="run").command_type == "run"
+        tm.that(m.Command(command_type="run").command_type, eq="run")
 
     @staticmethod
     def test_event_has_event_type_and_generated_id() -> None:
         """Test event has event type and generated id."""
         event = m.Event(event_type="created", aggregate_id="agg-1")
 
-        assert event.message_type == "event"
-        assert event.event_type == "created"
-        assert event.event_id.startswith("evt_")
+        tm.that(event.message_type, eq="event")
+        tm.that(event.event_type, eq="created")
+        tm.that(event.event_id.startswith("evt_"), truth=True)
 
     # ------------------------------------------------------------------ #
     # Handler                                                            #
@@ -200,10 +200,10 @@ class TestsFlextCoreModelsCqrs:
             handler_name="handler",
         )
 
-        assert handler.handler_id == "h-1"
-        assert handler.handler_name == "handler"
-        assert handler.handler_type == c.HandlerType.QUERY
-        assert handler.handler_mode == c.HandlerType.COMMAND
+        tm.that(handler.handler_id, eq="h-1")
+        tm.that(handler.handler_name, eq="handler")
+        tm.that(handler.handler_type, eq=c.HandlerType.QUERY)
+        tm.that(handler.handler_mode, eq=c.HandlerType.COMMAND)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -216,7 +216,7 @@ class TestsFlextCoreModelsCqrs:
         """Test handler accepts each handler type."""
         handler = m.Handler(handler_type=handler_type, handler_id="h", handler_name="n")
 
-        assert handler.handler_type == handler_type
+        tm.that(handler.handler_type, eq=handler_type)
 
     @staticmethod
     def test_handler_rejects_empty_identity() -> None:
@@ -256,6 +256,6 @@ class TestsFlextCoreModelsCqrs:
 
         parsed = adapter.validate_python(payload)
 
-        assert isinstance(parsed, expected_cls)
+        tm.that(isinstance(parsed, expected_cls), truth=True)
         message = cast("m.Command | m.Query | m.Event", parsed)
-        assert message.message_type == payload["message_type"]
+        tm.that(message.message_type, eq=payload["message_type"])

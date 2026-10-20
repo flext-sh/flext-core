@@ -27,7 +27,7 @@ from typing import ClassVar
 import pytest
 
 from flext_core.utilities import FlextUtilitiesEnforcement
-from tests import c, m, p, t, u
+from tests import c, m, p, t, tm, u
 from tests.unit._enforcement_support import make_class
 
 type _WarningRecords = list[warnings.WarningMessage]
@@ -115,13 +115,17 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         recorded = _run_layer_records(bad, "constants")
 
-        assert recorded, "expected run_layer to emit at least one warning"
-        assert all(issubclass(rec.category, c.FlextMroViolation) for rec in recorded), (
-            "every emitted warning must be from the FLEXT violation family"
+        tm.that(
+            recorded, truth=True, msg="expected run_layer to emit at least one warning"
+        )
+        tm.that(
+            all(issubclass(rec.category, c.FlextMroViolation) for rec in recorded),
+            truth=True,
+            msg="every emitted warning must be from the FLEXT violation family",
         )
         texts = [str(rec.message) for rec in recorded]
-        assert any("[const_mutable]" in text for text in texts)
-        assert any("[ENFORCE-079]" in text for text in texts)
+        tm.that(any("[const_mutable]" in text for text in texts), truth=True)
+        tm.that(any("[ENFORCE-079]" in text for text in texts), truth=True)
 
     @pytest.mark.parametrize(
         ("case", "factory"),
@@ -148,7 +152,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         recorded = _run_layer_records(target, "constants")
 
-        assert recorded == [], f"{case} should not raise enforcement warnings"
+        tm.that(recorded, eq=[], msg=f"{case} should not raise enforcement warnings")
 
     # ------------------------------------------------------------------ #
     # check — Report.violations public contract                          #
@@ -181,13 +185,13 @@ class TestsFlextCoreEnforcementNamespacePart02:
         report = u.check(bad)
 
         matches = [v for v in report.violations if v.rule_id == "ENFORCE-079"]
-        assert matches, f"{name}: expected an ENFORCE-079 violation"
+        tm.that(matches, truth=True, msg=f"{name}: expected an ENFORCE-079 violation")
         violation = matches[0]
         assert "Constant 'GROUPS' declared" in violation.message
-        assert violation.qualname == "FlextSyntheticCli"
-        assert violation.agents_md_anchor
-        assert violation.severity
-        assert violation.layer
+        tm.that(violation.qualname, eq="FlextSyntheticCli")
+        tm.that(violation.agents_md_anchor, truth=True)
+        tm.that(violation.severity, truth=True)
+        tm.that(violation.layer, truth=True)
 
     @pytest.mark.parametrize(
         ("case", "body", "module"),
@@ -241,8 +245,10 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         report = u.check(good)
 
-        assert not any(v.rule_id == "ENFORCE-079" for v in report.violations), (
-            f"{case} must not raise ENFORCE-079"
+        tm.that(
+            any(v.rule_id == "ENFORCE-079" for v in report.violations),
+            truth=False,
+            msg=f"{case} must not raise ENFORCE-079",
         )
 
     @staticmethod
@@ -252,8 +258,8 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         report = u.check(clean, layer="constants")
 
-        assert report.empty
-        assert report.violations == []
+        tm.that(report.empty, truth=True)
+        tm.that(report.violations, eq=[])
 
     # ------------------------------------------------------------------ #
     # emit — mode dispatch is the observable contract                    #
@@ -263,7 +269,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
     def test_emit_raises_type_error_in_strict_mode() -> None:
         """STRICT mode turns a violation report into a raised ``TypeError``."""
         report = _bad_constant_report()
-        assert not report.empty
+        tm.that(report.empty, truth=False)
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -274,13 +280,13 @@ class TestsFlextCoreEnforcementNamespacePart02:
     def test_emit_stays_silent_in_off_mode() -> None:
         """OFF mode neither warns nor raises for a non-empty report."""
         report = _bad_constant_report()
-        assert not report.empty
+        tm.that(report.empty, truth=False)
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.OFF)
 
-        assert recorded == []
+        tm.that(recorded, eq=[])
 
     @staticmethod
     def test_emit_warns_in_warn_mode() -> None:
@@ -290,23 +296,27 @@ class TestsFlextCoreEnforcementNamespacePart02:
         is not a smell tag, so it never warns as ``FlextSmellViolation``.
         """
         report = _bad_constant_report()
-        assert not report.empty
+        tm.that(report.empty, truth=False)
 
         with pytest.warns(c.FlextMroViolation, match="ENFORCE-079") as recorded:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
-        assert not any(
-            issubclass(record.category, c.FlextSmellViolation) for record in recorded
+        tm.that(
+            any(
+                issubclass(record.category, c.FlextSmellViolation)
+                for record in recorded
+            ),
+            truth=False,
         )
 
     @staticmethod
     def test_emit_is_a_noop_for_empty_report() -> None:
         """An empty report never warns or raises regardless of mode."""
         empty_report = u.check(make_class("FlextSyntheticCleanConstants", {}))
-        assert empty_report.empty
+        tm.that(empty_report.empty, truth=True)
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             FlextUtilitiesEnforcement.emit(empty_report, mode=c.EnforcementMode.STRICT)
 
-        assert recorded == []
+        tm.that(recorded, eq=[])

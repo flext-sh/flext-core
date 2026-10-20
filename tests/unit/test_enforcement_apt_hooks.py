@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 import pytest
 
-from tests import c, m, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import t
@@ -51,15 +51,15 @@ class TestsFlextEnforcementAptHooks:
     def test_a_pt_rule_is_published_in_canonical_catalog(rule_id: str) -> None:
         """Test a pt rule is published in canonical catalog."""
         catalog_ids = {rule.id for rule in u.build_canonical_catalog().rules}
-        assert rule_id in catalog_ids
+        tm.that(rule_id in catalog_ids, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
     def test_a_pt_rule_carries_agents_md_anchor(rule_id: str) -> None:
         """Test a pt rule carries agents md anchor."""
         rule = u.build_canonical_catalog().by_id(rule_id)
-        assert rule is not None
-        assert rule.agents_md_anchor != ""
+        tm.that(rule, none=False)
+        tm.that(rule.agents_md_anchor, ne="")
 
     @staticmethod
     @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
@@ -68,29 +68,29 @@ class TestsFlextEnforcementAptHooks:
         # violation — both narrative fields must be populated.
         """Test a pt rule documents problem and fix."""
         rule = u.build_canonical_catalog().by_id(rule_id)
-        assert rule is not None
-        assert rule.description != ""
-        assert isinstance(rule.source, m.EnforcementBeartypeSource)
+        tm.that(rule, none=False)
+        tm.that(rule.description, ne="")
+        tm.that(isinstance(rule.source, m.EnforcementBeartypeSource), truth=True)
         problem, fix = c.ENFORCEMENT_RULES_TEXT[rule.source.tag]
-        assert problem != ""
-        assert fix != ""
+        tm.that(problem, ne="")
+        tm.that(fix, ne="")
 
     @staticmethod
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
     def test_a_pt_rule_severity_is_a_named_level(rule_id: str) -> None:
         """Test a pt rule severity is a named level."""
         rule = u.build_canonical_catalog().by_id(rule_id)
-        assert rule is not None
-        assert rule.severity.value != ""
+        tm.that(rule, none=False)
+        tm.that(rule.severity.value, ne="")
 
     @staticmethod
     def test_every_catalog_rule_id_is_well_formed_and_unique() -> None:
         """Test every catalog rule id is well formed and unique."""
         ids = [rule.id for rule in u.build_canonical_catalog().rules]
         for rid in ids:
-            assert rid.startswith("ENFORCE-")
-            assert len(rid) == len("ENFORCE-NNN")
-        assert len(ids) == len(set(ids))
+            tm.that(rid.startswith("ENFORCE-"), truth=True)
+            tm.that(len(rid), eq=len("ENFORCE-NNN"))
+        tm.that(len(ids), eq=len(set(ids)))
 
     # --- Per-rule source contract (public discriminated ``source`` model) ---
 
@@ -99,18 +99,18 @@ class TestsFlextEnforcementAptHooks:
     def test_static_rule_is_owned_by_the_infra_rule_engine(rule_id: str) -> None:
         """Test static rule is owned by the infra rule engine."""
         rule = u.build_canonical_catalog().by_id(rule_id)
-        assert rule is not None
-        assert isinstance(rule.source, m.EnforcementInfraRuleSource)
-        assert rule.source.rule_ids
+        tm.that(rule, none=False)
+        tm.that(isinstance(rule.source, m.EnforcementInfraRuleSource), truth=True)
+        tm.that(rule.source.rule_ids, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
     def test_beartype_rule_tag_has_a_runtime_category(rule_id: str) -> None:
         """Test beartype rule tag has a runtime category."""
         rule = u.build_canonical_catalog().by_id(rule_id)
-        assert rule is not None
-        assert isinstance(rule.source, m.EnforcementBeartypeSource)
-        assert rule.source.tag in c.ENFORCEMENT_TAG_CATEGORY
+        tm.that(rule, none=False)
+        tm.that(isinstance(rule.source, m.EnforcementBeartypeSource), truth=True)
+        tm.that(rule.source.tag in c.ENFORCEMENT_TAG_CATEGORY, truth=True)
 
     # --- Runtime behavior via the public ``u.check`` entrypoint ---
 
@@ -123,7 +123,7 @@ class TestsFlextEnforcementAptHooks:
         emitted_a_pt = {
             v.rule_id for v in report.violations if v.rule_id in self.A_PT_RULE_IDS
         }
-        assert emitted_a_pt == set()
+        tm.that(emitted_a_pt, eq=set())
 
     def test_check_emits_only_catalog_consistent_violations(self) -> None:
         # Full runtime pipeline (dispatch -> visitors -> emit -> Report). Every
@@ -133,5 +133,7 @@ class TestsFlextEnforcementAptHooks:
         catalog_ids = {rule.id for rule in u.build_canonical_catalog().rules}
         report = u.check(type(self))
         for violation in report.violations:
-            assert violation.message != ""
-            assert (not violation.rule_id) or violation.rule_id in catalog_ids
+            tm.that(violation.message, ne="")
+            tm.that(
+                (not violation.rule_id) or violation.rule_id in catalog_ids, truth=True
+            )

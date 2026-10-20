@@ -41,28 +41,28 @@ class TestsFlextCoreBase:
 
         dumped = model.model_dump()
 
-        assert dumped == {"name": "alpha", "count": 7}
+        tm.that(dumped, eq={"name": "alpha", "count": 7})
 
     def test_base_model_applies_declared_default(self) -> None:
         model = self.Sample(name="beta")
 
-        assert model.count == 3
+        tm.that(model.count, eq=3)
 
     def test_base_model_round_trips_through_json(self) -> None:
         original = self.Sample(name="gamma", count=11)
 
         restored = self.Sample.model_validate_json(original.model_dump_json())
 
-        assert restored == original
+        tm.that(restored, eq=original)
 
     def test_base_model_validate_from_mapping(self) -> None:
         model = self.Sample.model_validate({"name": "delta", "count": 2})
 
-        assert model.name == "delta"
-        assert model.count == 2
+        tm.that(model.name, eq="delta")
+        tm.that(model.count, eq=2)
 
     def test_base_model_exposes_declared_fields(self) -> None:
-        assert set(self.Sample.model_fields) == {"name", "count"}
+        tm.that(set(self.Sample.model_fields), eq={"name", "count"})
 
     @pytest.mark.parametrize(
         "payload",
@@ -83,7 +83,7 @@ class TestsFlextCoreBase:
         left = self.SampleValue(amount=5, label="usd")
         right = self.SampleValue(amount=5, label="usd")
 
-        assert left == right
+        tm.that(left, eq=right)
 
     @pytest.mark.parametrize(("amount", "label"), [(6, "usd"), (5, "eur")])
     def test_value_objects_differ_when_any_field_differs(
@@ -93,23 +93,23 @@ class TestsFlextCoreBase:
     ) -> None:
         base = self.SampleValue(amount=5, label="usd")
 
-        assert base != self.SampleValue(amount=amount, label=label)
+        tm.that(base, ne=self.SampleValue(amount=amount, label=label))
 
     def test_equal_value_objects_share_hash_and_distinct_values_do_not(self) -> None:
         first = self.SampleValue(amount=9, label="gbp")
         second = self.SampleValue(amount=9, label="gbp")
         distinct = self.SampleValue(amount=10, label="gbp")
 
-        assert first == second
-        assert first != distinct
-        assert hash(first) == hash(second)
-        assert len({hash(first), hash(second), hash(distinct)}) == 2
+        tm.that(first, eq=second)
+        tm.that(first, ne=distinct)
+        tm.that(hash(first), eq=hash(second))
+        tm.that(len({hash(first), hash(second), hash(distinct)}), eq=2)
 
     def test_value_object_is_not_equal_to_foreign_type(self) -> None:
         value = self.SampleValue(amount=1, label="jpy")
 
-        assert value != object()
-        assert value != "jpy"
+        tm.that(value, ne=object())
+        tm.that(value, ne="jpy")
 
     def test_value_object_is_immutable(self) -> None:
         value = self.SampleValue(amount=2, label="chf")

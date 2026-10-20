@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import r
+from tests import r, tm
 
 if TYPE_CHECKING:
     from tests import p
@@ -29,22 +29,22 @@ class TestsFlextCoreResultChainHelpers:
         """A success result exposes its value and reports success state."""
         result = r[int].ok(5)
 
-        assert result.success is True
-        assert result.failure is False
-        assert bool(result) is True
-        assert result.value == 5
-        assert result.unwrap() == 5
-        assert result.error is None
+        tm.that(result.success is True, truth=True)
+        tm.that(result.failure is False, truth=True)
+        tm.that(bool(result) is True, truth=True)
+        tm.that(result.value, eq=5)
+        tm.that(result.unwrap(), eq=5)
+        tm.that(result.error, none=True)
 
     @staticmethod
     def test_fail_carries_error_and_reports_failure() -> None:
         """A failure result reports failure state and carries its error message."""
         result: p.Result[int] = r[int].fail("boom")
 
-        assert result.success is False
-        assert result.failure is True
-        assert bool(result) is False
-        assert result.error == "boom"
+        tm.that(result.success is False, truth=True)
+        tm.that(result.failure is True, truth=True)
+        tm.that(bool(result) is False, truth=True)
+        tm.that(result.error, eq="boom")
 
     @staticmethod
     def test_value_access_on_failure_raises() -> None:
@@ -67,24 +67,24 @@ class TestsFlextCoreResultChainHelpers:
         """``map`` applies the function to a success value, preserving success."""
         result = r[int].ok(5).map(lambda x: x * 2)
 
-        assert result.success is True
-        assert result.value == 10
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value, eq=10)
 
     @staticmethod
     def test_map_short_circuits_on_failure() -> None:
         """``map`` leaves a failure untouched and never runs the function."""
         result = r[int].fail("prior").map(lambda value: value * 2)
 
-        assert result.failure is True
-        assert result.error == "prior"
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, eq="prior")
 
     @staticmethod
     def test_flat_map_chains_success_producing_results() -> None:
         """``flat_map`` composes fallible steps, flattening nested results."""
         result = r[int].ok(10).flat_map(lambda x: r[int].ok(x // 2))
 
-        assert result.success is True
-        assert result.value == 5
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value, eq=5)
 
     @staticmethod
     def test_flat_map_propagates_downstream_failure() -> None:
@@ -97,8 +97,8 @@ class TestsFlextCoreResultChainHelpers:
             )
         )
 
-        assert result.failure is True
-        assert result.error == "division by zero"
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, eq="division by zero")
 
     @staticmethod
     def test_flat_map_short_circuits_upstream_failure() -> None:
@@ -109,8 +109,8 @@ class TestsFlextCoreResultChainHelpers:
             .flat_map(lambda value: r[int].fail(f"step ran with {value}"))
         )
 
-        assert result.failure is True
-        assert result.error == "upstream"
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, eq="upstream")
 
     @staticmethod
     def test_end_to_end_chain_composes_map_flat_map_filter() -> None:
@@ -123,7 +123,7 @@ class TestsFlextCoreResultChainHelpers:
             .filter(lambda x: x > 5)
         )
 
-        assert result.unwrap() == 8
+        tm.that(result.unwrap(), eq=8)
 
     @pytest.mark.parametrize(("value", "keeps_success"), [(20, True), (5, False)])
     @staticmethod
@@ -135,7 +135,7 @@ class TestsFlextCoreResultChainHelpers:
         """``filter`` keeps success when the predicate holds, else fails it."""
         result = r[int].ok(value).filter(lambda x: x > 10)
 
-        assert result.success is keeps_success
+        tm.that(result.success is keeps_success, truth=True)
 
     @pytest.mark.parametrize(
         ("source", "expected"),
@@ -147,7 +147,7 @@ class TestsFlextCoreResultChainHelpers:
         expected: int,
     ) -> None:
         """``unwrap_or`` returns the value on success and the default on failure."""
-        assert source.unwrap_or(99) == expected
+        tm.that(source.unwrap_or(99), eq=expected)
 
     @pytest.mark.parametrize(
         ("source", "expected"),
@@ -159,52 +159,52 @@ class TestsFlextCoreResultChainHelpers:
         expected: int,
     ) -> None:
         """``unwrap_or_else`` calls the supplier only when the result failed."""
-        assert source.unwrap_or_else(lambda: 7) == expected
+        tm.that(source.unwrap_or_else(lambda: 7), eq=expected)
 
     @staticmethod
     def test_recover_replaces_failure_with_value() -> None:
         """``recover`` turns a failure into a success using the error."""
         recovered = r[int].fail("boom").recover(lambda _error: 0)
 
-        assert recovered.success is True
-        assert recovered.value == 0
+        tm.that(recovered.success is True, truth=True)
+        tm.that(recovered.value, eq=0)
 
     @staticmethod
     def test_recover_leaves_success_unchanged() -> None:
         """``recover`` is a no-op on a success result."""
         recovered = r[int].ok(5).recover(lambda _error: 99)
 
-        assert recovered.value == 5
+        tm.that(recovered.value, eq=5)
 
     @staticmethod
     def test_lash_chains_alternative_result_on_failure() -> None:
         """``lash`` swaps in an alternative result when the source failed."""
         result = r[int].fail("boom").lash(lambda _error: r[int].ok(-1))
 
-        assert result.success is True
-        assert result.value == -1
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value, eq=-1)
 
     @staticmethod
     def test_lash_leaves_success_unchanged() -> None:
         """``lash`` does not run its handler for a success result."""
         result = r[int].ok(5).lash(lambda _error: r[int].ok(0))
 
-        assert result.value == 5
+        tm.that(result.value, eq=5)
 
     @staticmethod
     def test_map_error_rewrites_failure_message() -> None:
         """``map_error`` transforms the error text of a failure."""
         result: p.Result[int] = r[int].fail("boom").map_error(lambda err: f"{err}!")
 
-        assert result.failure is True
-        assert result.error == "boom!"
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, eq="boom!")
 
     @staticmethod
     def test_map_error_leaves_success_unchanged() -> None:
         """``map_error`` does not touch a success value."""
         result: p.Result[int] = r[int].ok(5).map_error(lambda err: f"{err}!")
 
-        assert result.value == 5
+        tm.that(result.value, eq=5)
 
     @pytest.mark.parametrize(
         ("source", "expected"),
@@ -218,7 +218,7 @@ class TestsFlextCoreResultChainHelpers:
         """``fold`` applies the matching branch and returns a plain value."""
         folded = source.fold(lambda err: f"err:{err}", lambda value: f"ok:{value}")
 
-        assert folded == expected
+        tm.that(folded, eq=expected)
 
     @staticmethod
     def test_tap_runs_side_effect_only_on_success() -> None:
@@ -229,8 +229,8 @@ class TestsFlextCoreResultChainHelpers:
         r[int].ok(5).tap(seen_ok.append)
         r[int].fail("boom").tap(seen_fail.append)
 
-        assert seen_ok == [5]
-        assert seen_fail == []
+        tm.that(seen_ok, eq=[5])
+        tm.that(seen_fail, eq=[])
 
     @staticmethod
     def test_tap_error_runs_side_effect_only_on_failure() -> None:
@@ -241,8 +241,8 @@ class TestsFlextCoreResultChainHelpers:
         r[int].fail("boom").tap_error(seen_fail.append)
         r[int].ok(5).tap_error(seen_ok.append)
 
-        assert seen_fail == ["boom"]
-        assert seen_ok == []
+        tm.that(seen_fail, eq=["boom"])
+        tm.that(seen_ok, eq=[])
 
     @pytest.mark.parametrize(
         ("source", "expected"),
@@ -258,4 +258,4 @@ class TestsFlextCoreResultChainHelpers:
         def mapper(value: int) -> int:
             return value + 1
 
-        assert source.map_or(0, mapper) == expected
+        tm.that(source.map_or(0, mapper), eq=expected)

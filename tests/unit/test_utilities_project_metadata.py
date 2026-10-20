@@ -85,7 +85,7 @@ class TestsFlextCoreUtilitiesProjectMetadata:
         package_name = u.__module__.partition(".")[0]
         suffixes = u.lazy_alias_suffixes(package_name)
         tm.that(suffixes, is_=tuple)
-        assert suffixes
+        tm.that(suffixes, truth=True)
 
     @staticmethod
     def test_lazy_alias_suffixes_propagates_missing_package() -> None:
@@ -93,7 +93,7 @@ class TestsFlextCoreUtilitiesProjectMetadata:
         package_name = "nonexistent_distribution_xyz"
         with pytest.raises(ModuleNotFoundError) as raised:
             u.lazy_alias_suffixes(package_name)
-        assert raised.value.name == package_name
+        tm.that(raised.value.name, eq=package_name)
 
     @staticmethod
     def test_pyproject_document_parses_nested_project_and_tool() -> None:

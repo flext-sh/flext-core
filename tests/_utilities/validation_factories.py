@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from tests import c
+from tests import c, p, t
 from tests._utilities import (
     TestsFlextUtilitiesServicesMixin,
     TestsFlextUtilitiesUserFactoriesMixin,
 )
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
 
 class TestsFlextUtilitiesValidationFactoriesMixin(
@@ -23,6 +23,33 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
     TestsFlextUtilitiesUserFactoriesMixin,
 ):
     """Validation and failing service factory helpers."""
+
+    @staticmethod
+    def input_reader() -> Callable[[str], str]:
+        """Return the native input reader for a private-attribute factory.
+
+        Returns:
+            The builtin input callable.
+
+        """
+        return input
+
+    @staticmethod
+    def validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
+        """Derive a field default from Pydantic's already validated input.
+
+        Returns:
+            The validated label passed to the field factory.
+
+        Raises:
+            TypeError: If the validated label is not a string.
+
+        """
+        label = values["label"]
+        if not isinstance(label, str):
+            msg = "Validated label must be a string"
+            raise TypeError(msg)
+        return label
 
     class GetUserServiceAutoFactory(
         TestsFlextUtilitiesUserFactoriesMixin.GetUserFactoryBase[

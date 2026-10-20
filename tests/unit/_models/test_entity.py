@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m
+from tests import m, tm
 
 
 class TestsFlextCoreEntity:
@@ -35,89 +35,89 @@ class TestsFlextCoreEntity:
     def test_entity_exposes_declared_field(self) -> None:
         entity = self._Sample(name="alpha")
 
-        assert entity.name == "alpha"
+        tm.that(entity.name, eq="alpha")
 
     def test_entity_auto_generates_unique_id(self) -> None:
         first = self._Sample(name="a")
         second = self._Sample(name="b")
 
-        assert first.unique_id is not None
-        assert first.unique_id != second.unique_id
+        tm.that(first.unique_id, none=False)
+        tm.that(first.unique_id, ne=second.unique_id)
 
     def test_entity_lifecycle_fields_are_populated(self) -> None:
         entity = self._Sample(name="a")
 
-        assert entity.version == 1
-        assert entity.created_at is not None
-        assert entity.updated_at is not None
+        tm.that(entity.version, eq=1)
+        tm.that(entity.created_at, none=False)
+        tm.that(entity.updated_at, none=False)
 
     def test_entity_domain_events_default_empty(self) -> None:
         entity = self._Sample(name="a")
 
-        assert entity.domain_events == []
+        tm.that(entity.domain_events, eq=[])
 
     def test_entity_domain_events_are_not_shared_between_instances(self) -> None:
         first = self._Sample(name="a")
         second = self._Sample(name="b")
 
-        assert first.domain_events is not second.domain_events
+        tm.that(first.domain_events is not second.domain_events, truth=True)
 
     def test_entities_with_same_identity_are_equal(self) -> None:
         original = self._Sample(name="a")
         same_identity = self._Sample(name="different", unique_id=original.unique_id)
 
-        assert original == same_identity
+        tm.that(original, eq=same_identity)
 
     def test_entities_with_different_identity_are_not_equal(self) -> None:
         first = self._Sample(name="a")
         second = self._Sample(name="a")
 
-        assert first != second
+        tm.that(first, ne=second)
 
     def test_entity_equality_with_non_entity_is_false(self) -> None:
         entity = self._Sample(name="a")
 
-        assert entity != 42
-        assert entity != "a"
+        tm.that(entity, ne=42)
+        tm.that(entity, ne="a")
 
     def test_entity_hash_is_consistent_with_identity_equality(self) -> None:
         original = self._Sample(name="a")
         same_identity = self._Sample(name="other", unique_id=original.unique_id)
 
-        assert hash(original) == hash(same_identity)
+        tm.that(hash(original), eq=hash(same_identity))
 
     def test_entities_with_same_identity_share_hash(self) -> None:
         original = self._Sample(name="a")
         same_identity = self._Sample(name="other", unique_id=original.unique_id)
 
-        assert original == same_identity
-        assert len({hash(original), hash(same_identity)}) == 1
+        tm.that(original, eq=same_identity)
+        tm.that(len({hash(original), hash(same_identity)}), eq=1)
 
     def test_entity_model_dump_exposes_public_fields(self) -> None:
         entity = self._Sample(name="alpha")
 
         dumped = entity.model_dump(mode="python")
 
-        assert dumped["name"] == "alpha"
-        assert dumped["unique_id"] == entity.unique_id
-        assert dumped["version"] == 1
-        assert "created_at" in dumped
-        assert "domain_events" in dumped
+        tm.that(dumped["name"], eq="alpha")
+        tm.that(dumped["unique_id"], eq=entity.unique_id)
+        tm.that(dumped["version"], eq=1)
+        tm.that("created_at" in dumped, truth=True)
+        tm.that("domain_events" in dumped, truth=True)
 
     @staticmethod
     def test_aggregate_root_is_an_entity() -> None:
-        assert issubclass(m.AggregateRoot, m.Entity)
+        tm.that(issubclass(m.AggregateRoot, m.Entity), truth=True)
 
     @staticmethod
     def test_aggregate_root_uses_identity_equality() -> None:
         root = m.AggregateRoot()
         twin = m.AggregateRoot(unique_id=root.unique_id)
 
-        assert root == twin
-        assert hash(root) == hash(twin)
+        tm.that(root, eq=twin)
+        tm.that(hash(root), eq=hash(twin))
 
     def test_values_with_equal_fields_are_equal(self) -> None:
-        assert self._Coord(x=1, y=2) == self._Coord(x=1, y=2)
+        tm.that(self._Coord(x=1, y=2), eq=self._Coord(x=1, y=2))
 
     @pytest.mark.parametrize(("x_a", "y_a", "x_b", "y_b"), [(1, 2, 9, 2), (1, 2, 1, 9)])
     def test_values_with_differing_fields_are_not_equal(
@@ -127,10 +127,10 @@ class TestsFlextCoreEntity:
         x_b: int,
         y_b: int,
     ) -> None:
-        assert self._Coord(x=x_a, y=y_a) != self._Coord(x=x_b, y=y_b)
+        tm.that(self._Coord(x=x_a, y=y_a), ne=self._Coord(x=x_b, y=y_b))
 
     def test_equal_values_share_a_hash(self) -> None:
-        assert hash(self._Coord(x=3, y=4)) == hash(self._Coord(x=3, y=4))
+        tm.that(hash(self._Coord(x=3, y=4)), eq=hash(self._Coord(x=3, y=4)))
 
     def test_value_equality_with_non_value_is_false(self) -> None:
-        assert self._Coord(x=1, y=1) != (1, 1)
+        tm.that(self._Coord(x=1, y=1), ne=(1, 1))

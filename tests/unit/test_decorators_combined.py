@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import d, e, r, tm, u
+from tests import d, e, r, tm
 
 if TYPE_CHECKING:
     from tests import p
 
 
-class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
+class TestsFlextCoreDecoratorsCombined:
     """Assert observable behavior of ``d.combined`` and decorator stacking."""
 
     @staticmethod
@@ -34,7 +34,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = simple_function()
 
         # Assert: non-railway composition is a transparent pass-through.
-        assert outcome == "result"
+        tm.that(outcome, eq="result")
 
     @staticmethod
     def test_combined_with_railway_wraps_success_in_result() -> None:
@@ -49,8 +49,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = operation()
 
         # Assert
-        assert isinstance(outcome, r)
-        assert u.Tests.assert_success(outcome, expected_value="success") == "success"
+        tm.ok(outcome, eq="success")
 
     @staticmethod
     def test_combined_with_railway_captures_exception_as_failure() -> None:
@@ -70,11 +69,10 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = operation()
 
         # Assert: failure is delivered as a value, not a raised exception.
-        assert isinstance(outcome, r)
-        assert outcome.failure
-        assert outcome.error_code == "COMBINED_FAIL"
-        assert outcome.error is not None
-        assert "boom" in outcome.error
+        tm.that(outcome.failure, truth=True)
+        tm.that(outcome.error_code, eq="COMBINED_FAIL")
+        tm.that(outcome.error, none=False)
+        tm.that("boom" in outcome.error, truth=True)
 
     @staticmethod
     def test_combined_preserves_wrapped_callable_name() -> None:
@@ -86,7 +84,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
             return "ok"
 
         # Assert: functools.wraps identity is part of the public contract.
-        assert business_operation.__name__ == "business_operation"
+        tm.that(business_operation.__name__, eq="business_operation")
 
     @staticmethod
     def test_railway_preserves_a_preexisting_result() -> None:
@@ -102,21 +100,27 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         tm.that(outcome is original, eq=True)
         tm.that(tm.ok(outcome), eq="already_wrapped")
 
-    def test_retry_succeeds_after_transient_failure(self) -> None:
+    @staticmethod
+    def test_retry_succeeds_after_transient_failure() -> None:
         # Arrange
         """Test retry succeeds after transient failure."""
-        service = self.ServiceWithLogger()
+        attempts = 0
 
         @d.retry(max_attempts=2, delay_seconds=0.001)
         def flaky_method() -> str:
-            return service.flaky_method()
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                message = "First attempt fails"
+                raise RuntimeError(message)
+            return "success"
 
         # Act
         outcome = flaky_method()
 
         # Assert: the operation recovers and the retry count is observable.
-        assert outcome == "success"
-        assert service.attempts == 2
+        tm.that(outcome, eq="success")
+        tm.that(attempts, eq=2)
 
     @staticmethod
     def test_retry_raises_flext_timeout_when_exhausted() -> None:
@@ -131,7 +135,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         # Act / Assert: exhaustion surfaces as a typed FlextExceptions member.
         with pytest.raises(e.FlextTimeoutError) as exc_info:
             always_failing()
-        assert exc_info.value.operation == "always_failing"
+        tm.that(exc_info.value.operation, eq="always_failing")
 
     @staticmethod
     def test_stacking_log_operation_over_railway_returns_result() -> None:
@@ -148,8 +152,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = stacked_operation()
 
         # Assert: the innermost railway shape survives the logging layers.
-        assert isinstance(outcome, r)
-        assert u.Tests.assert_success(outcome, expected_value="stacked_result")
+        tm.ok(outcome, eq="stacked_result")
 
     @staticmethod
     def test_stacking_railway_over_retry_recovers_then_wraps() -> None:
@@ -171,9 +174,8 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = flaky_with_railway()
 
         # Assert
-        assert isinstance(outcome, r)
-        assert u.Tests.assert_success(outcome, expected_value="success")
-        assert attempts == 2
+        tm.ok(outcome, eq="success")
+        tm.that(attempts, eq=2)
 
     @pytest.mark.parametrize(
         ("timeout_seconds", "should_raise"),
@@ -197,9 +199,9 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         if should_raise:
             with pytest.raises(e.FlextTimeoutError) as exc_info:
                 measured()
-            assert exc_info.value.operation == "measured"
+            tm.that(exc_info.value.operation, eq="measured")
         else:
-            assert measured() == "done"
+            tm.that(measured(), eq="done")
 
     @staticmethod
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
@@ -219,6 +221,5 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = divide(a, b)
 
         # Assert: with a non-zero divisor the railway always succeeds cleanly.
-        assert isinstance(outcome, r)
-        assert outcome.success
-        assert u.Tests.assert_success(outcome) == a / b
+        tm.that(outcome.success, truth=True)
+        tm.ok(outcome, eq=a / b)

@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, e, m, t
+from tests import c, e, m, t, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -92,13 +92,13 @@ class TestsFlextCoreExceptionsTypedMetrics:
         error = factory()
 
         # Assert: public identity + message contract, and it behaves as an exception
-        assert isinstance(error, expected_type)
-        assert isinstance(error, Exception)
-        assert error.message == "Test message"
+        tm.that(isinstance(error, expected_type), truth=True)
+        tm.that(isinstance(error, Exception), truth=True)
+        tm.that(error.message, eq="Test message")
         with pytest.raises(expected_type) as caught:
             raise error
-        assert caught.value is error
-        assert caught.value.message == "Test message"
+        tm.that(caught.value is error, truth=True)
+        tm.that(caught.value.message, eq="Test message")
 
     @pytest.mark.parametrize(
         ("factory", "expected_domain"),
@@ -127,9 +127,9 @@ class TestsFlextCoreExceptionsTypedMetrics:
         error = factory()
 
         # Assert: routing domain derived from the structured error code
-        assert error.error_domain == expected_domain
-        assert error.matches_error_domain(expected_domain) is True
-        assert error.matches_error_domain("nonexistent-domain") is False
+        tm.that(error.error_domain, eq=expected_domain)
+        tm.that(error.matches_error_domain(expected_domain) is True, truth=True)
+        tm.that(error.matches_error_domain("nonexistent-domain") is False, truth=True)
 
     @staticmethod
     def test_string_representation_prefixes_error_code() -> None:
@@ -139,9 +139,9 @@ class TestsFlextCoreExceptionsTypedMetrics:
 
         # Act / Assert: caller-visible str() carries the structured code
         rendered = str(error)
-        assert error.error_code in rendered
-        assert error.message in rendered
-        assert rendered == f"[{error.error_code}] {error.message}"
+        tm.that(error.error_code in rendered, truth=True)
+        tm.that(error.message in rendered, truth=True)
+        tm.that(rendered, eq=f"[{error.error_code}] {error.message}")
 
     @pytest.mark.parametrize(
         ("factory", "attribute", "expected_value"),
@@ -191,7 +191,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         error = factory()
 
         # Assert: structured field is readable through the public attribute
-        assert getattr(error, attribute) == expected_value
+        tm.that(getattr(error, attribute), eq=expected_value)
 
     @staticmethod
     def test_base_error_exposes_correlation_and_metadata() -> None:
@@ -206,9 +206,9 @@ class TestsFlextCoreExceptionsTypedMetrics:
         )
 
         # Assert: correlation id + metadata attributes reachable publicly
-        assert err.correlation_id == "corr-001"
-        assert err.error_message == "boom"
-        assert err.metadata.attributes.get("scope") == "service"
+        tm.that(err.correlation_id, eq="corr-001")
+        tm.that(err.error_message, eq="boom")
+        tm.that(err.metadata.attributes.get("scope"), eq="service")
 
     @staticmethod
     def test_not_found_error_excludes_internal_context_keys_from_metadata() -> None:
@@ -229,9 +229,9 @@ class TestsFlextCoreExceptionsTypedMetrics:
 
         # Assert: caller-provided context survives; reserved keys are excluded
         attributes = error.metadata.attributes
-        assert attributes["key1"] == "value1"
-        assert "correlation_id" not in attributes
-        assert "metadata" not in attributes
+        tm.that(attributes["key1"], eq="value1")
+        tm.that("correlation_id" not in attributes, truth=True)
+        tm.that("metadata" not in attributes, truth=True)
 
     @staticmethod
     def test_type_error_normalizes_expected_and_actual_type() -> None:
@@ -245,12 +245,12 @@ class TestsFlextCoreExceptionsTypedMetrics:
         )
 
         # Assert: both resolve to concrete types on the public attributes
-        assert error.expected_type is str
-        assert error.actual_type is int
+        tm.that(error.expected_type is str, truth=True)
+        tm.that(error.actual_type is int, truth=True)
         attributes = error.metadata.attributes
-        assert attributes["source"] == "api"
-        assert attributes["expected_type"] == "str"
-        assert attributes["actual_type"] == "int"
+        tm.that(attributes["source"], eq="api")
+        tm.that(attributes["expected_type"], eq="str")
+        tm.that(attributes["actual_type"], eq="int")
 
     @staticmethod
     def test_metrics_snapshot_counts_recorded_exceptions() -> None:
@@ -265,17 +265,17 @@ class TestsFlextCoreExceptionsTypedMetrics:
         metrics = e.resolve_metrics_snapshot()
 
         # Assert: public snapshot contract
-        assert isinstance(metrics, m.ExceptionMetricsSnapshot)
-        assert metrics.total_exceptions == 3
-        assert metrics.unique_exception_types == 2
-        assert metrics.has_exceptions is True
-        assert metrics.exception_counts[e.ValidationError.__qualname__] == 2
-        assert metrics.exception_counts[e.FlextTimeoutError.__qualname__] == 1
+        tm.that(isinstance(metrics, m.ExceptionMetricsSnapshot), truth=True)
+        tm.that(metrics.total_exceptions, eq=3)
+        tm.that(metrics.unique_exception_types, eq=2)
+        tm.that(metrics.has_exceptions is True, truth=True)
+        tm.that(metrics.exception_counts[e.ValidationError.__qualname__], eq=2)
+        tm.that(metrics.exception_counts[e.FlextTimeoutError.__qualname__], eq=1)
 
         # Assert: flat config export mirrors the snapshot
         config_map = metrics.to_config_map()
-        assert config_map["total_exceptions"] == 3
-        assert config_map["unique_exception_types"] == 2
+        tm.that(config_map["total_exceptions"], eq=3)
+        tm.that(config_map["unique_exception_types"], eq=2)
 
         # Cleanup so the shared counter does not leak into other tests
         e.clear_metrics()
@@ -294,7 +294,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         second = e.resolve_metrics_snapshot()
 
         # Assert: cleared state is empty and clearing again is a no-op
-        assert first.total_exceptions == 0
-        assert first.unique_exception_types == 0
-        assert first.has_exceptions is False
-        assert second.total_exceptions == 0
+        tm.that(first.total_exceptions, eq=0)
+        tm.that(first.unique_exception_types, eq=0)
+        tm.that(first.has_exceptions is False, truth=True)
+        tm.that(second.total_exceptions, eq=0)

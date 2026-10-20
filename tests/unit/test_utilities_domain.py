@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import u
+from tests import tm, u
 
 
 class TestsFlextCoreUtilitiesDomain:
@@ -40,12 +40,12 @@ class TestsFlextCoreUtilitiesDomain:
         expected: str,
     ) -> None:
         """Test join produces expected string."""
-        assert u.join(values, separator=separator, case=case) == expected
+        tm.that(u.join(values, separator=separator, case=case), eq=expected)
 
     @staticmethod
     def test_join_empty_sequence_is_empty_string() -> None:
         """Test join empty sequence is empty string."""
-        assert u.join([]) == ""
+        tm.that(u.join([]), eq="")
 
     # ------------------------------------------------------------ normalize
     @staticmethod
@@ -68,7 +68,7 @@ class TestsFlextCoreUtilitiesDomain:
         expected: str,
     ) -> None:
         """Test normalize returns expected string."""
-        assert u.normalize(value, case=case) == expected
+        tm.that(u.normalize(value, case=case), eq=expected)
 
     # --------------------------------------------------------------- to_str
     @staticmethod
@@ -81,17 +81,17 @@ class TestsFlextCoreUtilitiesDomain:
         expected: str,
     ) -> None:
         """Test to str converts value."""
-        assert u.to_str(value) == expected
+        tm.that(u.to_str(value), eq=expected)
 
     @staticmethod
     def test_to_str_none_uses_default() -> None:
         """Test to str none uses default."""
-        assert u.to_str(None, default="fallback") == "fallback"
+        tm.that(u.to_str(None, default="fallback"), eq="fallback")
 
     @staticmethod
     def test_to_str_present_value_ignores_default() -> None:
         """Test to str present value ignores default."""
-        assert u.to_str("real", default="fallback") == "real"
+        tm.that(u.to_str("real", default="fallback"), eq="real")
 
     # ---------------------------------------------------------- to_str_list
     @staticmethod
@@ -109,12 +109,12 @@ class TestsFlextCoreUtilitiesDomain:
         expected: list[str],
     ) -> None:
         """Test to str list converts value."""
-        assert u.to_str_list(value) == expected
+        tm.that(u.to_str_list(value), eq=expected)
 
     @staticmethod
     def test_to_str_list_none_uses_default() -> None:
         """Test to str list none uses default."""
-        assert u.to_str_list(None, default=["x"]) == ["x"]
+        tm.that(u.to_str_list(None, default=["x"]), eq=["x"])
 
     # --------------------------------------------------------------- to_int
     @staticmethod
@@ -137,12 +137,12 @@ class TestsFlextCoreUtilitiesDomain:
         expected: int,
     ) -> None:
         """Test to int converts value."""
-        assert u.to_int(value) == expected
+        tm.that(u.to_int(value), eq=expected)
 
     @staticmethod
     def test_to_int_invalid_uses_default() -> None:
         """Test to int invalid uses default."""
-        assert u.to_int("nope", default=99) == 99
+        tm.that(u.to_int("nope", default=99), eq=99)
 
     # ------------------------------------------------------------- to_float
     @staticmethod
@@ -156,12 +156,12 @@ class TestsFlextCoreUtilitiesDomain:
         expected: float,
     ) -> None:
         """Test to float converts value."""
-        assert u.to_float(value) == expected
+        tm.that(u.to_float(value), eq=expected)
 
     @staticmethod
     def test_to_float_invalid_uses_default() -> None:
         """Test to float invalid uses default."""
-        assert u.to_float("bad", default=1.5) == pytest.approx(1.5)
+        tm.that(u.to_float("bad", default=1.5), eq=pytest.approx(1.5))
 
     # -------------------------------------------------------------- to_bool
     @staticmethod
@@ -183,12 +183,12 @@ class TestsFlextCoreUtilitiesDomain:
         expected: bool,
     ) -> None:
         """Test to bool converts value."""
-        assert u.to_bool(value) is expected
+        tm.that(u.to_bool(value) is expected, truth=True)
 
     @staticmethod
     def test_to_bool_none_uses_default() -> None:
         """Test to bool none uses default."""
-        assert u.to_bool(None, default=True) is True
+        tm.that(u.to_bool(None, default=True) is True, truth=True)
 
     # ------------------------------------------------------ to_positive_int
     @staticmethod
@@ -213,12 +213,12 @@ class TestsFlextCoreUtilitiesDomain:
         expected: int,
     ) -> None:
         """Test to positive int rejects non positive."""
-        assert u.to_positive_int(value) == expected
+        tm.that(u.to_positive_int(value), eq=expected)
 
     @staticmethod
     def test_to_positive_int_non_positive_uses_default() -> None:
         """Test to positive int non positive uses default."""
-        assert u.to_positive_int(-1, default=10) == 10
+        tm.that(u.to_positive_int(-1, default=10), eq=10)
 
     # ------------------------------------------------------ to_optional_str
     @staticmethod
@@ -231,4 +231,4 @@ class TestsFlextCoreUtilitiesDomain:
         expected: str | None,
     ) -> None:
         """Test to optional str returns non empty string only."""
-        assert u.to_optional_str(value) == expected
+        tm.that(u.to_optional_str(value), eq=expected)

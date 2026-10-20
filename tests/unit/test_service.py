@@ -21,7 +21,7 @@ from typing import override
 import pytest
 from flext_tests import FlextTestsCase, FlextTestsSettings
 
-from tests import m, p, r, s
+from tests import m, p, r, s, tm
 
 
 class TestsFlextService(FlextTestsCase):
@@ -50,9 +50,11 @@ class TestsFlextService(FlextTestsCase):
 
         result = service.execute()
 
-        assert result.success
-        assert not result.failure
-        assert result.unwrap() == m.Tests.ServiceUserData(user_id=1, name="test_user")
+        tm.that(result.success, truth=True)
+        tm.that(result.failure, truth=False)
+        tm.that(
+            result.unwrap(), eq=m.Tests.ServiceUserData(user_id=1, name="test_user")
+        )
 
     @staticmethod
     def test_execute_success_value_exposes_public_model_fields() -> None:
@@ -60,31 +62,34 @@ class TestsFlextService(FlextTestsCase):
         result = m.Tests.ServiceUserService().execute()
 
         payload = result.value
-        assert isinstance(payload, m.Tests.ServiceUserData)
-        assert payload.user_id == 1
-        assert payload.name == "test_user"
+        tm.that(isinstance(payload, m.Tests.ServiceUserData), truth=True)
+        tm.that(payload.user_id, eq=1)
+        tm.that(payload.name, eq="test_user")
 
     def test_execute_failure_propagates_error_through_result(self) -> None:
         """Test execute failure propagates error through result."""
         result = self._FailingService().execute()
 
-        assert result.failure
-        assert not result.success
-        assert result.error == "execute-boom"
+        tm.that(result.failure, truth=True)
+        tm.that(result.success, truth=False)
+        tm.that(result.error, eq="execute-boom")
 
     def test_execute_success_result_supports_combinators(self) -> None:
         """Test execute success result supports combinators."""
         result = self._PureService().execute()
 
-        assert result.map(lambda ok: ok and True).unwrap() is True
-        assert result.flat_map(lambda ok: r[bool].ok(value=not ok)).unwrap() is False
+        tm.that(result.map(lambda ok: ok and True).unwrap() is True, truth=True)
+        tm.that(
+            result.flat_map(lambda ok: r[bool].ok(value=not ok)).unwrap() is False,
+            truth=True,
+        )
 
     def test_execute_failure_result_short_circuits_combinators(self) -> None:
         """Test execute failure result short circuits combinators."""
         result = self._FailingService().execute()
 
-        assert result.map(operator.not_).failure
-        assert result.unwrap_or(default=False) is False
+        tm.that(result.map(operator.not_).failure, truth=True)
+        tm.that(result.unwrap_or(default=False) is False, truth=True)
 
     @staticmethod
     def _satisfies_service_protocol(candidate: p.Base) -> bool:
@@ -98,14 +103,16 @@ class TestsFlextService(FlextTestsCase):
 
     def test_real_service_satisfies_the_service_protocol(self) -> None:
         """Every real service satisfies p.Service structurally (S4 contract)."""
-        assert self._satisfies_service_protocol(m.Tests.ServiceUserService())
-        assert self._satisfies_service_protocol(self._PureService())
+        tm.that(
+            self._satisfies_service_protocol(m.Tests.ServiceUserService()), truth=True
+        )
+        tm.that(self._satisfies_service_protocol(self._PureService()), truth=True)
 
     def test_model_without_service_runtime_is_not_a_service(self) -> None:
         """A plain model lacks the runtime surface and execute: not a service."""
         data = m.Tests.ServiceUserData(user_id=1, name="test_user")
 
-        assert not self._satisfies_service_protocol(data)
+        tm.that(self._satisfies_service_protocol(data), truth=False)
 
     # --- ServiceUserData: public model state -----------------------------
 
@@ -121,8 +128,8 @@ class TestsFlextService(FlextTestsCase):
         """Test service user data round trips public state."""
         data = m.Tests.ServiceUserData(user_id=user_id, name=name)
 
-        assert data.model_dump() == {"user_id": user_id, "name": name}
-        assert data == m.Tests.ServiceUserData(user_id=user_id, name=name)
+        tm.that(data.model_dump(), eq={"user_id": user_id, "name": name})
+        tm.that(data, eq=m.Tests.ServiceUserData(user_id=user_id, name=name))
 
     # --- fetch_global(): shared-runtime singleton ------------------------
 
@@ -131,8 +138,8 @@ class TestsFlextService(FlextTestsCase):
         first = type(self.service).fetch_global()
         second = type(self.service).fetch_global()
 
-        assert first is self.service
-        assert second is first
+        tm.that(first is self.service, truth=True)
+        tm.that(second is first, truth=True)
 
     # --- settings / logger public accessors ------------------------------
 
@@ -141,16 +148,16 @@ class TestsFlextService(FlextTestsCase):
         """Test settings expose tests namespace."""
         settings = m.Tests.ServiceUserService().settings
 
-        assert isinstance(settings, FlextTestsSettings)
-        assert isinstance(settings.Tests, m.BaseModel)
+        tm.that(isinstance(settings, FlextTestsSettings), truth=True)
+        tm.that(isinstance(settings.Tests, m.BaseModel), truth=True)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:
         """Test fetch settings returns typed tests settings."""
         with self._PureService.isolated_test_runtime():
             settings = self._PureService.fetch_settings()
 
-            assert isinstance(settings, FlextTestsSettings)
-            assert isinstance(settings.Tests, m.BaseModel)
+            tm.that(isinstance(settings, FlextTestsSettings), truth=True)
+            tm.that(isinstance(settings.Tests, m.BaseModel), truth=True)
 
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         """Test fetch logger matches shared service logger."""
@@ -169,8 +176,8 @@ class TestsFlextService(FlextTestsCase):
         service = self._PureService.with_settings(settings)
 
         dumped = service.settings.model_dump()
-        assert dumped == settings.model_dump()
-        assert dumped["log_level"] == "ERROR"
+        tm.that(dumped, eq=settings.model_dump())
+        tm.that(dumped["log_level"], eq="ERROR")
 
     # --- isolated_test_runtime(): isolation invariant --------------------
 
@@ -183,11 +190,11 @@ class TestsFlextService(FlextTestsCase):
         ) as scoped_service:
             scoped_settings = FlextTestsSettings.model_validate(scoped_service.settings)
 
-            assert scoped_settings.log_level == "WARNING"
+            tm.that(scoped_settings.log_level, eq="WARNING")
             scoped_global = FlextTestsSettings.fetch_global()
-            assert scoped_global.log_level != "WARNING"
+            tm.that(scoped_global.log_level, ne="WARNING")
 
-        assert self._PureService.fetch_settings().log_level == baseline_level
+        tm.that(self._PureService.fetch_settings().log_level, eq=baseline_level)
 
     # --- track(): context-manager metrics contract -----------------------
 
@@ -197,5 +204,5 @@ class TestsFlextService(FlextTestsCase):
         service = m.Tests.ServiceUserService()
 
         with service.track("load_users") as metrics:
-            assert isinstance(metrics, Mapping)
-            assert metrics["operation_name"] == "load_users"
+            tm.that(isinstance(metrics, Mapping), truth=True)
+            tm.that(metrics["operation_name"], eq="load_users")

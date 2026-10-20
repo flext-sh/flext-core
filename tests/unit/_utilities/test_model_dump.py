@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import e, m
-from tests import u
+from tests import tm, u
 
 
 class TestsFlextCoreModelDump:
@@ -23,7 +23,7 @@ class TestsFlextCoreModelDump:
     def test_dump_projects_through_model_dump_json() -> None:
         model = m.Pagination()
 
-        assert u.dump(model) == model.model_dump(mode="json")
+        tm.that(u.dump(model), eq=model.model_dump(mode="json"))
 
     @staticmethod
     def test_dump_fails_loud_on_invalid_inline_options() -> None:
@@ -32,4 +32,7 @@ class TestsFlextCoreModelDump:
         with pytest.raises(e.PydanticValidationError) as raised:
             u.dump(model, include=123)
 
-        assert any("include" in error["loc"] for error in raised.value.errors())
+        tm.that(
+            any("include" in error["loc"] for error in raised.value.errors()),
+            truth=True,
+        )

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_core import FlextRegistry
-from tests import c, h, m, r, t, u
+from tests import c, h, m, r, t, tm, u
 
 if TYPE_CHECKING:
     from tests import p
@@ -25,9 +25,9 @@ class TestsFlextCoreRegistry:
         """Registration and plugin storage share the explicit composition graph."""
         runtime = u.build_service_runtime()
         registry = FlextRegistry(registry_runtime=runtime)
-        assert registry.dispatcher is runtime.dispatcher
-        assert registry.container is runtime.container
-        assert "registry_runtime" not in registry.model_dump()
+        tm.that(registry.dispatcher is runtime.dispatcher, truth=True)
+        tm.that(registry.container is runtime.container, truth=True)
+        tm.that("registry_runtime" not in registry.model_dump(), truth=True)
         assert "registry_runtime" not in registry.model_json_schema().get(
             "properties", {}
         )
@@ -46,7 +46,7 @@ class TestsFlextCoreRegistry:
         registry = FlextRegistry(registry_runtime=runtime)
         with pytest.raises((TypeError, ValueError)):
             registry.registry_runtime = "invalid"
-        assert registry.registry_runtime is runtime
+        tm.that(registry.registry_runtime is runtime, truth=True)
 
     @staticmethod
     @pytest.fixture
@@ -66,8 +66,8 @@ class TestsFlextCoreRegistry:
 
         outcome = registry.execute()
 
-        assert outcome.success
-        assert outcome.value is True
+        tm.that(outcome.success, truth=True)
+        tm.that(outcome.value is True, truth=True)
 
     @staticmethod
     def test_register_handler_returns_registration_details(
@@ -77,14 +77,14 @@ class TestsFlextCoreRegistry:
         handler = u.Tests.Handler()
         registration = registry.register_handler(handler)
 
-        assert registration.success
+        tm.that(registration.success, truth=True)
         details = registration.value
-        assert details.registration_id
-        assert (
-            details.status
-            == m.RegistrationDetails(registration_id=details.registration_id).status
+        tm.that(details.registration_id, truth=True)
+        tm.that(
+            details.status,
+            eq=m.RegistrationDetails(registration_id=details.registration_id).status,
         )
-        assert details.handler_mode == handler.mode
+        tm.that(details.handler_mode, eq=handler.mode)
 
     @staticmethod
     def test_register_handler_propagates_dispatcher_failure(
@@ -97,8 +97,11 @@ class TestsFlextCoreRegistry:
 
         registration = registry.register_handler(unroutable)
 
-        assert registration.failure
-        assert c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED in (registration.error or "")
+        tm.that(registration.failure, truth=True)
+        tm.that(
+            c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED in (registration.error or ""),
+            truth=True,
+        )
 
     @staticmethod
     def test_register_handlers_batch_reports_every_success(
@@ -116,14 +119,16 @@ class TestsFlextCoreRegistry:
 
         batch = registry.register_handlers((first, second))
 
-        assert batch.success
+        tm.that(batch.success, truth=True)
         summary = batch.value
-        assert summary.success is True
-        assert summary.failure is False
-        assert len(summary.registered) == 2
-        assert list(summary.errors) == []
-        assert registry.dispatcher.dispatch(m.Command()).value == "first"
-        assert registry.dispatcher.dispatch(m.Tests.RegistryQuery()).value == "second"
+        tm.that(summary.success is True, truth=True)
+        tm.that(summary.failure is False, truth=True)
+        tm.that(len(summary.registered), eq=2)
+        tm.that(list(summary.errors), eq=[])
+        tm.that(registry.dispatcher.dispatch(m.Command()).value, eq="first")
+        tm.that(
+            registry.dispatcher.dispatch(m.Tests.RegistryQuery()).value, eq="second"
+        )
 
     @staticmethod
     def test_register_bindings_batch_reports_every_success(
@@ -142,18 +147,18 @@ class TestsFlextCoreRegistry:
             "bound-second": second,
         })
 
-        assert batch.success
+        tm.that(batch.success, truth=True)
         summary = batch.value
-        assert summary.success is True
-        assert len(summary.registered) == 2
-        assert list(summary.errors) == []
-        assert (
-            registry.dispatcher.dispatch(m.Command(command_type="bound-first")).value
-            == "first"
+        tm.that(summary.success is True, truth=True)
+        tm.that(len(summary.registered), eq=2)
+        tm.that(list(summary.errors), eq=[])
+        tm.that(
+            registry.dispatcher.dispatch(m.Command(command_type="bound-first")).value,
+            eq="first",
         )
-        assert (
-            registry.dispatcher.dispatch(m.Command(command_type="bound-second")).value
-            == "second"
+        tm.that(
+            registry.dispatcher.dispatch(m.Command(command_type="bound-second")).value,
+            eq="second",
         )
 
     @staticmethod
@@ -162,23 +167,29 @@ class TestsFlextCoreRegistry:
         first = registry.register("service-name", "service-value")
         duplicate = registry.register("service-name", "service-value")
 
-        assert first.success
-        assert duplicate.success
+        tm.that(first.success, truth=True)
+        tm.that(duplicate.success, truth=True)
 
     @staticmethod
     def test_instance_plugin_roundtrips_then_unregisters(
         registry: p.Registry,
     ) -> None:
         """Test instance plugin roundtrips then unregisters."""
-        assert registry.register_plugin("validators", "local", "plugin").success
+        tm.that(
+            registry.register_plugin("validators", "local", "plugin").success,
+            truth=True,
+        )
 
-        assert registry.fetch_plugin("validators", "local").value == "plugin"
-        assert list(registry.list_plugins("validators").value) == ["local"]
+        tm.that(registry.fetch_plugin("validators", "local").value, eq="plugin")
+        tm.that(list(registry.list_plugins("validators").value), eq=["local"])
 
-        assert registry.unregister_plugin("validators", "local").success
-        assert registry.fetch_plugin("validators", "local").failure
-        assert registry.register_plugin("validators", "local", "replacement").success
-        assert registry.fetch_plugin("validators", "local").value == "replacement"
+        tm.that(registry.unregister_plugin("validators", "local").success, truth=True)
+        tm.that(registry.fetch_plugin("validators", "local").failure, truth=True)
+        tm.that(
+            registry.register_plugin("validators", "local", "replacement").success,
+            truth=True,
+        )
+        tm.that(registry.fetch_plugin("validators", "local").value, eq="replacement")
 
     @staticmethod
     @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
@@ -188,23 +199,33 @@ class TestsFlextCoreRegistry:
         plugin = m.ConfigMap(root={"plugin": "original"})
         equal_but_distinct = m.ConfigMap(root={"plugin": "original"})
         try:
-            assert registry.register_plugin(
-                "identity", "payload", plugin, scope=scope
-            ).success
-            assert registry.register_plugin(
-                "identity", "payload", plugin, scope=scope
-            ).success
-            assert registry.register_plugin(
-                "identity", "payload", equal_but_distinct, scope=scope
-            ).failure
+            tm.that(
+                registry.register_plugin(
+                    "identity", "payload", plugin, scope=scope
+                ).success,
+                truth=True,
+            )
+            tm.that(
+                registry.register_plugin(
+                    "identity", "payload", plugin, scope=scope
+                ).success,
+                truth=True,
+            )
+            tm.that(
+                registry.register_plugin(
+                    "identity", "payload", equal_but_distinct, scope=scope
+                ).failure,
+                truth=True,
+            )
             assert (
                 registry.fetch_plugin("identity", "payload", scope=scope).value
                 is plugin
             )
         finally:
-            assert registry.unregister_plugin(
-                "identity", "payload", scope=scope
-            ).success
+            tm.that(
+                registry.unregister_plugin("identity", "payload", scope=scope).success,
+                truth=True,
+            )
 
     @staticmethod
     @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
@@ -214,24 +235,33 @@ class TestsFlextCoreRegistry:
         payload = m.ConfigMap(root={})
         original = payload.model_dump
         try:
-            assert registry.register_plugin(
-                "bound", "method", original, scope=scope
-            ).success
-            assert registry.register_plugin(
-                "bound", "method", payload.model_dump, scope=scope
-            ).success
+            tm.that(
+                registry.register_plugin(
+                    "bound", "method", original, scope=scope
+                ).success,
+                truth=True,
+            )
+            tm.that(
+                registry.register_plugin(
+                    "bound", "method", payload.model_dump, scope=scope
+                ).success,
+                truth=True,
+            )
             assert (
                 registry.fetch_plugin("bound", "method", scope=scope).value is original
             )
         finally:
-            assert registry.unregister_plugin("bound", "method", scope=scope).success
+            tm.that(
+                registry.unregister_plugin("bound", "method", scope=scope).success,
+                truth=True,
+            )
 
     @staticmethod
     def test_instance_plugins_do_not_leak_between_compositions() -> None:
         """Two independently composed APIs do not inherit another registry's plugins."""
         first, second = u.build_registry(), u.build_registry()
-        assert first.register_plugin("isolated", "payload", "one").success
-        assert second.fetch_plugin("isolated", "payload").failure
+        tm.that(first.register_plugin("isolated", "payload", "one").success, truth=True)
+        tm.that(second.fetch_plugin("isolated", "payload").failure, truth=True)
 
     @staticmethod
     def test_conflicting_batch_does_not_publish_earlier_binding(
@@ -245,17 +275,26 @@ class TestsFlextCoreRegistry:
         def replacement(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("replacement")
 
-        assert registry.register_bindings({"conflicting-batch": original}).success
-        assert registry.register_bindings({
-            "new-route": replacement,
-            "conflicting-batch": replacement,
-        }).failure
-        assert registry.dispatcher.dispatch(m.Command(command_type="new-route")).failure
-        assert (
+        tm.that(
+            registry.register_bindings({"conflicting-batch": original}).success,
+            truth=True,
+        )
+        tm.that(
+            registry.register_bindings({
+                "new-route": replacement,
+                "conflicting-batch": replacement,
+            }).failure,
+            truth=True,
+        )
+        tm.that(
+            registry.dispatcher.dispatch(m.Command(command_type="new-route")).failure,
+            truth=True,
+        )
+        tm.that(
             registry.dispatcher.dispatch(
                 m.Command(command_type="conflicting-batch")
-            ).value
-            == "original"
+            ).value,
+            eq="original",
         )
 
     @staticmethod
@@ -270,43 +309,45 @@ class TestsFlextCoreRegistry:
             "plugin",
             scope=c.RegistrationScope.CLASS,
         )
-        assert registration.success
+        tm.that(registration.success, truth=True)
 
         fetched = reader.fetch_plugin(
             "validators",
             "shared",
             scope=c.RegistrationScope.CLASS,
         )
-        assert fetched.value == "plugin"
+        tm.that(fetched.value, eq="plugin")
 
-        assert reader.unregister_plugin(
-            "validators",
-            "shared",
-            scope=c.RegistrationScope.CLASS,
-        ).success
-        assert writer.fetch_plugin(
-            "validators",
-            "shared",
-            scope=c.RegistrationScope.CLASS,
-        ).failure
+        tm.that(
+            reader.unregister_plugin(
+                "validators", "shared", scope=c.RegistrationScope.CLASS
+            ).success,
+            truth=True,
+        )
+        tm.that(
+            writer.fetch_plugin(
+                "validators", "shared", scope=c.RegistrationScope.CLASS
+            ).failure,
+            truth=True,
+        )
 
     @staticmethod
     def test_register_plugin_rejects_empty_name(registry: p.Registry) -> None:
         """Test register plugin rejects empty name."""
         result = registry.register_plugin("validators", "", "plugin")
 
-        assert result.failure
-        assert result.error
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, truth=True)
 
     @staticmethod
     def test_fetch_unknown_plugin_fails(registry: p.Registry) -> None:
         """Test fetch unknown plugin fails."""
-        assert registry.fetch_plugin("validators", "absent").failure
+        tm.that(registry.fetch_plugin("validators", "absent").failure, truth=True)
 
     @staticmethod
     def test_unregister_unknown_plugin_fails(registry: p.Registry) -> None:
         """Test unregister unknown plugin fails."""
-        assert registry.unregister_plugin("validators", "absent").failure
+        tm.that(registry.unregister_plugin("validators", "absent").failure, truth=True)
 
     @pytest.mark.parametrize(
         ("errors", "expected_success"),
@@ -326,6 +367,6 @@ class TestsFlextCoreRegistry:
         )
         summary = m.RegistrySummary(registered=[detail], errors=list(errors))
 
-        assert summary.success is expected_success
-        assert summary.failure is (not expected_success)
-        assert len(summary.registered) == 1
+        tm.that(summary.success is expected_success, truth=True)
+        tm.that(summary.failure is (not expected_success), truth=True)
+        tm.that(len(summary.registered), eq=1)
