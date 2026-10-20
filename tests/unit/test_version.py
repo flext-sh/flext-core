@@ -65,7 +65,7 @@ class TestsFlextCoreVersion:
     def test_version_string_and_info_describe_the_same_version() -> None:
         """String and tuple representations identify the same published version."""
         release = ".".join(str(part) for part in FlextVersion.__version_info__)
-        tm.that(FlextVersion.__version__.startswith(release), eq=True)
+        tm.ok(FlextVersion.__version__.startswith(release))
 
     @pytest.mark.parametrize(
         "version",

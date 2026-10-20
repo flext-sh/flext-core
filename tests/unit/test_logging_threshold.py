@@ -63,8 +63,8 @@ class TestsFlextCoreLoggingThreshold:
         warning_out = self.captured(
             lambda: logger.warning("warning-at-warning"),
         )
-        tm.that("info-under-warning" in info_out, eq=False)
-        tm.that("warning-at-warning" in warning_out, eq=True)
+        tm.fail("info-under-warning" in info_out)
+        tm.ok("warning-at-warning" in warning_out)
 
     def test_lowering_the_level_reenables_debug_output(self) -> None:
         """Test lowering the level reenables debug output."""
@@ -75,7 +75,7 @@ class TestsFlextCoreLoggingThreshold:
         debug_out = self.captured(
             lambda: logger.debug("debug-at-debug"),
         )
-        tm.that("debug-at-debug" in debug_out, eq=True)
+        tm.ok("debug-at-debug" in debug_out)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -123,7 +123,7 @@ class TestsFlextCoreLoggingThreshold:
         )
         selected = u.resolve_logging_settings(runtime_settings=current, trace=True)
         tm.that(selected.log_level, eq=current.log_level)
-        tm.that(selected.trace, eq=True)
+        tm.ok(selected.trace)
 
     @staticmethod
     def test_unknown_level_name_fails_loud() -> None:

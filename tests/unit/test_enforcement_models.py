@@ -80,7 +80,7 @@ class TestsFlextEnforcementModels:
             target = source.BadModel
             if not isinstance(target, type):
                 pytest.fail("Invalid source fixture did not declare a model class")
-            tm.that(bool(messages(u.check(target), fragment="Any")), eq=True)
+            tm.ok(bool(messages(u.check(target), fragment="Any")))
 
     @staticmethod
     def test_typed_field_passes() -> None:

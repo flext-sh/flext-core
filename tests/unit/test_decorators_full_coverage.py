@@ -36,7 +36,7 @@ class TestsFlextCoreDecorators:
             result = fn("ok")
 
         tm.that(result, eq="OK")
-        tm.that(any(w.category is DeprecationWarning for w in caught), eq=True)
+        tm.ok(any(w.category is DeprecationWarning for w in caught))
 
     @staticmethod
     def test_inject_resolves_dependency_from_shared_container(

@@ -235,7 +235,7 @@ class TestsFlextCoreUtilitiesCollection:
 
         tm.fail(failed)
         tm.that(visited, eq=[1, 2])
-        tm.that(failed.exception is raised[0], eq=True)
+        tm.ok(failed.exception is raised[0])
         tm.that(
             failed.error,
             eq=c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(

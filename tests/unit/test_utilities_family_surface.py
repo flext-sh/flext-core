@@ -24,7 +24,7 @@ class TestsFlextCoreUtilitiesFamilySurface:
             "flext_cli",
             (),
         )
-        tm.that(candidate, eq=True)
+        tm.ok(candidate)
 
     @staticmethod
     def test_consumer_with_family_requirement_is_discovered() -> None:
@@ -33,7 +33,7 @@ class TestsFlextCoreUtilitiesFamilySurface:
             "cosmos_main",
             ("pydantic", "flext_cli"),
         )
-        tm.that(candidate, eq=True)
+        tm.ok(candidate)
 
     @staticmethod
     def test_unrelated_distribution_is_not_discovered() -> None:
@@ -42,7 +42,7 @@ class TestsFlextCoreUtilitiesFamilySurface:
             "probe_consumer_surface",
             ("pydantic",),
         )
-        tm.that(candidate, eq=False)
+        tm.fail(candidate)
 
     @staticmethod
     def test_consumer_without_any_requirement_is_not_discovered() -> None:
@@ -51,4 +51,4 @@ class TestsFlextCoreUtilitiesFamilySurface:
             "cosmos_main",
             (),
         )
-        tm.that(candidate, eq=False)
+        tm.fail(candidate)

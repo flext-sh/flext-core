@@ -135,10 +135,10 @@ class TestsFlextCoreUtilitiesSettings:
         resolved_summary = container.resolve("settings_summary", type_cls=m.ConfigMap)
 
         tm.ok(success_result)
-        tm.that(success_result.value, eq=True)
+        tm.ok(success_result.value)
         tm.ok(resolved_summary)
         summary = resolved_summary.value
-        tm.that(summary is expected_summary, eq=True)
+        tm.ok(summary is expected_summary)
         tm.that(
             summary.root,
             eq={

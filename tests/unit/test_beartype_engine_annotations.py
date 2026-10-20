@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, TypeAliasType
 import pytest
 
 import tests.utilities
-from tests import t, tm, u
+from tests import m, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
 if TYPE_CHECKING:
@@ -39,6 +39,9 @@ class TestsFlextBeartypeEngineAnnotations(
             (str | None, False),
             (t.IntMapping, False),
             (t.StrSequence, False),
+            (t.JsonPayload, False),
+            (t.ContextHookMap, False),
+            (t.MappingKV[str, t.JsonPayload], False),
             (Mapping[str, t.SequenceOf[int]], False),
             (None, False),
         ],
@@ -51,6 +54,15 @@ class TestsFlextBeartypeEngineAnnotations(
     ) -> None:
         """contains_any is True iff typing.Any appears at any nesting depth."""
         tm.that(u.contains_any(hint) is expected, truth=True)
+
+    @staticmethod
+    @pytest.mark.parametrize("field_name", ["hooks", "scope_vars"])
+    def test_loaded_context_fields_retain_their_strict_payload_contract(
+        field_name: str,
+    ) -> None:
+        """The actual Pydantic field must retain the declaration's no-Any contract."""
+        annotation = m.ContextRuntimeState.model_fields[field_name].annotation
+        tm.that(u.contains_any(annotation), eq=False, msg=repr(annotation))
 
     @pytest.mark.parametrize(
         "alias_name",
@@ -71,7 +83,7 @@ class TestsFlextBeartypeEngineAnnotations(
             alias = getattr(source.InvalidTypes, alias_name)
             if not isinstance(alias, TypeAliasType):
                 pytest.fail("Invalid source fixture is not a native alias")
-            tm.that(u.contains_any(alias.__value__), eq=True)
+            tm.ok(u.contains_any(alias.__value__))
 
     @pytest.mark.parametrize(
         ("hint", "expected"),

@@ -100,7 +100,7 @@ class TestsFlextResultTransforms:
 
         tapped = success.tap(events.append)
 
-        tm.that(tapped is success, eq=True)
+        tm.ok(tapped is success)
         tm.that(tuple(events), eq=("ready",))
 
     @staticmethod
@@ -111,7 +111,7 @@ class TestsFlextResultTransforms:
 
         tapped = failure.tap(events.append)
 
-        tm.that(tapped is failure, eq=True)
+        tm.ok(tapped is failure)
         tm.that(tuple(events), eq=())
 
     @staticmethod
@@ -122,7 +122,7 @@ class TestsFlextResultTransforms:
 
         tapped = failure.tap_error(errors.append)
 
-        tm.that(tapped is failure, eq=True)
+        tm.ok(tapped is failure)
         tm.that(tuple(errors), eq=("broken",))
 
     @staticmethod
@@ -133,7 +133,7 @@ class TestsFlextResultTransforms:
 
         tapped = success.tap_error(errors.append)
 
-        tm.that(tapped is success, eq=True)
+        tm.ok(tapped is success)
         tm.that(tuple(errors), eq=())
 
     @pytest.mark.parametrize(

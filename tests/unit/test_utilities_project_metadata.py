@@ -105,7 +105,7 @@ class TestsFlextCoreUtilitiesProjectMetadata:
         dumped = doc.model_dump()
         tm.that(dumped["project"]["name"], eq="flext-ldif")
         tm.that(dumped["project"]["version"], eq="1.0.0")
-        tm.that(dumped["tool"]["flext"]["workspace"]["attached"], eq=True)
+        tm.ok(dumped["tool"]["flext"]["workspace"]["attached"])
 
     @staticmethod
     def test_distribution_requirement_names_normalize_to_import_grammar(

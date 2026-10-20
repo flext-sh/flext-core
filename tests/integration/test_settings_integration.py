@@ -32,7 +32,7 @@ class TestsFlextSettingsIntegration:
         first = FlextSettings.fetch_global()
         second = FlextSettings.fetch_global()
         third = FlextSettings.fetch_global()
-        tm.that(first is second is third, eq=True)
+        tm.ok(first is second is third)
 
     @staticmethod
     def test_reset_for_testing_replaces_the_global_instance() -> None:
@@ -40,18 +40,18 @@ class TestsFlextSettingsIntegration:
         before = FlextSettings.fetch_global()
         FlextSettings.reset_for_testing()
         after = FlextSettings.fetch_global()
-        tm.that(after is not before, eq=True)
+        tm.ok(after is not before)
 
     @staticmethod
     def test_container_resolves_settings_to_the_global_singleton() -> None:
         """The container's bound settings resolve to the global singleton."""
         global_settings = FlextSettings.fetch_global()
         container = FlextContainer()
-        tm.that(container.settings is global_settings, eq=True)
+        tm.ok(container.settings is global_settings)
         resolved = u.Tests.assert_success(
             container.resolve(str(c.Directory.CONFIG)),
         )
-        tm.that(resolved is global_settings, eq=True)
+        tm.ok(resolved is global_settings)
 
     @staticmethod
     def test_default_settings_expose_documented_public_defaults() -> None:
@@ -98,8 +98,8 @@ class TestsFlextSettingsIntegration:
         """Trace controls diagnostic detail independently of severity."""
         original = FlextSettings.fetch_global()
         selected = original.clone(trace=True, debug=False)
-        tm.that(selected.trace, eq=True)
-        tm.that(selected.debug, eq=False)
+        tm.ok(selected.trace)
+        tm.fail(selected.debug)
         tm.that(selected.log_level, eq=original.log_level)
 
     @staticmethod

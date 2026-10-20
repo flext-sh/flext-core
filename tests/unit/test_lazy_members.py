@@ -65,9 +65,9 @@ class TestsFlextCoreLazyMembers:
             class Namespace(Deferred):
                 pass
 
-            tm.that(module in sys.modules, eq=False)
+            tm.fail(module in sys.modules)
             tm.that(Namespace.VALUE, eq=7)
-            tm.that(module in sys.modules, eq=True)
+            tm.ok(module in sys.modules)
             who = cast("Callable[[], str]", Namespace.who)
             twice = cast("Callable[[int], int]", Namespace.twice)
             nested = cast("type", Namespace.Nested)
@@ -77,8 +77,8 @@ class TestsFlextCoreLazyMembers:
             tm.that(who(), eq="Namespace")
             tm.that(twice(4), eq=8)
             tm.that(nested.__qualname__, eq="Mixin.Nested")
-            tm.that(isinstance(vars(Deferred)["VALUE"], FlextLazyMember), eq=False)
-            tm.that(isinstance(vars(Deferred)["who"], classmethod), eq=True)
+            tm.fail(isinstance(vars(Deferred)["VALUE"], FlextLazyMember))
+            tm.ok(isinstance(vars(Deferred)["who"], classmethod))
 
     def test_resolve_members_forces_every_deferred_member(
         self,
@@ -111,7 +111,7 @@ class TestsFlextCoreLazyMembers:
 
             with pytest.raises(ImportError, match="declares no member"):
                 _ = Deferred.missing
-            tm.that(isinstance(vars(Deferred)["missing"], FlextLazyMember), eq=True)
+            tm.ok(isinstance(vars(Deferred)["missing"], FlextLazyMember))
 
     def test_broken_module_raises_with_its_cause(self, tmp_path: Path) -> None:
         """A mixin module whose body fails propagates, never a missing name."""

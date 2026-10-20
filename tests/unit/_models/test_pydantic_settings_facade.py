@@ -35,7 +35,7 @@ class TestsFlextCorePydanticSettingsFacade:
         """The native annotation accepts the original settings instance."""
         instance = FlextModels.BaseSettings()
         adapter = u.type_adapter(TypeForm(FlextModels.PydanticBaseSettings))
-        tm.that(adapter.validate_python(instance) is instance, eq=True)
+        tm.ok(adapter.validate_python(instance) is instance)
 
     class _TopicSettings(m.BaseSettings):
         """Settings model whose customise hook is annotated through the facade."""

@@ -97,7 +97,7 @@ class TestsFlextCoreDecoratorsCombined:
 
         outcome = returns_result()
 
-        tm.that(outcome is original, eq=True)
+        tm.ok(outcome is original)
         tm.that(tm.ok(outcome), eq="already_wrapped")
 
     @staticmethod

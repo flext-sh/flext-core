@@ -70,8 +70,8 @@ class TestsFlextLoggingStages:
             "    structlog.get_logger().info('closed stream')\n"
         )
         executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
-        tm.that(u.Cli.process_succeeded(executed.outcome), eq=False)
-        tm.that(executed.outcome.timed_out, eq=False)
+        tm.fail(u.Cli.process_succeeded(executed.outcome))
+        tm.fail(executed.outcome.timed_out)
         tm.that(executed.outcome.forwarded_signal, eq=None)
         tm.that(executed.stderr, has="ValueError: I/O operation on closed file")
 
@@ -97,8 +97,8 @@ class TestsFlextLoggingStages:
         executed = tm.ok(
             u.Cli.run_raw((sys.executable, "-c", consumer, *events)),
         )
-        tm.that(u.Cli.process_succeeded(executed.outcome), eq=True)
-        tm.that(executed.outcome.timed_out, eq=False)
+        tm.ok(u.Cli.process_succeeded(executed.outcome))
+        tm.fail(executed.outcome.timed_out)
         emitted = tuple(
             u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))["event"]
             for line in executed.stderr.splitlines()
@@ -133,8 +133,8 @@ class TestsFlextLoggingStages:
             "raise AssertionError('closed native stream did not fail')\n"
         )
         executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
-        tm.that(u.Cli.process_succeeded(executed.outcome), eq=False)
-        tm.that(executed.outcome.timed_out, eq=False)
+        tm.fail(u.Cli.process_succeeded(executed.outcome))
+        tm.fail(executed.outcome.timed_out)
         tm.that(executed.outcome.forwarded_signal, eq=None)
         tm.that(executed.stderr, has="ValueError: I/O operation on closed file")
         tm.that(executed.stderr, lacks="AssertionError")
@@ -198,11 +198,11 @@ class TestsFlextLoggingStages:
         except ValueError:
             result = logger.info("ordered stages", payload=payload, exc_info=True)
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(len(observed), eq=2)
         tm.that(observed[1]["payload"], eq=payload)
         tm.that(observed[1]["exception_type"], eq="ValueError")
-        tm.that('"stage_order": ["first", "second"]' in stream.getvalue(), eq=True)
+        tm.ok('"stage_order": ["first", "second"]' in stream.getvalue())
 
     @pytest.mark.parametrize("entrypoint", ["info", "exception", "trace"])
     def test_first_stage_failure_escapes_unchanged(self, entrypoint: str) -> None:
@@ -249,7 +249,7 @@ class TestsFlextLoggingStages:
         with pytest.raises(ValueError, match="typed stage failed") as caught:
             _ = emit("stage failure")
 
-        tm.that(caught.value is failure, eq=True)
+        tm.ok(caught.value is failure)
         tm.that(visited, eq=["first"])
         tm.that(stream.getvalue(), eq="")
         frames = traceback.extract_tb(caught.value.__traceback__)
@@ -280,13 +280,13 @@ class TestsFlextLoggingStages:
                 operation="read",
             )
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(observed[0]["exception_type"], eq=type(error).__name__)
         tm.that(observed[0]["exception_message"], eq=str(error))
         info = tm.not_none(u.resolve_logging_exception_info(observed[0]["exc_info"]))
-        tm.that(info[1] is error, eq=True)
-        tm.that(info[2] is original_traceback, eq=True)
-        tm.that("operation failed" in stream.getvalue(), eq=True)
+        tm.ok(info[1] is error)
+        tm.ok(info[2] is original_traceback)
+        tm.ok("operation failed" in stream.getvalue())
 
     def test_invalid_registration_is_rejected(self) -> None:
         """The options boundary rejects a noncallable stage."""
@@ -331,14 +331,14 @@ class TestsFlextLoggingStages:
             )
         )
         info = tm.not_none(u.resolve_logging_exception_info(observed[0]["exc_info"]))
-        tm.that(info[0] is saved[0], eq=True)
-        tm.that(info[1] is saved[1], eq=True)
-        tm.that(info[2] is saved[2], eq=True)
+        tm.ok(info[0] is saved[0])
+        tm.ok(info[1] is saved[1])
+        tm.ok(info[2] is saved[2])
         rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
         tm.that(rendered["payload"], eq=payload.model_dump(mode="json"))
         tm.that(rendered["sequence"], eq=[1, "two", False, None])
         tm.that(rendered["source"], eq=str(source))
-        tm.that("exc_info" in rendered, eq=False)
+        tm.fail("exc_info" in rendered)
         tm.that(rendered["exception_message"], eq=str(original))
 
     def test_exception_triple_is_not_an_ordinary_json_field(self) -> None:
@@ -411,10 +411,10 @@ class TestsFlextLoggingStages:
         fresh = u.create_module_logger("tests.logging.stages.fresh")
         result = fresh.info("replacement chain")
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(observed, eq=["cached chain", "replacement chain"])
-        tm.that("cached chain" in stream.getvalue(), eq=True)
-        tm.that("replacement chain" in stream.getvalue(), eq=True)
+        tm.ok("cached chain" in stream.getvalue())
+        tm.ok("replacement chain" in stream.getvalue())
 
     @pytest.mark.parametrize("initial_async", [True, False])
     def test_explicit_synchronous_factory_replaces_previous_factory(
@@ -438,10 +438,10 @@ class TestsFlextLoggingStages:
         with redirect_stderr(current_stdout):
             current = u.create_module_logger("tests.logging.factory.synchronous")
             result = current.info("synchronous replacement")
-        tm.that(result.success, eq=True)
-        tm.that("synchronous replacement" in current_stdout.getvalue(), eq=True)
-        tm.that("synchronous replacement" in old_stream.getvalue(), eq=False)
-        tm.that("synchronous replacement" in first_stdout.getvalue(), eq=False)
+        tm.ok(result.success)
+        tm.ok("synchronous replacement" in current_stdout.getvalue())
+        tm.fail("synchronous replacement" in old_stream.getvalue())
+        tm.fail("synchronous replacement" in first_stdout.getvalue())
 
     def test_registered_native_wrapper_emits_bound_context(self) -> None:
         """A registered native wrapper executes real context-bound emission."""
@@ -461,11 +461,11 @@ class TestsFlextLoggingStages:
         )
         logger = u.create_module_logger("tests.logging.native.wrapper")
         result = logger.bind(operation="native").warning("emitted native event")
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(registrations, eq=["native"])
-        tm.that("emitted native event" in stream.getvalue(), eq=True)
-        tm.that("operation" in stream.getvalue(), eq=True)
-        tm.that("native" in stream.getvalue(), eq=True)
+        tm.ok("emitted native event" in stream.getvalue())
+        tm.ok("operation" in stream.getvalue())
+        tm.ok("native" in stream.getvalue())
 
     def test_native_destinations_share_one_sanitized_observer_event(self) -> None:
         """Native handlers present the same event without duplicating hooks."""
@@ -497,7 +497,7 @@ class TestsFlextLoggingStages:
         sanitized = u.Cli.json_as_mapping(record.context["payload"])
         tm.that(rendered["payload"], eq=sanitized)
         tm.that(sanitized["count"], eq=2)
-        tm.that(sanitized["password"] == password, eq=False)
+        tm.fail(sanitized["password"] == password)
         tm.that(str(record.context), lacks=password)
         tm.that(console.getvalue(), has="delivered once", lacks=password)
         tm.that(structured.getvalue(), lacks=password)
@@ -653,7 +653,7 @@ class TestsFlextLoggingStages:
             tm.ok(u.failure("causal error", exception=error))
         tm.ok(u.debug("filtered detail"))
         record = observed[0]
-        tm.that(record.exception is original, eq=True)
+        tm.ok(record.exception is original)
         tm.that(
             "exception"
             in m.LoggingRecord.model_validate(
@@ -666,7 +666,7 @@ class TestsFlextLoggingStages:
         tm.that(stream.getvalue(), has="stack_trace", lacks=sensitive_value)
         tm.that(stream.getvalue(), has="ValueError", lacks='"locals"')
         tm.that(stream.getvalue(), lacks="filtered detail")
-        tm.that(original.__cause__ is cause, eq=True)
+        tm.ok(original.__cause__ is cause)
 
     def test_business_exception_survives_selected_observer_failure(self) -> None:
         """The selected failure is visible without replacing the original cause."""
@@ -697,9 +697,9 @@ class TestsFlextLoggingStages:
 
         with pytest.raises(RuntimeError) as caught:
             log_business_failure()
-        tm.that(caught.value is original, eq=True)
-        tm.that(original.__cause__ is cause, eq=True)
-        tm.that(original.__context__ is hook_error, eq=True)
+        tm.ok(caught.value is original)
+        tm.ok(original.__cause__ is cause)
+        tm.ok(original.__context__ is hook_error)
         tm.that(original.__notes__, has="Logging also failed: OSError")
 
     def test_native_exception_group_and_original_cause_remain_observable(self) -> None:
@@ -722,7 +722,7 @@ class TestsFlextLoggingStages:
             raise original
         except ExceptionGroup as error:
             tm.ok(u.failure("group failed", exception=error))
-        tm.that(observed[0].exception is original, eq=True)
+        tm.ok(observed[0].exception is original)
         tm.that(stream.getvalue(), has="ExceptionGroup")
         tm.that(stream.getvalue(), has="ValueError")
         tm.that(stream.getvalue(), has="OSError", lacks='"locals"')
@@ -741,7 +741,7 @@ class TestsFlextLoggingStages:
         stream.close()
         with pytest.raises(ValueError, match="closed file") as caught:
             _ = u.log("native sink failure")
-        tm.that(caught.value.__traceback__ is not None, eq=True)
+        tm.ok(caught.value.__traceback__ is not None)
 
     def test_saved_native_exception_info_preserves_original_and_supplied_traceback(
         self,
@@ -769,9 +769,9 @@ class TestsFlextLoggingStages:
                 resolved = u.resolve_logging_exception_info(True)
                 if resolved is None:
                     pytest.fail("An active exception must resolve to native exc_info")
-                tm.that(resolved[0] is saved[0], eq=True)
-                tm.that(resolved[1] is saved[1], eq=True)
-                tm.that(resolved[2] is saved[2], eq=True)
+                tm.ok(resolved[0] is saved[0])
+                tm.ok(resolved[1] is saved[1])
+                tm.ok(resolved[2] is saved[2])
                 tm.that(u.resolve_logging_exception_info(False), eq=None)
             else:
                 pytest.fail("The original exception must be raised with its cause")
@@ -781,7 +781,7 @@ class TestsFlextLoggingStages:
                 discarded_tb = original.__traceback__
             else:
                 pytest.fail("Re-raising the original exception must add a traceback")
-            tm.that(discarded_tb is saved_tb, eq=False)
+            tm.fail(discarded_tb is saved_tb)
             stream = io.StringIO()
             observed: list[p.LoggingRecord] = []
             handler = u.create_logging_handler(stream=stream)
@@ -797,15 +797,15 @@ class TestsFlextLoggingStages:
                 _ = u.fetch_logger("saved.native.exception").error(
                     "failed operation", exc_info=saved
                 )
-            tm.that(caught.value is original, eq=True)
-            tm.that(observed[0].exception is original, eq=True)
-            tm.that(original.__cause__ is cause, eq=True)
-            tm.that(isinstance(original.__context__, ValueError), eq=True)
+            tm.ok(caught.value is original)
+            tm.ok(observed[0].exception is original)
+            tm.ok(original.__cause__ is cause)
+            tm.ok(isinstance(original.__context__, ValueError))
             restored_tb = original.__traceback__
             while restored_tb is not None and restored_tb is not saved_tb:
-                tm.that(restored_tb is discarded_tb, eq=False)
+                tm.fail(restored_tb is discarded_tb)
                 restored_tb = restored_tb.tb_next
-            tm.that(restored_tb is saved_tb, eq=True)
+            tm.ok(restored_tb is saved_tb)
 
     def test_declared_sensitive_keys_are_casefolded_before_hooks_and_sinks(
         self,
@@ -857,7 +857,7 @@ class TestsFlextLoggingStages:
             u.configure_structlog(
                 settings=m.StructlogOptions(handlers=(logging.StreamHandler(stream),))
             )
-        tm.that(u.logging_settings() is original, eq=True)
+        tm.ok(u.logging_settings() is original)
         tm.that(stream.getvalue(), eq="")
 
     def test_native_positional_formatter_accepts_mapping_and_filters_before_format(
@@ -878,7 +878,7 @@ class TestsFlextLoggingStages:
         tm.ok(logger.info("named %(actor)s", {"actor": "sam"}))
         event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
         tm.that(event["event"], eq="named sam")
-        tm.that("positional_args" in event, eq=False)
+        tm.fail("positional_args" in event)
 
     @staticmethod
     def exercise_async_stream_failure() -> None:
@@ -892,20 +892,20 @@ class TestsFlextLoggingStages:
                 _ = logger.info("first closed output")
             with pytest.raises(ValueError, match="closed file") as second:
                 _ = logger.info("second closed output")
-        tm.that(second.value is first.value, eq=True)
-        tm.that(first.value.__traceback__ is not None, eq=True)
+        tm.ok(second.value is first.value)
+        tm.ok(first.value.__traceback__ is not None)
         with pytest.raises(ValueError, match="closed file") as teardown:
             u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
-        tm.that(teardown.value is first.value, eq=True)
+        tm.ok(teardown.value is first.value)
 
     @staticmethod
     def assert_blocked_pipe_outcome(outcome: p.LogResult | ValueError) -> None:
         """Validate the public outcome after a blocked writer recovers."""
         if isinstance(outcome, ValueError):
             tm.that(str(outcome), eq="I/O operation on stopped async log writer")
-            tm.that(outcome.__traceback__ is not None, eq=True)
+            tm.ok(outcome.__traceback__ is not None)
         else:
-            tm.that(outcome.success, eq=True)
+            tm.ok(outcome.success)
 
     @staticmethod
     def exercise_blocked_pipe_shutdown() -> None:
@@ -947,12 +947,12 @@ class TestsFlextLoggingStages:
                     msg = "Public logging did not reach the native pipe"
                     raise TimeoutError(msg)
                 chunks = [os.read(read_fd, capacity)]
-                tm.that(b"blocked pipe output" in chunks[0], eq=True)
+                tm.ok(b"blocked pipe output" in chunks[0])
                 with pytest.raises(TimeoutError, match="shutdown timeout") as stopped:
                     u.configure_structlog(
                         settings=m.StructlogOptions(async_logging=False)
                     )
-                tm.that(stopped.value.__traceback__ is not None, eq=True)
+                tm.ok(stopped.value.__traceback__ is not None)
 
                 def drain() -> None:
                     while chunk := os.read(read_fd, capacity):
@@ -971,7 +971,7 @@ class TestsFlextLoggingStages:
             if reader.is_alive():
                 msg = "Native pipe drainage did not finish after closing its writer"
                 raise TimeoutError(msg)
-            tm.that(payload.encode() in b"".join(chunks), eq=True)
+            tm.ok(payload.encode() in b"".join(chunks))
         finally:
             os.close(read_fd)
 

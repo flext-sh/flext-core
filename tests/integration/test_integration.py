@@ -50,8 +50,8 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("test_service")
 
         # Assert - bind is fluent, resolve yields the exact stored value
-        tm.that(bind_return is clean_container, eq=True)
-        tm.that(resolved.success, eq=True)
+        tm.ok(bind_return is clean_container)
+        tm.ok(resolved.success)
         tm.that(resolved.value, eq=test_value)
 
     @staticmethod
@@ -70,7 +70,7 @@ class TestsFlextCoreIntegration:
         result = r[str].ok("payload")
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(u.Tests.assert_success(result), eq="payload")
 
     @staticmethod
@@ -83,7 +83,7 @@ class TestsFlextCoreIntegration:
         mapped = result.map(lambda value: value * 2)
 
         # Assert
-        tm.that(mapped.success, eq=True)
+        tm.ok(mapped.success)
         tm.that(mapped.value, eq=_DOUBLED_RESULT)
 
     @staticmethod
@@ -96,7 +96,7 @@ class TestsFlextCoreIntegration:
         chained = result.flat_map(lambda value: r[str].ok(f"resolved_{value}"))
 
         # Assert
-        tm.that(chained.success, eq=True)
+        tm.ok(chained.success)
         tm.that(chained.value, eq="resolved_id-1")
 
     @staticmethod
@@ -109,7 +109,7 @@ class TestsFlextCoreIntegration:
         mapped = failure.map(lambda value: value + 1).flat_map(r[int].ok)
 
         # Assert
-        tm.that(mapped.success, eq=False)
+        tm.fail(mapped.success)
         tm.that(mapped.error, eq="boom")
 
     @staticmethod
@@ -142,8 +142,8 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("result_factory")
 
         # Assert - factory is fluent and delivers the computed payload
-        tm.that(factory_return is clean_container, eq=True)
-        tm.that(resolved.success, eq=True)
+        tm.ok(factory_return is clean_container)
+        tm.ok(resolved.success)
         tm.that(resolved.value, eq=expected)
 
     @staticmethod
@@ -155,7 +155,7 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("does_not_exist")
 
         # Assert
-        tm.that(resolved.success, eq=False)
+        tm.fail(resolved.success)
         tm.that(resolved.error, none=False)
         tm.that(tm.not_none(resolved.error), has="does_not_exist")
 
@@ -173,7 +173,7 @@ class TestsFlextCoreIntegration:
         resolved = clean_container.resolve("svc")
 
         # Assert
-        tm.that(resolved.success, eq=True)
+        tm.ok(resolved.success)
         tm.that(resolved.value, eq="first")
 
     @staticmethod

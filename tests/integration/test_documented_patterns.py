@@ -44,7 +44,7 @@ class TestsFlextCoreDocumentedPatterns:
         first = u.Tests.execute_v1_pipeline(case)
         second = u.Tests.execute_v2_pipeline(case)
 
-        tm.that(first.success, eq=True)
+        tm.ok(first.success)
         tm.that(first.value, eq=expected.value)
         tm.that(second, eq=expected.value)
 
@@ -63,7 +63,7 @@ class TestsFlextCoreDocumentedPatterns:
         result = r[int].ok(seed).map(transform)
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=expected)
 
     @staticmethod
@@ -76,7 +76,7 @@ class TestsFlextCoreDocumentedPatterns:
         result = failure.map(lambda value: value + 1)
 
         # Assert
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="boom")
 
     @staticmethod
@@ -91,7 +91,7 @@ class TestsFlextCoreDocumentedPatterns:
         )
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=_FLAT_MAP_VALUE)
 
     @staticmethod
@@ -106,7 +106,7 @@ class TestsFlextCoreDocumentedPatterns:
         )
 
         # Assert
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="stopped")
 
     @pytest.mark.parametrize(
@@ -131,7 +131,7 @@ class TestsFlextCoreDocumentedPatterns:
         )
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=_RECOVERED_VALUE)
 
     @staticmethod
@@ -143,7 +143,7 @@ class TestsFlextCoreDocumentedPatterns:
         )
 
         # Assert
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="BOOM")
 
     @staticmethod
@@ -167,7 +167,7 @@ class TestsFlextCoreDocumentedPatterns:
         result = r[int].ok(1).flow_through(step)
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=_FLOW_VALUE)
 
     @staticmethod
@@ -184,11 +184,11 @@ class TestsFlextCoreDocumentedPatterns:
         missing = fetch_profile_name("u-2")
 
         # Assert — success path
-        tm.that(found.success, eq=True)
+        tm.ok(found.success)
         tm.that(found.value, eq="Ada")
 
         # Assert — failure path exposes typed code + structured data publicly
-        tm.that(missing.failure, eq=True)
+        tm.ok(missing.failure)
         tm.that(missing.error_code, eq="NOT_FOUND_ERROR")
         tm.that(missing.error, eq="User 'u-2' not found")
         error_data = tm.not_none(missing.error_data)
@@ -277,7 +277,7 @@ class TestsFlextCoreDocumentedPatterns:
         result = increment(3)
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=_INCREMENTED_VALUE)
 
     @staticmethod
@@ -292,5 +292,5 @@ class TestsFlextCoreDocumentedPatterns:
         result = sum_values([1, 2, 3])
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=_COMBINED_SUM)

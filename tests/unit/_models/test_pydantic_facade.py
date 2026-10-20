@@ -48,13 +48,13 @@ class TestsFlextCorePydanticDeclarations:
         })
         tm.that(payload.required, eq="present")
         tm.that(payload.defaulted, eq=3)
-        tm.that(payload.nullable is None, eq=True)
+        tm.ok(payload.nullable is None)
         tm.that(payload.generated, eq=())
         tm.that(payload.aliased, eq="alias")
         tm.that(payload.model_dump(by_alias=True)["output"], eq="alias")
         constructed = Defaults(required="constructor")
         tm.that(constructed.defaulted, eq=3)
-        tm.that(constructed.nullable is None, eq=True)
+        tm.ok(constructed.nullable is None)
         tm.that(constructed.generated, eq=())
         with pytest.raises(m.ValidationError):
             Payload.model_validate({"input": {"value": "alias"}})
@@ -109,7 +109,7 @@ class TestsFlextCorePydanticDeclarations:
             }),
         ):
             box = TestsFlextCorePydanticDeclarations._ProtocolBox(item=payload)
-            tm.that(box.item is payload, eq=True)
+            tm.ok(box.item is payload)
             tm.that(box.model_dump()["item"], eq=expected)
 
         def reject() -> None:
@@ -133,7 +133,7 @@ class TestsFlextCorePydanticDeclarations:
     ) -> None:
         model_type = TestsFlextCorePydanticDeclarations._ProtocolBox
         field = model_type.model_fields["item"]
-        tm.that(field.annotation is p.Tests.PublicPayload, eq=True)
+        tm.ok(field.annotation is p.Tests.PublicPayload)
         tm.that(
             model_type.model_config.get("frozen", False),
             eq=m.ContractModel.model_config.get("frozen", False),
@@ -374,7 +374,7 @@ class TestsFlextCorePydanticDeclarations:
         })
 
         tm.that(credentials.token.get_secret_value(), eq="s3cret")
-        tm.that("s3cret" in repr(credentials), eq=False)
+        tm.fail("s3cret" in repr(credentials))
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Credentials.model_validate({})
@@ -449,7 +449,7 @@ class TestsFlextCorePydanticDeclarations:
         greeter = TestsFlextCorePydanticDeclarations._Greeter()
         card = TestsFlextCorePydanticDeclarations._GreetingCard(payload=greeter)
 
-        tm.that(card.payload is greeter, eq=True)
+        tm.ok(card.payload is greeter)
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._GreetingCard.model_validate({

@@ -24,16 +24,16 @@ class TestsFlextCoreDeprecationWarnings:
         """A successful result reports success and never failure."""
         result: p.Result[str] = r[str].ok("value")
 
-        tm.that(result.success, eq=True)
-        tm.that(result.failure, eq=False)
+        tm.ok(result.success)
+        tm.fail(result.failure)
 
     @staticmethod
     def test_fail_reports_failure_state() -> None:
         """A failed result reports failure and never success."""
         result: p.Result[str] = r[str].fail("deprecated")
 
-        tm.that(result.failure, eq=True)
-        tm.that(result.success, eq=False)
+        tm.ok(result.failure)
+        tm.fail(result.success)
 
     @staticmethod
     def test_ok_exposes_wrapped_value() -> None:
@@ -63,7 +63,7 @@ class TestsFlextCoreDeprecationWarnings:
         """Map applies the callable to a successful value."""
         result: p.Result[int] = r[int].ok(5).map(u.Tests.double)
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.unwrap(), eq=10)
 
     @staticmethod
@@ -71,7 +71,7 @@ class TestsFlextCoreDeprecationWarnings:
         """Map keeps the failure untouched when the result failed."""
         result: p.Result[int] = r[int].fail("boom").map(u.Tests.double)
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="boom")
 
     @staticmethod
@@ -86,7 +86,7 @@ class TestsFlextCoreDeprecationWarnings:
         """flat_map keeps the failure untouched when the result failed."""
         result: p.Result[int] = r[int].fail("boom").flat_map(u.Tests.increment)
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="boom")
 
     @staticmethod
@@ -103,7 +103,7 @@ class TestsFlextCoreDeprecationWarnings:
         """Recover supplies the callable's value on failure."""
         result: p.Result[int] = r[int].fail("boom").recover(u.Tests.forty_two)
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.unwrap(), eq=42)
 
     @staticmethod

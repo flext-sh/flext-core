@@ -42,14 +42,14 @@ class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
         """execute() succeeds with True when the service is available."""
         service = self.UserQueryService()
         result = service.execute()
-        tm.that(u.Tests.assert_success(result, expected_value=True), eq=True)
+        tm.ok(u.Tests.assert_success(result, expected_value=True))
 
     def test_user_service_execute_reports_unavailable_in_failure_mode(self) -> None:
         """execute() fails with the unavailable error under failure mode."""
         service = self.UserQueryService()
         service.configure_failure_mode(should_fail=True)
         result = service.execute()
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         _ = u.Tests.assert_failure(result, "User service unavailable")
 
     # ------------------------------------------------------------------ #
@@ -63,7 +63,7 @@ class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
         tm.that(entity.unique_id, eq=user_id)
         tm.that(entity.name, eq=f"User {user_id}")
         tm.that(entity.email, eq=f"user{user_id}@example.com")
-        tm.that(entity.active, eq=True)
+        tm.ok(entity.active)
 
     def test_fetch_user_returns_applied_custom_entity(self) -> None:
         """fetch_user() returns previously applied custom user data verbatim."""
@@ -84,7 +84,7 @@ class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
         service = self.UserQueryService()
         service.configure_failure_mode(should_fail=True)
         result = service.fetch_user("anyone")
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         _ = u.Tests.assert_failure(result, "User service unavailable")
 
     def test_fetch_user_counts_each_call(self) -> None:
@@ -129,7 +129,7 @@ class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
         service = self.NotificationService()
         service.configure_failure_mode(should_fail=True)
         result = service.send("test@example.com")
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         _ = u.Tests.assert_failure(result, "Notification service unavailable")
         tm.that(service.sent_notifications, lacks="test@example.com")
 

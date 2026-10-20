@@ -186,7 +186,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
     ) -> None:
         """Test read project metadata fails on missing pyproject."""
         result = _read(tmp_path)
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
 
     @pytest.mark.parametrize(
         ("body", "match_pattern"),
@@ -205,5 +205,5 @@ class TestsFlextUtilitiesProjectMetadataRead:
         """Test read project metadata fails on incomplete pyproject."""
         root = write_pyproject(tmp_path, body)
         result = _read(root)
-        tm.that(result.failure, eq=True)
-        tm.that(match_pattern in (result.error or ""), eq=True)
+        tm.ok(result.failure)
+        tm.ok(match_pattern in (result.error or ""))

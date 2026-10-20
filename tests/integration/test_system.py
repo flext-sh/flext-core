@@ -33,8 +33,8 @@ class TestsFlextCoreSystem:
         """A successful result is success, not failure, carries the value, no error."""
         result = r[str].ok("payload")
 
-        tm.that(result.success, eq=True)
-        tm.that(result.failure, eq=False)
+        tm.ok(result.success)
+        tm.fail(result.failure)
         tm.that(result.value, eq="payload")
         tm.that(result.unwrap(), eq="payload")
         tm.that(result.error, none=True)
@@ -47,8 +47,8 @@ class TestsFlextCoreSystem:
             error_code=c.ErrorCode.VALIDATION_ERROR,
         )
 
-        tm.that(result.success, eq=False)
-        tm.that(result.failure, eq=True)
+        tm.fail(result.success)
+        tm.ok(result.failure)
         tm.that(result.error, eq="processing_failed")
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)
 
@@ -76,7 +76,7 @@ class TestsFlextCoreSystem:
             .map(lambda x: x.replace("_", "-"))
         )
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=expected)
 
     @staticmethod
@@ -84,7 +84,7 @@ class TestsFlextCoreSystem:
         """Map does not run its function once the result is a failure."""
         result: p.Result[str] = r[str].fail("boom").map(lambda x: x.upper())
 
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, eq="boom")
 
     @pytest.mark.parametrize(
@@ -122,7 +122,7 @@ class TestsFlextCoreSystem:
             .lash(lambda _error: r[str].ok("valor_recuperado"))
         )
 
-        tm.that(recovered.success, eq=True)
+        tm.ok(recovered.success)
         tm.that(recovered.value, eq="valor_recuperado")
 
     @staticmethod
@@ -152,7 +152,7 @@ class TestsFlextCoreSystem:
         )
 
         tm.that(ok_pipe.value, eq="final_etapa2_etapa1_dados")
-        tm.that(fail_pipe.failure, eq=True)
+        tm.ok(fail_pipe.failure)
         tm.that(fail_pipe.error, eq="erro_na_etapa2")
 
     # ------------------------------------------------------------------ #
@@ -266,10 +266,10 @@ class TestsFlextCoreSystem:
         """Bind returns the container for chaining; resolve yields the value."""
         container = FlextContainer()
 
-        tm.that(container.bind("service", "value") is container, eq=True)
+        tm.ok(container.bind("service", "value") is container)
 
         resolved = container.resolve("service")
-        tm.that(resolved.success, eq=True)
+        tm.ok(resolved.success)
         tm.that(resolved.value, eq="value")
 
     @staticmethod
@@ -277,7 +277,7 @@ class TestsFlextCoreSystem:
         """Resolving an unregistered key yields a failure carrying an error."""
         resolved = FlextContainer().resolve("missing_service")
 
-        tm.that(resolved.success, eq=False)
+        tm.fail(resolved.success)
         tm.that(resolved.error, none=False)
 
     # ------------------------------------------------------------------ #
@@ -305,7 +305,7 @@ class TestsFlextCoreSystem:
         """A valid record yields a success whose fields are all transformed."""
         result = self._process_user_data({"nome": "João", "email": "joao@exemplo.com"})
 
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value["nome"], eq="processed_João")
         tm.that(result.value["email"], eq="processed_joao@exemplo.com")
 
@@ -313,7 +313,7 @@ class TestsFlextCoreSystem:
         """An empty field aborts the workflow with a descriptive validation error."""
         result = self._process_user_data({"nome": "", "email": "joao@exemplo.com"})
 
-        tm.that(result.success, eq=False)
+        tm.fail(result.success)
         tm.that(result.error, none=False)
         tm.that(tm.not_none(result.error), has="must not be empty")
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)

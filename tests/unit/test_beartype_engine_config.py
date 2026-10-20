@@ -70,7 +70,7 @@ class TestsFlextCoreBeartypeEngineConfig:
             alias = getattr(source.InvalidTypes, alias_name)
             if not isinstance(alias, TypeAliasType):
                 pytest.fail("Invalid source fixture is not a native alias")
-            tm.that(u.contains_any(alias.__value__), eq=True)
+            tm.ok(u.contains_any(alias.__value__))
 
     @pytest.mark.parametrize(
         ("alias_name", "expected"),

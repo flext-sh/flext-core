@@ -213,6 +213,7 @@ class TestsFlextTypeAliasResolution:
         deferred = u.deferred_alias(alias, owner=Consumer)
         tm.that(deferred, none=False)
         tm.not_none(deferred)
+        assert deferred is not None
         tm.that(deferred.module, eq=type_aliases.__name__)
         tm.not_none(deferred)
         tm.that(
@@ -220,6 +221,7 @@ class TestsFlextTypeAliasResolution:
             eq=f"{TestsFlextTypeAliasDeclarations.LegalTypes.__qualname__}.Deferred",
         )
         tm.not_none(deferred)
+        assert deferred is not None
         tm.that(deferred.unavailable_imports, eq=("DeferredPath",))
         tm.that(u.deferred(alias, owner=Consumer), eq=(deferred,))
         tm.that(u.resolve_type_alias_value(alias, owner=Consumer), none=True)

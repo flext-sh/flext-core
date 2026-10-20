@@ -320,8 +320,8 @@ class TestsFlextCorePublicApiContract:
         tm.that(
             facade.registry.fetch_plugin("public-api", "plugin").unwrap(), eq=plugin
         )
-        tm.that(facade.registry is facade.registry, eq=True)
-        tm.that(facade.registry.dispatcher is facade.dispatcher, eq=True)
+        tm.ok(facade.registry is facade.registry)
+        tm.ok(facade.registry.dispatcher is facade.dispatcher)
 
     @staticmethod
     def test_facade_registry_uses_custom_runtime_without_leaking_to_siblings() -> None:
@@ -333,9 +333,9 @@ class TestsFlextCorePublicApiContract:
         binding = "public-api-runtime-binding"
         tm.ok(facade.registry.register(binding, "registered-value"))
         tm.that(facade.container.resolve(binding).unwrap(), eq="registered-value")
-        tm.that(sibling.container.has(binding), eq=False)
-        tm.that(facade.settings is custom_settings, eq=True)
-        tm.that(facade.registry.dispatcher is facade.dispatcher, eq=True)
+        tm.fail(sibling.container.has(binding))
+        tm.ok(facade.settings is custom_settings)
+        tm.ok(facade.registry.dispatcher is facade.dispatcher)
 
     @staticmethod
     def test_concurrent_registry_access_preserves_plugin_lifecycle() -> None:
@@ -352,7 +352,7 @@ class TestsFlextCorePublicApiContract:
         with ThreadPoolExecutor(max_workers=barrier.parties) as executor:
             registries = tuple(executor.map(register, range(barrier.parties)))
 
-        tm.that(all(registry is facade.registry for registry in registries), eq=True)
+        tm.ok(all(registry is facade.registry for registry in registries))
         for index in range(barrier.parties):
             name = str(index)
             tm.that(

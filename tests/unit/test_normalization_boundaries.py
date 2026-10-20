@@ -41,8 +41,8 @@ class TestsFlextCoreNormalizationBoundaries:
     @staticmethod
     def test_json_null_is_preserved_at_both_boundaries() -> None:
         """Both boundaries preserve explicit null values."""
-        tm.that(u.normalize_to_json_value(None) is None, eq=True)
-        tm.that(u.normalize_to_container(None) is None, eq=True)
+        tm.ok(u.normalize_to_json_value(None) is None)
+        tm.ok(u.normalize_to_container(None) is None)
         tm.that(u.normalize_to_container([None]), eq=[None])
 
     @staticmethod
@@ -65,7 +65,7 @@ class TestsFlextCoreNormalizationBoundaries:
         issues = parsed["issues"]
         if not isinstance(issues, (tuple, list)):
             pytest.fail("Issue sequence did not retain its native collection shape")
-        tm.that(isinstance(issues[0], Mapping), eq=True)
+        tm.ok(isinstance(issues[0], Mapping))
         expected: t.JsonDict = {"issues": [{"locations": []}]}
         tm.that(u.normalize_to_json_mapping(parsed), eq=expected)
 
@@ -77,7 +77,7 @@ class TestsFlextCoreNormalizationBoundaries:
         items = parsed["items"]
         if not isinstance(items, (tuple, list)):
             pytest.fail("Model sequence did not retain its native collection shape")
-        tm.that(items[0] is model, eq=True)
+        tm.ok(items[0] is model)
         tm.that(
             u.normalize_to_json_mapping(parsed),
             eq={"items": [model.model_dump(mode="json")]},
@@ -119,7 +119,7 @@ class TestsFlextCoreNormalizationBoundaries:
     def test_container_preserves_models_and_unwraps_root_payloads() -> None:
         """Models retain identity while root payloads normalize recursively."""
         model = m.Metadata(attributes={"source": "native"})
-        tm.that(u.normalize_to_container(model) is model, eq=True)
+        tm.ok(u.normalize_to_container(model) is model)
         tm.that(
             u.normalize_to_container(m.ConfigMap(root={"key": Path("relative")})),
             eq={"key": str(Path("relative"))},
@@ -145,7 +145,7 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.that(source, eq={"active": True})
         first, second = m.Metadata(), m.Metadata()
         tm.that(first.attributes, eq=second.attributes)
-        tm.that(first.attributes is second.attributes, eq=False)
+        tm.fail(first.attributes is second.attributes)
 
     @staticmethod
     def test_registration_uses_native_payload_and_metadata_contracts() -> None:
@@ -154,7 +154,7 @@ class TestsFlextCoreNormalizationBoundaries:
         scalar = m.ServiceRegistration(
             name="scalar", service="payload", metadata=metadata
         )
-        tm.that(scalar.metadata is metadata, eq=True)
+        tm.ok(scalar.metadata is metadata)
         mapping = m.ServiceRegistration.model_validate({
             "name": "mapping",
             "service": {"nested": [None]},
@@ -179,7 +179,7 @@ class TestsFlextCoreNormalizationBoundaries:
         services: tuple[p.RegisterableService, ...] = (model, model.model_dump)
         for service in services:
             value: p.GuardInput = service
-            tm.that(u.normalize_registerable_service(value) is service, eq=True)
+            tm.ok(u.normalize_registerable_service(value) is service)
 
     @staticmethod
     def test_timestamp_validator_preserves_aware_timezone() -> None:
@@ -188,8 +188,8 @@ class TestsFlextCoreNormalizationBoundaries:
         aware = naive.replace(tzinfo=timezone(timedelta(hours=3)))
         normalized = m.TimestampedModel.model_validate({"created_at": naive})
         preserved = m.TimestampedModel.model_validate({"created_at": aware})
-        tm.that(normalized.created_at.tzinfo is UTC, eq=True)
-        tm.that(preserved.created_at is aware, eq=True)
+        tm.ok(normalized.created_at.tzinfo is UTC)
+        tm.ok(preserved.created_at is aware)
 
     @staticmethod
     def test_invalid_pagination_does_not_become_a_default() -> None:
@@ -217,8 +217,8 @@ class TestsFlextCoreNormalizationBoundaries:
         )
         scope = clean_container.scope()
         tm.that(tm.ok(scope.resolve("shared-service")), eq="inherited")
-        tm.that(scope.bind("scoped-service", "isolated") is scope, eq=True)
-        tm.that(clean_container.resolve("scoped-service").failure, eq=True)
+        tm.ok(scope.bind("scoped-service", "isolated") is scope)
+        tm.ok(clean_container.resolve("scoped-service").failure)
 
     @staticmethod
     @pytest.mark.parametrize("trace", [False, True])

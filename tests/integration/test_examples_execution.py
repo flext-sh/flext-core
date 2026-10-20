@@ -82,5 +82,5 @@ class TestsFlextExamplesExecution:
         check_match = tm.not_none(_CHECK_COUNT_RE.search(stdout))
         tm.that(int(check_match.group(1)), gt=0)
 
-        tm.that(expected_path.exists(), eq=True)
-        tm.that(actual_path.exists(), eq=False)
+        tm.ok(expected_path.exists())
+        tm.fail(actual_path.exists())

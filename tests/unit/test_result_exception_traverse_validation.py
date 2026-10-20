@@ -46,8 +46,8 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         result = r[int].traverse([1, 2, 3], process, fail_fast=True)
 
         # Assert
-        tm.that(result.failure, eq=True)
-        tm.that(result.exception is raised, eq=True)
+        tm.ok(result.failure)
+        tm.ok(result.exception is raised)
 
     @staticmethod
     def test_traverse_fail_fast_wraps_callback_exception() -> None:
@@ -64,8 +64,8 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         result = r[int].traverse([1, 2, 3], process, fail_fast=True)
 
         # Assert
-        tm.that(result.failure, eq=True)
-        tm.that(result.exception is exc, eq=True)
+        tm.ok(result.failure)
+        tm.ok(result.exception is exc)
         tm.that(result.error, eq=str(exc))
 
     @staticmethod
@@ -80,7 +80,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         result = r[int].traverse([1, 2, 3], double, fail_fast=True)
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(list(result.value), eq=[2, 4, 6])
         tm.that(result.exception, none=True)
 
@@ -100,7 +100,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         result = r[int].traverse([1, 2, 3], process, fail_fast=False)
 
         # Assert
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, none=False)
         tm.that(result.error, has=["error 1", "error 2"])
 
@@ -119,7 +119,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         result = r[int].traverse([1, 2, 3], process, fail_fast=False)
 
         # Assert
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.error, none=False)
         tm.that(result.error, has=["callback error 1", "callback error 3"])
 
@@ -135,7 +135,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         result = r[int].traverse([1, 2, 3], double, fail_fast=False)
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(list(result.value), eq=[2, 4, 6])
 
     @staticmethod
@@ -153,7 +153,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         )
 
         # Assert
-        tm.that(result.failure, eq=True)
+        tm.ok(result.failure)
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=c.ValidationError)
 
@@ -172,7 +172,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         )
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         user = result.value
         tm.that(user.name, eq="Alice")
         tm.that(user.age, eq=30)
@@ -208,7 +208,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
 
         # Assert
         tm.that(result.error, eq="error")
-        tm.that(result.exception is exc, eq=True)
+        tm.ok(result.exception is exc)
 
     @staticmethod
     def test_failure_short_circuits_map_and_unwrap_or_uses_default() -> None:
@@ -221,8 +221,8 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         mapped = result.map(lambda value: value + 1)
 
         # Assert
-        tm.that(mapped.failure, eq=True)
-        tm.that(mapped.exception is exc, eq=True)
+        tm.ok(mapped.failure)
+        tm.ok(mapped.exception is exc)
         tm.that(result.unwrap_or(-1), eq=-1)
 
     @pytest.mark.parametrize(
@@ -240,6 +240,6 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         result = r[bool | int].ok(value)
 
         # Assert
-        tm.that(result.success, eq=True)
+        tm.ok(result.success)
         tm.that(result.value, eq=expected)
         tm.that(result.exception, none=True)

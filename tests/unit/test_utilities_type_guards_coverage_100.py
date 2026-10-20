@@ -71,7 +71,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
             truth=True,
         )
         tm.that(metadata["repository_root"], eq=str(repository_root))
-        tm.that(metadata["retry_window"] is None, eq=True)
+        tm.ok(metadata["retry_window"] is None)
         tm.that(isinstance(payload["started_at"], str), truth=True)
         tm.that(
             datetime.fromisoformat(cast("str", payload["started_at"])),

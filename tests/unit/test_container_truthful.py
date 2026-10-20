@@ -49,7 +49,7 @@ class TestsFlextCoreContainerTruthful:
             with pytest.raises(e.ValidationError, match="reserved"):
                 _ = write()
         tm.ok(clean_container.resolve(name))
-        tm.that(clean_container.has(name), eq=False)
+        tm.fail(clean_container.has(name))
 
     @staticmethod
     def test_duplicate_is_rejected_across_registration_kinds(
@@ -90,9 +90,9 @@ class TestsFlextCoreContainerTruthful:
 
         for container in (scoped, nested):
             tm.that(list(container.names()), eq=["public"])
-            tm.that(container.has(c.ServiceName.LOGGER), eq=False)
+            tm.fail(container.has(c.ServiceName.LOGGER))
             logger = tm.ok(container.resolve(c.ServiceName.LOGGER))
-            tm.that(isinstance(logger, p.Logger), eq=True)
+            tm.ok(isinstance(logger, p.Logger))
             with pytest.raises(e.ValidationError, match="reserved"):
                 _ = container.factory(
                     c.ServiceName.LOGGER,
@@ -106,9 +106,9 @@ class TestsFlextCoreContainerTruthful:
         """The scoped settings and context services are the scope's own."""
         scoped = clean_container.scope(subproject="unit")
 
-        tm.that(tm.ok(scoped.resolve(c.Directory.CONFIG)) is scoped.settings, eq=True)
-        tm.that(tm.ok(scoped.resolve(c.FIELD_CONTEXT)) is scoped.context, eq=True)
-        tm.that(scoped.settings is clean_container.settings, eq=False)
+        tm.ok(tm.ok(scoped.resolve(c.Directory.CONFIG)) is scoped.settings)
+        tm.ok(tm.ok(scoped.resolve(c.FIELD_CONTEXT)) is scoped.context)
+        tm.fail(scoped.settings is clean_container.settings)
 
     @staticmethod
     def test_scope_spec_overrides_inherited_registration(
@@ -138,8 +138,8 @@ class TestsFlextCoreContainerTruthful:
             value.model_dump(mode="json"),
             eq=u.normalize_to_json_value(payload),
         )
-        tm.that(payload["created"] is instant, eq=True)
-        tm.that(payload["path"] is path, eq=True)
+        tm.ok(payload["created"] is instant)
+        tm.ok(payload["path"] is path)
 
     @staticmethod
     def test_sequence_registration_serializes_a_list_root(
@@ -157,8 +157,8 @@ class TestsFlextCoreContainerTruthful:
             value.model_dump(mode="json"),
             eq=u.normalize_to_json_value(payload),
         )
-        tm.that(payload[1] is path, eq=True)
-        tm.that(payload[2] is instant, eq=True)
+        tm.ok(payload[1] is path)
+        tm.ok(payload[2] is instant)
 
     @staticmethod
     def test_registered_model_member_preserves_its_public_fields(
@@ -179,14 +179,14 @@ class TestsFlextCoreContainerTruthful:
         payload = frozenset({"first", "second"})
         normalized = u.normalize_to_container(payload)
 
-        tm.that(isinstance(normalized, list), eq=True)
+        tm.ok(isinstance(normalized, list))
         if isinstance(normalized, list):
             tm.that(set(normalized), eq=payload)
 
     @staticmethod
     def test_null_normalization_keeps_the_pydantic_json_value() -> None:
         """An admitted JSON null is data, never an implicit empty string."""
-        tm.that(u.normalize_to_container(None) is None, eq=True)
+        tm.ok(u.normalize_to_container(None) is None)
 
     @staticmethod
     def test_unsupported_container_value_is_not_silently_stringified() -> None:
