@@ -18,8 +18,8 @@ from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 
 )
 
 
-class FlextUtilitiesBeartypeClassVisitor(
-    class_visitor_part_01.FlextUtilitiesBeartypeClassVisitor
+class FlextUtilitiesBeartypeClassVisitorPart02(
+    class_visitor_part_01.FlextUtilitiesBeartypeClassVisitorPart01
 ):
     @staticmethod
     def v_mro_shape(
@@ -47,4 +47,4 @@ class FlextUtilitiesBeartypeClassVisitor(
         return violation or self_ref
 
 
-__all__: list[str] = ["FlextUtilitiesBeartypeClassVisitor"]
+__all__: list[str] = ["FlextUtilitiesBeartypeClassVisitorPart02"]

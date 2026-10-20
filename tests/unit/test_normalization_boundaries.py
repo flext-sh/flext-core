@@ -82,6 +82,17 @@ class TestsFlextCoreNormalizationBoundaries:
             m.ConfigMap.model_validate({"issues": [invalid]} if nested else invalid)
 
     @staticmethod
+    @pytest.mark.parametrize("payload", [{1: "invalid-key"}, {"nested": {1: None}}])
+    def test_json_normalization_rejects_invalid_mapping_keys(
+        payload: p.GuardInput,
+    ) -> None:
+        """Both JSON boundaries reject keys before they can be stringified."""
+        with pytest.raises(m.ValidationError):
+            u.normalize_to_json_value(payload)
+        with pytest.raises(m.ValidationError):
+            u.normalize_to_json_mapping(payload)
+
+    @staticmethod
     def test_json_payload_rejects_unsupported_nested_values() -> None:
         """Unknown values cannot be accepted as empty abstract model instances."""
         with pytest.raises(m.ValidationError):
@@ -109,7 +120,12 @@ class TestsFlextCoreNormalizationBoundaries:
     def test_container_preserves_models_and_unwraps_root_payloads() -> None:
         """Models retain identity while root payloads normalize recursively."""
         model = m.Metadata(attributes={"source": "native"})
-        tm.that(u.normalize_to_container(model), eq=model.model_dump(mode="python"))
+        tm.ok(u.normalize_to_container(model) is model)
+        serialized = m.Tests.PlainSerializedPayload(name="before")
+        normalized = u.normalize_to_container(serialized)
+        tm.ok(normalized is serialized)
+        serialized.name = "after"
+        tm.that(u.normalize_to_json_value(normalized), eq="after")
         tm.that(
             u.normalize_to_container(m.ConfigMap(root={"key": str(Path("relative"))})),
             eq={"key": str(Path("relative"))},
@@ -150,12 +166,12 @@ class TestsFlextCoreNormalizationBoundaries:
             "service": {"nested": [None]},
             "metadata": {"tag": "value"},
         })
-        if not isinstance(mapping.service, m.ConfigMap):
-            pytest.fail("Mapping service must follow the ConfigMap contract")
-        if not isinstance(mapping.metadata, m.Metadata):
-            pytest.fail("Registration attributes must follow the Metadata contract")
-        tm.that(mapping.service.model_dump(mode="json"), eq={"nested": [None]})
-        tm.that(mapping.metadata.attributes, eq={"tag": "value"})
+        tm.that(mapping.service, eq={"nested": [None]})
+        tm.that(
+            mapping.metadata,
+            is_=m.Metadata,
+            attr_eq={"attributes": {"tag": "value"}},
+        )
         with pytest.raises(m.ValidationError):
             m.ServiceRegistration.model_validate({
                 "name": "invalid",
@@ -163,13 +179,51 @@ class TestsFlextCoreNormalizationBoundaries:
             })
 
     @staticmethod
-    def test_registration_guard_preserves_model_and_bound_callable() -> None:
-        """Registration values pass the guard boundary without losing identity."""
+    def test_registration_preserves_model_and_bound_callable() -> None:
+        """The registration model retains validated service references."""
         model = m.ConfigMap(root={"plugin": "guard"})
         services: tuple[p.RegisterableService, ...] = (model, model.model_dump)
         for service in services:
-            value: p.GuardInput = service
-            tm.ok(u.normalize_registerable_service(value) is service)
+            registration = m.ServiceRegistration(name="identity", service=service)
+            tm.that(registration.service is service, truth=True)
+
+    @staticmethod
+    def test_factory_preserves_native_collection_identity(
+        clean_container: p.Container,
+    ) -> None:
+        """Factory results retain their native payload and reference on resolve."""
+        payload: t.JsonMapping = {"nested": [None]}
+
+        def produce() -> t.JsonMapping:
+            return payload
+
+        clean_container.factory("identity", produce)
+        tm.that(
+            tm.ok(clean_container.resolve("identity")),
+            where=lambda value: value is payload,
+        )
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "payload",
+        [
+            {1: "invalid-key"},
+            {"nested": [ModuleType("unsupported")]},
+            [ModuleType("unsupported")],
+        ],
+    )
+    @pytest.mark.parametrize("registration_kind", ["factories", "resources"])
+    def test_factory_and_resource_reject_invalid_payloads(
+        clean_container: p.Container,
+        payload: p.GuardInput,
+        registration_kind: str,
+    ) -> None:
+        """Untrusted callable outputs cross the canonical admission model."""
+        spec = m.ServiceRegistrationSpec.model_validate({
+            registration_kind: {"invalid-payload": lambda: payload},
+        })
+        scope = clean_container.scope(registration=spec)
+        tm.fail(scope.resolve("invalid-payload"))
 
     @staticmethod
     def test_timestamp_validator_preserves_aware_timezone() -> None:

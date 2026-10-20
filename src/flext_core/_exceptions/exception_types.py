@@ -14,7 +14,7 @@ from flext_core import c, m, t
 from flext_core._exceptions import FlextExceptionsBase
 
 if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsResult
+    from flext_core import p
 
 
 class FlextExceptionsTypes(FlextExceptionsBase):
@@ -146,7 +146,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             actual_type: type | str | None = None,
             options: m.ExceptionInitOptions | None = None,
             params: m.BaseModel | None = None,
-            metadata: FlextProtocolsResult.HasModelDump | t.JsonValue | None = None,
+            metadata: p.HasModelDump | t.JsonValue | None = None,
             **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize type error with type information."""

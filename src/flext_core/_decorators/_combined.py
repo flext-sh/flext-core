@@ -30,9 +30,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         track_perf: bool = True,
         railway_enabled: Literal[False] = False,
         railway_error_code: str | None = None,
-    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
-        _ = inject_deps, operation_name, track_perf, railway_enabled, railway_error_code
-        raise NotImplementedError
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]: ...
 
     @overload
     @classmethod
@@ -47,9 +45,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
     ) -> Callable[
         [Callable[PCallback, TResult]],
         Callable[PCallback, FlextProtocolsResult.Result[TResult]],
-    ]:
-        _ = inject_deps, operation_name, track_perf, railway_enabled, railway_error_code
-        raise NotImplementedError
+    ]: ...
 
     @classmethod
     def combined[**PCallback, TResult](

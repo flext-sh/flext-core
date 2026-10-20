@@ -9,8 +9,10 @@ from __future__ import annotations
 from flext_core._utilities._enforcement_parts import enforcement_part_03
 
 
-class FlextUtilitiesEnforcement(enforcement_part_03.FlextUtilitiesEnforcement):
+class FlextUtilitiesEnforcementPart04(
+    enforcement_part_03.FlextUtilitiesEnforcementPart03
+):
     """Runtime enforcement engine; the rule catalog is package data."""
 
 
-__all__: list[str] = ["FlextUtilitiesEnforcement"]
+__all__: list[str] = ["FlextUtilitiesEnforcementPart04"]

@@ -29,10 +29,10 @@ from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeModuleVisitor,
     FlextUtilitiesBeartypeTypeAliases,
 )
-from flext_core._utilities._beartype._class_visitor_parts import (
+from flext_core._utilities._beartype.class_visitor import (
     FlextUtilitiesBeartypeClassVisitor,
 )
-from flext_core._utilities._beartype._helpers_parts import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
 
 
 class FlextUtilitiesBeartypeEngine(

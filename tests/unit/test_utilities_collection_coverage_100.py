@@ -19,50 +19,6 @@ if TYPE_CHECKING:
     from tests import t
 
 
-def _double(value: int) -> int:
-    return value * 2
-
-
-def _increment(value: int) -> int:
-    return value + 1
-
-
-def _times_ten(value: int) -> int:
-    return value * 10
-
-
-def _equals_two(value: int) -> bool:
-    return value == 2
-
-
-def _equals_four(value: int) -> bool:
-    return value == 4
-
-
-def _is_even(value: int) -> bool:
-    return value % 2 == 0
-
-
-def _is_odd(value: int) -> bool:
-    return value % 2 != 0
-
-
-def _greater_than_one(value: int) -> bool:
-    return value > 1
-
-
-def _greater_than_two(value: int) -> bool:
-    return value > 2
-
-
-def _greater_than_ten(value: int) -> bool:
-    return value > 10
-
-
-def _upper(value: str) -> str:
-    return value.upper()
-
-
 class TestsFlextCoreUtilitiesCollection:
     """Behavior contract for the collection utilities.
 
@@ -71,10 +27,10 @@ class TestsFlextCoreUtilitiesCollection:
     """
 
     @staticmethod
-    def test_normalize_domain_event_data_flattens_public_payloads(
+    def test_domain_event_retains_its_validated_payload(
         tmp_path: Path,
     ) -> None:
-        """Test normalize domain event data flattens public payloads."""
+        """Keep the validated payload and its native values without normalization."""
         repository_root = tmp_path / "flext"
         repository_root.mkdir()
         config_payload = m.ConfigMap.model_validate({
@@ -83,34 +39,29 @@ class TestsFlextCoreUtilitiesCollection:
             "attempt_count": 2,
             "ignored": None,
         })
-        mapping_payload: t.JsonMapping = {"tenant": "acme", "retry": 1, "skip": None}
-
-        normalized_config = u.normalize_domain_event_data(config_payload)
-        normalized_mapping_payload = u.normalize_domain_event_data(mapping_payload)
-        normalized_none = u.normalize_domain_event_data(None)
-
-        tm.that(normalized_none, eq={})
-        tm.that(
-            normalized_config,
-            eq={
-                "event": "sync-users",
-                "repository_root": str(repository_root),
-                "attempt_count": 2,
-            },
+        event = m.DomainEvent(
+            event_type="sync-users",
+            aggregate_id="acme",
+            data=config_payload,
         )
-        tm.that(normalized_mapping_payload, eq={"tenant": "acme", "retry": 1})
+        tm.that(event.data, where=lambda value: value is config_payload)
+        tm.that(
+            event.data.root["repository_root"],
+            where=lambda value: value is repository_root,
+        )
+        tm.that(event.data.root["ignored"], none=True)
 
     # --- map -------------------------------------------------------------
 
     @pytest.mark.parametrize(
         ("items", "mapper", "expected"),
         [
-            ([1, 2, 3], _double, [2, 4, 6]),
-            ((1, 2), _increment, (2, 3)),
-            ({"a": 1, "b": 2}, _times_ten, {"a": 10, "b": 20}),
-            ({1, 2}, _double, {2, 4}),
-            (frozenset({1, 2}), _double, frozenset({2, 4})),
-            (range(3), _double, [0, 2, 4]),
+            ([1, 2, 3], u.Tests.double, [2, 4, 6]),
+            ((1, 2), (1).__add__, (2, 3)),
+            ({"a": 1, "b": 2}, (10).__mul__, {"a": 10, "b": 20}),
+            ({1, 2}, u.Tests.double, {2, 4}),
+            (frozenset({1, 2}), u.Tests.double, frozenset({2, 4})),
+            (range(3), u.Tests.double, [0, 2, 4]),
         ],
     )
     @staticmethod
@@ -127,17 +78,17 @@ class TestsFlextCoreUtilitiesCollection:
     @pytest.mark.parametrize(
         ("items", "predicate", "expected", "expect_found"),
         [
-            ([1, 2, 3], _equals_two, 2, True),
-            ({"a": 1, "b": 4}, _equals_four, 4, True),
-            ([1, 3, 5], _equals_two, None, False),
+            ([1, 2, 3], (2).__eq__, 2, True),
+            ({"a": 1, "b": 4}, (4).__eq__, 4, True),
+            ([1, 3, 5], (2).__eq__, None, False),
         ],
     )
     @staticmethod
     def test_find_returns_matching_element_or_failure(
         *,
-        items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
-        predicate: Callable[[t.JsonValue], bool],
-        expected: t.JsonValue,
+        items: t.SequenceOf[int] | t.MappingKV[str, int],
+        predicate: Callable[[int], bool],
+        expected: int | None,
         expect_found: bool,
     ) -> None:
         """Test find returns matching element or failure."""
@@ -153,7 +104,7 @@ class TestsFlextCoreUtilitiesCollection:
         """Test find returns failure when mapping has no matching value."""
         result = u.find(
             {"tenant": "acme", "mode": "full"},
-            lambda value: value == "delta",
+            "delta".__eq__,
         )
 
         tm.fail(result)
@@ -164,15 +115,25 @@ class TestsFlextCoreUtilitiesCollection:
     @pytest.mark.parametrize(
         ("items", "predicate", "mapper", "expected"),
         [
-            ([1, 2, 3, 4], _is_even, None, [2, 4]),
-            ([1, 2, 3, 4], _greater_than_two, _double, [6, 8]),
-            ({"a": 1, "b": 2, "c": 3}, _is_odd, None, {"a": 1, "c": 3}),
-            ({"a": 1, "b": 4}, _greater_than_two, _double, {"b": 8}),
-            ([1, 3, 5], _greater_than_ten, None, []),
-            ([2, 4, 6], _is_even, None, [2, 4, 6]),
-            ((1, 2, 3, 4), _is_even, None, (2, 4)),
-            ((1, 2, 3, 4), _greater_than_two, _double, (6, 8)),
-            (range(4), _is_even, None, [0, 2]),
+            ([1, 2, 3, 4], u.Tests.is_even, None, [2, 4]),
+            ([1, 2, 3, 4], (2).__lt__, u.Tests.double, [6, 8]),
+            (
+                {"a": 1, "b": 2, "c": 3},
+                u.Tests.is_odd,
+                None,
+                {"a": 1, "c": 3},
+            ),
+            (
+                {"a": 1, "b": 4},
+                (2).__lt__,
+                u.Tests.double,
+                {"b": 8},
+            ),
+            ([1, 3, 5], (10).__lt__, None, []),
+            ([2, 4, 6], u.Tests.is_even, None, [2, 4, 6]),
+            ((1, 2, 3, 4), u.Tests.is_even, None, (2, 4)),
+            ((1, 2, 3, 4), (2).__lt__, u.Tests.double, (6, 8)),
+            (range(4), u.Tests.is_even, None, [0, 2]),
         ],
     )
     @staticmethod
@@ -189,12 +150,12 @@ class TestsFlextCoreUtilitiesCollection:
 
     @pytest.mark.parametrize(
         ("items", "predicate", "expected"),
-        [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], _is_even, 2)],
+        [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], u.Tests.is_even, 2)],
     )
     @staticmethod
     def test_count_returns_total_or_matching(
-        items: t.JsonList,
-        predicate: Callable[[t.JsonValue], bool] | None,
+        items: t.SequenceOf[int],
+        predicate: Callable[[int], bool] | None,
         expected: int,
     ) -> None:
         """Test count returns total or matching."""
@@ -205,23 +166,27 @@ class TestsFlextCoreUtilitiesCollection:
     @pytest.mark.parametrize(
         ("items", "processor", "predicate", "expected"),
         [
-            ([1, 2, 3], _double, None, [2, 4, 6]),
-            ([1, 2, 3], _double, _greater_than_one, [4, 6]),
-            (["a", "b", "c"], _upper, None, ["A", "B", "C"]),
-            ([], _double, None, []),
+            ([1, 2, 3], u.Tests.double, None, [2, 4, 6]),
+            ([1, 2, 3], u.Tests.double, (1).__lt__, [4, 6]),
+            ([], u.Tests.double, None, []),
         ],
     )
     @staticmethod
     def test_process_applies_processor_with_optional_predicate(
-        items: t.JsonList,
-        processor: Callable[[t.JsonValue], t.JsonValue],
-        predicate: Callable[[t.JsonValue], bool] | None,
-        expected: t.JsonList,
+        items: t.SequenceOf[int],
+        processor: Callable[[int], int],
+        predicate: Callable[[int], bool] | None,
+        expected: t.SequenceOf[int],
     ) -> None:
         """Test process applies processor with optional predicate."""
         result = u.process(items, processor, predicate=predicate)
         tm.ok(result)
         tm.that(result.value, eq=expected)
+
+    @staticmethod
+    def test_process_uppercases_each_string() -> None:
+        """Apply a string processor without widening its input contract."""
+        tm.ok(u.process(["a", "b", "c"], str.upper), eq=["A", "B", "C"])
 
     @staticmethod
     def test_process_first_failure_ends_run_carrying_its_exception() -> None:

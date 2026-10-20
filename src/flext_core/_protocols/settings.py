@@ -28,7 +28,7 @@ class FlextProtocolsSettings:
 
     @runtime_checkable
     class Settings(
-        FlextProtocolsResult.HasModelDump,
+        FlextProtocolsResult.HasModelDump[t.MappingKV[str, t.JsonPayload | None]],
         FlextProtocolsBase.Base,
         Protocol,
     ):

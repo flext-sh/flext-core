@@ -17,7 +17,9 @@ from flext_core._models import FlextModelsContainers
 from flext_core._utilities._mapper_access_parts import mapper_access_part_01
 
 
-class FlextUtilitiesMapperAccess(mapper_access_part_01.FlextUtilitiesMapperAccess):
+class FlextUtilitiesMapperAccessPart02(
+    mapper_access_part_01.FlextUtilitiesMapperAccessPart01
+):
     @staticmethod
     def _extract_handle_array_index(
         current: t.JsonPayload
@@ -44,7 +46,7 @@ class FlextUtilitiesMapperAccess(mapper_access_part_01.FlextUtilitiesMapperAcces
                 "extract array index",
                 c.ERR_MAPPER_NOT_A_SEQUENCE,
             )
-        index_result = FlextUtilitiesMapperAccess._normalize_array_index(
+        index_result = FlextUtilitiesMapperAccessPart02._normalize_array_index(
             array_match,
             len(sequence),
         )
@@ -84,17 +86,19 @@ class FlextUtilitiesMapperAccess(mapper_access_part_01.FlextUtilitiesMapperAcces
         """
         match data:
             case dict() | Mapping() if key in data:
-                return FlextUtilitiesMapperAccess._normalize_accessible_value(data[key])
+                return FlextUtilitiesMapperAccessPart02._normalize_accessible_value(
+                    data[key]
+                )
             case m.ConfigMap() | m.Dict() if key in data.root:
-                return FlextUtilitiesMapperAccess._normalize_accessible_value(
+                return FlextUtilitiesMapperAccessPart02._normalize_accessible_value(
                     data.root[key],
                 )
             case _ if hasattr(data, key):
-                return FlextUtilitiesMapperAccess._normalize_accessible_value(
+                return FlextUtilitiesMapperAccessPart02._normalize_accessible_value(
                     getattr(data, key),
                 )
             case _:
                 return ""
 
 
-__all__: list[str] = ["FlextUtilitiesMapperAccess"]
+__all__: list[str] = ["FlextUtilitiesMapperAccessPart02"]

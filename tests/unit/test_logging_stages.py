@@ -829,7 +829,7 @@ class TestsFlextLoggingStages:
             (declared_key, declared_key.casefold(), declared_key.swapcase()),
             sensitive_value,
         )
-        nested: list[t.JsonPayload] = [payload]
+        nested: list[t.JsonValue] = [payload]
         tm.ok(
             u.log(
                 "declared sensitive payload",

@@ -6,8 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._beartype._class_visitor_parts import (
-    FlextUtilitiesBeartypeClassVisitor,
+from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_03 import (
+    FlextUtilitiesBeartypeClassVisitorPart03,
 )
+
+
+class FlextUtilitiesBeartypeClassVisitor(FlextUtilitiesBeartypeClassVisitorPart03):
+    """Compose class governance through its internal part hierarchy."""
+
 
 __all__: list[str] = ["FlextUtilitiesBeartypeClassVisitor"]

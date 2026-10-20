@@ -95,7 +95,7 @@ class TestsFlextCoreEnforcementTargetIdentity:
             if v.rule_id in {"ENFORCE-047", "ENFORCE-049"}
         }
 
-        assert bool(violations) is facade_module
+        tm.that(violations, truth=facade_module)
 
     @staticmethod
     def test_declared_facade_with_alias_first_remains_valid() -> None:

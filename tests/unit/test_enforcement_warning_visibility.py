@@ -69,7 +69,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
             )
 
         tm.that(len(record), eq=1)
-        assert record[0].category is category
+        tm.that(record[0].category, where=lambda actual: actual is category)
 
     @staticmethod
     def test_parent_category_captures_smell_violation() -> None:
@@ -83,7 +83,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 stacklevel=2,
             )
 
-        assert record[0].category is c.FlextSmellViolation
+        tm.that(
+            record[0].category, where=lambda category: category is c.FlextSmellViolation
+        )
 
     def test_real_filterwarnings_keep_mro_violations_visible(
         self,
@@ -142,7 +144,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
         tm.that(result.success, truth=True, msg=result.error)
         output = result.value.stdout + result.value.stderr
         tm.that(result.value.outcome.raw_return_code, eq=0, msg=output)
-        assert "FlextMroViolation" in output, (
-            "runtime enforcement warning suppressed by shipped filterwarnings:\n"
-            + output
+        tm.that(
+            output,
+            has="FlextMroViolation",
+            msg="runtime enforcement warning suppressed by shipped filterwarnings:\n"
+            + output,
         )

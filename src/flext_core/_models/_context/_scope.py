@@ -9,7 +9,9 @@ from __future__ import annotations
 from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_03
 
 
-class FlextModelsContextScope(flextmodelscontextscope_part_03.FlextModelsContextScope):
+class FlextModelsContextScope(
+    flextmodelscontextscope_part_03.FlextModelsContextScopePart03
+):
     """Public facade for FlextModelsContextScope."""
 
 

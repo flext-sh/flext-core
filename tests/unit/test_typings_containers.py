@@ -21,7 +21,6 @@ import flext_tests
 import pytest
 from typing_extensions import TypeForm
 
-import flext_core
 from tests import c, m, t, tm, u
 
 
@@ -32,10 +31,8 @@ class TestsFlextCoreJsonPayload:
     def test_models_are_not_accepted_as_json_payloads() -> None:
         """Models must be serialized before crossing the JSON boundary."""
         model = m.ConfigMap(root={"name": "sample"})
-        adapter: flext_tests.m.TypeAdapter[
-            flext_core._typings.pydantic.FlextTypesPydantic.JsonValue
-        ] = u.type_adapter(
-            TypeForm(flext_core._typings.pydantic.FlextTypesPydantic.JsonValue)
+        adapter: flext_tests.m.TypeAdapter[t.JsonValue] = u.type_adapter(
+            TypeForm(t.JsonValue)
         )
         with pytest.raises(flext_tests.m.ValidationError):
             adapter.validate_python(model)
@@ -53,10 +50,8 @@ class TestsFlextCoreJsonPayload:
     def test_models_inside_json_collections_require_an_owned_model_contract() -> None:
         """The JSON branch must not silently admit arbitrary model instances."""
         model = m.Metadata(attributes={"name": "sample"})
-        adapter: flext_tests.m.TypeAdapter[
-            flext_core._typings.pydantic.FlextTypesPydantic.JsonValue
-        ] = u.type_adapter(
-            TypeForm(flext_core._typings.pydantic.FlextTypesPydantic.JsonValue)
+        adapter: flext_tests.m.TypeAdapter[t.JsonValue] = u.type_adapter(
+            TypeForm(t.JsonValue)
         )
         with pytest.raises(flext_tests.m.ValidationError):
             adapter.validate_python({"items": [{"model": model}]})

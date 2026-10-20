@@ -10,26 +10,16 @@ import functools
 import importlib
 import sys
 from types import ModuleType
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    TypeAliasType,
-    cast,
-    get_args,
-    get_origin,
-    is_protocol,
-)
+from typing import Any, TypeAliasType, cast, get_args, get_origin, is_protocol
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
+from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesFamilySurface
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeTypeAliases
 
-if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
 
-
-class FlextUtilitiesBeartypeHelpers:
+class FlextUtilitiesBeartypeHelpersPart01:
     """Annotation + bytecode inspection helpers."""
 
     @staticmethod
@@ -60,7 +50,7 @@ class FlextUtilitiesBeartypeHelpers:
             (
                 alias,
                 module_path,
-                FlextUtilitiesBeartypeHelpers._lazy_suffix(module_path),
+                FlextUtilitiesBeartypeHelpersPart01._lazy_suffix(module_path),
             )
             for alias, entry in lazy_imports.items()
             if len(alias) == 1 and alias.islower()
@@ -77,7 +67,7 @@ class FlextUtilitiesBeartypeHelpers:
         """
         return frozenset(
             alias
-            for alias, _, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+            for alias, _, _ in FlextUtilitiesBeartypeHelpersPart01.lazy_alias_suffixes(
                 package_name,
             )
         )
@@ -90,7 +80,7 @@ class FlextUtilitiesBeartypeHelpers:
             Local facade module names derived from generated lazy exports.
 
         """
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart01
         return frozenset(
             module_path.rsplit(".", 1)[-1]
             for _, module_path, suffix in h.lazy_alias_suffixes(
@@ -115,7 +105,7 @@ class FlextUtilitiesBeartypeHelpers:
         package_name = target.__module__.split(".", 1)[0]
         if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
             return False
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart01
         return any(
             vars(sys.modules[module_path]).get(alias) is target
             for alias, module_path, _ in h.lazy_alias_suffixes(
@@ -160,7 +150,7 @@ class FlextUtilitiesBeartypeHelpers:
             if current_id in seen:
                 return current
             seen.add(current_id)
-            resolved = FlextUtilitiesBeartypeHelpers.resolve_type_alias_value(
+            resolved = FlextUtilitiesBeartypeHelpersPart01.resolve_type_alias_value(
                 current,
                 owner=owner,
             )
@@ -176,7 +166,7 @@ class FlextUtilitiesBeartypeHelpers:
         seen: set[int],
         owner: ModuleType | type | None = None,
     ) -> bool:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart01
         hint = h.unwrap_type_alias(hint, owner=owner)
         if hint is None:
             return False
@@ -198,7 +188,7 @@ class FlextUtilitiesBeartypeHelpers:
         hint: FlextTypingBase.TypeFormSpecifier | None,
         forbidden: frozenset[str],
     ) -> tuple[bool, str]:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart01
         hint = h.unwrap_type_alias(hint)
         if hint is None:
             return False, ""
@@ -243,4 +233,4 @@ class FlextUtilitiesBeartypeHelpers:
         return any(is_protocol(base) for base in value.__mro__[1:])
 
 
-__all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]
+__all__: list[str] = ["FlextUtilitiesBeartypeHelpersPart01"]

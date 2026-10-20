@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
-class FlextLazy(FlextLazyPart01):
+class FlextLazyPart02(FlextLazyPart01):
     """Install and resolve exports without generated-package bootstrap imports."""
 
     @staticmethod
@@ -229,4 +229,4 @@ class FlextLazy(FlextLazyPart01):
         return hooks
 
 
-__all__: list[str] = ["FlextLazy"]
+__all__: list[str] = ["FlextLazyPart02"]

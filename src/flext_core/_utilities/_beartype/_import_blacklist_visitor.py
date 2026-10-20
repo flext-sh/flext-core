@@ -8,10 +8,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 from flext_core import c, t
-from flext_core._models import FlextModelsEnforcement
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
+
+if TYPE_CHECKING:
+    from flext_core import m
 
 _MIN_FAMILY_MODULE_PARTS = 2
 
@@ -22,7 +25,7 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
     @classmethod
     def implementation(
         cls,
-        params: FlextModelsEnforcement.ImportBlacklistParams,
+        params: m.ImportBlacklistParams,
         target: type,
     ) -> t.StrMapping | None:
         """Run the IMPORT_BLACKLIST checks behind the visitor facade.

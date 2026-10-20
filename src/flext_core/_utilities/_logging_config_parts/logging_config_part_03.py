@@ -20,7 +20,9 @@ from flext_core._utilities._logging_config_parts import (
 )
 
 
-class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingConfig):
+class FlextUtilitiesLoggingConfigPart03(
+    logging_config_part_02.FlextUtilitiesLoggingConfigPart02
+):
     @staticmethod
     def resolve_effective_log_level(
         *,
@@ -132,7 +134,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         Cached public loggers lazily consume the same elected composition.
         Caller-supplied handlers retain ownership of their delivery lifecycle.
         """
-        owner = logging_config_part_01.FlextUtilitiesLoggingConfig
+        owner = logging_config_part_01.FlextUtilitiesLoggingConfigPart01
         if (
             owner.selected_logging_options() is not None
             and settings is None
@@ -287,4 +289,4 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
         cls.configure_structlog(runtime_settings=selected)
 
 
-__all__: list[str] = ["FlextUtilitiesLoggingConfig"]
+__all__: list[str] = ["FlextUtilitiesLoggingConfigPart03"]

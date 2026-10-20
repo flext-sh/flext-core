@@ -14,7 +14,7 @@ from collections.abc import (
     Set as AbstractSet,
 )
 from concurrent.futures import Future
-from datetime import date, time, tzinfo
+from datetime import date, datetime, time, tzinfo
 from enum import Enum
 from logging import Formatter, Handler, LogRecord
 from pathlib import Path
@@ -29,16 +29,17 @@ class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
     type JsonPayload = (
-        FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType | Path
+        FlextTypesPydantic.JsonValue
+        | FlextTypesPydantic.SerializeAsAny[FlextTypesPydantic.BaseModelInstance]
+        | Path
+        | datetime
     )
 
-    type ServiceLeaf[T] = (
-        FlextTypingBase.Scalar | FlextTypesPydantic.JsonValue | Path | T
-    )
+    type ServiceLeaf[T] = FlextTypingBase.Scalar | FlextTypesServices.JsonPayload | T
     type ServiceValue[T] = (
         FlextTypesServices.ServiceLeaf[T]
-        | FlextTypingBase.JsonMapping
-        | FlextTypingBase.JsonList
+        | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload]
+        | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]
     )
     type RegisterableService[T] = (
         FlextTypesServices.ServiceValue[T]
@@ -83,7 +84,11 @@ class FlextTypesServices:
     type LoggingExceptionInfo = tuple[
         type[BaseException], BaseException, LoggingTraceback | None
     ]
-    type LogArgument[T] = FlextTypesServices.JsonPayload | T
+    type LogArgument[T] = (
+        FlextTypesServices.JsonPayload
+        | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]
+        | T
+    )
     type LogValue[T] = (
         FlextTypesServices.LogArgument[T]
         | BaseException

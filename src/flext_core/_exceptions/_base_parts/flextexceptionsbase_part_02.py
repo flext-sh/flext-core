@@ -92,7 +92,6 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
             final_kwargs_dict.update(
                 FlextExceptionsHelpers.build_context_map(source_value, {})
             )
-        final_kwargs = m.ConfigMap.model_validate(final_kwargs_dict)
         self.correlation_id = (
             f"exc_{uuid.uuid4().hex[:8]}"
             if options.auto_correlation and not options.correlation_id
@@ -100,7 +99,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         )
         self.metadata = type(self).normalize_metadata(
             options.metadata,
-            final_kwargs.root,
+            final_kwargs_dict,
         )
         self.timestamp = time.time()
         self.auto_log = options.auto_log

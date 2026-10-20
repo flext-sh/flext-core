@@ -150,6 +150,7 @@ class FlextProtocolsBase:
             self,
             *,
             mode: str = "python",
+            exclude: set[str] | None = None,
             by_alias: bool | None = None,
             exclude_defaults: bool = False,
             exclude_none: bool = False,

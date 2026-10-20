@@ -23,9 +23,15 @@ _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
-    type ModelInput = t.ModelInput[FlextProtocolsResult.HasModelDump]
-    type ConfigModelInput = t.ConfigModelInput[FlextProtocolsResult.HasModelDump]
-    type MetadataInput = t.MetadataInput[FlextProtocolsResult.HasModelDump]
+    type ModelInput = t.ModelInput[
+        FlextProtocolsResult.HasModelDump[t.MappingKV[str, t.JsonPayload | None]]
+    ]
+    type ConfigModelInput = t.ConfigModelInput[
+        FlextProtocolsResult.HasModelDump[t.MappingKV[str, t.JsonPayload | None]]
+    ]
+    type MetadataInput = t.MetadataInput[
+        FlextProtocolsResult.HasModelDump[t.MappingKV[str, t.JsonPayload | None]]
+    ]
 
     @runtime_checkable
     class ResultView(Protocol[_ResultViewT_co]):
@@ -196,13 +202,15 @@ class FlextProtocolsResult:
         def matches_error_domain(self, domain: str) -> bool: ...
 
     @runtime_checkable
-    class HasModelDump(Protocol):
+    class HasModelDump[
+        DumpT: t.JsonPayload | t.MetadataMapping = t.JsonPayload
+    ](Protocol):
         def model_dump(
             self,
             *,
             mode: str = "python",
             exclude: set[str] | None = None,
-        ) -> t.MappingKV[str, t.JsonPayload | None]: ...
+        ) -> DumpT: ...
 
 
 __all__: list[str] = ["FlextProtocolsResult"]

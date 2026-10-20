@@ -17,10 +17,8 @@ import structlog.contextvars
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsContainers
-from flext_core._models._context import (
-    FlextModelsContextScope,
-    FlextModelsContextTokens,
-)
+from flext_core._models._context import FlextModelsContextTokens
+from flext_core._models._context._scope import FlextModelsContextScope
 from flext_core._utilities import FlextUtilitiesGenerators
 
 

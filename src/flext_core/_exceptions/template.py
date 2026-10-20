@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, m, t
+from flext_core import FlextRuntime, c, m, t
 
 
 class FlextExceptionsTemplate:
@@ -40,9 +40,11 @@ class FlextExceptionsTemplate:
                 )
                 and field_help
             }
-        payload |= m.ConfigMap.model_validate({
-            key: value for key, value in values.items() if value is not None
-        }).model_dump(mode="json")
+        payload |= {
+            key: FlextRuntime.normalize_to_json_value(value)
+            for key, value in values.items()
+            if value is not None
+        }
         return m.ConfigMap.model_validate(payload)
 
     @staticmethod

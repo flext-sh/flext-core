@@ -12,7 +12,9 @@ from flext_core._utilities import FlextUtilitiesBeartypeEngine
 from flext_core._utilities._enforcement_parts import enforcement_part_02
 
 
-class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
+class FlextUtilitiesEnforcementPart03(
+    enforcement_part_02.FlextUtilitiesEnforcementPart02
+):
     @staticmethod
     def _is_exempt(target: type) -> bool:
         """Return True if the target is exempt from enforcement.
@@ -48,10 +50,10 @@ class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
             return
         if FlextUtilitiesBeartypeEngine.defined_in_function_scope(model_type):
             return
-        if FlextUtilitiesEnforcement._is_exempt(model_type):
+        if FlextUtilitiesEnforcementPart03._is_exempt(model_type):
             return
-        report = FlextUtilitiesEnforcement.check_model_construction(model_type)
-        FlextUtilitiesEnforcement.emit(report)
+        report = FlextUtilitiesEnforcementPart03.check_model_construction(model_type)
+        FlextUtilitiesEnforcementPart03.emit(report)
 
     @staticmethod
     def run_layer(target: type, layer: str) -> None:
@@ -63,10 +65,10 @@ class FlextUtilitiesEnforcement(enforcement_part_02.FlextUtilitiesEnforcement):
             return
         if FlextUtilitiesBeartypeEngine.defined_in_function_scope(target):
             return
-        if FlextUtilitiesEnforcement._is_exempt(target):
+        if FlextUtilitiesEnforcementPart03._is_exempt(target):
             return
-        report = FlextUtilitiesEnforcement.check(target, layer=layer)
-        FlextUtilitiesEnforcement.emit(report, mode=c.ENFORCEMENT_NAMESPACE_MODE)
+        report = FlextUtilitiesEnforcementPart03.check(target, layer=layer)
+        FlextUtilitiesEnforcementPart03.emit(report, mode=c.ENFORCEMENT_NAMESPACE_MODE)
 
 
-__all__: list[str] = ["FlextUtilitiesEnforcement"]
+__all__: list[str] = ["FlextUtilitiesEnforcementPart03"]

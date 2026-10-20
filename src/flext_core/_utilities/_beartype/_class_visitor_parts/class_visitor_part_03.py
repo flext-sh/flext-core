@@ -95,8 +95,8 @@ def _loose_symbol_payload(
     )
 
 
-class FlextUtilitiesBeartypeClassVisitor(
-    class_visitor_part_02.FlextUtilitiesBeartypeClassVisitor
+class FlextUtilitiesBeartypeClassVisitorPart03(
+    class_visitor_part_02.FlextUtilitiesBeartypeClassVisitorPart02
 ):
     @staticmethod
     def v_loose_symbol(
@@ -118,4 +118,4 @@ class FlextUtilitiesBeartypeClassVisitor(
         return _loose_symbol_payload(params, context)
 
 
-__all__: list[str] = ["FlextUtilitiesBeartypeClassVisitor"]
+__all__: list[str] = ["FlextUtilitiesBeartypeClassVisitorPart03"]

@@ -20,7 +20,7 @@ from flext_core._models._cqrs_parts import flextmodelscqrs_part_01
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
-class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
+class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
@@ -91,7 +91,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
             validate_default=True,
         )
         pagination: Annotated[
-            flextmodelscqrs_part_01.FlextModelsCqrs.Pagination,
+            flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination,
             Field(
                 description=(
                     "Pagination settings controlling page number"
@@ -100,7 +100,9 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
                 title="Pagination",
                 examples=[{"page": c.FIRST_PAGE_INDEX, "size": c.DEFAULT_PAGE_SIZE}],
             ),
-        ] = Field(default_factory=flextmodelscqrs_part_01.FlextModelsCqrs.Pagination)
+        ] = Field(
+            default_factory=flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination
+        )
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -137,7 +139,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrs):
             pagination_cls: type[BaseModel] = getattr(
                 cls,
                 "Pagination",
-                flextmodelscqrs_part_01.FlextModelsCqrs.Pagination,
+                flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination,
             )
             if v is None:
                 return pagination_cls()

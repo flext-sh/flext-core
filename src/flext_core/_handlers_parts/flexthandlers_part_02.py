@@ -14,10 +14,10 @@ from __future__ import annotations
 from flext_core._handlers_parts import flexthandlers_part_01
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    flexthandlers_part_01.FlextHandlers[MessageT_contra, ResultT],
+class FlextHandlersPart02[MessageT_contra, ResultT](
+    flexthandlers_part_01.FlextHandlersPart01[MessageT_contra, ResultT],
 ):
     """Generated MRO anchor for handler parts."""
 
 
-__all__: list[str] = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlersPart02"]

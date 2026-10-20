@@ -15,8 +15,8 @@ if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(
-    flextexceptionsfactories_part_02.FlextExceptionsFactories
+class FlextExceptionsFactoriesPart03(
+    flextexceptionsfactories_part_02.FlextExceptionsFactoriesPart02
 ):
     @staticmethod
     def fail_connection[TResult](
@@ -40,14 +40,14 @@ class FlextExceptionsFactories(
             R[T].fail with a canonical connection-error message.
 
         """
-        options, error = FlextExceptionsFactories._resolve_options(options)
+        options, error = FlextExceptionsFactoriesPart03._resolve_options(options)
         params = params or m.ConnectionErrorParams(host=host)
-        msg = FlextExceptionsFactories._failure_message(
+        msg = FlextExceptionsFactoriesPart03._failure_message(
             f"connect to {host}",
             params=params,
             error=error,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart03._fail_result(
             msg,
             params,
             options=options,
@@ -78,11 +78,11 @@ class FlextExceptionsFactories(
             operation=operation,
         )
         op_label = operation or "operation"
-        msg = FlextExceptionsFactories._failure_message(
+        msg = FlextExceptionsFactoriesPart03._failure_message(
             f"{op_label} (timeout={timeout_seconds}s)",
             params=params,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart03._fail_result(
             msg,
             params,
             default_error_code=error_code or c.ErrorCode.TIMEOUT_ERROR,
@@ -107,14 +107,14 @@ class FlextExceptionsFactories(
             R[T].fail with a canonical authentication-error message.
 
         """
-        options, error = FlextExceptionsFactories._resolve_options(options)
+        options, error = FlextExceptionsFactoriesPart03._resolve_options(options)
         params = m.AuthenticationErrorParams(auth_method=auth_method, user_id=user_id)
-        msg = FlextExceptionsFactories._failure_message(
+        msg = FlextExceptionsFactoriesPart03._failure_message(
             f"authenticate user {user_id or 'unknown'}",
             params=params,
             error=error,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart03._fail_result(
             msg,
             params,
             options=options,
@@ -141,18 +141,18 @@ class FlextExceptionsFactories(
             R[T].fail with a canonical authorization-error message.
 
         """
-        options, error = FlextExceptionsFactories._resolve_options(options)
+        options, error = FlextExceptionsFactoriesPart03._resolve_options(options)
         params = m.AuthorizationErrorParams(
             user_id=user_id,
             resource=resource,
             permission=permission,
         )
-        msg = FlextExceptionsFactories._failure_message(
+        msg = FlextExceptionsFactoriesPart03._failure_message(
             f"authorize {user_id!r} on {resource!r}",
             params=params,
             error=error,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart03._fail_result(
             msg,
             params,
             options=options,
@@ -161,4 +161,4 @@ class FlextExceptionsFactories(
         )
 
 
-__all__: list[str] = ["FlextExceptionsFactories"]
+__all__: list[str] = ["FlextExceptionsFactoriesPart03"]

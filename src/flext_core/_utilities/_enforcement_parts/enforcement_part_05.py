@@ -10,7 +10,9 @@ from flext_core import c
 from flext_core._utilities._enforcement_parts import enforcement_part_04
 
 
-class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
+class FlextUtilitiesEnforcementPart05(
+    enforcement_part_04.FlextUtilitiesEnforcementPart04
+):
     @staticmethod
     def class_name_to_module(class_name: str) -> str:
         """Map a ``Flext<Project><Layer><Concern>`` class to its owning package.
@@ -59,4 +61,4 @@ class FlextUtilitiesEnforcement(enforcement_part_04.FlextUtilitiesEnforcement):
         raise ValueError(msg)
 
 
-__all__: list[str] = ["FlextUtilitiesEnforcement"]
+__all__: list[str] = ["FlextUtilitiesEnforcementPart05"]

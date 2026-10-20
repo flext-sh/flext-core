@@ -74,10 +74,10 @@ class TestsFlextCoreExceptionsBase:
         error = e.ValidationError("bad", field="email")
         with pytest.raises(e.BaseError) as excinfo:
             raise error
-        raised = cast("e.ValidationError", excinfo.value)
-        assert isinstance(raised, e.ValidationError)
-        tm.that(isinstance(raised, e.ValidationError), truth=True)
-        tm.that(raised.field, eq="email")
+        raised = excinfo.value
+        tm.that(raised, is_=e.ValidationError)
+        if isinstance(raised, e.ValidationError):
+            tm.that(raised.field, eq="email")
         tm.that("bad" in str(raised), truth=True)
 
     @staticmethod
@@ -127,10 +127,10 @@ class TestsFlextCoreExceptionsBase:
         tm.that(mapped.failure, truth=True)
         tm.that(mapped.error, eq=result.error)
         tm.that(result.exception, none=False)
-        tm.not_none(result.exception)
-        with pytest.raises(type(result.exception)) as raised:
+        exception = tm.not_none(result.exception)
+        with pytest.raises(type(exception)) as raised:
             mapped.unwrap()
-        tm.that(raised.value is result.exception, truth=True)
+        tm.that(raised.value is exception, truth=True)
 
     @staticmethod
     def test_fail_not_found_returns_structured_failure() -> None:

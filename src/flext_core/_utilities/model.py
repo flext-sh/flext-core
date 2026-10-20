@@ -85,9 +85,7 @@ class FlextUtilitiesModel:
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> p.Result[TValue]:
-        _ = target, data, from_json, strict
-        raise NotImplementedError
+    ) -> p.Result[TValue]: ...
 
     @overload
     @staticmethod
@@ -97,9 +95,7 @@ class FlextUtilitiesModel:
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> p.Result[TValue]:
-        _ = target, data, from_json, strict
-        raise NotImplementedError
+    ) -> p.Result[TValue]: ...
 
     @staticmethod
     def validate_value[TValue](

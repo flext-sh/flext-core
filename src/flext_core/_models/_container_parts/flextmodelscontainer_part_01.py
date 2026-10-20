@@ -15,7 +15,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-import flext_core
 from flext_core import c, p, t
 from flext_core._models import (
     FlextModelsBase,
@@ -93,17 +92,6 @@ class FlextModelsContainerPart01:
                 description="Service tags for categorization", validate_default=True
             ),
         ] = ()
-
-        @FlextModelsPydantic.field_validator("service", mode="before")
-        @classmethod
-        def _validate_service(cls, value: p.GuardInput) -> p.RegisterableService:
-            """Apply the utility-owned admission at the native field boundary.
-
-            Returns:
-                The admitted service.
-
-            """
-            return flext_core.u.normalize_registerable_service(value)
 
         @FlextModelsPydantic.computed_field
         @property

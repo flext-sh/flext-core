@@ -15,7 +15,6 @@ import pytest
 
 from tests import t, tm, u
 
-type _MatchValue = str | int | bool | list[int] | t.MappingKV[str, int]
 type _ConvValue = str | float | int | bool | None
 
 
@@ -36,7 +35,7 @@ class TestsFlextCoreUtilities:
         ],
     )
     def test_matches_type_reports_runtime_type_membership(
-        value: _MatchValue,
+        value: t.JsonValue,
         type_name: str,
         *,
         expected: bool,

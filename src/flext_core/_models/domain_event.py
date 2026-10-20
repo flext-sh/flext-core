@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from flext_core import t
 from flext_core._models import (
@@ -18,13 +18,12 @@ from flext_core._models import (
     FlextModelsContainers,
     FlextModelsPydantic,
 )
-from flext_core._utilities import FlextUtilitiesCollection
 
 
 class FlextModelsDomainEvent:
     """Namespace for domain event models.
 
-    Contains DomainEvent and helper utilities for event data normalization.
+    Contains the typed DomainEvent contract.
     Split into its own module so Entity can import without forward references.
     """
 
@@ -34,8 +33,8 @@ class FlextModelsDomainEvent:
     ):
         """Base class for domain events."""
 
-        message_type: str = FlextModelsPydantic.Field(
-            default="event",  # type: ignore
+        message_type: Literal["event"] = FlextModelsPydantic.Field(
+            default="event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
             validate_default=True,
@@ -54,12 +53,7 @@ class FlextModelsDomainEvent:
                 ),
             ),
         ]
-        data: Annotated[
-            FlextModelsContainers.ConfigMap,
-            FlextModelsPydantic.BeforeValidator(
-                FlextUtilitiesCollection.normalize_domain_event_data,
-            ),
-        ] = FlextModelsPydantic.Field(
+        data: FlextModelsContainers.ConfigMap = FlextModelsPydantic.Field(
             validate_default=True,
             description="Event data container",
             default_factory=lambda: FlextModelsContainers.ConfigMap(root={}),

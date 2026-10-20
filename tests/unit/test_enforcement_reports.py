@@ -84,15 +84,15 @@ class TestsFlextCoreEnforcementReports:
         tm.that(len(report), eq=1)
         tm.that(report[0], eq="boom")
         tm.that(report.messages, eq=["boom"])
-        assert "boom" in report
+        tm.that(report, where=lambda value: "boom" in value)
 
     @staticmethod
     def test_report_membership_ignores_non_string_fragments() -> None:
         """Test report membership ignores non string fragments."""
         report = m.Report(violations=[_hard_violation(message="boom")])
 
-        assert 123 not in report
-        assert None not in report
+        tm.that(report, where=lambda value: 123 not in value)
+        tm.that(report, where=lambda value: None not in value)
 
     @staticmethod
     def test_report_aggregates_all_violation_messages_in_order() -> None:
@@ -265,7 +265,9 @@ class TestsFlextCoreEnforcementReports:
 
         tm.that(str(excinfo.value), eq=expected)
         tm.that(len(recorded), eq=1)
-        assert recorded[0].category is c.FlextMroViolation
+        tm.that(
+            recorded[0].category, where=lambda category: category is c.FlextMroViolation
+        )
         tm.that(str(recorded[0].message), eq=expected)
 
     @staticmethod
@@ -337,7 +339,9 @@ class TestsFlextCoreEnforcementReports:
         with pytest.warns(c.FlextSmellViolation) as caught:
             FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
 
-        assert caught[0].category is c.FlextSmellViolation
+        tm.that(
+            caught[0].category, where=lambda category: category is c.FlextSmellViolation
+        )
 
     @staticmethod
     def test_emit_of_checked_report_carries_layer_tag_and_fix(tmp_path: Path) -> None:

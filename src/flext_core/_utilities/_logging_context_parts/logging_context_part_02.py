@@ -17,8 +17,8 @@ from flext_core._utilities import FlextUtilitiesBase
 from flext_core._utilities._logging_context_parts import logging_context_part_01
 
 
-class FlextUtilitiesLoggingContext(
-    logging_context_part_01.FlextUtilitiesLoggingContext
+class FlextUtilitiesLoggingContextPart02(
+    logging_context_part_01.FlextUtilitiesLoggingContextPart01
 ):
     @staticmethod
     def _to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
@@ -39,11 +39,7 @@ class FlextUtilitiesLoggingContext(
                 config=FlextModelsBase.ArbitraryTypesModel.model_config,
             ).validate_python(list(value))
             return FlextRuntime.normalize_to_json_value(admitted)
-        admitted = FlextUtilitiesBase.type_adapter(
-            TypeForm(t.JsonPayload),
-            config=FlextModelsBase.ArbitraryTypesModel.model_config,
-        ).validate_python(value)
-        return FlextRuntime.normalize_to_json_value(admitted)
+        return FlextRuntime.normalize_to_json_value(value)
 
     @staticmethod
     def to_container_context(
@@ -56,9 +52,9 @@ class FlextUtilitiesLoggingContext(
 
         """
         return {
-            key: FlextUtilitiesLoggingContext._to_container_value(value)
+            key: FlextUtilitiesLoggingContextPart02._to_container_value(value)
             for key, value in context.items()
         }
 
 
-__all__: list[str] = ["FlextUtilitiesLoggingContext"]
+__all__: list[str] = ["FlextUtilitiesLoggingContextPart02"]

@@ -82,8 +82,9 @@ class TestsFlextCorePublicApiContract:
         """Generated consumers can compose lazy exports from the foundation root."""
         build_map = flext_core.build_lazy_import_map
         install = flext_core.install_lazy_exports
-        assert {"build_lazy_import_map", "install_lazy_exports"} <= set(
+        tm.that(
             flext_core.__all__,
+            has=["build_lazy_import_map", "install_lazy_exports"],
         )
         imports = build_map({"collections": ("Counter",)})
         namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}

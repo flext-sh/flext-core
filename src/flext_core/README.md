@@ -13,6 +13,7 @@ dispatcher-driven orchestration.
 from __future__ import annotations
 
 from flext_core import p, r
+from flext_tests import tm
 
 
 def safe_divide(a: float, b: float) -> p.Result[float]:
@@ -21,7 +22,7 @@ def safe_divide(a: float, b: float) -> p.Result[float]:
     return r[float].ok(a / b)
 
 
-assert safe_divide(10, 2).success
+tm.ok(safe_divide(10, 2))
 tm.fail(safe_divide(10, 0))
 ```
 
@@ -29,30 +30,31 @@ tm.fail(safe_divide(10, 0))
 
 ```python
 from flext_core import FlextSettings
+from flext_tests import tm
 
 settings = FlextSettings.fetch_global()
-assert isinstance(settings.model_dump(), dict)
+tm.that(settings.model_dump(), is_=dict)
 ```
 
 ### Container
 
 ```python
 from flext_core import FlextContainer
+from flext_tests import tm
 
 container = FlextContainer()
 _ = container.bind("service", "ready")
 resolved = container.resolve("service")
 
-assert resolved.success
-assert resolved.value == "ready"
+tm.ok(resolved, eq="ready")
 ```
 
 ### Dispatcher (examples-backed)
 
 ```python
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
+from flext_tests import tm
 
 result = Ex04DispatchDsl.run()
-assert result.success
-assert result.value == "pong:dispatcher-example"
+tm.ok(result, eq="pong:dispatcher-example")
 ```

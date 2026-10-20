@@ -28,8 +28,9 @@ class TestsFlextCoreRegistry:
         tm.that(registry.dispatcher is runtime.dispatcher, truth=True)
         tm.that(registry.container is runtime.container, truth=True)
         tm.that("registry_runtime" not in registry.model_dump(), truth=True)
-        assert "registry_runtime" not in registry.model_json_schema().get(
-            "properties", {}
+        tm.that(
+            registry.model_json_schema().get("properties", {}),
+            lacks="registry_runtime",
         )
 
     @staticmethod
@@ -44,8 +45,9 @@ class TestsFlextCoreRegistry:
         """Assignment cannot invalidate the composed graph after construction."""
         runtime = u.build_service_runtime()
         registry = FlextRegistry(registry_runtime=runtime)
+        field_name = "registry_runtime"
         with pytest.raises((TypeError, ValueError)):
-            registry.registry_runtime = "invalid"
+            setattr(registry, field_name, "invalid")
         tm.that(registry.registry_runtime is runtime, truth=True)
 
     @staticmethod
@@ -217,9 +219,9 @@ class TestsFlextCoreRegistry:
                 ).failure,
                 truth=True,
             )
-            assert (
-                registry.fetch_plugin("identity", "payload", scope=scope).value
-                is plugin
+            tm.that(
+                registry.fetch_plugin("identity", "payload", scope=scope).value,
+                where=lambda value: value is plugin,
             )
         finally:
             tm.that(
@@ -247,8 +249,9 @@ class TestsFlextCoreRegistry:
                 ).success,
                 truth=True,
             )
-            assert (
-                registry.fetch_plugin("bound", "method", scope=scope).value is original
+            tm.that(
+                registry.fetch_plugin("bound", "method", scope=scope).value,
+                where=lambda value: value is original,
             )
         finally:
             tm.that(

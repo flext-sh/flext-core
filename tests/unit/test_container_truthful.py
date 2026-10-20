@@ -124,7 +124,7 @@ class TestsFlextCoreContainerTruthful:
     def test_mapping_registration_keeps_input_and_serializes_its_payload(
         clean_container: p.Container,
     ) -> None:
-        """Registration normalizes a validated copy without altering caller data."""
+        """An explicitly validated model retains the caller's payload values."""
         instant = datetime.now(UTC)
         path = Path("registered-payload")
         payload: t.MappingKV[str, datetime | Path] = {"created": instant, "path": path}
@@ -145,10 +145,12 @@ class TestsFlextCoreContainerTruthful:
         instant = datetime.now(UTC)
         path = Path("sequence-payload")
         payload: t.SequenceOf[str | Path | datetime] = ["entry", path, instant]
-        _ = clean_container.bind("sequence-payload", payload)
+        registered = m.ObjectList(root=payload)
+        _ = clean_container.bind("sequence-payload", registered)
         value = tm.ok(
             clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
         )
+        tm.that(value, where=lambda resolved: resolved is registered)
         tm.that(
             value.model_dump(mode="json"),
             eq=u.normalize_to_json_value(payload),

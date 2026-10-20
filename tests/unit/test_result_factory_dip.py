@@ -317,7 +317,7 @@ class TestsFlextCoreResultFactoryDip:
 
 def _assert_redacted(error_data: object, password: str, token: str) -> None:
     text = str(error_data)
-    assert "password" not in text
-    assert "token" not in text
-    assert password not in text
-    assert token not in text
+    tm.that(text, lacks="password")
+    tm.that(text, lacks="token")
+    tm.that(text, lacks=password)
+    tm.that(text, lacks=token)

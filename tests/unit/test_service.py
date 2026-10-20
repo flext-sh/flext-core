@@ -148,9 +148,9 @@ class TestsFlextService(FlextTestsCase):
         """Test settings expose tests namespace."""
         settings = m.Tests.ServiceUserService().settings
 
-        tm.that(isinstance(settings, FlextTestsSettings), truth=True)
-        assert isinstance(settings, FlextTestsSettings)
-        tm.that(isinstance(settings.Tests, m.BaseModel), truth=True)
+        tm.that(settings, is_=FlextTestsSettings)
+        if isinstance(settings, FlextTestsSettings):
+            tm.that(settings.Tests, is_=m.BaseModel)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:
         """Test fetch settings returns typed tests settings."""
@@ -163,9 +163,9 @@ class TestsFlextService(FlextTestsCase):
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         """Test fetch logger matches shared service logger."""
         with self._PureService.isolated_test_runtime():
-            assert (
-                self._PureService.fetch_logger()
-                is self._PureService.fetch_global().logger
+            tm.that(
+                self._PureService.fetch_logger(),
+                where=lambda logger: logger is self._PureService.fetch_global().logger,
             )
 
     # --- with_settings(): runtime snapshot -------------------------------

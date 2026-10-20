@@ -14,7 +14,7 @@ from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context import FlextModelsContextData
 
 
-class FlextModelsContextScope:
+class FlextModelsContextScopePart01:
     """Namespace for context scope and statistics models."""
 
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
@@ -69,4 +69,4 @@ class FlextModelsContextScope:
         )
 
 
-__all__: list[str] = ["FlextModelsContextScope"]
+__all__: list[str] = ["FlextModelsContextScopePart01"]

@@ -31,7 +31,9 @@ from flext_core._utilities._logging_config_parts import logging_config_part_01
 from flext_core._utilities.metadata import FlextUtilitiesMetadata
 
 
-class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingConfig):
+class FlextUtilitiesLoggingConfigPart02(
+    logging_config_part_01.FlextUtilitiesLoggingConfigPart01
+):
     @staticmethod
     def level_based_context_filter(
         logger: p.OutputLogger | None,
@@ -79,7 +81,10 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
-        if level < logging_config_part_01.FlextUtilitiesLoggingConfig.log_threshold():
+        if (
+            level
+            < logging_config_part_01.FlextUtilitiesLoggingConfigPart01.log_threshold()
+        ):
             raise structlog.DropEvent
         return event_dict
 
@@ -96,7 +101,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
 
         """
         _ = logger, method_name
-        info = FlextUtilitiesLoggingConfig.resolve_logging_exception_info(
+        info = FlextUtilitiesLoggingConfigPart02.resolve_logging_exception_info(
             event.get("exc_info")
         )
         if info is not None:
@@ -210,4 +215,4 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
         return processors
 
 
-__all__: list[str] = ["FlextUtilitiesLoggingConfig"]
+__all__: list[str] = ["FlextUtilitiesLoggingConfigPart02"]

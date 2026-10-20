@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import ast
 import warnings
-from collections.abc import Callable
-from typing import Any, cast
 
 import pytest
 from typing_extensions import TypeForm
@@ -27,7 +25,7 @@ class TestsFlextTypeAliasResolution:
         """Specialized service aliases resolve during native model validation."""
         payload = m.ConfigMap(root={"bootstrap": "value"})
         service = m.ServiceRegistration(name="bootstrap", service=payload)
-        assert service.service is payload
+        tm.that(service.service, where=lambda value: value is payload)
 
         def factory() -> p.ServiceValue:
             return payload
@@ -37,26 +35,25 @@ class TestsFlextTypeAliasResolution:
             factories={"factory": factory},
             resources={"resource": factory},
         )
-        tm.that(registration.services, none=False)
-        assert cast("dict[str, object]", registration.services)["bootstrap"] is payload
-        tm.that(registration.factories, none=False)
-        assert (
-            cast("dict[str, Callable[[], object]]", registration.factories)["factory"]()
-            is payload
+        tm.that(
+            tm.not_none(registration.services)["bootstrap"],
+            where=lambda value: value is payload,
         )
-        tm.that(registration.resources, none=False)
-        assert (
-            cast("dict[str, Callable[[], object]]", registration.resources)[
-                "resource"
-            ]()
-            is payload
+        tm.that(
+            tm.not_none(registration.factories)["factory"](),
+            where=lambda value: value is payload,
         )
-        assert (
-            m.FactoryRegistration(name="factory", factory=factory).factory() is payload
+        tm.that(
+            tm.not_none(registration.resources)["resource"](),
+            where=lambda value: value is payload,
         )
-        assert (
-            m.ResourceRegistration(name="resource", factory=factory).factory()
-            is payload
+        tm.that(
+            m.FactoryRegistration(name="factory", factory=factory).factory(),
+            where=lambda value: value is payload,
+        )
+        tm.that(
+            m.ResourceRegistration(name="resource", factory=factory).factory(),
+            where=lambda value: value is payload,
         )
 
     @staticmethod
@@ -64,14 +61,14 @@ class TestsFlextTypeAliasResolution:
         """Protocol-bearing input aliases remain runtime-valid Pydantic inputs."""
         payload = m.ConfigMap(root={"bootstrap": "value"})
         failure = m.ResultFailureSpec(error_data=payload)
-        assert failure.error_data is payload
+        tm.that(failure.error_data, where=lambda value: value is payload)
         event = u.type_adapter(
-            TypeForm(dict[str, Any]), config=m.ArbitraryTypesModel.model_config
+            TypeForm(p.LoggingEvent), config=m.ArbitraryTypesModel.model_config
         ).validate_python({
             "payload": payload,
             "event": "bootstrap",
         })
-        assert event["payload"] is payload
+        tm.that(event["payload"], where=lambda value: value is payload)
         tm.that(event["event"], eq="bootstrap")
         overrides = u.type_adapter(
             TypeForm(p.SettingsOverridesMapping),
@@ -79,16 +76,15 @@ class TestsFlextTypeAliasResolution:
         ).validate_python({
             "payload": payload,
         })
-        assert overrides["payload"] is payload
+        tm.that(overrides["payload"], where=lambda value: value is payload)
 
     @staticmethod
     def test_source_inspection_keeps_parser_and_alias_contracts_distinct() -> None:
         """Source inspection and universal parsing coexist on the public facade."""
         parsed = u.parse("42", int)
-        tm.that(parsed.success, truth=True)
-        tm.that(parsed.value, eq=42)
+        tm.that(tm.ok(parsed), eq=42)
         tree = u.parse_module(type_aliases)
-        tm.that(isinstance(tree, ast.Module), truth=True)
+        tm.that(tree, is_=ast.Module)
         tm.that(
             any(
                 isinstance(node, ast.ClassDef)
@@ -98,9 +94,7 @@ class TestsFlextTypeAliasResolution:
             truth=True,
         )
         owner = TestsFlextTypeAliasDeclarations.LegalTypes
-        deferred = u.deferred_alias(owner.Deferred, owner=owner)
-        tm.that(deferred, none=False)
-        deferred = tm.not_none(deferred)
+        deferred = tm.not_none(u.deferred_alias(owner.Deferred, owner=owner))
         tm.that(deferred.unavailable_imports, eq=("DeferredPath",))
         tm.that(u.deferred_alias(owner.Resolved, owner=owner), none=True)
         tm.that(u.deferred(owner.Deferred, owner=owner), eq=(deferred,))
@@ -110,7 +104,10 @@ class TestsFlextTypeAliasResolution:
         """Test resolved alias keeps its runtime value."""
         alias = TestsFlextTypeAliasDeclarations.LegalTypes.Resolved
 
-        assert u.resolve_type_alias_value(alias) is alias.__value__
+        tm.that(
+            u.resolve_type_alias_value(alias),
+            where=lambda value: value is alias.__value__,
+        )
         tm.that(u.alias_contains_any(alias), truth=False)
 
     @staticmethod
@@ -125,7 +122,9 @@ class TestsFlextTypeAliasResolution:
         owner = TestsFlextTypeAliasDeclarations.LegalTypes
         tm.that(u.resolve_type_alias_value(alias, owner=owner), none=True)
         tm.that(u.alias_contains_any(alias, owner=owner), truth=False)
-        assert u.unwrap_type_alias(alias, owner=owner) is alias
+        tm.that(
+            u.unwrap_type_alias(alias, owner=owner), where=lambda value: value is alias
+        )
 
     @staticmethod
     def test_report_accounts_for_each_deferred_alias_rule() -> None:
@@ -174,7 +173,7 @@ class TestsFlextTypeAliasResolution:
         tm.that(deferred.complete, truth=False)
         tm.that(deferred.violations, truth=False)
         tm.that(recorded, truth=False)
-        assert deferred.model_dump()["complete"] is False
+        tm.that(deferred.model_dump()["complete"], eq=False, is_=bool)
 
     @staticmethod
     def test_local_alias_does_not_inherit_a_name_based_exemption() -> None:
@@ -209,18 +208,12 @@ class TestsFlextTypeAliasResolution:
                 )
             )
 
-        deferred = u.deferred_alias(alias, owner=Consumer)
-        tm.that(deferred, none=False)
-        tm.not_none(deferred)
-        assert deferred is not None
+        deferred = tm.not_none(u.deferred_alias(alias, owner=Consumer))
         tm.that(deferred.module, eq=type_aliases.__name__)
-        tm.not_none(deferred)
         tm.that(
             deferred.qualname,
             eq=f"{TestsFlextTypeAliasDeclarations.LegalTypes.__qualname__}.Deferred",
         )
-        tm.not_none(deferred)
-        assert deferred is not None
         tm.that(deferred.unavailable_imports, eq=("DeferredPath",))
         tm.that(u.deferred(alias, owner=Consumer), eq=(deferred,))
         tm.that(u.resolve_type_alias_value(alias, owner=Consumer), none=True)
@@ -234,7 +227,10 @@ class TestsFlextTypeAliasResolution:
         """Only the exact alias binding can authenticate its defining AST path."""
         owner = TestsFlextTypeAliasDeclarations.OtherScope
         alias = owner.Deferred
-        assert u.resolve_type_alias_value(alias, owner=m.ArbitraryTypesModel) is int
+        tm.that(
+            u.resolve_type_alias_value(alias, owner=m.ArbitraryTypesModel),
+            where=lambda value: value is int,
+        )
         tm.that(u.deferred_alias(alias, owner=m.ArbitraryTypesModel), none=True)
         tm.that(
             u.deferred_alias(
@@ -248,10 +244,8 @@ class TestsFlextTypeAliasResolution:
         """Homonymous nested declarations remain distinct across repeated queries."""
         parent = TestsFlextTypeAliasDeclarations.NestedScopes
         child = parent.Child
-        parent_proof = u.deferred_alias(parent.Deferred, owner=parent)
-        child_proof = u.deferred_alias(child.Deferred, owner=child)
-        if parent_proof is None or child_proof is None:
-            pytest.fail("Both static-only aliases must retain their lexical proof")
+        parent_proof = tm.not_none(u.deferred_alias(parent.Deferred, owner=parent))
+        child_proof = tm.not_none(u.deferred_alias(child.Deferred, owner=child))
         tm.that(parent_proof.qualname, eq=f"{parent.__qualname__}.Deferred")
         tm.that(child_proof.qualname, eq=f"{child.__qualname__}.Deferred")
         tm.that(parent_proof.unavailable_imports, eq=child_proof.unavailable_imports)

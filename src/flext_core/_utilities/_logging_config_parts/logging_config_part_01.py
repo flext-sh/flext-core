@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     import types
 
 
-class FlextUtilitiesLoggingConfig:
+class FlextUtilitiesLoggingConfigPart01:
     """Structlog configuration, async writer, and processor chain assembly."""
 
     _log_threshold: ClassVar[int]
@@ -79,7 +79,7 @@ class FlextUtilitiesLoggingConfig:
     @staticmethod
     def log_threshold() -> int:
         """Return the elected minimum severity applied before enrichment."""
-        return FlextUtilitiesLoggingConfig._log_threshold
+        return FlextUtilitiesLoggingConfigPart01._log_threshold
 
     @staticmethod
     def structlog() -> types.ModuleType:
@@ -241,21 +241,21 @@ class FlextUtilitiesLoggingConfig:
     @staticmethod
     def selected_logging_settings() -> p.LoggingSettings | None:
         """Return the explicitly elected logging settings."""
-        return FlextUtilitiesLoggingConfig._runtime_settings
+        return FlextUtilitiesLoggingConfigPart01._runtime_settings
 
     @staticmethod
     def selected_logging_options() -> p.StructlogOptions | None:
         """Return the elected composition, if configured."""
-        return FlextUtilitiesLoggingConfig._options
+        return FlextUtilitiesLoggingConfigPart01._options
 
     @staticmethod
     def configure_logging_state(
         settings: p.LoggingSettings, options: p.StructlogOptions, threshold: int
     ) -> None:
         """Publish the state owned by the shared logging configuration."""
-        FlextUtilitiesLoggingConfig._runtime_settings = settings
-        FlextUtilitiesLoggingConfig._options = options
-        FlextUtilitiesLoggingConfig._log_threshold = threshold
+        FlextUtilitiesLoggingConfigPart01._runtime_settings = settings
+        FlextUtilitiesLoggingConfigPart01._options = options
+        FlextUtilitiesLoggingConfigPart01._log_threshold = threshold
 
     @staticmethod
     def _resolve_logger_factory(
@@ -271,22 +271,22 @@ class FlextUtilitiesLoggingConfig:
         """
         if (
             not async_logging or logger_factory is not None
-        ) and FlextUtilitiesLoggingConfig._async_writer is not None:
-            FlextUtilitiesLoggingConfig._async_writer.shutdown()
-            FlextUtilitiesLoggingConfig._async_writer = None
+        ) and FlextUtilitiesLoggingConfigPart01._async_writer is not None:
+            FlextUtilitiesLoggingConfigPart01._async_writer.shutdown()
+            FlextUtilitiesLoggingConfigPart01._async_writer = None
         if logger_factory is not None:
             return logger_factory
         if not async_logging:
             return structlog.PrintLoggerFactory(
                 file=FlextUtilitiesLoggingStream.TextStream(sys.stderr)
             )
-        if FlextUtilitiesLoggingConfig._async_writer is None:
-            FlextUtilitiesLoggingConfig._async_writer = (
-                FlextUtilitiesLoggingConfig._AsyncLogWriter(sys.stderr)
+        if FlextUtilitiesLoggingConfigPart01._async_writer is None:
+            FlextUtilitiesLoggingConfigPart01._async_writer = (
+                FlextUtilitiesLoggingConfigPart01._AsyncLogWriter(sys.stderr)
             )
         return structlog.PrintLoggerFactory(
-            file=FlextUtilitiesLoggingConfig._async_writer
+            file=FlextUtilitiesLoggingConfigPart01._async_writer
         )
 
 
-__all__: list[str] = ["FlextUtilitiesLoggingConfig"]
+__all__: list[str] = ["FlextUtilitiesLoggingConfigPart01"]

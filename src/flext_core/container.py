@@ -14,18 +14,9 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from functools import partial
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    ClassVar,
-    Self,
-    TypeGuard,
-    cast,
-    overload,
-    override,
-)
+from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
 from typing_extensions import TypeForm
 
@@ -83,7 +74,6 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         registration: m.ServiceRegistrationSpec
         | p.ServiceRegistrationSpec
         | None = None,
-        **kwargs: Any,
     ) -> Self:
         """Create or return the global singleton instance."""
         if cls._global_instance is None:
@@ -247,15 +237,17 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def _resolve_callable(
         callable_obj: p.FactoryCallable,
         kind: str,
+        name: str,
     ) -> p.Result[p.RegisterableService]:
-        """Invoke a factory/resource callable and validate what it produced.
+        """Validate factory/resource admission and return the original value.
 
         Returns:
             The resulting ``p.Result[p.RegisterableService]``.
 
         """
         try:
-            resolved = u.normalize_registerable_service(callable_obj())
+            resolved = callable_obj()
+            m.ServiceRegistration(name=name, service=resolved)
         except c.EXC_BROAD_RUNTIME as exc:
             return r[p.RegisterableService].from_result(
                 e.fail_operation(
@@ -272,9 +264,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         name: str,
         *,
         type_cls: type[T],
-    ) -> p.Result[T]:
-        _ = name, type_cls
-        raise NotImplementedError
+    ) -> p.Result[T]: ...
 
     @overload
     def resolve(
@@ -282,9 +272,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         name: str,
         *,
         type_cls: None = None,
-    ) -> p.Result[p.RegisterableService]:
-        _ = name, type_cls
-        raise NotImplementedError
+    ) -> p.Result[p.RegisterableService]: ...
 
     @override
     def resolve[T: p.RegisterableService](
@@ -314,9 +302,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             case m.ServiceRegistration() as record:
                 result = r[p.RegisterableService].ok(record.service)
             case m.FactoryRegistration() as record:
-                result = self._resolve_callable(record.factory, "factory")
+                result = self._resolve_callable(record.factory, "factory", name)
             case record:
-                result = self._resolve_callable(record.factory, "resource")
+                result = self._resolve_callable(record.factory, "resource", name)
         if type_cls is None or result.failure:
             return result
         if self._matches_service_type(result.value, type_cls):
@@ -337,10 +325,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             The merged settings exposed by this container.
 
         """
-        config_dict = self._global_config.model_dump()
-        return m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},  # type: ignore
-        )
+        return m.ConfigMap.model_validate(self._global_config.model_dump())
 
     @override
     def has(self, name: str) -> bool:
@@ -391,16 +376,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         if isinstance(overrides, m.ConfigMap):
             self._user_overrides = overrides
         elif isinstance(overrides, Mapping):
-            self._user_overrides = m.ConfigMap(
-                root={
-                    k: (
-                        list(v)  # type: ignore
-                        if isinstance(v, Sequence) and not isinstance(v, (str, bytes))
-                        else v
-                    )
-                    for k, v in overrides.items()
-                },
-            )
+            self._user_overrides = m.ConfigMap.model_validate(overrides)
         else:
             self._user_overrides = m.ConfigMap(root={})
         self._config = (
@@ -678,12 +654,14 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         """
         if settings is None:
             return self
-        merged = self._user_overrides.model_copy()
-        merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})  # type: ignore
-        self._user_overrides = merged
         self._global_config = m.ContainerConfig.model_validate(
-            self._global_config.model_dump() | dict(merged),
+            {
+                **self._global_config.model_dump(),
+                **self._user_overrides.root,
+                **settings,
+            },
         )
+        self._user_overrides.update(settings)
         return self
 
 

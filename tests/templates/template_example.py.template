@@ -21,7 +21,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import pytest
-from tests import test_framework
+from tests import test_framework, tm
 
 from flext_core import r, p, u
 
@@ -63,7 +63,7 @@ class TestTEMPLATECategory:
         )
 
         # Assert real behavior
-        assert actual_output == test_data["expected"]
+        tm.that(actual_output, eq=test_data["expected"])
 
     def test_template_operation_failure_handling(self) -> None:
         """Test TEMPLATE operation failure handling with real scenarios."""
@@ -78,7 +78,7 @@ class TestTEMPLATECategory:
         )
 
         # Verify error message content
-        assert "input" in error_msg.lower()
+        tm.that(error_msg.lower(), has="input")
 
     def test_template_operation_performance(self) -> None:
         """Test TEMPLATE operation performance with real execution."""
@@ -116,7 +116,7 @@ class TestTEMPLATECategory:
         )
 
         # Verify entity was processed correctly
-        assert processed_entity.unique_id == "integration-test"
+        tm.that(processed_entity.unique_id, eq="integration-test")
 
     def test_template_business_rules_validation(self) -> None:
         """Test TEMPLATE business rules with real validation."""
@@ -154,7 +154,7 @@ class TestTEMPLATECategory:
         # Test with correct types
         correct_result = u.TEMPLATE.process_typed_data("string_input")
         correct_output = test_framework.assert_result_success(correct_result)
-        assert isinstance(correct_output, str)
+        tm.that(correct_output, is_=str)
 
         # Test type coercion/error handling
         type_result = u.TEMPLATE.process_typed_data(123)  # Wrong type

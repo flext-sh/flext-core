@@ -187,7 +187,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         matches = [v for v in report.violations if v.rule_id == "ENFORCE-079"]
         tm.that(matches, truth=True, msg=f"{name}: expected an ENFORCE-079 violation")
         violation = matches[0]
-        assert "Constant 'GROUPS' declared" in violation.message
+        tm.that(violation.message, has="Constant 'GROUPS' declared")
         tm.that(violation.qualname, eq="FlextSyntheticCli")
         tm.that(violation.agents_md_anchor, truth=True)
         tm.that(violation.severity, truth=True)

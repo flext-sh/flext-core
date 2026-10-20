@@ -47,13 +47,10 @@ class TestsFlextMixins:
         """Test settings property satisfies settings protocol."""
         service = self._service()
 
-        assert service.settings.model_dump()["log_level"] in {
-            "DEBUG",
-            "INFO",
-            "WARNING",
-            "ERROR",
-            "CRITICAL",
-        }
+        tm.that(
+            {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"},
+            has=service.settings.model_dump()["log_level"],
+        )
 
     def test_container_property_satisfies_container_protocol(self) -> None:
         """Test container property satisfies container protocol."""

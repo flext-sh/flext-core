@@ -8,8 +8,11 @@ from __future__ import annotations
 
 from flext_core._utilities._enforcement_collect_parts import enforcement_collect_part_02
 
-FlextUtilitiesEnforcementCollect = (
-    enforcement_collect_part_02.FlextUtilitiesEnforcementCollect
-)
+
+class FlextUtilitiesEnforcementCollect(
+    enforcement_collect_part_02.FlextUtilitiesEnforcementCollectPart02
+):
+    """Compose enforcement collection through its internal part hierarchy."""
+
 
 __all__: list[str] = ["FlextUtilitiesEnforcementCollect"]

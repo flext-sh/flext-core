@@ -6,19 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
 from structlog.types import BindableLogger
 from structlog.typing import Processor
 
+from flext_core import t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsResult,
     FlextProtocolsSettings,
 )
-
-if TYPE_CHECKING:
-    from flext_core import t
 
 
 class FlextProtocolsLoggingPart01:

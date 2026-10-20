@@ -35,12 +35,12 @@ class TestsFlextCoreLazyRelativePackages:
         """Both sibling and current-package paths identify importable modules."""
         normalized = normalize_lazy_imports(package, {"module": relative})
         target = normalized["module"]
-        tm.that(isinstance(target, str), truth=True)
-        assert isinstance(target, str)
-        tm.that(
-            importlib.import_module(target) is importlib.import_module(absolute),
-            truth=True,
-        )
+        tm.that(target, is_=str)
+        if isinstance(target, str):
+            tm.that(
+                importlib.import_module(target),
+                where=lambda module: module is importlib.import_module(absolute),
+            )
 
     @staticmethod
     def test_symbol_target_resolves_parent_package() -> None:

@@ -8,7 +8,12 @@ from __future__ import annotations
 
 from flext_core.flextlazy_attribute import FlextLazyAttribute
 from flext_core.flextlazy_member import FlextLazyMember
-from flext_core.flextlazy_part_02 import FlextLazy
+from flext_core.flextlazy_part_02 import FlextLazyPart02
+
+
+class FlextLazy(FlextLazyPart02):
+    """Public lazy export facade."""
+
 
 lazy = FlextLazy()
 """Shared ``FlextLazy`` singleton used by package-level lazy exports."""

@@ -19,7 +19,9 @@ if TYPE_CHECKING:
     from flext_core._models import FlextModelsConfig
 
 
-class FlextUtilitiesParserTargets(parser_targets_part_01.FlextUtilitiesParserTargets):
+class FlextUtilitiesParserTargetsPart02(
+    parser_targets_part_01.FlextUtilitiesParserTargetsPart01
+):
     @staticmethod
     def _parse_try_primitive[T](
         value: t.JsonPayload,
@@ -33,9 +35,9 @@ class FlextUtilitiesParserTargets(parser_targets_part_01.FlextUtilitiesParserTar
             The resulting ``T | None``.
 
         """
-        opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
+        opts, fp = FlextUtilitiesParserTargetsPart02._resolve_opts(options, kwargs)
         if value is None:
-            return FlextUtilitiesParserTargets._parse_with_default(
+            return FlextUtilitiesParserTargetsPart02._parse_with_default(
                 opts,
                 c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
@@ -46,7 +48,7 @@ class FlextUtilitiesParserTargets(parser_targets_part_01.FlextUtilitiesParserTar
                 coerced_value,
             ).unwrap()
             return validated_str
-        cls = FlextUtilitiesParserTargets
+        cls = FlextUtilitiesParserTargetsPart02
         coerce_map: Mapping[
             type[T | int | float | bool],
             Callable[[t.JsonPayload], p.Result[int] | p.Result[float] | p.Result[bool]],
@@ -78,4 +80,4 @@ class FlextUtilitiesParserTargets(parser_targets_part_01.FlextUtilitiesParserTar
         return None
 
 
-__all__: list[str] = ["FlextUtilitiesParserTargets"]
+__all__: list[str] = ["FlextUtilitiesParserTargetsPart02"]

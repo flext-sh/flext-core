@@ -60,8 +60,11 @@ class TestsFlextEnforcementModels:
             == {},
             truth=True,
         )
-        assert (
-            first_state.statistics.operations is not second_state.statistics.operations
+        tm.that(
+            first_state.statistics.operations,
+            where=lambda operations: (
+                operations is not second_state.statistics.operations
+            ),
         )
         tm.that(first_state.hooks == second_state.hooks, truth=True)
         tm.that(first_state.hooks is not second_state.hooks, truth=True)

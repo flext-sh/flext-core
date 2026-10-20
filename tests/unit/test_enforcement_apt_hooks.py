@@ -72,11 +72,12 @@ class TestsFlextEnforcementAptHooks:
         tm.that(rule, none=False)
         rule = tm.not_none(rule)
         tm.that(rule.description, ne="")
-        tm.that(isinstance(rule.source, m.EnforcementBeartypeSource), truth=True)
-        assert isinstance(rule.source, m.EnforcementBeartypeSource)
-        problem, fix = c.ENFORCEMENT_RULES_TEXT[rule.source.tag]
-        tm.that(problem, ne="")
-        tm.that(fix, ne="")
+        source = rule.source
+        tm.that(source, is_=m.EnforcementBeartypeSource)
+        if isinstance(source, m.EnforcementBeartypeSource):
+            problem, fix = c.ENFORCEMENT_RULES_TEXT[source.tag]
+            tm.that(problem, ne="")
+            tm.that(fix, ne="")
 
     @staticmethod
     @pytest.mark.parametrize("rule_id", A_PT_RULE_IDS)
@@ -105,9 +106,10 @@ class TestsFlextEnforcementAptHooks:
         rule = u.build_canonical_catalog().by_id(rule_id)
         tm.that(rule, none=False)
         rule = tm.not_none(rule)
-        tm.that(isinstance(rule.source, m.EnforcementInfraRuleSource), truth=True)
-        assert isinstance(rule.source, m.EnforcementInfraRuleSource)
-        tm.that(rule.source.rule_ids, truth=True)
+        source = rule.source
+        tm.that(source, is_=m.EnforcementInfraRuleSource)
+        if isinstance(source, m.EnforcementInfraRuleSource):
+            tm.that(source.rule_ids, empty=False)
 
     @staticmethod
     @pytest.mark.parametrize("rule_id", RUNTIME_RULE_IDS)
@@ -116,9 +118,10 @@ class TestsFlextEnforcementAptHooks:
         rule = u.build_canonical_catalog().by_id(rule_id)
         tm.that(rule, none=False)
         rule = tm.not_none(rule)
-        tm.that(isinstance(rule.source, m.EnforcementBeartypeSource), truth=True)
-        assert isinstance(rule.source, m.EnforcementBeartypeSource)
-        tm.that(rule.source.tag in c.ENFORCEMENT_TAG_CATEGORY, truth=True)
+        source = rule.source
+        tm.that(source, is_=m.EnforcementBeartypeSource)
+        if isinstance(source, m.EnforcementBeartypeSource):
+            tm.that(c.ENFORCEMENT_TAG_CATEGORY, has=source.tag)
 
     # --- Runtime behavior via the public ``u.check`` entrypoint ---
 

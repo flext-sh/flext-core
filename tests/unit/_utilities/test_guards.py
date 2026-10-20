@@ -393,7 +393,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_scalar_identifies_scalar_values(
-        value: p.ProtocolGuardInput | None,
+        value: t.JsonValue,
         *,
         expected: bool,
     ) -> None:
@@ -412,7 +412,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_primitive_identifies_primitive_values(
-        value: p.ProtocolGuardInput,
+        value: t.JsonValue,
         *,
         expected: bool,
     ) -> None:
@@ -473,7 +473,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_list_like_excludes_strings_and_bytes(
-        value: p.ProtocolGuardInput,
+        value: t.JsonValue | bytes | tuple[int, ...],
         *,
         expected: bool,
     ) -> None:
@@ -503,7 +503,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_empty_value_reports_absence_or_empty_containers(
-        value: p.ProtocolGuardInput | None,
+        value: t.JsonValue,
         *,
         expected: bool,
     ) -> None:

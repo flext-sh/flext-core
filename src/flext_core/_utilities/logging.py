@@ -17,7 +17,7 @@ from typing import Self
 
 import structlog
 
-from flext_core import FlextBoundLogger, c, m, p, t
+from flext_core import FlextBoundLogger, c, p, t
 from flext_core._utilities import FlextUtilitiesLoggingContext
 
 
@@ -59,13 +59,11 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = c.Status.SUCCESS if success else c.Status.FAILED
-            context = m.ConfigMap(
-                root={
-                    c.MetadataKey.DURATION_SECONDS: elapsed,
-                    c.HandlerType.OPERATION: self._operation_name,
-                    c.FIELD_STATUS: status,
-                },
-            )
+            context: dict[str, p.LogValue] = {
+                c.MetadataKey.DURATION_SECONDS: elapsed,
+                c.HandlerType.OPERATION: self._operation_name,
+                c.FIELD_STATUS: status,
+            }
             if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
                 context["exception_message"] = str(exc_val) if exc_val else ""
@@ -74,7 +72,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             try:
                 _ = emit(
                     event,
-                    **FlextUtilitiesLogging.to_container_context(context.root),
+                    **context,
                 )
             except BaseException as logging_error:
                 if exc_val is not None and exc_val is not logging_error:

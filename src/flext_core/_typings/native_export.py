@@ -6,11 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core import p
-
 
 class FlextTypingNativeExport[T]:
     """Expose a native value without binding or narrowing callable overloads."""
@@ -21,12 +16,11 @@ class FlextTypingNativeExport[T]:
         """Retain the original value and its complete inferred type."""
         self._value = value
 
-    def __get__(
+    def __get__[OwnerT](
         self,
-        instance: p.AttributeProbe | None,
-        owner: type | None = None,
+        instance: OwnerT | None,
+        owner: type[OwnerT] | None = None,
     ) -> T:
-        _ = instance, owner
         """Return the identical native value for class and instance access.
 
         Returns:
