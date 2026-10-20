@@ -31,7 +31,6 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     @staticmethod
     @abstractmethod
     def _create_success[V](value: V) -> p.Result[V]:
-        _ = value
         """Construct a payload through the concrete facade's MRO owner."""
         raise NotImplementedError
 
@@ -43,7 +42,6 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         error_data: t.JsonDict | None,
         exception: BaseException | None,
     ) -> p.Result[Never]:
-        _ = error, error_code, error_data, exception
         """Construct normalized failure state through the concrete facade."""
         raise NotImplementedError
 

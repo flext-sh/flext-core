@@ -196,7 +196,7 @@ class TestsFlextLoggingStages:
         try:
             raise failure
         except ValueError:
-            result = logger.info("ordered stages", payload=payload, exc_info=True)
+            result = logger.info("ordered stages", payload=payload, exc_info=True)  # pyrefly: ignore
 
         tm.ok(result.success)
         tm.that(len(observed), eq=2)
@@ -326,7 +326,7 @@ class TestsFlextLoggingStages:
                 "native exception with JSON fields",
                 exc_info=saved if saved_tuple else original,
                 payload=payload,
-                sequence=(1, "two", False, None),
+                sequence=(1, "two", False, None),  # pyrefly: ignore
                 source=source,
             )
         )
@@ -829,7 +829,7 @@ class TestsFlextLoggingStages:
             (declared_key, declared_key.casefold(), declared_key.swapcase()),
             sensitive_value,
         )
-        nested: list[t.JsonValue] = [payload]
+        nested: list[t.JsonPayload] = [payload]  # pyrefly: ignore
         tm.ok(
             u.log(
                 "declared sensitive payload",

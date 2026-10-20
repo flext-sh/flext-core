@@ -20,9 +20,8 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     def __init_subclass__(cls, **kwargs: t.Scalar | t.ScalarMapping) -> None:
         """Keep explicitly selected class-scope plugins local to each subclass."""
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         cls._class_plugin_storage = {}
-        _ = kwargs
 
     @override
     def _get_runtime(self) -> p.ServiceRuntime:

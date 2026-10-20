@@ -262,9 +262,9 @@ class TestsFlextHandlerDiscovery:
 
         module = u.Tests.handler_module("unimported_handlers", operation=operation)
         saved = h.Discovery.scan_module(module)[0][1]
-        module.operation = replacement
+        module.operation = replacement  # pyrefly: ignore
         tm.that(h.Discovery.scan_module(module)[0][1] is replacement)
-        del module.operation
+        del module.operation  # pyrefly: ignore
         tm.that(h.Discovery.scan_module(module), empty=True)
         tm.that(saved is operation)
         tm.that(saved(m.Command()) is outcome)

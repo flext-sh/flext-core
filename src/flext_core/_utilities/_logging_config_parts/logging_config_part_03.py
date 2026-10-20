@@ -35,7 +35,6 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
             The effective severity without changing trace detail.
 
         """
-        _ = trace
         return c.LogLevel.DEBUG if debug and not log_level_explicit else log_level
 
     @classmethod

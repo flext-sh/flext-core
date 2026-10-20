@@ -23,81 +23,67 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem](  # type: ignore
+    def filter[TItem](
         items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.SequenceOf[TItem]:
-        _ = items, predicate, mapper
-        raise NotImplementedError
+    ) -> t.SequenceOf[TItem]: ...
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](  # type: ignore
+    def filter[TItem, TMapped](
         items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.SequenceOf[TMapped]:
-        _ = items, predicate, mapper
-        raise NotImplementedError
+    ) -> t.SequenceOf[TMapped]: ...
 
     @overload
     @staticmethod
-    def filter[TItem](  # type: ignore
+    def filter[TItem](
         items: t.VariadicTuple[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.VariadicTuple[TItem]:
-        _ = items, predicate, mapper
-        raise NotImplementedError
+    ) -> t.VariadicTuple[TItem]: ...
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](  # type: ignore
+    def filter[TItem, TMapped](
         items: t.VariadicTuple[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]:
-        _ = items, predicate, mapper
-        raise NotImplementedError
+    ) -> t.VariadicTuple[TMapped]: ...
 
     @overload
     @staticmethod
-    def filter[TItem](  # type: ignore
+    def filter[TItem](
         items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.MappingKV[str, TItem]:
-        _ = items, predicate, mapper
-        raise NotImplementedError
+    ) -> t.MappingKV[str, TItem]: ...
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](  # type: ignore
+    def filter[TItem, TMapped](
         items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.MappingKV[str, TMapped]:
-        _ = items, predicate, mapper
-        raise NotImplementedError
+    ) -> t.MappingKV[str, TMapped]: ...
 
     @staticmethod
     def filter[TItem, TMapped](
-        items: t.SequenceOf[TItem] | t.VariadicTuple[TItem] | t.MappingKV[str, TItem],
+        items: t.SequenceOf[TItem] | t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped] | None = None,
     ) -> (
         t.SequenceOf[TItem]
         | t.SequenceOf[TMapped]
-        | t.VariadicTuple[TItem]
-        | t.VariadicTuple[TMapped]
         | t.MappingKV[str, TItem]
         | t.MappingKV[str, TMapped]
     ):
@@ -105,15 +91,12 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
         Returns:
             The resulting ``t.SequenceOf[TItem] | t.SequenceOf[TMapped] |
-                t.VariadicTuple[TItem] | t.VariadicTuple[TMapped] | t.MappingKV[str,
-                TItem] | t.MappingKV[str, TMapped]``.
+                t.MappingKV[str, TItem] | t.MappingKV[str, TMapped]``.
 
         """
         filtered_output: (
             t.SequenceOf[TItem]
             | t.SequenceOf[TMapped]
-            | t.VariadicTuple[TItem]
-            | t.VariadicTuple[TMapped]
             | t.MappingKV[str, TItem]
             | t.MappingKV[str, TMapped]
         )
@@ -150,60 +133,48 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](  # type: ignore
+    def map[TItem, TMapped](
         items: t.SequenceOf[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.SequenceOf[TMapped]:
-        _ = items, mapper
-        raise NotImplementedError
+    ) -> t.SequenceOf[TMapped]: ...
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](  # type: ignore
+    def map[TItem, TMapped](
         items: t.VariadicTuple[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]:
-        _ = items, mapper
-        raise NotImplementedError
+    ) -> t.VariadicTuple[TMapped]: ...
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](  # type: ignore
+    def map[TItem, TMapped](
         items: t.MappingKV[str, TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.MappingKV[str, TMapped]:
-        _ = items, mapper
-        raise NotImplementedError
+    ) -> t.MappingKV[str, TMapped]: ...
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](  # type: ignore
+    def map[TItem, TMapped](
         items: set[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> set[TMapped]:
-        _ = items, mapper
-        raise NotImplementedError
+    ) -> set[TMapped]: ...
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](  # type: ignore
+    def map[TItem, TMapped](
         items: frozenset[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> frozenset[TMapped]:
-        _ = items, mapper
-        raise NotImplementedError
+    ) -> frozenset[TMapped]: ...
 
     @staticmethod
     def map[TItem, TMapped](
         items: t.SequenceOf[TItem]
-        | t.VariadicTuple[TItem]
         | t.MappingKV[str, TItem]
         | set[TItem]
         | frozenset[TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> (
         t.SequenceOf[TMapped]
-        | t.VariadicTuple[TMapped]
         | t.MappingKV[str, TMapped]
         | set[TMapped]
         | frozenset[TMapped]
@@ -211,8 +182,8 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
         """Unified map function — preserves container type.
 
         Returns:
-            The resulting ``t.SequenceOf[TMapped] | t.VariadicTuple[TMapped] |
-                t.MappingKV[str, TMapped] | set[TMapped] | frozenset[TMapped]``.
+            The resulting ``t.SequenceOf[TMapped] | t.MappingKV[str, TMapped] |
+                set[TMapped] | frozenset[TMapped]``.
 
         """
         if isinstance(items, list):

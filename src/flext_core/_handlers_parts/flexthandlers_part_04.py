@@ -109,7 +109,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         this base implementation doesn't use instance state.
 
         """
-        _ = self
         if data is None:
             return r[bool].fail_op(
                 "validate handler message",

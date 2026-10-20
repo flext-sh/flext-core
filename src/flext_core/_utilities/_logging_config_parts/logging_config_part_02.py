@@ -44,7 +44,6 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             The event without context above its severity.
 
         """
-        _ = logger
         level_hierarchy = logging.getLevelNamesMapping()
         current_level = level_hierarchy[method_name.upper()]
         filtered_dict: p.LoggingEvent = {}

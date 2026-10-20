@@ -114,7 +114,6 @@ class FlextModelsPydantic:
     @overload
     @staticmethod
     def empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]:  # type: ignore
-        _ = contract
         raise NotImplementedError
 
     @overload
@@ -122,7 +121,6 @@ class FlextModelsPydantic:
     def empty[ContractT](  # type: ignore
         *, contract_factory: Callable[[], TypeForm[ContractT]]
     ) -> Callable[[], ContractT]:
-        _ = contract_factory
         raise NotImplementedError
 
     @staticmethod

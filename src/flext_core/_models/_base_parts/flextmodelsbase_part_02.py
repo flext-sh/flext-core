@@ -13,8 +13,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Hashable
+from collections.abc import Hashable, Mapping
 from datetime import datetime
+from pathlib import Path
 from typing import Annotated, ClassVar, dataclass_transform, override
 
 from pydantic import ConfigDict
@@ -107,6 +108,16 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         )
         attributes: Annotated[
             t.JsonMapping,
+            FlextModelsPydantic.BeforeValidator(
+                lambda value: (
+                    {
+                        key: str(item) if isinstance(item, Path) else item
+                        for key, item in value.items()
+                    }
+                    if isinstance(value, Mapping)
+                    else value
+                )
+            ),
             FlextModelsPydantic.Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",

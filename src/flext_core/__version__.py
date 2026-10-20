@@ -108,8 +108,7 @@ class _FlextVersionMetadata:
 
     def __init_subclass__(cls, **kwargs: str | float | bool | None) -> None:
         """Recompute derived attributes when a subclass overrides ``_metadata``."""
-        _ = kwargs
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         if "_metadata" in cls.__dict__:
             cls._apply_metadata()
 

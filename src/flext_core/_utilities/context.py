@@ -371,23 +371,17 @@ class FlextUtilitiesContext:
     def update_context_operation(
         state: p.ContextRuntimeState, operation: str
     ) -> p.ContextRuntimeState:
-        """Copy state with the existing counter and operation-metric updates.
-
-        Returns:
-            The state with updated operation statistics.
-
-        """
         counters: t.MappingKV[str, int] = {
             "sets": state.statistics.sets,
             "gets": state.statistics.gets,
             "removes": state.statistics.removes,
             "clears": state.statistics.clears,
         }
-        updates: t.MutableMappingKV[str, t.JsonPayload] = {}
+        updates: dict[str, t.JsonPayload] = {}
         counter = f"{operation}s"
         if counter in counters:
             updates[counter] = counters[counter] + 1
-        operations: t.MutableMappingKV[str, t.JsonValue] = {
+        operations: dict[str, t.JsonValue] = {
             key: value
             for key, value in state.statistics.operations.items()
             if isinstance(value, c.PRIMITIVES_TYPES)
@@ -395,7 +389,7 @@ class FlextUtilitiesContext:
         current = operations.get(operation)
         if isinstance(current, int):
             operations[operation] = current + 1
-            updates["operations"] = dict(operations)
+            updates["operations"] = operations
         if not updates:
             return state
         statistics = state.statistics.model_copy(update=updates)

@@ -249,7 +249,6 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         if layer == c.EnforcementLayer.UTILITIES.lower():
 
             def accept_utility(name: str, _value: FlextTypesPydantic.JsonValue) -> bool:
-                _ = _value
                 allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_utility(
                     target,
                     name,
@@ -259,7 +258,6 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             return accept_utility
 
         def accept_public(name: str, _value: FlextTypesPydantic.JsonValue) -> bool:
-            _ = _value
             allowed: bool = FlextUtilitiesBeartypeEngine.attr_accept_public(name)
             return allowed
 

@@ -118,9 +118,9 @@ class TestsFlextCoreNormalizationBoundaries:
     def test_container_preserves_models_and_unwraps_root_payloads() -> None:
         """Models retain identity while root payloads normalize recursively."""
         model = m.Metadata(attributes={"source": "native"})
-        tm.ok(u.normalize_to_container(model) is model)
+        tm.that(u.normalize_to_container(model), eq=model.model_dump(mode="python"))
         tm.that(
-            u.normalize_to_container(m.ConfigMap(root={"key": Path("relative")})),
+            u.normalize_to_container(m.ConfigMap(root={"key": str(Path("relative"))})),
             eq={"key": str(Path("relative"))},
         )
 

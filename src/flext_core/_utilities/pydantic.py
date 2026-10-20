@@ -254,6 +254,11 @@ class FlextUtilitiesPydantic(
             if isinstance(value, p.HasModelDump)
             else value
         )
+        if isinstance(payload, Mapping):
+            payload = {
+                key: (str(item) if isinstance(item, Path) else item)
+                for key, item in payload.items()
+            }
         parsed = _models.FlextModelsContainers.ConfigMap.model_validate(payload)
         return FlextUtilitiesPydantic.normalize_to_json_mapping(parsed)
 

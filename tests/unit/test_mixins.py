@@ -78,7 +78,7 @@ class TestsFlextMixins:
         service = self._service()
 
         with service.track("load") as metrics:
-            captured: Mapping[str, t.JsonPayload] = metrics
+            captured: Mapping[str, t.JsonValue] = metrics
 
         tm.that("operation_name" in captured, truth=True)
         tm.that("start_time" in captured, truth=True)
@@ -164,7 +164,7 @@ class TestsFlextMixins:
     def test_settings_overrides_setter_round_trips(self) -> None:
         """Test settings overrides setter round trips."""
         service = self._service()
-        overrides: t.ScalarMapping = {"feature_flag": True, "retries": 3}
+        overrides: t.MappingKV[str, t.JsonValue] = {"feature_flag": True, "retries": 3}
 
         service.settings_overrides = overrides
 

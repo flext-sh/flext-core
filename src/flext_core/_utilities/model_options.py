@@ -20,7 +20,10 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
     @classmethod
     def resolve_runtime_options(
         cls,
-        source: p.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
+        source: p.RuntimeBootstrapProvider
+        | p.RuntimeBootstrapOptions
+        | p.MixinsInfrastructure
+        | None = None,
     ) -> p.RuntimeBootstrapOptions:
         """Resolve the runtime options an options model or a component declares.
 

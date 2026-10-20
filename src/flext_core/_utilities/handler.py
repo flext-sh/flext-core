@@ -116,7 +116,7 @@ class FlextUtilitiesHandler:
 
         """
         if not state.context_stack:
-            empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
+            empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})  # type: ignore[assignment]
             return FlextResult.ok((state, empty_context))
         popped = state.context_stack[-1]
         next_state = state.model_copy(

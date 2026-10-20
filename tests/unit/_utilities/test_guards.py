@@ -229,7 +229,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_matches_type_string_spec_reflects_runtime_type(
-        value: t.JsonValue | None,
+        value: p.ProtocolGuardInput | None,
         spec: str,
         *,
         expected: bool,
@@ -250,7 +250,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_matches_type_non_empty_specs_require_content(
-        value: t.JsonValue,
+        value: p.ProtocolGuardInput,
         spec: str,
         *,
         expected: bool,
@@ -296,7 +296,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_matches_type_type_and_tuple_specs(
-        value: t.JsonValue,
+        value: p.ProtocolGuardInput,
         spec: type | t.VariadicTuple[type],
         *,
         expected: bool,
@@ -328,7 +328,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_container_accepts_scalars_and_nested_json(
-        value: t.JsonValue,
+        value: p.ProtocolGuardInput,
     ) -> None:
         tm.that(u.container_value(value) is True, truth=True)
 
@@ -338,7 +338,7 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_container_rejects_none_and_non_json_members(
-        value: t.JsonValue | None,
+        value: p.ProtocolGuardInput | None,
     ) -> None:
         tm.that(u.container_value(value) is False, truth=True)
 
@@ -393,11 +393,11 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_scalar_identifies_scalar_values(
-        value: t.JsonValue | None,
+        value: p.ProtocolGuardInput | None,
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.scalar(value) is expected, truth=True)
+        tm.that(u.scalar(value) is expected, truth=True)  # type: ignore
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -412,11 +412,11 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_primitive_identifies_primitive_values(
-        value: t.JsonValue,
+        value: p.ProtocolGuardInput,
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.primitive(value) is expected, truth=True)
+        tm.that(u.primitive(value) is expected, truth=True)  # type: ignore
 
     # ------------------------------------------------------------------
     # collection guards
@@ -429,11 +429,11 @@ class TestsFlextCoreGuards:
         tm.that(u.list_value((1, 2)) is False, truth=True)
         counter = u.Tests.MemoryCounter()
         service = u.Tests.CountingService(counter=counter)
-        registry: p.GuardInput = {"service": service}
+        registry: p.GuardInput = {"service": service}  # type: ignore
         tm.that(u.mapping(registry), truth=True)
         tm.that(u.dict_like(registry), truth=True)
-        tm.that(u.list_value([service]), truth=True)
-        tm.that(u.list_like([service]), truth=True)
+        tm.that(u.list_value([service]), truth=True)  # type: ignore
+        tm.that(u.list_like([service]), truth=True)  # type: ignore
         tm.that(u.container_value(registry), truth=False)
         tm.that(service.counter is counter, truth=True)
         tm.that(service.execute().unwrap(), eq=1)
@@ -473,11 +473,11 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_list_like_excludes_strings_and_bytes(
-        value: t.JsonValue,
+        value: p.ProtocolGuardInput,
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.list_like(value) is expected, truth=True)
+        tm.that(u.list_like(value) is expected, truth=True)  # type: ignore
 
     @staticmethod
     def test_dict_like_accepts_only_mappings() -> None:
@@ -503,11 +503,11 @@ class TestsFlextCoreGuards:
     )
     @staticmethod
     def test_empty_value_reports_absence_or_empty_containers(
-        value: t.JsonValue | None,
+        value: p.ProtocolGuardInput | None,
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.empty_value(value) is expected, truth=True)
+        tm.that(u.empty_value(value) is expected, truth=True)  # type: ignore
 
     @pytest.mark.parametrize(
         ("value", "expected"),

@@ -179,9 +179,9 @@ class TestsFlextUtilitiesPydantic:
         """Literal aliases and factories participate in constructor synthesis."""
 
         model_label: str = m.Field(alias="modelLabel")
-        utility_label: str = u.Field(alias="utilityLabel")
+        utility_label: str = m.Field(alias="utilityLabel")
         model_value: str = m.Field(default_factory=str)
-        utility_value: str = u.Field(default_factory=str)
+        utility_value: str = m.Field(default_factory=str)
 
     @staticmethod
     def test_alias_named_constructor_preserves_factory_defaults() -> None:

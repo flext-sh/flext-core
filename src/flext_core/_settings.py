@@ -32,7 +32,7 @@ import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, ClassVar, Literal, Self
+from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, Self
 
 from pydantic import BaseModel, Field, TypeAdapter, computed_field, model_validator
 from pydantic_settings import (
@@ -272,22 +272,18 @@ class FlextSettings(BaseSettings):
     _instance: ClassVar[Self | None] = None
     _app_namespace: ClassVar[str | None] = None
 
-    def __init_subclass__(
-        cls, **kwargs: FlextProtocolsSettings.SettingsOverride | None
-    ) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
-        _ = kwargs
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         cls._instance = None
 
-    def __new__(cls, **kwargs: FlextProtocolsSettings.SettingsOverride | None) -> Self:
+    def __new__(cls, **kwargs: Any) -> Self:
         """Singleton factory; unknown kwargs are ignored by consumer factories.
 
         Raises:
             TypeError: If Singleton instance is not of expected type.
 
         """
-        _ = kwargs
         if not cls._singleton_enabled:
             return super().__new__(cls)
         if cls._instance is None:
@@ -325,7 +321,9 @@ class FlextSettings(BaseSettings):
                 cls._singleton_enabled = original
 
     @classmethod
-    def fetch_global(cls, *, overrides: t.MappingKV[str, t.JsonValue] | None = None) -> Self:
+    def fetch_global(
+        cls, *, overrides: t.MappingKV[str, t.JsonValue] | None = None
+    ) -> Self:
         """Return the shared per-class singleton (lazy, thread-safe).
 
         With ``overrides`` return an isolated clone; the singleton is not

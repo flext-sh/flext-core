@@ -91,7 +91,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             TypeError: If a concrete subclass does not override handle().
 
         """
-        _ = kwargs
         super().__init_subclass__()
         if cls.__module__.startswith("flext_core._handlers_parts"):
             return

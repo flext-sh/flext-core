@@ -128,7 +128,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(mapped.error, eq=result.error)
         tm.that(result.exception, none=False)
         tm.not_none(result.exception)
-        with pytest.raises(type(result.exception)) as raised:
+        with pytest.raises(type(result.exception)) as raised:  # pyrefly: ignore
             mapped.unwrap()
         tm.that(raised.value is result.exception, truth=True)
 

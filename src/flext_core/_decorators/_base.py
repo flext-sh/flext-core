@@ -54,7 +54,6 @@ class FlextDecoratorsBase:
             Whether value carries or can route logging context.
 
         """
-        _ = cls
         return isinstance(
             value,
             (
@@ -79,7 +78,6 @@ class FlextDecoratorsBase:
             The resulting ``pl.Logger``.
 
         """
-        _ = cls
         if isinstance(first_arg, FlextProtocolsLogging.Logger):
             return first_arg
         if isinstance(first_arg, FlextProtocolsLogging.HasLogger):

@@ -41,7 +41,6 @@ class FlextRuntimeBase(FlextUtilitiesBase):
             The resulting ``t.LogLevel``.
 
         """
-        _ = trace
         if debug and not log_level_explicit:
             return c.LogLevel.DEBUG
         return log_level

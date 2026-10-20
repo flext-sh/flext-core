@@ -93,7 +93,6 @@ class FlextModelsEntity:
             __context: FlextTypingBase.ScalarMapping | None,
             /,
         ) -> None:
-            _ = __context
             """Post-initialization hook to set updated_at timestamp when absent."""
             if self.updated_at is None:
                 self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()

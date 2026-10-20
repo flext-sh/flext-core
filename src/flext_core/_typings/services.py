@@ -29,9 +29,7 @@ from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
-    type JsonPayload = (
-        FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType | Path
-    )
+    type JsonPayload = FlextTypesPydantic.JsonValue
 
     type ServiceLeaf[T] = (
         FlextTypingBase.Scalar | FlextTypesPydantic.JsonValue | Path | T

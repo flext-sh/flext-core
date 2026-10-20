@@ -31,8 +31,7 @@ class FlextModelsNamespace:
         ``utility_not_static``, ``proto_*``) additionally fire when the
         class name ends in a recognised layer suffix.
         """
-        _ = kwargs
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         if c.ENFORCEMENT_NAMESPACE_MODE is c.EnforcementMode.OFF:
             return
         layer = FlextUtilitiesEnforcement.detect_layer(cls) or ""

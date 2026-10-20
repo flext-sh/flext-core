@@ -38,7 +38,6 @@ class FlextUtilitiesLoggingConfig:
 
         @override
         def handleError(self, record: t.LoggingNativeRecord) -> None:
-            _ = record
             error = sys.exception()
             if error is not None:
                 raise error

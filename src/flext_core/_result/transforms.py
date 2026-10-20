@@ -77,13 +77,12 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
     def flow_through(self: Self) -> p.Result[T]: ...
 
     @overload
-    def flow_through[U](  # type: ignore
+    def flow_through[U](
         self: Self,
         first: Callable[[T | U], p.Result[U]],
         /,
         *funcs: Callable[[T | U], p.Result[U]],
     ) -> p.Result[T | U]:
-        _ = first, funcs
         raise NotImplementedError
 
     def flow_through[U](

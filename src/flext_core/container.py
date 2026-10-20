@@ -49,7 +49,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     services to their own settings and context.
     """
 
-    _settings_type: ClassVar[p.SettingsType] = FlextSettings  # type: ignore
+    _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
     _context_type: ClassVar[p.ContextType] = FlextContext  # type: ignore[assignment]
 
@@ -68,15 +68,8 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _global_config: m.ContainerConfig
 
-    def __new__(
-        cls,
-        *,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
-    ) -> Self:
+    def __new__(cls) -> Self:
         """Create or return the global singleton instance."""
-        _ = registration
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:
@@ -258,7 +251,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         return r[p.RegisterableService].ok(resolved)
 
     @overload
-    def resolve[T: p.RegisterableService](  # type: ignore
+    def resolve[T: p.RegisterableService](
         self,
         name: str,
         *,
@@ -268,7 +261,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         raise NotImplementedError
 
     @overload
-    def resolve(  # type: ignore
+    def resolve(
         self,
         name: str,
         *,
@@ -330,7 +323,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         """
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},  # type: ignore[misc]
         )
 
     @override
@@ -385,7 +378,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             self._user_overrides = m.ConfigMap(
                 root={
                     k: (
-                        list(v)
+                        list(v)  # type: ignore[misc, arg-type]
                         if isinstance(v, Sequence) and not isinstance(v, (str, bytes))
                         else v
                     )
@@ -670,7 +663,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         if settings is None:
             return self
         merged = self._user_overrides.model_copy()
-        merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})  # type: ignore[arg-type]
+        merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})
         self._user_overrides = merged
         self._global_config = m.ContainerConfig.model_validate(
             self._global_config.model_dump() | dict(merged),

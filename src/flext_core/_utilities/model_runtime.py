@@ -215,7 +215,10 @@ class FlextUtilitiesModelRuntime(
     @classmethod
     def build_service_runtime(
         cls,
-        source: p.RuntimeBootstrapOptions | p.MixinsInfrastructure | None = None,
+        source: p.RuntimeBootstrapProvider
+        | p.RuntimeBootstrapOptions
+        | p.MixinsInfrastructure
+        | None = None,
     ) -> p.ServiceRuntime:
         """Materialize settings, context, container and dispatcher for one component.
 
