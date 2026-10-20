@@ -193,7 +193,7 @@ class TestsFlextBeartypeEngineAnnotations(
             if not isinstance(alias, TypeAliasType):
                 pytest.fail("Source fixture did not declare a native type alias")
             tm.that(u.deferred_alias(alias, owner=owner), none=True)
-            with pytest.raises(NameError) as native:
+            with pytest.raises(NameError):
                 _ = alias.__value__
             with pytest.raises(NameError) as resolved:
                 u.resolve_type_alias_value(alias, owner=owner)

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, dataclass_transform
+from typing import TYPE_CHECKING, Any, ClassVar, dataclass_transform
 
 import pydantic
 import pydantic.fields
@@ -59,8 +59,8 @@ class FlextModelsPydantic:
     # Compatibility: older flext-infra code calls m.empty(contract_factory=...).
     # Delegate to the canonical utility owner.
     @staticmethod
-    def empty(*args, **kwargs):
-        from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+    def empty(*args: Any, **kwargs: Any) -> Any:
+        from flext_core._utilities.pydantic import FlextUtilitiesPydantic  # noqa: PLC0415
 
         return FlextUtilitiesPydantic.empty(*args, **kwargs)
 

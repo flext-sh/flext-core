@@ -95,7 +95,7 @@ class TestsFlextCoreExceptions:
         message = "not found"
         with pytest.raises(e.BaseError) as excinfo:
             raise e.NotFoundError(message, resource_type="user", resource_id="u-1")
-        raised = excinfo.value
+        raised: e.NotFoundError = excinfo.value
         tm.that(isinstance(raised, e.NotFoundError), truth=True)
         tm.that(raised.resource_type, eq="user")
         tm.that(raised.resource_id, eq="u-1")
@@ -111,7 +111,7 @@ class TestsFlextCoreExceptions:
         )
         # Assert — correlation id is generated and exposed publicly.
         tm.that(error.correlation_id, none=False)
-        tm.that(error.correlation_id.startswith("exc_"), truth=True)
+        tm.that(str(error.correlation_id).startswith("exc_"), truth=True)
 
     @pytest.mark.parametrize(
         ("declared", "expected"),

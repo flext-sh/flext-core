@@ -29,7 +29,9 @@ class TestsFlextCoreEnforcement:
         tm.that("violations" in dumped, truth=True)
         tm.that(isinstance(report.violations, list), truth=True)
         tm.that(
-            report.violations, truth=True, msg="a builtin type must produce at least one finding"
+            report.violations,
+            truth=True,
+            msg="a builtin type must produce at least one finding",
         )
 
     @staticmethod
