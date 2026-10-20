@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
@@ -375,22 +375,21 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             else m.ContainerConfig()
         )
         overrides = spec.user_overrides
-        self._user_overrides = (
-            overrides
-            if isinstance(overrides, m.ConfigMap)
-            else m.ConfigMap(
+        if isinstance(overrides, m.ConfigMap):
+            self._user_overrides = overrides
+        elif isinstance(overrides, Mapping):
+            self._user_overrides = m.ConfigMap(
                 root={
-                    k: list(v)
-                    if isinstance(v, Sequence) and not isinstance(v, str | bytes)
-                    else v
-                    for k, v in (
-                        overrides.items()
-                        if hasattr(overrides, "items")
-                        else dict[str, object]().items()
+                    k: (
+                        list(v)
+                        if isinstance(v, Sequence) and not isinstance(v, (str, bytes))
+                        else v
                     )
+                    for k, v in overrides.items()
                 },
             )
-        )
+        else:
+            self._user_overrides = m.ConfigMap(root={})
         self._config = (
             spec.settings
             if spec.settings is not None

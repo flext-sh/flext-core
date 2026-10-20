@@ -61,10 +61,6 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                     **dict(declared),
                     **{name: value for name, value in seeds if value is not None},
                 })
-            case p.RuntimeBootstrapOptions():
-                return m.RuntimeBootstrapOptions.model_validate(
-                    source, from_attributes=True
-                )
             case _:
                 msg = f"unknown runtime bootstrap source: {source!r}"
                 raise TypeError(msg)

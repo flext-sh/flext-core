@@ -7,12 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
-from typing import TYPE_CHECKING, cast
 
 from flext_core._protocols import FlextProtocolsContainer
-
-if TYPE_CHECKING:
-    from flext_core import t
 
 
 class FlextUtilitiesGuardsTypeProtocolStringMixin:
@@ -49,7 +45,7 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
 
         """
         return isinstance(value, Mapping) and bool(
-            cast("Mapping[str, t.JsonValue]", value),
+            value,
         )
 
     @staticmethod
@@ -65,7 +61,7 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
         return (
             isinstance(value, Sequence)
             and not isinstance(value, (str, bytes, bytearray))
-            and bool(cast("Sequence[t.JsonValue]", value))
+            and bool(value)
         )
 
     @staticmethod

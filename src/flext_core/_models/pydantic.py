@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar, dataclass_transform
 
 import pydantic
@@ -53,7 +54,9 @@ class FlextModelsPydantic:
     """
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
-    Field = FlextTypingNativeExport(pydantic.Field)
+    Field: Callable[..., pydantic.fields.FieldInfo] = FlextTypingNativeExport(
+        pydantic.Field,
+    )
     FieldInfo = pydantic.fields.FieldInfo
 
     if TYPE_CHECKING:
