@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextSettings
-from tests import u
+from tests import tm, u
 
 
 class TestsFlextCoreSettings:
@@ -42,8 +42,8 @@ class TestsFlextCoreSettings:
             """Base FlextSettings work_dir uses the 'flext' namespace name."""
             FlextSettings.reset_for_testing()
             s = FlextSettings.fetch_global()
-            assert isinstance(s.work_dir, Path)
-            assert s.work_dir.name == "flext"
+            tm.that(isinstance(s.work_dir, Path), truth=True)
+            tm.that(s.work_dir.name, eq="flext")
             FlextSettings.reset_for_testing()
 
         @staticmethod
@@ -64,7 +64,7 @@ class TestsFlextCoreSettings:
                 )
                 expected = Path.home() / ".cache" / "flext"
             with env_context:
-                assert FlextSettings.fetch_global().work_dir == expected
+                tm.that(FlextSettings.fetch_global().work_dir, eq=expected)
             FlextSettings.reset_for_testing()
 
         @staticmethod
@@ -76,7 +76,9 @@ class TestsFlextCoreSettings:
             with u.Tests.env_vars_context(
                 env_vars={"XDG_CACHE_HOME": "/xdg/cache"},
             ):
-                assert FlextSettings.fetch_global().work_dir == Path("/xdg/cache/flext")
+                tm.that(
+                    FlextSettings.fetch_global().work_dir, eq=Path("/xdg/cache/flext")
+                )
             FlextSettings.reset_for_testing()
 
         @staticmethod
@@ -88,7 +90,7 @@ class TestsFlextCoreSettings:
             with u.Tests.env_vars_context(
                 env_vars={"FLEXT_WORK_DIR": str(custom_dir)},
             ):
-                assert FlextSettings.fetch_global().work_dir == custom_dir
+                tm.that(FlextSettings.fetch_global().work_dir, eq=custom_dir)
             FlextSettings.reset_for_testing()
 
         @staticmethod
@@ -128,20 +130,23 @@ class TestsFlextCoreSettings:
                     Path("/xdg/runtime/flext-tap-oracle"),
                 )
                 for library_settings in (cli_settings, meltano_settings):
-                    assert (
-                        library_settings.work_dir,
-                        library_settings.data_dir,
-                        library_settings.state_dir,
-                        library_settings.config_dir,
-                        library_settings.runtime_dir,
-                    ) == expected
+                    tm.that(
+                        (
+                            library_settings.work_dir,
+                            library_settings.data_dir,
+                            library_settings.state_dir,
+                            library_settings.config_dir,
+                            library_settings.runtime_dir,
+                        ),
+                        eq=expected,
+                    )
 
         @staticmethod
         def test_application_namespace_is_first_wins() -> None:
             """A later library bootstrap cannot replace the outer identity."""
             FlextSettings.apply_app_namespace("flext-tap-oracle")
             FlextSettings.apply_app_namespace("flext-cli")
-            assert FlextSettings.fetch_global().work_dir.name == "flext-tap-oracle"
+            tm.that(FlextSettings.fetch_global().work_dir.name, eq="flext-tap-oracle")
 
         @staticmethod
         def test_unregistered_owner_namespace_prevails_by_default() -> None:
@@ -165,8 +170,8 @@ class TestsFlextCoreSettings:
 
                 _AiHubSettings.reset_for_testing()
                 s = _AiHubSettings.fetch_global()
-                assert s.cache_dir == Path("/xdg/cache/ai-hub")
-                assert s.data_dir == Path("/xdg/data/ai-hub")
+                tm.that(s.cache_dir, eq=Path("/xdg/cache/ai-hub"))
+                tm.that(s.data_dir, eq=Path("/xdg/data/ai-hub"))
                 _AiHubSettings.reset_for_testing()
 
         @staticmethod
@@ -175,8 +180,8 @@ class TestsFlextCoreSettings:
             settings = FlextSettings.fetch_global()
             FlextSettings.apply_app_namespace("flext-tap-oracle")
             dumped = settings.model_dump()
-            assert Path(str(dumped["cache_dir"])).name == "flext-tap-oracle"
-            assert Path(str(dumped["config_dir"])).name == "flext-tap-oracle"
+            tm.that(Path(str(dumped["cache_dir"])).name, eq="flext-tap-oracle")
+            tm.that(Path(str(dumped["config_dir"])).name, eq="flext-tap-oracle")
 
         @staticmethod
         def test_environment_supplies_application_namespace() -> None:
@@ -184,7 +189,9 @@ class TestsFlextCoreSettings:
             with u.Tests.env_vars_context(
                 env_vars={"FLEXT_APP_NAMESPACE": "flext-target-ldap"},
             ):
-                assert FlextSettings.fetch_global().data_dir.name == "flext-target-ldap"
+                tm.that(
+                    FlextSettings.fetch_global().data_dir.name, eq="flext-target-ldap"
+                )
 
         @staticmethod
         def test_environment_application_namespace_rejects_paths() -> None:
@@ -207,7 +214,7 @@ class TestsFlextCoreSettings:
                 env_vars={"FLEXT_TAP_ORACLE_WORK_DIR": str(override)},
             ):
                 FlextSettings.apply_app_namespace("flext-tap-oracle")
-                assert FlextSettings.fetch_global().work_dir == override
+                tm.that(FlextSettings.fetch_global().work_dir, eq=override)
 
         @staticmethod
         def test_runtime_dir_falls_back_under_work_dir(tmp_path: Path) -> None:
@@ -219,7 +226,7 @@ class TestsFlextCoreSettings:
             ):
                 FlextSettings.apply_app_namespace("flext")
                 FlextSettings.reset_for_testing()
-                assert FlextSettings.fetch_global().runtime_dir == work_dir / "run"
+                tm.that(FlextSettings.fetch_global().runtime_dir, eq=work_dir / "run")
             FlextSettings.reset_for_testing()
 
         @staticmethod
@@ -234,7 +241,7 @@ class TestsFlextCoreSettings:
             ):
                 FlextSettings.apply_app_namespace("flext")
                 FlextSettings.reset_for_testing()
-                assert FlextSettings.fetch_global().runtime_dir == runtime_dir
+                tm.that(FlextSettings.fetch_global().runtime_dir, eq=runtime_dir)
             FlextSettings.reset_for_testing()
 
         @staticmethod
@@ -252,25 +259,25 @@ class TestsFlextCoreSettings:
         """fetch_global returns the same instance across calls."""
         first = FlextSettings.fetch_global()
         second = FlextSettings.fetch_global()
-        assert first is second
+        tm.that(first is second, truth=True)
 
     @staticmethod
     def test_universal_fields_present_with_defaults() -> None:
         """The five universal runtime fields exist with scalar defaults."""
         s = FlextSettings.fetch_global()
-        assert isinstance(s.debug, bool)
-        assert isinstance(s.trace, bool)
-        assert isinstance(s.log_level, str)
-        assert isinstance(s.timezone, str)
-        assert isinstance(s.async_logging, bool)
+        tm.that(isinstance(s.debug, bool), truth=True)
+        tm.that(isinstance(s.trace, bool), truth=True)
+        tm.that(isinstance(s.log_level, str), truth=True)
+        tm.that(isinstance(s.timezone, str), truth=True)
+        tm.that(isinstance(s.async_logging, bool), truth=True)
 
     @staticmethod
     def test_update_global_replaces_singleton_and_propagates() -> None:
         """update_global installs a new singleton reflected by fetch_global."""
         FlextSettings.reset_for_testing()
         updated = FlextSettings.update_global(log_level="ERROR")
-        assert updated.log_level == "ERROR"
-        assert FlextSettings.fetch_global().log_level == "ERROR"
+        tm.that(updated.log_level, eq="ERROR")
+        tm.that(FlextSettings.fetch_global().log_level, eq="ERROR")
         FlextSettings.reset_for_testing()
 
     @staticmethod
@@ -286,9 +293,9 @@ class TestsFlextCoreSettings:
         original = FlextSettings.fetch_global()
         original_level = original.log_level
         snapshot = original.clone(log_level="CRITICAL")
-        assert snapshot.log_level == "CRITICAL"
-        assert original.log_level == original_level
-        assert FlextSettings.fetch_global().log_level == original_level
+        tm.that(snapshot.log_level, eq="CRITICAL")
+        tm.that(original.log_level, eq=original_level)
+        tm.that(FlextSettings.fetch_global().log_level, eq=original_level)
         FlextSettings.reset_for_testing()
 
     @staticmethod
@@ -298,8 +305,8 @@ class TestsFlextCoreSettings:
         singleton = FlextSettings.fetch_global()
         singleton_level = singleton.log_level
         derived = FlextSettings.fetch_global(overrides={"log_level": "WARNING"})
-        assert derived.log_level == "WARNING"
-        assert FlextSettings.fetch_global().log_level == singleton_level
+        tm.that(derived.log_level, eq="WARNING")
+        tm.that(FlextSettings.fetch_global().log_level, eq=singleton_level)
         FlextSettings.reset_for_testing()
 
     @staticmethod
@@ -307,9 +314,9 @@ class TestsFlextCoreSettings:
         """Trace-only settings preserve the captured severity."""
         original = FlextSettings.fetch_global()
         selected = original.clone(trace=True, debug=False)
-        assert selected.trace
-        assert not selected.debug
-        assert selected.log_level == original.log_level
+        tm.that(selected.trace, truth=True)
+        tm.that(selected.debug, truth=False)
+        tm.that(selected.log_level, eq=original.log_level)
 
     @staticmethod
     def test_reset_for_testing_drops_singleton() -> None:
@@ -317,7 +324,7 @@ class TestsFlextCoreSettings:
         first = FlextSettings.fetch_global()
         FlextSettings.reset_for_testing()
         second = FlextSettings.fetch_global()
-        assert first is not second
+        tm.that(first is not second, truth=True)
 
 
 TestsFlextCoreSettingsWorkDir = TestsFlextCoreSettings.TestsFlextCoreSettingsWorkDir

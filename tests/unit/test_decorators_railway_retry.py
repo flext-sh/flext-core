@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from tests import c, d, e, r
+from tests import c, d, e, r, tm
 
 
 @d.timeout(timeout_seconds=0.005)
@@ -42,9 +42,9 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         result = successful_operation()
 
         # Assert
-        assert isinstance(result, r)
-        assert result.success is True
-        assert result.unwrap() == "success"
+        tm.that(isinstance(result, r), truth=True)
+        tm.that(result.success is True, truth=True)
+        tm.that(result.unwrap(), eq="success")
 
     @staticmethod
     def test_railway_converts_raised_exception_into_failure_result() -> None:
@@ -60,12 +60,12 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         result = failing_operation()
 
         # Assert
-        assert isinstance(result, r)
-        assert result.failure is True
-        assert result.error is not None
-        assert "Operation failed" in result.error
-        assert "failing_operation" in result.error
-        assert "ValueError" in result.error
+        tm.that(isinstance(result, r), truth=True)
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("Operation failed" in result.error, truth=True)
+        tm.that("failing_operation" in result.error, truth=True)
+        tm.that("ValueError" in result.error, truth=True)
 
     @pytest.mark.parametrize(
         ("error_code", "expected_code"),
@@ -88,8 +88,8 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         result = failing_operation()
 
         # Assert
-        assert result.failure is True
-        assert result.error_code == expected_code
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error_code, eq=expected_code)
 
     @staticmethod
     def test_railway_forwards_arguments_and_supports_result_chaining() -> None:
@@ -104,8 +104,8 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         chained = add(2, 3).map(lambda total: total * 10)
 
         # Assert
-        assert chained.success is True
-        assert chained.unwrap() == 50
+        tm.that(chained.success is True, truth=True)
+        tm.that(chained.unwrap(), eq=50)
 
     # -------------------------------------------------------------------- retry
     @staticmethod
@@ -124,8 +124,8 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         value = successful_operation()
 
         # Assert
-        assert value == "success"
-        assert calls == 1
+        tm.that(value, eq="success")
+        tm.that(calls, eq=1)
 
     @staticmethod
     def test_retry_recovers_after_transient_failures() -> None:
@@ -146,8 +146,8 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         value = flaky_operation()
 
         # Assert
-        assert value == "success"
-        assert attempts == 3
+        tm.that(value, eq="success")
+        tm.that(attempts, eq=3)
 
     @staticmethod
     def test_retry_forwards_arguments_to_wrapped_callable() -> None:
@@ -162,7 +162,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         value = concat("a", suffix="b")
 
         # Assert
-        assert value == "a-b"
+        tm.that(value, eq="a-b")
 
     @staticmethod
     def test_retry_raises_timeout_error_when_attempts_are_exhausted() -> None:
@@ -180,7 +180,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
             match="failed after 2 attempts",
         ) as info:
             always_fails()
-        assert info.value.operation == "always_fails"
+        tm.that(info.value.operation, eq="always_fails")
 
     # ------------------------------------------------------------------ timeout
     @staticmethod
@@ -197,7 +197,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         value = fast_operation()
 
         # Assert
-        assert value == "completed"
+        tm.that(value, eq="completed")
 
     @staticmethod
     def test_timeout_raises_timeout_error_when_duration_exceeded() -> None:
@@ -206,7 +206,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         # Act / Assert
         with pytest.raises(e.FlextTimeoutError) as info:
             slow_operation()
-        assert info.value.operation == "slow_operation"
+        tm.that(info.value.operation, eq="slow_operation")
 
     @staticmethod
     def test_timeout_uses_default_error_code_when_none_provided() -> None:
@@ -215,4 +215,4 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         # Act / Assert
         with pytest.raises(e.FlextTimeoutError) as info:
             slow_operation()
-        assert info.value.error_code == c.ErrorCode.TIMEOUT_ERROR.value
+        tm.that(info.value.error_code, eq=c.ErrorCode.TIMEOUT_ERROR.value)

@@ -19,7 +19,7 @@ import pytest
 
 import tests.utilities
 from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests import p
+from tests import p, tm
 
 
 class TestsFlextCoreBeartypeEngine(
@@ -62,7 +62,10 @@ class TestsFlextCoreBeartypeEngine(
         class Local:
             """Function-scoped marker class."""
 
-        assert FlextUtilitiesBeartypeEngine.defined_in_function_scope(Local) is True
+        tm.that(
+            FlextUtilitiesBeartypeEngine.defined_in_function_scope(Local) is True,
+            truth=True,
+        )
 
     @staticmethod
     def test_defined_in_function_scope_false_for_module_class() -> None:
@@ -85,7 +88,10 @@ class TestsFlextCoreBeartypeEngine(
         expected: bool,
     ) -> None:
         """Only names without a leading underscore are accepted as public."""
-        assert FlextUtilitiesBeartypeEngine.attr_accept_public(name) is expected
+        tm.that(
+            FlextUtilitiesBeartypeEngine.attr_accept_public(name) is expected,
+            truth=True,
+        )
 
     @pytest.mark.parametrize(
         ("name", "expected"),
@@ -128,7 +134,10 @@ class TestsFlextCoreBeartypeEngine(
     ) -> None:
         """Private names and skip-listed attributes are rejected regardless of value."""
         value: p.AttributeProbe = 1
-        assert FlextUtilitiesBeartypeEngine.attr_accept_constants(name, value) is False
+        tm.that(
+            FlextUtilitiesBeartypeEngine.attr_accept_constants(name, value) is False,
+            truth=True,
+        )
 
     @staticmethod
     def test_attr_accept_constants_rejects_type_value() -> None:

@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c, m, p, t, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextModelsProjectMetadata:
@@ -42,12 +42,12 @@ class TestsFlextModelsProjectMetadata:
         expected_stem: str,
     ) -> None:
         """Test derive class stem covers overrides and pascalization."""
-        assert u.derive_class_stem(project_name) == expected_stem
+        tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
     @staticmethod
     def test_derive_class_stem_returns_empty_for_empty_project_name() -> None:
         """Test derive class stem returns empty for empty project name."""
-        assert u.derive_class_stem("") == ""
+        tm.that(u.derive_class_stem(""), eq="")
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -64,7 +64,7 @@ class TestsFlextModelsProjectMetadata:
         expected: str,
     ) -> None:
         """Test derive class stem normalizes kebab and snake."""
-        assert u.derive_class_stem(slug) == expected
+        tm.that(u.derive_class_stem(slug), eq=expected)
 
     # ------------------------------------------------------------------
     # ProjectMetadata — derived names, immutability, validation
@@ -94,17 +94,17 @@ class TestsFlextModelsProjectMetadata:
         """Test project metadata exposes package name and class stem."""
         metadata = self._metadata(tmp_path)
 
-        assert metadata.package_name == "flext_ldif"
-        assert metadata.class_stem == c.Tests.SAMPLE_PROJECT_CLASS_STEM
+        tm.that(metadata.package_name, eq="flext_ldif")
+        tm.that(metadata.class_stem, eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM)
 
     def test_project_metadata_exposes_nested_project(self, tmp_path: Path) -> None:
         """Test project metadata exposes nested project."""
         metadata = self._metadata(tmp_path)
 
-        assert metadata.project.name == c.Tests.SAMPLE_PROJECT_NAME
-        assert metadata.project.version == c.Tests.SAMPLE_PROJECT_VERSION
-        assert metadata.project.authors == ()
-        assert metadata.project.requires_python == ""
+        tm.that(metadata.project.name, eq=c.Tests.SAMPLE_PROJECT_NAME)
+        tm.that(metadata.project.version, eq=c.Tests.SAMPLE_PROJECT_VERSION)
+        tm.that(metadata.project.authors, eq=())
+        tm.that(metadata.project.requires_python, eq="")
 
     def test_project_metadata_is_frozen_against_mutation(self, tmp_path: Path) -> None:
         """Test project metadata is frozen against mutation."""
@@ -143,8 +143,8 @@ class TestsFlextModelsProjectMetadata:
 
         rebuilt = m.ProjectMetadata.model_validate(metadata.model_dump())
 
-        assert rebuilt == metadata
-        assert rebuilt.class_stem == metadata.class_stem
+        tm.that(rebuilt, eq=metadata)
+        tm.that(rebuilt.class_stem, eq=metadata.class_stem)
 
     # ------------------------------------------------------------------
     # Project — PEP 621 normalization
@@ -163,15 +163,17 @@ class TestsFlextModelsProjectMetadata:
             "requires-python": ">=3.13,<3.14",
         })
 
-        assert project.authors == (
-            m.ProjectAuthor(
-                name=c.Tests.SAMPLE_AUTHOR_ALICE,
-                email="alice@example.com",
+        tm.that(
+            project.authors,
+            eq=(
+                m.ProjectAuthor(
+                    name=c.Tests.SAMPLE_AUTHOR_ALICE, email="alice@example.com"
+                ),
+                m.ProjectAuthor(name=c.Tests.SAMPLE_AUTHOR_BOB),
             ),
-            m.ProjectAuthor(name=c.Tests.SAMPLE_AUTHOR_BOB),
         )
-        assert project.urls.homepage == "https://example.test/flext-ldif"
-        assert project.requires_python == ">=3.13,<3.14"
+        tm.that(project.urls.homepage, eq="https://example.test/flext-ldif")
+        tm.that(project.requires_python, eq=">=3.13,<3.14")
 
     @staticmethod
     def test_project_applies_defaults_for_missing_optionals() -> None:
@@ -181,10 +183,10 @@ class TestsFlextModelsProjectMetadata:
             "version": c.Tests.SAMPLE_PROJECT_VERSION,
         })
 
-        assert project.authors == ()
-        assert project.requires_python == ""
-        assert project.urls.homepage == ""
-        assert project.dependencies == ()
+        tm.that(project.authors, eq=())
+        tm.that(project.requires_python, eq="")
+        tm.that(project.urls.homepage, eq="")
+        tm.that(project.dependencies, eq=())
 
     @staticmethod
     def test_project_ignores_unknown_keys() -> None:
@@ -195,8 +197,8 @@ class TestsFlextModelsProjectMetadata:
             "readme": "README.md",
         })
 
-        assert project.name == c.Tests.SAMPLE_PROJECT_NAME
-        assert not hasattr(project, "readme")
+        tm.that(project.name, eq=c.Tests.SAMPLE_PROJECT_NAME)
+        tm.that(hasattr(project, "readme"), truth=False)
 
     # ------------------------------------------------------------------
     # ProjectToolFlext — [tool.flext] aggregation
@@ -210,19 +212,20 @@ class TestsFlextModelsProjectMetadata:
             "workspace": {"attached": True},
         })
 
-        assert (
-            tool_config.project.class_stem_override == c.Tests.SAMPLE_PROJECT_CLASS_STEM
+        tm.that(
+            tool_config.project.class_stem_override,
+            eq=c.Tests.SAMPLE_PROJECT_CLASS_STEM,
         )
-        assert tool_config.docs.site_title == "Flext LDIF"
-        assert tool_config.workspace.attached is True
+        tm.that(tool_config.docs.site_title, eq="Flext LDIF")
+        tm.that(tool_config.workspace.attached is True, truth=True)
 
     @staticmethod
     def test_project_tool_flext_uses_sub_table_defaults_when_empty() -> None:
         """Test project tool flext uses sub table defaults when empty."""
         tool_config = m.ProjectToolFlext()
 
-        assert tool_config.project.class_stem_override is None
-        assert tool_config.workspace.attached is False
+        tm.that(tool_config.project.class_stem_override, none=True)
+        tm.that(tool_config.workspace.attached is False, truth=True)
 
     @staticmethod
     def test_project_tool_flext_budget_table_round_trips() -> None:
@@ -230,11 +233,11 @@ class TestsFlextModelsProjectMetadata:
         budget = {"lint": {"time-seconds": 30, "memory-mb": 1024, "tokens": 100000}}
         tool_config = m.ProjectToolFlext.model_validate({"project": {"budget": budget}})
 
-        assert tool_config.project.budget == budget
+        tm.that(tool_config.project.budget, eq=budget)
 
     @staticmethod
     def test_project_tool_flext_budget_defaults_to_none() -> None:
         """Test project tool flext budget defaults to none."""
         tool_config = m.ProjectToolFlext()
 
-        assert tool_config.project.budget is None
+        tm.that(tool_config.project.budget, none=True)

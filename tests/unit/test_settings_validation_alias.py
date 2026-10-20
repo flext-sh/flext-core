@@ -23,7 +23,7 @@ from typing import Annotated
 import pytest
 
 from flext_core import FlextSettings
-from tests import m, t
+from tests import m, t, tm
 
 
 class TestsFlextCoreSettingsValidationAlias:
@@ -61,7 +61,7 @@ class TestsFlextCoreSettingsValidationAlias:
         )
 
         # Assert — declared default surfaces through the public field.
-        assert settings.pandoc_bin == "pandoc"
+        tm.that(settings.pandoc_bin, eq="pandoc")
 
     @pytest.mark.parametrize(
         "override_value",
@@ -80,10 +80,10 @@ class TestsFlextCoreSettingsValidationAlias:
         )
 
         # Assert — returned value carries the override AND it propagates.
-        assert returned.pandoc_bin == override_value
-        assert (
-            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin
-            == override_value
+        tm.that(returned.pandoc_bin, eq=override_value)
+        tm.that(
+            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin,
+            eq=override_value,
         )
 
     @staticmethod
@@ -100,11 +100,11 @@ class TestsFlextCoreSettingsValidationAlias:
         )
 
         # Assert — repeated identical override yields the same observable state.
-        assert first.pandoc_bin == "pandoc-a"
-        assert second.pandoc_bin == "pandoc-a"
-        assert (
-            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin
-            == "pandoc-a"
+        tm.that(first.pandoc_bin, eq="pandoc-a")
+        tm.that(second.pandoc_bin, eq="pandoc-a")
+        tm.that(
+            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin,
+            eq="pandoc-a",
         )
 
     @staticmethod
@@ -117,11 +117,11 @@ class TestsFlextCoreSettingsValidationAlias:
         cloned = base.clone(pandoc_bin="cloned_pandoc")
 
         # Assert — clone is isolated; global keeps its prior value.
-        assert cloned.pandoc_bin == "cloned_pandoc"
-        assert base.pandoc_bin == "pandoc"
-        assert (
-            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin
-            == "pandoc"
+        tm.that(cloned.pandoc_bin, eq="cloned_pandoc")
+        tm.that(base.pandoc_bin, eq="pandoc")
+        tm.that(
+            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin,
+            eq="pandoc",
         )
 
     @staticmethod
@@ -137,8 +137,8 @@ class TestsFlextCoreSettingsValidationAlias:
         copy = base.clone()
 
         # Assert — value equality but distinct instances (deep copy contract).
-        assert copy.pandoc_bin == "global_pandoc"
-        assert copy is not base
+        tm.that(copy.pandoc_bin, eq="global_pandoc")
+        tm.that(copy is not base, truth=True)
 
     @staticmethod
     def test_fetch_global_overrides_yield_isolated_snapshot() -> None:
@@ -154,10 +154,10 @@ class TestsFlextCoreSettingsValidationAlias:
         )
 
         # Assert
-        assert snapshot.pandoc_bin == "snap"
-        assert (
-            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin
-            == "pandoc"
+        tm.that(snapshot.pandoc_bin, eq="snap")
+        tm.that(
+            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin,
+            eq="pandoc",
         )
 
     @staticmethod
@@ -174,7 +174,7 @@ class TestsFlextCoreSettingsValidationAlias:
         dumped = settings.model_dump()
 
         # Assert — public serialization keys on the field name, not the alias.
-        assert dumped["pandoc_bin"] == "dumped_pandoc"
+        tm.that(dumped["pandoc_bin"], eq="dumped_pandoc")
 
     @staticmethod
     def test_unknown_override_key_raises_value_error() -> None:

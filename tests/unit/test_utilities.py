@@ -13,7 +13,7 @@ import uuid
 
 import pytest
 
-from tests import t, u
+from tests import t, tm, u
 
 type _MatchValue = str | int | bool | list[int] | t.MappingKV[str, int]
 type _ConvValue = str | float | int | bool | None
@@ -42,27 +42,27 @@ class TestsFlextCoreUtilities:
         expected: bool,
     ) -> None:
         """Test matches type reports runtime type membership."""
-        assert u.matches_type(value, type_name) is expected
+        tm.that(u.matches_type(value, type_name) is expected, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize("kind", ["ulid", "uuid4", "uuid", "id", "hex", "short"])
     def test_generate_returns_non_empty_string(kind: str) -> None:
         """Test generate returns non empty string."""
         generated = u.generate(kind)
-        assert isinstance(generated, str)
-        assert generated
+        tm.that(isinstance(generated, str), truth=True)
+        tm.that(generated, truth=True)
 
     @staticmethod
     def test_generate_produces_distinct_values_across_calls() -> None:
         """Test generate produces distinct values across calls."""
-        assert u.generate("uuid4") != u.generate("uuid4")
+        tm.that(u.generate("uuid4"), ne=u.generate("uuid4"))
 
     @staticmethod
     def test_generate_uuid4_is_a_valid_uuid() -> None:
         # Parsing through uuid.UUID proves the output honors the v4 format.
         """Test generate uuid4 is a valid uuid."""
         parsed = uuid.UUID(u.generate("uuid4"))
-        assert parsed.version == 4
+        tm.that(parsed.version, eq=4)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -83,7 +83,7 @@ class TestsFlextCoreUtilities:
         expected: bool,
     ) -> None:
         """Test to bool follows truthiness."""
-        assert u.to_bool(value) is expected
+        tm.that(u.to_bool(value) is expected, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -95,7 +95,7 @@ class TestsFlextCoreUtilities:
         expected: int,
     ) -> None:
         """Test to int parses or defaults to zero."""
-        assert u.to_int(value) == expected
+        tm.that(u.to_int(value), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -107,7 +107,7 @@ class TestsFlextCoreUtilities:
         expected: float,
     ) -> None:
         """Test to float parses or defaults to zero."""
-        assert u.to_float(value) == expected
+        tm.that(u.to_float(value), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(("value", "expected"), [(5, 5), (0, 0), (-1, 0)])
@@ -116,7 +116,7 @@ class TestsFlextCoreUtilities:
         expected: int,
     ) -> None:
         """Test to positive int clamps negatives to zero."""
-        assert u.to_positive_int(value) == expected
+        tm.that(u.to_positive_int(value), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(("value", "expected"), [(5, "5"), (None, "")])
@@ -125,7 +125,7 @@ class TestsFlextCoreUtilities:
         expected: str,
     ) -> None:
         """Test to str stringifies with empty default."""
-        assert u.to_str(value) == expected
+        tm.that(u.to_str(value), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, None)])
@@ -134,7 +134,7 @@ class TestsFlextCoreUtilities:
         expected: str | None,
     ) -> None:
         """Test to optional str preserves none."""
-        assert u.to_optional_str(value) == expected
+        tm.that(u.to_optional_str(value), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -146,7 +146,7 @@ class TestsFlextCoreUtilities:
         expected: list[str],
     ) -> None:
         """Test to str list wraps scalars and preserves lists."""
-        assert u.to_str_list(value) == expected
+        tm.that(u.to_str_list(value), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -158,7 +158,7 @@ class TestsFlextCoreUtilities:
         expected: str,
     ) -> None:
         """Test normalize alnum lowercases and drops non alnum."""
-        assert u.normalize_alnum(value) == expected
+        tm.that(u.normalize_alnum(value), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -172,7 +172,7 @@ class TestsFlextCoreUtilities:
         expected: bool,
     ) -> None:
         """Test deep eq compares mapping contents."""
-        assert u.deep_eq(left, right) is expected
+        tm.that(u.deep_eq(left, right) is expected, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -186,7 +186,7 @@ class TestsFlextCoreUtilities:
         expected: bool,
     ) -> None:
         """Test same type compares runtime types."""
-        assert u.same_type(left, right) is expected
+        tm.that(u.same_type(left, right) is expected, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -198,4 +198,4 @@ class TestsFlextCoreUtilities:
         expected: str,
     ) -> None:
         """Test type name reports runtime type name."""
-        assert u.type_name(value) == expected
+        tm.that(u.type_name(value), eq=expected)

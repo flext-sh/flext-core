@@ -46,16 +46,16 @@ class TestsFlextCoreUtilitiesConfig:
 
         result = u.config_load(path)
 
-        assert result.success, result.error
-        assert result.value == {"a": 1, "s": {"b": "x"}}
+        tm.that(result.success, result.error, truth=True)
+        tm.that(result.value, eq={"a": 1, "s": {"b": "x"}})
 
     @staticmethod
     def test_config_load_missing_file_fails_closed(tmp_path: Path) -> None:
         """Test config load missing file fails closed."""
         result = u.config_load(tmp_path / "absent.toml")
 
-        assert result.failure
-        assert "absent.toml" in (result.error or "")
+        tm.that(result.failure, truth=True)
+        tm.that("absent.toml" in (result.error or ""), truth=True)
 
     @staticmethod
     def test_config_load_parse_error_fails_closed(tmp_path: Path) -> None:
@@ -65,7 +65,7 @@ class TestsFlextCoreUtilitiesConfig:
 
         result = u.config_load(path)
 
-        assert result.failure
+        tm.that(result.failure, truth=True)
 
     @staticmethod
     def test_config_load_non_mapping_top_level_fails_closed(
@@ -82,22 +82,22 @@ class TestsFlextCoreUtilitiesConfig:
 
         result = u.config_load(path)
 
-        assert result.success
-        assert result.value == {}
+        tm.that(result.success, truth=True)
+        tm.that(result.value, eq={})
 
     @staticmethod
     def test_config_merge_deep_combines_nested() -> None:
         """Test config merge deep combines nested."""
         merged = u.config_merge({"a": 1, "n": {"x": 1}}, {"n": {"y": 2}, "b": 3})
 
-        assert merged == {"a": 1, "n": {"x": 1, "y": 2}, "b": 3}
+        tm.that(merged, eq={"a": 1, "n": {"x": 1, "y": 2}, "b": 3})
 
     @staticmethod
     def test_config_merge_override_replaces_scalar() -> None:
         """Test config merge override replaces scalar."""
         merged = u.config_merge({"a": 1}, {"a": 2})
 
-        assert merged == {"a": 2}
+        tm.that(merged, eq={"a": 2})
 
     @staticmethod
     def test_config_env_override_expands_string_leaves(tmp_path: Path) -> None:
@@ -108,42 +108,42 @@ class TestsFlextCoreUtilitiesConfig:
             {"HOME": home},
         )
 
-        assert expanded == {"home": home, "n": {"p": f"{home}/x"}, "keep": 5}
+        tm.that(expanded, eq={"home": home, "n": {"p": f"{home}/x"}, "keep": 5})
 
     @staticmethod
     def test_config_env_override_unknown_var_expands_to_empty() -> None:
         """Test config env override unknown var expands to empty."""
         expanded = u.config_env_override("${MISSING}", {})
 
-        assert not expanded
+        tm.that(expanded, truth=False)
 
     @staticmethod
     def test_config_env_override_default_used_when_var_absent() -> None:
         """Test config env override default used when var absent."""
         expanded = u.config_env_override("${MISSING:-fallback}", {})
 
-        assert expanded == "fallback"
+        tm.that(expanded, eq="fallback")
 
     @staticmethod
     def test_config_env_override_default_ignored_when_var_present() -> None:
         """Test config env override default ignored when var present."""
         expanded = u.config_env_override("${PORT:-9120}", {"PORT": "8080"})
 
-        assert expanded == "8080"
+        tm.that(expanded, eq="8080")
 
     @staticmethod
     def test_config_env_override_default_empty_string() -> None:
         """Test config env override default empty string."""
         expanded = u.config_env_override("${MISSING:-}", {})
 
-        assert not expanded
+        tm.that(expanded, truth=False)
 
     @staticmethod
     def test_config_env_override_expands_sequences() -> None:
         """Test config env override expands sequences."""
         expanded = u.config_env_override(["${HOME}", 2, "${HOME}/y"], {"HOME": "/h"})
 
-        assert expanded == ["/h", 2, "/h/y"]
+        tm.that(expanded, eq=["/h", 2, "/h/y"])
 
     @staticmethod
     def test_config_env_override_nested_default_var_present() -> None:
@@ -154,7 +154,7 @@ class TestsFlextCoreUtilitiesConfig:
             {"AI_HUB": "/x/.ai-hub", "HOME": "/x"},
         )
 
-        assert expanded == "/x/.ai-hub"
+        tm.that(expanded, eq="/x/.ai-hub")
 
     @staticmethod
     def test_config_env_override_nested_default_var_absent() -> None:
@@ -162,11 +162,11 @@ class TestsFlextCoreUtilitiesConfig:
         """Test config env override nested default var absent."""
         expanded = u.config_env_override("${AI_HUB:-${HOME}/.ai-hub}", {"HOME": "/x"})
 
-        assert expanded == "/x/.ai-hub"
+        tm.that(expanded, eq="/x/.ai-hub")
 
     @staticmethod
     def test_config_env_override_nested_fallback_chain() -> None:
         """Test config env override nested fallback chain."""
         expanded = u.config_env_override("${A:-${B:-http://d}}", {"B": "http://b"})
 
-        assert expanded == "http://b"
+        tm.that(expanded, eq="http://b")

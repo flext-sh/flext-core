@@ -16,7 +16,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextUtilitiesRuntimeViolationRegistry
-from tests import m
+from tests import m, tm
 
 
 @pytest.mark.usefixtures("_isolated_buffer")
@@ -45,7 +45,7 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
     @staticmethod
     def test_drain_on_empty_buffer_returns_empty_tuple() -> None:
         """Test drain on empty buffer returns empty tuple."""
-        assert FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports() == ()
+        tm.that(FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports(), eq=())
 
     def test_appended_report_is_returned_by_drain(self) -> None:
         """Test appended report is returned by drain."""
@@ -54,8 +54,8 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
         FlextUtilitiesRuntimeViolationRegistry.append_violation_report(report)
         drained = FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports()
 
-        assert drained == (report,)
-        assert drained[0].violations[0].message == "captured violation"
+        tm.that(drained, eq=(report,))
+        tm.that(drained[0].violations[0].message, eq="captured violation")
 
     def test_drain_resets_buffer_so_second_call_is_empty(self) -> None:
         """Test drain resets buffer so second call is empty."""
@@ -66,8 +66,8 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
         first = FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports()
         second = FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports()
 
-        assert len(first) == 1
-        assert second == ()
+        tm.that(len(first), eq=1)
+        tm.that(second, eq=())
 
     def test_multiple_appends_drain_in_fifo_order(self) -> None:
         """Test multiple appends drain in fifo order."""
@@ -77,7 +77,7 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
             FlextUtilitiesRuntimeViolationRegistry.append_violation_report(report)
         drained = FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports()
 
-        assert [item.violations[0].message for item in drained] == ["v0", "v1", "v2"]
+        tm.that([item.violations[0].message for item in drained], eq=["v0", "v1", "v2"])
 
     def test_clear_discards_buffered_reports_without_returning_them(self) -> None:
         """Test clear discards buffered reports without returning them."""
@@ -87,7 +87,7 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
 
         FlextUtilitiesRuntimeViolationRegistry.clear_violation_reports()
 
-        assert FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports() == ()
+        tm.that(FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports(), eq=())
 
     @staticmethod
     def test_clear_on_empty_buffer_is_safe_and_idempotent() -> None:
@@ -95,7 +95,7 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
         FlextUtilitiesRuntimeViolationRegistry.clear_violation_reports()
         FlextUtilitiesRuntimeViolationRegistry.clear_violation_reports()
 
-        assert FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports() == ()
+        tm.that(FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports(), eq=())
 
     @staticmethod
     def test_reports_with_empty_violations_are_buffered() -> None:
@@ -105,5 +105,5 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
         FlextUtilitiesRuntimeViolationRegistry.append_violation_report(empty_report)
         drained = FlextUtilitiesRuntimeViolationRegistry.drain_violation_reports()
 
-        assert drained == (empty_report,)
-        assert drained[0].violations == ()
+        tm.that(drained, eq=(empty_report,))
+        tm.that(drained[0].violations, eq=())

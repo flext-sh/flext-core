@@ -11,6 +11,8 @@ import time
 from contextlib import redirect_stdout
 from typing import TYPE_CHECKING
 
+from tests import tm
+
 if TYPE_CHECKING:
     from collections.abc import Callable
 
@@ -22,5 +24,5 @@ def capture_stdout[T](emit: Callable[[], T], *, contains: str) -> T:
         deadline = time.monotonic() + 0.25
         while time.monotonic() < deadline and contains not in stream.getvalue():
             time.sleep(0.01)
-    assert contains in stream.getvalue()
+    tm.that(contains in stream.getvalue(), truth=True)
     return result

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 
-from tests import c, m, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import t
@@ -44,14 +44,14 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # Arrange / Act / Assert: default warning filters surface UserWarning,
         # so a caller sees enforcement violations without extra configuration.
         """Test enforcement categories are userwarnings."""
-        assert issubclass(category, UserWarning)
+        tm.that(issubclass(category, UserWarning), truth=True)
 
     @staticmethod
     def test_smell_violation_is_a_mro_violation() -> None:
         # A caller filtering or catching FlextMroViolation must also capture
         # the more specific smell category.
         """Test smell violation is a mro violation."""
-        assert issubclass(c.FlextSmellViolation, c.FlextMroViolation)
+        tm.that(issubclass(c.FlextSmellViolation, c.FlextMroViolation), truth=True)
 
     @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     @staticmethod
@@ -68,7 +68,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 stacklevel=2,
             )
 
-        assert len(record) == 1
+        tm.that(len(record), eq=1)
         assert record[0].category is category
 
     @staticmethod
@@ -139,9 +139,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
         )
 
         # Assert: the warning survives to the caller's output.
-        assert result.success, result.error
+        tm.that(result.success, truth=True, msg=result.error)
         output = result.value.stdout + result.value.stderr
-        assert result.value.outcome.raw_return_code == 0, output
+        tm.that(result.value.outcome.raw_return_code, eq=0, msg=output)
         assert "FlextMroViolation" in output, (
             "runtime enforcement warning suppressed by shipped filterwarnings:\n"
             + output

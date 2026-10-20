@@ -70,9 +70,9 @@ class TestsFlextCoreLazyMembers:
             who = Namespace.who
             twice = Namespace.twice
             nested = Namespace.Nested
-            assert callable(who)
-            assert callable(twice)
-            assert isinstance(nested, type)
+            tm.that(callable(who), truth=True)
+            tm.that(callable(twice), truth=True)
+            tm.that(isinstance(nested, type), truth=True)
             tm.that(who(), eq="Namespace")
             tm.that(twice(4), eq=8)
             tm.that(nested.__qualname__, eq="Mixin.Nested")
@@ -125,7 +125,7 @@ class TestsFlextCoreLazyMembers:
 
             with pytest.raises(ImportError, match="cannot load") as caught:
                 _ = Deferred.VALUE
-            assert isinstance(caught.value.__cause__, AttributeError)
+            tm.that(isinstance(caught.value.__cause__, AttributeError), truth=True)
 
     @staticmethod
     def test_member_must_bind_to_its_own_name() -> None:

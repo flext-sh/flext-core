@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextContainer, FlextContext
-from tests import c, d, m, u
+from tests import c, d, m, tm, u
 
 
 class TestsFlextCoreDecoratorsInjectionLogging:
@@ -44,7 +44,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def greet(name: str, *, greeter: str = "DEFAULT") -> str:
             return f"{greeter}:{name}"
 
-        assert greet("bob") == "HELLO:bob"
+        tm.that(greet("bob"), eq="HELLO:bob")
 
     @staticmethod
     def test_inject_explicit_kwarg_overrides_container_value(
@@ -57,7 +57,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def greet(*, greeter: str = "DEFAULT") -> str:
             return greeter
 
-        assert greet(greeter="EXPLICIT") == "EXPLICIT"
+        tm.that(greet(greeter="EXPLICIT"), eq="EXPLICIT")
 
     @staticmethod
     def test_inject_missing_key_preserves_default_argument() -> None:
@@ -67,7 +67,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def use(*, dependency: str = "fallback") -> str:
             return dependency
 
-        assert use() == "fallback"
+        tm.that(use(), eq="fallback")
 
     @staticmethod
     def test_inject_delivers_pydantic_model_instance(
@@ -84,7 +84,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def read(*, service: InjectedService | None = None) -> str:
             return service.value if service is not None else "none"
 
-        assert read() == "model-value"
+        tm.that(read(), eq="model-value")
 
     # --- d.log_operation -------------------------------------------------
     @pytest.mark.parametrize("payload", ["success", "", "multi word result"])
@@ -96,7 +96,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def produce() -> str:
             return payload
 
-        assert produce() == payload
+        tm.that(produce(), eq=payload)
 
     @staticmethod
     def test_log_operation_with_perf_tracking_returns_value() -> None:
@@ -106,7 +106,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def compute() -> int:
             return 42
 
-        assert compute() == 42
+        tm.that(compute(), eq=42)
 
     @pytest.mark.parametrize(
         ("exc_type", "message"),
@@ -151,8 +151,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
             with pytest.raises(ValueError, match="kaboom"):
                 boom()
             captured = capsys.readouterr()
-            assert "named_failure_op" in captured.err
-            assert captured.out == ""
+            tm.that("named_failure_op" in captured.err, truth=True)
+            tm.that(captured.out, eq="")
         finally:
             u.configure_structlog(
                 settings=original_options, runtime_settings=original_settings
@@ -167,7 +167,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def inside() -> str:
             return FlextContext.ensure_correlation_id()
 
-        assert inside()
+        tm.that(inside(), truth=True)
 
     @staticmethod
     def test_with_correlation_returns_wrapped_value() -> None:
@@ -177,7 +177,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def produce() -> str:
             return "wrapped"
 
-        assert produce() == "wrapped"
+        tm.that(produce(), eq="wrapped")
 
     # --- d.deprecated ----------------------------------------------------
     @staticmethod
@@ -189,4 +189,4 @@ class TestsFlextCoreDecoratorsInjectionLogging:
             return 7
 
         with pytest.warns(DeprecationWarning, match="deprecated"):
-            assert old_api() == 7
+            tm.that(old_api(), eq=7)

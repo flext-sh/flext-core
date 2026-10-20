@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests import m, r
+from tests import m, r, tm
 
 if TYPE_CHECKING:
     from tests import p
@@ -28,8 +28,8 @@ class TestsFlextCoreResultRecentBehaviors:
         """A success result reports success and exposes its value."""
         result = r[bool].ok(value=True)
 
-        assert result.success is True
-        assert result.value is True
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value is True, truth=True)
 
     @staticmethod
     def test_map_error_transforms_message_and_preserves_error_code() -> None:
@@ -42,10 +42,10 @@ class TestsFlextCoreResultRecentBehaviors:
 
         transformed = failure.map_error(lambda msg: f"{msg}_mapped")
 
-        assert transformed.failure is True
-        assert transformed.error is not None
-        assert "bad_mapped" in transformed.error
-        assert transformed.error_code == "E1"
+        tm.that(transformed.failure is True, truth=True)
+        tm.that(transformed.error, none=False)
+        tm.that("bad_mapped" in transformed.error, truth=True)
+        tm.that(transformed.error_code, eq="E1")
 
     @staticmethod
     def test_map_error_leaves_success_unchanged() -> None:
@@ -54,8 +54,8 @@ class TestsFlextCoreResultRecentBehaviors:
 
         transformed = success.map_error(lambda msg: f"{msg}_x")
 
-        assert transformed.success is True
-        assert transformed.value == 1
+        tm.that(transformed.success is True, truth=True)
+        tm.that(transformed.value, eq=1)
 
     @staticmethod
     def test_flow_through_stops_at_first_failure() -> None:
@@ -75,10 +75,10 @@ class TestsFlextCoreResultRecentBehaviors:
 
         result = r[int].ok(1).flow_through(step1, fail_step, unreachable)
 
-        assert result.failure is True
-        assert result.error is not None
-        assert "stop" in result.error
-        assert visited == [1]
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("stop" in result.error, truth=True)
+        tm.that(visited, eq=[1])
 
     @staticmethod
     def test_flow_through_threads_value_through_all_steps() -> None:
@@ -92,17 +92,17 @@ class TestsFlextCoreResultRecentBehaviors:
 
         result = r[int].ok(1).flow_through(increment, multiply)
 
-        assert result.success is True
-        assert result.value == 20
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value, eq=20)
 
     @staticmethod
     def test_create_from_callable_fails_when_result_is_none() -> None:
         """``create_from_callable`` fails when the callable returns ``None``."""
         result: p.Result[int] = r[int].create_from_callable(lambda: None)
 
-        assert result.failure is True
-        assert result.error is not None
-        assert "Callable returned None" in result.error
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("Callable returned None" in result.error, truth=True)
 
     @staticmethod
     def test_create_from_callable_captures_raised_exception() -> None:
@@ -114,34 +114,34 @@ class TestsFlextCoreResultRecentBehaviors:
 
         result = r[int].create_from_callable(raises_boom)
 
-        assert result.failure is True
-        assert result.error is not None
-        assert "boom" in result.error
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("boom" in result.error, truth=True)
 
     @staticmethod
     def test_create_from_callable_wraps_value_on_success() -> None:
         """A non-``None`` return becomes a success carrying that value."""
         result = r[int].create_from_callable(lambda: 42)
 
-        assert result.success is True
-        assert result.value == 42
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value, eq=42)
 
     @staticmethod
     def test_flat_map_into_success_value_reports_success() -> None:
         """Flat map can continue with non-`None` success payload."""
         result: p.Result[int] = r[str].ok("x").flat_map(lambda _: r[int].ok(1))
 
-        assert result.success is True
-        assert result.value == 1
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value, eq=1)
 
     @staticmethod
     def test_map_returning_none_reports_failure() -> None:
         """``map`` producing ``None`` fails closed instead of empty success."""
         result = r[str].ok("x").map(lambda _: None)
 
-        assert result.failure is True
-        assert result.error is not None
-        assert "cannot be None" in result.error
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("cannot be None" in result.error, truth=True)
 
     @staticmethod
     def test_with_resource_returns_value_and_runs_cleanup() -> None:
@@ -161,6 +161,6 @@ class TestsFlextCoreResultRecentBehaviors:
 
         result = r[str].with_resource(factory, op, cleanup)
 
-        assert result.success is True
-        assert result.value == "done"
-        assert cleanup_calls == ["ran"]
+        tm.that(result.success is True, truth=True)
+        tm.that(result.value, eq="done")
+        tm.that(cleanup_calls, eq=["ran"])

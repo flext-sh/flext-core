@@ -10,7 +10,7 @@ from typing import cast
 
 import pytest
 
-from tests import c, h, m, r, t, u
+from tests import c, h, m, r, t, tm, u
 
 
 class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
@@ -34,7 +34,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         )
 
         # Assert
-        assert handler.handler_name == "simple_handler"
+        tm.that(handler.handler_name, eq="simple_handler")
         u.Tests.assert_success(handler.handle("test"), expected_value="handled_test")
 
     @staticmethod
@@ -115,7 +115,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         handler = h.create_from_callable(named_callable)
 
         # Assert
-        assert handler.handler_name == "named_callable"
+        tm.that(handler.handler_name, eq="named_callable")
 
     @staticmethod
     def test_handler_config_overrides_name_and_type() -> None:
@@ -138,8 +138,8 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         handler = h.create_from_callable(any_callable, handler_config=config)
 
         # Assert
-        assert handler.handler_name == "ConfiguredName"
-        assert handler.mode == c.HandlerType.EVENT
+        tm.that(handler.handler_name, eq="ConfiguredName")
+        tm.that(handler.mode, eq=c.HandlerType.EVENT)
 
     @pytest.mark.parametrize(
         "scenario",
@@ -162,7 +162,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         )
 
         # Assert
-        assert by_type.mode == scenario.handler_mode
+        tm.that(by_type.mode, eq=scenario.handler_mode)
 
     def test_execute_returns_processed_success(self) -> None:
         # Arrange
@@ -237,8 +237,8 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         result = handler.dispatch_message("payload", operation=c.HandlerMode.QUERY)
 
         # Assert
-        assert result.failure
-        assert result.error is not None
+        tm.that(result.failure, truth=True)
+        tm.that(result.error, none=False)
 
     def test_can_handle_message_type(self) -> None:
         # Arrange
@@ -247,7 +247,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act / Assert
-        assert handler.can_handle(str) is True
+        tm.that(handler.can_handle(str) is True, truth=True)
 
     def test_mode_reflects_configured_handler_type(self) -> None:
         # Arrange
@@ -263,7 +263,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act / Assert
-        assert handler.mode == c.HandlerType.COMMAND
+        tm.that(handler.mode, eq=c.HandlerType.COMMAND)
 
     @pytest.mark.parametrize(
         ("payload", "expected_success"),
@@ -284,7 +284,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         result = handler.validate_message(payload)
 
         # Assert
-        assert result.success is expected_success
+        tm.that(result.success is expected_success, truth=True)
 
     def test_failing_handler_returns_descriptive_failure(self) -> None:
         # Arrange

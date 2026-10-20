@@ -88,9 +88,9 @@ class TestsFlextCoreContainerProperties:
 
         names = set(container.names())
 
-        assert {"svc_a", "svc_b"} <= names
-        assert "logger" not in names
-        assert "command_bus" not in names
+        tm.that({"svc_a", "svc_b"} <= names, truth=True)
+        tm.that("logger" not in names, truth=True)
+        tm.that("command_bus" not in names, truth=True)
 
     # -- error paths -------------------------------------------------------
 
@@ -157,13 +157,13 @@ class TestsFlextCoreContainerProperties:
         container: FlextContainer,
     ) -> None:
         """Mutating operations return the container to support chaining."""
-        assert container.bind("x", 1) is container
-        assert container.factory("y", lambda: 2) is container
+        tm.that(container.bind("x", 1) is container, truth=True)
+        tm.that(container.factory("y", lambda: 2) is container, truth=True)
 
     @staticmethod
     def test_shared_returns_singleton_instance(container: FlextContainer) -> None:
         """``shared`` returns the one canonical instance."""
-        assert FlextContainer.shared() is container
+        tm.that(FlextContainer.shared() is container, truth=True)
 
     @staticmethod
     def test_snapshot_exposes_merged_settings_mapping(
@@ -172,7 +172,7 @@ class TestsFlextCoreContainerProperties:
         """``snapshot`` returns a mapping serializable via its public API."""
         snapshot = container.snapshot()
 
-        assert isinstance(snapshot.model_dump(), dict)
+        tm.that(isinstance(snapshot.model_dump(), dict), truth=True)
 
     # -- property-based roundtrip ------------------------------------------
 

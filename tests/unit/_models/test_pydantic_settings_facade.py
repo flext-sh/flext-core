@@ -76,10 +76,10 @@ class TestsFlextCorePydanticSettingsFacade:
             topic_prefix: str = "unset"
 
         with u.Tests.env_vars_context(env_vars={"TOPIC_PREFIX": "from-env"}):
-            assert _EnvSettings().topic_prefix == "from-env"
-        assert _EnvSettings(topic_prefix="explicit").topic_prefix == "explicit"
+            tm.that(_EnvSettings().topic_prefix, eq="from-env")
+        tm.that(_EnvSettings(topic_prefix="explicit").topic_prefix, eq="explicit")
 
     def test_settings_override_annotated_through_alias_is_consulted(self) -> None:
         with u.Tests.env_vars_context(env_vars={"TOPIC": "from-env"}):
-            assert self._TopicSettings().topic == "default"
-            assert self._TopicSettings(topic="explicit").topic == "explicit"
+            tm.that(self._TopicSettings().topic, eq="default")
+            tm.that(self._TopicSettings(topic="explicit").topic, eq="explicit")

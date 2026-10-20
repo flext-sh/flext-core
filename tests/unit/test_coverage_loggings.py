@@ -123,7 +123,7 @@ class TestsFlextCoverageLoggings:
         """Test fetch logger returns usable service logger."""
         logger = u.fetch_logger("user-service")
 
-        assert logger is not None
+        tm.that(logger, none=False)
         result = self.assert_captured_log_success(
             lambda: logger.info("service ready"),
             contains="service ready",

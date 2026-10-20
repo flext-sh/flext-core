@@ -46,8 +46,8 @@ class TestsFlextCoreUtilitiesTypeGuards:
         }
 
         payload = metadata["payload"]
-        assert isinstance(payload, dict)
-        assert isinstance(normalized_modes, list)
+        tm.that(isinstance(payload, dict), truth=True)
+        tm.that(isinstance(normalized_modes, list), truth=True)
 
         command_spec = m.GuardCheckSpec.model_validate({
             "starts": "sync",
@@ -57,19 +57,22 @@ class TestsFlextCoreUtilitiesTypeGuards:
             "empty": False,
         })
 
-        assert u.dict_non_empty(metadata)
-        assert u.matches_type(payload, "dict_non_empty")
-        assert not u.matches_type(envelope, "dict_non_empty")
-        assert u.matches_type(payload["tags"], "list_non_empty")
-        assert u.matches_type(payload["attempt_count"], (int, float))
-        assert u.matches_type(payload["command_name"], str)
-        assert u.string_non_empty(payload["correlation_id"])
-        assert u.chk(payload["command_name"], command_spec)
-        assert u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0])
-        assert u.chk(payload["command_name"], gt="alpha", none=False, empty=False)
+        tm.that(u.dict_non_empty(metadata), truth=True)
+        tm.that(u.matches_type(payload, "dict_non_empty"), truth=True)
+        tm.that(u.matches_type(envelope, "dict_non_empty"), truth=False)
+        tm.that(u.matches_type(payload["tags"], "list_non_empty"), truth=True)
+        tm.that(u.matches_type(payload["attempt_count"], (int, float)), truth=True)
+        tm.that(u.matches_type(payload["command_name"], str), truth=True)
+        tm.that(u.string_non_empty(payload["correlation_id"]), truth=True)
+        tm.that(u.chk(payload["command_name"], command_spec), truth=True)
+        tm.that(u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0]), truth=True)
+        tm.that(
+            u.chk(payload["command_name"], gt="alpha", none=False, empty=False),
+            truth=True,
+        )
         tm.that(metadata["repository_root"], eq=str(repository_root))
         tm.that(metadata["retry_window"] is None, eq=True)
-        assert isinstance(payload["started_at"], str)
+        tm.that(isinstance(payload["started_at"], str), truth=True)
         tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)
         tm.that(set(normalized_modes), eq={"delta", "full"})
 
@@ -101,10 +104,10 @@ class TestsFlextCoreUtilitiesTypeGuards:
             return_value=True,
         )
 
-        assert guarded_payload == payload
-        assert fallback_tags == ["cli"]
-        assert guarded_attempt == 2
-        assert isinstance(failed_guard_result, p.Result)
+        tm.that(guarded_payload, eq=payload)
+        tm.that(fallback_tags, eq=["cli"])
+        tm.that(guarded_attempt, eq=2)
+        tm.that(isinstance(failed_guard_result, p.Result), truth=True)
         tm.fail(failed_guard_result)
         tm.that(
             failed_guard_result.error,

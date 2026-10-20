@@ -55,7 +55,7 @@ class TestsFlextCoreResult:
 
         tm.that(result.error_code, eq="E_BAD")
         tm.that(result.error_data, eq={"field": "name"})
-        assert result.exception is cause
+        tm.that(result.exception is cause, truth=True)
 
     @pytest.mark.parametrize(
         ("success", "default", "expected"),
@@ -212,8 +212,8 @@ class TestsFlextCoreResult:
     @staticmethod
     def test_results_satisfy_success_checkable_protocol() -> None:
         """Result instances honor the structural p.SuccessCheckable contract."""
-        assert isinstance(r[int].ok(1), p.SuccessCheckable)
-        assert isinstance(r[int].fail("e"), p.SuccessCheckable)
+        tm.that(isinstance(r[int].ok(1), p.SuccessCheckable), truth=True)
+        tm.that(isinstance(r[int].fail("e"), p.SuccessCheckable), truth=True)
 
     @staticmethod
     def test_ok_rejects_none_payload_explicitly() -> None:

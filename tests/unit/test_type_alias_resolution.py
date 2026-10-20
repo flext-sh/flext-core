@@ -12,7 +12,7 @@ import warnings
 import pytest
 from typing_extensions import TypeForm
 
-from tests import c, m, p, u
+from tests import c, m, p, tm, u
 from tests.fixtures import type_aliases
 from tests.fixtures.type_aliases import TestsFlextTypeAliasDeclarations
 
@@ -35,11 +35,11 @@ class TestsFlextTypeAliasResolution:
             factories={"factory": factory},
             resources={"resource": factory},
         )
-        assert registration.services is not None
+        tm.that(registration.services, none=False)
         assert registration.services["bootstrap"] is payload
-        assert registration.factories is not None
+        tm.that(registration.factories, none=False)
         assert registration.factories["factory"]() is payload
-        assert registration.resources is not None
+        tm.that(registration.resources, none=False)
         assert registration.resources["resource"]() is payload
         assert (
             m.FactoryRegistration(name="factory", factory=factory).factory() is payload
@@ -62,7 +62,7 @@ class TestsFlextTypeAliasResolution:
             "event": "bootstrap",
         })
         assert event["payload"] is payload
-        assert event["event"] == "bootstrap"
+        tm.that(event["event"], eq="bootstrap")
         overrides = u.type_adapter(
             TypeForm(p.SettingsOverridesMapping),
             config=m.ArbitraryTypesModel.model_config,
@@ -75,21 +75,24 @@ class TestsFlextTypeAliasResolution:
     def test_source_inspection_keeps_parser_and_alias_contracts_distinct() -> None:
         """Source inspection and universal parsing coexist on the public facade."""
         parsed = u.parse("42", int)
-        assert parsed.success
-        assert parsed.value == 42
+        tm.that(parsed.success, truth=True)
+        tm.that(parsed.value, eq=42)
         tree = u.parse_module(type_aliases)
-        assert isinstance(tree, ast.Module)
-        assert any(
-            isinstance(node, ast.ClassDef)
-            and node.name == TestsFlextTypeAliasDeclarations.__name__
-            for node in tree.body
+        tm.that(isinstance(tree, ast.Module), truth=True)
+        tm.that(
+            any(
+                isinstance(node, ast.ClassDef)
+                and node.name == TestsFlextTypeAliasDeclarations.__name__
+                for node in tree.body
+            ),
+            truth=True,
         )
         owner = TestsFlextTypeAliasDeclarations.LegalTypes
         deferred = u.deferred_alias(owner.Deferred, owner=owner)
-        assert deferred is not None
-        assert deferred.unavailable_imports == ("DeferredPath",)
-        assert u.deferred_alias(owner.Resolved, owner=owner) is None
-        assert u.deferred(owner.Deferred, owner=owner) == (deferred,)
+        tm.that(deferred, none=False)
+        tm.that(deferred.unavailable_imports, eq=("DeferredPath",))
+        tm.that(u.deferred_alias(owner.Resolved, owner=owner), none=True)
+        tm.that(u.deferred(owner.Deferred, owner=owner), eq=(deferred,))
 
     @staticmethod
     def test_resolved_alias_keeps_its_runtime_value() -> None:
@@ -97,7 +100,7 @@ class TestsFlextTypeAliasResolution:
         alias = TestsFlextTypeAliasDeclarations.LegalTypes.Resolved
 
         assert u.resolve_type_alias_value(alias) is alias.__value__
-        assert not u.alias_contains_any(alias)
+        tm.that(u.alias_contains_any(alias), truth=False)
 
     @staticmethod
     def test_declared_static_only_alias_stays_lazy() -> None:
@@ -107,10 +110,10 @@ class TestsFlextTypeAliasResolution:
         with pytest.raises(NameError) as raised:
             _ = alias.__value__
 
-        assert raised.value.name == "DeferredPath"
+        tm.that(raised.value.name, eq="DeferredPath")
         owner = TestsFlextTypeAliasDeclarations.LegalTypes
-        assert u.resolve_type_alias_value(alias, owner=owner) is None
-        assert not u.alias_contains_any(alias, owner=owner)
+        tm.that(u.resolve_type_alias_value(alias, owner=owner), none=True)
+        tm.that(u.alias_contains_any(alias, owner=owner), truth=False)
         assert u.unwrap_type_alias(alias, owner=owner) is alias
 
     @staticmethod
@@ -119,22 +122,29 @@ class TestsFlextTypeAliasResolution:
         target = TestsFlextTypeAliasDeclarations.LegalTypes
         report = u.check(target, layer=c.EnforcementLayer.TYPES.lower())
 
-        assert not report.complete
-        assert report.deferred
+        tm.that(report.complete, truth=False)
+        tm.that(report.deferred, truth=True)
         expected = {
             f"{target.__qualname__}.{name}"
             for name in ("Deferred", "Nested", "Factory")
         }
-        assert {item.location for item in report.deferred} == expected
-        assert all(item.tag == "alias_any" for item in report.deferred)
-        assert all(
-            item.alias.unavailable_imports == ("DeferredPath",)
-            for item in report.deferred
+        tm.that({item.location for item in report.deferred}, eq=expected)
+        tm.that(all(item.tag == "alias_any" for item in report.deferred), truth=True)
+        tm.that(
+            all(
+                item.alias.unavailable_imports == ("DeferredPath",)
+                for item in report.deferred
+            ),
+            truth=True,
         )
-        assert all(item.alias.module == target.__module__ for item in report.deferred)
-        assert all(item.alias.line_number > 0 for item in report.deferred)
-        assert all(
-            item.alias.qualname.endswith(".Deferred") for item in report.deferred
+        tm.that(
+            all(item.alias.module == target.__module__ for item in report.deferred),
+            truth=True,
+        )
+        tm.that(all(item.alias.line_number > 0 for item in report.deferred), truth=True)
+        tm.that(
+            all(item.alias.qualname.endswith(".Deferred") for item in report.deferred),
+            truth=True,
         )
 
     @staticmethod
@@ -150,9 +160,9 @@ class TestsFlextTypeAliasResolution:
             warnings.simplefilter("always")
             u.emit(deferred, mode=c.EnforcementMode.STRICT)
 
-        assert not deferred.complete
-        assert not deferred.violations
-        assert not recorded
+        tm.that(deferred.complete, truth=False)
+        tm.that(deferred.violations, truth=False)
+        tm.that(recorded, truth=False)
         assert deferred.model_dump()["complete"] is False
 
     @staticmethod
@@ -163,7 +173,7 @@ class TestsFlextTypeAliasResolution:
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(alias, owner=m.ArbitraryTypesModel)
 
-        assert raised.value.name == "DeferredPath"
+        tm.that(raised.value.name, eq="DeferredPath")
 
     @staticmethod
     def test_alias_without_owner_context_propagates_its_original_error() -> None:
@@ -173,7 +183,7 @@ class TestsFlextTypeAliasResolution:
         with pytest.raises(NameError) as raised:
             u.resolve_type_alias_value(alias)
 
-        assert raised.value.name == "DeferredPath"
+        tm.that(raised.value.name, eq="DeferredPath")
 
     @staticmethod
     def test_consumer_context_preserves_the_foreign_alias_declaration() -> None:
@@ -189,18 +199,19 @@ class TestsFlextTypeAliasResolution:
             )
 
         deferred = u.deferred_alias(alias, owner=Consumer)
-        assert deferred is not None
-        assert deferred.module == type_aliases.__name__
-        assert deferred.qualname == (
-            f"{TestsFlextTypeAliasDeclarations.LegalTypes.__qualname__}.Deferred"
+        tm.that(deferred, none=False)
+        tm.that(deferred.module, eq=type_aliases.__name__)
+        tm.that(
+            deferred.qualname,
+            eq=f"{TestsFlextTypeAliasDeclarations.LegalTypes.__qualname__}.Deferred",
         )
-        assert deferred.unavailable_imports == ("DeferredPath",)
-        assert u.deferred(alias, owner=Consumer) == (deferred,)
-        assert u.resolve_type_alias_value(alias, owner=Consumer) is None
-        assert Consumer(value=1).value == 1
+        tm.that(deferred.unavailable_imports, eq=("DeferredPath",))
+        tm.that(u.deferred(alias, owner=Consumer), eq=(deferred,))
+        tm.that(u.resolve_type_alias_value(alias, owner=Consumer), none=True)
+        tm.that(Consumer(value=1).value, eq=1)
         report = u.check(Consumer)
-        assert not report.complete
-        assert any(item.alias == deferred for item in report.deferred)
+        tm.that(report.complete, truth=False)
+        tm.that(any(item.alias == deferred for item in report.deferred), truth=True)
 
     @staticmethod
     def test_equal_alias_names_do_not_replace_runtime_identity() -> None:
@@ -208,13 +219,12 @@ class TestsFlextTypeAliasResolution:
         owner = TestsFlextTypeAliasDeclarations.OtherScope
         alias = owner.Deferred
         assert u.resolve_type_alias_value(alias, owner=m.ArbitraryTypesModel) is int
-        assert u.deferred_alias(alias, owner=m.ArbitraryTypesModel) is None
-        assert (
+        tm.that(u.deferred_alias(alias, owner=m.ArbitraryTypesModel), none=True)
+        tm.that(
             u.deferred_alias(
-                TestsFlextTypeAliasDeclarations.LegalTypes.Deferred,
-                owner=owner,
-            )
-            is not None
+                TestsFlextTypeAliasDeclarations.LegalTypes.Deferred, owner=owner
+            ),
+            none=False,
         )
 
     @staticmethod
@@ -223,7 +233,7 @@ class TestsFlextTypeAliasResolution:
         with pytest.raises(NameError) as raised:
             u.alias_contains_any(TestsFlextTypeAliasDeclarations.InvalidTypes.Invalid)
 
-        assert raised.value.name == "Absent"
+        tm.that(raised.value.name, eq="Absent")
 
     @staticmethod
     def test_unexpected_alias_attribute_error_escapes_the_consumer() -> None:
@@ -234,7 +244,7 @@ class TestsFlextTypeAliasResolution:
                 owner=m.ArbitraryTypesModel,
             )
 
-        assert raised.value.name == "Value"
+        tm.that(raised.value.name, eq="Value")
 
     @staticmethod
     def test_foreign_broken_alias_keeps_its_causal_name_error() -> None:
@@ -244,7 +254,7 @@ class TestsFlextTypeAliasResolution:
                 TestsFlextTypeAliasDeclarations.InvalidTypes.Invalid,
                 owner=m.ArbitraryTypesModel,
             )
-        assert raised.value.name == "Absent"
+        tm.that(raised.value.name, eq="Absent")
 
     @staticmethod
     def test_check_does_not_turn_an_invalid_alias_into_an_empty_report() -> None:
@@ -255,12 +265,12 @@ class TestsFlextTypeAliasResolution:
                 layer=c.EnforcementLayer.TYPES.lower(),
             )
 
-        assert raised.value.name == "Absent"
+        tm.that(raised.value.name, eq="Absent")
 
     @staticmethod
     def test_complete_report_requires_no_deferred_inspection() -> None:
         """Test complete report requires no deferred inspection."""
-        assert m.Report().complete
+        tm.that(m.Report().complete, truth=True)
 
     @staticmethod
     def test_deferred_report_validates_and_round_trips_through_public_models() -> None:
@@ -269,9 +279,9 @@ class TestsFlextTypeAliasResolution:
             TestsFlextTypeAliasDeclarations.LegalTypes,
             layer=c.EnforcementLayer.TYPES.lower(),
         )
-        assert report.deferred
+        tm.that(report.deferred, truth=True)
         restored = m.Report.model_validate_json(report.model_dump_json(round_trip=True))
 
-        assert restored.deferred == report.deferred
-        assert not restored.complete
-        assert m.Report.model_json_schema()
+        tm.that(restored.deferred, eq=report.deferred)
+        tm.that(restored.complete, truth=False)
+        tm.that(m.Report.model_json_schema(), truth=True)

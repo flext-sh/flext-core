@@ -25,7 +25,7 @@ from flext_core.lazy import (
     merge_lazy_imports,
     normalize_lazy_imports,
 )
-from tests import u
+from tests import tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -82,10 +82,10 @@ class TestsFlextCoreLazyExportsMerge:
             "    print('accepted')\n"
         )
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
-        assert result.success, result.error
-        assert result.value.outcome.raw_return_code == 0, result.value.stderr
-        assert result.value.stdout.strip() == ("accepted" if accepted else "rejected")
-        assert result.value.stderr == ""
+        tm.that(result.success, truth=True, msg=result.error)
+        tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
+        tm.that(result.value.stdout.strip(), eq="accepted" if accepted else "rejected")
+        tm.that(result.value.stderr, eq="")
 
     @staticmethod
     def test_merge_normalizes_child_relative_targets_to_absolute_paths() -> None:
@@ -97,7 +97,7 @@ class TestsFlextCoreLazyExportsMerge:
         try:
             merged = merge_lazy_imports((child_package_name,), {})
 
-            assert merged["Alpha"] == (alpha_module_name, "Alpha")
+            tm.that(merged["Alpha"], eq=(alpha_module_name, "Alpha"))
         finally:
             sys.modules.pop(child_package_name, None)
             sys.modules.pop(alpha_module_name, None)
@@ -117,7 +117,7 @@ class TestsFlextCoreLazyExportsMerge:
                 module_name=parent_package_name,
             )
 
-            assert merged["Alpha"] == (alpha_module_name, "Alpha")
+            tm.that(merged["Alpha"], eq=(alpha_module_name, "Alpha"))
         finally:
             sys.modules.pop(child_package_name, None)
             sys.modules.pop(alpha_module_name, None)
@@ -136,7 +136,7 @@ class TestsFlextCoreLazyExportsMerge:
                 module_name=parent_package_name,
             )
 
-            assert merged == {"Local": (f"{parent_package_name}.local", "Local")}
+            tm.that(merged, eq={"Local": (f"{parent_package_name}.local", "Local")})
         finally:
             sys.modules.pop(child_package_name, None)
 
@@ -182,7 +182,7 @@ class TestsFlextCoreLazyExportsMerge:
         expected: t.LazyImportDict,
     ) -> None:
         """Relative targets bind to the module; absolute targets pass through."""
-        assert normalize_lazy_imports(module_path, raw) == expected
+        tm.that(normalize_lazy_imports(module_path, raw), eq=expected)
 
     @staticmethod
     def test_installed_getattr_resolves_submodule_and_caches_it() -> None:
@@ -204,7 +204,7 @@ class TestsFlextCoreLazyExportsMerge:
             )
 
             getattr_fn = module_globals["__getattr__"]
-            assert callable(getattr_fn)
+            tm.that(callable(getattr_fn), truth=True)
             assert getattr_fn("module") is child_module
             assert lazy.cache_stats["module_cache"] >= 1
         finally:
@@ -229,19 +229,22 @@ class TestsFlextCoreLazyExportsMerge:
                 publish_all=False,
             )
             getattr_fn = module_globals["__getattr__"]
-            assert callable(getattr_fn)
+            tm.that(callable(getattr_fn), truth=True)
             getattr_fn("module")
             assert lazy.cache_stats["module_cache"] >= 1
 
             lazy.reset()
 
-            assert lazy.cache_stats == {
-                "module_cache": 0,
-                "child_lazy_cache": 0,
-                "child_merge_cache": 0,
-                "normalized_map_cache": 0,
-                "install_cache": 0,
-            }
+            tm.that(
+                lazy.cache_stats,
+                eq={
+                    "module_cache": 0,
+                    "child_lazy_cache": 0,
+                    "child_merge_cache": 0,
+                    "normalized_map_cache": 0,
+                    "install_cache": 0,
+                },
+            )
         finally:
             sys.modules.pop(package_name, None)
             sys.modules.pop(module_name, None)
@@ -251,7 +254,7 @@ class TestsFlextCoreLazyExportsMerge:
         """Test build map returns keys in alphabetic order by default."""
         mapping = lazy.build_map({"pkg.mod": ("zeta", "alpha")})
 
-        assert list(mapping) == ["alpha", "zeta"]
+        tm.that(list(mapping), eq=["alpha", "zeta"])
 
     @staticmethod
     def test_build_map_preserves_insertion_order_when_sort_keys_disabled() -> None:
@@ -262,8 +265,8 @@ class TestsFlextCoreLazyExportsMerge:
             sort_keys=False,
         )
 
-        assert list(mapping) == ["zeta", "alpha", "beta"]
-        assert mapping["beta"] == ("pkg.alias", "Thing")
+        tm.that(list(mapping), eq=["zeta", "alpha", "beta"])
+        tm.that(mapping["beta"], eq=("pkg.alias", "Thing"))
 
     @staticmethod
     def test_build_map_merges_module_groups_and_alias_groups() -> None:
@@ -273,4 +276,4 @@ class TestsFlextCoreLazyExportsMerge:
             alias_groups={"pkg.alias": (("beta", "Thing"),)},
         )
 
-        assert mapping == {"alpha": "pkg.mod", "beta": ("pkg.alias", "Thing")}
+        tm.that(mapping, eq={"alpha": "pkg.mod", "beta": ("pkg.alias", "Thing")})

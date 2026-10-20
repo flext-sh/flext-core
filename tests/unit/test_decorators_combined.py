@@ -34,7 +34,7 @@ class TestsFlextCoreDecoratorsCombined:
         outcome = simple_function()
 
         # Assert: non-railway composition is a transparent pass-through.
-        assert outcome == "result"
+        tm.that(outcome, eq="result")
 
     @staticmethod
     def test_combined_with_railway_wraps_success_in_result() -> None:
@@ -69,10 +69,10 @@ class TestsFlextCoreDecoratorsCombined:
         outcome = operation()
 
         # Assert: failure is delivered as a value, not a raised exception.
-        assert outcome.failure
-        assert outcome.error_code == "COMBINED_FAIL"
-        assert outcome.error is not None
-        assert "boom" in outcome.error
+        tm.that(outcome.failure, truth=True)
+        tm.that(outcome.error_code, eq="COMBINED_FAIL")
+        tm.that(outcome.error, none=False)
+        tm.that("boom" in outcome.error, truth=True)
 
     @staticmethod
     def test_combined_preserves_wrapped_callable_name() -> None:
@@ -84,7 +84,7 @@ class TestsFlextCoreDecoratorsCombined:
             return "ok"
 
         # Assert: functools.wraps identity is part of the public contract.
-        assert business_operation.__name__ == "business_operation"
+        tm.that(business_operation.__name__, eq="business_operation")
 
     @staticmethod
     def test_railway_preserves_a_preexisting_result() -> None:
@@ -119,8 +119,8 @@ class TestsFlextCoreDecoratorsCombined:
         outcome = flaky_method()
 
         # Assert: the operation recovers and the retry count is observable.
-        assert outcome == "success"
-        assert attempts == 2
+        tm.that(outcome, eq="success")
+        tm.that(attempts, eq=2)
 
     @staticmethod
     def test_retry_raises_flext_timeout_when_exhausted() -> None:
@@ -135,7 +135,7 @@ class TestsFlextCoreDecoratorsCombined:
         # Act / Assert: exhaustion surfaces as a typed FlextExceptions member.
         with pytest.raises(e.FlextTimeoutError) as exc_info:
             always_failing()
-        assert exc_info.value.operation == "always_failing"
+        tm.that(exc_info.value.operation, eq="always_failing")
 
     @staticmethod
     def test_stacking_log_operation_over_railway_returns_result() -> None:
@@ -175,7 +175,7 @@ class TestsFlextCoreDecoratorsCombined:
 
         # Assert
         tm.ok(outcome, eq="success")
-        assert attempts == 2
+        tm.that(attempts, eq=2)
 
     @pytest.mark.parametrize(
         ("timeout_seconds", "should_raise"),
@@ -199,9 +199,9 @@ class TestsFlextCoreDecoratorsCombined:
         if should_raise:
             with pytest.raises(e.FlextTimeoutError) as exc_info:
                 measured()
-            assert exc_info.value.operation == "measured"
+            tm.that(exc_info.value.operation, eq="measured")
         else:
-            assert measured() == "done"
+            tm.that(measured(), eq="done")
 
     @staticmethod
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))
@@ -221,5 +221,5 @@ class TestsFlextCoreDecoratorsCombined:
         outcome = divide(a, b)
 
         # Assert: with a non-zero divisor the railway always succeeds cleanly.
-        assert outcome.success
+        tm.that(outcome.success, truth=True)
         tm.ok(outcome, eq=a / b)

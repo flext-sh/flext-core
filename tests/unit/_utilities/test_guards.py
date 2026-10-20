@@ -234,7 +234,7 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.matches_type(value, spec) is expected
+        tm.that(u.matches_type(value, spec) is expected, truth=True)
 
     @pytest.mark.parametrize(
         ("value", "spec", "expected"),
@@ -255,16 +255,16 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.matches_type(value, spec) is expected
+        tm.that(u.matches_type(value, spec) is expected, truth=True)
 
     @staticmethod
     def test_matches_type_is_case_insensitive_for_string_specs() -> None:
-        assert u.matches_type("x", "STR") is True
-        assert u.matches_type(1, "Int") is True
+        tm.that(u.matches_type("x", "STR") is True, truth=True)
+        tm.that(u.matches_type(1, "Int") is True, truth=True)
 
     @staticmethod
     def test_matches_type_unknown_string_spec_returns_false() -> None:
-        assert u.matches_type("x", "no_such_spec") is False
+        tm.that(u.matches_type("x", "no_such_spec") is False, truth=True)
 
     @pytest.mark.parametrize(
         "spec",
@@ -276,7 +276,10 @@ class TestsFlextCoreGuards:
     ) -> None:
         # A populated model would otherwise satisfy dict-like checks; the guard
         # contract deliberately excludes Pydantic models from these specs.
-        assert u.matches_type(TestsFlextCoreGuards._SampleModel(), spec) is False
+        tm.that(
+            u.matches_type(TestsFlextCoreGuards._SampleModel(), spec) is False,
+            truth=True,
+        )
 
     # ------------------------------------------------------------------
     # matches_type — type and tuple specs
@@ -298,12 +301,12 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.matches_type(value, spec) is expected
+        tm.that(u.matches_type(value, spec) is expected, truth=True)
 
     @staticmethod
     def test_matches_type_invalid_scalar_spec_returns_false() -> None:
         # An out-of-contract spec (a bare scalar) must not match anything.
-        assert u.matches_type("x", 123) is False
+        tm.that(u.matches_type("x", 123) is False, truth=True)
 
     # ------------------------------------------------------------------
     # container — recursive JSON-compatibility contract
@@ -327,7 +330,7 @@ class TestsFlextCoreGuards:
     def test_container_accepts_scalars_and_nested_json(
         value: t.JsonValue,
     ) -> None:
-        assert u.container_value(value) is True
+        tm.that(u.container_value(value) is True, truth=True)
 
     @pytest.mark.parametrize(
         "value",
@@ -337,12 +340,12 @@ class TestsFlextCoreGuards:
     def test_container_rejects_none_and_non_json_members(
         value: t.JsonValue | None,
     ) -> None:
-        assert u.container_value(value) is False
+        tm.that(u.container_value(value) is False, truth=True)
 
     @staticmethod
     def test_all_container_mapping_values_accepts_json_values() -> None:
         mapping: t.JsonDict = {"a": 1, "b": [2, 3], "c": {"d": "e"}}
-        assert u.all_container_mapping_values(mapping) is True
+        tm.that(u.all_container_mapping_values(mapping) is True, truth=True)
         path = Path("native-payload")
         timestamp = datetime(2026, 1, 2, tzinfo=UTC)
         native = {1: (path, timestamp)}
@@ -394,7 +397,7 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.scalar(value) is expected
+        tm.that(u.scalar(value) is expected, truth=True)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -413,17 +416,17 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.primitive(value) is expected
+        tm.that(u.primitive(value) is expected, truth=True)
 
     # ------------------------------------------------------------------
     # collection guards
     # ------------------------------------------------------------------
     @staticmethod
     def test_mapping_and_list_value_discriminate_collections() -> None:
-        assert u.mapping({"k": "v"}) is True
-        assert u.mapping([1, 2]) is False
-        assert u.list_value([1, 2]) is True
-        assert u.list_value((1, 2)) is False
+        tm.that(u.mapping({"k": "v"}) is True, truth=True)
+        tm.that(u.mapping([1, 2]) is False, truth=True)
+        tm.that(u.list_value([1, 2]) is True, truth=True)
+        tm.that(u.list_value((1, 2)) is False, truth=True)
         counter = u.Tests.MemoryCounter()
         service = u.Tests.CountingService(counter=counter)
         registry: p.GuardInput = {"service": service}
@@ -474,13 +477,13 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.list_like(value) is expected
+        tm.that(u.list_like(value) is expected, truth=True)
 
     @staticmethod
     def test_dict_like_accepts_only_mappings() -> None:
-        assert u.dict_like({"k": "v"}) is True
-        assert u.dict_like([1, 2]) is False
-        assert u.dict_like("text") is False
+        tm.that(u.dict_like({"k": "v"}) is True, truth=True)
+        tm.that(u.dict_like([1, 2]) is False, truth=True)
+        tm.that(u.dict_like("text") is False, truth=True)
 
     # ------------------------------------------------------------------
     # emptiness / non-empty guards
@@ -504,7 +507,7 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.empty_value(value) is expected
+        tm.that(u.empty_value(value) is expected, truth=True)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -516,13 +519,13 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.string_non_empty(value) is expected
+        tm.that(u.string_non_empty(value) is expected, truth=True)
 
     @staticmethod
     def test_dict_non_empty_requires_populated_mapping() -> None:
-        assert u.dict_non_empty({"k": 1}) is True
-        assert u.dict_non_empty({}) is False
-        assert u.dict_non_empty(None) is False
+        tm.that(u.dict_non_empty({"k": 1}) is True, truth=True)
+        tm.that(u.dict_non_empty({}) is False, truth=True)
+        tm.that(u.dict_non_empty(None) is False, truth=True)
         events: list[str] = []
         failure = RuntimeError("original mapping truth failure")
 
@@ -554,8 +557,8 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     @staticmethod
     def test_instance_of_matches_concrete_type() -> None:
-        assert u.instance_of(5, int) is True
-        assert u.instance_of("x", int) is False
+        tm.that(u.instance_of(5, int) is True, truth=True)
+        tm.that(u.instance_of("x", int) is False, truth=True)
 
     @pytest.mark.parametrize(
         ("value", "container", "expected"),
@@ -575,13 +578,13 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        assert u.in_(value, container) is expected
+        tm.that(u.in_(value, container) is expected, truth=True)
 
     @staticmethod
     def test_in_returns_false_for_unhashable_value() -> None:
         # A list is unhashable; membership in a set raises TypeError internally,
         # which the guard must swallow into a plain False.
-        assert u.in_([1], {1, 2}) is False
+        tm.that(u.in_([1], {1, 2}) is False, truth=True)
 
     @staticmethod
     def test_type_name_returns_runtime_qualname() -> None:

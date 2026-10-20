@@ -58,7 +58,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             """Log timing while preserving the original business exception."""
             elapsed = time.time() - self._start_time
             success = exc_type is None
-            status = "success" if success else "failed"
+            status = c.Status.SUCCESS if success else c.Status.FAILED
             context = m.ConfigMap(
                 root={
                     c.MetadataKey.DURATION_SECONDS: elapsed,

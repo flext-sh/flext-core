@@ -40,16 +40,16 @@ class TestsFlextCoreExceptionsStructuredContracts:
         error = factory()
 
         # Assert: structured protocol surface
-        assert isinstance(error, p.StructuredError)
-        assert error.error_domain == expected_domain
-        assert error.error_code == expected_code
-        assert error.error_message == error.message
-        assert error.matches_error_domain(expected_domain)
-        assert not error.matches_error_domain("definitely-not-a-domain")
+        tm.that(isinstance(error, p.StructuredError), truth=True)
+        tm.that(error.error_domain, eq=expected_domain)
+        tm.that(error.error_code, eq=expected_code)
+        tm.that(error.error_message, eq=error.message)
+        tm.that(error.matches_error_domain(expected_domain), truth=True)
+        tm.that(error.matches_error_domain("definitely-not-a-domain"), truth=False)
 
         # Assert: caller-visible payload flows through public metadata
         for key, value in expected_payload.items():
-            assert error.metadata.attributes[key] == value
+            tm.that(error.metadata.attributes[key], eq=value)
 
     @pytest.mark.parametrize(
         ("_name", "factory", "expected_domain", "expected_code", "_expected_payload"),
@@ -70,11 +70,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
             raise factory()
 
         error = caught.value
-        assert error.error_domain == expected_domain
-        assert error.error_code == expected_code
-        assert error.matches_error_domain(expected_domain)
-        assert error.message in str(error)
-        assert error.error_message == error.message
+        tm.that(error.error_domain, eq=expected_domain)
+        tm.that(error.error_code, eq=expected_code)
+        tm.that(error.matches_error_domain(expected_domain), truth=True)
+        tm.that(error.message in str(error), truth=True)
+        tm.that(error.error_message, eq=error.message)
 
     @staticmethod
     def test_base_error_defaults_to_unknown_domain_protocol_surface() -> None:
@@ -83,11 +83,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
         error = e.BaseError("Base failure")
 
         # Assert
-        assert isinstance(error, p.StructuredError)
-        assert error.error_domain == c.ErrorDomain.UNKNOWN.value
-        assert error.error_code == c.ErrorCode.UNKNOWN_ERROR
-        assert error.error_message == "Base failure"
-        assert error.matches_error_domain(c.ErrorDomain.UNKNOWN.value)
+        tm.that(isinstance(error, p.StructuredError), truth=True)
+        tm.that(error.error_domain, eq=c.ErrorDomain.UNKNOWN.value)
+        tm.that(error.error_code, eq=c.ErrorCode.UNKNOWN_ERROR)
+        tm.that(error.error_message, eq="Base failure")
+        tm.that(error.matches_error_domain(c.ErrorDomain.UNKNOWN.value), truth=True)
 
     @staticmethod
     def test_specific_errors_are_catchable_as_base_error() -> None:
@@ -102,9 +102,9 @@ class TestsFlextCoreExceptionsStructuredContracts:
             raise not_found
 
         error = caught.value
-        assert isinstance(error, e.NotFoundError)
-        assert error.error_code == c.ErrorCode.NOT_FOUND_ERROR
-        assert error.error_domain == c.ErrorDomain.NOT_FOUND.value
+        tm.that(isinstance(error, e.NotFoundError), truth=True)
+        tm.that(error.error_code, eq=c.ErrorCode.NOT_FOUND_ERROR)
+        tm.that(error.error_domain, eq=c.ErrorDomain.NOT_FOUND.value)
 
     @staticmethod
     def test_metadata_attributes_preserve_correlation_id() -> None:
@@ -120,14 +120,14 @@ class TestsFlextCoreExceptionsStructuredContracts:
         )
 
         # Assert: caller-supplied context is observable on the public surface
-        assert error.message == "Insert failed"
-        assert error.error_code == c.ErrorCode.OPERATION_ERROR
-        assert error.error_domain == c.ErrorDomain.INTERNAL.value
-        assert error.correlation_id == "corr-123"
-        assert error.metadata.attributes["scope"] == "users"
-        assert error.metadata.attributes["operation"] == "insert_user"
-        assert error.metadata.attributes["reason"] == "constraint"
-        assert error.metadata.attributes["attempt"] == 2
+        tm.that(error.message, eq="Insert failed")
+        tm.that(error.error_code, eq=c.ErrorCode.OPERATION_ERROR)
+        tm.that(error.error_domain, eq=c.ErrorDomain.INTERNAL.value)
+        tm.that(error.correlation_id, eq="corr-123")
+        tm.that(error.metadata.attributes["scope"], eq="users")
+        tm.that(error.metadata.attributes["operation"], eq="insert_user")
+        tm.that(error.metadata.attributes["reason"], eq="constraint")
+        tm.that(error.metadata.attributes["attempt"], eq=2)
 
     @pytest.mark.parametrize(
         ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
@@ -147,14 +147,14 @@ class TestsFlextCoreExceptionsStructuredContracts:
         result_data = result.error_data or {}
 
         # Assert: r[T] failure contract
-        assert result.failure
-        assert not result.success
-        assert result.error is not None
-        assert expected_fragment in result.error
-        assert result.error_code == expected_code
-        assert result.error_data is not None
+        tm.that(result.failure, truth=True)
+        tm.that(result.success, truth=False)
+        tm.that(result.error, none=False)
+        tm.that(expected_fragment in result.error, truth=True)
+        tm.that(result.error_code, eq=expected_code)
+        tm.that(result.error_data, none=False)
         for key, value in expected_data.items():
-            assert result_data[key] == value
+            tm.that(result_data[key], eq=value)
 
     @pytest.mark.parametrize(
         ("_name", "factory", "_expected_fragment", "expected_code", "_expected_data"),
@@ -174,19 +174,20 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
         # Act / Assert: map short-circuits, preserving the failure and its code.
         mapped = result.map(operator.not_)
-        assert mapped.failure
-        assert mapped.error_code == expected_code
+        tm.that(mapped.failure, truth=True)
+        tm.that(mapped.error_code, eq=expected_code)
 
         # Strict extraction preserves the failure instead of inventing a value.
         if result.exception is not None:
             with pytest.raises(type(result.exception)) as raised:
                 result.unwrap()
-            assert raised.value is result.exception
+            tm.that(raised.value is result.exception, truth=True)
         else:
             with pytest.raises(RuntimeError) as logical:
                 result.unwrap()
-            assert str(logical.value) == c.ERR_RESULT_CANNOT_UNWRAP.format(
-                error=result.error,
+            tm.that(
+                str(logical.value),
+                eq=c.ERR_RESULT_CANNOT_UNWRAP.format(error=result.error),
             )
 
         # recover converts a failure into a caller-defined success value.
@@ -196,5 +197,5 @@ class TestsFlextCoreExceptionsStructuredContracts:
         # tap_error observes the error without altering the failure channel.
         observed: list[bool] = []
         tapped = result.tap_error(lambda _err: observed.append(True))
-        assert tapped.failure
-        assert len(observed) == 1
+        tm.that(tapped.failure, truth=True)
+        tm.that(len(observed), eq=1)

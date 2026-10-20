@@ -15,7 +15,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from tests import u
+from tests import tm, u
 
 _MISSING_PREFIX = "class name missing project prefix"
 type _NamespaceTree = Mapping[str, _NamespaceTree]
@@ -37,7 +37,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         report = u.check(_PrivateHelper)
 
-        assert report.empty
+        tm.that(report.empty, truth=True)
         assert _MISSING_PREFIX not in report
 
     @staticmethod
@@ -48,7 +48,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         report = u.check(fake)
 
-        assert report.empty
+        tm.that(report.empty, truth=True)
         assert _MISSING_PREFIX not in report
 
     @staticmethod
@@ -85,16 +85,16 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         report = u.check(offender)
 
-        assert report  # truthy: at least one violation
+        tm.that(report, truth=True)
         assert len(report) >= 1
         assert _MISSING_PREFIX in report
         prefix_violations = [
             v for v in report.violations if _MISSING_PREFIX in v.message
         ]
-        assert prefix_violations
+        tm.that(prefix_violations, truth=True)
         violation = prefix_violations[0]
-        assert violation.layer == "Namespace"
-        assert violation.qualname == "Widget"
+        tm.that(violation.layer, eq="Namespace")
+        tm.that(violation.qualname, eq="Widget")
         assert '"Flext"' in violation.message
 
     @staticmethod
@@ -105,7 +105,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         report = u.check(compliant)
 
-        assert report.empty
+        tm.that(report.empty, truth=True)
         assert _MISSING_PREFIX not in report
 
     @pytest.mark.parametrize(
@@ -174,6 +174,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
             "FlextDeepNamespace.Ldap.ServiceContracts.SearchContract",
             "FlextDeepNamespace.Ldap.ServiceContracts.BindContract",
         )
-        assert len(deep_messages) == len(expected)
+        tm.that(len(deep_messages), eq=len(expected))
         for qualname in expected:
-            assert any(f" at {qualname} " in text for text in deep_messages)
+            tm.that(
+                any(f" at {qualname} " in text for text in deep_messages), truth=True
+            )

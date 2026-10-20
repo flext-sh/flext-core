@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import e, t
+from tests import e, t, tm
 
 _CLEAN_MODULE = "tests.fixtures.clean_module"
 _BAD_MODULE = "tests_flext_enforcement_integration_fixtures_bad"
@@ -142,8 +142,10 @@ class TestsFlextEnforcementIntegration:
         messages = _capture_import_warnings(_CLEAN_MODULE)
 
         # Assert: the hook produces no FLEXT violation warnings.
-        assert messages == (), "Clean module import must be silent; got: " + " | ".join(
+        tm.that(
             messages,
+            eq=(),
+            msg="Clean module import must be silent; got: " + " | ".join(messages),
         )
 
     @pytest.fixture(scope="class")
@@ -164,7 +166,9 @@ class TestsFlextEnforcementIntegration:
             encoding="utf-8",
         )
         messages = _capture_import_warnings(_BAD_MODULE, search_path=module_root)
-        assert messages, "Importing the violating module emitted no warnings"
+        tm.that(
+            messages, "Importing the violating module emitted no warnings", truth=True
+        )
         return messages
 
     @staticmethod
@@ -174,8 +178,11 @@ class TestsFlextEnforcementIntegration:
         # The public FlextMroViolation export is a genuine Warning subclass and
         # is the exact category a caller can filter on.
         """Test every emitted warning is the public category."""
-        assert issubclass(e.MroViolation, Warning)
-        assert all("violates FLEXT" in message for message in violation_messages)
+        tm.that(issubclass(e.MroViolation, Warning), truth=True)
+        tm.that(
+            all("violates FLEXT" in message for message in violation_messages),
+            truth=True,
+        )
 
     @pytest.mark.parametrize(
         ("fragment", "rule"),
@@ -203,8 +210,10 @@ class TestsFlextEnforcementIntegration:
     ) -> None:
         # Assert: the observable warning output names the specific violation.
         """Test rule violation is reported in warning text."""
-        assert any(fragment in message for message in violation_messages), (
-            f"rule={rule!r}: no warning contained {fragment!r}"
+        tm.that(
+            any(fragment in message for message in violation_messages),
+            truth=True,
+            msg=f"rule={rule!r}: no warning contained {fragment!r}",
         )
 
     @pytest.mark.parametrize(
@@ -229,8 +238,10 @@ class TestsFlextEnforcementIntegration:
     ) -> None:
         # Assert: every rule-breaking top-level class triggers the hook.
         """Test each violating class is named in a warning."""
-        assert any(class_name in message for message in violation_messages), (
-            f"No violation warning named {class_name!r}"
+        tm.that(
+            any(class_name in message for message in violation_messages),
+            truth=True,
+            msg=f"No violation warning named {class_name!r}",
         )
 
     @staticmethod
@@ -257,9 +268,14 @@ class TestsFlextEnforcementIntegration:
         messages = _capture_import_warnings(module_name, search_path=module_root)
 
         # Assert: BOTH constants are reported without any intermediate cure.
-        assert any("GROUPS" in message for message in messages), (
-            "detector missed GROUPS: " + " | ".join(messages)
+        tm.that(
+            any("GROUPS" in message for message in messages),
+            truth=True,
+            msg="detector missed GROUPS: " + " | ".join(messages),
         )
-        assert any("LIMITS" in message for message in messages), (
-            "detector missed LIMITS (whack-a-mole regression): " + " | ".join(messages)
+        tm.that(
+            any("LIMITS" in message for message in messages),
+            truth=True,
+            msg="detector missed LIMITS (whack-a-mole regression): "
+            + " | ".join(messages),
         )

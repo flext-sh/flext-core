@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c, m, u, utilities
+from tests import c, m, tm, u, utilities
 
 
 class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
@@ -58,12 +58,12 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
         app_id = u.format_app_id(cleaned)
         normalized_key = u.normalize_alnum(cleaned)
 
-        assert app_id == expected_id
-        assert app_id == app_id.lower()
-        assert " " not in app_id
-        assert "_" not in app_id
-        assert normalized_key == expected_key
-        assert normalized_key.isalnum() or not normalized_key
+        tm.that(app_id, eq=expected_id)
+        tm.that(app_id, eq=app_id.lower())
+        tm.that(" " not in app_id, truth=True)
+        tm.that("_" not in app_id, truth=True)
+        tm.that(normalized_key, eq=expected_key)
+        tm.that(normalized_key.isalnum() or not normalized_key, truth=True)
 
     @pytest.mark.parametrize(
         "value",
@@ -77,13 +77,13 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
     def test_public_text_helpers_are_idempotent(value: str) -> None:
         """Re-applying the helpers to their own output is a fixed point."""
         cleaned = u.safe_string(value)
-        assert u.safe_string(cleaned) == cleaned
+        tm.that(u.safe_string(cleaned), eq=cleaned)
 
         app_id = u.format_app_id(cleaned)
-        assert u.format_app_id(app_id) == app_id
+        tm.that(u.format_app_id(app_id), eq=app_id)
 
         normalized_key = u.normalize_alnum(cleaned)
-        assert u.normalize_alnum(normalized_key) == normalized_key
+        tm.that(u.normalize_alnum(normalized_key), eq=normalized_key)
 
     @staticmethod
     def test_public_text_helpers_prepare_and_persist_app_manifest(
@@ -110,10 +110,10 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
             manifest_content=manifest_path.read_text(encoding=c.DEFAULT_ENCODING),
         )
 
-        assert snapshot.app_id == "fleet-sync-app-v2"
-        assert snapshot.normalized_key == "fleetsyncappv2"
-        assert Path(snapshot.manifest_path) == manifest_path
-        assert snapshot.manifest_content == manifest_content
-        assert " " not in snapshot.app_id
-        assert "_" not in snapshot.app_id
-        assert snapshot.normalized_key.isalnum()
+        tm.that(snapshot.app_id, eq="fleet-sync-app-v2")
+        tm.that(snapshot.normalized_key, eq="fleetsyncappv2")
+        tm.that(Path(snapshot.manifest_path), eq=manifest_path)
+        tm.that(snapshot.manifest_content, eq=manifest_content)
+        tm.that(" " not in snapshot.app_id, truth=True)
+        tm.that("_" not in snapshot.app_id, truth=True)
+        tm.that(snapshot.normalized_key.isalnum(), truth=True)

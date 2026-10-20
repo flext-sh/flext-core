@@ -92,7 +92,7 @@ class TestsFlextLoggings:
         logger: p.Logger,
     ) -> None:
         """Test create module logger returns usable logger instance."""
-        assert logger is not None
+        tm.that(logger, none=False)
 
     def test_bind_returns_logger_accepting_subsequent_log_calls(
         self,
@@ -100,7 +100,7 @@ class TestsFlextLoggings:
     ) -> None:
         """Test bind returns logger accepting subsequent log calls."""
         bound = logger.bind(service_name="svc", correlation_id="cid")
-        assert bound is not None
+        tm.that(bound, none=False)
         result = self._assert_log_output(
             lambda: bound.info("bound ok"),
             contains="bound ok",
@@ -113,7 +113,7 @@ class TestsFlextLoggings:
     ) -> None:
         """Test new returns fresh bound logger without prior context."""
         refreshed = logger.bind(initial="x").new(fresh="y")
-        assert refreshed is not None
+        tm.that(refreshed, none=False)
         result = self._assert_log_output(
             lambda: refreshed.info("new ok"),
             contains="new ok",

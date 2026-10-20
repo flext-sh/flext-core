@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from uuid import UUID
 
-from tests import c, m, u
+from tests import c, m, tm, u
 
 
 class TestsFlextCoreUtilitiesGenerators:
@@ -59,20 +59,20 @@ class TestsFlextCoreUtilitiesGenerators:
         event_body, event_suffix = audit.event_id.removeprefix("evt-").rsplit("-", 1)
         replay_prefix, replay_suffix = audit.replay_key.split("_", 1)
 
-        assert correlation_prefix == "corr"
-        assert len(correlation_suffix) == c.SHORT_UUID_LENGTH
-        assert audit.command_id.startswith("cmd-")
-        assert command_timestamp.isdigit()
-        assert command_metadata == f"{request.command_name}-{request.tenant}"
-        assert len(command_suffix) == 8
-        assert event_body == request.environment
-        assert len(event_suffix) == 6
-        assert replay_prefix == "replay"
-        assert len(replay_suffix) == 6
-        assert str(UUID(audit.opaque_id)) == audit.opaque_id
-        assert str(UUID(audit.aggregate_id)) == audit.aggregate_id
-        assert datetime.fromisoformat(audit.emitted_at).tzinfo == UTC
-        assert audit.generated_at.tzinfo == UTC
+        tm.that(correlation_prefix, eq="corr")
+        tm.that(len(correlation_suffix), eq=c.SHORT_UUID_LENGTH)
+        tm.that(audit.command_id.startswith("cmd-"), truth=True)
+        tm.that(command_timestamp.isdigit(), truth=True)
+        tm.that(command_metadata, eq=f"{request.command_name}-{request.tenant}")
+        tm.that(len(command_suffix), eq=8)
+        tm.that(event_body, eq=request.environment)
+        tm.that(len(event_suffix), eq=6)
+        tm.that(replay_prefix, eq="replay")
+        tm.that(len(replay_suffix), eq=6)
+        tm.that(str(UUID(audit.opaque_id)), eq=audit.opaque_id)
+        tm.that(str(UUID(audit.aggregate_id)), eq=audit.aggregate_id)
+        tm.that(datetime.fromisoformat(audit.emitted_at).tzinfo, eq=UTC)
+        tm.that(audit.generated_at.tzinfo, eq=UTC)
 
     @staticmethod
     def test_public_generators_accept_prefix_override_for_custom_batches() -> None:
@@ -87,8 +87,8 @@ class TestsFlextCoreUtilitiesGenerators:
             ),
         )
 
-        assert batch_id.startswith("agg-ldap-delta-")
-        assert len(batch_id.removeprefix("agg-ldap-delta-")) == 10
+        tm.that(batch_id.startswith("agg-ldap-delta-"), truth=True)
+        tm.that(len(batch_id.removeprefix("agg-ldap-delta-")), eq=10)
 
     @staticmethod
     def test_public_generators_cover_query_and_external_provider_ids() -> None:
@@ -116,19 +116,19 @@ class TestsFlextCoreUtilitiesGenerators:
         lookup_prefix, lookup_name, lookup_suffix = audit.lookup_id.split("_")
         query_prefix, query_suffix = audit.query_id.split("_")
 
-        assert str(UUID(audit.request_id)) == audit.request_id
-        assert str(UUID(audit.explicit_id)) == audit.explicit_id
-        assert lookup_prefix == "qry"
-        assert lookup_name == "status"
-        assert len(lookup_suffix) == 7
-        assert query_prefix == "qry"
-        assert len(query_suffix) == 5
-        assert audit.event_channel_id.startswith("evt-")
-        assert len(audit.event_channel_id.removeprefix("evt-")) == 6
-        assert audit.ulid_token.isalnum()
-        assert len(audit.ulid_token) == 12
-        assert str(UUID(audit.manual_id)) == audit.manual_id
-        assert len(audit.external_token) == 8
+        tm.that(str(UUID(audit.request_id)), eq=audit.request_id)
+        tm.that(str(UUID(audit.explicit_id)), eq=audit.explicit_id)
+        tm.that(lookup_prefix, eq="qry")
+        tm.that(lookup_name, eq="status")
+        tm.that(len(lookup_suffix), eq=7)
+        tm.that(query_prefix, eq="qry")
+        tm.that(len(query_suffix), eq=5)
+        tm.that(audit.event_channel_id.startswith("evt-"), truth=True)
+        tm.that(len(audit.event_channel_id.removeprefix("evt-")), eq=6)
+        tm.that(audit.ulid_token.isalnum(), truth=True)
+        tm.that(len(audit.ulid_token), eq=12)
+        tm.that(str(UUID(audit.manual_id)), eq=audit.manual_id)
+        tm.that(len(audit.external_token), eq=8)
 
     @staticmethod
     def test_public_generators_cover_orchestration_identifier_families() -> None:
@@ -166,17 +166,17 @@ class TestsFlextCoreUtilitiesGenerators:
         timestamped_prefix, timestamped_body = audit.timestamped_batch_id.split("_", 1)
         timestamped_value, timestamped_suffix = timestamped_body.rsplit("_", 1)
 
-        assert entity_prefix == "ent"
-        assert entity_name == "customer"
-        assert len(entity_suffix) == 6
-        assert batch_prefix == c.ProcessingMode.BATCH
-        assert batch_name == "users"
-        assert len(batch_suffix) == 7
-        assert transaction_body == "sync_42"
-        assert len(transaction_suffix) == 9
-        assert saga_body == "ldap_full"
-        assert len(saga_suffix) == 5
-        assert timestamped_prefix == c.ProcessingMode.BATCH
-        assert timestamped_value.isdigit()
-        assert len(timestamped_suffix) == 4
-        assert str(UUID(audit.explicit_uuid)) == audit.explicit_uuid
+        tm.that(entity_prefix, eq="ent")
+        tm.that(entity_name, eq="customer")
+        tm.that(len(entity_suffix), eq=6)
+        tm.that(batch_prefix, eq=c.ProcessingMode.BATCH)
+        tm.that(batch_name, eq="users")
+        tm.that(len(batch_suffix), eq=7)
+        tm.that(transaction_body, eq="sync_42")
+        tm.that(len(transaction_suffix), eq=9)
+        tm.that(saga_body, eq="ldap_full")
+        tm.that(len(saga_suffix), eq=5)
+        tm.that(timestamped_prefix, eq=c.ProcessingMode.BATCH)
+        tm.that(timestamped_value.isdigit(), truth=True)
+        tm.that(len(timestamped_suffix), eq=4)
+        tm.that(str(UUID(audit.explicit_uuid)), eq=audit.explicit_uuid)
