@@ -24,7 +24,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
     @staticmethod
     def resolve_effective_log_level(
         *,
-        trace: bool,
+        trace: bool = False,
         debug: bool,
         log_level: t.LogLevel,
         log_level_explicit: bool = True,
@@ -84,7 +84,6 @@ class FlextUtilitiesLoggingConfig(logging_config_part_02.FlextUtilitiesLoggingCo
                 logging.getLevelName(cls.level_number(selected.log_level))
             ),
             debug=selected.debug,
-            trace=selected.trace,
             log_level_explicit=(
                 log_level is not None
                 or (debug is None and "log_level" in current.model_fields_set)

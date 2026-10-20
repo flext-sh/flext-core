@@ -15,10 +15,9 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._base_parts import flextmodelsbase_part_02
-from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
@@ -102,7 +101,7 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
         """Mixin for versioning with optimistic locking."""
 
         version: Annotated[
-            FlextTypingBase.NonNegativeInt,
+            t.NonNegativeInt,
             FlextModelsPydantic.Field(
                 default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Version number for optimistic locking",
@@ -137,7 +136,7 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
             FlextModelsPydantic.ConfigDict(populate_by_name=True)
         )
         max_retries: Annotated[
-            FlextTypingBase.NonNegativeInt,
+            t.NonNegativeInt,
             FlextModelsPydantic.Field(
                 default=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
@@ -145,14 +144,14 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
             ),
         ] = c.MAX_RETRY_ATTEMPTS
         initial_delay_seconds: Annotated[
-            FlextTypingBase.PositiveFloat,
+            t.PositiveFloat,
             FlextModelsPydantic.Field(
                 default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Initial delay between retries",
             ),
         ] = c.DEFAULT_RETRY_DELAY_SECONDS
         max_delay_seconds: Annotated[
-            FlextTypingBase.PositiveFloat,
+            t.PositiveFloat,
             FlextModelsPydantic.Field(
                 default=c.DEFAULT_MAX_DELAY_SECONDS,
                 description="Maximum delay between retries",

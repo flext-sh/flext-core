@@ -17,12 +17,12 @@ from typing import Annotated, override
 
 from pydantic import Field
 
+from flext_core import t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsDomainEvent,
     FlextModelsPydantic,
 )
-from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities import FlextUtilitiesDomain, FlextUtilitiesGenerators
 
 
@@ -90,7 +90,7 @@ class FlextModelsEntity:
         @override
         def model_post_init(
             self,
-            __context: FlextTypingBase.ScalarMapping | None,
+            __context: t.ScalarMapping | None,
             /,
         ) -> None:
             """Post-initialization hook to set updated_at timestamp when absent."""
@@ -117,7 +117,7 @@ class FlextModelsEntity:
             bool, FlextModelsPydantic.Field(description="Strip empty values")
         ] = False
         map_keys: Annotated[
-            FlextTypingBase.StrMapping | None,
+            t.StrMapping | None,
             FlextModelsPydantic.Field(
                 description="Optional old-key to new-key mapping"
             ),
@@ -130,7 +130,7 @@ class FlextModelsEntity:
             str, FlextModelsPydantic.Field(description="Resolved parent path context")
         ] = ""
         default: Annotated[
-            FlextTypesServices.JsonPayload | None,
+            t.JsonPayload | None,
             FlextModelsPydantic.Field(description="Default fallback payload"),
         ] = None
         required: Annotated[

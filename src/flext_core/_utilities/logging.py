@@ -73,7 +73,8 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             event = f"{self._operation_name} {status}"
             try:
                 _ = emit(
-                    event, **FlextUtilitiesLogging.to_container_context(context.root)
+                    event,
+                    **FlextUtilitiesLogging.to_container_context(context.root),
                 )
             except BaseException as logging_error:
                 if exc_val is not None and exc_val is not logging_error:

@@ -108,13 +108,16 @@ class TestsFlextCoreUtilitiesCollection:
             ([1, 2, 3], _double, [2, 4, 6]),
             ((1, 2), _increment, (2, 3)),
             ({"a": 1, "b": 2}, _times_ten, {"a": 10, "b": 20}),
+            ({1, 2}, _double, {2, 4}),
+            (frozenset({1, 2}), _double, frozenset({2, 4})),
+            (range(3), _double, [0, 2, 4]),
         ],
     )
     @staticmethod
     def test_map_applies_function_to_each_element(
-        items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
-        mapper: Callable[[t.JsonValue], t.JsonValue],
-        expected: t.JsonValue,
+        items: t.SequenceOf[int] | t.MappingKV[str, int] | set[int] | frozenset[int],
+        mapper: Callable[[int], int],
+        expected: t.SequenceOf[int] | t.MappingKV[str, int] | set[int] | frozenset[int],
     ) -> None:
         """Test map applies function to each element."""
         tm.that(u.map(items, mapper), eq=expected)
@@ -167,14 +170,17 @@ class TestsFlextCoreUtilitiesCollection:
             ({"a": 1, "b": 4}, _greater_than_two, _double, {"b": 8}),
             ([1, 3, 5], _greater_than_ten, None, []),
             ([2, 4, 6], _is_even, None, [2, 4, 6]),
+            ((1, 2, 3, 4), _is_even, None, (2, 4)),
+            ((1, 2, 3, 4), _greater_than_two, _double, (6, 8)),
+            (range(4), _is_even, None, [0, 2]),
         ],
     )
     @staticmethod
     def test_filter_keeps_matching_and_optionally_maps(
-        items: t.JsonList | tuple[t.JsonValue, ...] | t.JsonMapping,
-        predicate: Callable[[t.JsonValue], bool],
-        mapper: Callable[[t.JsonValue], t.JsonValue] | None,
-        expected: t.JsonValue,
+        items: t.SequenceOf[int] | t.MappingKV[str, int],
+        predicate: Callable[[int], bool],
+        mapper: Callable[[int], int] | None,
+        expected: t.SequenceOf[int] | t.MappingKV[str, int],
     ) -> None:
         """Test filter keeps matching and optionally maps."""
         tm.that(u.filter(items, predicate, mapper=mapper), eq=expected)

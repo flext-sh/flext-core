@@ -74,6 +74,7 @@ class FlextTypingBase(FlextTypesPydantic):
     type MutableFlatContainer = (
         MutableFlatContainerMapping | MutableSequenceOf[FlextTypesPydantic.JsonValue]
     )
+    type RuntimeData = FlextTypesPydantic.JsonValue | Path
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
     type IntMapping = MappingKV[str, int]
     type IntDict = dict[str, int]

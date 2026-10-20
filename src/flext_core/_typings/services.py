@@ -1,4 +1,3 @@
-# AUTO-GENERATED FILE — regenerate through `make gen` (source of truth: flext-infra templates)
 """FlextTypesServices - service, mapping, and runtime helper type aliases.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -20,7 +19,7 @@ from enum import Enum
 from logging import Formatter, Handler, LogRecord
 from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
-from typing import Any, BinaryIO, TextIO, TypeAliasType
+from typing import BinaryIO, TextIO, TypeAliasType
 
 from flext_core import c
 from flext_core._typings import FlextTypesPydantic, FlextTypingBase
@@ -29,7 +28,9 @@ from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 class FlextTypesServices:
     """Type aliases for service registration and runtime mappings."""
 
-    type JsonPayload = FlextTypesPydantic.JsonValue
+    type JsonPayload = (
+        FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType | Path
+    )
 
     type ServiceLeaf[T] = (
         FlextTypingBase.Scalar | FlextTypesPydantic.JsonValue | Path | T
@@ -40,10 +41,11 @@ class FlextTypesServices:
         | FlextTypingBase.JsonList
     )
     type RegisterableService[T] = (
-        FlextTypesServices.ServiceValue[T] | Callable[..., Any]
+        FlextTypesServices.ServiceValue[T]
+        | Callable[..., FlextTypesServices.ServiceValue[T]]
     )
-    type FactoryCallable[T] = Callable[..., Any]
-    type ResourceCallable[T] = Callable[..., Any]
+    type FactoryCallable[T] = Callable[[], FlextTypesServices.ServiceValue[T]]
+    type ResourceCallable[T] = FlextTypesServices.FactoryCallable[T]
     type ServiceMap[T] = FlextTypingBase.MappingKV[
         str, FlextTypesServices.RegisterableService[T]
     ]
@@ -192,7 +194,7 @@ class FlextTypesServices:
         | FlextTypesServices.LazyCollection
         | ModuleType
         | type[BaseException | Enum]
-        | Callable[..., Any]
+        | Callable[..., FlextTypesPydantic.JsonValue]
     )
     type LazyGetattr = Callable[[str], FlextTypesServices.ModuleExport]
     type LazyDir = Callable[[], FlextTypingBase.SequenceOf[str]]

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from typing import ClassVar, Literal
 
+from flext_core import p
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._enforcement import FlextModelsEnforcementModelBase
-from flext_core._protocols import FlextProtocolsBase
 
 
 class FlextModelsEnforcementResolution:
@@ -25,7 +25,7 @@ class FlextModelsEnforcementResolution:
             )
         )
         status: Literal["resolved"] = "resolved"
-        value: FlextProtocolsBase.AttributeProbe
+        value: p.AttributeProbe
 
     class DeferredAlias(FlextModelsEnforcementModelBase):
         """Source-proven imports prevent runtime evaluation of a declared alias."""

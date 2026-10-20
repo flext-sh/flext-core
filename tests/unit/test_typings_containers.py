@@ -28,13 +28,14 @@ class TestsFlextCoreJsonPayload:
     """Payloads admit native JSON containers and explicitly declared model leaves."""
 
     @staticmethod
-    def test_direct_models_survive_runtime_payload_validation() -> None:
-        """The runtime contract preserves a model leaf without serializing it."""
+    def test_models_are_not_accepted_as_json_payloads() -> None:
+        """Models must be serialized before crossing the JSON boundary."""
         model = m.ConfigMap(root={"name": "sample"})
         adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
             TypeForm(t.JsonPayload)
         )
-        tm.ok(adapter.validate_python(model) is model)
+        with pytest.raises(flext_tests.m.ValidationError):
+            adapter.validate_python(model)
 
     @staticmethod
     def test_nested_json_survives_runtime_payload_validation() -> None:

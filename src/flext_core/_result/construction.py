@@ -32,7 +32,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     @abstractmethod
     def _create_success[V](value: V) -> p.Result[V]:
         """Construct a payload through the concrete facade's MRO owner."""
-        raise NotImplementedError
+        raise NotImplementedError(value)
 
     @staticmethod
     @abstractmethod
@@ -43,7 +43,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         exception: BaseException | None,
     ) -> p.Result[Never]:
         """Construct normalized failure state through the concrete facade."""
-        raise NotImplementedError
+        raise NotImplementedError(f"{error}|{error_code}|{error_data}|{exception}")
 
     @staticmethod
     def require_error(source: p.FailureLike) -> str:

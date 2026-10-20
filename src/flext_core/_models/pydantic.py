@@ -40,8 +40,8 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from typing_extensions import TypeForm
 
-from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
-from flext_core._typings.native_export import FlextTypingNativeExport
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 class FlextModelsPydantic:
@@ -56,11 +56,11 @@ class FlextModelsPydantic:
     """
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
-    Field = FlextTypingNativeExport(pydantic.Field)
+    Field = staticmethod(pydantic.Field)
     FieldInfo = FieldInfo
 
     if TYPE_CHECKING:
-        PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
+        PrivateAttr: ClassVar[p.PrivateAttrFactory]
     else:
         PrivateAttr = staticmethod(pydantic.PrivateAttr)
 
@@ -90,7 +90,7 @@ class FlextModelsPydantic:
     class SettingsConfigDict(pydantic_settings.SettingsConfigDict, total=False):
         """Canonical settings configuration exported through the models facade."""
 
-    field_validator = FlextTypingNativeExport(pydantic.field_validator)
+    field_validator = staticmethod(pydantic.field_validator)
     # Why (abstraction boundary): ENFORCE-070 makes flext-core the sole owner of
     # pydantic, and the tier-whitelist gate rejects a bare ``pydantic`` import in
     # every downstream project. A name that this facade does not re-export
@@ -100,16 +100,10 @@ class FlextModelsPydantic:
     # model-level counterpart of ``field_validator`` above, and its absence alone
     # forced bare pydantic imports across 32 downstream modules.
     # Re-export native decorators with their complete upstream overload sets.
-    model_validator = FlextTypingNativeExport(pydantic.model_validator)
-    field_serializer: ClassVar[FlextProtocolsBase.FieldSerializerFactory] = (
-        pydantic.field_serializer
-    )
-    model_serializer: ClassVar[FlextProtocolsBase.ModelSerializerFactory] = (
-        pydantic.model_serializer
-    )
-    computed_field: ClassVar[FlextProtocolsBase.ComputedFieldFactory] = (
-        pydantic.computed_field
-    )
+    model_validator = staticmethod(pydantic.model_validator)
+    field_serializer: ClassVar[p.FieldSerializerFactory] = pydantic.field_serializer
+    model_serializer: ClassVar[p.ModelSerializerFactory] = pydantic.model_serializer
+    computed_field: ClassVar[p.ComputedFieldFactory] = pydantic.computed_field
 
     @overload
     @staticmethod

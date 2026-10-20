@@ -13,8 +13,7 @@ import math
 from pydantic import ConfigDict
 from typing_extensions import TypeForm
 
-from flext_core import c, t
-from flext_core._models import FlextModelsPydantic
+from flext_core import c, m, t
 from flext_core._utilities import FlextUtilitiesBase
 
 
@@ -76,7 +75,7 @@ class FlextUtilitiesConversion:
             float_value = FlextUtilitiesBase.type_adapter(
                 TypeForm(t.StrictFloat)
             ).validate_python(value)
-        except FlextModelsPydantic.ValidationError:
+        except m.ValidationError:
             return str(value)
         else:
             if float_value.is_integer():
@@ -105,7 +104,7 @@ class FlextUtilitiesConversion:
                 TypeForm(t.JsonList), config=ConfigDict(strict=True)
             ).validate_python(value)
             return [str(item) for item in list_value]
-        except FlextModelsPydantic.ValidationError:
+        except m.ValidationError:
             return [str(value)]
 
     @staticmethod

@@ -17,11 +17,12 @@ from typing import Annotated, ClassVar
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._container_parts import flextmodelscontainer_part_02
-from flext_core._protocols import FlextProtocolsBase
-from flext_core._typings import FlextTypesServices
 
 
 class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
+    t = t
+    p = p
+
     class ServiceRegistrationSpec(FlextModelsBase.ArbitraryTypesModel):
         """Bootstrap specification for container registration.
 
@@ -87,15 +88,15 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
                 validate_default=True,
             ),
         ] = None
-        user_overrides: (
-            FlextProtocolsBase.Model | FlextTypesServices.UserOverridesMapping | None
-        ) = FlextModelsPydantic.Field(
-            default=None,
-            title="User Overrides",
-            description="User-level configuration overrides applied after defaults.",
-            validate_default=True,
+        user_overrides: p.Model | t.UserOverridesMapping | None = (
+            FlextModelsPydantic.Field(
+                default=None,
+                title="User Overrides",
+                description="User-level configuration overrides applied after defaults.",
+                validate_default=True,
+            )
         )
-        container_config: FlextProtocolsBase.Model | None = FlextModelsPydantic.Field(
+        container_config: p.Model | None = FlextModelsPydantic.Field(
             default=None,
             title="Container Config",
             description="Container configuration model controlling DI behavior.",

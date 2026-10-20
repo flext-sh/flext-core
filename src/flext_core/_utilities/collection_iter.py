@@ -194,7 +194,9 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
             return {k: mapper(v) for k, v in items.items()}
         if isinstance(items, set):
             return {mapper(item) for item in items}
-        return frozenset(mapper(item) for item in items)
+        if isinstance(items, frozenset):
+            return frozenset(mapper(item) for item in items)
+        return [mapper(item) for item in items]
 
 
 __all__: list[str] = ["FlextUtilitiesCollectionIter"]

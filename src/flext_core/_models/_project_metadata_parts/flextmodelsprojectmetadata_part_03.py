@@ -10,12 +10,12 @@ from typing import Annotated
 
 from pydantic import Field
 
+from flext_core import t
 from flext_core._models._project_metadata_parts import (
     flextmodelsprojectmetadata_part_01,
     flextmodelsprojectmetadata_part_02,
     flextmodelsprojectmetadata_part_05,
 )
-from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsProjectMetadataAggregates(
@@ -52,15 +52,15 @@ class FlextModelsProjectMetadataAggregates(
             Field(default="", alias="requires-python", description="Python constraint"),
         ] = ""
         dependencies: Annotated[
-            FlextTypingBase.StrTuple,
+            t.StrTuple,
             Field(default=(), description="PEP 508 runtime dependency declarations"),
         ] = ()
         classifiers: Annotated[
-            FlextTypingBase.StrTuple,
+            t.StrTuple,
             Field(default=(), description="Trove classifiers"),
         ] = ()
         keywords: Annotated[
-            FlextTypingBase.StrTuple,
+            t.StrTuple,
             Field(default=(), description="Project search keywords"),
         ] = ()
 

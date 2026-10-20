@@ -11,12 +11,11 @@ from typing import Annotated, Self
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._models._project_metadata_parts import (
     flextmodelsprojectmetadata_part_01,
     flextmodelsprojectmetadata_part_05,
 )
-from flext_core._typings import FlextTypingBase
 
 FlextModelsProjectMetadataContract = (
     flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
@@ -80,7 +79,7 @@ class FlextModelsProjectMetadataFields:
             Field(default=None, description="Explicit class stem override"),
         ] = None
         budget: Annotated[
-            FlextTypingBase.JsonMapping | None,
+            t.JsonMapping | None,
             Field(
                 default=None,
                 description=(
@@ -93,7 +92,7 @@ class FlextModelsProjectMetadataFields:
             ),
         ] = None
         duplication: Annotated[
-            FlextTypingBase.JsonMapping | None,
+            t.JsonMapping | None,
             Field(
                 default=None,
                 description=(
@@ -208,7 +207,7 @@ class FlextModelsProjectMetadataFields:
             Field(default=None, description="Documentation site title override"),
         ] = None
         exclude_docs: Annotated[
-            FlextTypingBase.StrTuple,
+            t.StrTuple,
             Field(default=(), description="Documentation exclusion patterns"),
         ] = ()
         readme_sections: Annotated[
@@ -244,7 +243,7 @@ class FlextModelsProjectMetadataFields:
             Field(default=None, description="Explicit namespace-enforcement toggle"),
         ] = None
         scan_dirs: Annotated[
-            FlextTypingBase.StrTuple,
+            t.StrTuple,
             Field(default=(), description="Explicit namespace scan directories"),
         ] = ()
         include_dynamic_dirs: Annotated[
