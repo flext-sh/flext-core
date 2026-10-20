@@ -15,12 +15,10 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core import p, t
-from flext_core._models import (
-    FlextModelsBase,
-    FlextModelsContainers,
-    FlextModelsPydantic,
-)
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._container_parts import flextmodelscontainer_part_02
+from flext_core._protocols import FlextProtocolsBase
+from flext_core._typings import FlextTypesServices
 
 
 class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
@@ -90,25 +88,18 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             ),
         ] = None
         user_overrides: (
-            FlextModelsContainers.ConfigMap
-            | t.MappingKV[
-                str,
-                FlextModelsContainers.ConfigMap | t.ScalarList | t.Scalar,
-            ]
-            | None
+            FlextProtocolsBase.Model | FlextTypesServices.UserOverridesMapping | None
         ) = FlextModelsPydantic.Field(
             default=None,
             title="User Overrides",
             description="User-level configuration overrides applied after defaults.",
             validate_default=True,
         )
-        container_config: FlextModelsContainer.ContainerConfig | None = (
-            FlextModelsPydantic.Field(
-                default=None,
-                title="Container Config",
-                description="Container configuration model controlling DI behavior.",
-                validate_default=True,
-            )
+        container_config: FlextProtocolsBase.Model | None = FlextModelsPydantic.Field(
+            default=None,
+            title="Container Config",
+            description="Container configuration model controlling DI behavior.",
+            validate_default=True,
         )
 
 

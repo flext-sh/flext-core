@@ -401,6 +401,7 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(
             isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog), truth=True
         )
+        assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
         tm.that(pet.animal.bark, eq="woof")
 
         with pytest.raises(m.ValidationError):

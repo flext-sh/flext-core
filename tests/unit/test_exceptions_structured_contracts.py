@@ -150,7 +150,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         tm.that(result.failure, truth=True)
         tm.that(result.success, truth=False)
         tm.that(result.error, none=False)
-        tm.that(expected_fragment in result.error, truth=True)
+        tm.that(expected_fragment in str(result.error), truth=True)
         tm.that(result.error_code, eq=expected_code)
         tm.that(result.error_data, none=False)
         for key, value in expected_data.items():

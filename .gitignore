@@ -316,10 +316,8 @@ __pyrefly_virtual__/
 .venv.*/
 *.egg-info/
 _tmp_*/
-*.bak/
-*.orig/
-*.rej/
-*.swp/
+*.orig
+*.swp
 build/
 dist/
 node_modules/
@@ -327,6 +325,7 @@ site/
 target/
 .pyrefly_cache/
 .tox/
+venv/
 .flext-sync.lock
 .sync.lock
 .planning/
@@ -371,6 +370,3 @@ CLAUDE.local.md
 !.flext/uv/standalone/pyproject.toml
 !.flext/uv/local/uv.lock
 !.flext/uv/standalone/uv.lock
-
-# RUNTIME: local projections (derived)
-/.vscode/settings.json

@@ -17,18 +17,33 @@ from typing import TypeAliasType
 from flext_core import t
 from flext_core._models import FlextModelsEnforcement
 from flext_core._utilities._beartype import bound_names, parse_module, scope_nodes
-from flext_core._utilities._beartype._module_source_scan import _cached_declarations
+from flext_core._utilities._beartype._module_source_scan import cached_declarations
 
 
 @functools.lru_cache(maxsize=65536)
-def _cached_scope_nodes(scope: object) -> tuple[ast.AST, ...]:
+def _cached_scope_nodes(scope: ast.AST) -> tuple[ast.AST, ...]:
     """Cache scope traversal for one immutable AST node.
 
     Returns:
         The resulting ``tuple[ast.AST, ...]``.
 
     """
-    return tuple(scope_nodes(scope))  # type: ignore[arg-type]
+    return tuple(scope_nodes(scope))
+
+
+@functools.lru_cache(maxsize=65536)
+def _cached_scope_bindings(scope: ast.AST) -> t.MappingKV[str, tuple[ast.AST, ...]]:
+    """Index each binding once in its lexical scope, retaining duplicate owners.
+
+    Returns:
+        The nodes that bind each name without entering a nested scope.
+
+    """
+    bindings: t.MutableMappingKV[str, list[ast.AST]] = {}
+    for node in _cached_scope_nodes(scope):
+        for name in bound_names(node):
+            bindings.setdefault(name, []).append(node)
+    return {name: tuple(nodes) for name, nodes in bindings.items()}
 
 
 def _flag_guarded(
@@ -192,7 +207,7 @@ def _declaration_entry(
     """
     candidates = tuple(
         (entry, context)
-        for entry in _cached_declarations(source_tree)
+        for entry in cached_declarations(source_tree)
         if entry[0][-1:] == (alias.__name__,)
         and (context := _deferred_module(alias, entry[0], owner=owner)) is not None
         and context[0] is module
@@ -216,10 +231,10 @@ def _declaration_entry(
     (path, declaration, scopes), (declaring_module, class_owners) = candidates[0]
     owners: tuple[ModuleType | type, ...] = (declaring_module, *class_owners)
     if any(
-        name in bound_names(node) and node is not binding
+        node is not binding
         for binding, scope in zip((*scopes[1:], declaration.name), scopes, strict=True)
         for name in bound_names(binding)
-        for node in _cached_scope_nodes(scope)
+        for node in _cached_scope_bindings(scope).get(name, ())
     ):
         msg = f"Ambiguous type alias binding: {alias.__module__}.{'.'.join(path)}"
         raise ValueError(msg)

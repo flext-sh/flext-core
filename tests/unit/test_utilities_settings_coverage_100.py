@@ -165,4 +165,4 @@ class TestsFlextCoreUtilitiesSettings:
 
         tm.fail(failure_result)
         tm.that(failure_result.error, none=False)
-        tm.that(error_message in failure_result.error, truth=True)
+        tm.that(error_message in str(failure_result.error), truth=True)

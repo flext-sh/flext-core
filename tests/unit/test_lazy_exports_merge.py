@@ -14,8 +14,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Callable
 from types import ModuleType
-from typing import TYPE_CHECKING, Callable, cast
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -203,7 +204,7 @@ class TestsFlextCoreLazyExportsMerge:
                 publish_all=False,
             )
 
-            getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+            getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)
             assert getattr_fn("module") is child_module
             assert lazy.cache_stats["module_cache"] >= 1
@@ -228,7 +229,7 @@ class TestsFlextCoreLazyExportsMerge:
                 {"module": module_name},
                 publish_all=False,
             )
-            getattr_fn = cast(Callable[[str], object], module_globals["__getattr__"])
+            getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)
             getattr_fn("module")
             assert lazy.cache_stats["module_cache"] >= 1

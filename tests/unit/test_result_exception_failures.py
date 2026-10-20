@@ -152,7 +152,7 @@ class TestsFlextCoreResultExceptionFailures:
             error_data={
                 "phase": "lazy-init",
                 "completed": True,
-                "issues": tuple(issues) if tuple_issues else issues,
+                "issues": tuple(issues) if tuple_issues else issues,  # type: ignore[dict-item]
                 "written_files": ["src/independent/__init__.py"],
                 "pending_files": ["src/package/__init__.py"],
             },

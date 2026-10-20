@@ -318,20 +318,70 @@ variance-mismatch = "error"
 
 [tool.pyright]
 exclude = [
+  "**/*.bak",
+  "**/*.bak/**",
+  "**/*.egg-info/**",
+  "**/*.orig",
+  "**/*.orig/**",
+  "**/*.rej",
+  "**/*.rej/**",
+  "**/*.swp",
+  "**/*.swp/**",
   "**/.*",
+  "**/.agents-sync-home/**",
+  "**/.agents/**",
+  "**/.archive/**",
+  "**/.beads/**",
+  "**/.benchmarks/**",
+  "**/.bkp/**",
+  "**/.cache/**",
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.gemini/**",
+  "**/.git/**",
+  "**/.hypothesis/**",
+  "**/.kilo/**",
   "**/.mypy_cache",
+  "**/.mypy_cache/**",
+  "**/.omo/**",
+  "**/.opencode/**",
+  "**/.pylance_cache/**",
+  "**/.pyrefly_cache/**",
   "**/.pytest_cache",
+  "**/.pytest_cache/**",
+  "**/.reports/**",
   "**/.ruff_cache",
+  "**/.ruff_cache/**",
+  "**/.serena/**",
+  "**/.snapshots/**",
+  "**/.test-tmp/**",
+  "**/.tmp/**",
+  "**/.tox/**",
   "**/.venv",
+  "**/.venv.*/**",
   "**/.venv/**",
+  "**/.vscode/**",
+  "**/.worktrees/**",
   "**/__pycache__",
+  "**/__pycache__/**",
   "**/__pyrefly_virtual__/**",
+  "**/_tmp_*/**",
+  "**/build/**",
   "**/dist-packages",
   "**/dist-packages/**",
+  "**/dist/**",
+  "**/htmlcov/**",
+  "**/incoming/**",
+  "**/legado/**",
   "**/node_modules",
+  "**/node_modules/**",
   "**/protos/**",
+  "**/reports/**",
   "**/site-packages",
   "**/site-packages/**",
+  "**/site/**",
+  "**/target/**",
   "**/venv",
   "**/venv/**",
   ".git",
@@ -341,8 +391,6 @@ exclude = [
 ]
 include = ["conftest.py", "examples", "scripts", "src", "tests"]
 extraPaths = ["src", "."]
-venv = ".venv"
-venvPath = "."
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportCallIssue = "error"
@@ -454,6 +502,9 @@ ignore = [
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
 ]
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+
 extend-safe-fixes = [
   "camelcase-imported-as-lowercase",
   "relative-imports",

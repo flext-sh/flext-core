@@ -106,7 +106,7 @@ def declarations(
 
 
 @functools.cache
-def _cached_declarations(
+def cached_declarations(
     node: ast.AST,
     scopes: tuple[
         ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef, ...
@@ -176,6 +176,7 @@ def loads(tree: ast.Module, name: str) -> bool:
 
 __all__: list[str] = [
     "bound_names",
+    "cached_declarations",
     "declarations",
     "export_names",
     "loads",

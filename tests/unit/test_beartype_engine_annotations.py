@@ -174,6 +174,7 @@ class TestsFlextBeartypeEngineAnnotations(
         tm.that(u.alias_contains_any(Host.LazyAlias, owner=Host) is False, truth=True)
         deferred = u.deferred_alias(Host.LazyAlias, owner=Host)
         tm.that(deferred, none=False)
+        assert deferred is not None
         tm.that(deferred.module, eq=Host.__module__)
         tm.that(deferred.qualname, eq=f"{Host.__qualname__}.LazyAlias")
         tm.that(deferred.unavailable_imports, eq=("LazyResolvableType",))

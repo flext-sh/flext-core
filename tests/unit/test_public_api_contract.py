@@ -14,8 +14,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
+from typing import cast
 
 import pytest
 
@@ -91,11 +93,11 @@ class TestsFlextCorePublicApiContract:
             imports,
             public_exports=("Counter",),
         )
-        resolver = namespace["__getattr__"]
+        resolver = cast("Callable[[str], object]", namespace["__getattr__"])
         tm.that(callable(resolver), truth=True)
         counter = resolver("Counter")
         tm.that(isinstance(counter, type), truth=True)
-        tm.that(counter.__name__, eq="Counter")
+        tm.that(cast("type", counter).__name__, eq="Counter")
 
     @staticmethod
     @pytest.mark.parametrize("name", _FACADES)

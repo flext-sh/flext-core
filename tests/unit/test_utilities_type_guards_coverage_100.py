@@ -73,8 +73,11 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(metadata["repository_root"], eq=str(repository_root))
         tm.that(metadata["retry_window"] is None, eq=True)
         tm.that(isinstance(payload["started_at"], str), truth=True)
-        tm.that(datetime.fromisoformat(payload["started_at"]), eq=envelope.started_at)
-        tm.that(set(normalized_modes), eq={"delta", "full"})
+        tm.that(
+            datetime.fromisoformat(cast("str", payload["started_at"])),
+            eq=envelope.started_at,
+        )
+        tm.that(set(cast("list[object]", normalized_modes)), eq={"delta", "full"})
 
     @staticmethod
     def test_public_guard_returns_normalized_values_defaults_and_failures() -> None:
@@ -108,8 +111,9 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(fallback_tags, eq=["cli"])
         tm.that(guarded_attempt, eq=2)
         tm.that(isinstance(failed_guard_result, p.Result), truth=True)
+        assert isinstance(failed_guard_result, p.Result)
         tm.fail(failed_guard_result)
         tm.that(
-            failed_guard_result.error,
+            cast("str", failed_guard_result.error),
             eq="Guard validation raised ValueError: invalid metadata",
         )

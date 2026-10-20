@@ -219,6 +219,7 @@ class TestsFlextCoreHandlersValidationContext(
         # Assert
         popped = u.Tests.assert_success(result)
         tm.that(isinstance(popped, m.ConfigMap), truth=True)
+        assert isinstance(popped, m.ConfigMap)
         tm.that(popped.model_dump(), eq={})
 
     def test_can_handle_accepts_arbitrary_type_for_flexible_handler(self) -> None:

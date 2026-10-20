@@ -7,7 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Callable, cast
+from collections.abc import Callable
+from typing import TYPE_CHECKING, cast
 
 import pytest
 
@@ -67,9 +68,9 @@ class TestsFlextCoreLazyMembers:
             tm.that(module in sys.modules, eq=False)
             tm.that(Namespace.VALUE, eq=7)
             tm.that(module in sys.modules, eq=True)
-            who = cast(Callable[[], str], Namespace.who)
-            twice = cast(Callable[[int], int], Namespace.twice)
-            nested = cast(type, Namespace.Nested)
+            who = cast("Callable[[], str]", Namespace.who)
+            twice = cast("Callable[[int], int]", Namespace.twice)
+            nested = cast("type", Namespace.Nested)
             tm.that(callable(who), truth=True)
             tm.that(callable(twice), truth=True)
             tm.that(isinstance(nested, type), truth=True)

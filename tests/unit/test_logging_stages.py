@@ -177,10 +177,8 @@ class TestsFlextLoggingStages:
             raise failure
         except ValueError:
             result = logger.info("ordered stages", payload=payload, exc_info=True)
-        else:
-            pytest.fail("Invalid integer conversion must provide active exc_info")
 
-        tm.that(result.success, eq=True)
+        tm.that(result.success, eq=True)  # type: ignore[unreachable]
         tm.that(len(observed), eq=2)
         tm.that(observed[1]["payload"], eq=payload)
         tm.that(observed[1]["exception_type"], eq="ValueError")
@@ -825,7 +823,7 @@ class TestsFlextLoggingStages:
             (declared_key, declared_key.casefold(), declared_key.swapcase()),
             sensitive_value,
         )
-        nested: t.JsonList = [payload]
+        nested: list[t.JsonValue] = [payload]
         tm.ok(
             u.log(
                 "declared sensitive payload",

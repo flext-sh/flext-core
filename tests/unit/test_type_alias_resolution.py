@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import ast
 import warnings
+from collections.abc import Callable
+from typing import cast
 
 import pytest
 from typing_extensions import TypeForm
@@ -36,11 +38,19 @@ class TestsFlextTypeAliasResolution:
             resources={"resource": factory},
         )
         tm.that(registration.services, none=False)
-        assert registration.services["bootstrap"] is payload
+        assert cast("dict[str, object]", registration.services)["bootstrap"] is payload
         tm.that(registration.factories, none=False)
-        assert registration.factories["factory"]() is payload
+        assert (
+            cast("dict[str, Callable[[], object]]", registration.factories)["factory"]()
+            is payload
+        )
         tm.that(registration.resources, none=False)
-        assert registration.resources["resource"]() is payload
+        assert (
+            cast("dict[str, Callable[[], object]]", registration.resources)[
+                "resource"
+            ]()
+            is payload
+        )
         assert (
             m.FactoryRegistration(name="factory", factory=factory).factory() is payload
         )
@@ -90,6 +100,8 @@ class TestsFlextTypeAliasResolution:
         owner = TestsFlextTypeAliasDeclarations.LegalTypes
         deferred = u.deferred_alias(owner.Deferred, owner=owner)
         tm.that(deferred, none=False)
+        assert deferred is not None
+        assert deferred is not None
         tm.that(deferred.unavailable_imports, eq=("DeferredPath",))
         tm.that(u.deferred_alias(owner.Resolved, owner=owner), none=True)
         tm.that(u.deferred(owner.Deferred, owner=owner), eq=(deferred,))
@@ -200,11 +212,14 @@ class TestsFlextTypeAliasResolution:
 
         deferred = u.deferred_alias(alias, owner=Consumer)
         tm.that(deferred, none=False)
+        assert deferred is not None
         tm.that(deferred.module, eq=type_aliases.__name__)
+        assert deferred is not None
         tm.that(
             deferred.qualname,
             eq=f"{TestsFlextTypeAliasDeclarations.LegalTypes.__qualname__}.Deferred",
         )
+        assert deferred is not None
         tm.that(deferred.unavailable_imports, eq=("DeferredPath",))
         tm.that(u.deferred(alias, owner=Consumer), eq=(deferred,))
         tm.that(u.resolve_type_alias_value(alias, owner=Consumer), none=True)
@@ -226,6 +241,21 @@ class TestsFlextTypeAliasResolution:
             ),
             none=False,
         )
+
+    @staticmethod
+    def test_nested_alias_bindings_keep_independent_lexical_owners() -> None:
+        """Homonymous nested declarations remain distinct across repeated queries."""
+        parent = TestsFlextTypeAliasDeclarations.NestedScopes
+        child = parent.Child
+        parent_proof = u.deferred_alias(parent.Deferred, owner=parent)
+        child_proof = u.deferred_alias(child.Deferred, owner=child)
+        if parent_proof is None or child_proof is None:
+            pytest.fail("Both static-only aliases must retain their lexical proof")
+        tm.that(parent_proof.qualname, eq=f"{parent.__qualname__}.Deferred")
+        tm.that(child_proof.qualname, eq=f"{child.__qualname__}.Deferred")
+        tm.that(parent_proof.unavailable_imports, eq=child_proof.unavailable_imports)
+        tm.that(u.deferred_alias(parent.Deferred, owner=child), eq=parent_proof)
+        tm.that(u.deferred_alias(child.Deferred, owner=parent), eq=child_proof)
 
     @staticmethod
     def test_guarded_import_in_other_scope_does_not_hide_missing_name() -> None:

@@ -36,6 +36,7 @@ class TestsFlextCoreLazyRelativePackages:
         normalized = normalize_lazy_imports(package, {"module": relative})
         target = normalized["module"]
         tm.that(isinstance(target, str), truth=True)
+        assert isinstance(target, str)
         tm.that(
             importlib.import_module(target) is importlib.import_module(absolute),
             truth=True,

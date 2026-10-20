@@ -235,9 +235,10 @@ class TestsFlextCoreResultFactoryDip:
         result: p.Result[int] = r[int].fail(None, exception=exc)
         tm.fail(result, has="")
         tm.that(result.error_data, none=False)
+        assert result.error_data is not None
         tm.that(result.error_data.get("host"), eq="db.example")
-        tm.that("password" not in result.error_data, truth=True)
-        tm.that("token" not in result.error_data, truth=True)
+        tm.that("password" not in str(result.error_data), truth=True)
+        tm.that("token" not in str(result.error_data), truth=True)
         tm.that(password not in str(result.error_data), truth=True)
         tm.that(token not in str(result.error_data), truth=True)
 
@@ -290,9 +291,10 @@ class TestsFlextCoreResultFactoryDip:
         )
         tm.fail(result, has="denied")
         tm.that(result.error_data, none=False)
+        assert result.error_data is not None
         tm.that(result.error_data.get("host"), eq="db.example")
-        tm.that("password" not in result.error_data, truth=True)
-        tm.that("token" not in result.error_data, truth=True)
+        tm.that("password" not in str(result.error_data), truth=True)
+        tm.that("token" not in str(result.error_data), truth=True)
         tm.that(password not in str(result.error_data), truth=True)
         tm.that(token not in str(result.error_data), truth=True)
 
@@ -314,8 +316,9 @@ class TestsFlextCoreResultFactoryDip:
         )
         tm.fail(result, has="denied")
         tm.that(result.error_data, none=False)
+        assert result.error_data is not None
         tm.that(result.error_data.get("host"), eq="kept")
-        tm.that("password" not in result.error_data, truth=True)
-        tm.that("api_key" not in result.error_data, truth=True)
+        tm.that("password" not in str(result.error_data), truth=True)
+        tm.that("api_key" not in str(result.error_data), truth=True)
         for secret in (exception_password, password, api_key):
             tm.that(secret not in str(result.error_data), truth=True)

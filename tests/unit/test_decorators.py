@@ -59,7 +59,7 @@ class TestsFlextCoreDecorators:
         tm.that(outcome.failure, truth=True)
         tm.that(outcome.error_code, eq="CUSTOM_CODE")
         tm.that(outcome.error, none=False)
-        tm.that(message in outcome.error, truth=True)
+        tm.that(message in str(outcome.error), truth=True)
 
     @staticmethod
     def test_railway_defaults_error_code_when_omitted() -> None:

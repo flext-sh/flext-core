@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, cast
 
 import pytest
 
@@ -95,7 +95,7 @@ class TestsFlextCoreExceptions:
         message = "not found"
         with pytest.raises(e.BaseError) as excinfo:
             raise e.NotFoundError(message, resource_type="user", resource_id="u-1")
-        raised: e.NotFoundError = excinfo.value
+        raised = cast("e.NotFoundError", excinfo.value)
         tm.that(isinstance(raised, e.NotFoundError), truth=True)
         tm.that(raised.resource_type, eq="user")
         tm.that(raised.resource_id, eq="u-1")
@@ -176,8 +176,10 @@ class TestsFlextCoreExceptions:
         tm.that(result.error, none=False)
         tm.that(result.error_code, eq=c.ErrorCode.ALREADY_EXISTS)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["resource_type"], eq="user")
-        tm.that(result.error_data["resource_id"], eq="u-1")
+        tm.that(
+            cast("dict[str, object]", result.error_data)["resource_type"], eq="user"
+        )
+        tm.that(cast("dict[str, object]", result.error_data)["resource_id"], eq="u-1")
 
     @staticmethod
     def test_fail_auth_returns_structured_failure() -> None:
@@ -185,11 +187,11 @@ class TestsFlextCoreExceptions:
         result: p.Result[bool] = e.fail_auth("ldap", "user1")
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("authenticate user user1" in result.error, truth=True)
+        tm.that("authenticate user user1" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.AUTHENTICATION_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["auth_method"], eq="ldap")
-        tm.that(result.error_data["user_id"], eq="user1")
+        tm.that(cast("dict[str, object]", result.error_data)["auth_method"], eq="ldap")
+        tm.that(cast("dict[str, object]", result.error_data)["user_id"], eq="user1")
 
     @staticmethod
     def test_fail_authz_returns_structured_failure() -> None:
@@ -199,9 +201,11 @@ class TestsFlextCoreExceptions:
         tm.that(result.error, none=False)
         tm.that(result.error_code, eq=c.ErrorCode.AUTHORIZATION_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["user_id"], eq="u-1")
-        tm.that(result.error_data["resource"], eq="admin.panel")
-        tm.that(result.error_data["permission"], eq="write")
+        tm.that(cast("dict[str, object]", result.error_data)["user_id"], eq="u-1")
+        tm.that(
+            cast("dict[str, object]", result.error_data)["resource"], eq="admin.panel"
+        )
+        tm.that(cast("dict[str, object]", result.error_data)["permission"], eq="write")
 
     @staticmethod
     def test_fail_connection_returns_structured_failure() -> None:
@@ -209,10 +213,12 @@ class TestsFlextCoreExceptions:
         result: p.Result[bool] = e.fail_connection("ldap.example.com")
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("connect to ldap.example.com" in result.error, truth=True)
+        tm.that("connect to ldap.example.com" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.CONNECTION_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["host"], eq="ldap.example.com")
+        tm.that(
+            cast("dict[str, object]", result.error_data)["host"], eq="ldap.example.com"
+        )
 
     @staticmethod
     def test_fail_timeout_returns_structured_failure() -> None:
@@ -220,11 +226,16 @@ class TestsFlextCoreExceptions:
         result: p.Result[bool] = e.fail_timeout(30.0, "fetch_users")
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("fetch_users" in result.error, truth=True)
+        tm.that("fetch_users" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.TIMEOUT_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(result.error_data["operation"], eq="fetch_users")
-        tm.that(result.error_data["timeout_seconds"], eq=pytest.approx(30.0))
+        tm.that(
+            cast("dict[str, object]", result.error_data)["operation"], eq="fetch_users"
+        )
+        tm.that(
+            cast("dict[str, object]", result.error_data)["timeout_seconds"],
+            eq=pytest.approx(30.0),
+        )
 
     @staticmethod
     def test_failure_result_short_circuits_map_and_recovers() -> None:

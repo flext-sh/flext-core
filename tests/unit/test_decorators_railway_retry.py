@@ -63,9 +63,9 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         tm.that(isinstance(result, r), truth=True)
         tm.that(result.failure is True, truth=True)
         tm.that(result.error, none=False)
-        tm.that("Operation failed" in result.error, truth=True)
-        tm.that("failing_operation" in result.error, truth=True)
-        tm.that("ValueError" in result.error, truth=True)
+        tm.that("Operation failed" in str(result.error), truth=True)
+        tm.that("failing_operation" in str(result.error), truth=True)
+        tm.that("ValueError" in str(result.error), truth=True)
 
     @pytest.mark.parametrize(
         ("error_code", "expected_code"),

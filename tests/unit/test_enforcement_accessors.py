@@ -41,7 +41,9 @@ class TestsFlextCoreEnforcementAccessors:
 
         # Assert — the offending method is named and remediation is offered.
         tm.that(
-            accessor, f"{prefix} should be flagged as a forbidden accessor", truth=True
+            accessor,
+            truth=True,
+            msg=f"{prefix} should be flagged as a forbidden accessor",
         )
         message = accessor[0].message
         tm.that(f'"{prefix}"' in message, truth=True)
@@ -63,7 +65,9 @@ class TestsFlextCoreEnforcementAccessors:
 
         # Assert
         tm.that(
-            messages, f"{prefix} is a domain verb and must not be flagged", truth=False
+            messages,
+            truth=False,
+            msg=f"{prefix} is a domain verb and must not be flagged",
         )
 
     @staticmethod
@@ -104,8 +108,8 @@ class TestsFlextCoreEnforcementAccessors:
         # Assert
         tm.that(
             accessor,
-            "an override of a foreign contract is not an accessor",
-            truth=False,
+            eq=[],
+            msg="an override of a foreign contract is not an accessor",
         )
 
     @staticmethod

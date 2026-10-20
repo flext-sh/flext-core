@@ -29,6 +29,16 @@ class TestsFlextTypeAliasDeclarations:
 
         type Deferred = int
 
+    class NestedScopes:
+        """Nested homonymous aliases belong to different lexical binding indexes."""
+
+        type Deferred = DeferredPath | str
+
+        class Child:
+            """The child does not rebind the enclosing declaration."""
+
+            type Deferred = DeferredPath | bytes
+
     class InvalidTypes:
         """A missing name without a guarded import retains its NameError."""
 
