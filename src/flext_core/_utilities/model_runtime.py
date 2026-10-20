@@ -98,19 +98,17 @@ class FlextUtilitiesModelRuntime(
             method, or equally valued immutable scalar of the same type.
 
         """
-        return (
-            previous is candidate
-            or (
-                isinstance(previous, MethodType)
-                and isinstance(candidate, MethodType)
-                and previous.__self__ is candidate.__self__
+        if previous is candidate:
+            return True
+        if isinstance(previous, MethodType) and isinstance(candidate, MethodType):
+            return (
+                previous.__self__ is candidate.__self__
                 and previous.__func__ is candidate.__func__
             )
-            or (
-                any(type(previous) is scalar_type for scalar_type in c.SCALAR_TYPES)
-                and type(previous) is type(candidate)
-                and previous == candidate
-            )
+        return (
+            type(previous) is type(candidate)
+            and any(type(previous) is scalar_type for scalar_type in c.SCALAR_TYPES)
+            and previous == candidate
         )
 
     @staticmethod

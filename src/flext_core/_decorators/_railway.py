@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from functools import wraps
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, TypeIs, overload
 
 from flext_core import c, m, r
 from flext_core._decorators import FlextDecoratorsLogging
@@ -42,7 +42,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
 
         @overload
         def decorator[**PCallback, TValue](
-            func: Callable[PCallback, TValue],
+            func: Callable[PCallback, TValue | FlextProtocolsResult.Result[TValue]],
             /,
         ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
 
@@ -50,6 +50,11 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
             func: Callable[PCallback, TValue | FlextProtocolsResult.Result[TValue]],
             /,
         ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]:
+            def is_result(
+                value: TValue | FlextProtocolsResult.Result[TValue],
+            ) -> TypeIs[FlextProtocolsResult.Result[TValue]]:
+                return isinstance(value, FlextProtocolsResult.Result)
+
             @wraps(func)
             def wrapper(
                 *args: PCallback.args,
@@ -57,9 +62,8 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
             ) -> FlextProtocolsResult.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
-                    if isinstance(result, FlextProtocolsResult.Result):
-                        preserved: FlextProtocolsResult.Result[TValue] = result
-                        return preserved
+                    if is_result(result):
+                        return result
                     return r[TValue].ok(result)
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     effective_error_code = (

@@ -34,7 +34,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
 
     @overload
     @classmethod
-    def combined[**PCallback, TResult](
+    def combined(
         cls,
         *,
         inject_deps: FlextTypingBase.StrMapping | None = None,
@@ -42,10 +42,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         track_perf: bool = True,
         railway_enabled: Literal[True],
         railway_error_code: str | None = None,
-    ) -> Callable[
-        [Callable[PCallback, TResult]],
-        Callable[PCallback, FlextProtocolsResult.Result[TResult]],
-    ]: ...
+    ) -> FlextProtocolsResult.RailwayDecorator: ...
 
     @classmethod
     def combined[**PCallback, TResult](
@@ -56,16 +53,14 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         track_perf: bool = True,
         railway_enabled: bool = False,
         railway_error_code: str | None = None,
-    ) -> Callable[
-        [Callable[PCallback, TResult]],
-        Callable[PCallback, TResult]
-        | Callable[PCallback, FlextProtocolsResult.Result[TResult]],
-    ]:
+    ) -> (
+        Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]
+        | FlextProtocolsResult.RailwayDecorator
+    ):
         """Apply injection, operation logging, and optional railway wrapping.
 
         Returns:
-            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
-                TResult] | Callable[PCallback, pr.Result[TResult]]]``.
+            A return-preserving decorator, or the result-preserving railway decorator.
 
         """
         railway = m.CombinedRailwayOptions.model_validate({
@@ -74,15 +69,30 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
         })
         if railway.enabled:
 
-            def railway_decorator(
-                func: Callable[PCallback, TResult],
-            ) -> Callable[PCallback, FlextProtocolsResult.Result[TResult]]:
-                result = cls.railway(error_code=railway.error_code)(func)
+            @overload
+            def railway_decorator[**PCall, TValue](
+                func: Callable[PCall, FlextProtocolsResult.Result[TValue]],
+                /,
+            ) -> Callable[PCall, FlextProtocolsResult.Result[TValue]]: ...
+
+            @overload
+            def railway_decorator[**PCall, TValue](
+                func: Callable[PCall, TValue | FlextProtocolsResult.Result[TValue]],
+                /,
+            ) -> Callable[PCall, FlextProtocolsResult.Result[TValue]]: ...
+
+            def railway_decorator[**PCall, TValue](
+                func: Callable[PCall, TValue | FlextProtocolsResult.Result[TValue]],
+                /,
+            ) -> Callable[PCall, FlextProtocolsResult.Result[TValue]]:
+                result: Callable[PCall, FlextProtocolsResult.Result[TValue]] = (
+                    cls.railway(error_code=railway.error_code)(func)
+                )
                 if inject_deps:
                     result = cls.inject(**inject_deps)(result)
                 operation_logger: Callable[
-                    [Callable[PCallback, FlextProtocolsResult.Result[TResult]]],
-                    Callable[PCallback, FlextProtocolsResult.Result[TResult]],
+                    [Callable[PCall, FlextProtocolsResult.Result[TValue]]],
+                    Callable[PCall, FlextProtocolsResult.Result[TValue]],
                 ] = cls.log_operation(
                     operation_name=operation_name,
                     track_perf=track_perf,

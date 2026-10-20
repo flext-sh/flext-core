@@ -177,6 +177,7 @@ class FlextProtocolsResult:
     class Result[T](ResultState[T], ResultOps[T], Protocol):
         """Covariant structural railway interface over result operations and state."""
 
+    @runtime_checkable
     class RailwayDecorator(Protocol):
         """Wrap raw returns once and preserve already returned results."""
 
@@ -190,7 +191,7 @@ class FlextProtocolsResult:
         @overload
         def __call__[**PCallback, TValue](
             self,
-            func: Callable[PCallback, TValue],
+            func: Callable[PCallback, TValue | FlextProtocolsResult.Result[TValue]],
             /,
         ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
 
