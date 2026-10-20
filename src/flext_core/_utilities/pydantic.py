@@ -30,6 +30,7 @@ from pydantic import (
     SkipValidation,
     WrapSerializer,
     WrapValidator,
+    computed_field,
     validate_call,
     with_config,
 )
@@ -65,8 +66,10 @@ class FlextUtilitiesPydantic(
     WrapSerializer = WrapSerializer
 
     if TYPE_CHECKING:
+        computed_field: ClassVar[p.ComputedFieldFactory] = computed_field
         validate_call: ClassVar[p.ValidateCall] = validate_call
     else:
+        computed_field = staticmethod(computed_field)
         validate_call = staticmethod(validate_call)
     with_config = staticmethod(with_config)
 
@@ -171,9 +174,13 @@ class FlextUtilitiesPydantic(
             warnings.simplefilter("ignore")
             if isinstance(value, MappingProxyType):
                 payload = dict(value)
-            elif hasattr(value, "model_dump") and hasattr(value, "__pydantic_core_schema__"):
+            elif hasattr(value, "model_dump") and hasattr(
+                value, "__pydantic_core_schema__"
+            ):
                 payload = value.model_dump(mode="json")
-            elif model_adapter.validator.isinstance_python(value) and not isinstance(value, Mapping):
+            elif model_adapter.validator.isinstance_python(value) and not isinstance(
+                value, Mapping
+            ):
                 payload = model_adapter.validate_python(value).model_dump(mode="json")
             else:
                 payload = value

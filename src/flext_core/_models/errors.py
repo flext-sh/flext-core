@@ -11,7 +11,6 @@ from typing import Annotated, ClassVar, Self
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsErrors:
@@ -144,7 +143,7 @@ class FlextModelsErrors:
             ),
         ] = 0
 
-        @FlextUtilitiesPydantic.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def has_exceptions(self) -> bool:
             """Whether the metrics snapshot contains recorded exceptions."""
@@ -179,19 +178,19 @@ class FlextModelsErrors:
             validate_default=True,
         )
 
-        @FlextUtilitiesPydantic.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def total_exceptions(self) -> int:
             """Total recorded exception occurrences."""
             return sum(self.exception_counts.values(), 0)
 
-        @FlextUtilitiesPydantic.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def unique_exception_types(self) -> int:
             """Number of unique exception types recorded."""
             return len(self.exception_counts)
 
-        @FlextUtilitiesPydantic.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def exception_counts_summary(self) -> str:
             """Human-readable summary for logs and diagnostics."""

@@ -74,12 +74,12 @@ class FlextMixins(FlextMixinsState):
         try:
             with FlextContext.timed_operation(operation_name) as metrics:
                 metrics_map: t.MutableMappingKV[str, t.JsonPayload] = {
-                    key: u.normalize_to_container(value)
+                    key: u.normalize_to_container(value)  # type: ignore[misc]
                     for key, value in metrics.root.items()
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
-                    yield metrics_map
+                    yield metrics_map  # type: ignore[misc]
                     if "duration_ms" in metrics_map:
                         total = u.to_float(stats.get("total_duration_ms", 0.0))
                         stats["total_duration_ms"] = total + u.to_float(
@@ -102,8 +102,8 @@ class FlextMixins(FlextMixinsState):
                     metrics_map["error_count"] = stats["error_count"]
                     metrics_map["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
-                        metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]
-                    self._operation_stats[operation_name] = stats_model
+                        metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]  # type: ignore[assignment]
+                    self._operation_stats[operation_name] = stats_model  # type: ignore[assignment]
         finally:
             _ = u.clear_scope(c.ContextScope.OPERATION)
             FlextContext.apply_operation_name("")

@@ -59,9 +59,7 @@ class FlextTypesServices:
         | FlextTypesPydantic.BaseModelInstance
         | None
     )
-    type JsonPayload = (
-        FlextTypesPydantic.JsonValue | Path
-    )
+    type JsonPayload = FlextTypesPydantic.JsonValue | Path
     type OperationMetricsStream = Generator[
         FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
     ]

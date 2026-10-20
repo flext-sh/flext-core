@@ -22,6 +22,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         """Keep explicitly selected class-scope plugins local to each subclass."""
         super().__init_subclass__()
         cls._class_plugin_storage = {}
+        _ = kwargs
 
     @override
     def _get_runtime(self) -> p.ServiceRuntime:

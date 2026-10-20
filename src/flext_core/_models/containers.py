@@ -53,7 +53,9 @@ class FlextModelsContainers:
             return self.root(value)
 
     class _MappingRootBase(
-        FlextModelsPydantic.RootModel[t.MutableMappingKV[str, JsonValue | BaseModel]],
+        FlextModelsPydantic.RootModel[
+            t.MutableMappingKV[str, t.JsonValue | FlextModelsPydantic.BaseModel]
+        ],
     ):
         """MRO base providing the explicit mapping API for dict-rooted RootModels.
 
@@ -63,10 +65,12 @@ class FlextModelsContainers:
         ``root`` field with the appropriate description.
         """
 
-        def __getitem__(self, key: str) -> JsonValue | BaseModel:
+        def __getitem__(self, key: str) -> t.JsonValue | FlextModelsPydantic.BaseModel:
             return self.root[key]
 
-        def __setitem__(self, key: str, value: JsonValue | BaseModel) -> None:
+        def __setitem__(
+            self, key: str, value: t.JsonValue | FlextModelsPydantic.BaseModel
+        ) -> None:
             self.root[key] = value
 
         def __delitem__(self, key: str) -> None:
@@ -85,19 +89,19 @@ class FlextModelsContainers:
             """Return a view over the mapping's string keys."""
             return self.root.keys()
 
-        def values(self) -> ValuesView[JsonValue | BaseModel]:
+        def values(self) -> ValuesView[t.JsonValue | FlextModelsPydantic.BaseModel]:
             """Return a view over the stored JSON payloads."""
             return self.root.values()
 
-        def items(self) -> ItemsView[str, JsonValue | BaseModel]:
+        def items(self) -> ItemsView[str, t.JsonValue | FlextModelsPydantic.BaseModel]:
             """Return a view over the key-payload pairs."""
             return self.root.items()
 
         def get(
             self,
             key: str,
-            default: JsonValue | BaseModel | None = None,
-        ) -> JsonValue | BaseModel | None:
+            default: t.JsonValue | FlextModelsPydantic.BaseModel | None = None,
+        ) -> t.JsonValue | FlextModelsPydantic.BaseModel | None:
             """Return the payload stored under ``key``.
 
             Args:
@@ -112,7 +116,7 @@ class FlextModelsContainers:
 
         def update(
             self,
-            other: t.MappingKV[str, JsonValue | BaseModel],
+            other: t.MappingKV[str, t.JsonValue | FlextModelsPydantic.BaseModel],
         ) -> None:
             """Merge ``other`` into the mapping, overwriting existing keys.
 
@@ -129,8 +133,8 @@ class FlextModelsContainers:
         def pop(
             self,
             key: str,
-            *args: JsonValue | BaseModel,
-        ) -> JsonValue | BaseModel:
+            *args: t.JsonValue | FlextModelsPydantic.BaseModel,
+        ) -> t.JsonValue | FlextModelsPydantic.BaseModel:
             """Remove ``key`` and return its payload.
 
             Args:
@@ -144,7 +148,7 @@ class FlextModelsContainers:
             """
             return self.root.pop(key, *args)
 
-        def popitem(self) -> tuple[str, JsonValue | BaseModel]:
+        def popitem(self) -> tuple[str, t.JsonValue | FlextModelsPydantic.BaseModel]:
             """Remove the most recently inserted key-payload pair.
 
             Returns:
@@ -156,8 +160,8 @@ class FlextModelsContainers:
         def setdefault(
             self,
             key: str,
-            default: JsonValue | BaseModel,
-        ) -> JsonValue | BaseModel:
+            default: t.JsonValue | FlextModelsPydantic.BaseModel,
+        ) -> t.JsonValue | FlextModelsPydantic.BaseModel:
             """Return the payload under ``key``, storing ``default`` if absent.
 
             Args:
@@ -175,7 +179,7 @@ class FlextModelsContainers:
         """Runtime dictionary container with explicit mapping API."""
 
         root: Annotated[
-            t.MutableMappingKV[str, JsonValue | BaseModel],
+            t.MutableMappingKV[str, t.JsonValue | FlextModelsPydantic.BaseModel],
             FlextModelsPydantic.Field(
                 description="Validated runtime key-value mapping.",
             ),
@@ -185,14 +189,16 @@ class FlextModelsContainers:
         """Runtime configuration mapping with explicit mapping API."""
 
         root: Annotated[
-            t.MutableMappingKV[str, JsonValue | BaseModel],
+            t.MutableMappingKV[str, t.JsonValue | FlextModelsPydantic.BaseModel],
             FlextModelsPydantic.Field(
                 description="Validated runtime configuration mapping.",
             ),
         ]
 
     class ObjectList(
-        FlextModelsPydantic.RootModel[list[JsonValue | BaseModel]],
+        FlextModelsPydantic.RootModel[
+            list[t.JsonValue | FlextModelsPydantic.BaseModel]
+        ],
     ):
         """Runtime list container rooted in validated values.
 
@@ -200,7 +206,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            list[JsonValue | BaseModel],
+            list[t.JsonValue | FlextModelsPydantic.BaseModel],
             FlextModelsPydantic.Field(description="Validated runtime sequence."),
         ]
 
