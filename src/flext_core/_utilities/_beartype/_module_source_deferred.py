@@ -16,15 +16,11 @@ from typing import TypeAliasType
 
 from flext_core import t
 from flext_core._models import FlextModelsEnforcement
-from flext_core._utilities._beartype import (
-    bound_names,
-    declarations,
-    parse_module,
-    scope_nodes,
-)
+from flext_core._utilities._beartype import bound_names, parse_module, scope_nodes
+from flext_core._utilities._beartype._module_source_scan import _cached_declarations
 
 
-@functools.lru_cache(maxsize=4096)
+@functools.lru_cache(maxsize=65536)
 def _cached_scope_nodes(scope: object) -> tuple[ast.AST, ...]:
     """Cache scope traversal for one immutable AST node.
 
@@ -196,7 +192,7 @@ def _declaration_entry(
     """
     candidates = tuple(
         (entry, context)
-        for entry in declarations(source_tree)
+        for entry in _cached_declarations(source_tree)
         if entry[0][-1:] == (alias.__name__,)
         and (context := _deferred_module(alias, entry[0], owner=owner)) is not None
         and context[0] is module

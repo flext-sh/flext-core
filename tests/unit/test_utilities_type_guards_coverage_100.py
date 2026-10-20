@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from tests import m, p, tm, u
 
@@ -45,7 +45,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
             "modes": normalized_modes,
         }
 
-        payload = metadata["payload"]
+        payload = cast("t.JsonDict", metadata["payload"])
         tm.that(isinstance(payload, dict), truth=True)
         tm.that(isinstance(normalized_modes, list), truth=True)
 

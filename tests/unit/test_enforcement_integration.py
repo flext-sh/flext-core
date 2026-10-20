@@ -167,7 +167,9 @@ class TestsFlextEnforcementIntegration:
         )
         messages = _capture_import_warnings(_BAD_MODULE, search_path=module_root)
         tm.that(
-            messages, truth=True, msg="Importing the violating module emitted no warnings"
+            messages,
+            truth=True,
+            msg="Importing the violating module emitted no warnings",
         )
         return messages
 

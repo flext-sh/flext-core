@@ -74,7 +74,7 @@ class TestsFlextCoreExceptionsBase:
         error = e.ValidationError("bad", field="email")
         with pytest.raises(e.BaseError) as excinfo:
             raise error
-        raised = excinfo.value
+        raised: e.ValidationError = excinfo.value
         tm.that(isinstance(raised, e.ValidationError), truth=True)
         tm.that(raised.field, eq="email")
         tm.that("bad" in str(raised), truth=True)
@@ -88,8 +88,8 @@ class TestsFlextCoreExceptionsBase:
         )
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("Failed to register service" in result.error, truth=True)
-        tm.that("boom" in result.error, truth=True)
+        tm.that("Failed to register service" in str(result.error), truth=True)
+        tm.that("boom" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.OPERATION_ERROR)
         tm.that(result.error_data, none=False)
         tm.that(result.error_data["operation"], eq="register service")

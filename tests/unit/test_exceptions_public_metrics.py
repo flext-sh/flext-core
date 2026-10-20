@@ -30,12 +30,12 @@ class TestsFlextCoreExceptionsPublicMetrics:
         second = m.ExceptionMetricsState()
         snapshot = m.ExceptionMetricsSnapshot()
 
-        tm.that(first.exception_counts == second.exception_counts, eq={})
+        tm.that(first.exception_counts, eq={})
         tm.that(first.exception_counts is not second.exception_counts, truth=True)
         tm.that(snapshot.exception_counts is not first.exception_counts, truth=True)
         updated = first.record_exception(ValueError)
         tm.that(updated.exception_counts, eq={ValueError.__qualname__: 1})
-        tm.that(first.exception_counts == second.exception_counts, eq={})
+        tm.that(first.exception_counts, eq={})
 
     @staticmethod
     def test_invalid_metrics_preserve_native_validation_error() -> None:

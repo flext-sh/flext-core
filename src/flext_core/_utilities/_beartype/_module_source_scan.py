@@ -46,6 +46,19 @@ def bound_names(node: ast.AST) -> tuple[str, ...]:
     return ()
 
 
+@functools.lru_cache(maxsize=8192)
+def _cached_scope_nodes_tuple(node: ast.AST) -> tuple[ast.AST, ...]:
+    result: list[ast.AST] = []
+    for child in ast.iter_child_nodes(node):
+        result.append(child)
+        if not isinstance(
+            child,
+            (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda),
+        ):
+            result.extend(_cached_scope_nodes_tuple(child))
+    return tuple(result)
+
+
 def scope_nodes(node: ast.AST) -> Iterator[ast.AST]:
     """Yield the descendant nodes reachable without entering a nested scope.
 
@@ -53,13 +66,7 @@ def scope_nodes(node: ast.AST) -> Iterator[ast.AST]:
         Each ``ast.AST``.
 
     """
-    for child in ast.iter_child_nodes(node):
-        yield child
-        if not isinstance(
-            child,
-            (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef, ast.Lambda),
-        ):
-            yield from scope_nodes(child)
+    yield from _cached_scope_nodes_tuple(node)
 
 
 def declarations(
@@ -96,6 +103,30 @@ def declarations(
         return
     for child in ast.iter_child_nodes(node):
         yield from declarations(child, scopes, path)
+
+
+@functools.cache
+def _cached_declarations(
+    node: ast.AST,
+    scopes: tuple[
+        ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef, ...
+    ] = (),
+    path: tuple[str, ...] = (),
+) -> tuple[
+    tuple[
+        tuple[str, ...],
+        ast.TypeAlias,
+        tuple[ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef, ...],
+    ],
+    ...,
+]:
+    """Cache the full declaration traversal for one AST root.
+
+    Returns:
+        The resulting cached declaration tuple.
+
+    """
+    return tuple(declarations(node, scopes, path))
 
 
 def export_names(tree: ast.Module) -> frozenset[str]:
