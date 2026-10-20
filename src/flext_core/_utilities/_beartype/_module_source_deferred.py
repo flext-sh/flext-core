@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 import builtins
+import functools
 import inspect
 import sys
 from types import ModuleType
@@ -21,6 +22,17 @@ from flext_core._utilities._beartype import (
     parse_module,
     scope_nodes,
 )
+
+
+@functools.lru_cache(maxsize=4096)
+def _cached_scope_nodes(scope: object) -> tuple[ast.AST, ...]:
+    """Cache scope traversal for one immutable AST node.
+
+    Returns:
+        The resulting ``tuple[ast.AST, ...]``.
+
+    """
+    return tuple(scope_nodes(scope))  # type: ignore[arg-type]
 
 
 def _flag_guarded(
@@ -70,7 +82,7 @@ def guarded_imports(
         The resulting ``set[str]``.
 
     """
-    nodes = tuple(node for scope in scopes for node in scope_nodes(scope))
+    nodes = tuple(node for scope in scopes for node in _cached_scope_nodes(scope))
     flag_imports: t.MutableMappingKV[str, ast.ImportFrom] = {
         item.asname or item.name: node
         for node in nodes
@@ -211,7 +223,7 @@ def _declaration_entry(
         name in bound_names(node) and node is not binding
         for binding, scope in zip((*scopes[1:], declaration.name), scopes, strict=True)
         for name in bound_names(binding)
-        for node in scope_nodes(scope)
+        for node in _cached_scope_nodes(scope)
     ):
         msg = f"Ambiguous type alias binding: {alias.__module__}.{'.'.join(path)}"
         raise ValueError(msg)
