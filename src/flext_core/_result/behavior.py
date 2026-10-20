@@ -64,6 +64,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         _exc_val: BaseException | None,
         _exc_tb: TracebackType | None,
     ) -> None:
+        _ = _exc_type, _exc_val, _exc_tb
         pass
 
     def __or__[D](self, default: D) -> T | D:

@@ -64,7 +64,7 @@ class FlextUtilitiesModelRuntime(
         )
         registry_candidate = registry_module.FlextRegistry(
             registry_runtime=cls.build_service_runtime(
-                m.RuntimeBootstrapOptions(
+                m.RuntimeBootstrapOptions(  # type: ignore
                     dispatcher=elected_dispatcher,
                 )
             ),
@@ -210,7 +210,7 @@ class FlextUtilitiesModelRuntime(
         if settings is not None:
             return settings.clone(**overrides) if overrides else settings
         settings_type = runtime_options.settings_type or cls._settings_base()
-        return settings_type.fetch_global(overrides=overrides)
+        return settings_type.fetch_global(overrides=overrides)  # type: ignore
 
     @classmethod
     def build_service_runtime(

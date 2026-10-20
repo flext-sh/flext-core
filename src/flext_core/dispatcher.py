@@ -271,7 +271,7 @@ class FlextDispatcher:
             case p.Execute():
                 resolved = handler.execute
             case callable_handler if callable(callable_handler):
-                resolved = callable_handler
+                resolved = callable_handler  # type: ignore
             case _:
                 return r[
                     tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]

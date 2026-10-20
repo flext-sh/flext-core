@@ -100,7 +100,7 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         )
         self.metadata = type(self).normalize_metadata(
             options.metadata,
-            final_kwargs.root,
+            final_kwargs.root,  # type: ignore
         )
         self.timestamp = time.time()
         self.auto_log = options.auto_log

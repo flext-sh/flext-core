@@ -26,6 +26,7 @@ class FlextTypingNativeExport[T]:
         instance: p.AttributeProbe | None,
         owner: type | None = None,
     ) -> T:
+        _ = instance, owner
         """Return the identical native value for class and instance access.
 
         Returns:

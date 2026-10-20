@@ -101,8 +101,8 @@ class FlextUtilitiesContext:
     OPERATION_START_TIME: ClassVar[p.ContextProxy[datetime]] = StructlogProxyContextVar[
         datetime
     ](c.ContextKey.OPERATION_START_TIME)
-    OPERATION_METADATA: ClassVar[p.ContextProxy[t.JsonMapping]] = (
-        StructlogProxyContextVar[t.JsonMapping](c.ContextKey.OPERATION_METADATA)
+    OPERATION_METADATA: ClassVar[p.ContextProxy[t.JsonMapping]] = (  # type: ignore
+        StructlogProxyContextVar[t.JsonMapping](c.ContextKey.OPERATION_METADATA)  # type: ignore
     )
 
     @staticmethod
@@ -130,14 +130,14 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_dict_proxy(
         key: str, default: t.JsonMapping | None = None
-    ) -> p.ContextProxy[t.JsonMapping]:
+    ) -> p.ContextProxy[t.JsonMapping]:  # type: ignore
         """Create a mapping proxy over the shared structlog storage.
 
         Returns:
             The mapping context proxy.
 
         """
-        return FlextUtilitiesContext.StructlogProxyContextVar[t.JsonMapping](
+        return FlextUtilitiesContext.StructlogProxyContextVar[t.JsonMapping](  # type: ignore
             key, default
         )
 
@@ -255,7 +255,7 @@ class FlextUtilitiesContext:
             else None
         )
         try:
-            yield metadata
+            yield metadata  # type: ignore
         finally:
             duration = time.perf_counter() - perf
             metadata.root.update({
@@ -393,7 +393,7 @@ class FlextUtilitiesContext:
         current = operations.get(operation)
         if isinstance(current, int):
             operations[operation] = current + 1
-            updates["operations"] = operations
+            updates["operations"] = operations  # type: ignore
         if not updates:
             return state
         statistics = state.statistics.model_copy(update=updates)

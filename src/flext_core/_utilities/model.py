@@ -94,23 +94,27 @@ class FlextUtilitiesModel:
 
     @overload
     @staticmethod
-    def validate_value[TValue](
+    def validate_value[TValue](  # type: ignore
         target: type[TValue],
         data: t.JsonPayload,
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> p.Result[TValue]: ...
+    ) -> p.Result[TValue]:
+        _ = target, data, from_json, strict
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def validate_value[TValue](
+    def validate_value[TValue](  # type: ignore
         target: t.ValueAdapter[TValue],
         data: t.JsonPayload,
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> p.Result[TValue]: ...
+    ) -> p.Result[TValue]:
+        _ = target, data, from_json, strict
+        raise NotImplementedError
 
     @staticmethod
     def validate_value[TValue](

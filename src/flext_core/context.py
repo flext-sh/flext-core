@@ -82,7 +82,7 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
             A successful storage result.
 
         """
-        self.data.root.update({key: value})
+        self.data.root.update({key: value})  # type: ignore
         return FlextResult[bool].ok(value=True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:
@@ -92,7 +92,7 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
         value = self.data.root[key]
         if value is None:
             return FlextResult[t.JsonPayload].fail(f"Key '{key}' has no value")
-        return FlextResult[t.JsonPayload].ok(value)
+        return FlextResult[t.JsonPayload].ok(value)  # type: ignore
 
     def has(self, key: str) -> bool:
         """Whether the scope contains the key, including null-valued entries.
@@ -109,11 +109,11 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
 
     def values(self) -> list[t.JsonPayload]:
         """Return stored values in insertion order."""
-        return list(self.data.root.values())
+        return list(self.data.root.values())  # type: ignore
 
     def items(self) -> list[tuple[str, t.JsonPayload]]:
         """Return stored key-value pairs in insertion order."""
-        return list(self.data.root.items())
+        return list(self.data.root.items())  # type: ignore
 
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
         """Return a metadata attribute or an explicit missing/null failure."""
@@ -148,7 +148,7 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
             This context with merged values.
 
         """
-        self.data.root.update(other.items() if isinstance(other, p.Context) else other)
+        self.data.root.update(other.items() if isinstance(other, p.Context) else other)  # type: ignore
         return self
 
     def clone(self) -> Self:
@@ -170,7 +170,7 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
             A scope snapshot or this context.
 
         """
-        return dict(self.data.root) if as_dict else self
+        return dict(self.data.root) if as_dict else self  # type: ignore
 
 
 __all__: t.StrSequence = ("FlextContext",)

@@ -23,57 +23,69 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def filter[TItem](
+    def filter[TItem](  # type: ignore
         items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.SequenceOf[TItem]: ...
+    ) -> t.SequenceOf[TItem]:
+        _ = items, predicate, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](
+    def filter[TItem, TMapped](  # type: ignore
         items: t.SequenceOf[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.SequenceOf[TMapped]: ...
+    ) -> t.SequenceOf[TMapped]:
+        _ = items, predicate, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def filter[TItem](
+    def filter[TItem](  # type: ignore
         items: t.VariadicTuple[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.VariadicTuple[TItem]: ...
+    ) -> t.VariadicTuple[TItem]:
+        _ = items, predicate, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](
+    def filter[TItem, TMapped](  # type: ignore
         items: t.VariadicTuple[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]: ...
+    ) -> t.VariadicTuple[TMapped]:
+        _ = items, predicate, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def filter[TItem](
+    def filter[TItem](  # type: ignore
         items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.MappingKV[str, TItem]: ...
+    ) -> t.MappingKV[str, TItem]:
+        _ = items, predicate, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def filter[TItem, TMapped](
+    def filter[TItem, TMapped](  # type: ignore
         items: t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.MappingKV[str, TMapped]: ...
+    ) -> t.MappingKV[str, TMapped]:
+        _ = items, predicate, mapper
+        raise NotImplementedError
 
     @staticmethod
     def filter[TItem, TMapped](
@@ -138,38 +150,48 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: t.SequenceOf[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.SequenceOf[TMapped]: ...
+    ) -> t.SequenceOf[TMapped]:
+        _ = items, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: t.VariadicTuple[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]: ...
+    ) -> t.VariadicTuple[TMapped]:
+        _ = items, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: t.MappingKV[str, TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.MappingKV[str, TMapped]: ...
+    ) -> t.MappingKV[str, TMapped]:
+        _ = items, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: set[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> set[TMapped]: ...
+    ) -> set[TMapped]:
+        _ = items, mapper
+        raise NotImplementedError
 
     @overload
     @staticmethod
-    def map[TItem, TMapped](
+    def map[TItem, TMapped](  # type: ignore
         items: frozenset[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> frozenset[TMapped]: ...
+    ) -> frozenset[TMapped]:
+        _ = items, mapper
+        raise NotImplementedError
 
     @staticmethod
     def map[TItem, TMapped](

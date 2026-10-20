@@ -87,12 +87,14 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
     def flow_through(self: Self) -> p.Result[T]: ...
 
     @overload
-    def flow_through[U](
+    def flow_through[U](  # type: ignore
         self: Self,
         first: Callable[[T | U], p.Result[U]],
         /,
         *funcs: Callable[[T | U], p.Result[U]],
-    ) -> p.Result[T | U]: ...
+    ) -> p.Result[T | U]:
+        _ = first, funcs
+        raise NotImplementedError
 
     def flow_through[U](
         self: Self, *funcs: Callable[[T | U], p.Result[U]]
@@ -203,11 +205,17 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         return self._as_result()
 
     @overload
-    def map_or(self, default: None, func: None = None) -> T | None: ...
+    def map_or(self, default: None, func: None = None) -> T | None:  # type: ignore
+        _ = default, func
+        raise NotImplementedError
     @overload
-    def map_or[U](self, default: U, func: None = None) -> T | U: ...
+    def map_or[U](self, default: U, func: None = None) -> T | U:  # type: ignore
+        _ = default, func
+        raise NotImplementedError
     @overload
-    def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
+    def map_or[U](self, default: U, func: Callable[[T], U]) -> U:  # type: ignore
+        _ = default, func
+        raise NotImplementedError
 
     def map_or[U](self, default: U, func: Callable[[T], U] | None = None) -> U | T:
         """Apply ``func`` to the payload on success, otherwise return ``default``.

@@ -258,20 +258,24 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         return r[p.RegisterableService].ok(resolved)
 
     @overload
-    def resolve[T: p.RegisterableService](
+    def resolve[T: p.RegisterableService](  # type: ignore
         self,
         name: str,
         *,
         type_cls: type[T],
-    ) -> p.Result[T]: ...
+    ) -> p.Result[T]:
+        _ = name, type_cls
+        raise NotImplementedError
 
     @overload
-    def resolve(
+    def resolve(  # type: ignore
         self,
         name: str,
         *,
         type_cls: None = None,
-    ) -> p.Result[p.RegisterableService]: ...
+    ) -> p.Result[p.RegisterableService]:
+        _ = name, type_cls
+        raise NotImplementedError
 
     @override
     def resolve[T: p.RegisterableService](
@@ -662,11 +666,11 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         Returns:
             The resulting ``Self``.
 
-        """
+        """  # type: ignore
         if settings is None:
             return self
         merged = self._user_overrides.model_copy()
-        merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})
+        merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})  # type: ignore
         self._user_overrides = merged
         self._global_config = m.ContainerConfig.model_validate(
             self._global_config.model_dump() | dict(merged),

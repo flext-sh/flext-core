@@ -33,7 +33,7 @@ class FlextUtilitiesMapperAccess(mapper_access_part_01.FlextUtilitiesMapperAcces
 
         """
         if isinstance(current, FlextModelsContainers.ObjectList):
-            sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
+            sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root  # type: ignore
         elif isinstance(current, Sequence) and not isinstance(
             current,
             c.STR_BYTES_TYPES,
