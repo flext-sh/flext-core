@@ -194,7 +194,8 @@ class TestsFlextCoreServiceOperations:
     class KeywordOnlyService(s[bool]):
         """Operation with a keyword-only request."""
 
-        def send(self, *, request: m.Tests.DispatchRequest) -> p.Result[bool]:
+        @staticmethod
+        def send(*, request: m.Tests.DispatchRequest) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -206,8 +207,8 @@ class TestsFlextCoreServiceOperations:
     class DefaultRequestService(s[bool]):
         """Operation whose request has a default."""
 
+        @staticmethod
         def send(
-            self,
             request: m.Tests.DispatchRequest | None = None,
         ) -> p.Result[bool]:
             """Send an optional request.
@@ -243,7 +244,8 @@ class TestsFlextCoreServiceOperations:
     class UnionRequestService(s[bool]):
         """Operation whose request annotation is not a dotted name."""
 
-        def send(self, request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
+        @staticmethod
+        def send(request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -279,7 +281,8 @@ class TestsFlextCoreServiceOperations:
     class MissingMetadataService(s[bool]):
         """A Protocol request without its explicit schema association."""
 
-        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+        @staticmethod
+        def send(request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -292,7 +295,8 @@ class TestsFlextCoreServiceOperations:
         """A quoted t alias resolves to the same Protocol without eval."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self, request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
+        @staticmethod
+        def send(request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -305,7 +309,8 @@ class TestsFlextCoreServiceOperations:
         """A model annotation cannot replace the public Protocol contract."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
+        @staticmethod
+        def send(request: m.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -318,7 +323,8 @@ class TestsFlextCoreServiceOperations:
         """The explicit schema must provide every consumed Protocol member."""
 
         @h.handler(command=m.Value)
-        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+        @staticmethod
+        def send(request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -331,7 +337,8 @@ class TestsFlextCoreServiceOperations:
         """A metadata command class is not necessarily a request model."""
 
         @h.handler(command=str)
-        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+        @staticmethod
+        def send(request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -344,7 +351,8 @@ class TestsFlextCoreServiceOperations:
         """An input-less operation cannot consume declared command metadata."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self) -> p.Result[str]:
+        @staticmethod
+        def send() -> p.Result[str]:
             """Report readiness.
 
             Returns:

@@ -7,11 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
+import functools
 import inspect
 from collections.abc import Iterator
 from types import ModuleType
 
 
+@functools.cache
 def parse_module(module: ModuleType) -> ast.Module:
     """Read the defining source of one module as an AST.
 
