@@ -57,9 +57,10 @@ class FlextTypesServices:
         | Path
         | FlextTypesPydantic.JsonValue
         | FlextTypesPydantic.BaseModelInstance
+        | None
     )
     type JsonPayload = (
-        FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelInstance
+        FlextTypesPydantic.JsonValue | Path
     )
     type OperationMetricsStream = Generator[
         FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
@@ -117,7 +118,7 @@ class FlextTypesServices:
     type LoggingWriteCompletion = Future[int]
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
-    type RuntimeData = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType
+    type RuntimeData = JsonPayload
     type BootstrapInput = FlextTypesPydantic.BaseModelType | FlextTypingBase.JsonMapping
     type ServiceClass = type
     type UserOverridesMapping = FlextTypingBase.MappingKV[str, JsonPayload]

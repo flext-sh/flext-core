@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence, Set as AbstractSet
 from pathlib import Path
-from types import EllipsisType
+from types import EllipsisType, MappingProxyType
 from typing import (
     TYPE_CHECKING,
     Annotated,
@@ -20,7 +20,6 @@ from typing import (
     TypeAliasType,
     get_args,
     get_origin,
-    overload,
 )
 
 from pydantic import (
@@ -38,7 +37,6 @@ from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
 from flext_core import _models, c, p, t
-from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
@@ -47,7 +45,6 @@ from flext_core._utilities import (
 
 
 class FlextUtilitiesPydantic(
-    FlextModelsPydantic,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
 ):
@@ -122,7 +119,7 @@ class FlextUtilitiesPydantic(
         return adapter.validate_python(value)
 
     @staticmethod
-    def normalize_to_container(value: p.GuardInput) -> t.RuntimeData:
+    def normalize_to_container(value: p.GuardInput) -> t.RuntimeData | BaseModel:
         """Preserve model identity and use native JSON for supported data shapes.
 
         Returns:
@@ -168,14 +165,21 @@ class FlextUtilitiesPydantic(
                 config=_models.FlextModelsBase.ArbitraryTypesModel.model_config,
             )
             FlextUtilitiesPydantic._json_model_adapter = model_adapter
-        payload = (
-            model_adapter.validate_python(value).model_dump(mode="json")
-            if model_adapter.validator.isinstance_python(value)
-            else value
-        )
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            if isinstance(value, MappingProxyType):
+                payload = dict(value)
+            elif hasattr(value, "model_dump") and hasattr(value, "__pydantic_core_schema__"):
+                payload = value.model_dump(mode="json")
+            elif model_adapter.validator.isinstance_python(value) and not isinstance(value, Mapping):
+                payload = model_adapter.validate_python(value).model_dump(mode="json")
+            else:
+                payload = value
         if isinstance(payload, Mapping):
             payload = _models.FlextModelsContainers.ConfigMap.model_validate(
-                payload
+                to_jsonable_python(payload)
             ).root
         return adapter.validate_python(to_jsonable_python(payload), strict=True)
 
@@ -309,17 +313,6 @@ class FlextUtilitiesPydantic(
                 return c.EMPTY_COLLECTION_JSON_SEEDS["array"]
         msg = f"empty default requires a collection contract; got {contract!r}"
         raise TypeError(msg)
-
-    @overload
-    @staticmethod
-    def empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]: ...
-
-    @overload
-    @staticmethod
-    def empty[ContractT](
-        *,
-        contract_factory: Callable[[], TypeForm[ContractT]],
-    ) -> Callable[[], ContractT]: ...
 
     @staticmethod
     def empty[ContractT](
