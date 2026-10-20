@@ -11,21 +11,23 @@ from typing import Protocol, runtime_checkable
 from flext_core import t
 from flext_core._protocols import (
     FlextProtocolsBase,
-    FlextProtocolsContext,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
     FlextProtocolsSettings,
 )
+from flext_core._protocols._context_parts.flextprotocolscontext_part_01 import (
+    FlextProtocolsContextPart01,
+)
 
 
-class FlextProtocolsContainer:
+class FlextProtocolsContainerPart01:
     """Protocols for DI container behavior."""
 
     type RegistryCollaborator = (
-        FlextProtocolsBase.Model[object]
+        FlextProtocolsBase.Model
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
-        | FlextProtocolsContext.Context
+        | FlextProtocolsContextPart01.Context
         | FlextProtocolsHandler.Dispatcher
     )
     type ServiceValue = t.ServiceValue[RegistryCollaborator]
@@ -41,11 +43,11 @@ class FlextProtocolsContainer:
         """Complete typed input validated by the canonical registration model."""
 
         settings: FlextProtocolsSettings.Settings | None
-        context: FlextProtocolsContext.Context | None
+        context: FlextProtocolsContextPart01.Context | None
         dispatcher: FlextProtocolsHandler.Dispatcher | None
-        services: FlextProtocolsContainer.ServiceMap | None
-        factories: FlextProtocolsContainer.FactoryMap | None
-        resources: FlextProtocolsContainer.ResourceMap | None
+        services: FlextProtocolsContainerPart01.ServiceMap | None
+        factories: FlextProtocolsContainerPart01.FactoryMap | None
+        resources: FlextProtocolsContainerPart01.ResourceMap | None
 
         @property
         def user_overrides(
@@ -74,4 +76,4 @@ class FlextProtocolsContainer:
         def root(self) -> t.MutableMappingKV[str, RootValueT]: ...
 
 
-__all__: list[str] = ["FlextProtocolsContainer"]
+__all__: list[str] = ["FlextProtocolsContainerPart01"]

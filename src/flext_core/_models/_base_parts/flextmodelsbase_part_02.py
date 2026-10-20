@@ -22,14 +22,11 @@ from pydantic import ConfigDict
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._base_parts import flextmodelsbase_part_01
+from flext_core._models._base_parts import FlextModelsBasePart01
 from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesPydantic
 
 
-class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
-    class StrictModel(flextmodelsbase_part_01.FlextModelsBase.StrictModel):
-        """Reusable strict model preset for validated domain boundaries."""
-
+class FlextModelsBasePart02(FlextModelsBasePart01):
     class Metadata(FlextModelsPydantic.BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
@@ -145,7 +142,7 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
             """
             return FlextUtilitiesPydantic.validate_metadata_attributes(value)
 
-    class ContractModel(StrictModel):
+    class ContractModel(FlextModelsBasePart01.StrictModel):
         """Immutable base model with strict validation."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -196,4 +193,4 @@ class FlextModelsBase(flextmodelsbase_part_01.FlextModelsBase):
         ] = FlextModelsPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
 
 
-__all__: list[str] = ["FlextModelsBase"]
+__all__: list[str] = ["FlextModelsBasePart02"]

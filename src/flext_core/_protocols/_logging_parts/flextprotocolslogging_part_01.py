@@ -1,4 +1,4 @@
-"""FlextProtocolsLogging - logging and related infrastructure protocols.
+"""FlextProtocolsLoggingPart01 - logging and related infrastructure protocols.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -11,18 +11,20 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from structlog.types import BindableLogger
 from structlog.typing import Processor
 
-from flext_core._protocols import FlextProtocolsSettings
-from flext_core._protocols.base import FlextProtocolsBase
-from flext_core._protocols.result import FlextProtocolsResult
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsResult,
+    FlextProtocolsSettings,
+)
 
 if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextProtocolsLogging:
+class FlextProtocolsLoggingPart01:
     """Protocols for logging, connection, validation, and entries."""
 
-    type LogArgument = t.LogArgument
+    type LogArgument[T] = t.LogArgument[T]
     type LogValue = t.LogValue[FlextProtocolsBase.Model]
     type LoggingEventValue = t.LoggingEventValue[FlextProtocolsBase.Model]
     type LoggingEvent = t.LoggingEvent[FlextProtocolsBase.Model]
@@ -75,52 +77,52 @@ class FlextProtocolsLogging:
             exception: BaseException | None,
             exc_info: bool,
             context: t.MappingKV[str, t.JsonPayload | Exception],
-        ) -> FlextProtocolsLogging.LoggingEvent:
+        ) -> FlextProtocolsLoggingPart01.LoggingEvent:
             """Build normalized structured exception context."""
             ...
 
         def critical(
             self,
             msg: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kw: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kw: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log critical message."""
             ...
 
         def debug(
             self,
             msg: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kw: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kw: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log debug message."""
             ...
 
         def error(
             self,
             msg: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kw: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kw: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log error message."""
             ...
 
         def exception(
             self,
             msg: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kw: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kw: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log exception with traceback."""
             ...
 
         def info(
             self,
             msg: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kw: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kw: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log info message."""
             ...
 
@@ -128,27 +130,27 @@ class FlextProtocolsLogging:
             self,
             level: str,
             message: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kw: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kw: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log a message at an arbitrary level."""
             ...
 
         def trace(
             self,
             message: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kwargs: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kwargs: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log a trace/debug-level diagnostic message."""
             ...
 
         def warning(
             self,
             msg: str,
-            *args: FlextProtocolsLogging.LogValue,
-            **kw: FlextProtocolsLogging.LogValue,
-        ) -> FlextProtocolsLogging.LogResult:
+            *args: FlextProtocolsLoggingPart01.LogValue,
+            **kw: FlextProtocolsLoggingPart01.LogValue,
+        ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log warning message."""
             ...
 
@@ -156,7 +158,7 @@ class FlextProtocolsLogging:
     class HasLogger(Protocol):
         """Protocol for values that expose a canonical logger attribute."""
 
-        logger: FlextProtocolsLogging.Logger
+        logger: FlextProtocolsLoggingPart01.Logger
 
     @runtime_checkable
     class OutputLogger(Protocol):
@@ -182,10 +184,10 @@ class FlextProtocolsLogging:
 
         def __call__(
             self,
-            logger: FlextProtocolsLogging.OutputLogger,
+            logger: FlextProtocolsLoggingPart01.OutputLogger,
             method_name: str,
-            event_dict: FlextProtocolsLogging.LoggingEvent,
-        ) -> FlextProtocolsLogging.LoggingEvent:
+            event_dict: FlextProtocolsLoggingPart01.LoggingEvent,
+        ) -> FlextProtocolsLoggingPart01.LoggingEvent:
             """Return the next event; stage exceptions propagate unchanged."""
             ...
 
@@ -193,7 +195,7 @@ class FlextProtocolsLogging:
     class OutputLoggerFactory(Protocol):
         """Construct an output logger from native positional logger names."""
 
-        def __call__(self, *args: str) -> FlextProtocolsLogging.OutputLogger: ...
+        def __call__(self, *args: str) -> FlextProtocolsLoggingPart01.OutputLogger: ...
 
     @runtime_checkable
     class NativeLoggingWrapper(Protocol):
@@ -201,20 +203,20 @@ class FlextProtocolsLogging:
 
         def __init__(
             self,
-            logger: FlextProtocolsLogging.OutputLogger,
+            logger: FlextProtocolsLoggingPart01.OutputLogger,
             processors: t.SequenceOf[Processor],
-            context: FlextProtocolsLogging.LoggingContext,
+            context: FlextProtocolsLoggingPart01.LoggingContext,
         ) -> None: ...
 
         @property
-        def _context(self) -> FlextProtocolsLogging.LoggingContext: ...
+        def _context(self) -> FlextProtocolsLoggingPart01.LoggingContext: ...
 
         def bind(
-            self, **new_values: FlextProtocolsLogging.LoggingEventValue
+            self, **new_values: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> Self: ...
 
         def new(
-            self, **new_values: FlextProtocolsLogging.LoggingEventValue
+            self, **new_values: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> Self: ...
 
         def unbind(self, *keys: str) -> Self: ...
@@ -222,34 +224,36 @@ class FlextProtocolsLogging:
         def try_unbind(self, *keys: str) -> Self: ...
 
         def critical(
-            self, event: str, **context: FlextProtocolsLogging.LoggingEventValue
+            self, event: str, **context: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> None: ...
 
         def debug(
-            self, event: str, **context: FlextProtocolsLogging.LoggingEventValue
+            self, event: str, **context: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> None: ...
 
         def error(
-            self, event: str, **context: FlextProtocolsLogging.LoggingEventValue
+            self, event: str, **context: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> None: ...
 
         def exception(
-            self, event: str, **context: FlextProtocolsLogging.LoggingEventValue
+            self, event: str, **context: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> None: ...
 
         def info(
-            self, event: str, **context: FlextProtocolsLogging.LoggingEventValue
+            self, event: str, **context: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> None: ...
 
         def warning(
-            self, event: str, **context: FlextProtocolsLogging.LoggingEventValue
+            self, event: str, **context: FlextProtocolsLoggingPart01.LoggingEventValue
         ) -> None: ...
 
     @runtime_checkable
     class LoggerWrapperFactory(Protocol):
         """Construct the native logging wrapper class at runtime composition."""
 
-        def __call__(self) -> type[FlextProtocolsLogging.NativeLoggingWrapper]: ...
+        def __call__(
+            self,
+        ) -> type[FlextProtocolsLoggingPart01.NativeLoggingWrapper]: ...
 
     @runtime_checkable
     class StructlogOptions(Protocol):
@@ -264,13 +268,17 @@ class FlextProtocolsLogging:
         @property
         def processing_stages(
             self,
-        ) -> t.SequenceOf[FlextProtocolsLogging.LoggingStage]: ...
+        ) -> t.SequenceOf[FlextProtocolsLoggingPart01.LoggingStage]: ...
 
         @property
-        def observers(self) -> t.SequenceOf[FlextProtocolsLogging.LoggingObserver]: ...
+        def observers(
+            self,
+        ) -> t.SequenceOf[FlextProtocolsLoggingPart01.LoggingObserver]: ...
 
         @property
-        def handlers(self) -> t.SequenceOf[FlextProtocolsLogging.LoggingHandler]: ...
+        def handlers(
+            self,
+        ) -> t.SequenceOf[FlextProtocolsLoggingPart01.LoggingHandler]: ...
 
         @property
         def redacted_keys(self) -> t.SequenceOf[str]: ...
@@ -281,12 +289,12 @@ class FlextProtocolsLogging:
         @property
         def wrapper_class_factory(
             self,
-        ) -> FlextProtocolsLogging.LoggerWrapperFactory | None: ...
+        ) -> FlextProtocolsLoggingPart01.LoggerWrapperFactory | None: ...
 
         @property
         def logger_factory(
             self,
-        ) -> FlextProtocolsLogging.OutputLoggerFactory | None: ...
+        ) -> FlextProtocolsLoggingPart01.OutputLoggerFactory | None: ...
 
         @property
         def cache_logger_on_first_use(self) -> bool: ...
@@ -333,7 +341,9 @@ class FlextProtocolsLogging:
     class LoggingObserver(Protocol):
         """Receive one sanitized snapshot before native output fanout."""
 
-        def __call__(self, event: FlextProtocolsLogging.LoggingRecord, /) -> None: ...
+        def __call__(
+            self, event: FlextProtocolsLoggingPart01.LoggingRecord, /
+        ) -> None: ...
 
     @runtime_checkable
     class LoggingHandler(Protocol):
@@ -354,4 +364,4 @@ class FlextProtocolsLogging:
         def close(self) -> None: ...
 
 
-__all__: list[str] = ["FlextProtocolsLogging"]
+__all__: list[str] = ["FlextProtocolsLoggingPart01"]

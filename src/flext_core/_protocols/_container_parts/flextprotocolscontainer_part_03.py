@@ -11,13 +11,19 @@ from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 from flext_core._protocols._container_parts import flextprotocolscontainer_part_02
 
 if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsContext, FlextProtocolsSettings
+    from flext_core._protocols import (
+        FlextProtocolsContext,
+        FlextProtocolsHandler,
+        FlextProtocolsSettings,
+    )
 
 
-class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsContainer):
+class FlextProtocolsContainerPart03(
+    flextprotocolscontainer_part_02.FlextProtocolsContainerPart02
+):
     @runtime_checkable
     class ContainerLifecycle(
-        flextprotocolscontainer_part_02.FlextProtocolsContainer.Container,
+        flextprotocolscontainer_part_02.FlextProtocolsContainerPart02.Container,
         Protocol,
     ):
         """Extended container contract for bootstrap and lifecycle operations."""
@@ -25,14 +31,15 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsCont
         def initialize_registrations(
             self,
             *,
-            registration: FlextProtocolsContainer.ServiceRegistrationSpec | None = None,
+            registration: FlextProtocolsContainerPart03.ServiceRegistrationSpec
+            | None = None,
         ) -> None:
             """Initialize explicit registrations and runtime-bound state."""
             ...
 
         @override
         def register_core_services(
-            self, *, dispatcher: FlextProtocolsContainer.Dispatcher | None = None
+            self, *, dispatcher: FlextProtocolsHandler.Dispatcher | None = None
         ) -> None:
             """Register the canonical core service set into the container."""
             ...
@@ -40,8 +47,8 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsCont
     @runtime_checkable
     class ContainerType[
         TContainer: (
-            flextprotocolscontainer_part_02.FlextProtocolsContainer.Container
-        ) = (flextprotocolscontainer_part_02.FlextProtocolsContainer.Container),
+            flextprotocolscontainer_part_02.FlextProtocolsContainerPart02.Container
+        ) = (flextprotocolscontainer_part_02.FlextProtocolsContainerPart02.Container),
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 
@@ -62,4 +69,4 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsCont
             ...
 
 
-__all__: list[str] = ["FlextProtocolsContainer"]
+__all__: list[str] = ["FlextProtocolsContainerPart03"]

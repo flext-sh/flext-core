@@ -14,15 +14,21 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._container_parts import flextmodelscontainer_part_02
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsContainer,
+    FlextProtocolsContext,
+    FlextProtocolsHandler,
+    FlextProtocolsSettings,
+)
+from flext_core._typings import FlextTypesPydantic, FlextTypesServices
 
 
-class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
-    t = t
-    p = p
-
+class FlextModelsContainerPart03(
+    flextmodelscontainer_part_02.FlextModelsContainerPart02
+):
     class ServiceRegistrationSpec(FlextModelsBase.ArbitraryTypesModel):
         """Bootstrap specification for container registration.
 
@@ -38,7 +44,7 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
         )
 
         settings: Annotated[
-            p.Settings | None,
+            FlextProtocolsSettings.Settings | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Config",
@@ -46,23 +52,25 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             ),
         ] = None
         context: Annotated[
-            p.Context | None,
+            FlextProtocolsContext.Context | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Context",
                 description="Execution context attached to the container.",
             ),
         ] = None
-        dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
-            default=None,
-            exclude=True,
-            description=(
-                "Explicit command bus retained by this scope; "
-                "otherwise a fresh bus is built."
-            ),
+        dispatcher: FlextTypesPydantic.Port[FlextProtocolsHandler.Dispatcher | None] = (
+            FlextModelsPydantic.Field(
+                default=None,
+                exclude=True,
+                description=(
+                    "Explicit command bus retained by this scope; "
+                    "otherwise a fresh bus is built."
+                ),
+            )
         )
         services: Annotated[
-            p.ServiceMap | None,
+            FlextProtocolsContainer.ServiceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Services",
@@ -71,7 +79,7 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             ),
         ] = None
         factories: Annotated[
-            p.FactoryMap | None,
+            FlextProtocolsContainer.FactoryMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Factories",
@@ -80,7 +88,7 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             ),
         ] = None
         resources: Annotated[
-            p.ResourceMap | None,
+            FlextProtocolsContainer.ResourceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Resources",
@@ -88,13 +96,15 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
                 validate_default=True,
             ),
         ] = None
-        user_overrides: t.UserOverridesMapping | None = FlextModelsPydantic.Field(
+        user_overrides: (
+            FlextProtocolsBase.Model | FlextTypesServices.UserOverridesMapping | None
+        ) = FlextModelsPydantic.Field(
             default=None,
             title="User Overrides",
             description="User-level configuration overrides applied after defaults.",
             validate_default=True,
         )
-        container_config: p.Model | None = FlextModelsPydantic.Field(
+        container_config: FlextProtocolsBase.Model | None = FlextModelsPydantic.Field(
             default=None,
             title="Container Config",
             description="Container configuration model controlling DI behavior.",
@@ -102,4 +112,4 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
         )
 
 
-__all__: list[str] = ["FlextModelsContainer"]
+__all__: list[str] = ["FlextModelsContainerPart03"]

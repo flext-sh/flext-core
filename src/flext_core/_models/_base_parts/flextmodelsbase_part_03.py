@@ -21,9 +21,9 @@ from flext_core._models._base_parts import flextmodelsbase_part_02
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
-class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
+class FlextModelsBasePart03(flextmodelsbase_part_02.FlextModelsBasePart02):
     class TimestampableMixin(
-        flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin
+        flextmodelsbase_part_02.FlextModelsBasePart02.MutableConfiguredMixin
     ):
         """Mixin for timestamps with Pydantic v2 validation and serialization."""
 
@@ -96,7 +96,7 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
             return self
 
     class VersionableMixin(
-        flextmodelsbase_part_02.FlextModelsBase.MutableConfiguredMixin
+        flextmodelsbase_part_02.FlextModelsBasePart02.MutableConfiguredMixin
     ):
         """Mixin for versioning with optimistic locking."""
 
@@ -159,10 +159,10 @@ class FlextModelsBase(flextmodelsbase_part_02.FlextModelsBase):
         ] = c.DEFAULT_MAX_DELAY_SECONDS
 
     class TimestampedModel(
-        flextmodelsbase_part_02.FlextModelsBase.ArbitraryTypesModel,
+        flextmodelsbase_part_02.FlextModelsBasePart02.ArbitraryTypesModel,
         TimestampableMixin,
     ):
         """Model with timestamp fields."""
 
 
-__all__: list[str] = ["FlextModelsBase"]
+__all__: list[str] = ["FlextModelsBasePart03"]

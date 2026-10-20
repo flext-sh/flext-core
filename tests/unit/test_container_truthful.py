@@ -128,7 +128,7 @@ class TestsFlextCoreContainerTruthful:
         instant = datetime.now(UTC)
         path = Path("registered-payload")
         payload: t.MappingKV[str, datetime | Path] = {"created": instant, "path": path}
-        _ = clean_container.bind("mapping-payload", payload)
+        _ = clean_container.bind("mapping-payload", m.ConfigMap(root=payload))
         value = tm.ok(clean_container.resolve("mapping-payload", type_cls=m.ConfigMap))
         tm.that(
             value.model_dump(mode="json"),

@@ -25,7 +25,7 @@ from flext_core._models import (
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
-class FlextModelsContainer:
+class FlextModelsContainerPart01:
     """Container models namespace for DI and service registry."""
 
     class RegistrationEnvelope(FlextModelsBase.ArbitraryTypesModel):
@@ -80,7 +80,7 @@ class FlextModelsContainer:
             FlextModelsPydantic.Field(..., description="Service identifier/name"),
         ]
         service: Annotated[
-            p.RegisterableService,
+            t.Port[p.RegisterableService],
             FlextModelsPydantic.Field(
                 ...,
                 description="Service instance (protocols, models, callables)",
@@ -131,4 +131,4 @@ class FlextModelsContainer:
         ]
 
 
-__all__: list[str] = ["FlextModelsContainer"]
+__all__: list[str] = ["FlextModelsContainerPart01"]

@@ -1,4 +1,4 @@
-"""FlextProtocolsLogging - logging and related infrastructure protocols.
+"""FlextProtocolsLoggingPart02 - logging and related infrastructure protocols.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,7 +9,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._protocols._logging_parts import flextprotocolslogging_part_01
+from flext_core._protocols._logging_parts.flextprotocolslogging_part_01 import (
+    FlextProtocolsLoggingPart01,
+)
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -18,7 +20,7 @@ if TYPE_CHECKING:
     from flext_core._protocols import FlextProtocolsResult
 
 
-class FlextProtocolsLogging(flextprotocolslogging_part_01.FlextProtocolsLogging):
+class FlextProtocolsLoggingPart02(FlextProtocolsLoggingPart01):
     @runtime_checkable
     class Metadata(Protocol):
         """Metadata protocol."""
@@ -98,19 +100,19 @@ class FlextProtocolsLogging(flextprotocolslogging_part_01.FlextProtocolsLogging)
 
         def __and__(
             self,
-            other: FlextProtocolsLogging.ValidatorSpec,
-        ) -> FlextProtocolsLogging.ValidatorSpec:
+            other: FlextProtocolsLoggingPart02.ValidatorSpec,
+        ) -> FlextProtocolsLoggingPart02.ValidatorSpec:
             """Compose with AND - both validators must pass."""
             ...
 
-        def __invert__(self) -> FlextProtocolsLogging.ValidatorSpec:
+        def __invert__(self) -> FlextProtocolsLoggingPart02.ValidatorSpec:
             """Negate validator - passes when original fails."""
             ...
 
         def __or__(
             self,
-            other: FlextProtocolsLogging.ValidatorSpec,
-        ) -> FlextProtocolsLogging.ValidatorSpec:
+            other: FlextProtocolsLoggingPart02.ValidatorSpec,
+        ) -> FlextProtocolsLoggingPart02.ValidatorSpec:
             """Compose with OR - at least one validator must pass."""
             ...
 
@@ -149,4 +151,4 @@ class FlextProtocolsLogging(flextprotocolslogging_part_01.FlextProtocolsLogging)
             ...
 
 
-__all__: list[str] = ["FlextProtocolsLogging"]
+__all__: list[str] = ["FlextProtocolsLoggingPart02"]

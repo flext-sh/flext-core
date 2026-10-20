@@ -73,8 +73,6 @@ class TestsFlextCoreNormalizationBoundaries:
         parsed = m.ConfigMap.model_validate({"payload": payload})
         tm.that(u.normalize_to_json_mapping(parsed), eq={"payload": payload})
 
-
-
     @staticmethod
     @pytest.mark.parametrize("nested", [False, True])
     def test_json_payload_rejects_non_string_mapping_keys(*, nested: bool) -> None:

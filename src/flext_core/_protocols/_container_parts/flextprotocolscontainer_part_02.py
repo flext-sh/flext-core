@@ -21,7 +21,9 @@ if TYPE_CHECKING:
     )
 
 
-class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsContainer):
+class FlextProtocolsContainerPart02(
+    flextprotocolscontainer_part_01.FlextProtocolsContainerPart01
+):
     @runtime_checkable
     class Container(
         FlextProtocolsSettings.Configurable,
@@ -62,7 +64,7 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             ...
 
         @overload
-        def resolve[T: FlextProtocolsContainer.RegisterableService](
+        def resolve[T: FlextProtocolsContainerPart02.RegisterableService](
             self,
             name: str,
             *,
@@ -76,7 +78,7 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             *,
             type_cls: None = None,
         ) -> FlextProtocolsResult.Result[
-            FlextProtocolsContainer.RegisterableService
+            FlextProtocolsContainerPart02.RegisterableService
         ]: ...
 
         def snapshot(self) -> m.ConfigMap:
@@ -92,19 +94,19 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             ...
 
         def bind(
-            self, name: str, impl: FlextProtocolsContainer.RegisterableService
+            self, name: str, impl: FlextProtocolsContainerPart02.RegisterableService
         ) -> Self:
             """Bind a concrete service instance or value."""
             ...
 
         def factory(
-            self, name: str, impl: FlextProtocolsContainer.FactoryCallable
+            self, name: str, impl: FlextProtocolsContainerPart02.FactoryCallable
         ) -> Self:
             """Bind a factory callable."""
             ...
 
         def resource(
-            self, name: str, impl: FlextProtocolsContainer.ResourceCallable
+            self, name: str, impl: FlextProtocolsContainerPart02.ResourceCallable
         ) -> Self:
             """Bind a lifecycle-managed resource factory."""
             ...
@@ -135,7 +137,7 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             *,
             subproject: str | None = None,
             registration: (
-                flextprotocolscontainer_part_01.FlextProtocolsContainer.ServiceRegistrationSpec
+                flextprotocolscontainer_part_01.FlextProtocolsContainerPart01.ServiceRegistrationSpec
                 | None
             ) = None,
         ) -> Self:
@@ -143,4 +145,4 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_01.FlextProtocolsCont
             ...
 
 
-__all__: list[str] = ["FlextProtocolsContainer"]
+__all__: list[str] = ["FlextProtocolsContainerPart02"]

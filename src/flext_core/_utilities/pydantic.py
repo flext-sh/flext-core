@@ -16,6 +16,7 @@ from types import EllipsisType, MappingProxyType
 from typing import (
     TYPE_CHECKING,
     Annotated,
+    Any,
     ClassVar,
     TypeAliasType,
     get_args,
@@ -87,9 +88,7 @@ class FlextUtilitiesPydantic(
     to_jsonable_python = to_jsonable_python
 
     _registerable_adapter: ClassVar[t.ValueAdapter[p.RegisterableService] | None] = None
-    _collaborator_adapter: ClassVar[t.ValueAdapter[p.RegistryCollaborator] | None] = (
-        None
-    )
+    _collaborator_adapter: ClassVar[t.ValueAdapter[Any] | None] = None
     _json_model_adapter: ClassVar[
         t.ValueAdapter[p.Model[t.JsonPayload] | p.HasModelDump] | None
     ] = None

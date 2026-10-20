@@ -9,7 +9,7 @@ from __future__ import annotations
 import ast
 import warnings
 from collections.abc import Callable
-from typing import cast
+from typing import Any, cast
 
 import pytest
 from typing_extensions import TypeForm
@@ -66,7 +66,7 @@ class TestsFlextTypeAliasResolution:
         failure = m.ResultFailureSpec(error_data=payload)
         assert failure.error_data is payload
         event = u.type_adapter(
-            TypeForm(p.LoggingEvent), config=m.ArbitraryTypesModel.model_config
+            TypeForm(dict[str, Any]), config=m.ArbitraryTypesModel.model_config
         ).validate_python({
             "payload": payload,
             "event": "bootstrap",

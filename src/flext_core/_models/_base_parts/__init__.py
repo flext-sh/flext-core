@@ -13,14 +13,20 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core._models._base_parts.flextmodelsbase_part_01 import (
+        FlextModelsBasePart01,
+    )
     from flext_core._models._base_parts.flextmodelsbase_part_03 import FlextModelsBase
 
 
-__all__: tuple[str, ...] = ("FlextModelsBase",)
+__all__: tuple[str, ...] = ("FlextModelsBase", "FlextModelsBasePart01")
 
 __getattr__ = install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextModelsBase": ".flextmodelsbase_part_03"}),
+    MappingProxyType({
+        "FlextModelsBase": ".flextmodelsbase_part_03",
+        "FlextModelsBasePart01": ".flextmodelsbase_part_01",
+    }),
     public_exports=__all__,
 )[0]

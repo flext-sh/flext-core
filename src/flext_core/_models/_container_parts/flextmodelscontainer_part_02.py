@@ -19,9 +19,11 @@ from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._container_parts import flextmodelscontainer_part_01
 
 
-class FlextModelsContainer(flextmodelscontainer_part_01.FlextModelsContainer):
+class FlextModelsContainerPart02(
+    flextmodelscontainer_part_01.FlextModelsContainerPart01
+):
     class ResourceRegistration(
-        flextmodelscontainer_part_01.FlextModelsContainer.RegistrationEnvelope,
+        flextmodelscontainer_part_01.FlextModelsContainerPart01.RegistrationEnvelope,
     ):
         """Model for lifecycle-managed resource registrations.
 
@@ -100,4 +102,4 @@ class FlextModelsContainer(flextmodelscontainer_part_01.FlextModelsContainer):
         ] = True
 
 
-__all__: list[str] = ["FlextModelsContainer"]
+__all__: list[str] = ["FlextModelsContainerPart02"]

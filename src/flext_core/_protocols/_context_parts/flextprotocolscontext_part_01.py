@@ -12,16 +12,17 @@ if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
     from flext_core import t
+    from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsResult
 
 
-class FlextProtocolsContext:
+class FlextProtocolsContextPart01:
     """Protocols for context and runtime bootstrap options."""
 
     @runtime_checkable
     class ContextRead(Protocol):
         """Read-only context operations."""
 
-        def get(self, key: str) -> FlextProtocolsContext.Result[t.JsonPayload]:
+        def get(self, key: str) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Get a context value by key."""
             ...
 
@@ -47,7 +48,7 @@ class FlextProtocolsContext:
 
         def set(
             self, key: str, value: t.JsonPayload
-        ) -> FlextProtocolsContext.Result[bool]:
+        ) -> FlextProtocolsResult.Result[bool]:
             """Set a context value in the context scope."""
             ...
 
@@ -89,7 +90,7 @@ class FlextProtocolsContext:
 
         def resolve_metadata(
             self, key: str
-        ) -> FlextProtocolsContext.Result[t.JsonPayload]:
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Get a metadata value by key."""
             ...
 
@@ -123,15 +124,15 @@ class FlextProtocolsContext:
         @staticmethod
         def fetch_service(
             service_name: str,
-        ) -> FlextProtocolsContext.Result[FlextProtocolsContext.RegisterableService]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsContainer.RegisterableService]:
             """Resolve a service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
             service_name: str,
-            service: FlextProtocolsContext.RegisterableService,
-        ) -> FlextProtocolsContext.Result[bool]:
+            service: FlextProtocolsContainer.RegisterableService,
+        ) -> FlextProtocolsResult.Result[bool]:
             """Register a service through the configured container."""
             ...
 
@@ -158,4 +159,4 @@ class FlextProtocolsContext:
             ...
 
 
-__all__: list[str] = ["FlextProtocolsContext"]
+__all__: list[str] = ["FlextProtocolsContextPart01"]
