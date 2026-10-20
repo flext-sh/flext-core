@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import Self, cast
 
 from pydantic import BaseModel, PrivateAttr
 
@@ -143,7 +143,10 @@ class FlextResultBase[T](BaseModel):
             else error_data
         )
         return FlextUtilitiesTypingAdapterJson.json_dict_adapter().validate_python(
-            FlextUtilitiesPydantic.normalize_to_json_value(payload), strict=True
+            FlextUtilitiesPydantic.normalize_to_json_value(
+                cast(t.JsonPayload, payload)
+            ),
+            strict=True,
         )
 
 

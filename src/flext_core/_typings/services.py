@@ -127,10 +127,10 @@ class FlextTypesServices:
     type ModelInput[T] = (
         FlextTypesPydantic.JsonValue
         | T
-        | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload]
+        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
     )
     type ConfigModelInput[T] = (
-        T | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload]
+        T | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
     )
     type MetadataInput[T] = (
         T | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None] | None

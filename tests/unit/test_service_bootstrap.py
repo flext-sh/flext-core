@@ -95,7 +95,7 @@ class TestsFlextCoreServiceBootstrap:
         resolved = u.resolve_runtime_options(service)
 
         tm.that(declared, none=False)
-        assert declared is not None
+        tm.not_none(declared)
         tm.that(resolved.settings_type is declared, eq=True)
         tm.that(service.settings is declared.fetch_global(), eq=True)
 
@@ -141,7 +141,7 @@ class TestsFlextCoreServiceBootstrap:
         runtime = u.build_service_runtime(self.ConcreteTestService())
 
         tm.that(declared, none=False)
-        assert declared is not None
+        tm.not_none(declared)
         tm.that(runtime.settings is declared.fetch_global(), eq=True)
         tm.that(runtime.context is runtime.container.context, eq=True)
         tm.that(runtime.settings is runtime.container.settings, eq=True)

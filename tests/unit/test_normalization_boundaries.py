@@ -58,7 +58,7 @@ class TestsFlextCoreNormalizationBoundaries:
         tuple_items: bool,
     ) -> None:
         """Mapping payloads must not materialize the abstract model union arm."""
-        items: list[t.MetadataMapping] = [{"locations": ()}]
+        items: list[t.MetadataMapping] = [{"locations": []}]
         parsed = m.ConfigMap.model_validate({
             "issues": tuple(items) if tuple_items else items,
         })

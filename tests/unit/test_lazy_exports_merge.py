@@ -223,6 +223,7 @@ class TestsFlextCoreLazyExportsMerge:
         sys.modules[module_name] = ModuleType(module_name)
         try:
             module_globals: t.ModuleGlobals = {}
+            # second install pass for merge verification
             install_lazy_exports(
                 package_name,
                 module_globals,

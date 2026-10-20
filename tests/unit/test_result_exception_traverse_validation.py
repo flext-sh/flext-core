@@ -18,7 +18,7 @@ import tests.utilities
 from tests import c, r, tm
 
 if TYPE_CHECKING:
-    from tests import p, t
+    from tests import p
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
@@ -161,7 +161,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
     def test_from_validation_success_returns_populated_model() -> None:
         # Arrange
         """Test from validation success returns populated model."""
-        valid: t.MappingKV[str, t.JsonPayload] = {"name": "Alice", "age": 30}
+        valid = {"name": "Alice", "age": 30}
 
         # Act
         result = r[

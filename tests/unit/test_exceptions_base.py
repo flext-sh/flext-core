@@ -93,7 +93,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that("boom" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.OPERATION_ERROR)
         tm.that(result.error_data, none=False)
-        assert result.error_data is not None
+        tm.not_none(result.error_data)
         tm.that(
             cast("dict[str, object]", result.error_data)["operation"],
             eq="register service",
@@ -127,7 +127,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(mapped.failure, truth=True)
         tm.that(mapped.error, eq=result.error)
         tm.that(result.exception, none=False)
-        assert result.exception is not None
+        tm.not_none(result.exception)
         with pytest.raises(type(result.exception)) as raised:  # type: ignore[arg-type]
             mapped.unwrap()
         tm.that(raised.value is result.exception, truth=True)
@@ -141,7 +141,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that("Service 'command_bus' not found" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.NOT_FOUND_ERROR)
         tm.that(result.error_data, none=False)
-        assert result.error_data is not None
+        tm.not_none(result.error_data)
         tm.that(
             cast("dict[str, object]", result.error_data)["resource_type"], eq="service"
         )
@@ -159,7 +159,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that("Dispatcher" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.TYPE_ERROR)
         tm.that(result.error_data, none=False)
-        assert result.error_data is not None
+        tm.not_none(result.error_data)
         tm.that(
             cast("dict[str, object]", result.error_data)["expected_type"],
             eq="Dispatcher",
@@ -181,7 +181,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(result.error, none=False)
         tm.that("ldap3.Connection" in str(result.error), truth=True)
         tm.that(result.error_data, none=False)
-        assert result.error_data is not None
+        tm.not_none(result.error_data)
         tm.that(
             cast("dict[str, object]", result.error_data)["service_name"],
             eq="connection",
@@ -212,7 +212,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(f"validate {field}" in str(result.error), truth=True)
         tm.that(result.error_code, eq=c.ErrorCode.VALIDATION_ERROR)
         tm.that(result.error_data, none=False)
-        assert result.error_data is not None
+        tm.not_none(result.error_data)
         tm.that(cast("dict[str, object]", result.error_data)["field"], eq=field)
         tm.that(cast("dict[str, object]", result.error_data)["value"], eq=value)
         tm.that(cast("dict[str, object]", result.error_data)["cause"], eq=cause)
@@ -226,6 +226,6 @@ class TestsFlextCoreExceptionsBase:
             options=m.ExceptionInitOptions(auto_correlation=True),
         )
         tm.that(error.correlation_id, none=False)
-        assert error.correlation_id is not None
+        tm.not_none(error.correlation_id)
         tm.that(error.correlation_id.startswith("exc_"), truth=True)
         tm.that(error.field, eq="email")

@@ -50,9 +50,9 @@ class TestsFlextEnforcementModels:
         first_state = m.ContextRuntimeState()
         second_state = m.ContextRuntimeState()
 
-        tm.that(first_export.data == second_export.data, eq={})
+        tm.that(first_export.data == second_export.data, truth=True)
         tm.that(first_export.data is not second_export.data, truth=True)
-        tm.that(first_export.statistics == second_export.statistics, eq={})
+        tm.that(first_export.statistics == second_export.statistics, truth=True)
         tm.that(first_export.statistics is not second_export.statistics, truth=True)
         tm.that(
             first_state.statistics.operations
@@ -63,9 +63,9 @@ class TestsFlextEnforcementModels:
         assert (
             first_state.statistics.operations is not second_state.statistics.operations
         )
-        tm.that(first_state.hooks == second_state.hooks, eq={})
+        tm.that(first_state.hooks == second_state.hooks, truth=True)
         tm.that(first_state.hooks is not second_state.hooks, truth=True)
-        tm.that(first_state.scope_vars == second_state.scope_vars, eq={})
+        tm.that(first_state.scope_vars == second_state.scope_vars, truth=True)
         tm.that(first_state.scope_vars is not second_state.scope_vars, truth=True)
         for model in (m.ContextExport, m.ContextStatistics, m.ContextRuntimeState):
             tm.that(
@@ -160,7 +160,7 @@ class TestsFlextEnforcementModels:
         tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
         first = _M()
         second = _M()
-        tm.that(first.items == second.items, eq=[])
+        tm.that(first.items == second.items, truth=True)
         tm.that(first.items is not second.items, truth=True)
         value = _M.Value()
         first.items.append(value)
@@ -188,7 +188,7 @@ class TestsFlextEnforcementModels:
         tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
         first = _M()
         second = _M()
-        tm.that(first.items == second.items, eq=[])
+        tm.that(first.items == second.items, truth=True)
         tm.that(first.items is not second.items, truth=True)
 
     @staticmethod
@@ -228,7 +228,7 @@ class TestsFlextEnforcementModels:
         tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
         first = _M()
         second = _M()
-        tm.that(first.items == second.items, eq={})
+        tm.that(first.items == second.items, truth=True)
         tm.that(first.items is not second.items, truth=True)
         value = _M.Value()
         first.items["value"] = value
@@ -278,9 +278,9 @@ class TestsFlextEnforcementModels:
         before = messages(u.check(_M), fragment="read-only field contract")
         tm.that(len(before), eq=6)
         instance = _M()
-        tm.that(instance.sequence_union == instance.sequence_optional, eq=[])
+        tm.that(instance.sequence_union == instance.sequence_optional, truth=True)
         tm.that(instance.sequence_typing_union, eq=[])
-        tm.that(instance.mapping_union == instance.mapping_optional, eq={})
+        tm.that(instance.mapping_union == instance.mapping_optional, truth=True)
         tm.that(instance.mapping_typing_union, eq={})
         tm.that(messages(u.check(_M), fragment="read-only field contract"), eq=before)
 

@@ -25,6 +25,11 @@ _INHERITANCE_FRAGMENT = "must inherit FlextSettings"
 _ACCESSOR_FRAGMENT = "accessor method"
 
 
+def _inheritance_violations(cls: type) -> list[m.Violation]:
+    """Return inheritance violations for *cls*."""
+    return [v for v in u.check(cls).violations if _INHERITANCE_FRAGMENT in v.message]
+
+
 class TestsFlextCoreEnforcementAccessors:
     """Public enforcement behavior: what ``u.check`` reports to a caller."""
 
@@ -184,9 +189,7 @@ class TestsFlextCoreEnforcementAccessors:
         cls.__module__ = "flext_core.synthetic"
 
         # Act
-        inheritance = [
-            v for v in u.check(cls).violations if _INHERITANCE_FRAGMENT in v.message
-        ]
+        inheritance = _inheritance_violations(cls)
 
         # Assert — flagged, and tagged with the catalog rule id callers can filter on.
         tm.that(inheritance, truth=True)
@@ -200,10 +203,8 @@ class TestsFlextCoreEnforcementAccessors:
         """Test settings named plain class is not a settings target."""
         cls = make_class("FlextWorkerSettings", {})
 
-        # Act
-        inheritance = [
-            v for v in u.check(cls).violations if _INHERITANCE_FRAGMENT in v.message
-        ]
+        # Act — plain class does not inherit FlextSettings
+        inheritance = _inheritance_violations(cls)
 
         # Assert
         tm.that(inheritance, truth=False)
@@ -236,9 +237,7 @@ class TestsFlextCoreEnforcementAccessors:
         cls = make_class("FlextCoreService", {})
 
         # Act
-        inheritance = [
-            v for v in u.check(cls).violations if _INHERITANCE_FRAGMENT in v.message
-        ]
+        inheritance = _inheritance_violations(cls)
 
         # Assert
         tm.that(inheritance, truth=False)

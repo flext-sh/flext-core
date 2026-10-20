@@ -141,7 +141,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
       170          )
       171          result: p.Result[int] = r[int].fail(None, exception=exc)
       172          tm.fail(result, has="")
-      173          assert result.error_data is not None
+      173          tm.not_none(result.error_data)
 ```
 
 **Decisão**:
@@ -159,7 +159,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
                   "password": "s3cret", "host": "db.example", "token": "t0k"},
       216          )
       217          tm.fail(result, has="denied")
-      218          assert result.error_data is not None
+      218          tm.not_none(result.error_data)
       219          tm.that(result.error_data.get("host"), eq="db.example")
 ```
 
@@ -197,7 +197,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
       230              exception=exc,
       231          )
       232          tm.fail(result, has="denied")
-      233          assert result.error_data is not None
+      233          tm.not_none(result.error_data)
 ```
 
 **Decisão**:

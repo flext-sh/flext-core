@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from typing import cast
 
 from flext_core._protocols import FlextProtocolsContainer
 
@@ -45,7 +46,7 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
 
         """
         return isinstance(value, Mapping) and bool(
-            value,
+            cast("Mapping[str, object]", value),
         )
 
     @staticmethod
@@ -61,7 +62,7 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
         return (
             isinstance(value, Sequence)
             and not isinstance(value, (str, bytes, bytearray))
-            and bool(value)
+            and bool(cast("Sequence[object]", value))
         )
 
     @staticmethod

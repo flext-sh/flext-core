@@ -142,8 +142,8 @@ class TestsFlextCoreResultExceptionFailures:
                 "column": 0,
                 "code": "source-drift",
                 "message": str(original),
-                "locations": (),
-                "related_locations": (),
+                "locations": [],
+                "related_locations": [],
             }
         ]
         result: p.Result[tuple[Path, ...]] = r[tuple[Path, ...]].fail(

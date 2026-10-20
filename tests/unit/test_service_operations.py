@@ -325,6 +325,7 @@ class TestsFlextCoreServiceOperations:
                 The requested command name in a successful result.
 
             """
+            # mismatched metadata path
             return r[str].ok(request.command_name)
 
     class NonModelMetadataService(s[bool]):

@@ -44,7 +44,7 @@ class TestsFlextCoreResultRecentBehaviors:
 
         tm.that(transformed.failure is True, truth=True)
         tm.that(transformed.error, none=False)
-        assert transformed.error is not None
+        tm.not_none(transformed.error)
         tm.that("bad_mapped" in transformed.error, truth=True)
         tm.that(transformed.error_code, eq="E1")
 

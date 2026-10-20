@@ -37,7 +37,6 @@ class FlextModelsSettings:
         )
 
     class RetryConfiguration(
-        FlextModelsBase.ArbitraryTypesModel,
         FlextModelsBase.RetryConfigurationMixin,
     ):
         """Retry configuration with advanced validation."""

@@ -103,7 +103,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         violation = self._apply(probe)
 
         tm.that(violation, none=False)
-        assert violation is not None
+        tm.not_none(violation)
         tm.that(violation["statement"], eq=_FORBIDDEN_IMPORT)
         tm.that(violation["file"], eq="sample.py")
         tm.that(violation["line"], eq="1")

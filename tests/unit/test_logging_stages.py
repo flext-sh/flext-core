@@ -37,6 +37,26 @@ class TestsFlextLoggingStages:
     """Observable contracts of typed event stages and terminal rendering."""
 
     @staticmethod
+    def _make_observe(observed: list[p.LoggingEvent]) -> p.LoggingStage:
+        """Capture the event before the terminal renderer consumes its fields.
+
+        Returns:
+            The typed stage preserving a snapshot of each observed event.
+
+        """
+
+        def observe(
+            logger: p.OutputLogger,
+            method_name: str,
+            event_dict: p.LoggingEvent,
+        ) -> p.LoggingEvent:
+            _ = logger, method_name
+            observed.append(dict(event_dict))
+            return event_dict
+
+        return observe
+
+    @staticmethod
     def test_closed_async_stream_preserves_native_failure() -> None:
         """A failed sink terminates without logging back into its own writer."""
         consumer = (
@@ -178,7 +198,7 @@ class TestsFlextLoggingStages:
         except ValueError:
             result = logger.info("ordered stages", payload=payload, exc_info=True)
 
-        tm.that(result.success, eq=True)  # type: ignore[unreachable]
+        tm.that(result.success, eq=True)
         tm.that(len(observed), eq=2)
         tm.that(observed[1]["payload"], eq=payload)
         tm.that(observed[1]["exception_type"], eq="ValueError")
@@ -240,14 +260,7 @@ class TestsFlextLoggingStages:
         observed: list[p.LoggingEvent] = []
         stream = io.StringIO()
 
-        def observe(
-            logger: p.OutputLogger,
-            method_name: str,
-            event_dict: p.LoggingEvent,
-        ) -> p.LoggingEvent:
-            _ = logger, method_name
-            observed.append(dict(event_dict))
-            return event_dict
+        observe = self._make_observe(observed)
 
         u.configure_structlog(
             settings=m.StructlogOptions(
@@ -288,14 +301,7 @@ class TestsFlextLoggingStages:
         stream = io.StringIO()
         observed: list[p.LoggingEvent] = []
 
-        def observe(
-            logger: p.OutputLogger,
-            method_name: str,
-            event_dict: p.LoggingEvent,
-        ) -> p.LoggingEvent:
-            _ = logger, method_name
-            observed.append(dict(event_dict))
-            return event_dict
+        observe = self._make_observe(observed)
 
         u.configure_structlog(
             settings=m.StructlogOptions(
