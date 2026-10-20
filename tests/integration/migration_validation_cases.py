@@ -67,4 +67,4 @@ class TestsFlextFlextMigrationApplicationCase:
             contains="Processing data",
         )
         tm.ok(result.success)
-        tm.ok(result.value["processed"])
+        tm.that(result.value["processed"], eq=True)

@@ -234,10 +234,9 @@ class TestsFlextCoreResultFactoryDip:
         )
         result: p.Result[int] = r[int].fail(None, exception=exc)
         tm.fail(result, has="")
-        tm.that(result.error_data, none=False)
-        tm.not_none(result.error_data)
-        tm.that(result.error_data.get("host"), eq="db.example")
-        _assert_redacted(result.error_data, password, token)
+        error_data = tm.not_none(result.error_data)
+        tm.that(error_data.get("host"), eq="db.example")
+        _assert_redacted(error_data, password, token)
 
     @staticmethod
     def test_fail_op_wraps_exception_and_stays_concrete_result() -> None:
@@ -287,10 +286,9 @@ class TestsFlextCoreResultFactoryDip:
             error_data={"password": password, "host": "db.example", "token": token},
         )
         tm.fail(result, has="denied")
-        tm.that(result.error_data, none=False)
-        tm.not_none(result.error_data)
-        tm.that(result.error_data.get("host"), eq="db.example")
-        _assert_redacted(result.error_data, password, token)
+        error_data = tm.not_none(result.error_data)
+        tm.that(error_data.get("host"), eq="db.example")
+        _assert_redacted(error_data, password, token)
 
     @staticmethod
     def test_fail_explicit_error_data_wins_but_still_redacts_with_exception() -> None:
@@ -309,9 +307,8 @@ class TestsFlextCoreResultFactoryDip:
             exception=exc,
         )
         tm.fail(result, has="denied")
-        tm.that(result.error_data, none=False)
-        tm.not_none(result.error_data)
-        tm.that(result.error_data.get("host"), eq="kept")
+        error_data = tm.not_none(result.error_data)
+        tm.that(error_data.get("host"), eq="kept")
         tm.that("password" not in str(result.error_data), truth=True)
         tm.that("api_key" not in str(result.error_data), truth=True)
         for secret in (exception_password, password, api_key):

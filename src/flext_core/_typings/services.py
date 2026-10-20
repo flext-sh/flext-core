@@ -53,18 +53,19 @@ class FlextTypesServices:
     ]
 
     type JsonPayloadLeaf = (
-        FlextTypingBase.Scalar | Path | FlextTypesPydantic.BaseModelInstance
+        FlextTypingBase.Scalar
+        | Path
+        | FlextTypesPydantic.JsonValue
+        | FlextTypesPydantic.BaseModelInstance
+        | None
     )
-    # Reuse the canonical JSON graph, as required by recursive-type-alias;
-    # introducing namespace self-reference here breaks checker convergence.
-    type JsonPayloadCollectionValue = (
-        FlextTypesServices.JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
-        | FlextTypingBase.SequenceOf[FlextTypesPydantic.JsonValue]
+    type JsonPayload = (
+        FlextTypesPydantic.JsonValue | Path
     )
-    type JsonPayload = FlextTypesServices.JsonPayloadCollectionValue
-    type OperationMetricsStream = Generator[FlextTypingBase.MappingKV[str, JsonPayload]]
-    type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayloadLeaf | T
+    type OperationMetricsStream = Generator[
+        FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
+    ]
+    type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayload | T
     type SettingsOverrideCollectionValue[T] = (
         FlextTypesServices.SettingsOverrideLeaf[T]
         | FlextTypingBase.MappingKV[str, FlextTypesServices.SettingsOverrideLeaf[T]]
@@ -117,7 +118,7 @@ class FlextTypesServices:
     type LoggingWriteCompletion = Future[int]
     type MetadataMapping = FlextTypingBase.MappingKV[str, JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, JsonPayload]
-    type RuntimeData = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelType
+    type RuntimeData = JsonPayload
     type BootstrapInput = FlextTypesPydantic.BaseModelType | FlextTypingBase.JsonMapping
     type ServiceClass = type
     type UserOverridesMapping = FlextTypingBase.MappingKV[str, JsonPayload]

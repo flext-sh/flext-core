@@ -37,6 +37,7 @@ from pydantic import (
     WrapSerializer,
     WrapValidator,
 )
+from pydantic.fields import FieldInfo
 from typing_extensions import TypeForm
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
@@ -56,7 +57,7 @@ class FlextModelsPydantic:
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
     Field = FlextTypingNativeExport(pydantic.Field)
-    from pydantic.fields import FieldInfo
+    FieldInfo = FieldInfo
 
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]

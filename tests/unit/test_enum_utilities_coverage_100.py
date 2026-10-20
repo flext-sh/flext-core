@@ -106,11 +106,9 @@ class TestsFlextCoreEnumUtilities:
             tm.that(result.value, eq=scenario.expected_status)
         else:
             tm.fail(result)
-            tm.that(scenario.expected_error, none=False)
-            tm.not_none(scenario.expected_error)
-            tm.that(result.error, none=False)
-            tm.not_none(result.error)
-            tm.that(scenario.expected_error in result.error, truth=True)
+            expected_error = tm.not_none(scenario.expected_error)
+            error = tm.not_none(result.error)
+            tm.that(expected_error in error, truth=True)
 
     def test_parsed_member_round_trips_into_enum_values(self) -> None:
         """A successfully parsed member's value is present in enum_values."""

@@ -225,7 +225,6 @@ class TestsFlextCoreExceptionsBase:
             field="email",
             options=m.ExceptionInitOptions(auto_correlation=True),
         )
-        tm.that(error.correlation_id, none=False)
-        tm.not_none(error.correlation_id)
-        tm.that(error.correlation_id.startswith("exc_"), truth=True)
+        correlation_id = tm.not_none(error.correlation_id)
+        tm.that(correlation_id.startswith("exc_"), truth=True)
         tm.that(error.field, eq="email")
