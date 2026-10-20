@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, ClassVar, dataclass_transform, overload
 
 import pydantic
 import pydantic_settings
+from pydantic.fields import FieldInfo
 from pydantic import (
     AfterValidator,
     AliasChoices,
@@ -56,7 +57,7 @@ class FlextModelsPydantic:
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
     Field = FlextTypingNativeExport(pydantic.Field)
-    from pydantic.fields import FieldInfo as FieldInfo
+    FieldInfo = FieldInfo
 
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
