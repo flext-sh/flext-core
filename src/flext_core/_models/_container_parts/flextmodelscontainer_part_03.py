@@ -88,13 +88,11 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
                 validate_default=True,
             ),
         ] = None
-        user_overrides: p.Model | t.UserOverridesMapping | None = (
-            FlextModelsPydantic.Field(
-                default=None,
-                title="User Overrides",
-                description="User-level configuration overrides applied after defaults.",
-                validate_default=True,
-            )
+        user_overrides: t.UserOverridesMapping | None = FlextModelsPydantic.Field(
+            default=None,
+            title="User Overrides",
+            description="User-level configuration overrides applied after defaults.",
+            validate_default=True,
         )
         container_config: p.Model | None = FlextModelsPydantic.Field(
             default=None,

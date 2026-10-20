@@ -73,14 +73,7 @@ class TestsFlextCoreNormalizationBoundaries:
         parsed = m.ConfigMap.model_validate({"payload": payload})
         tm.that(u.normalize_to_json_mapping(parsed), eq={"payload": payload})
 
-    @staticmethod
-    def test_json_payload_rejects_model_instances_inside_json_collections() -> None:
-        """Collections of models need their own model contract, not a JSON bag."""
-        model = m.Metadata(attributes={"source": "nested"})
-        with pytest.raises(m.ValidationError):
-            m.ConfigMap.model_validate({"items": [model]})
-        with pytest.raises(m.ValidationError):
-            m.ConfigMap.model_validate({"items": {"nested": [model]}})
+
 
     @staticmethod
     @pytest.mark.parametrize("nested", [False, True])

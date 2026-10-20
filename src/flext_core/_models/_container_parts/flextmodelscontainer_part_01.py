@@ -80,7 +80,7 @@ class FlextModelsContainer:
             FlextModelsPydantic.Field(..., description="Service identifier/name"),
         ]
         service: Annotated[
-            t.Port[p.RegisterableService],
+            p.RegisterableService,
             FlextModelsPydantic.Field(
                 ...,
                 description="Service instance (protocols, models, callables)",

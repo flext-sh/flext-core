@@ -102,33 +102,12 @@ class FlextUtilitiesPydantic(
             The SDK-validated service value or unchanged collaborator port.
 
         """
-        adapter: t.ValueAdapter[p.RegisterableService] | None = (
-            FlextUtilitiesPydantic._registerable_adapter
-        )
-        if adapter is None:
-            registration = _models.FlextModelsContainer.ServiceRegistration
-            adapter = FlextUtilitiesBase.type_adapter(
-                registration.model_fields["service"].rebuild_annotation(),
-                config=registration.model_config,
-            )
-            FlextUtilitiesPydantic._registerable_adapter = adapter
-        collaborator: t.ValueAdapter[p.RegistryCollaborator] | None = (
-            FlextUtilitiesPydantic._collaborator_adapter
-        )
-        if collaborator is None:
-            collaborator = FlextUtilitiesBase.type_adapter(
-                TypeForm(p.RegistryCollaborator),
-                config=_models.FlextModelsContainer.ServiceRegistration.model_config,
-            )
-            FlextUtilitiesPydantic._collaborator_adapter = collaborator
-        if collaborator.validator.isinstance_python(value):
-            return adapter.validate_python(value)
         models = _models.FlextModelsContainers
         if isinstance(value, Mapping):
             value = models.ConfigMap.model_validate(value)
         elif isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
             value = models.ObjectList.model_validate(value)
-        return adapter.validate_python(value)
+        return value
 
     @staticmethod
     def normalize_to_container(value: p.GuardInput) -> t.JsonPayload:
@@ -183,6 +162,11 @@ class FlextUtilitiesPydantic(
             warnings.simplefilter("ignore")
             if isinstance(value, MappingProxyType):
                 payload = dict(value)
+            elif isinstance(value, tuple):
+                payload = tuple(
+                    str(item) if isinstance(item, (type, BaseException)) else item
+                    for item in value
+                )
             elif hasattr(value, "model_dump") and hasattr(
                 value, "__pydantic_core_schema__"
             ):

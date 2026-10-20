@@ -162,7 +162,9 @@ class TestsFlextCoreContainerTruthful:
     ) -> None:
         """A nested Pydantic value retains its own validated serialization."""
         metadata = m.Metadata()
-        _ = clean_container.bind("model-payload", {"metadata": metadata})
+        _ = clean_container.bind(
+            "model-payload", m.ConfigMap(root={"metadata": metadata})
+        )
         value = tm.ok(clean_container.resolve("model-payload", type_cls=m.ConfigMap))
         tm.that(
             value.model_dump(mode="json"),

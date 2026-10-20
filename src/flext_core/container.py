@@ -16,7 +16,16 @@ import inspect
 import sys
 from collections.abc import Mapping, Sequence
 from functools import partial
-from typing import TYPE_CHECKING, Any, ClassVar, Self, TypeGuard, cast, overload, override
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Self,
+    TypeGuard,
+    cast,
+    overload,
+    override,
+)
 
 from typing_extensions import TypeForm
 
@@ -68,7 +77,14 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _global_config: m.ContainerConfig
 
-    def __new__(cls, **kwargs: Any) -> Self:
+    def __new__(
+        cls,
+        *,
+        registration: m.ServiceRegistrationSpec
+        | p.ServiceRegistrationSpec
+        | None = None,
+        **kwargs: Any,
+    ) -> Self:
         """Create or return the global singleton instance."""
         if cls._global_instance is None:
             with cls._global_lock:
@@ -503,7 +519,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                     },
                     **(spec.resources or {}),
                 },
-                user_overrides=self._user_overrides.model_copy(),
+                user_overrides=dict(self._user_overrides.root),
                 container_config=self._global_config.model_copy(deep=True),
             ),
         )

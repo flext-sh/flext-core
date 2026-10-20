@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Literal, Protocol, Self, overload, runtime_che
 
 from typing_extensions import TypeForm
 
-from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core import t
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, MutableSequence
@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     )
     from pydantic_core.core_schema import WhenUsed
 
-    from flext_core import m, t
+    from flext_core import m
 
 
 class FlextProtocolsBase:
@@ -135,9 +135,7 @@ class FlextProtocolsBase:
         __module__: str
 
     @runtime_checkable
-    class Model[DumpT: FlextTypesServices.JsonPayload = FlextTypingBase.JsonDict](
-        Base, Protocol
-    ):
+    class Model[DumpT: t.JsonPayload = t.JsonDict](Base, Protocol):
         """Structural typing protocol for Pydantic v2 models.
 
         Ensures types have Pydantic signatures without importing BaseModel directly

@@ -22,7 +22,7 @@ class FlextProtocolsContainer:
     """Protocols for DI container behavior."""
 
     type RegistryCollaborator = (
-        FlextProtocolsBase.Model[t.JsonPayload]
+        FlextProtocolsBase.Model[object]
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
         | FlextProtocolsContext.Context
