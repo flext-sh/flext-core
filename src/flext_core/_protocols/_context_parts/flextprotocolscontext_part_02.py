@@ -13,7 +13,7 @@ from flext_core._protocols._context_parts import flextprotocolscontext_part_01
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import p, t
+    from flext_core import t
 
 
 class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext):
@@ -38,7 +38,9 @@ class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext)
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[p.MutableRootDict[t.JsonPayload]]:
+        ) -> AbstractContextManager[
+            FlextProtocolsContext.MutableRootDict[t.JsonPayload]
+        ]:
             """Create a timed operation scope."""
             ...
 
@@ -70,30 +72,34 @@ class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext)
         """Protocol for flat context classes exposing the canonical class API."""
 
         @classmethod
-        def create(cls, **initial_data: t.JsonPayload) -> p.Context:
+        def create(cls, **initial_data: t.JsonPayload) -> FlextProtocolsContext.Context:
             """Create a new context instance."""
             ...
 
         @classmethod
-        def resolve_container(cls) -> p.Container:
+        def resolve_container(cls) -> FlextProtocolsContext.Container:
             """Resolve the configured container."""
             ...
 
         @classmethod
-        def configure_container(cls, container: p.Container) -> None:
+        def configure_container(
+            cls, container: FlextProtocolsContext.Container
+        ) -> None:
             """Configure the container used by the context service namespace."""
             ...
 
         @staticmethod
-        def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
+        def fetch_service(
+            service_name: str,
+        ) -> FlextProtocolsContext.Result[FlextProtocolsContext.RegisterableService]:
             """Resolve a named service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
             service_name: str,
-            service: p.RegisterableService,
-        ) -> p.Result[bool]:
+            service: FlextProtocolsContext.RegisterableService,
+        ) -> FlextProtocolsContext.Result[bool]:
             """Register a named service through the configured container."""
             ...
 
@@ -141,7 +147,9 @@ class FlextProtocolsContext(flextprotocolscontext_part_01.FlextProtocolsContext)
         @staticmethod
         def timed_operation(
             operation_name: str | None = None,
-        ) -> AbstractContextManager[p.MutableRootDict[t.JsonPayload]]:
+        ) -> AbstractContextManager[
+            FlextProtocolsContext.MutableRootDict[t.JsonPayload]
+        ]:
             """Create a timed operation scope."""
             ...
 

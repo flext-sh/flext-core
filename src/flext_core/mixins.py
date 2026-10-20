@@ -79,7 +79,7 @@ class FlextMixins(FlextMixinsState):
                 }
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
-                    yield metrics_map
+                    yield metrics_map  # type: ignore
                     if "duration_ms" in metrics_map:
                         total = u.to_float(stats.get("total_duration_ms", 0.0))
                         stats["total_duration_ms"] = total + u.to_float(
@@ -103,7 +103,7 @@ class FlextMixins(FlextMixinsState):
                     metrics_map["success_rate"] = stats["success_rate"]
                     if "avg_duration_ms" in stats:
                         metrics_map["avg_duration_ms"] = stats["avg_duration_ms"]
-                    self._operation_stats[operation_name] = stats_model
+                    self._operation_stats[operation_name] = stats_model  # type: ignore
         finally:
             _ = u.clear_scope(c.ContextScope.OPERATION)
             FlextContext.apply_operation_name("")

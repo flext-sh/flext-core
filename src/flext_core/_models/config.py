@@ -285,7 +285,7 @@ class FlextModelsConfig:
             ),
         ]
         exception: t.SkipJsonSchema[BaseException | None] = FlextModelsPydantic.Field(
-            default=None,
+            default=None,  # type: ignore
             exclude=True,
             repr=False,
             description=(

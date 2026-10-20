@@ -186,7 +186,7 @@ class FlextUtilitiesPydantic(
             elif hasattr(value, "model_dump") and hasattr(
                 value, "__pydantic_core_schema__"
             ):
-                payload = value.model_dump(mode="json")
+                payload = value.model_dump(mode="json")  # type: ignore
             elif model_adapter.validator.isinstance_python(value) and not isinstance(
                 value, Mapping
             ):

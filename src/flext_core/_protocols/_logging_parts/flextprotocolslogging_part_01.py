@@ -14,7 +14,6 @@ from structlog.typing import Processor
 from flext_core._protocols import FlextProtocolsSettings
 from flext_core._protocols.base import FlextProtocolsBase
 from flext_core._protocols.result import FlextProtocolsResult
-from flext_core._typings import FlextTypesServices
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -23,13 +22,11 @@ if TYPE_CHECKING:
 class FlextProtocolsLogging:
     """Protocols for logging, connection, validation, and entries."""
 
-    type LogArgument = FlextTypesServices.LogArgument[FlextProtocolsBase.Model]
-    type LogValue = FlextTypesServices.LogValue[FlextProtocolsBase.Model]
-    type LoggingEventValue = FlextTypesServices.LoggingEventValue[
-        FlextProtocolsBase.Model
-    ]
-    type LoggingEvent = FlextTypesServices.LoggingEvent[FlextProtocolsBase.Model]
-    type LoggingContext = FlextTypesServices.LoggingContext[FlextProtocolsBase.Model]
+    type LogArgument = t.LogArgument
+    type LogValue = t.LogValue[FlextProtocolsBase.Model]
+    type LoggingEventValue = t.LoggingEventValue[FlextProtocolsBase.Model]
+    type LoggingEvent = t.LoggingEvent[FlextProtocolsBase.Model]
+    type LoggingContext = t.LoggingContext[FlextProtocolsBase.Model]
     type LogResult = FlextProtocolsResult.Result[bool]
 
     @runtime_checkable

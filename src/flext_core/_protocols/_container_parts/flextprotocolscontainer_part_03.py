@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 from flext_core._protocols._container_parts import flextprotocolscontainer_part_02
 
 if TYPE_CHECKING:
-    from flext_core import p
     from flext_core._protocols import FlextProtocolsContext, FlextProtocolsSettings
 
 
@@ -26,14 +25,14 @@ class FlextProtocolsContainer(flextprotocolscontainer_part_02.FlextProtocolsCont
         def initialize_registrations(
             self,
             *,
-            registration: p.ServiceRegistrationSpec | None = None,
+            registration: FlextProtocolsContainer.ServiceRegistrationSpec | None = None,
         ) -> None:
             """Initialize explicit registrations and runtime-bound state."""
             ...
 
         @override
         def register_core_services(
-            self, *, dispatcher: p.Dispatcher | None = None
+            self, *, dispatcher: FlextProtocolsContainer.Dispatcher | None = None
         ) -> None:
             """Register the canonical core service set into the container."""
             ...

@@ -8,13 +8,10 @@ from __future__ import annotations
 
 from contextvars import ContextVar
 from datetime import datetime
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import Protocol, Self, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols._context_parts import flextprotocolscontext_part_02
-
-if TYPE_CHECKING:
-    from flext_core import p
 
 
 class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext):
@@ -34,10 +31,12 @@ class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext)
 
         def get(self) -> t.JsonPayload | datetime | None: ...
 
-        def set(self, value: ValueT | None) -> p.ContextProxyToken: ...
+        def set(
+            self, value: ValueT | None
+        ) -> FlextProtocolsContext.ContextProxyToken: ...
 
         @staticmethod
-        def reset(token: p.ContextProxyToken) -> None: ...
+        def reset(token: FlextProtocolsContext.ContextProxyToken) -> None: ...
 
     @runtime_checkable
     class ContextMetadata(Protocol):
@@ -79,13 +78,13 @@ class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext)
         """Data capabilities consumed by context runtime helpers."""
 
         @property
-        def metadata(self) -> p.ContextMetadata: ...
+        def metadata(self) -> FlextProtocolsContext.ContextMetadata: ...
 
         @property
         def hooks(self) -> t.ContextHookMap: ...
 
         @property
-        def statistics(self) -> p.ContextStatistics: ...
+        def statistics(self) -> FlextProtocolsContext.ContextStatistics: ...
 
         @property
         def active(self) -> bool: ...
@@ -96,15 +95,22 @@ class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext)
         @property
         def scope_vars(
             self,
-        ) -> t.MappingKV[str, ContextVar[p.MutableRootDict[t.JsonPayload] | None]]: ...
+        ) -> t.MappingKV[
+            str, ContextVar[FlextProtocolsContext.MutableRootDict[t.JsonPayload] | None]
+        ]: ...
 
         def model_copy(
             self,
             *,
             update: t.MappingKV[
                 str,
-                p.ContextStatistics
-                | t.MappingKV[str, ContextVar[p.MutableRootDict[t.JsonPayload] | None]],
+                FlextProtocolsContext.ContextStatistics
+                | t.MappingKV[
+                    str,
+                    ContextVar[
+                        FlextProtocolsContext.MutableRootDict[t.JsonPayload] | None
+                    ],
+                ],
             ]
             | None = None,
             deep: bool = False,
@@ -115,38 +121,38 @@ class FlextProtocolsContext(flextprotocolscontext_part_02.FlextProtocolsContext)
         """Actual scoped runtime selected by a component's composition root."""
 
         @property
-        def settings(self) -> p.Settings: ...
+        def settings(self) -> FlextProtocolsContext.Settings: ...
 
         @property
-        def context(self) -> p.Context: ...
+        def context(self) -> FlextProtocolsContext.Context: ...
 
         @property
-        def container(self) -> p.Container: ...
+        def container(self) -> FlextProtocolsContext.Container: ...
 
         @property
-        def dispatcher(self) -> p.Dispatcher: ...
+        def dispatcher(self) -> FlextProtocolsContext.Dispatcher: ...
 
     @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options a service base declares for its runtime."""
 
         @property
-        def settings(self) -> p.Settings | None: ...
+        def settings(self) -> FlextProtocolsContext.Settings | None: ...
 
         @property
-        def settings_type(self) -> p.SettingsType | None: ...
+        def settings_type(self) -> FlextProtocolsContext.SettingsType | None: ...
 
         @property
         def settings_overrides(self) -> t.MappingKV[str, t.JsonValue] | None: ...
 
         @property
-        def context(self) -> p.Context | None: ...
+        def context(self) -> FlextProtocolsContext.Context | None: ...
 
         @property
-        def container(self) -> p.Container | None: ...
+        def container(self) -> FlextProtocolsContext.Container | None: ...
 
         @property
-        def dispatcher(self) -> p.Dispatcher | None: ...
+        def dispatcher(self) -> FlextProtocolsContext.Dispatcher | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsContext"]

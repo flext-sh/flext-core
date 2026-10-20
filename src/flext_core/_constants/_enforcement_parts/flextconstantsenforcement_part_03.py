@@ -14,7 +14,7 @@ from flext_core._constants._enforcement_parts import FlextConstantsEnforcementEn
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core._typings import FlextTypingBase
+    from flext_core import t
 
 
 class FlextConstantsEnforcementNamespace:
@@ -29,7 +29,7 @@ class FlextConstantsEnforcementNamespace:
     # ENFORCEMENT_NAMESPACE_FACADE_ROOTS (Flext{Name}) and
     # ENFORCEMENT_NAMESPACE_LAYER_MAP ((Name, name.lower())) below — adding
     # a layer requires editing only this tuple.
-    NAMESPACE_LAYER_NAMES: ClassVar[FlextTypingBase.VariadicTuple[str]] = (
+    NAMESPACE_LAYER_NAMES: ClassVar[t.VariadicTuple[str]] = (
         "Constants",
         "Models",
         "Protocols",
@@ -61,7 +61,7 @@ class FlextConstantsEnforcementNamespace:
     )
     """Root facade class names — skip namespace prefix check on these."""
 
-    ENFORCEMENT_NAMESPACE_LAYER_MAP: ClassVar[FlextTypingBase.StrPairTuple] = tuple(
+    ENFORCEMENT_NAMESPACE_LAYER_MAP: ClassVar[t.StrPairTuple] = tuple(
         (name, name.lower()) for name in NAMESPACE_LAYER_NAMES
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
@@ -91,45 +91,45 @@ class FlextConstantsEnforcementNamespace:
     })
     """Canonical short aliases exposed by FLEXT facade namespaces."""
 
-    ENFORCEMENT_PROJECT_ALIAS_OWNERS: ClassVar[
-        Mapping[str, FlextTypingBase.VariadicTuple[str]]
-    ] = MappingProxyType(
-        dict.fromkeys(
-            (
-                "flext_api",
-                "flext_auth",
-                "flext_cli",
-                "flext_core",
-                "flext_db_oracle",
-                "flext_dbt_ldap",
-                "flext_dbt_ldif",
-                "flext_dbt_oracle",
-                "flext_dbt_oracle_wms",
-                "flext_grpc",
-                "flext_infra",
-                "flext_ldap",
-                "flext_ldif",
-                "flext_meltano",
-                "flext_observability",
-                "flext_oracle_oic",
-                "flext_oracle_wms",
-                "flext_plugin",
-                "flext_quality",
-                "flext_tap_ldap",
-                "flext_tap_ldif",
-                "flext_tap_oracle",
-                "flext_tap_oracle_oic",
-                "flext_tap_oracle_wms",
-                "flext_target_ldap",
-                "flext_target_ldif",
-                "flext_target_oracle",
-                "flext_target_oracle_oic",
-                "flext_target_oracle_wms",
-                "flext_tests",
-                "flext_web",
+    ENFORCEMENT_PROJECT_ALIAS_OWNERS: ClassVar[Mapping[str, t.VariadicTuple[str]]] = (
+        MappingProxyType(
+            dict.fromkeys(
+                (
+                    "flext_api",
+                    "flext_auth",
+                    "flext_cli",
+                    "flext_core",
+                    "flext_db_oracle",
+                    "flext_dbt_ldap",
+                    "flext_dbt_ldif",
+                    "flext_dbt_oracle",
+                    "flext_dbt_oracle_wms",
+                    "flext_grpc",
+                    "flext_infra",
+                    "flext_ldap",
+                    "flext_ldif",
+                    "flext_meltano",
+                    "flext_observability",
+                    "flext_oracle_oic",
+                    "flext_oracle_wms",
+                    "flext_plugin",
+                    "flext_quality",
+                    "flext_tap_ldap",
+                    "flext_tap_ldif",
+                    "flext_tap_oracle",
+                    "flext_tap_oracle_oic",
+                    "flext_tap_oracle_wms",
+                    "flext_target_ldap",
+                    "flext_target_ldif",
+                    "flext_target_oracle",
+                    "flext_target_oracle_oic",
+                    "flext_target_oracle_wms",
+                    "flext_tests",
+                    "flext_web",
+                ),
+                ("c", "m", "p", "t", "u"),
             ),
-            ("c", "m", "p", "t", "u"),
-        ),
+        )
     )
     """SSOT: project package name → canonical aliases it re-exports locally.
 

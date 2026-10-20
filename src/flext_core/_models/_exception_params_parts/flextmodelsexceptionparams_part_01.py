@@ -12,10 +12,8 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import c, t
+from flext_core import c, p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._protocols import FlextProtocolsResult
-from flext_core._typings import FlextTypesPydantic, FlextTypesServices
 
 
 class FlextModelsExceptionParams:
@@ -30,9 +28,9 @@ class FlextModelsExceptionParams:
     from the outer Field).
     """
 
-    type OptStrictStr = FlextTypesPydantic.StrictStr | None
+    type OptStrictStr = t.StrictStr | None
 
-    type OptStrictInt = FlextTypesPydantic.StrictInt | None
+    type OptStrictInt = t.StrictInt | None
 
     type OptNumeric = t.Numeric | None
 
@@ -78,16 +76,14 @@ class FlextModelsExceptionParams:
             ),
         ] = c.ErrorCode.UNKNOWN_ERROR
         context: Annotated[
-            t.MappingKV[str, FlextTypesServices.JsonPayload | None]
-            | FlextProtocolsResult.HasModelDump
-            | None,
+            t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Structured context mapping or dumpable payload.",
             ),
         ] = None
         metadata: Annotated[
-            FlextProtocolsResult.HasModelDump | FlextTypesPydantic.JsonValue | None,
+            p.HasModelDump | t.JsonValue | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Metadata payload or dumpable model for the exception.",
@@ -115,9 +111,7 @@ class FlextModelsExceptionParams:
             ),
         ] = True
         merged_kwargs: Annotated[
-            t.MappingKV[str, FlextTypesServices.JsonPayload | None]
-            | FlextProtocolsResult.HasModelDump
-            | None,
+            t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Pre-merged keyword payload forwarded by factories.",

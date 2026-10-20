@@ -16,7 +16,7 @@ import inspect
 import sys
 from collections.abc import Mapping, Sequence
 from functools import partial
-from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
+from typing import TYPE_CHECKING, Any, ClassVar, Self, TypeGuard, cast, overload, override
 
 from typing_extensions import TypeForm
 
@@ -68,7 +68,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _global_config: m.ContainerConfig
 
-    def __new__(cls) -> Self:
+    def __new__(cls, **kwargs: Any) -> Self:
         """Create or return the global singleton instance."""
         if cls._global_instance is None:
             with cls._global_lock:
@@ -323,7 +323,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         """
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},  # type: ignore
         )
 
     @override
@@ -378,7 +378,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             self._user_overrides = m.ConfigMap(
                 root={
                     k: (
-                        list(v)
+                        list(v)  # type: ignore
                         if isinstance(v, Sequence) and not isinstance(v, (str, bytes))
                         else v
                     )
@@ -663,7 +663,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         if settings is None:
             return self
         merged = self._user_overrides.model_copy()
-        merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})
+        merged.update({k: u.normalize_to_container(v) for k, v in settings.items()})  # type: ignore
         self._user_overrides = merged
         self._global_config = m.ContainerConfig.model_validate(
             self._global_config.model_dump() | dict(merged),

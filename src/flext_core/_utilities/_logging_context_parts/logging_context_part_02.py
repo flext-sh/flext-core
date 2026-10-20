@@ -9,10 +9,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import Any
+
 from typing_extensions import TypeForm
 
 from flext_core import FlextRuntime, p, t
 from flext_core._models import FlextModelsBase
+from flext_core._typings import FlextTypesServices
 from flext_core._utilities import FlextUtilitiesBase
 from flext_core._utilities._logging_context_parts import logging_context_part_01
 
@@ -34,7 +37,7 @@ class FlextUtilitiesLoggingContext(
         if isinstance(value, BaseException):
             return str(value)
         admitted = FlextUtilitiesBase.type_adapter(
-            TypeForm(p.LogArgument),
+            TypeForm(FlextTypesServices.JsonPayload | Any),
             config=FlextModelsBase.ArbitraryTypesModel.model_config,
         ).validate_python(value)
         return FlextRuntime.normalize_to_json_value(admitted)

@@ -10,12 +10,11 @@ from typing import Annotated
 
 from pydantic import Discriminator, Field, model_validator
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._models._enforcement import (
     FlextModelsEnforcementModelBase,
     FlextModelsEnforcementSources,
 )
-from flext_core._typings import FlextTypingBase
 
 
 class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
@@ -35,7 +34,7 @@ class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):
             Discriminator("kind"),
         ]
         agents_md_anchor: str = ""
-        skills: FlextTypingBase.StrSequence = ()
+        skills: t.StrSequence = ()
         enabled: bool = True
         promote_to_error_when_strict: bool = True
         notes: str = ""

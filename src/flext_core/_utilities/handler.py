@@ -15,12 +15,9 @@ import time
 from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from flext_core import FlextResult, FlextRuntime, c, m, p
-
-if TYPE_CHECKING:
-    from flext_core import t
+from flext_core import FlextResult, FlextRuntime, c, m, p, t
 
 
 class FlextUtilitiesHandler:
@@ -37,7 +34,7 @@ class FlextUtilitiesHandler:
             The resulting ``p.HandlerRuntimeState``.
 
         """
-        return m.HandlerRuntimeState(
+        return m.HandlerRuntimeState(  # type: ignore
             execution_context=m.ExecutionContext(
                 handler_name=handler_name,
                 handler_mode=handler_mode,
@@ -97,7 +94,7 @@ class FlextUtilitiesHandler:
                     "push handler context",
                     validated.error,
                 )
-            execution_context: p.ExecutionContext = validated.unwrap()
+            execution_context: p.ExecutionContext = validated.unwrap()  # type: ignore
             pushed_context = execution_context
         return FlextResult.ok(
             state.model_copy(

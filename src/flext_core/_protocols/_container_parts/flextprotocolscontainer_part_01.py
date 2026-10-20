@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
+from flext_core import t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsContext,
@@ -15,28 +16,25 @@ from flext_core._protocols import (
     FlextProtocolsLogging,
     FlextProtocolsSettings,
 )
-from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
 class FlextProtocolsContainer:
     """Protocols for DI container behavior."""
 
     type RegistryCollaborator = (
-        FlextProtocolsBase.Model[FlextTypesServices.JsonPayload]
+        FlextProtocolsBase.Model[t.JsonPayload]
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
         | FlextProtocolsContext.Context
         | FlextProtocolsHandler.Dispatcher
     )
-    type ServiceValue = FlextTypesServices.ServiceValue[RegistryCollaborator]
-    type RegisterableService = FlextTypesServices.RegisterableService[
-        RegistryCollaborator
-    ]
-    type FactoryCallable = FlextTypesServices.FactoryCallable[RegistryCollaborator]
-    type ResourceCallable = FlextTypesServices.ResourceCallable[RegistryCollaborator]
-    type ServiceMap = FlextTypesServices.ServiceMap[RegistryCollaborator]
-    type FactoryMap = FlextTypesServices.FactoryMap[RegistryCollaborator]
-    type ResourceMap = FlextTypesServices.ResourceMap[RegistryCollaborator]
+    type ServiceValue = t.ServiceValue[RegistryCollaborator]
+    type RegisterableService = t.RegisterableService[RegistryCollaborator]
+    type FactoryCallable = t.FactoryCallable[RegistryCollaborator]
+    type ResourceCallable = t.ResourceCallable[RegistryCollaborator]
+    type ServiceMap = t.ServiceMap[RegistryCollaborator]
+    type FactoryMap = t.FactoryMap[RegistryCollaborator]
+    type ResourceMap = t.ResourceMap[RegistryCollaborator]
 
     @runtime_checkable
     class ServiceRegistrationSpec(Protocol):
@@ -52,9 +50,7 @@ class FlextProtocolsContainer:
         @property
         def user_overrides(
             self,
-        ) -> (
-            FlextProtocolsBase.Model | FlextTypesServices.UserOverridesMapping | None
-        ): ...
+        ) -> FlextProtocolsBase.Model | t.UserOverridesMapping | None: ...
 
         @property
         def container_config(self) -> FlextProtocolsBase.Model | None: ...
@@ -68,14 +64,14 @@ class FlextProtocolsContainer:
         """
 
         @property
-        def root(self) -> FlextTypingBase.MappingKV[str, RootValueT]: ...
+        def root(self) -> t.MappingKV[str, RootValueT]: ...
 
     @runtime_checkable
     class MutableRootDict[RootValueT](Protocol):
         """Structural contract for mutable validated root mappings."""
 
         @property
-        def root(self) -> FlextTypingBase.MutableMappingKV[str, RootValueT]: ...
+        def root(self) -> t.MutableMappingKV[str, RootValueT]: ...
 
 
 __all__: list[str] = ["FlextProtocolsContainer"]
