@@ -53,17 +53,14 @@ class FlextTypesServices:
     ]
 
     type JsonPayloadLeaf = (
-        FlextTypingBase.Scalar
-        | Path
-        | FlextTypesPydantic.JsonValue
-        | FlextTypesPydantic.BaseModelInstance
+        FlextTypingBase.Scalar | Path | FlextTypesPydantic.BaseModelInstance
     )
-    # Runtime payloads admit existing models at every collection depth;
-    # JsonValue alone would reject those instances inside a list or mapping.
+    # Reuse the canonical JSON graph, as required by recursive-type-alias;
+    # introducing namespace self-reference here breaks checker convergence.
     type JsonPayloadCollectionValue = (
-        JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayloadCollectionValue]
-        | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayloadCollectionValue]
+        FlextTypesServices.JsonPayloadLeaf
+        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
+        | FlextTypingBase.SequenceOf[FlextTypesPydantic.JsonValue]
     )
     type JsonPayload = FlextTypesServices.JsonPayloadCollectionValue
     type OperationMetricsStream = Generator[FlextTypingBase.MappingKV[str, JsonPayload]]
@@ -111,7 +108,9 @@ class FlextTypesServices:
         | tuple[FlextTypesServices.LogValue[T], ...]
     )
     type LoggingEvent[T] = MutableMapping[str, FlextTypesServices.LoggingEventValue[T]]
-    type LoggingContext[T] = dict[str, FlextTypesServices.LoggingEventValue[T]]
+    type LoggingContext[T] = FlextTypingBase.DictKV[
+        str, FlextTypesServices.LoggingEventValue[T]
+    ]
     type TextStream = TextIO
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
