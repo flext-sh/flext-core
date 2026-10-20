@@ -53,7 +53,7 @@ class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExt
                 default=default,
                 required=required,
             )
-        return FlextResult[t.JsonPayload].ok(  # type: ignore
+        return FlextResult[t.JsonPayload].ok(
             current if FlextUtilitiesGuards.container_value(current) else str(current),
         )
 

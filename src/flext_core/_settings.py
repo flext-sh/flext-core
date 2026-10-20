@@ -332,7 +332,7 @@ class FlextSettings(BaseSettings):
         instance = cls._initialized_instance()
         if overrides:
             if instance is not None:
-                return instance.clone(**overrides)  # type: ignore
+                return instance.clone(**overrides)
             with cls.singleton_disabled():
                 return cls.model_validate(dict(overrides))
         if instance is not None:

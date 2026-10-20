@@ -44,7 +44,7 @@ class TestsFlextServiceRegistrationSpecOwner:
     ) -> None:
         """Services, factories and resources declared by a spec all resolve."""
         container = FlextContainer(
-            registration=m.ServiceRegistrationSpec(  # type: ignore
+            registration=m.ServiceRegistrationSpec(
                 services={"service": "value"},
                 factories={"factory": _factory},
                 resources={"resource": _factory},
@@ -76,7 +76,7 @@ class TestsFlextServiceRegistrationSpecOwner:
         _ = clean_container.bind("service", "first")
 
         with pytest.raises(e.ValidationError, match="service"):
-            _ = FlextContainer(registration=spec)  # type: ignore
+            _ = FlextContainer(registration=spec)
 
         tm.ok(clean_container.resolve("service"), eq="first")
 

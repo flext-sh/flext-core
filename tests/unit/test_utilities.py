@@ -42,7 +42,7 @@ class TestsFlextCoreUtilities:
         expected: bool,
     ) -> None:
         """Test matches type reports runtime type membership."""
-        tm.that(u.matches_type(value, type_name) is expected, truth=True)  # type: ignore
+        tm.that(u.matches_type(value, type_name) is expected, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize("kind", ["ulid", "uuid4", "uuid", "id", "hex", "short"])

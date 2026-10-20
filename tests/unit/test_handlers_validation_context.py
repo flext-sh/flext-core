@@ -75,7 +75,7 @@ class TestsFlextCoreHandlersValidationContext(
         handler = self.ValidationTestHandler(settings=settings)
 
         # Act
-        result = handler.validate_message(message)  # pyrefly: ignore
+        result = handler.validate_message(message)
 
         # Assert
         _ = u.Tests.assert_success(result, expected_value=True)
@@ -104,7 +104,7 @@ class TestsFlextCoreHandlersValidationContext(
         handler = self.ValidationTestHandler(settings=settings)
 
         # Act
-        result = handler.validate_message(falsy_message)  # pyrefly: ignore
+        result = handler.validate_message(falsy_message)
 
         # Assert
         _ = u.Tests.assert_failure(result, c.Tests.VALIDATION_FAILED_FOR_TEST)

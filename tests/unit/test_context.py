@@ -364,7 +364,7 @@ class TestsFlextCoreContext:
         """Mutation of the original nested payload does not affect its clone."""
         payload: t.JsonDict = {"state": "original"}
         context = FlextContext()
-        context.set("nested", payload)  # pyrefly: ignore
+        context.set("nested", payload)
         cloned = context.clone()
         payload["state"] = "changed"
         tm.ok(context.get("nested"), eq={"state": "changed"})
@@ -463,13 +463,13 @@ class TestsFlextCoreContext:
     def test_timing_and_service_scopes_restore_values_on_failure() -> None:
         """Timing still finalizes metrics and restores outer shared values on errors."""
         FlextContext.apply_operation_name("outer-operation")
-        metrics: p.MutableRootDict[t.JsonPayload] = m.ConfigMap(root={})  # pyrefly: ignore
+        metrics: p.MutableRootDict[t.JsonPayload] = m.ConfigMap(root={})
 
         def fail_timed_scope() -> None:
             nonlocal metrics
             with (
                 FlextContext.service_context("inner-service", "inner-version"),
-                FlextContext.timed_operation("inner-operation") as metrics,  # pyrefly: ignore
+                FlextContext.timed_operation("inner-operation") as metrics,
             ):
                 tm.that(FlextContext.resolve_operation_name(), eq="inner-operation")
                 msg = "timed failure"
@@ -505,7 +505,7 @@ class TestsFlextCoreContext:
         """Extended scopes retain metadata, hooks and independent storage."""
 
         def on_event(value: t.Scalar) -> t.JsonPayload:
-            return value  # pyrefly: ignore
+            return value
 
         metadata = m.Metadata(attributes={"source": "runtime"})
         state = u.create_context_runtime(metadata)
@@ -529,7 +529,7 @@ class TestsFlextCoreContext:
             eq=False,
         )
         values = m.ConfigMap(root={"source": "first"})
-        token = variable.set(values)  # pyrefly: ignore
+        token = variable.set(values)
         try:
             tm.ok(updated.scope_vars["custom"].get() is values)
         finally:

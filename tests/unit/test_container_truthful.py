@@ -128,11 +128,11 @@ class TestsFlextCoreContainerTruthful:
         instant = datetime.now(UTC)
         path = Path("registered-payload")
         payload: t.MappingKV[str, datetime | Path] = {"created": instant, "path": path}
-        _ = clean_container.bind("mapping-payload", payload)  # pyrefly: ignore
+        _ = clean_container.bind("mapping-payload", payload)
         value = tm.ok(clean_container.resolve("mapping-payload", type_cls=m.ConfigMap))
         tm.that(
             value.model_dump(mode="json"),
-            eq=u.normalize_to_json_value(payload),  # pyrefly: ignore
+            eq=u.normalize_to_json_value(payload),
         )
         tm.ok(payload["created"] is instant)
         tm.ok(payload["path"] is path)
@@ -145,13 +145,13 @@ class TestsFlextCoreContainerTruthful:
         instant = datetime.now(UTC)
         path = Path("sequence-payload")
         payload: t.SequenceOf[str | Path | datetime] = ["entry", path, instant]
-        _ = clean_container.bind("sequence-payload", payload)  # pyrefly: ignore
+        _ = clean_container.bind("sequence-payload", payload)
         value = tm.ok(
             clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
         )
         tm.that(
             value.model_dump(mode="json"),
-            eq=u.normalize_to_json_value(payload),  # pyrefly: ignore
+            eq=u.normalize_to_json_value(payload),
         )
         tm.ok(payload[1] is path)
         tm.ok(payload[2] is instant)
@@ -162,7 +162,7 @@ class TestsFlextCoreContainerTruthful:
     ) -> None:
         """A nested Pydantic value retains its own validated serialization."""
         metadata = m.Metadata()
-        _ = clean_container.bind("model-payload", {"metadata": metadata})  # pyrefly: ignore
+        _ = clean_container.bind("model-payload", {"metadata": metadata})
         value = tm.ok(clean_container.resolve("model-payload", type_cls=m.ConfigMap))
         tm.that(
             value.model_dump(mode="json"),

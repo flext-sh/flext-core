@@ -397,7 +397,7 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.scalar(value) is expected, truth=True)  # type: ignore
+        tm.that(u.scalar(value) is expected, truth=True)
 
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -416,7 +416,7 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.primitive(value) is expected, truth=True)  # type: ignore
+        tm.that(u.primitive(value) is expected, truth=True)
 
     # ------------------------------------------------------------------
     # collection guards
@@ -429,11 +429,11 @@ class TestsFlextCoreGuards:
         tm.that(u.list_value((1, 2)) is False, truth=True)
         counter = u.Tests.MemoryCounter()
         service = u.Tests.CountingService(counter=counter)
-        registry: p.GuardInput = {"service": service}  # type: ignore
+        registry: p.GuardInput = {"service": service}
         tm.that(u.mapping(registry), truth=True)
         tm.that(u.dict_like(registry), truth=True)
-        tm.that(u.list_value([service]), truth=True)  # type: ignore
-        tm.that(u.list_like([service]), truth=True)  # type: ignore
+        tm.that(u.list_value([service]), truth=True)
+        tm.that(u.list_like([service]), truth=True)
         tm.that(u.container_value(registry), truth=False)
         tm.that(service.counter is counter, truth=True)
         tm.that(service.execute().unwrap(), eq=1)
@@ -477,7 +477,7 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.list_like(value) is expected, truth=True)  # type: ignore
+        tm.that(u.list_like(value) is expected, truth=True)
 
     @staticmethod
     def test_dict_like_accepts_only_mappings() -> None:
@@ -507,7 +507,7 @@ class TestsFlextCoreGuards:
         *,
         expected: bool,
     ) -> None:
-        tm.that(u.empty_value(value) is expected, truth=True)  # type: ignore
+        tm.that(u.empty_value(value) is expected, truth=True)
 
     @pytest.mark.parametrize(
         ("value", "expected"),

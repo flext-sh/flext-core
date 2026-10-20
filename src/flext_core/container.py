@@ -51,7 +51,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
-    _context_type: ClassVar[p.ContextType] = FlextContext  # type: ignore[assignment]
+    _context_type: ClassVar[p.ContextType] = FlextContext
 
     _context: p.Context
 
@@ -323,7 +323,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         """
         config_dict = self._global_config.model_dump()
         return m.ConfigMap(
-            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},  # type: ignore[misc]
+            root={k: u.normalize_to_container(v) for k, v in config_dict.items()},
         )
 
     @override
@@ -378,7 +378,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             self._user_overrides = m.ConfigMap(
                 root={
                     k: (
-                        list(v)  # type: ignore[misc, arg-type]
+                        list(v)
                         if isinstance(v, Sequence) and not isinstance(v, (str, bytes))
                         else v
                     )

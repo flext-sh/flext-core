@@ -58,11 +58,11 @@ class TestsFlextCoreUtilitiesTypeGuards:
         })
 
         tm.that(u.dict_non_empty(metadata), truth=True)
-        tm.that(u.matches_type(payload, "dict_non_empty"), truth=True)  # pyrefly: ignore
+        tm.that(u.matches_type(payload, "dict_non_empty"), truth=True)
         tm.that(u.matches_type(envelope, "dict_non_empty"), truth=False)
-        tm.that(u.matches_type(payload["tags"], "list_non_empty"), truth=True)  # pyrefly: ignore
-        tm.that(u.matches_type(payload["attempt_count"], (int, float)), truth=True)  # pyrefly: ignore
-        tm.that(u.matches_type(payload["command_name"], str), truth=True)  # pyrefly: ignore
+        tm.that(u.matches_type(payload["tags"], "list_non_empty"), truth=True)
+        tm.that(u.matches_type(payload["attempt_count"], (int, float)), truth=True)
+        tm.that(u.matches_type(payload["command_name"], str), truth=True)
         tm.that(u.string_non_empty(payload["correlation_id"]), truth=True)
         tm.that(u.chk(payload["command_name"], command_spec), truth=True)
         tm.that(u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0]), truth=True)

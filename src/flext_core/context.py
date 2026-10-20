@@ -82,7 +82,7 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
             A successful storage result.
 
         """
-        self.data.root.update({key: value})  # type: ignore
+        self.data.root.update({key: value})
         return FlextResult[bool].ok(value=True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:
@@ -148,7 +148,7 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
             This context with merged values.
 
         """
-        self.data.root.update(other.items() if isinstance(other, p.Context) else other)  # type: ignore
+        self.data.root.update(other.items() if isinstance(other, p.Context) else other)
         return self
 
     def clone(self) -> Self:
