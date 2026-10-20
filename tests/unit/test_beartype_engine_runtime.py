@@ -56,7 +56,7 @@ class TestsFlextCoreBeartypeEngineRuntime(
         conf = flext_core.u.build_beartype_conf()
 
         # Assert
-        tm.that(isinstance(conf, BeartypeConf), truth=True)
+        tm.that(conf, is_=BeartypeConf)
         tm.that(conf.strategy, where=lambda strategy: strategy is BeartypeStrategy.O0)
         tm.that(conf.violation_type, none=True)
 

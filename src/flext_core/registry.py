@@ -81,7 +81,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegistrationDetails]`` containing the registration details or
-              an error if registration failed.
+                an error if registration failed.
 
         """
         outcome = self.dispatcher.register_handlers((
@@ -104,7 +104,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegistrySummary]`` containing the summary of the registration
-              process or an error if registration failed.
+                process or an error if registration failed.
 
         """
         return self._register_batch(
@@ -122,7 +122,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegistrySummary]`` containing the summary of the registration
-              process or an error if registration failed.
+                process or an error if registration failed.
 
         """
         return self._register_batch(
@@ -223,7 +223,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegisterableService]`` containing the requested plugin or an
-              error if not found.
+                error if not found.
 
         """
         key = u.registry_plugin_key(category, name)
@@ -252,7 +252,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[t.StrSequence]`` containing the list of registered plugin
-              names.
+                names.
 
         """
         key_prefix = u.registry_plugin_key(category)

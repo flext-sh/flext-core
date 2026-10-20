@@ -106,7 +106,7 @@ class TestsFlextCoreEntity:
 
     @staticmethod
     def test_aggregate_root_is_an_entity() -> None:
-        tm.that(issubclass(m.AggregateRoot, m.Entity), truth=True)
+        tm.that(m.AggregateRoot, where=m.Entity.__subclasscheck__)
 
     @staticmethod
     def test_aggregate_root_uses_identity_equality() -> None:

@@ -34,18 +34,18 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, Self
 
+import pydantic_settings
 from pydantic import BaseModel, Field, TypeAdapter, computed_field, model_validator
-from pydantic_settings import (
-    BaseSettings,
-    PydanticBaseSettingsSource,
-    SettingsConfigDict,
-)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from flext_core._constants import FlextConstantsEnvironment, FlextConstantsSettings
 from flext_core._protocols.settings import FlextProtocolsSettings
 
 if TYPE_CHECKING:
     from flext_core import t
+
+PydanticBaseSettingsSource = pydantic_settings.PydanticBaseSettingsSource
+"""Upstream settings-source base exposed for consumer-defined loading sources."""
 
 
 def _resolve_env_file(namespace: str | None = None) -> str:

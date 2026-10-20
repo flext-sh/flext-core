@@ -48,7 +48,7 @@ class TestsFlextCoreUtilities:
     def test_generate_returns_non_empty_string(kind: str) -> None:
         """Test generate returns non empty string."""
         generated = u.generate(kind)
-        tm.that(isinstance(generated, str), truth=True)
+        tm.that(generated, is_=str)
         tm.that(generated, truth=True)
 
     @staticmethod

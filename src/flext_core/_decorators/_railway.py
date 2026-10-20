@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from functools import wraps
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING, overload
 
 from flext_core import c, m, r
 from flext_core._decorators import FlextDecoratorsLogging
@@ -23,23 +23,32 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
     """Decorators that convert failures to results or retry operations."""
 
     @classmethod
-    def railway[**PCallback, TValue](
+    def railway(
         cls,
         error_code: str | None = None,
-    ) -> Callable[
-        [Callable[PCallback, TValue]],
-        Callable[PCallback, FlextProtocolsResult.Result[TValue]],
-    ]:
+    ) -> FlextProtocolsResult.RailwayDecorator:
         """Wrap a callable in the FLEXT railway result pattern.
 
         Returns:
-            The resulting ``Callable[[Callable[PCallback, TValue]], Callable[PCallback,
-                pr.Result[TValue]]]``.
+            A decorator preserving existing results and wrapping raw returns once.
 
         """
 
-        def decorator(
+        @overload
+        def decorator[**PCallback, TValue](
+            func: Callable[PCallback, FlextProtocolsResult.Result[TValue]],
+            /,
+        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+
+        @overload
+        def decorator[**PCallback, TValue](
             func: Callable[PCallback, TValue],
+            /,
+        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+
+        def decorator[**PCallback, TValue](
+            func: Callable[PCallback, TValue | FlextProtocolsResult.Result[TValue]],
+            /,
         ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]:
             @wraps(func)
             def wrapper(
@@ -49,7 +58,8 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                 try:
                     result = func(*args, **kwargs)
                     if isinstance(result, FlextProtocolsResult.Result):
-                        return cast("FlextProtocolsResult.Result[TValue]", result)
+                        preserved: FlextProtocolsResult.Result[TValue] = result
+                        return preserved
                     return r[TValue].ok(result)
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     effective_error_code = (

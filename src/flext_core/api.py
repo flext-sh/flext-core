@@ -18,5 +18,6 @@ class FlextCore(
 
 
 core: FlextCore = FlextCore.fetch_global()
+"""Shared registry and dispatcher execution facade for the current public API."""
 
 __all__: list[str] = ["FlextCore", "core"]

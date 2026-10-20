@@ -23,14 +23,12 @@ _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
-    type ModelInput = t.ModelInput[
-        FlextProtocolsResult.HasModelDump[t.MappingKV[str, t.JsonPayload | None]]
-    ]
+    type ModelInput = t.ModelInput[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
     type ConfigModelInput = t.ConfigModelInput[
-        FlextProtocolsResult.HasModelDump[t.MappingKV[str, t.JsonPayload | None]]
+        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
     ]
     type MetadataInput = t.MetadataInput[
-        FlextProtocolsResult.HasModelDump[t.MappingKV[str, t.JsonPayload | None]]
+        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
     ]
 
     @runtime_checkable
@@ -179,6 +177,23 @@ class FlextProtocolsResult:
     class Result[T](ResultState[T], ResultOps[T], Protocol):
         """Covariant structural railway interface over result operations and state."""
 
+    class RailwayDecorator(Protocol):
+        """Wrap raw returns once and preserve already returned results."""
+
+        @overload
+        def __call__[**PCallback, TValue](
+            self,
+            func: Callable[PCallback, FlextProtocolsResult.Result[TValue]],
+            /,
+        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+
+        @overload
+        def __call__[**PCallback, TValue](
+            self,
+            func: Callable[PCallback, TValue],
+            /,
+        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+
     @runtime_checkable
     class SuccessCheckable(Protocol):
         @property
@@ -202,9 +217,9 @@ class FlextProtocolsResult:
         def matches_error_domain(self, domain: str) -> bool: ...
 
     @runtime_checkable
-    class HasModelDump[
-        DumpT: t.JsonPayload | t.MetadataMapping = t.JsonPayload
-    ](Protocol):
+    class HasModelDump[DumpT: t.JsonPayload | t.MetadataMapping = t.MetadataMapping](
+        Protocol
+    ):
         def model_dump(
             self,
             *,

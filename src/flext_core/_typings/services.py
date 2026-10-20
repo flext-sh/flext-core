@@ -57,7 +57,7 @@ class FlextTypesServices:
         str, FlextTypesServices.ResourceCallable[T]
     ]
 
-    type OperationMetricsStream = Generator[FlextTypingBase.JsonMapping]
+    type OperationMetricsStream = Generator[FlextTypesServices.MutableMetadataMapping]
 
     type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayload | T
     type SettingsOverrideCollectionValue[T] = (

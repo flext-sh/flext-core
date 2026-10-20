@@ -49,8 +49,8 @@ class TestsFlextCoreExceptions:
         # Act / Assert — every typed error is reachable on the facade and is a
         # catchable member of the BaseError hierarchy.
         """Test facade exposes typed errors as base error subclasses."""
-        tm.that(issubclass(subclass, e.BaseError), truth=True)
-        tm.that(issubclass(subclass, Exception), truth=True)
+        tm.that(subclass, where=e.BaseError.__subclasscheck__)
+        tm.that(subclass, where=Exception.__subclasscheck__)
 
     @pytest.mark.parametrize(
         ("error", "expected_domain"),
@@ -96,7 +96,7 @@ class TestsFlextCoreExceptions:
         with pytest.raises(e.BaseError) as excinfo:
             raise e.NotFoundError(message, resource_type="user", resource_id="u-1")
         raised = cast("e.NotFoundError", excinfo.value)
-        tm.that(isinstance(raised, e.NotFoundError), truth=True)
+        tm.that(raised, is_=e.NotFoundError)
         tm.that(raised.resource_type, eq="user")
         tm.that(raised.resource_id, eq="u-1")
 
@@ -259,7 +259,7 @@ class TestsFlextCoreExceptions:
     ) -> None:
         # Assert — enforcement violations are exposed on the facade and raise.
         """Test enforcement violations are raisable exception types."""
-        tm.that(issubclass(violation, Exception), truth=True)
+        tm.that(violation, where=Exception.__subclasscheck__)
         message = "enforcement breach"
         with pytest.raises(violation):
             raise violation(message)

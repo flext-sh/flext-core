@@ -70,8 +70,9 @@ class TestsFlextCoreEnforcementReports:
             m.Report.model_validate({"violations": ({"message": "incomplete"},)})
         with pytest.raises(m.ValidationError):
             m.Report.model_validate({"unexpected": True})
+        field_name = "violations"
         with pytest.raises(m.ValidationError):
-            report.violations = ()
+            setattr(report, field_name, ())
 
     @staticmethod
     def test_nonempty_report_exposes_messages_via_public_protocol() -> None:

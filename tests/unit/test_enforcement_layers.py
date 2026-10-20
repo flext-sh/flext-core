@@ -228,10 +228,10 @@ class TestsFlextCoreEnforcementLayers:
         report = u.check(self._constants_mutable_list(), layer="constants")
 
         # Assert -- public contract: a typed Report with a list of violations.
-        tm.that(isinstance(report, m.Report), truth=True)
-        tm.that(isinstance(report.violations, list), truth=True)
-        tm.that(all(isinstance(v.message, str) for v in report.violations), truth=True)
-        tm.that(all(isinstance(v.layer, str) for v in report.violations), truth=True)
+        tm.that(report, is_=m.Report)
+        tm.that(report.violations, is_=list)
+        tm.that([v.message for v in report.violations], all_=str)
+        tm.that([v.layer for v in report.violations], all_=str)
 
     @pytest.mark.parametrize(
         ("build", "layer", "expected_layer", "rule_tag"),

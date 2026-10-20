@@ -3,10 +3,10 @@
 <!-- TOC START -->
 
 - [Overview](#overview)
-- [Base Model + Field](#base-model-field)
-- [ConfigDict + model_dump](#configdict-model_dump)
-- [field_validator](#field_validator)
 - [Native Decorators](#native-decorators)
+- [Base Model + Field](#base-model-field)
+- [ConfigDict + model\_dump](#configdict-model_dump)
+- [field\_validator](#field_validator)
 - [examples-backed sanity check](#examples-backed-sanity-check)
 
 <!-- TOC END -->

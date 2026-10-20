@@ -36,8 +36,8 @@ class TestsFlextCoreExceptionsBase:
         subclass: type[e.BaseError],
     ) -> None:
         """Test typed exceptions are base error subclasses."""
-        tm.that(issubclass(subclass, e.BaseError), truth=True)
-        tm.that(issubclass(subclass, Exception), truth=True)
+        tm.that(subclass, where=e.BaseError.__subclasscheck__)
+        tm.that(subclass, where=Exception.__subclasscheck__)
 
     @staticmethod
     def test_base_error_sets_timestamp_and_formats_string() -> None:

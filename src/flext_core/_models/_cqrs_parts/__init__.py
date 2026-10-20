@@ -10,17 +10,19 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import FlextModelsCqrs
+    from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
+        FlextModelsCqrsPart01,
+    )
 
 
-__all__: tuple[str, ...] = ("FlextModelsCqrs",)
+__all__: tuple[str, ...] = ("FlextModelsCqrsPart01",)
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextModelsCqrs": ".flextmodelscqrs_part_01"}),
+    MappingProxyType({"FlextModelsCqrsPart01": ".flextmodelscqrs_part_01"}),
     public_exports=__all__,
-)[0]
+)

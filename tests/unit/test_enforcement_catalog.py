@@ -173,4 +173,4 @@ class TestsFlextEnforcementCatalog:
     def test_every_rule_severity_is_an_enum_member() -> None:
         """Test every rule severity is an enum member."""
         for rule in u.build_canonical_catalog().rules:
-            tm.that(isinstance(rule.severity, c.EnforcementRuleSeverity), truth=True)
+            tm.that(rule.severity, is_=c.EnforcementRuleSeverity)

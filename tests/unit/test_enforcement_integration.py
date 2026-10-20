@@ -180,7 +180,7 @@ class TestsFlextEnforcementIntegration:
         # The public FlextMroViolation export is a genuine Warning subclass and
         # is the exact category a caller can filter on.
         """Test every emitted warning is the public category."""
-        tm.that(issubclass(e.MroViolation, Warning), truth=True)
+        tm.that(e.MroViolation, where=Warning.__subclasscheck__)
         tm.that(
             all("violates FLEXT" in message for message in violation_messages),
             truth=True,

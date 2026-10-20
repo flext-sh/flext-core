@@ -127,7 +127,7 @@ class TestsFlextCoreContainerTruthful:
         """An explicitly validated model retains the caller's payload values."""
         instant = datetime.now(UTC)
         path = Path("registered-payload")
-        payload: t.MappingKV[str, datetime | Path] = {"created": instant, "path": path}
+        payload: t.MutableMetadataMapping = {"created": instant, "path": path}
         _ = clean_container.bind("mapping-payload", m.ConfigMap(root=payload))
         value = tm.ok(clean_container.resolve("mapping-payload", type_cls=m.ConfigMap))
         tm.that(
@@ -144,7 +144,7 @@ class TestsFlextCoreContainerTruthful:
         """The registry model port admits list output, not only named fields."""
         instant = datetime.now(UTC)
         path = Path("sequence-payload")
-        payload: t.SequenceOf[str | Path | datetime] = ["entry", path, instant]
+        payload: t.ListOf[t.JsonPayload] = ["entry", path, instant]
         registered = m.ObjectList(root=payload)
         _ = clean_container.bind("sequence-payload", registered)
         value = tm.ok(

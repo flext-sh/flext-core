@@ -127,7 +127,7 @@ class TestsFlextCoreEnumUtilities:
         """The returned value set is a frozenset and cannot be mutated."""
         values = u.enum_values(self.Status)
 
-        tm.that(isinstance(values, frozenset), truth=True)
+        tm.that(values, is_=frozenset)
         tm.that(hasattr(values, "add"), truth=False)
 
     def test_enum_values_is_idempotent(self) -> None:

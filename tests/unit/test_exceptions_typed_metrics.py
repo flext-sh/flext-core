@@ -93,7 +93,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
 
         # Assert: public identity + message contract, and it behaves as an exception
         tm.that(isinstance(error, expected_type), truth=True)
-        tm.that(isinstance(error, Exception), truth=True)
+        tm.that(error, is_=Exception)
         tm.that(error.message, eq="Test message")
         with pytest.raises(expected_type) as caught:
             raise error
@@ -265,7 +265,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         metrics = e.resolve_metrics_snapshot()
 
         # Assert: public snapshot contract
-        tm.that(isinstance(metrics, m.ExceptionMetricsSnapshot), truth=True)
+        tm.that(metrics, is_=m.ExceptionMetricsSnapshot)
         tm.that(metrics.total_exceptions, eq=3)
         tm.that(metrics.unique_exception_types, eq=2)
         tm.that(metrics.has_exceptions is True, truth=True)

@@ -46,7 +46,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         }
 
         payload = cast("t.JsonDict", metadata["payload"])
-        tm.that(isinstance(payload, dict), truth=True)
+        tm.that(payload, is_=dict)
         tm.that(isinstance(normalized_modes, list), truth=True)
 
         command_spec = m.GuardCheckSpec.model_validate({

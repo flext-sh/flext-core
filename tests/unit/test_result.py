@@ -212,8 +212,8 @@ class TestsFlextCoreResult:
     @staticmethod
     def test_results_satisfy_success_checkable_protocol() -> None:
         """Result instances honor the structural p.SuccessCheckable contract."""
-        tm.that(isinstance(r[int].ok(1), p.SuccessCheckable), truth=True)
-        tm.that(isinstance(r[int].fail("e"), p.SuccessCheckable), truth=True)
+        tm.that(r[int].ok(1), is_=p.SuccessCheckable)
+        tm.that(r[int].fail("e"), is_=p.SuccessCheckable)
 
     @staticmethod
     def test_ok_rejects_none_payload_explicitly() -> None:

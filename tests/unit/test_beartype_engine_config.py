@@ -30,7 +30,7 @@ class TestsFlextCoreBeartypeEngineConfig:
     def test_build_conf_returns_beartype_conf_instance() -> None:
         """The factory yields a real ``BeartypeConf`` callers can pass to beartype."""
         conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        tm.that(isinstance(conf, BeartypeConf), truth=True)
+        tm.that(conf, is_=BeartypeConf)
 
     @staticmethod
     def test_default_mode_is_off() -> None:

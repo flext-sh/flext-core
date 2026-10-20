@@ -103,7 +103,7 @@ class TestsFlextCoreModelsCqrs:
         """Test query defaults to a pagination instance."""
         query = m.Query()
 
-        tm.that(isinstance(query.pagination, m.Pagination), truth=True)
+        tm.that(query.pagination, is_=m.Pagination)
         tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX)
         tm.that(query.pagination.size, eq=c.DEFAULT_PAGE_SIZE)
         tm.that(query.message_type, eq="query")
@@ -119,7 +119,7 @@ class TestsFlextCoreModelsCqrs:
             "filters": {},
         })
 
-        tm.that(isinstance(query.pagination, m.Pagination), truth=True)
+        tm.that(query.pagination, is_=m.Pagination)
         tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX + 3)
         tm.that(query.pagination.size, eq=c.DEFAULT_PAGE_SIZE)
 
@@ -128,7 +128,7 @@ class TestsFlextCoreModelsCqrs:
         """Test query uses default pagination when none supplied."""
         query = m.Query.model_validate({"pagination": None, "filters": {}})
 
-        tm.that(isinstance(query.pagination, m.Pagination), truth=True)
+        tm.that(query.pagination, is_=m.Pagination)
         tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX)
 
     @staticmethod

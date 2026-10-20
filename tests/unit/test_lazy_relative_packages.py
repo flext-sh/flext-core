@@ -47,8 +47,8 @@ class TestsFlextCoreLazyRelativePackages:
         """A symbol mapping preserves its attribute while resolving its module."""
         normalized = normalize_lazy_imports("xml.etree", {"Node": ("..dom", "Node")})
         target = normalized["Node"]
-        tm.that(isinstance(target, tuple), truth=True)
-        module_name, attribute = target
+        tm.that(target, is_=tuple)
+        module_name, attribute = target[0], target[1]
         module = importlib.import_module(module_name)
         expected = importlib.import_module("xml.dom")
         tm.that(getattr(module, attribute) is expected.Node, truth=True)

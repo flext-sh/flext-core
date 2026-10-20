@@ -42,7 +42,7 @@ class TestsFlextCoreSettings:
             """Base FlextSettings work_dir uses the 'flext' namespace name."""
             FlextSettings.reset_for_testing()
             s = FlextSettings.fetch_global()
-            tm.that(isinstance(s.work_dir, Path), truth=True)
+            tm.that(s.work_dir, is_=Path)
             tm.that(s.work_dir.name, eq="flext")
             FlextSettings.reset_for_testing()
 
@@ -265,11 +265,11 @@ class TestsFlextCoreSettings:
     def test_universal_fields_present_with_defaults() -> None:
         """The five universal runtime fields exist with scalar defaults."""
         s = FlextSettings.fetch_global()
-        tm.that(isinstance(s.debug, bool), truth=True)
-        tm.that(isinstance(s.trace, bool), truth=True)
-        tm.that(isinstance(s.log_level, str), truth=True)
-        tm.that(isinstance(s.timezone, str), truth=True)
-        tm.that(isinstance(s.async_logging, bool), truth=True)
+        tm.that(s.debug, is_=bool)
+        tm.that(s.trace, is_=bool)
+        tm.that(s.log_level, is_=str)
+        tm.that(s.timezone, is_=str)
+        tm.that(s.async_logging, is_=bool)
 
     @staticmethod
     def test_update_global_replaces_singleton_and_propagates() -> None:

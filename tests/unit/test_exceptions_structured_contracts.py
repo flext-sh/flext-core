@@ -40,7 +40,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         error = factory()
 
         # Assert: structured protocol surface
-        tm.that(isinstance(error, p.StructuredError), truth=True)
+        tm.that(error, is_=p.StructuredError)
         tm.that(error.error_domain, eq=expected_domain)
         tm.that(error.error_code, eq=expected_code)
         tm.that(error.error_message, eq=error.message)
@@ -83,7 +83,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         error = e.BaseError("Base failure")
 
         # Assert
-        tm.that(isinstance(error, p.StructuredError), truth=True)
+        tm.that(error, is_=p.StructuredError)
         tm.that(error.error_domain, eq=c.ErrorDomain.UNKNOWN.value)
         tm.that(error.error_code, eq=c.ErrorCode.UNKNOWN_ERROR)
         tm.that(error.error_message, eq="Base failure")

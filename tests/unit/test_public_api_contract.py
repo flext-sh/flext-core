@@ -177,13 +177,13 @@ class TestsFlextCorePublicApiContract:
         """``unwrap_or`` yields the wrapped value on success, the default on failure."""
         # Arrange / Act / Assert
         tm.that(r.ok(7).unwrap_or(99), eq=7)
-        tm.that(r.fail("boom").unwrap_or(99), eq=99)
+        tm.that(r[int].fail("boom").unwrap_or(99), eq=99)
 
     @staticmethod
     def test_unwrap_or_else_invokes_supplier_only_on_failure() -> None:
         """``unwrap_or_else`` computes the fallback from the supplier on failure."""
         # Arrange / Act / Assert
-        tm.that(r.fail("boom").unwrap_or_else(lambda: 42), eq=42)
+        tm.that(r[int].fail("boom").unwrap_or_else(lambda: 42), eq=42)
         tm.that(r.ok(1).unwrap_or_else(lambda: 42), eq=1)
 
     @staticmethod
@@ -261,7 +261,7 @@ class TestsFlextCorePublicApiContract:
         """Structured exception classes raise with, and preserve, their message."""
         # Arrange
         exc_type: type[Exception] = getattr(e, exc_name)
-        tm.that(issubclass(exc_type, Exception), truth=True)
+        tm.that(exc_type, where=Exception.__subclasscheck__)
         message = "broken invariant"
         # Act / Assert
         with pytest.raises(exc_type, match="broken"):
@@ -273,7 +273,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange / Act
         version = flext_core.__version__
         # Assert
-        tm.that(isinstance(version, str), truth=True)
+        tm.that(version, is_=str)
         tm.that(version, truth=True)
 
     @staticmethod
@@ -305,7 +305,7 @@ class TestsFlextCorePublicApiContract:
             msg="core not importable from flext_core",
         )
         # The singleton should be an instance of FlextCore
-        tm.that(isinstance(flext_core.core, flext_core.FlextCore), truth=True)
+        tm.that(flext_core.core, is_=flext_core.FlextCore)
         # core should have container access via MRO
         tm.that(hasattr(flext_core.core, "container"), truth=True)
         tm.that(hasattr(flext_core.core, "registry"), truth=True)

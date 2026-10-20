@@ -14,7 +14,8 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-**Version**: `0.12.0` | **Python**: 3.13+ | **Project class**: `domain`
+**Version**: `0.12.0` | **Python**: see `pyproject.toml` `requires-python` | **Project
+class**: `domain`
 
 > **Alpha (0.12.0).** This package is alpha quality. Every package in the workspace must
 > be re-checked and re-validated at 0.12.0 before any promotion beyond alpha; treat
@@ -37,9 +38,8 @@ Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 ## Collection Rules
 
 Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent
-FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry
-verification).
+and this project's `AGENTS.md` for the current authority chain, execution boundaries and
+required validation.
 
 ## Operation Flow
 
@@ -57,7 +57,8 @@ verification).
   classes listed under Module Map above.
 - Public extensions exposed by this project: `FlextBase`, `FlextBoundLogger`,
   `FlextCli`, `FlextConfig`, `FlextConstants`, `FlextConstantsEnforcement` (+32 more).
-- Library abstraction boundaries: see AGENTS.md §2.7.
+- Library abstraction boundaries: see the project `AGENTS.md` and the referenced parent
+  architecture rules.
 
 ## Quality Gates
 

@@ -7,9 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import ast
-import inspect
 import sys
-import textwrap
 from types import ModuleType
 from typing import TypeAliasType, runtime_checkable
 
@@ -51,8 +49,23 @@ class FlextUtilitiesBeartypeModuleSource:
             TypeError: If Class source does not open with its declaration.
 
         """
-        source = textwrap.dedent(inspect.getsource(target))
-        declaration = ast.parse(source, filename=inspect.getfile(target)).body[0]
+        declaration: ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
+        declaration = parse_module(sys.modules[target.__module__])
+        for name in target.__qualname__.split("."):
+            if name == "<locals>":
+                continue
+            matches = [
+                node
+                for node in declaration.body
+                if isinstance(
+                    node, (ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)
+                )
+                and node.name == name
+            ]
+            if len(matches) != 1:
+                msg = f"Class source does not uniquely declare {target!r}"
+                raise TypeError(msg)
+            declaration = matches[0]
         if not isinstance(declaration, ast.ClassDef):
             msg = f"Class source does not open with its declaration: {target!r}"
             raise TypeError(msg)

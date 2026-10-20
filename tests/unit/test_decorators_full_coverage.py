@@ -226,5 +226,5 @@ class TestsFlextCoreDecorators:
             return _Payload(v=7)
 
         payload = build()
-        tm.that(isinstance(payload, _Payload), truth=True)
+        tm.that(payload, is_=_Payload)
         tm.that(payload.v, eq=7)

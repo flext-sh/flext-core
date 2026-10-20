@@ -483,9 +483,7 @@ class TestsFlextCorePydanticDeclarations:
 
         vector = adapter.validate_python({"x": 1, "y": 2})
 
-        tm.that(
-            isinstance(vector, TestsFlextCorePydanticDeclarations._Vector), truth=True
-        )
+        tm.that(vector, is_=TestsFlextCorePydanticDeclarations._Vector)
         tm.that((vector.x, vector.y), eq=(1, 2))
 
         with pytest.raises(m.ValidationError):

@@ -44,14 +44,14 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # Arrange / Act / Assert: default warning filters surface UserWarning,
         # so a caller sees enforcement violations without extra configuration.
         """Test enforcement categories are userwarnings."""
-        tm.that(issubclass(category, UserWarning), truth=True)
+        tm.that(category, where=UserWarning.__subclasscheck__)
 
     @staticmethod
     def test_smell_violation_is_a_mro_violation() -> None:
         # A caller filtering or catching FlextMroViolation must also capture
         # the more specific smell category.
         """Test smell violation is a mro violation."""
-        tm.that(issubclass(c.FlextSmellViolation, c.FlextMroViolation), truth=True)
+        tm.that(c.FlextSmellViolation, where=c.FlextMroViolation.__subclasscheck__)
 
     @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     @staticmethod

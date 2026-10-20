@@ -61,7 +61,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        tm.that(isinstance(snapshot, m.ExceptionMetricsSnapshot), truth=True)
+        tm.that(snapshot, is_=m.ExceptionMetricsSnapshot)
 
     @staticmethod
     def test_cleared_state_reports_no_exceptions() -> None:

@@ -37,11 +37,11 @@ class FlextModelsHandler:
             exclude=True,
         )
         message_type: t.RegistryBindingKey | None = FlextModelsPydantic.Field(
-            default=None,  # type: ignore
+            default=None,
             description="Explicit message type or route name",
         )
         is_event: bool = FlextModelsPydantic.Field(
-            default=False,  # type: ignore
+            default=False,
             description="Whether this binding subscribes to events",
         )
 

@@ -134,7 +134,7 @@ class TestsFlextEnforcementAptHooks:
         emitted_a_pt = {
             v.rule_id for v in report.violations if v.rule_id in self.A_PT_RULE_IDS
         }
-        tm.that(emitted_a_pt, eq=set())
+        tm.that(emitted_a_pt, empty=True)
 
     def test_check_emits_only_catalog_consistent_violations(self) -> None:
         # Full runtime pipeline (dispatch -> visitors -> emit -> Report). Every

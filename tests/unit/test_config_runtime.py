@@ -28,14 +28,14 @@ class TestsFlextCoreConfigSettingsCanonical:
 
         S1: mutation raises.
         """
-        tm.that(isinstance(config, FlextConfig), truth=True)
+        tm.that(config, is_=FlextConfig)
         tm.rejects_assignment(config, "anything", "mutated", expected=m.ValidationError)
 
     @staticmethod
     def test_settings_is_preinstantiated_usable_singleton() -> None:
         """S2: ``settings`` is a ready-to-use FlextSettings instance used directly."""
-        tm.that(isinstance(settings, FlextSettings), truth=True)
-        tm.that(isinstance(settings.model_dump(), dict), truth=True)
+        tm.that(settings, is_=FlextSettings)
+        tm.that(settings.model_dump(), is_=dict)
 
     @staticmethod
     def test_custom_runtime_settings_preserve_frozen_config_and_defaults() -> None:

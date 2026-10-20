@@ -35,7 +35,7 @@ class FlextModelsContextData:
             ),
         ] = None
 
-        @FlextModelsPydantic.field_validator("data", mode="before")  # type: ignore
+        @FlextModelsPydantic.field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(
             cls, value: p.ModelInput | None
@@ -67,7 +67,7 @@ class FlextModelsContextData:
                 for key, item in data.items()
             })
 
-        @FlextModelsPydantic.field_validator("metadata", mode="before")  # type: ignore
+        @FlextModelsPydantic.field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata_before(cls, value: p.MetadataInput) -> p.MetadataInput:
             """Validate attribute mappings as metadata without a failure fallback.

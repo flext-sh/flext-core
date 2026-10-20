@@ -84,11 +84,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_context_map(
-        context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
-        extra_kwargs: t.MappingKV[
-            str,
-            t.JsonPayload | None,
-        ],
+        context: p.MetadataInput,
+        extra_kwargs: t.MetadataMapping,
         excluded_keys: set[str] | frozenset[str] | None = None,
     ) -> t.JsonDict:
         """Build normalized context map from context and kwargs.
@@ -109,11 +106,8 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_param_map(
-        context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
-        extra_kwargs: t.MappingKV[
-            str,
-            t.JsonPayload | None,
-        ],
+        context: p.MetadataInput,
+        extra_kwargs: t.MetadataMapping,
         keys: set[str] | frozenset[str],
     ) -> t.JsonDict:
         """Build parameter map restricted to declared param keys.

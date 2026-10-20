@@ -62,7 +62,7 @@ class TestsFlextService(FlextTestsCase):
         result = m.Tests.ServiceUserService().execute()
 
         payload = result.value
-        tm.that(isinstance(payload, m.Tests.ServiceUserData), truth=True)
+        tm.that(payload, is_=m.Tests.ServiceUserData)
         tm.that(payload.user_id, eq=1)
         tm.that(payload.name, eq="test_user")
 
@@ -157,8 +157,8 @@ class TestsFlextService(FlextTestsCase):
         with self._PureService.isolated_test_runtime():
             settings = self._PureService.fetch_settings()
 
-            tm.that(isinstance(settings, FlextTestsSettings), truth=True)
-            tm.that(isinstance(settings.Tests, m.BaseModel), truth=True)
+            tm.that(settings, is_=FlextTestsSettings)
+            tm.that(settings.Tests, is_=m.BaseModel)
 
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         """Test fetch logger matches shared service logger."""
@@ -205,5 +205,5 @@ class TestsFlextService(FlextTestsCase):
         service = m.Tests.ServiceUserService()
 
         with service.track("load_users") as metrics:
-            tm.that(isinstance(metrics, Mapping), truth=True)
+            tm.that(metrics, is_=Mapping)
             tm.that(metrics["operation_name"], eq="load_users")

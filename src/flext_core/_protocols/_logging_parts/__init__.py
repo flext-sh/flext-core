@@ -10,19 +10,33 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core._protocols._logging_parts.flextprotocolslogging_part_01 import (
+        FlextProtocolsLoggingPart01,
+    )
+    from flext_core._protocols._logging_parts.flextprotocolslogging_part_02 import (
+        FlextProtocolsLoggingPart02,
+    )
     from flext_core._protocols._logging_parts.flextprotocolslogging_part_03 import (
-        FlextProtocolsLogging,
+        FlextProtocolsLoggingPart03,
     )
 
 
-__all__: tuple[str, ...] = ("FlextProtocolsLogging",)
+__all__: tuple[str, ...] = (
+    "FlextProtocolsLoggingPart01",
+    "FlextProtocolsLoggingPart02",
+    "FlextProtocolsLoggingPart03",
+)
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextProtocolsLogging": ".flextprotocolslogging_part_03"}),
+    MappingProxyType({
+        "FlextProtocolsLoggingPart01": ".flextprotocolslogging_part_01",
+        "FlextProtocolsLoggingPart02": ".flextprotocolslogging_part_02",
+        "FlextProtocolsLoggingPart03": ".flextprotocolslogging_part_03",
+    }),
     public_exports=__all__,
-)[0]
+)

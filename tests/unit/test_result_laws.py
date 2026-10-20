@@ -257,11 +257,11 @@ class TestsFlextCoreResultLaws:
     @staticmethod
     def test_results_satisfy_success_checkable_protocol_at_runtime() -> None:
         """Test results satisfy success checkable protocol at runtime."""
-        tm.that(isinstance(r[str].ok("value"), p.SuccessCheckable), truth=True)
-        tm.that(isinstance(r[str].fail("boom"), p.SuccessCheckable), truth=True)
+        tm.that(r[str].ok("value"), is_=p.SuccessCheckable)
+        tm.that(r[str].fail("boom"), is_=p.SuccessCheckable)
 
     @staticmethod
     def test_results_satisfy_result_protocol_at_runtime() -> None:
         """Test results satisfy result protocol at runtime."""
-        tm.that(isinstance(r[str].ok("value"), p.Result), truth=True)
-        tm.that(isinstance(r[str].fail("boom"), p.Result), truth=True)
+        tm.that(r[str].ok("value"), is_=p.Result)
+        tm.that(r[str].fail("boom"), is_=p.Result)

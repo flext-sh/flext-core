@@ -23,8 +23,6 @@ from flext_core import FlextContext
 from tests import c, m, p, tm, x
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from tests import t
 
 
@@ -56,30 +54,40 @@ class TestsFlextMixins:
         """Test container property satisfies container protocol."""
         service = self._service()
 
-        tm.that(isinstance(service.container, p.Container), truth=True)
+        tm.that(service.container, is_=p.Container)
 
     def test_context_property_satisfies_context_protocol(self) -> None:
         """Test context property satisfies context protocol."""
         service = self._service()
 
-        tm.that(isinstance(service.context, p.Context), truth=True)
+        tm.that(service.context, is_=p.Context)
 
     def test_logger_property_satisfies_logger_protocol(self) -> None:
         """Test logger property satisfies logger protocol."""
         service = self._service()
 
-        tm.that(isinstance(service.logger, p.Logger), truth=True)
+        tm.that(service.logger, is_=p.Logger)
 
     def test_track_yields_metrics_mapping_with_operation_metadata(self) -> None:
         """Test track yields metrics mapping with operation metadata."""
         service = self._service()
+        body_metadata = m.Metadata(attributes={"source": "body"})
 
         with service.track("load") as metrics:
-            captured: Mapping[str, t.JsonValue] = metrics
+            captured: t.MetadataMapping = metrics
+            metrics["body_metadata"] = body_metadata
 
-        tm.that("operation_name" in captured, truth=True)
-        tm.that("start_time" in captured, truth=True)
+        tm.that(
+            captured,
+            keys=(
+                c.ContextKey.OPERATION_NAME,
+                c.MetadataKey.START_TIME,
+                c.MetadataKey.END_TIME,
+                c.MetadataKey.DURATION_SECONDS,
+            ),
+        )
         tm.that(captured["operation_count"], eq=1)
+        tm.that(captured["body_metadata"], where=lambda value: value is body_metadata)
 
     def test_track_increments_operation_count_across_invocations(self) -> None:
         """Test track increments operation count across invocations."""
@@ -148,7 +156,7 @@ class TestsFlextMixins:
         )
         tm.that(service.options.label, eq=expected)
         tm.that(service.model_dump()["options"], eq=service.options.model_dump())
-        tm.that(isinstance(service.settings, p.Settings), truth=True)
+        tm.that(service.settings, is_=p.Settings)
         with pytest.raises(c.ValidationError):
             ComposedService.model_validate({"options": {"label": []}})
         tm.rejects_assignment(

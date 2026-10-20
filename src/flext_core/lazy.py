@@ -20,13 +20,17 @@ lazy = FlextLazy()
 build_lazy_import_map = lazy.build_map
 """Convenience alias for building flat lazy import maps."""
 lazy_getattr = lazy.get
+"""Resolve a requested package export through its declared lazy import map."""
 lazy_member = lazy.member
 """Convenience alias for declaring one lazy member descriptor."""
 resolve_lazy_members = lazy.resolve_members
 """Convenience alias for resolving lazy member names."""
 cleanup_submodule_namespace = lazy.cleanup
+"""Remove submodule bindings that shadow declared package exports."""
 normalize_lazy_imports = lazy.normalize_map
+"""Normalize declared lazy imports into the canonical import-map model."""
 merge_lazy_imports = lazy.merge
+"""Combine lazy import maps through the shared lazy-export owner."""
 install_lazy_exports = lazy.install
 """Convenience alias for installing lazy exports into a module."""
 

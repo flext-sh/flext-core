@@ -128,7 +128,7 @@ errors; print's text, newline, and flush calls are not one atomic shutdown unit.
 
 Core is the foundation and never imports outer FLEXT packages. The application
 composition root injects settings, handlers, and observer ports. See
-[Observability](../../../flext-observability/docs/index.md) for capture/export
-integration and [CLI](../../../flext-cli/docs/index.md) for transport composition.
+[Observability](https://github.com/flext-sh/flext-observability/blob/0.12.0-dev/docs/index.md) for capture/export
+integration and [CLI](https://github.com/flext-sh/flext-cli/blob/0.12.0-dev/docs/index.md) for transport composition.
 Retirement of duplicate Observability logging remains pending; this guide does
 not certify that cutover or its gates.
