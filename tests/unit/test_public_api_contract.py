@@ -102,16 +102,14 @@ class TestsFlextCorePublicApiContract:
     def test_named_facade_is_importable(name: str) -> None:
         """Every advertised facade is reachable from the package root."""
         tm.that(
-            hasattr(flext_core, name),
-            f"{name} not importable from flext_core",
-            truth=True,
+            hasattr(flext_core, name), truth=True, msg=f"{name} not importable from flext_core"
         )
 
     @staticmethod
     def test_every_all_entry_resolves_to_an_object() -> None:
         """Each name published in ``__all__`` actually resolves via ``getattr``."""
         missing = [name for name in flext_core.__all__ if not hasattr(flext_core, name)]
-        tm.that(missing, f"Names in __all__ but not importable: {missing}", truth=False)
+        tm.that(missing, truth=False, msg=f"Names in __all__ but not importable: {missing}")
 
     @staticmethod
     @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
@@ -296,8 +294,8 @@ class TestsFlextCorePublicApiContract:
         )
         tm.that(
             hasattr(flext_core, "core"),
-            "core not importable from flext_core",
             truth=True,
+            msg="core not importable from flext_core",
         )
         # The singleton should be an instance of FlextCore
         tm.that(isinstance(flext_core.core, flext_core.FlextCore), truth=True)

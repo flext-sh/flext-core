@@ -99,7 +99,7 @@ class TestsFlextCoreLazyExports:
         # Assert — public contract: facade + alias resolve to the same object
         facade = getattr(module, facade_name)
         alias = getattr(module, alias_name)
-        assert alias is facade
+        tm.that(alias is facade, eq=True)
 
     @staticmethod
     def test_root_package_resolves_primary_facades_via_aliases() -> None:
@@ -108,13 +108,13 @@ class TestsFlextCoreLazyExports:
         package = importlib.import_module("flext_core")
 
         # Assert — each short alias resolves to its full facade
-        assert package.c is package.FlextConstants
-        assert package.e is package.FlextExceptions
-        assert package.m is package.FlextModels
-        assert package.p is package.FlextProtocols
-        assert package.t is package.FlextTypes
-        assert package.u is package.FlextUtilities
-        assert {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__)
+        tm.that(package.c is package.FlextConstants, eq=True)
+        tm.that(package.e is package.FlextExceptions, eq=True)
+        tm.that(package.m is package.FlextModels, eq=True)
+        tm.that(package.p is package.FlextProtocols, eq=True)
+        tm.that(package.t is package.FlextTypes, eq=True)
+        tm.that(package.u is package.FlextUtilities, eq=True)
+        tm.that({"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__), eq=True)
 
     @staticmethod
     def test_cold_loader_does_not_execute_generated_child_initializer(

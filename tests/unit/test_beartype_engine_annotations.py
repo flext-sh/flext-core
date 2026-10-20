@@ -197,7 +197,7 @@ class TestsFlextBeartypeEngineAnnotations(
                 _ = alias.__value__
             with pytest.raises(NameError) as resolved:
                 u.resolve_type_alias_value(alias, owner=owner)
-            tm.that(resolved.value.name == native.value.name, eq="GuardedPath")
+            tm.that(resolved.value.name, eq="GuardedPath")
 
     @staticmethod
     def test_local_alias_rejects_a_copied_owner_with_forged_qualname() -> None:

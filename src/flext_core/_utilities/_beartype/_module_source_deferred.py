@@ -271,8 +271,10 @@ def deferred_alias(
         )
     available.update(item.__name__ for item in alias.__type_params__)
     missing = _unavailable_names(declaration, available)
+    if not missing:
+        return None
     guarded = guarded_imports(scopes)
-    if not missing or not missing <= guarded:
+    if not missing <= guarded:
         return None
     return FlextModelsEnforcement.DeferredAlias(
         module=module.__name__,
