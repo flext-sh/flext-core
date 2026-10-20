@@ -453,8 +453,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
-BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -855,8 +855,7 @@ SETUP_ENVIRONMENT_RECIPE = $(INSTALL_RUNTIME_RECIPE); \
 	setup_scope="self"; \
 	if [ "$(strip $(GITHUB_ACTIONS))" = "true" ]; then setup_scope=self; fi; \
 	$(PROJECT_FLEXT_INFRA) codegen mise-artifacts --repository-root "$(PROJECT_ROOT)" --config-only --scope "$$setup_scope"; \
-	$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)" --scope "$$setup_scope" $(if $(filter Y,$(strip $(CI))),--no-allow-direnv); \
-	$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what runtime-bindings --scope "$$setup_scope"
+	$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)" --scope "$$setup_scope" $(if $(filter Y,$(strip $(CI))),--no-allow-direnv)
 
 # Reject borrowed environments before bootstrap, activation or custom hooks.
 # Members may use their containing workspace, never an unrelated checkout.
@@ -941,9 +940,12 @@ ifeq ($(VERB_CONTRACT),)
 
 
 
+
 help:
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-help,$(call RUN_PUBLIC,help))
+
+
 
 
 
@@ -955,10 +957,22 @@ pre-commit: _builtin_require_workspace
 
 .PHONY: _activated-pre-commit
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-pre-commit _custom-pre-commit post-pre-commit,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-pre-commit: _builtin-pre-commit
+_builtin-pre-commit: _builtin_require_environment
+else
+
+
 _activated-pre-commit: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-pre-commit,$(call RUN_PUBLIC,pre-commit))
+
+endif
+
+
 
 
 
@@ -970,10 +984,22 @@ upg-sources: _builtin_require_workspace
 
 .PHONY: _activated-upg-sources
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-upg-sources _custom-upg-sources post-upg-sources,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-upg-sources: _builtin-upg-sources
+_builtin-upg-sources: _builtin_require_environment
+else
+
+
 _activated-upg-sources: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-upg-sources,$(call RUN_PUBLIC,upg-sources))
+
+endif
+
+
 
 
 
@@ -985,10 +1011,22 @@ validate-lifecycle: _builtin_require_workspace
 
 .PHONY: _activated-validate-lifecycle
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-validate-lifecycle _custom-validate-lifecycle post-validate-lifecycle,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-validate-lifecycle: _builtin-validate-lifecycle
+_builtin-validate-lifecycle: _builtin_require_environment
+else
+
+
 _activated-validate-lifecycle: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-validate-lifecycle,$(call RUN_PUBLIC,validate-lifecycle))
+
+endif
+
+
 
 
 
@@ -1000,10 +1038,22 @@ build: _builtin_require_workspace
 
 .PHONY: _activated-build
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-build _custom-build post-build,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-build: _builtin-build
+_builtin-build: _builtin_require_environment
+else
+
+
 _activated-build: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-build,$(call RUN_PUBLIC,build))
+
+endif
+
+
 
 
 
@@ -1015,10 +1065,22 @@ examples: _builtin_require_workspace _builtin_require_examples
 
 .PHONY: _activated-examples
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-examples _custom-examples post-examples,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-examples: _builtin-examples
+_builtin-examples: _builtin_require_environment
+else
+
+
 _activated-examples: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-examples,$(call RUN_PUBLIC,examples))
+
+endif
+
+
 
 
 
@@ -1030,10 +1092,22 @@ check: _builtin_require_workspace
 
 .PHONY: _activated-check
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-check _custom-check post-check,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-check: _builtin-check
+_builtin-check: _builtin_require_environment
+else
+
+
 _activated-check: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-check,$(call RUN_PUBLIC,check))
+
+endif
+
+
 
 
 
@@ -1045,10 +1119,22 @@ check-pyright: _builtin_require_workspace
 
 .PHONY: _activated-check-pyright
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-check-pyright _custom-check-pyright post-check-pyright,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-check-pyright: _builtin-check-pyright
+_builtin-check-pyright: _builtin_require_environment
+else
+
+
 _activated-check-pyright: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-check-pyright,$(call RUN_PUBLIC,check-pyright))
+
+endif
+
+
 
 
 
@@ -1060,10 +1146,22 @@ census: _builtin_require_workspace
 
 .PHONY: _activated-census
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-census _custom-census post-census,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-census: _builtin-census
+_builtin-census: _builtin_require_environment
+else
+
+
 _activated-census: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-census,$(call RUN_PUBLIC,census))
+
+endif
+
+
 
 
 
@@ -1075,10 +1173,22 @@ census-constants: _builtin_require_workspace
 
 .PHONY: _activated-census-constants
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-census-constants _custom-census-constants post-census-constants,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-census-constants: _builtin-census-constants
+_builtin-census-constants: _builtin_require_environment
+else
+
+
 _activated-census-constants: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-census-constants,$(call RUN_PUBLIC,census-constants))
+
+endif
+
+
 
 
 
@@ -1090,10 +1200,22 @@ smells: _builtin_require_workspace
 
 .PHONY: _activated-smells
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-smells _custom-smells post-smells,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-smells: _builtin-smells
+_builtin-smells: _builtin_require_environment
+else
+
+
 _activated-smells: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-smells,$(call RUN_PUBLIC,smells))
+
+endif
+
+
 
 
 
@@ -1105,10 +1227,22 @@ test: _builtin_require_workspace
 
 .PHONY: _activated-test
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-test _custom-test post-test,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-test: _builtin-test
+_builtin-test: _builtin_require_environment
+else
+
+
 _activated-test: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-test,$(call RUN_PUBLIC,test))
+
+endif
+
+
 
 
 
@@ -1120,10 +1254,22 @@ tests: _builtin_require_workspace
 
 .PHONY: _activated-tests
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-tests _custom-tests post-tests,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-tests: _builtin-tests
+_builtin-tests: _builtin_require_environment
+else
+
+
 _activated-tests: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-tests,$(call RUN_PUBLIC,tests))
+
+endif
+
+
 
 
 
@@ -1135,10 +1281,22 @@ test-full: _builtin_require_workspace
 
 .PHONY: _activated-test-full
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-test-full _custom-test-full post-test-full,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-test-full: _builtin-test-full
+_builtin-test-full: _builtin_require_environment
+else
+
+
 _activated-test-full: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-test-full,$(call RUN_PUBLIC,test-full))
+
+endif
+
+
 
 
 
@@ -1150,10 +1308,22 @@ test-file: _builtin_require_workspace
 
 .PHONY: _activated-test-file
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-test-file _custom-test-file post-test-file,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-test-file: _builtin-test-file
+_builtin-test-file: _builtin_require_environment
+else
+
+
 _activated-test-file: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-test-file,$(call RUN_PUBLIC,test-file))
+
+endif
+
+
 
 
 
@@ -1165,10 +1335,22 @@ file-gate: _builtin_require_workspace
 
 .PHONY: _activated-file-gate
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-file-gate _custom-file-gate post-file-gate,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-file-gate: _builtin-file-gate
+_builtin-file-gate: _builtin_require_environment
+else
+
+
 _activated-file-gate: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-file-gate,$(call RUN_PUBLIC,file-gate))
+
+endif
+
+
 
 
 
@@ -1180,10 +1362,22 @@ profile-test: _builtin_require_workspace
 
 .PHONY: _activated-profile-test
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-test _custom-profile-test post-profile-test,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-test: _builtin-profile-test
+_builtin-profile-test: _builtin_require_environment
+else
+
+
 _activated-profile-test: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-test,$(call RUN_PUBLIC,profile-test))
+
+endif
+
+
 
 
 
@@ -1195,10 +1389,22 @@ profile-test-report: _builtin_require_workspace
 
 .PHONY: _activated-profile-test-report
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-test-report _custom-profile-test-report post-profile-test-report,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-test-report: _builtin-profile-test-report
+_builtin-profile-test-report: _builtin_require_environment
+else
+
+
 _activated-profile-test-report: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-test-report,$(call RUN_PUBLIC,profile-test-report))
+
+endif
+
+
 
 
 
@@ -1210,10 +1416,13 @@ profile-environment: _builtin_require_workspace
 
 .PHONY: _activated-profile-environment
 
+
 _activated-profile-environment: _builtin_require_interpreter
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-environment,$(call RUN_PUBLIC,profile-environment))
+
+
 
 
 
@@ -1225,10 +1434,13 @@ profile-environment-report: _builtin_require_workspace
 
 .PHONY: _activated-profile-environment-report
 
+
 _activated-profile-environment-report: _builtin_require_interpreter
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-environment-report,$(call RUN_PUBLIC,profile-environment-report))
+
+
 
 
 
@@ -1240,10 +1452,22 @@ profile-lanes: _builtin_require_workspace
 
 .PHONY: _activated-profile-lanes
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-lanes _custom-profile-lanes post-profile-lanes,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-lanes: _builtin-profile-lanes
+_builtin-profile-lanes: _builtin_require_environment
+else
+
+
 _activated-profile-lanes: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-lanes,$(call RUN_PUBLIC,profile-lanes))
+
+endif
+
+
 
 
 
@@ -1255,10 +1479,22 @@ profile-lanes-report: _builtin_require_workspace
 
 .PHONY: _activated-profile-lanes-report
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-lanes-report _custom-profile-lanes-report post-profile-lanes-report,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-lanes-report: _builtin-profile-lanes-report
+_builtin-profile-lanes-report: _builtin_require_environment
+else
+
+
 _activated-profile-lanes-report: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-lanes-report,$(call RUN_PUBLIC,profile-lanes-report))
+
+endif
+
+
 
 
 
@@ -1270,10 +1506,22 @@ profile-mod: _builtin_require_workspace
 
 .PHONY: _activated-profile-mod
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-mod _custom-profile-mod post-profile-mod,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-mod: _builtin-profile-mod
+_builtin-profile-mod: _builtin_require_environment
+else
+
+
 _activated-profile-mod: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod,$(call RUN_PUBLIC,profile-mod))
+
+endif
+
+
 
 
 
@@ -1285,10 +1533,22 @@ profile-mod-report: _builtin_require_workspace
 
 .PHONY: _activated-profile-mod-report
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-mod-report _custom-profile-mod-report post-profile-mod-report,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-mod-report: _builtin-profile-mod-report
+_builtin-profile-mod-report: _builtin_require_environment
+else
+
+
 _activated-profile-mod-report: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-report,$(call RUN_PUBLIC,profile-mod-report))
+
+endif
+
+
 
 
 
@@ -1300,10 +1560,22 @@ profile-mod-rules: _builtin_require_workspace
 
 .PHONY: _activated-profile-mod-rules
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-mod-rules _custom-profile-mod-rules post-profile-mod-rules,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-mod-rules: _builtin-profile-mod-rules
+_builtin-profile-mod-rules: _builtin_require_environment
+else
+
+
 _activated-profile-mod-rules: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-rules,$(call RUN_PUBLIC,profile-mod-rules))
+
+endif
+
+
 
 
 
@@ -1315,10 +1587,76 @@ profile-mod-rules-report: _builtin_require_workspace
 
 .PHONY: _activated-profile-mod-rules-report
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-mod-rules-report _custom-profile-mod-rules-report post-profile-mod-rules-report,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-mod-rules-report: _builtin-profile-mod-rules-report
+_builtin-profile-mod-rules-report: _builtin_require_environment
+else
+
+
 _activated-profile-mod-rules-report: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-rules-report,$(call RUN_PUBLIC,profile-mod-rules-report))
+
+endif
+
+
+
+
+
+
+profile-codemod: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'profile-codemod' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-codemod,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-codemod)
+
+.PHONY: _activated-profile-codemod
+
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-codemod _custom-profile-codemod post-profile-codemod,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-codemod: _builtin-profile-codemod
+_builtin-profile-codemod: _builtin_require_environment
+else
+
+
+_activated-profile-codemod: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-codemod,$(call RUN_PUBLIC,profile-codemod))
+
+endif
+
+
+
+
+
+
+profile-codemod-report: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'profile-codemod-report' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-codemod-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-codemod-report)
+
+.PHONY: _activated-profile-codemod-report
+
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-codemod-report _custom-profile-codemod-report post-profile-codemod-report,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-codemod-report: _builtin-profile-codemod-report
+_builtin-profile-codemod-report: _builtin_require_environment
+else
+
+
+_activated-profile-codemod-report: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-codemod-report,$(call RUN_PUBLIC,profile-codemod-report))
+
+endif
+
+
 
 
 
@@ -1330,10 +1668,22 @@ fmt: _builtin_require_workspace
 
 .PHONY: _activated-fmt
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-fmt _custom-fmt post-fmt,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-fmt: _builtin-fmt
+_builtin-fmt: _builtin_require_environment
+else
+
+
 _activated-fmt: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fmt,$(call RUN_PUBLIC,fmt))
+
+endif
+
+
 
 
 
@@ -1345,10 +1695,22 @@ fix: _builtin_require_workspace
 
 .PHONY: _activated-fix
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-fix _custom-fix post-fix,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-fix: _builtin-fix
+_builtin-fix: _builtin_require_environment
+else
+
+
 _activated-fix: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix,$(call RUN_PUBLIC,fix))
+
+endif
+
+
 
 
 
@@ -1360,10 +1722,22 @@ fix-namespace: _builtin_require_workspace
 
 .PHONY: _activated-fix-namespace
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-fix-namespace _custom-fix-namespace post-fix-namespace,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-fix-namespace: _builtin-fix-namespace
+_builtin-fix-namespace: _builtin_require_environment
+else
+
+
 _activated-fix-namespace: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix-namespace,$(call RUN_PUBLIC,fix-namespace))
+
+endif
+
+
 
 
 
@@ -1375,10 +1749,22 @@ fix-accessors: _builtin_require_workspace
 
 .PHONY: _activated-fix-accessors
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-fix-accessors _custom-fix-accessors post-fix-accessors,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-fix-accessors: _builtin-fix-accessors
+_builtin-fix-accessors: _builtin_require_environment
+else
+
+
 _activated-fix-accessors: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix-accessors,$(call RUN_PUBLIC,fix-accessors))
+
+endif
+
+
 
 
 
@@ -1390,10 +1776,22 @@ fix-toolchain: _builtin_require_workspace
 
 .PHONY: _activated-fix-toolchain
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-fix-toolchain _custom-fix-toolchain post-fix-toolchain,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-fix-toolchain: _builtin-fix-toolchain
+_builtin-fix-toolchain: _builtin_require_environment
+else
+
+
 _activated-fix-toolchain: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix-toolchain,$(call RUN_PUBLIC,fix-toolchain))
+
+endif
+
+
 
 
 
@@ -1405,10 +1803,22 @@ audit: _builtin_require_workspace
 
 .PHONY: _activated-audit
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-audit _custom-audit post-audit,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-audit: _builtin-audit
+_builtin-audit: _builtin_require_environment
+else
+
+
 _activated-audit: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-audit,$(call RUN_PUBLIC,audit))
+
+endif
+
+
 
 
 
@@ -1422,12 +1832,15 @@ status: _builtin_require_workspace
 
 .PHONY: _activated-status
 
+
 _activated-status: _builtin_require_interpreter
 	+@$(SELF_MAKE) _builtin_status_import_observation
 	+@$(SELF_MAKE) _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-status,$(call RUN_PUBLIC,status))
+
+
 
 
 
@@ -1439,10 +1852,22 @@ verify-clean: _builtin_require_workspace
 
 .PHONY: _activated-verify-clean
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-verify-clean _custom-verify-clean post-verify-clean,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-verify-clean: _builtin-verify-clean
+_builtin-verify-clean: _builtin_require_environment
+else
+
+
 _activated-verify-clean: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-verify-clean,$(call RUN_PUBLIC,verify-clean))
+
+endif
+
+
 
 
 
@@ -1454,10 +1879,22 @@ docs: _builtin_require_workspace
 
 .PHONY: _activated-docs
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-docs _custom-docs post-docs,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-docs: _builtin-docs
+_builtin-docs: _builtin_require_environment
+else
+
+
 _activated-docs: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-docs,$(call RUN_PUBLIC,docs))
+
+endif
+
+
 
 
 
@@ -1469,6 +1906,8 @@ clean:
 
 
 
+
+
 bootstrap-candidate: _builtin_require_workspace
 	@printf '==> %s | project=%s | profile=%s\n' 'bootstrap-candidate' "$(PROJECT_ROOT)" 'standalone'
 
@@ -1476,10 +1915,22 @@ bootstrap-candidate: _builtin_require_workspace
 
 .PHONY: _activated-bootstrap-candidate
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-bootstrap-candidate _custom-bootstrap-candidate post-bootstrap-candidate,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-bootstrap-candidate: _builtin-bootstrap-candidate
+_builtin-bootstrap-candidate: _builtin_require_environment
+else
+
+
 _activated-bootstrap-candidate: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-bootstrap-candidate,$(call RUN_PUBLIC,bootstrap-candidate))
+
+endif
+
+
 
 
 
@@ -1491,10 +1942,22 @@ release-plan: _builtin_require_workspace
 
 .PHONY: _activated-release-plan
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-release-plan _custom-release-plan post-release-plan,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-release-plan: _builtin-release-plan
+_builtin-release-plan: _builtin_require_environment
+else
+
+
 _activated-release-plan: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-plan,$(call RUN_PUBLIC,release-plan))
+
+endif
+
+
 
 
 
@@ -1506,10 +1969,22 @@ release-version: _builtin_require_workspace
 
 .PHONY: _activated-release-version
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-release-version _custom-release-version post-release-version,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-release-version: _builtin-release-version
+_builtin-release-version: _builtin_require_environment
+else
+
+
 _activated-release-version: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-version,$(call RUN_PUBLIC,release-version))
+
+endif
+
+
 
 
 
@@ -1521,10 +1996,22 @@ release-tag: _builtin_require_workspace
 
 .PHONY: _activated-release-tag
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-release-tag _custom-release-tag post-release-tag,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-release-tag: _builtin-release-tag
+_builtin-release-tag: _builtin_require_environment
+else
+
+
 _activated-release-tag: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-tag,$(call RUN_PUBLIC,release-tag))
+
+endif
+
+
 
 
 
@@ -1536,10 +2023,22 @@ release-build: _builtin_require_workspace
 
 .PHONY: _activated-release-build
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-release-build _custom-release-build post-release-build,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-release-build: _builtin-release-build
+_builtin-release-build: _builtin_require_environment
+else
+
+
 _activated-release-build: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-build,$(call RUN_PUBLIC,release-build))
+
+endif
+
+
 
 
 
@@ -1551,10 +2050,22 @@ publication: _builtin_require_workspace
 
 .PHONY: _activated-publication
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-publication _custom-publication post-publication,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-publication: _builtin-publication
+_builtin-publication: _builtin_require_environment
+else
+
+
 _activated-publication: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-publication,$(call RUN_PUBLIC,publication))
+
+endif
+
+
 
 
 
@@ -1563,6 +2074,7 @@ _activated-publication: _builtin_require_environment
 gen: _builtin_require_workspace _builtin_require_interpreter
 	@printf '==> %s | project=%s | profile=%s\n' 'gen' "$(PROJECT_ROOT)" 'standalone'
 	$(call RUN_PUBLIC,gen)
+
 
 
 
@@ -1575,6 +2087,25 @@ gen-footprint: _builtin_require_workspace _builtin_require_interpreter
 
 
 
+# This operation consumes the declared physical runtime without activating the
+# environment file it may itself regenerate.
+gen-pyproject: _builtin_require_workspace _builtin_require_interpreter
+	@printf '==> %s | project=%s | profile=%s\n' 'gen-pyproject' "$(PROJECT_ROOT)" 'standalone'
+	$(call RUN_PUBLIC,gen-pyproject)
+
+
+
+
+# This operation consumes the declared physical runtime without activating the
+# environment file it may itself regenerate.
+gen-editor: _builtin_require_workspace _builtin_require_interpreter
+	@printf '==> %s | project=%s | profile=%s\n' 'gen-editor' "$(PROJECT_ROOT)" 'standalone'
+	$(call RUN_PUBLIC,gen-editor)
+
+
+
+
+
 initialize: _builtin_require_workspace
 	@printf '==> %s | project=%s | profile=%s\n' 'initialize' "$(PROJECT_ROOT)" 'standalone'
 
@@ -1582,10 +2113,13 @@ initialize: _builtin_require_workspace
 
 .PHONY: _activated-initialize
 
+
 _activated-initialize: _builtin_require_interpreter
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-initialize,$(call RUN_PUBLIC,initialize))
+
+
 
 
 
@@ -1598,6 +2132,7 @@ project-new: _builtin_require_workspace _builtin_require_interpreter
 
 
 
+
 mod: _builtin_require_workspace
 	@printf '==> %s | project=%s | profile=%s\n' 'mod' "$(PROJECT_ROOT)" 'standalone'
 
@@ -1605,10 +2140,22 @@ mod: _builtin_require_workspace
 
 .PHONY: _activated-mod
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-mod _custom-mod post-mod,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-mod: _builtin-mod
+_builtin-mod: _builtin_require_environment
+else
+
+
 _activated-mod: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod,$(call RUN_PUBLIC,mod))
+
+endif
+
+
 
 
 
@@ -1620,10 +2167,22 @@ mod-types: _builtin_require_workspace
 
 .PHONY: _activated-mod-types
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-mod-types _custom-mod-types post-mod-types,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-mod-types: _builtin-mod-types
+_builtin-mod-types: _builtin_require_environment
+else
+
+
 _activated-mod-types: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-types,$(call RUN_PUBLIC,mod-types))
+
+endif
+
+
 
 
 
@@ -1635,10 +2194,22 @@ mod-rules: _builtin_require_workspace
 
 .PHONY: _activated-mod-rules
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-mod-rules _custom-mod-rules post-mod-rules,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-mod-rules: _builtin-mod-rules
+_builtin-mod-rules: _builtin_require_environment
+else
+
+
 _activated-mod-rules: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-rules,$(call RUN_PUBLIC,mod-rules))
+
+endif
+
+
 
 
 
@@ -1650,10 +2221,22 @@ mod-text: _builtin_require_workspace
 
 .PHONY: _activated-mod-text
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-mod-text _custom-mod-text post-mod-text,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-mod-text: _builtin-mod-text
+_builtin-mod-text: _builtin_require_environment
+else
+
+
 _activated-mod-text: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-text,$(call RUN_PUBLIC,mod-text))
+
+endif
+
+
 
 
 
@@ -1665,10 +2248,22 @@ mod-text-candidate: _builtin_require_workspace
 
 .PHONY: _activated-mod-text-candidate
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-mod-text-candidate _custom-mod-text-candidate post-mod-text-candidate,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-mod-text-candidate: _builtin-mod-text-candidate
+_builtin-mod-text-candidate: _builtin_require_environment
+else
+
+
 _activated-mod-text-candidate: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-text-candidate,$(call RUN_PUBLIC,mod-text-candidate))
+
+endif
+
+
 
 
 
@@ -1680,10 +2275,22 @@ mod-snapshots: _builtin_require_workspace
 
 .PHONY: _activated-mod-snapshots
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-mod-snapshots _custom-mod-snapshots post-mod-snapshots,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-mod-snapshots: _builtin-mod-snapshots
+_builtin-mod-snapshots: _builtin_require_environment
+else
+
+
 _activated-mod-snapshots: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-snapshots,$(call RUN_PUBLIC,mod-snapshots))
+
+endif
+
+
 
 
 
@@ -1695,10 +2302,22 @@ waza: _builtin_require_workspace
 
 .PHONY: _activated-waza
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-waza _custom-waza post-waza,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-waza: _builtin-waza
+_builtin-waza: _builtin_require_environment
+else
+
+
 _activated-waza: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-waza,$(call RUN_PUBLIC,waza))
+
+endif
+
+
 
 
 
@@ -1710,10 +2329,22 @@ duplication: _builtin_require_workspace
 
 .PHONY: _activated-duplication
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-duplication _custom-duplication post-duplication,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-duplication: _builtin-duplication
+_builtin-duplication: _builtin_require_environment
+else
+
+
 _activated-duplication: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-duplication,$(call RUN_PUBLIC,duplication))
+
+endif
+
+
 
 
 
@@ -1725,10 +2356,22 @@ sonarcloud-sync: _builtin_require_workspace
 
 .PHONY: _activated-sonarcloud-sync
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-sonarcloud-sync _custom-sonarcloud-sync post-sonarcloud-sync,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-sonarcloud-sync: _builtin-sonarcloud-sync
+_builtin-sonarcloud-sync: _builtin_require_environment
+else
+
+
 _activated-sonarcloud-sync: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-sonarcloud-sync,$(call RUN_PUBLIC,sonarcloud-sync))
+
+endif
+
+
 
 
 
@@ -1740,10 +2383,21 @@ sonarcloud-issues: _builtin_require_workspace
 
 .PHONY: _activated-sonarcloud-issues
 
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-sonarcloud-issues _custom-sonarcloud-issues post-sonarcloud-issues,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-sonarcloud-issues: _builtin-sonarcloud-issues
+_builtin-sonarcloud-issues: _builtin_require_environment
+else
+
+
 _activated-sonarcloud-issues: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-sonarcloud-issues,$(call RUN_PUBLIC,sonarcloud-issues))
+
+endif
+
 
 
 
@@ -1845,7 +2499,7 @@ test-full:
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-full to execute it.'
 
 test-file:
-	@printf '  %-16s %s\n' 'test-file' 'Run one declared test file incremental then complete, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).'
+	@printf '  %-16s %s\n' 'test-file' 'Run one complete declared test file once, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-file to execute it.'
 
 file-gate:
@@ -1891,6 +2545,14 @@ profile-mod-rules:
 profile-mod-rules-report:
 	@printf '  %-16s %s\n' 'profile-mod-rules-report' 'Render the profile of the complete read-only rule diagnostic.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod-rules-report to execute it.'
+
+profile-codemod:
+	@printf '  %-16s %s\n' 'profile-codemod' 'Profile the canonical read-only codemod gate for one literal FILE, preserving native findings and interruption evidence.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-codemod to execute it.'
+
+profile-codemod-report:
+	@printf '  %-16s %s\n' 'profile-codemod-report' 'Render the retained profile of the canonical read-only codemod gate.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-codemod-report to execute it.'
 
 fmt:
 	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.'
@@ -1963,6 +2625,14 @@ gen:
 gen-footprint:
 	@printf '  %-16s %s\n' 'gen-footprint' 'Inspect the pending generation journal and physical effect footprint without generation planning, participant leases, recovery, or publication.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen-footprint to execute it.'
+
+gen-pyproject:
+	@printf '  %-16s %s\n' 'gen-pyproject' 'Regenerate this project'"'"'s analyzer and dependency metadata through guarded publication.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen-pyproject to execute it.'
+
+gen-editor:
+	@printf '  %-16s %s\n' 'gen-editor' 'Project editor settings, analyzer configuration, and Git ignores without generating Python facades.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen-editor to execute it.'
 
 initialize:
 	@printf '  %-16s %s\n' 'initialize' 'Bootstrap this target'"'"'s own declaration and canonical Makefile.'
@@ -2076,7 +2746,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'test-full' 'Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.';
 
-	@printf '  %-16s %s\n' 'test-file' 'Run one declared test file incremental then complete, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).';
+	@printf '  %-16s %s\n' 'test-file' 'Run one complete declared test file once, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).';
 
 	@printf '  %-16s %s\n' 'file-gate' 'Run configured canonical read-only gates on one literal FILE=<repository-relative path>; invalid selection and missing gate owners fail loud.';
 
@@ -2099,6 +2769,10 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'profile-mod-rules' 'Profile the complete read-only rule diagnostic and retain its native failure outcome.';
 
 	@printf '  %-16s %s\n' 'profile-mod-rules-report' 'Render the profile of the complete read-only rule diagnostic.';
+
+	@printf '  %-16s %s\n' 'profile-codemod' 'Profile the canonical read-only codemod gate for one literal FILE, preserving native findings and interruption evidence.';
+
+	@printf '  %-16s %s\n' 'profile-codemod-report' 'Render the retained profile of the canonical read-only codemod gate.';
 
 	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.';
 
@@ -2135,6 +2809,10 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'gen' 'Regenerate declared projections with guarded publication per participant, without repairing authored inputs or resolving locks.';
 
 	@printf '  %-16s %s\n' 'gen-footprint' 'Inspect the pending generation journal and physical effect footprint without generation planning, participant leases, recovery, or publication.';
+
+	@printf '  %-16s %s\n' 'gen-pyproject' 'Regenerate this project'"'"'s analyzer and dependency metadata through guarded publication.';
+
+	@printf '  %-16s %s\n' 'gen-editor' 'Project editor settings, analyzer configuration, and Git ignores without generating Python facades.';
 
 	@printf '  %-16s %s\n' 'initialize' 'Bootstrap this target'"'"'s own declaration and canonical Makefile.';
 
@@ -2497,6 +3175,7 @@ _upg_lifecycle: _builtin_setup_submodules
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac
 
+	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope all
 	+@$(SELF_MAKE) _upg_resolve_locks
 	@$(SELF_MAKE) _upg_install_runtime
 	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope all
@@ -2666,6 +3345,19 @@ _builtin_test_file_all: _builtin_require_environment
 export FLEXT_FILE_GATE_FILE := $(value FILE)
 _builtin_file_gate_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,format,pyrefly,mypy,pyright,codemod" --file "$$FLEXT_FILE_GATE_FILE"
+
+# Isolate the same read-only codemod gate when diagnosing file-gate preparation.
+_builtin-profile-codemod: _builtin_require_environment
+	@mkdir -p "$(PROFILE_REPORTS_DIR)"
+	@$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry \
+		"$(PROFILE_REPORTS_DIR)/codemod.pstats" check run \
+		--repository-root "$(PROJECT_ROOT)" --gates codemod \
+		--file "$$FLEXT_FILE_GATE_FILE"
+
+_builtin-profile-codemod-report: _builtin_require_environment
+	@cd "$(PROJECT_ROOT)" || exit $$?; \
+		$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry \
+		"$(PROFILE_REPORTS_DIR)/codemod.pstats"
 
 # fmt is format-only (single-pass verb law): ruff formats Python, the
 # fmt_gates formatters run once through the checker's apply mode, and every
@@ -2990,6 +3682,15 @@ _builtin_gen_all: _builtin_require_interpreter
 
 _builtin-gen-footprint: _builtin_require_interpreter
 	@$(PROJECT_FLEXT_INFRA) codegen footprint --root "$(PROJECT_ROOT)"
+
+_builtin-gen-pyproject: _builtin_require_interpreter
+	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
+
+_builtin-gen-editor: _builtin_require_interpreter
+	@set -eu; \
+	scope=all; \
+	if [ "$(strip $(CI))" = "Y" ]; then scope=self; fi; \
+	$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what editor --scope "$$scope"
 
 _builtin-bootstrap-candidate: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) codegen candidate-bootstrap --repository-root "$(PROJECT_ROOT)"

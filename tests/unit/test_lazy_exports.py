@@ -185,6 +185,7 @@ class TestsFlextCoreLazyExports:
             "from flext_core import t, p, m",
             "from flext_cli import t, p, m",
             "from flext_infra import t, p, m",
+            "from flext_infra import u, t, p, m",
         ],
     )
     def test_cold_public_declarations_resolve_from_live_sources(

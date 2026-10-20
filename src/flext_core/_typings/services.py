@@ -58,10 +58,12 @@ class FlextTypesServices:
         | FlextTypesPydantic.JsonValue
         | FlextTypesPydantic.BaseModelInstance
     )
+    # Runtime payloads admit existing models at every collection depth;
+    # JsonValue alone would reject those instances inside a list or mapping.
     type JsonPayloadCollectionValue = (
         JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
-        | FlextTypingBase.SequenceOf[FlextTypesPydantic.JsonValue]
+        | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayloadCollectionValue]
+        | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayloadCollectionValue]
     )
     type JsonPayload = FlextTypesServices.JsonPayloadCollectionValue
     type OperationMetricsStream = Generator[FlextTypingBase.MappingKV[str, JsonPayload]]

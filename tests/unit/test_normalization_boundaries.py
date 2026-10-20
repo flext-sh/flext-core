@@ -84,6 +84,30 @@ class TestsFlextCoreNormalizationBoundaries:
         )
 
     @staticmethod
+    @pytest.mark.parametrize("depth", [1, 3])
+    def test_json_payload_preserves_models_at_recursive_collection_depths(
+        depth: int,
+    ) -> None:
+        """Nested mappings and sequences retain model identity before serialization."""
+        model = m.Metadata(attributes={"source": "recursive"})
+        payload: t.JsonPayload = model
+        expected: t.JsonValue = model.model_dump(mode="json")
+        for _ in range(depth):
+            payload = {"nested": [payload]}
+            expected = {"nested": [expected]}
+        parsed = m.ConfigMap.model_validate({"payload": payload})
+        current = parsed["payload"]
+        for _ in range(depth):
+            if not isinstance(current, Mapping):
+                pytest.fail("Recursive payload did not preserve its mapping")
+            items = current["nested"]
+            if not isinstance(items, (tuple, list)):
+                pytest.fail("Recursive payload did not preserve its sequence")
+            current = items[0]
+        tm.ok(current is model)
+        tm.that(u.normalize_to_json_mapping(parsed), eq={"payload": expected})
+
+    @staticmethod
     @pytest.mark.parametrize("nested", [False, True])
     def test_json_payload_rejects_non_string_mapping_keys(*, nested: bool) -> None:
         """Validation rejects invalid keys before native JSON can stringify them."""

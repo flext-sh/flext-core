@@ -24,6 +24,31 @@ from typing_extensions import TypeForm
 from tests import c, m, t, tm, u
 
 
+class TestsFlextCoreJsonPayload:
+    """Recursive runtime payloads remain typed instead of accepting any value."""
+
+    @staticmethod
+    def test_nested_models_survive_runtime_payload_validation() -> None:
+        """Containers admit validated models at every supported nesting depth."""
+        model = m.ConfigMap(root={"name": "sample"})
+        payload: t.JsonPayload = {"items": [{"model": model}]}
+        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
+            TypeForm(t.JsonPayload)
+        )
+
+        tm.that(adapter.validate_python(payload), eq=payload)
+
+    @staticmethod
+    def test_runtime_payload_rejects_unmodeled_values() -> None:
+        """An unconstrained value must not enter through an unrestricted branch."""
+        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
+            TypeForm(t.JsonPayload)
+        )
+
+        with pytest.raises(flext_tests.m.ValidationError):
+            adapter.validate_python(object())
+
+
 class TestsFlextCoreTypingsContainers:
     # ---- m.Dict: mapping read contract -------------------------------------
     """Tests for ``FlextCoreTypingsContainers``."""
