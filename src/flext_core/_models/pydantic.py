@@ -56,7 +56,7 @@ class FlextModelsPydantic:
 
     # Preserve the native overloads and field-specifier identity without a wrapper.
     Field = FlextTypingNativeExport(pydantic.Field)
-    from pydantic.fields import FieldInfo
+    from pydantic.fields import FieldInfo as FieldInfo
 
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]

@@ -53,18 +53,14 @@ class FlextTypesServices:
     ]
 
     type JsonPayloadLeaf = (
-        FlextTypingBase.Scalar | Path | FlextTypesPydantic.BaseModelInstance
+        FlextTypingBase.Scalar
+        | Path
+        | FlextTypesPydantic.JsonValue
+        | FlextTypesPydantic.BaseModelInstance
     )
-    # Reuse the canonical JSON graph, as required by recursive-type-alias;
-    # introducing namespace self-reference here breaks checker convergence.
-    type JsonPayloadCollectionValue = (
-        FlextTypesServices.JsonPayloadLeaf
-        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
-        | FlextTypingBase.SequenceOf[FlextTypesPydantic.JsonValue]
-    )
-    type JsonPayload = FlextTypesServices.JsonPayloadCollectionValue
-    type OperationMetricsStream = Generator[FlextTypingBase.MappingKV[str, JsonPayload]]
-    type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayloadLeaf | T
+    type JsonPayload = FlextTypesPydantic.JsonValue | FlextTypesPydantic.BaseModelInstance
+    type OperationMetricsStream = Generator[FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]]
+    type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayload | T
     type SettingsOverrideCollectionValue[T] = (
         FlextTypesServices.SettingsOverrideLeaf[T]
         | FlextTypingBase.MappingKV[str, FlextTypesServices.SettingsOverrideLeaf[T]]

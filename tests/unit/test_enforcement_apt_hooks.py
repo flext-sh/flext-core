@@ -59,7 +59,7 @@ class TestsFlextEnforcementAptHooks:
         """Test a pt rule carries agents md anchor."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         tm.that(rule, none=False)
-        tm.not_none(rule)
+        rule = tm.not_none(rule)
         tm.that(rule.agents_md_anchor, ne="")
 
     @staticmethod
@@ -70,7 +70,7 @@ class TestsFlextEnforcementAptHooks:
         """Test a pt rule documents problem and fix."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         tm.that(rule, none=False)
-        tm.not_none(rule)
+        rule = tm.not_none(rule)
         tm.that(rule.description, ne="")
         tm.that(isinstance(rule.source, m.EnforcementBeartypeSource), truth=True)
         assert isinstance(rule.source, m.EnforcementBeartypeSource)
@@ -84,7 +84,7 @@ class TestsFlextEnforcementAptHooks:
         """Test a pt rule severity is a named level."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         tm.that(rule, none=False)
-        tm.not_none(rule)
+        rule = tm.not_none(rule)
         tm.that(rule.severity.value, ne="")
 
     @staticmethod
@@ -104,7 +104,7 @@ class TestsFlextEnforcementAptHooks:
         """Test static rule is owned by the infra rule engine."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         tm.that(rule, none=False)
-        tm.not_none(rule)
+        rule = tm.not_none(rule)
         tm.that(isinstance(rule.source, m.EnforcementInfraRuleSource), truth=True)
         assert isinstance(rule.source, m.EnforcementInfraRuleSource)
         tm.that(rule.source.rule_ids, truth=True)
@@ -115,7 +115,7 @@ class TestsFlextEnforcementAptHooks:
         """Test beartype rule tag has a runtime category."""
         rule = u.build_canonical_catalog().by_id(rule_id)
         tm.that(rule, none=False)
-        tm.not_none(rule)
+        rule = tm.not_none(rule)
         tm.that(isinstance(rule.source, m.EnforcementBeartypeSource), truth=True)
         assert isinstance(rule.source, m.EnforcementBeartypeSource)
         tm.that(rule.source.tag in c.ENFORCEMENT_TAG_CATEGORY, truth=True)

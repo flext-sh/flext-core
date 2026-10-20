@@ -25,18 +25,35 @@ from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreJsonPayload:
-    """Recursive runtime payloads remain typed instead of accepting any value."""
+    """Payloads admit native JSON containers and explicitly declared model leaves."""
 
     @staticmethod
-    def test_nested_models_survive_runtime_payload_validation() -> None:
-        """Containers admit validated models at every supported nesting depth."""
+    def test_direct_models_survive_runtime_payload_validation() -> None:
+        """The runtime contract preserves a model leaf without serializing it."""
         model = m.ConfigMap(root={"name": "sample"})
-        payload: t.JsonPayload = {"items": [{"model": model}]}
         adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
             TypeForm(t.JsonPayload)
         )
+        tm.ok(adapter.validate_python(model) is model)
 
+    @staticmethod
+    def test_nested_json_survives_runtime_payload_validation() -> None:
+        """Nested collections use the existing canonical JsonValue contract."""
+        payload: t.JsonPayload = {"items": [{"name": "sample"}]}
+        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
+            TypeForm(t.JsonPayload)
+        )
         tm.that(adapter.validate_python(payload), eq=payload)
+
+    @staticmethod
+    def test_models_inside_json_collections_require_an_owned_model_contract() -> None:
+        """The JSON branch must not silently admit arbitrary model instances."""
+        model = m.Metadata(attributes={"name": "sample"})
+        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
+            TypeForm(t.JsonPayload)
+        )
+        with pytest.raises(flext_tests.m.ValidationError):
+            adapter.validate_python({"items": [{"model": model}]})
 
     @staticmethod
     def test_runtime_payload_rejects_unmodeled_values() -> None:
@@ -166,7 +183,7 @@ class TestsFlextCoreTypingsContainers:
         """m.ConfigMap exposes configuration values by key."""
         cm = m.ConfigMap(root={"timeout": 30, "debug": False})
         tm.that(cm["timeout"], eq=30)
-        tm.fail(cm["debug"])
+        tm.that(cm["debug"], eq=False)
 
     @staticmethod
     def test_configmap_len_counts_entries() -> None:

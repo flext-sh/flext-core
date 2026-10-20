@@ -326,7 +326,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
             return cls._failure(str(exc), exception=exc)
 
     @staticmethod
-    def successful_result[ValueT](obj: ValueT | p.ResultView[ValueT]) -> bool:
+    def successful_result[ValueT](obj: ValueT) -> bool:
         """Check whether an object is a successful result instance.
 
         Returns:
@@ -336,7 +336,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
-    def failed_result[ValueT](obj: ValueT | p.ResultView[ValueT]) -> bool:
+    def failed_result[ValueT](obj: ValueT) -> bool:
         """Check whether an object is a failed result instance.
 
         Returns:

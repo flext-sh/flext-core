@@ -177,7 +177,7 @@ class TestsFlextCoreDispatcher:
         tm.that(len(repeat.skipped), eq=1)
         tm.that(dispatcher.register_handler(other.handle, message_type="bound").failure)
         message = m.Command(command_type="bound")
-        tm.ok(tm.ok(dispatcher.dispatch(message)))
+        tm.ok(dispatcher.dispatch(message), eq=True)
         tm.that(original.handled, eq=[message.command_type])
         tm.that(other.handled, empty=True)
 

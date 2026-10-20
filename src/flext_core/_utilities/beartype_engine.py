@@ -117,7 +117,7 @@ class FlextUtilitiesBeartypeEngine(
         return target.__name__ not in (c.ENFORCEMENT_UTILITIES_STATEFUL_ADAPTERS)
 
     @staticmethod
-    def contains_any(hint: FlextTypingBase.TypeHintSpecifier | None) -> bool:
+    def contains_any(hint: FlextTypingBase.TypeFormSpecifier | None) -> bool:
         """Report whether a hint is or contains ``Any`` or ``object`` at any depth.
 
         Returns:

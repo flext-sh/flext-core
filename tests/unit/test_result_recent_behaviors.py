@@ -43,9 +43,8 @@ class TestsFlextCoreResultRecentBehaviors:
         transformed = failure.map_error(lambda msg: f"{msg}_mapped")
 
         tm.that(transformed.failure is True, truth=True)
-        tm.that(transformed.error, none=False)
-        tm.not_none(transformed.error)
-        tm.that("bad_mapped" in transformed.error, truth=True)
+        error = tm.not_none(transformed.error)
+        tm.that("bad_mapped" in error, truth=True)
         tm.that(transformed.error_code, eq="E1")
 
     @staticmethod

@@ -70,42 +70,36 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.that(u.normalize_to_json_mapping(parsed), eq=expected)
 
     @staticmethod
-    def test_json_payload_preserves_nested_model_identity() -> None:
-        """Existing model values retain identity and serialize their real fields."""
+    def test_json_payload_preserves_direct_model_identity() -> None:
+        """Generic payloads preserve a directly declared model leaf."""
         model = m.Metadata(attributes={"source": "publication"})
-        parsed = m.ConfigMap.model_validate({"items": [model]})
-        items = parsed["items"]
-        if not isinstance(items, (tuple, list)):
-            pytest.fail("Model sequence did not retain its native collection shape")
-        tm.ok(items[0] is model)
+        parsed = m.ConfigMap.model_validate({"item": model})
+        tm.ok(parsed["item"] is model)
         tm.that(
             u.normalize_to_json_mapping(parsed),
-            eq={"items": [model.model_dump(mode="json")]},
+            eq={"item": model.model_dump(mode="json")},
         )
 
     @staticmethod
     @pytest.mark.parametrize("depth", [1, 3])
-    def test_json_payload_preserves_models_at_recursive_collection_depths(
+    def test_json_payload_accepts_native_json_at_recursive_collection_depths(
         depth: int,
     ) -> None:
-        """Nested mappings and sequences retain model identity before serialization."""
-        model = m.Metadata(attributes={"source": "recursive"})
-        payload: t.JsonPayload = model
-        expected: t.JsonValue = model.model_dump(mode="json")
+        """JsonValue owns nested mappings and sequences without a recursive alias."""
+        payload: t.JsonValue = {"source": "recursive"}
         for _ in range(depth):
             payload = {"nested": [payload]}
-            expected = {"nested": [expected]}
         parsed = m.ConfigMap.model_validate({"payload": payload})
-        current = parsed["payload"]
-        for _ in range(depth):
-            if not isinstance(current, Mapping):
-                pytest.fail("Recursive payload did not preserve its mapping")
-            items = current["nested"]
-            if not isinstance(items, (tuple, list)):
-                pytest.fail("Recursive payload did not preserve its sequence")
-            current = items[0]
-        tm.ok(current is model)
-        tm.that(u.normalize_to_json_mapping(parsed), eq={"payload": expected})
+        tm.that(u.normalize_to_json_mapping(parsed), eq={"payload": payload})
+
+    @staticmethod
+    def test_json_payload_rejects_model_instances_inside_json_collections() -> None:
+        """Collections of models need their own model contract, not a JSON bag."""
+        model = m.Metadata(attributes={"source": "nested"})
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate({"items": [model]})
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate({"items": {"nested": [model]}})
 
     @staticmethod
     @pytest.mark.parametrize("nested", [False, True])
