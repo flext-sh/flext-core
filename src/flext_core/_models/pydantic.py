@@ -56,6 +56,14 @@ class FlextModelsPydantic:
     Field = FlextTypingNativeExport(pydantic.Field)
     FieldInfo = pydantic.fields.FieldInfo
 
+    # Compatibility: older flext-infra code calls m.empty(contract_factory=...).
+    # Delegate to the canonical utility owner.
+    @staticmethod
+    def empty(*args, **kwargs):
+        from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+
+        return FlextUtilitiesPydantic.empty(*args, **kwargs)
+
     if TYPE_CHECKING:
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
     else:
