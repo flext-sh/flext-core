@@ -194,6 +194,10 @@ class FlextModelsProjectMetadataFields:
     ):
         """``[tool.flext.docs]`` contract."""
 
+        documentation_language: Annotated[
+            t.DocumentationLanguage,
+            Field(default="en", description="Generated documentation language"),
+        ] = "en"
         package_name: Annotated[
             str | None,
             Field(default=None, description="Explicit import package override"),

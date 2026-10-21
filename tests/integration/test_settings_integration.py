@@ -35,12 +35,12 @@ class TestsFlextSettingsIntegration:
         tm.ok(first is second is third)
 
     @staticmethod
-    def test_reset_for_testing_replaces_the_global_instance() -> None:
-        """reset_for_testing() causes the next fetch_global() to be new."""
+    def test_reset_for_testing_preserves_the_global_instance() -> None:
+        """reset_for_testing() reloads the existing global root in place."""
         before = FlextSettings.fetch_global()
         FlextSettings.reset_for_testing()
         after = FlextSettings.fetch_global()
-        tm.ok(after is not before)
+        tm.ok(after is before)
 
     @staticmethod
     def test_container_resolves_settings_to_the_global_singleton() -> None:

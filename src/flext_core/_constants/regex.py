@@ -41,6 +41,11 @@ class FlextConstantsRegex:
         r"|^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
     )
     "Pattern for hostnames (domain names) or IPv4 addresses."
+    PATTERN_DNS_DOMAIN: Final[str] = (
+        r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+        r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$"
+    )
+    "RFC 1123 ASCII DNS labels, including single-label service namespaces."
     PATTERN_LDAP_DN: Final[str] = (
         r"^[A-Za-z][\w-]*[ \t]*+=[ \t]*+[^\s,][^,\r\n]*"
         r"(?:,[ \t]*+[A-Za-z][\w-]*[ \t]*+=[ \t]*+[^\s,][^,\r\n]*)*$"

@@ -19,6 +19,11 @@ Then ``from flext_x import settings`` and use it directly (``settings.debug``,
 ``settings.my_field``, ``settings.Cli`` via the namespace registry). The root
 package exports its own ``settings`` singleton the same way.
 
+The global lifecycle alone publishes a singleton; direct construction creates
+an isolated instance. Once published, each concrete class keeps that root identity.
+Updates and test resets validate detached candidates before publishing their
+state in place, so already-imported handles remain live even after source repoints.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -31,6 +36,7 @@ import sys
 import threading
 from collections.abc import Generator, Mapping
 from contextlib import contextmanager
+from copy import deepcopy
 from pathlib import Path
 from typing import TYPE_CHECKING, Annotated, Any, ClassVar, Literal, Self
 
@@ -268,7 +274,6 @@ class FlextSettings(BaseSettings):
     ] = True
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
-    _singleton_enabled: ClassVar[bool] = True
     _instance: ClassVar[Self | None] = None
     _app_namespace: ClassVar[str | None] = None
 
@@ -277,48 +282,22 @@ class FlextSettings(BaseSettings):
         super().__init_subclass__(**kwargs)
         cls._instance = None
 
-    def __new__(cls, **kwargs: Any) -> Self:
-        """Singleton factory; unknown kwargs are ignored by consumer factories.
-
-        Raises:
-            TypeError: If Singleton instance is not of expected type.
-
-        """
-        if not cls._singleton_enabled:
-            return super().__new__(cls)
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    cls._instance = super().__new__(cls)
-        raw_instance = cls._instance
-        if not isinstance(raw_instance, cls):
-            msg = f"Singleton instance is not of expected type {cls.__name__}"
-            raise TypeError(msg)
-        return raw_instance
-
-    @classmethod
-    def _initialized_instance(cls) -> Self | None:
-        """Return the cached singleton only after Pydantic finished init."""
-        existing = cls._instance
-        if isinstance(existing, cls) and hasattr(existing, "__pydantic_fields_set__"):
-            return existing
-        if existing is not None:
-            with cls._lock:
-                if cls._instance is existing:
-                    cls._instance = None
-        return None
-
     @classmethod
     @contextmanager
     def singleton_disabled(cls) -> Generator[None]:
-        """Temporarily disable singleton enforcement for clone operations."""
+        """Serialize isolated construction for existing snapshot consumers.
+
+        Construction itself never publishes; the global lifecycle owns the root.
+        """
         with cls._lock:
-            original = cls._singleton_enabled
-            cls._singleton_enabled = False
-            try:
-                yield
-            finally:
-                cls._singleton_enabled = original
+            yield
+
+    @classmethod
+    def _load_sources(cls) -> Self:
+        """Validate current sources, resolving an explicit dotenv repoint now."""
+        if FlextConstantsSettings.ENV_FILE_ENV_VAR in os.environ:
+            return cls.model_validate({"_env_file": cls.resolve_env_file()})
+        return cls()
 
     @classmethod
     def fetch_global(
@@ -329,22 +308,16 @@ class FlextSettings(BaseSettings):
         With ``overrides`` return an isolated clone; the singleton is not
         mutated (use ``update_global`` for that).
         """
-        instance = cls._initialized_instance()
-        if overrides:
-            if instance is not None:
-                return instance.clone(**overrides)
-            with cls.singleton_disabled():
-                return cls.model_validate(dict(overrides))
-        if instance is not None:
-            return instance
         with cls._lock:
-            instance = cls._initialized_instance()
-            if instance is not None:
-                return instance
-            with cls.singleton_disabled():
-                created = cls()
-            cls._instance = created
-            return created
+            instance = cls._instance
+            if overrides is not None:
+                cls._validate_overrides(**overrides)
+                current = instance if instance is not None else cls._load_sources()
+                return current.clone(**overrides)
+            if instance is None:
+                instance = cls._load_sources()
+                cls._instance = instance
+            return instance
 
     @classmethod
     def _merge_overrides(
@@ -371,7 +344,9 @@ class FlextSettings(BaseSettings):
                     **current_value.model_dump(mode="python", exclude=computed),
                     **{k: v for k, v in override_value.items() if k not in computed},
                 }
-                merged[field_name] = type(current_value).model_validate(merged_dict)
+                merged[field_name] = type(current_value).model_validate(
+                    merged_dict, by_name=True
+                )
                 continue
             merged[field_name] = override_value
         return merged
@@ -385,36 +360,41 @@ class FlextSettings(BaseSettings):
             The resulting ``Self``.
 
         """
-        if not overrides:
-            with self.__class__.singleton_disabled():
-                return self.model_copy(deep=True)
-        # Why: call the classmethod through the instance to satisfy the
-        # private-member-access lint (self.__class__._merge_overrides tripped it).
-        merged = self._merge_overrides(self, **overrides)
         with self.__class__.singleton_disabled():
-            copied = self.model_copy(update=merged, deep=True)
-            return type(copied).model_validate(copied, from_attributes=True)
+            if not overrides:
+                return self.model_copy(deep=True)
+            copied = self.model_copy(deep=True)
+            values = copied.model_dump(mode="python", round_trip=True)
+            values.update(deepcopy(self._merge_overrides(copied, **overrides)))
+            # Validate input, not a model instance (which may skip revalidation).
+            # self_instance preserves field-name overrides without rerunning sources.
+            type(self).__pydantic_validator__.validate_python(
+                values, self_instance=copied, by_name=True
+            )
+            return copied
 
     @classmethod
     def update_global(
         cls, **overrides: FlextProtocolsSettings.SettingsOverride | None
     ) -> Self:
-        """Replace the singleton via ``model_copy(update=…)`` + revalidate.
+        """Validate an isolated candidate, then publish into the stable root.
 
         Returns:
             The resulting ``Self``.
 
         """
-        if not overrides:
-            return cls.fetch_global()
-        current = cls.fetch_global()
-        merged = cls._merge_overrides(current, **overrides)
-        with cls.singleton_disabled():
-            new_instance = current.model_copy(update=merged, deep=True)
-            validated = cls.model_validate(new_instance, from_attributes=True)
         with cls._lock:
-            cls._instance = validated
-        return validated
+            cls._validate_overrides(**overrides)
+            current = cls._instance
+            if current is None:
+                current = cls._load_sources()
+                validated = current.clone(**overrides) if overrides else current
+                cls._instance = validated
+                return validated
+            if overrides:
+                validated = current.clone(**overrides)
+                current.__setstate__(validated.__getstate__())
+            return current
 
     @classmethod
     def _validate_overrides(
@@ -435,9 +415,15 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def reset_for_testing(cls) -> None:
-        """Drop the singleton slot for test isolation."""
+        """Reload sources into a published root; leave an unused class lazy.
+
+        Repoint the real environment before calling and restore it before calling
+        again. Validation failure leaves the published state and reference intact.
+        """
         with cls._lock:
-            cls._instance = None
+            if cls._instance is not None:
+                validated = cls._load_sources()
+                cls._instance.__setstate__(validated.__getstate__())
 
     @classmethod
     def apply_app_namespace(cls, namespace: str) -> None:

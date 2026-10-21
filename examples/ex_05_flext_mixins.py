@@ -1,4 +1,4 @@
-"""Mixins example aligned to stable result usage.
+"""Result success check for the mixins-named example entry point.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -9,27 +9,24 @@ from __future__ import annotations
 from examples import r
 
 
-def run() -> None:
-    """Execute a simple mixin-like success flow.
-
-    Raises:
-        RuntimeError: If mixins example failed.
-
-    """
-    result = r[str].ok("mixins-example")
-    if not result.success:
-        msg = "mixins example failed"
-        raise RuntimeError(msg)
-
-
 class ExamplesFlextMixins:
-    """Compatibility wrapper expected by examples package exports."""
+    """Expose the example's result success check through a class entry point."""
 
     @staticmethod
     def run() -> None:
-        """Run mixins example."""
-        run()
+        """Check a successful result without exercising mixin behavior.
+
+        Raises:
+            RuntimeError: If the result success check fails.
+
+        """
+        result = r[str].ok("mixins-example")
+        if not result.success:
+            msg = "mixins example failed"
+            raise RuntimeError(msg)
 
 
 if __name__ == "__main__":
-    run()
+    ExamplesFlextMixins.run()
+
+__all__ = ["ExamplesFlextMixins"]

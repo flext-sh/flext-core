@@ -14,11 +14,12 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+from typing import Self
 
 import pytest
 
-from flext_core import FlextSettings
-from tests import tm, u
+from flext_core import FlextSettings, settings
+from tests import m, t, tm, u
 
 
 class TestsFlextCoreSettings:
@@ -272,13 +273,16 @@ class TestsFlextCoreSettings:
         tm.that(s.async_logging, is_=bool)
 
     @staticmethod
-    def test_update_global_replaces_singleton_and_propagates() -> None:
-        """update_global installs a new singleton reflected by fetch_global."""
+    def test_update_global_preserves_imported_singleton_and_propagates() -> None:
+        """An already imported root sees validated updates without rebinding."""
         FlextSettings.reset_for_testing()
-        updated = FlextSettings.update_global(log_level="ERROR")
-        tm.that(updated.log_level, eq="ERROR")
-        tm.that(FlextSettings.fetch_global().log_level, eq="ERROR")
-        FlextSettings.reset_for_testing()
+        selected_level = "ERROR"
+        try:
+            updated = FlextSettings.update_global(log_level=selected_level)
+            tm.ok(updated is settings is FlextSettings.fetch_global())
+            tm.that(settings.log_level, eq=selected_level)
+        finally:
+            FlextSettings.reset_for_testing()
 
     @staticmethod
     def test_update_global_rejects_unknown_field() -> None:
@@ -319,12 +323,151 @@ class TestsFlextCoreSettings:
         tm.that(selected.log_level, eq=original.log_level)
 
     @staticmethod
-    def test_reset_for_testing_drops_singleton() -> None:
-        """reset_for_testing forces a fresh instance on next fetch_global."""
-        first = FlextSettings.fetch_global()
-        FlextSettings.reset_for_testing()
-        second = FlextSettings.fetch_global()
-        tm.that(first is not second, truth=True)
+    def test_reset_for_testing_reloads_and_restores_imported_handle() -> None:
+        """A real environment repoint and restoration keep the published root."""
+        original = settings.model_dump()
+        selected = not settings.debug
+        try:
+            with u.Tests.env_vars_context(
+                env_vars={"FLEXT_DEBUG": str(selected)},
+            ):
+                FlextSettings.reset_for_testing()
+                tm.ok(settings is FlextSettings.fetch_global())
+                tm.that(settings.debug, eq=selected)
+        finally:
+            FlextSettings.reset_for_testing()
+        tm.ok(settings is FlextSettings.fetch_global())
+        tm.that(settings.model_dump(), eq=original)
+
+    @staticmethod
+    def test_invalid_reset_and_direct_construction_leave_root_unchanged() -> None:
+        """Failed reloads and isolated constructors cannot poison a bound root."""
+        original = settings.model_dump()
+        with u.Tests.env_vars_context(env_vars={"FLEXT_LOG_LEVEL": "invalid-level"}):
+            with pytest.raises(m.ValidationError, match="Invalid log level"):
+                FlextSettings.reset_for_testing()
+            with pytest.raises(m.ValidationError, match="Invalid log level"):
+                FlextSettings()
+        tm.ok(settings is FlextSettings.fetch_global())
+        tm.that(settings.model_dump(), eq=original)
+        isolated = FlextSettings(log_level="CRITICAL")
+        tm.ok(isolated is not settings)
+        tm.that(settings.model_dump(), eq=original)
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "overrides",
+        [
+            {"debug": "not-a-bool"},
+            {"unknown_field": True},
+            {"log_level": "invalid-level"},
+            {"window": {"lower": 10}},
+            {"window": {"upper": "not-an-int"}},
+        ],
+    )
+    def test_invalid_updates_preserve_root_and_nested_state(
+        overrides: t.JsonMapping,
+    ) -> None:
+        """Scalar, unknown-key and nested-validator failures are transactional."""
+
+        class Window(m.BaseModel):
+            lower: int = 1
+            upper: int = 5
+
+            @m.model_validator(mode="after")
+            def validate_order(self) -> Self:
+                if self.lower >= self.upper:
+                    msg = "lower must be below upper"
+                    raise ValueError(msg)
+                return self
+
+        class NestedSettings(FlextSettings):
+            window: Window = m.Field(default_factory=Window)
+
+        published = NestedSettings.fetch_global()
+        nested = published.window
+        original = published.model_dump()
+        with pytest.raises(ValueError, match=r"."):
+            NestedSettings.update_global(**overrides)
+        tm.ok(published is NestedSettings.fetch_global())
+        tm.ok(published.window is nested)
+        tm.that(published.model_dump(), eq=original)
+        with pytest.raises(ValueError, match=r"."):
+            published.clone(**overrides)
+        tm.that(published.model_dump(), eq=original)
+
+    @staticmethod
+    def test_subclasses_and_nested_clones_are_isolated() -> None:
+        """Each concrete class owns its root; clone graphs never share mutation."""
+
+        class Labels(m.BaseModel):
+            names: list[str] = m.Field(default_factory=list)
+
+        class ParentSettings(FlextSettings):
+            labels: Labels = m.Field(default_factory=Labels)
+
+        parent = ParentSettings.fetch_global()
+
+        class ChildSettings(ParentSettings):
+            pass
+
+        class SiblingSettings(ParentSettings):
+            pass
+
+        child = ChildSettings.fetch_global()
+        sibling = SiblingSettings.fetch_global()
+        snapshot = child.clone(labels={"names": ["snapshot"]})
+        plain_snapshot = child.clone()
+        derived = ChildSettings.fetch_global(overrides={})
+        ChildSettings.update_global(labels={"names": ["global"]})
+        tm.ok(child is ChildSettings.fetch_global())
+        tm.that(snapshot.labels.names, eq=["snapshot"])
+        for isolated in (parent, sibling, plain_snapshot, derived):
+            tm.that(isolated.labels.names, eq=[])
+            tm.ok(isolated is not child)
+        ChildSettings.reset_for_testing()
+        tm.ok(child is ChildSettings.fetch_global())
+        tm.ok(parent is ParentSettings.fetch_global())
+        tm.ok(sibling is SiblingSettings.fetch_global())
+
+    @staticmethod
+    def test_unused_classes_stay_lazy_after_reset_and_failed_publication() -> None:
+        """Reset, snapshots and invalid first writes never publish a candidate."""
+
+        class LazySettings(FlextSettings):
+            marker: str = "unselected"
+
+        with u.Tests.env_vars_context(env_vars={"FLEXT_MARKER": "first"}):
+            LazySettings.reset_for_testing()
+            snapshot = LazySettings.fetch_global(overrides={})
+            tm.that(snapshot.marker, eq="first")
+            with pytest.raises(m.ValidationError, match="Invalid log level"):
+                LazySettings.update_global(log_level="invalid-level")
+            with pytest.raises(m.ValidationError, match="Invalid log level"):
+                LazySettings(log_level="invalid-level")
+        with u.Tests.env_vars_context(env_vars={"FLEXT_MARKER": "second"}):
+            published = LazySettings.fetch_global()
+        tm.that(published.marker, eq="second")
+        tm.ok(published is not snapshot)
+
+    @staticmethod
+    def test_dotenv_repoint_reloads_sources_without_rebinding(tmp_path: Path) -> None:
+        """FLEXT_ENV_FILE is resolved at reload, not frozen at module import."""
+        env_file = tmp_path / "selected.env"
+        selected_timezone = "Etc/GMT+3"
+        env_file.write_text(f"FLEXT_TIMEZONE={selected_timezone}\n", encoding="utf-8")
+        original = settings.model_dump()
+        try:
+            with u.Tests.env_vars_context(
+                env_vars={"FLEXT_ENV_FILE": str(env_file)},
+                vars_to_clear=("FLEXT_TIMEZONE",),
+            ):
+                FlextSettings.reset_for_testing()
+                tm.ok(settings is FlextSettings.fetch_global())
+                tm.that(settings.timezone, eq=selected_timezone)
+        finally:
+            FlextSettings.reset_for_testing()
+        tm.that(settings.model_dump(), eq=original)
 
 
 TestsFlextCoreSettingsWorkDir = TestsFlextCoreSettings.TestsFlextCoreSettingsWorkDir

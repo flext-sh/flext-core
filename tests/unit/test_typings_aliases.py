@@ -22,27 +22,6 @@ import pytest
 
 import flext_core
 from tests import c, p, t, tm
-from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
-
-LEGACY_GENERIC_NAMES: t.VariadicTuple[str] = (
-    "EnumT",
-    "MessageT_contra",
-    "P",
-    "R",
-    "ResultT",
-    "RootValueT",
-    "T",
-    "T_DomainResult",
-    "T_Model",
-    "T_Namespace",
-    "T_Settings",
-    "T_co",
-    "T_contra",
-    "TRuntime",
-    "U",
-    "TV",
-    "TV_co",
-)
 
 
 class TestsFlextCoreTypingsAliases:
@@ -75,7 +54,7 @@ class TestsFlextCoreTypingsAliases:
         tm.that(values.pop("last"), eq=4)
         tm.that(values, eq={"first": 1, "second": 2, "third": 3})
 
-    @pytest.mark.parametrize("alias_name", PUBLIC_ALIAS_NAMES)
+    @pytest.mark.parametrize("alias_name", c.Tests.PUBLIC_ALIAS_NAMES)
     @staticmethod
     def test_public_alias_reachable_through_facade(alias_name: str) -> None:
         """Every declared public alias resolves to a real object on ``t``."""
@@ -84,14 +63,14 @@ class TestsFlextCoreTypingsAliases:
         # Assert - attribute exists and is a concrete (non-None) alias object.
         tm.that(resolved, ne=None)
 
-    @pytest.mark.parametrize("alias_name", FLAT_ALIAS_NAMES)
+    @pytest.mark.parametrize("alias_name", c.Tests.FLAT_ALIAS_NAMES)
     @staticmethod
     def test_flat_mapping_alias_reachable_through_facade(alias_name: str) -> None:
         """Every flat mapping alias resolves to a real object on ``t``."""
         resolved = getattr(t, alias_name)
         tm.that(resolved, ne=None)
 
-    @pytest.mark.parametrize("legacy_name", LEGACY_GENERIC_NAMES)
+    @pytest.mark.parametrize("legacy_name", c.Tests.LEGACY_GENERIC_NAMES)
     @staticmethod
     def test_flext_core_hides_shared_generic_helpers(legacy_name: str) -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""

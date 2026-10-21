@@ -9,4 +9,16 @@ from pathlib import Path
 
 from flext_tests import install_local_packages
 
-install_local_packages(Path(__file__).resolve().parent, ("examples", "tests"))
+
+class FlextCorePytestBootstrap:
+    """Bind local test namespaces through the shared bootstrap owner."""
+
+    @staticmethod
+    def main() -> None:
+        """Install this checkout's example and test packages before collection."""
+        install_local_packages(Path(__file__).resolve().parent, ("examples", "tests"))
+
+
+FlextCorePytestBootstrap.main()
+
+__all__ = ["FlextCorePytestBootstrap"]

@@ -18,20 +18,6 @@ import pytest
 
 from tests import c, d, e, m, p, r, tm, u
 
-_COMBINED_SUM = 6
-_FLAT_MAP_VALUE = 20
-_FLOW_VALUE = 2
-_INCREMENTED_VALUE = 4
-_RECOVERED_VALUE = 99
-
-
-def _increment(value: int) -> int:
-    return value + 1
-
-
-def _triple(value: int) -> int:
-    return value * 3
-
 
 class TestsFlextCoreDocumentedPatterns:
     """Public-contract behavior of the documented result/exception/decorator DSL."""
@@ -50,7 +36,7 @@ class TestsFlextCoreDocumentedPatterns:
 
     @pytest.mark.parametrize(
         ("seed", "transform", "expected"),
-        [(1, _increment, 2), (10, _triple, 30), (-5, abs, 5)],
+        [(1, (1).__add__, 2), (10, (3).__mul__, 30), (-5, abs, 5)],
     )
     @staticmethod
     def test_map_transforms_success_value(
@@ -73,7 +59,7 @@ class TestsFlextCoreDocumentedPatterns:
         failure: p.Result[int] = r[int].fail("boom")
 
         # Act
-        result = failure.map(lambda value: value + 1)
+        result = failure.map((1).__add__)
 
         # Assert
         tm.ok(result.failure)
@@ -86,13 +72,13 @@ class TestsFlextCoreDocumentedPatterns:
         result = (
             r[int]
             .ok(1)
-            .flat_map(lambda value: r[int].ok(value + 1))
+            .flat_map(u.Tests.increment)
             .flat_map(lambda value: r[int].ok(value * 10))
         )
 
         # Assert
         tm.ok(result.success)
-        tm.that(result.value, eq=_FLAT_MAP_VALUE)
+        tm.that(result.value, eq=c.Tests.DOCUMENTED_FLAT_MAP_VALUE)
 
     @staticmethod
     def test_flat_map_short_circuits_on_first_failure() -> None:
@@ -127,12 +113,14 @@ class TestsFlextCoreDocumentedPatterns:
         """Recover converts a failure into the value returned by its handler."""
         # Act
         result: p.Result[int] = (
-            r[int].fail("boom").recover(lambda _error: _RECOVERED_VALUE)
+            r[int]
+            .fail("boom")
+            .recover(lambda _error: c.Tests.DOCUMENTED_RECOVERED_VALUE)
         )
 
         # Assert
         tm.ok(result.success)
-        tm.that(result.value, eq=_RECOVERED_VALUE)
+        tm.that(result.value, eq=c.Tests.DOCUMENTED_RECOVERED_VALUE)
 
     @staticmethod
     def test_map_error_rewrites_error_message() -> None:
@@ -160,15 +148,12 @@ class TestsFlextCoreDocumentedPatterns:
     def test_flow_through_pipes_success_into_next_step() -> None:
         """Flow through sends a success value into the next result step."""
 
-        def step(value: int) -> p.Result[int]:
-            return r[int].ok(value + 1)
-
         # Act
-        result = r[int].ok(1).flow_through(step)
+        result = r[int].ok(1).flow_through(u.Tests.increment)
 
         # Assert
         tm.ok(result.success)
-        tm.that(result.value, eq=_FLOW_VALUE)
+        tm.that(result.value, eq=c.Tests.DOCUMENTED_FLOW_VALUE)
 
     @staticmethod
     def test_not_found_factory_carries_structured_payload() -> None:
@@ -278,7 +263,7 @@ class TestsFlextCoreDocumentedPatterns:
 
         # Assert
         tm.ok(result.success)
-        tm.that(result.value, eq=_INCREMENTED_VALUE)
+        tm.that(result.value, eq=c.Tests.DOCUMENTED_INCREMENTED_VALUE)
 
     @staticmethod
     def test_combined_decorator_wraps_return_in_success_result() -> None:
@@ -293,4 +278,4 @@ class TestsFlextCoreDocumentedPatterns:
 
         # Assert
         tm.ok(result.success)
-        tm.that(result.value, eq=_COMBINED_SUM)
+        tm.that(result.value, eq=c.Tests.DOCUMENTED_COMBINED_SUM)

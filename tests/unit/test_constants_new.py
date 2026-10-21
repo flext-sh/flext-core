@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import enum
+import re
 
 import pytest
 
@@ -21,6 +22,29 @@ from tests import c, tm
 
 class TestsFlextConstantsNew:
     """Observable public-contract behavior over the c facade."""
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("domain", "valid"),
+        [
+            ("namespace", True),
+            ("tenant-1.internal", True),
+            ("Tenant.EXAMPLE", True),
+            ("a" * 63, True),
+            ("a" * 64, False),
+            ("-namespace", False),
+            ("namespace-", False),
+            ("namespace..internal", False),
+            ("audit.invalid/", False),
+            ("audit.invalid?region=external", False),
+            ("audit.invalid#fragment", False),
+            ("user@audit.invalid", False),
+            ("namespace with spaces", False),
+        ],
+    )
+    def test_dns_domain_pattern_bounds_labels(domain: str, *, valid: bool) -> None:
+        """DNS labels cannot introduce URI authority or query delimiters."""
+        tm.that(re.fullmatch(c.PATTERN_DNS_DOMAIN, domain) is not None, eq=valid)
 
     # ----------------------------------------------------------------- ranges
     @staticmethod

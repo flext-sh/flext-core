@@ -6,7 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._decorators import FlextDecorators
+from flext_core._decorators import _runtime
+
+
+class FlextDecorators(_runtime.FlextDecorators):
+    """Public decorator facade composed through the runtime implementation MRO."""
+
 
 d = FlextDecorators
 

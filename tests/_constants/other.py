@@ -8,13 +8,96 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c
+from flext_core import FlextConstants
 
 if TYPE_CHECKING:
     from flext_core import t
 
 
 class TestsFlextConstantsOther:
+    PUBLIC_ALIAS_NAMES: ClassVar[t.VariadicTuple[str]] = (
+        "Primitives",
+        "Scalar",
+        "Numeric",
+        "JsonValue",
+        "JsonMapping",
+        "JsonList",
+        "StrMapping",
+        "StrSequence",
+        "ScalarMapping",
+        "SecretValue",
+        "SettingsValue",
+        "IntPair",
+        "StrictStr",
+        "StrictInt",
+        "StrictFloat",
+        "StrictBytes",
+        "TextOrBinaryContent",
+        "RegistryBindingKey",
+        "JsonValue",
+        "FileContent",
+        "JsonMapping",
+        "JsonList",
+        "ConfigurationMapping",
+        "DispatchableHandler",
+        "FactoryCallable",
+        "HandlerCallable",
+        "JsonPayload",
+        "JsonValue",
+        "MessageTypeSpecifier",
+        "RegisterableService",
+        "ResourceCallable",
+        "JsonMapping",
+        "ScalarOrModel",
+        "ServiceMap",
+        "SortableObjectType",
+        "TypeHintSpecifier",
+    )
+    FLAT_ALIAS_NAMES: ClassVar[t.VariadicTuple[str]] = (
+        "AttributeMapping",
+        "MutableAttributeMapping",
+        "ConfigValueMapping",
+        "OptionalStrMapping",
+        "MutableOptionalStrMapping",
+        "HeaderMapping",
+        "FeatureFlagMapping",
+        "MutableFeatureFlagMapping",
+        "OptionalBoolMapping",
+        "MutableOptionalBoolMapping",
+    )
+    LEGACY_GENERIC_NAMES: ClassVar[t.VariadicTuple[str]] = (
+        "EnumT",
+        "MessageT_contra",
+        "P",
+        "R",
+        "ResultT",
+        "RootValueT",
+        "T",
+        "T_DomainResult",
+        "T_Model",
+        "T_Namespace",
+        "T_Settings",
+        "T_co",
+        "T_contra",
+        "TRuntime",
+        "U",
+        "TV",
+        "TV_co",
+    )
+
+    EXAMPLE_CHECK_COUNT_PATTERN: ClassVar[str] = r"\((\d+) checks\)"
+
+    DOCUMENTED_COMBINED_SUM: ClassVar[int] = 6
+    DOCUMENTED_FLAT_MAP_VALUE: ClassVar[int] = 20
+    DOCUMENTED_FLOW_VALUE: ClassVar[int] = 2
+    DOCUMENTED_INCREMENTED_VALUE: ClassVar[int] = 4
+    DOCUMENTED_RECOVERED_VALUE: ClassVar[int] = 99
+
+    NON_GOLDEN_EXAMPLE_MODULES: ClassVar[t.StrSequence] = (
+        "examples.ex_05_flext_mixins",
+        "examples.ex_06_flext_context",
+    )
+
     PUBLIC_EXAMPLES: ClassVar[tuple[tuple[str, str, str], ...]] = (
         ("ex_01_flext_result", "examples.ex_01_flext_result", "ex_01_flext_result.py"),
         (
@@ -110,10 +193,10 @@ class TestsFlextConstantsOther:
         ("invalid@symbol", "invalid@symbol"),
     )
     CORE_SAFE_STRING_INVALID_CASES: ClassVar[tuple[tuple[str | None, str], ...]] = (
-        (None, c.ERR_TEXT_NONE_NOT_ALLOWED),
-        ("", c.ERR_TEXT_EMPTY_NOT_ALLOWED),
-        ("   ", c.ERR_TEXT_EMPTY_NOT_ALLOWED),
-        ("\t", c.ERR_TEXT_EMPTY_NOT_ALLOWED),
+        (None, FlextConstants.ERR_TEXT_NONE_NOT_ALLOWED),
+        ("", FlextConstants.ERR_TEXT_EMPTY_NOT_ALLOWED),
+        ("   ", FlextConstants.ERR_TEXT_EMPTY_NOT_ALLOWED),
+        ("\t", FlextConstants.ERR_TEXT_EMPTY_NOT_ALLOWED),
     )
     CORE_FORMAT_APP_ID_CASES: ClassVar[tuple[tuple[str, str], ...]] = (
         ("MyApp", "myapp"),
