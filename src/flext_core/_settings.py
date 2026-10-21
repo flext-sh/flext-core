@@ -64,18 +64,18 @@ from pydantic_settings import (
 )
 
 
-def app_env_prefix(namespace: str) -> str:
-    """Return the environment prefix owned by one application namespace."""
-    normalized = "".join(char if char.isalnum() else "_" for char in namespace)
-    return f"{normalized.upper()}_"
-
-
 class FlextSettings(BaseSettings):
     """Single settings base: singleton + helper API + registry + universal fields.
 
     Every project subclasses this directly and exports its own
     ``settings = FlextXSettings.fetch_global()`` singleton.
     """
+
+    @staticmethod
+    def app_env_prefix(namespace: str) -> str:
+        """Return the environment prefix owned by one application namespace."""
+        normalized = "".join(char if char.isalnum() else "_" for char in namespace)
+        return f"{normalized.upper()}_"
 
     @staticmethod
     def _resolve_env_file(
@@ -295,10 +295,11 @@ class FlextSettings(BaseSettings):
         cls, candidate: ModelT, values: Mapping[str, ValueT]
     ) -> ModelT:
         """Validate detached stored state, never a presentation serialization."""
-        for value in values.values():
-            cls._validate_nested(value)
+        validated = {
+            name: cls._validate_nested(value) for name, value in values.items()
+        }
         candidate.__pydantic_validator__.validate_python(
-            dict(values), self_instance=candidate, by_name=True
+            validated, self_instance=candidate, by_name=True
         )
         return candidate
 
@@ -311,15 +312,16 @@ class FlextSettings(BaseSettings):
     @_validate_nested.register(BaseModel)
     @classmethod
     def _validate_model[ModelT: BaseModel](cls, value: ModelT) -> ModelT:
-        """Revalidate detached models even when their schema trusts instances."""
-        model_type: type[BaseModel] = value.__class__
+        """Validate a copy so a model resident in a hashed container stays intact."""
+        copied = value.model_copy(deep=True)
+        model_type: type[BaseModel] = copied.__class__
         values = {
             name: stored
-            for name, stored in value.__dict__.items()
+            for name, stored in copied.__dict__.items()
             if name in model_type.model_fields
         }
-        values.update(value.model_extra or {})
-        return cls._validate_candidate(value, values)
+        values.update(copied.model_extra or {})
+        return cls._validate_candidate(copied, values)
 
     @_validate_nested.register(Mapping)
     @_validate_nested.register(list)
@@ -341,11 +343,20 @@ class FlextSettings(BaseSettings):
         | set[ValueT]
         | frozenset[ValueT]
     ):
-        """Visit typed native containers without restricting their leaf types."""
-        nested_values = value.values() if isinstance(value, Mapping) else value
-        for nested in nested_values:
-            cls._validate_nested(nested)
-        return value
+        """Rebuild containers from validated copies without mutating resident keys."""
+        if isinstance(value, Mapping):
+            return {
+                cls._validate_nested(key): cls._validate_nested(nested)
+                for key, nested in value.items()
+            }
+        nested_values = (cls._validate_nested(nested) for nested in value)
+        if isinstance(value, list):
+            return list(nested_values)
+        if isinstance(value, tuple):
+            return tuple(nested_values)
+        if isinstance(value, set):
+            return set(nested_values)
+        return frozenset(nested_values)
 
     @classmethod
     def fetch_global(cls, *, overrides: Mapping[str, JsonValue] | None = None) -> Self:
@@ -598,7 +609,9 @@ class FlextSettings(BaseSettings):
     @classmethod
     def _absolute_app_dir(cls, name: str, root: Path) -> Path:
         namespace = cls._current_app_namespace()
-        override = os.environ.get(f"{app_env_prefix(namespace)}{name.upper()}_DIR")
+        override = os.environ.get(
+            f"{FlextSettings.app_env_prefix(namespace)}{name.upper()}_DIR"
+        )
         path = Path(override) if override else root / namespace
         if not path.is_absolute():
             msg = f"{name}_dir must be absolute"
@@ -663,7 +676,9 @@ class FlextSettings(BaseSettings):
 
         """
         namespace = self._current_app_namespace()
-        override = os.environ.get(f"{app_env_prefix(namespace)}RUNTIME_DIR")
+        override = os.environ.get(
+            f"{FlextSettings.app_env_prefix(namespace)}RUNTIME_DIR"
+        )
         if override:
             path = Path(override)
         else:

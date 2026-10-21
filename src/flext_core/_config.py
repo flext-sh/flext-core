@@ -42,7 +42,7 @@ from pydantic_settings import (
 )
 
 from flext_core._constants.config import FlextConstantsConfig
-from flext_core._settings import FlextSettings, app_env_prefix
+from flext_core._settings import FlextSettings
 from flext_core.config_sources import FlextStrictYamlConfigSource
 
 
@@ -94,7 +94,9 @@ class FlextConfig(BaseSettings):
 
         """
         namespace = cls._package_namespace()
-        override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
+        override = os.environ.get(
+            f"{FlextSettings.app_env_prefix(namespace)}CONFIG_DIR"
+        )
         if override:
             return Path(override)
         package = cls.__module__.partition(".")[0]

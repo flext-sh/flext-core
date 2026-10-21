@@ -1,7 +1,7 @@
 [singleton_and_global]
 constructor.singleton_identity: True
 fetch_global.identity: True
-reset_for_testing.recreates_singleton: True
+reset_for_testing.preserves_singleton: True
 subclass.singleton_identity: True
 subclass.isolated_slot: True
 
@@ -14,8 +14,7 @@ field.async_logging: False
 validate_configuration.indirect_via_model_validate: 'ERROR'
 
 [update_global_and_clone]
-update_global.before.log_level: 'INFO'
-update_global.replaces_instance: True
+update_global.preserves_instance: True
 update_global.installed_as_singleton: True
 update_global.after.log_level: 'ERROR'
 update_global.after.debug: True

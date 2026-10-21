@@ -7,11 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
+from uuid import UUID
 
 import pytest
 
 from flext_core import FlextSettings
-from tests import m, tm, u
+from tests import m, t, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -254,3 +255,92 @@ class TestsFlextCoreSettingsStateValidation:
         tm.that(snapshot.branch.port, eq=selected_port)
         tm.that(published.branch.endpoint, eq=selected_endpoint)
         tm.ok(snapshot.branch is not published.branch)
+
+    @staticmethod
+    @pytest.mark.parametrize("tuple_key", [False, True])
+    def test_invalid_mapping_keys_preserve_published_state(tuple_key: bool) -> None:
+        """Frozen model keys, including tuple members, cannot bypass constraints."""
+
+        class PortKey(m.BaseModel, frozen=True):
+            port: int = m.Field(default=389, ge=1, le=65535)
+
+        class Branch(m.BaseModel):
+            entries: t.MutableMappingKV[PortKey | tuple[PortKey, str], str]
+
+        class Owner(FlextSettings):
+            branch: Branch
+
+        valid_key = PortKey()
+        initial_entries: t.MutableMappingKV[PortKey | tuple[PortKey, str], str] = {
+            valid_key: "direct",
+            (valid_key, "tuple"): "tuple",
+        }
+        published = Owner.update_global(branch=Branch(entries=initial_entries))
+        original_branch = published.branch
+        original_mapping = original_branch.entries
+        original_contents = tuple(original_mapping.items())
+        invalid_port = 0
+        bad_key = valid_key.model_copy(update={"port": invalid_port})
+        bad_mapping_key = (bad_key, "tuple") if tuple_key else bad_key
+        bad_branch = original_branch.model_copy(
+            update={"entries": {bad_mapping_key: "invalid"}}
+        )
+        for operation in (Owner.update_global, published.clone):
+            with pytest.raises(m.ValidationError, match="port"):
+                operation(branch=bad_branch)
+            tm.ok(published is Owner.fetch_global())
+            tm.ok(published.branch is original_branch)
+            tm.ok(original_branch.entries is original_mapping)
+            tm.that(tuple(original_mapping.items()), eq=original_contents)
+            tm.that(original_mapping[valid_key], eq=initial_entries[valid_key])
+            tm.that(
+                original_mapping[valid_key, "tuple"],
+                eq=initial_entries[valid_key, "tuple"],
+            )
+            tm.that(bad_key.port, eq=invalid_port)
+            tm.that(bad_branch.entries[bad_mapping_key], eq="invalid")
+
+    @staticmethod
+    def test_mapping_keys_normalize_without_corrupting_native_keys() -> None:
+        """Validated key copies retain native opaque keys and usable tuple hashes."""
+
+        class PortKey(m.BaseModel, frozen=True):
+            port: int = m.Field(default=389, ge=1, le=65535)
+
+        class Branch(m.BaseModel):
+            entries: t.MutableMappingKV[PortKey | tuple[PortKey, UUID] | UUID, str]
+
+        class Owner(FlextSettings):
+            branch: Branch
+
+        selected_port = 1389
+        raw_key = PortKey().model_copy(update={"port": str(selected_port)})
+        opaque_key = UUID(int=1)
+        original_entries: t.MutableMappingKV[
+            PortKey | tuple[PortKey, UUID] | UUID, str
+        ] = {
+            raw_key: "model",
+            (raw_key, opaque_key): "tuple",
+            opaque_key: "opaque",
+        }
+        branch = Branch(entries=original_entries)
+        original_contents = tuple(branch.entries.items())
+        published = Owner.update_global(branch=branch)
+        snapshot = published.clone(branch=branch)
+        normalized_key = PortKey(port=selected_port)
+        for instance in (published, snapshot):
+            tm.that(
+                instance.branch.entries[normalized_key], eq=original_entries[raw_key]
+            )
+            tm.that(
+                instance.branch.entries[normalized_key, opaque_key],
+                eq=original_entries[raw_key, opaque_key],
+            )
+            tm.that(
+                instance.branch.entries[opaque_key], eq=original_entries[opaque_key]
+            )
+        tm.ok(snapshot is not published)
+        tm.ok(snapshot.branch is not published.branch)
+        tm.that(tuple(branch.entries.items()), eq=original_contents)
+        tm.that(raw_key.port, eq=str(selected_port))
+        tm.that(branch.entries[raw_key], eq=original_entries[raw_key])
