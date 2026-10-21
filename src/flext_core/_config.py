@@ -42,7 +42,7 @@ from pydantic_settings import (
 )
 
 from flext_core._constants.config import FlextConstantsConfig
-from flext_core._settings import app_env_prefix, platform_config_root
+from flext_core._settings import FlextSettings, app_env_prefix
 from flext_core.config_sources import FlextStrictYamlConfigSource
 
 
@@ -108,7 +108,7 @@ class FlextConfig(BaseSettings):
         (``$XDG_CONFIG_HOME/<namespace>`` on Linux). Packaged defaults stay
         immutable; anything declared here overlays them.
         """
-        return platform_config_root() / cls._package_namespace()
+        return FlextSettings.platform_config_root() / cls._package_namespace()
 
     @classmethod
     def _yaml_files_in(cls, directory: Path) -> list[Path]:
