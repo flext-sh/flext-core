@@ -93,10 +93,12 @@ class FlextProtocolsService:
         """
 
         settings_type: FlextProtocolsSettings.SettingsType | None
+
         @property
         def runtime_settings(self) -> FlextProtocolsSettings.Settings | None:
             """Settings seed observed by the service runtime."""
             ...
+
         settings_overrides: t.JsonMapping | None
         initial_context: FlextProtocolsContext.Context | None
 
