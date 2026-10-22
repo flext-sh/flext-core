@@ -147,7 +147,6 @@ class TestsFlextCoreDocumentedPatterns:
     @staticmethod
     def test_flow_through_pipes_success_into_next_step() -> None:
         """Flow through sends a success value into the next result step."""
-
         # Act
         result = r[int].ok(1).flow_through(u.Tests.increment)
 

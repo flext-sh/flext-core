@@ -144,7 +144,7 @@ class FlextResultBase[T](BaseModel):
         )
         return FlextUtilitiesTypingAdapterJson.json_dict_adapter().validate_python(
             FlextUtilitiesPydantic.normalize_to_json_value(
-                cast(t.JsonPayload, payload)
+                cast("t.JsonPayload", payload)
             ),
             strict=True,
         )

@@ -87,10 +87,10 @@ class TestsFlextCoreDecoratorsCombined:
         tm.that(business_operation.__name__, eq="business_operation")
 
     @staticmethod
-    @pytest.mark.parametrize("succeeds", (True, False))
+    @pytest.mark.parametrize("succeeds", [True, False])
     @pytest.mark.parametrize(
         "decorator",
-        (d.railway(), d.combined(railway_enabled=True)),
+        [d.railway(), d.combined(railway_enabled=True)],
     )
     def test_railway_preserves_a_preexisting_result(
         decorator: p.RailwayDecorator,
@@ -117,7 +117,7 @@ class TestsFlextCoreDecoratorsCombined:
     @staticmethod
     @pytest.mark.parametrize(
         "decorator",
-        (d.railway(), d.combined(railway_enabled=True)),
+        [d.railway(), d.combined(railway_enabled=True)],
     )
     def test_railway_normalizes_a_mixed_return_contract(
         decorator: p.RailwayDecorator,

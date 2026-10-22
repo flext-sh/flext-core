@@ -43,7 +43,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         exception: BaseException | None,
     ) -> p.Result[Never]:
         """Construct normalized failure state through the concrete facade."""
-        raise NotImplementedError(f"{error}|{error_code}|{error_data}|{exception}")
+        msg = f"{error}|{error_code}|{error_data}|{exception}"
+        raise NotImplementedError(msg)
 
     @staticmethod
     def require_error(source: p.FailureLike) -> str:
