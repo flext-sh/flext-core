@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    flexthandlers_part_06.FlextHandlers[MessageT_contra, ResultT],
+class FlextHandlersPart07[MessageT_contra, ResultT](
+    flexthandlers_part_06.FlextHandlersPart06[MessageT_contra, ResultT],
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 
@@ -58,7 +58,7 @@ class FlextHandlers[MessageT_contra, ResultT](
                 True if class has at least one handler, False otherwise
 
             """
-            return bool(FlextHandlers.Discovery.scan_class(target_class))
+            return bool(FlextHandlersPart07.Discovery.scan_class(target_class))
 
         @staticmethod
         def scan_class(
@@ -137,4 +137,4 @@ class FlextHandlers[MessageT_contra, ResultT](
             return sorted(handlers, key=lambda entry: (-entry[2].priority, entry[0]))
 
 
-__all__: list[str] = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlersPart07"]

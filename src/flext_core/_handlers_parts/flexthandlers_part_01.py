@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from flext_core import p
 
 
-class FlextHandlers[MessageT_contra, ResultT](x):
+class FlextHandlersPart01[MessageT_contra, ResultT](x):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
@@ -91,7 +91,6 @@ class FlextHandlers[MessageT_contra, ResultT](x):
             TypeError: If a concrete subclass does not override handle().
 
         """
-        _ = kwargs
         super().__init_subclass__()
         if cls.__module__.startswith("flext_core._handlers_parts"):
             return
@@ -102,7 +101,7 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         if abstract_methods:
             return
         for klass in cls.mro():
-            if klass is FlextHandlers:
+            if klass is FlextHandlersPart01:
                 msg = c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
                     qualname=cls.__qualname__,
                 )
@@ -151,4 +150,4 @@ class FlextHandlers[MessageT_contra, ResultT](x):
         )
 
 
-__all__: list[str] = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlersPart01"]

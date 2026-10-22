@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories:
+class FlextExceptionsFactoriesPart01:
     """Centralized fail_* factory helpers returning r[T].fail(...).
 
     Eliminates the 4-line boilerplate across all modules.
@@ -87,8 +87,8 @@ class FlextExceptionsFactories:
         default_error_code: str,
         result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
-        options, error = FlextExceptionsFactories._resolve_options(options)
-        return FlextExceptionsFactories._result_type(result_type).fail(
+        options, error = FlextExceptionsFactoriesPart01._resolve_options(options)
+        return FlextExceptionsFactoriesPart01._result_type(result_type).fail(
             message,
             error_code=options.error_code or default_error_code,
             error_data=FlextExceptionsTemplate.result_error_data(
@@ -120,12 +120,12 @@ class FlextExceptionsFactories:
             operation=operation,
             reason=str(exc) if exc is not None else None,
         )
-        msg = FlextExceptionsFactories._failure_message(
+        msg = FlextExceptionsFactoriesPart01._failure_message(
             operation,
             params=params,
             error=exc,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart01._fail_result(
             msg,
             params,
             options=m.ExceptionFactoryOptions(error=exc) if exc is not None else None,
@@ -161,7 +161,7 @@ class FlextExceptionsFactories:
             resource_type=resource_type.capitalize(),
             params=params,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart01._fail_result(
             msg,
             params,
             default_error_code=error_code or c.ErrorCode.NOT_FOUND_ERROR,
@@ -169,4 +169,4 @@ class FlextExceptionsFactories:
         )
 
 
-__all__: list[str] = ["FlextExceptionsFactories"]
+__all__: list[str] = ["FlextExceptionsFactoriesPart01"]

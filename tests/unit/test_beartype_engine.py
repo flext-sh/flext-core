@@ -35,9 +35,12 @@ class TestsFlextCoreBeartypeEngine(
             class Inner:
                 """Nested marker class."""
 
-        assert (
-            FlextUtilitiesBeartypeEngine.defined_inside(Outer.Inner, Outer.__qualname__)
-            is True
+        tm.that(
+            FlextUtilitiesBeartypeEngine.defined_inside(
+                Outer.Inner, Outer.__qualname__
+            ),
+            is_=bool,
+            eq=True,
         )
 
     @staticmethod
@@ -50,9 +53,10 @@ class TestsFlextCoreBeartypeEngine(
         class Other:
             """Unrelated marker class."""
 
-        assert (
-            FlextUtilitiesBeartypeEngine.defined_inside(Other, Outer.__qualname__)
-            is False
+        tm.that(
+            FlextUtilitiesBeartypeEngine.defined_inside(Other, Outer.__qualname__),
+            is_=bool,
+            eq=False,
         )
 
     @staticmethod
@@ -70,18 +74,19 @@ class TestsFlextCoreBeartypeEngine(
     @staticmethod
     def test_defined_in_function_scope_false_for_module_class() -> None:
         """A module-level class is not reported as function-scoped."""
-        assert (
+        tm.that(
             FlextUtilitiesBeartypeEngine.defined_in_function_scope(
                 tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
-            )
-            is False
+            ),
+            is_=bool,
+            eq=False,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("name", "expected"),
         [("run", True), ("do_thing", True), ("_private", False), ("__dunder__", False)],
     )
-    @staticmethod
     def test_attr_accept_public_rejects_underscore_names(
         name: str,
         *,
@@ -93,6 +98,7 @@ class TestsFlextCoreBeartypeEngine(
             truth=True,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("name", "expected"),
         [
@@ -103,32 +109,33 @@ class TestsFlextCoreBeartypeEngine(
             ("_private", False),
         ],
     )
-    @staticmethod
     def test_attr_accept_utility_excludes_exempt_and_private(
         name: str,
         *,
         expected: bool,
     ) -> None:
         """Public names pass unless they are dunder-exempt utility methods."""
-        assert (
+        tm.that(
             FlextUtilitiesBeartypeEngine.attr_accept_utility(
                 FlextUtilitiesBeartypeEngine,
                 name,
-            )
-            is expected
+            ),
+            is_=bool,
+            eq=expected,
         )
 
     @staticmethod
     def test_attr_accept_constants_accepts_public_plain_value() -> None:
         """A public, non-callable, non-skipped attribute is accepted."""
         value: p.AttributeProbe = 42
-        assert (
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("MAX_RETRIES", value)
-            is True
+        tm.that(
+            FlextUtilitiesBeartypeEngine.attr_accept_constants("MAX_RETRIES", value),
+            is_=bool,
+            eq=True,
         )
 
-    @pytest.mark.parametrize("name", ["_private", "model_fields", "__doc__"])
     @staticmethod
+    @pytest.mark.parametrize("name", ["_private", "model_fields", "__doc__"])
     def test_attr_accept_constants_rejects_private_and_skip_names(
         name: str,
     ) -> None:
@@ -147,8 +154,10 @@ class TestsFlextCoreBeartypeEngine(
             """Marker type used as an attribute value."""
 
         value: p.AttributeProbe = Nested
-        assert (
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("Nested", value) is False
+        tm.that(
+            FlextUtilitiesBeartypeEngine.attr_accept_constants("Nested", value),
+            is_=bool,
+            eq=False,
         )
 
     @staticmethod
@@ -165,23 +174,26 @@ class TestsFlextCoreBeartypeEngine(
         class_value = cast("p.AttributeProbe", classmethod(_cls_fn))
         property_value: p.AttributeProbe = property(_fn)
 
-        assert (
+        tm.that(
             FlextUtilitiesBeartypeEngine.attr_accept_constants(
                 "as_static",
                 static_value,
-            )
-            is False
+            ),
+            is_=bool,
+            eq=False,
         )
-        assert (
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("as_class", class_value)
-            is False
+        tm.that(
+            FlextUtilitiesBeartypeEngine.attr_accept_constants("as_class", class_value),
+            is_=bool,
+            eq=False,
         )
-        assert (
+        tm.that(
             FlextUtilitiesBeartypeEngine.attr_accept_constants(
                 "as_property",
                 property_value,
-            )
-            is False
+            ),
+            is_=bool,
+            eq=False,
         )
 
     @staticmethod
@@ -192,7 +204,8 @@ class TestsFlextCoreBeartypeEngine(
             """Callable attribute value."""
 
         value: p.AttributeProbe = _handler
-        assert (
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("handler", value)
-            is False
+        tm.that(
+            FlextUtilitiesBeartypeEngine.attr_accept_constants("handler", value),
+            is_=bool,
+            eq=False,
         )

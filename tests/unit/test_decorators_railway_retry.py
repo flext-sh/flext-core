@@ -67,11 +67,11 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         tm.that("failing_operation" in str(result.error), truth=True)
         tm.that("ValueError" in str(result.error), truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("error_code", "expected_code"),
         [(None, c.ErrorCode.OPERATION_ERROR.value), ("CUSTOM_ERROR", "CUSTOM_ERROR")],
     )
-    @staticmethod
     def test_railway_failure_carries_expected_error_code(
         error_code: str | None,
         expected_code: str,

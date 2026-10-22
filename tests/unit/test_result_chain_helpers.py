@@ -125,8 +125,8 @@ class TestsFlextCoreResultChainHelpers:
 
         tm.that(result.unwrap(), eq=8)
 
-    @pytest.mark.parametrize(("value", "keeps_success"), [(20, True), (5, False)])
     @staticmethod
+    @pytest.mark.parametrize(("value", "keeps_success"), [(20, True), (5, False)])
     def test_filter_keeps_or_rejects_by_predicate(
         value: int,
         *,
@@ -137,11 +137,11 @@ class TestsFlextCoreResultChainHelpers:
 
         tm.that(result.success is keeps_success, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), 5), (r[int].fail("boom"), 99)],
     )
-    @staticmethod
     def test_unwrap_or_returns_value_or_default(
         source: r[int],
         expected: int,
@@ -149,11 +149,11 @@ class TestsFlextCoreResultChainHelpers:
         """``unwrap_or`` returns the value on success and the default on failure."""
         tm.that(source.unwrap_or(99), eq=expected)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), 5), (r[int].fail("boom"), 7)],
     )
-    @staticmethod
     def test_unwrap_or_else_computes_default_on_failure(
         source: r[int],
         expected: int,
@@ -206,11 +206,11 @@ class TestsFlextCoreResultChainHelpers:
 
         tm.that(result.value, eq=5)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), "ok:5"), (r[int].fail("boom"), "err:boom")],
     )
-    @staticmethod
     def test_fold_collapses_to_single_value_per_branch(
         source: r[int],
         expected: str,
@@ -244,11 +244,11 @@ class TestsFlextCoreResultChainHelpers:
         tm.that(seen_fail, eq=["boom"])
         tm.that(seen_ok, eq=[])
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), 6), (r[int].fail("boom"), 0)],
     )
-    @staticmethod
     def test_map_or_applies_func_or_returns_default(
         source: r[int],
         expected: int,

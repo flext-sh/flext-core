@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 class TestsFlextCoreExceptionsBase:
     """Tests for ``FlextCoreExceptionsBase``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         "subclass",
         [
@@ -31,13 +32,12 @@ class TestsFlextCoreExceptionsBase:
             e.ConfigurationError,
         ],
     )
-    @staticmethod
     def test_typed_exceptions_are_base_error_subclasses(
         subclass: type[e.BaseError],
     ) -> None:
         """Test typed exceptions are base error subclasses."""
-        tm.that(issubclass(subclass, e.BaseError), truth=True)
-        tm.that(issubclass(subclass, Exception), truth=True)
+        tm.that(subclass, where=e.BaseError.__subclasscheck__)
+        tm.that(subclass, where=Exception.__subclasscheck__)
 
     @staticmethod
     def test_base_error_sets_timestamp_and_formats_string() -> None:
@@ -74,10 +74,9 @@ class TestsFlextCoreExceptionsBase:
         error = e.ValidationError("bad", field="email")
         with pytest.raises(e.BaseError) as excinfo:
             raise error
-        raised = cast("e.ValidationError", excinfo.value)
-        assert isinstance(raised, e.ValidationError)
-        tm.that(isinstance(raised, e.ValidationError), truth=True)
-        tm.that(raised.field, eq="email")
+        raised = excinfo.value
+        tm.ok(raised is error)
+        tm.that(error.field, eq="email")
         tm.that("bad" in str(raised), truth=True)
 
     @staticmethod
@@ -127,10 +126,10 @@ class TestsFlextCoreExceptionsBase:
         tm.that(mapped.failure, truth=True)
         tm.that(mapped.error, eq=result.error)
         tm.that(result.exception, none=False)
-        tm.not_none(result.exception)
-        with pytest.raises(type(result.exception)) as raised:  # type: ignore[arg-type]
+        exception = tm.not_none(result.exception)
+        with pytest.raises(type(exception)) as raised:
             mapped.unwrap()
-        tm.that(raised.value is result.exception, truth=True)
+        tm.that(raised.value is exception, truth=True)
 
     @staticmethod
     def test_fail_not_found_returns_structured_failure() -> None:
@@ -192,11 +191,11 @@ class TestsFlextCoreExceptionsBase:
         )
         tm.that(cast("dict[str, object]", result.error_data)["actual_type"], eq="str")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("field", "value", "cause"),
         [("name", "", "empty"), ("email", "bad", "invalid")],
     )
-    @staticmethod
     def test_fail_validation_returns_structured_failure(
         field: str,
         value: str,

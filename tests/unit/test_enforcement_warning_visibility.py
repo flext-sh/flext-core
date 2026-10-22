@@ -36,25 +36,25 @@ class TestsFlextCoreEnforcementWarningVisibility:
     # plugin autoload and exercises only pytest core so the integration boundary
     # remains deterministic and fits the config-owned regular-item budget.
 
-    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     @staticmethod
+    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(
         category: type[c.FlextMroViolation],
     ) -> None:
         # Arrange / Act / Assert: default warning filters surface UserWarning,
         # so a caller sees enforcement violations without extra configuration.
         """Test enforcement categories are userwarnings."""
-        tm.that(issubclass(category, UserWarning), truth=True)
+        tm.that(category, where=UserWarning.__subclasscheck__)
 
     @staticmethod
     def test_smell_violation_is_a_mro_violation() -> None:
         # A caller filtering or catching FlextMroViolation must also capture
         # the more specific smell category.
         """Test smell violation is a mro violation."""
-        tm.that(issubclass(c.FlextSmellViolation, c.FlextMroViolation), truth=True)
+        tm.that(c.FlextSmellViolation, where=c.FlextMroViolation.__subclasscheck__)
 
-    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     @staticmethod
+    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     def test_emitted_violation_is_observable_with_message(
         category: type[c.FlextMroViolation],
     ) -> None:
@@ -69,7 +69,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
             )
 
         tm.that(len(record), eq=1)
-        assert record[0].category is category
+        tm.that(record[0].category, where=lambda actual: actual is category)
 
     @staticmethod
     def test_parent_category_captures_smell_violation() -> None:
@@ -83,7 +83,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 stacklevel=2,
             )
 
-        assert record[0].category is c.FlextSmellViolation
+        tm.that(
+            record[0].category, where=lambda category: category is c.FlextSmellViolation
+        )
 
     def test_real_filterwarnings_keep_mro_violations_visible(
         self,
@@ -142,7 +144,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
         tm.that(result.success, truth=True, msg=result.error)
         output = result.value.stdout + result.value.stderr
         tm.that(result.value.outcome.raw_return_code, eq=0, msg=output)
-        assert "FlextMroViolation" in output, (
-            "runtime enforcement warning suppressed by shipped filterwarnings:\n"
-            + output
+        tm.that(
+            output,
+            has="FlextMroViolation",
+            msg="runtime enforcement warning suppressed by shipped filterwarnings:\n"
+            + output,
         )

@@ -6,6 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._mapper_extract_parts import FlextUtilitiesMapperExtract
+from flext_core._utilities._mapper_extract_parts.mapper_extract_part_02 import (
+    FlextUtilitiesMapperExtractPart02,
+)
+
+
+class FlextUtilitiesMapperExtract(FlextUtilitiesMapperExtractPart02):
+    """Compose mapper extraction through its internal part hierarchy."""
+
 
 __all__: list[str] = ["FlextUtilitiesMapperExtract"]

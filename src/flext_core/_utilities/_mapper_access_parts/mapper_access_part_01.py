@@ -18,7 +18,7 @@ from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesGuardsTypeCore
 
 
-class FlextUtilitiesMapperAccess:
+class FlextUtilitiesMapperAccessPart01:
     """Value-access primitives: normalize / read / array-index."""
 
     @staticmethod
@@ -43,7 +43,7 @@ class FlextUtilitiesMapperAccess:
             return FlextRuntime.normalize_to_container(
                 m.ConfigMap.model_validate(model_dump_attr()),
             )
-        return FlextUtilitiesMapperAccess._normalize_payload_value(value)
+        return FlextUtilitiesMapperAccessPart01._normalize_payload_value(value)
 
     @staticmethod
     def _normalize_payload_value(
@@ -59,7 +59,7 @@ class FlextUtilitiesMapperAccess:
             return str(value)
         if isinstance(value, (*c.SCALAR_TYPES, Path)):
             return value
-        return FlextUtilitiesMapperAccess._container_or_string(value)
+        return FlextUtilitiesMapperAccessPart01._container_or_string(value)
 
     @staticmethod
     def _container_or_string(
@@ -135,7 +135,7 @@ class FlextUtilitiesMapperAccess:
             mapping_obj = current
         if mapping_obj is not None:
             result = (
-                FlextUtilitiesMapperAccess._resolve_raw_value(
+                FlextUtilitiesMapperAccessPart01._resolve_raw_value(
                     mapping_obj[key_part],
                     key_part,
                 )
@@ -149,7 +149,7 @@ class FlextUtilitiesMapperAccess:
                 )
             )
         elif hasattr(current, key_part):
-            result = FlextUtilitiesMapperAccess._resolve_raw_value(
+            result = FlextUtilitiesMapperAccessPart01._resolve_raw_value(
                 getattr(current, key_part),
                 key_part,
             )
@@ -158,4 +158,4 @@ class FlextUtilitiesMapperAccess:
         return result
 
 
-__all__: list[str] = ["FlextUtilitiesMapperAccess"]
+__all__: list[str] = ["FlextUtilitiesMapperAccessPart01"]

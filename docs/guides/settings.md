@@ -136,26 +136,18 @@ from flext_core import FlextSettings, m
 class DocsDemoSettings(FlextSettings):
     """Settings subclass with a demo-scoped env prefix."""
 
-    model_config = m.ConfigDict(env_prefix="FLEXT_DOCS_DEMO_", extra="ignore")
+    model_config = m.SettingsConfigDict(env_prefix="FLEXT_DOCS_DEMO_", extra="ignore")
     feature_enabled: bool = True
 
 
-docs_settings = DocsDemoSettings()
-expected_level = "INFO"
-
-if not isinstance(docs_settings, DocsDemoSettings):
-    message = "Expected subclass instance"
-    raise TypeError(message)
-if not isinstance(docs_settings, FlextSettings):
-    message = "Expected FlextSettings compatibility"
-    raise TypeError(message)
-if docs_settings.feature_enabled is not True:
-    message = "Expected default feature flag to stay enabled"
-    raise RuntimeError(message)
-if docs_settings.log_level != expected_level:
-    message = "Unexpected inherited log level"
-    raise RuntimeError(message)
+docs_settings = DocsDemoSettings(feature_enabled=True)
+print(docs_settings.feature_enabled)
+print(docs_settings.log_level)
 ```
+
+The feature flag above is supplied explicitly. The inherited log level remains
+resolved from the settings sources; the example does not assume its configured
+default or the absence of environment overrides.
 
 ## Environment Variables
 

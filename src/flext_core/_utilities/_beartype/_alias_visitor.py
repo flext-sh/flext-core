@@ -7,14 +7,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from flext_core import c
-from flext_core._models import FlextModelsEnforcement
-from flext_core._protocols import FlextProtocolsBase
-from flext_core._typings import FlextTypingBase
+from flext_core import c, p, t
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
-_NO_VIOLATION: FlextTypingBase.StrMapping | None = None
+if TYPE_CHECKING:
+    from flext_core import m
+
+_NO_VIOLATION: t.StrMapping | None = None
 
 
 class FlextUtilitiesBeartypeAliasVisitor:
@@ -22,7 +23,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def _self_root_alias_import(
-        module: FlextProtocolsBase.AttributeProbe,
+        module: p.AttributeProbe,
         alias_char: str,
         package: str,
         module_name: str,
@@ -51,9 +52,9 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_alias_rebind(
-        params: FlextModelsEnforcement.AliasRebindParams,
+        params: m.AliasRebindParams,
         target: type,
-    ) -> FlextTypingBase.StrMapping | None:
+    ) -> t.StrMapping | None:
         """ALIAS_REBIND — canonical alias rebind / sibling-import discipline.
 
         Returns:
@@ -116,9 +117,9 @@ class FlextUtilitiesBeartypeAliasVisitor:
 
     @staticmethod
     def v_compatibility_alias(
-        params: FlextModelsEnforcement.CompatibilityAliasParams,
+        params: m.CompatibilityAliasParams,
         target: type,
-    ) -> FlextTypingBase.StrMapping | None:
+    ) -> t.StrMapping | None:
         """COMPATIBILITY_ALIAS — long facade class name must use canonical alias.
 
         Returns:

@@ -6,14 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, override
+from typing import Self, override
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._models import FlextModelsBase
-from flext_core._typings import FlextTypingBase
-
-if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesServices
 
 
 class FlextModelsBuilder:
@@ -43,9 +39,9 @@ class FlextModelsBuilder:
 
         def _set(
             self,
-            **updates: FlextTypesServices.JsonPayload
-            | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]
-            | FlextTypingBase.SequenceOf[FlextModelsBase.ContractModel],
+            **updates: t.JsonPayload
+            | t.SequenceOf[t.JsonPayload]
+            | t.SequenceOf[FlextModelsBase.ContractModel],
         ) -> Self:
             """Apply one immutable ``model_copy(update=...)`` transition.
 
@@ -64,17 +60,15 @@ class FlextModelsBuilder:
             """
             return self._set(**{field_name: tuple(parts)})
 
-        def _append(self, field_name: str, value: FlextTypingBase.JsonValue) -> Self:
+        def _append(self, field_name: str, value: t.JsonValue) -> Self:
             """Append one value to a sequence field while preserving immutability.
 
             Returns:
                 The resulting ``Self``.
 
             """
-            current_values: FlextTypingBase.VariadicTuple[FlextTypingBase.JsonValue] = (
-                tuple(
-                    getattr(self.state, field_name),
-                )
+            current_values: t.VariadicTuple[t.JsonValue] = tuple(
+                getattr(self.state, field_name),
             )
             return self._set(**{field_name: (*current_values, value)})
 
@@ -82,8 +76,7 @@ class FlextModelsBuilder:
         def _model[ModelT: FlextModelsBase.ContractModel](
             model_type: type[ModelT],
             /,
-            **data: FlextTypesServices.JsonPayload
-            | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload],
+            **data: t.JsonPayload | t.SequenceOf[t.JsonPayload],
         ) -> ModelT:
             """Build one ContractModel payload for DSL composition.
 
@@ -99,8 +92,7 @@ class FlextModelsBuilder:
             field_name: str,
             model_type: type[ModelT],
             /,
-            **data: FlextTypesServices.JsonPayload
-            | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload],
+            **data: t.JsonPayload | t.SequenceOf[t.JsonPayload],
         ) -> Self:
             """Build and append one ContractModel item to a sequence field.
 
@@ -109,12 +101,10 @@ class FlextModelsBuilder:
 
             """
             model_item = self._model(model_type, **data)
-            current_values: FlextTypingBase.VariadicTuple[
-                FlextModelsBase.ContractModel
-            ] = tuple(
+            current_values: t.VariadicTuple[FlextModelsBase.ContractModel] = tuple(
                 getattr(self.state, field_name),
             )
-            updated: FlextTypingBase.SequenceOf[FlextModelsBase.ContractModel] = (
+            updated: t.SequenceOf[FlextModelsBase.ContractModel] = (
                 *current_values,
                 model_item,
             )
@@ -144,4 +134,4 @@ class FlextModelsBuilder:
             return state
 
 
-__all__: FlextTypingBase.MutableSequenceOf[str] = ["FlextModelsBuilder"]
+__all__: t.MutableSequenceOf[str] = []

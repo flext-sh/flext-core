@@ -16,8 +16,8 @@ if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(
-    flextexceptionsfactories_part_01.FlextExceptionsFactories
+class FlextExceptionsFactoriesPart02(
+    flextexceptionsfactories_part_01.FlextExceptionsFactoriesPart01
 ):
     @staticmethod
     def fail_type_mismatch[TResult](
@@ -59,7 +59,7 @@ class FlextExceptionsFactories(
             type_name=expected_type,
             params=params,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart02._fail_result(
             msg,
             params,
             default_error_code=error_code or c.ErrorCode.TYPE_ERROR,
@@ -107,7 +107,7 @@ class FlextExceptionsFactories(
                 params=params,
             )
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart02._fail_result(
             base_msg,
             params,
             options=m.ExceptionFactoryOptions(error=error)
@@ -135,17 +135,17 @@ class FlextExceptionsFactories(
             R[T].fail with a canonical configuration-error message.
 
         """
-        options, error = FlextExceptionsFactories._resolve_options(options)
+        options, error = FlextExceptionsFactoriesPart02._resolve_options(options)
         params = m.ConfigurationErrorParams(
             config_key=config_key,
             config_source=config_source,
         )
-        msg = FlextExceptionsFactories._failure_message(
+        msg = FlextExceptionsFactoriesPart02._failure_message(
             f"read config key {config_key!r}",
             params=params,
             error=error,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart02._fail_result(
             msg,
             params,
             options=options,
@@ -154,4 +154,4 @@ class FlextExceptionsFactories(
         )
 
 
-__all__: list[str] = ["FlextExceptionsFactories"]
+__all__: list[str] = ["FlextExceptionsFactoriesPart02"]

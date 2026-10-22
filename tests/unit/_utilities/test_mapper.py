@@ -96,6 +96,7 @@ class TestsFlextCoreMapper:
         tm.that(u.agg([{"x": 1}, {"x": "skip"}, {"y": 9}], "x"), eq=1)
 
     # ------------------------------------------------------------------ deep_eq
+    @staticmethod
     @pytest.mark.parametrize(
         ("left", "right", "expected"),
         [
@@ -106,7 +107,6 @@ class TestsFlextCoreMapper:
             ({}, {}, True),
         ],
     )
-    @staticmethod
     def test_deep_eq_reports_structural_equality(
         left: t.JsonDict,
         right: t.JsonDict,

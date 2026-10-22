@@ -19,12 +19,12 @@ if TYPE_CHECKING:
 class TestsFlextContainerResolution:
     """Exercise public service resolution and discovery behavior."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         "scenario",
         m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
-    @staticmethod
     def test_get_service(
         scenario: m.Tests.ServiceScenario,
         clean_container: p.Container,
@@ -71,12 +71,12 @@ class TestsFlextContainerResolution:
             msg="Factory must be called twice after second get()",
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         "scenario",
         m.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
         ids=lambda s: s.name,
     )
-    @staticmethod
     def test_get_typed_correct(
         scenario: m.Tests.TypedRetrievalScenario,
         clean_container: p.Container,
@@ -119,12 +119,12 @@ class TestsFlextContainerResolution:
         result = clean_container.resolve("nonexistent", type_cls=int)
         u.Tests.assert_failure(result, expected_error="not found")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("has_service", "expected"),
         [(True, True), (False, False)],
         ids=["exists", "not_exists"],
     )
-    @staticmethod
     def test_has_service(
         *,
         has_service: bool,

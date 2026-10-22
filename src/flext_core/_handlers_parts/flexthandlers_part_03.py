@@ -22,8 +22,8 @@ if TYPE_CHECKING:
     from flext_core import p, t
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    flexthandlers_part_02.FlextHandlers[MessageT_contra, ResultT],
+class FlextHandlersPart03[MessageT_contra, ResultT](
+    flexthandlers_part_02.FlextHandlersPart02[MessageT_contra, ResultT],
 ):
     @staticmethod
     def handler[
@@ -126,4 +126,4 @@ class FlextHandlers[MessageT_contra, ResultT](
         return issubclass(message_type, self._expected_message_type)
 
 
-__all__: list[str] = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlersPart03"]

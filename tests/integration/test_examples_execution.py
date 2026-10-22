@@ -1,11 +1,12 @@
 """Behavioral tests for the public flext-core example scripts.
 
-Each example script is a self-verifying harness: run as ``python -m examples.<name>``
+Golden-backed scripts are self-verifying harnesses: ``python -m examples.<name>``
 it exercises the public API of one flext-core primitive, compares every audited
 value against a committed golden file, and reports the outcome on stdout. These
 tests assert only that observable contract -- process exit status, the announced
 ``PASS`` marker, the reported check count, the absence of failure/traceback
-markers, and the golden-file artifacts -- never any harness internals.
+markers, and the golden-file artifacts -- never any harness internals. Smaller
+non-golden examples are checked through their public module execution contract.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -21,11 +22,29 @@ import pytest
 
 from tests import c, m, tm, u
 
-_CHECK_COUNT_RE = re.compile(r"\((\d+) checks\)")
-
 
 class TestsFlextExamplesExecution:
     """Assert the observable execution contract of every public example script."""
+
+    @pytest.mark.parametrize("module_name", c.Tests.NON_GOLDEN_EXAMPLE_MODULES)
+    def test_non_golden_example_module_executes(self, module_name: str) -> None:
+        """The module executes its class entry without a free-function shim."""
+        output = tm.ok(
+            u.Cli.run_raw(
+                [sys.executable, "-m", module_name],
+                cwd=self._repo_root(),
+                options=m.Cli.ProcessOptions(remove_env_keys=("PYTHONPATH",)),
+            ),
+        )
+        tm.that(
+            u.Cli.process_succeeded(output.outcome),
+            eq=True,
+            msg=output.stdout + output.stderr,
+        )
+        tm.that(output.stderr, lacks="Traceback")
+        tm.that(
+            re.search("\\b\\w*Warning:", output.stderr), none=True, msg=output.stderr
+        )
 
     @staticmethod
     def _repo_root() -> Path:
@@ -69,17 +88,18 @@ class TestsFlextExamplesExecution:
                 options=m.Cli.ProcessOptions(remove_env_keys=("PYTHONPATH",)),
             ),
         )
-        returncode = output.outcome.raw_return_code
         stdout, stderr = output.stdout, output.stderr
 
-        tm.that(returncode, eq=0, msg=stdout + stderr)
+        tm.that(u.Cli.process_succeeded(output.outcome), eq=True, msg=stdout + stderr)
         tm.that(stdout, has=f"PASS: {example_name}")
         tm.that(stdout, lacks="FAIL")
         tm.that(stderr, lacks="Traceback")
         tm.that(stderr, lacks="FlextMroViolation")
         tm.that(re.search("\\b\\w*Warning:", stderr), none=True, msg=stderr)
 
-        check_match = tm.not_none(_CHECK_COUNT_RE.search(stdout))
+        check_match = tm.not_none(
+            re.search(c.Tests.EXAMPLE_CHECK_COUNT_PATTERN, stdout)
+        )
         tm.that(int(check_match.group(1)), gt=0)
 
         tm.ok(expected_path.exists())

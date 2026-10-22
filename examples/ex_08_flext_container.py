@@ -99,18 +99,13 @@ class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
         max_services = settings_map["max_services"]
         enable_factory_caching = settings_map["enable_factory_caching"]
         max_services_num = max_services if isinstance(max_services, int) else -1
-        factory_cache_flag = (
-            enable_factory_caching
-            if u.matches_type(enable_factory_caching, bool)
-            else False
-        )
         self.audit_check(
             "configure.resolve_settings.max_services_matches",
             max_services_num == configured_max_services,
         )
         self.audit_check(
             "configure.resolve_settings.enable_factory_caching_matches",
-            factory_cache_flag == configured_factory_caching,
+            enable_factory_caching is configured_factory_caching,
         )
         self.audit_check(
             "with_service.get.value_matches",

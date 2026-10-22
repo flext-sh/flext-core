@@ -8,7 +8,7 @@ internal revalidation mechanics.
 
 Public contract under test (flext_core.FlextSettings):
 - fetch_global() -> shared singleton
-- update_global(**overrides) -> new singleton, propagates to fetch_global()
+- update_global(**overrides) -> same published root, validated state propagates
 - clone(**overrides) -> isolated copy, does not mutate the global
 - validate_overrides / update_global reject unknown field keys with ValueError
 
@@ -63,16 +63,19 @@ class TestsFlextCoreSettingsValidationAlias:
         # Assert — declared default surfaces through the public field.
         tm.that(settings.pandoc_bin, eq="pandoc")
 
+    @staticmethod
     @pytest.mark.parametrize(
         "override_value",
         ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"],
     )
-    @staticmethod
     def test_update_global_applies_and_propagates_override(
         override_value: str,
     ) -> None:
         # Act — must not raise "Extra inputs are not permitted".
         """Test update global applies and propagates override."""
+        published = (
+            TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global()
+        )
         returned = (
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
                 pandoc_bin=override_value,
@@ -80,6 +83,7 @@ class TestsFlextCoreSettingsValidationAlias:
         )
 
         # Assert — returned value carries the override AND it propagates.
+        tm.ok(returned is published)
         tm.that(returned.pandoc_bin, eq=override_value)
         tm.that(
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.fetch_global().pandoc_bin,

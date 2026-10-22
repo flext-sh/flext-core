@@ -25,6 +25,9 @@ class TestsFlextUtilitiesPydanticEmpty:
 
     type _NonEmptyValues[ValueT] = Annotated[list[ValueT], m.Field(min_length=1)]
     type _NonEmptyAlias = _NonEmptyValues[int]
+    type _AnnotatedList = Annotated[list[int], m.Field(min_length=1)]
+    type _AnnotatedMapping = Annotated[t.MappingKV[str, int], m.Field(min_length=1)]
+    type _AnnotatedSet = Annotated[AbstractSet[int], m.Field(min_length=1)]
 
     class _Item(m.ArbitraryTypesModel):
         name: str = m.Field(default="item", description="Item name.")
@@ -116,17 +119,17 @@ class TestsFlextUtilitiesPydanticEmpty:
         "factory",
         [
             pytest.param(
-                u.empty(TypeForm(Annotated[list[int], m.Field(min_length=1)])),
+                u.empty(TypeForm(_AnnotatedList)),
                 id="annotated-list",
             ),
             pytest.param(
                 u.empty(
-                    TypeForm(Annotated[t.MappingKV[str, int], m.Field(min_length=1)]),
+                    TypeForm(_AnnotatedMapping),
                 ),
                 id="annotated-mapping",
             ),
             pytest.param(
-                u.empty(TypeForm(Annotated[AbstractSet[int], m.Field(min_length=1)])),
+                u.empty(TypeForm(_AnnotatedSet)),
                 id="annotated-set",
             ),
             pytest.param(u.empty(TypeForm(tuple[int, str])), id="fixed-tuple"),
@@ -152,7 +155,8 @@ class TestsFlextUtilitiesPydanticEmpty:
             observed.append(value)
             return value
 
-        factory = u.empty(TypeForm(Annotated[list[int], u.AfterValidator(record)]))
+        contract: TypeForm[list[int]] = Annotated[list[int], u.AfterValidator(record)]
+        factory = u.empty(contract)
         tm.that(observed, eq=[])
 
         first = factory()

@@ -19,7 +19,7 @@ from flext_core._utilities import (
 )
 
 
-class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
+class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
     """Per-target ``_parse_try_*`` helpers consumed by :meth:`parse`."""
 
     @staticmethod
@@ -56,9 +56,9 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             The resulting ``T``.
 
         """
-        opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
+        opts, fp = FlextUtilitiesParserTargetsPart01._resolve_opts(options, kwargs)
         if value is None:
-            return FlextUtilitiesParserTargets._parse_with_default(
+            return FlextUtilitiesParserTargetsPart01._parse_with_default(
                 opts,
                 c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
@@ -67,7 +67,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         target_name = target.__name__ if hasattr(target, "__name__") else "type"
 
         def _on_failure(error: str) -> p.Result[T]:
-            return FlextUtilitiesParserTargets._parse_with_default(
+            return FlextUtilitiesParserTargetsPart01._parse_with_default(
                 opts,
                 c.ERR_PARSER_CANNOT_PARSE_TO_TARGET.format(
                     field_prefix=fp,
@@ -108,7 +108,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 opts.case_insensitive``.
 
         """
-        opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
+        opts, fp = FlextUtilitiesParserTargetsPart01._resolve_opts(options, kwargs)
         if not issubclass(target, StrEnum):
             raise TypeError(c.ERR_PARSER_TARGET_NOT_STRENUM.format(field_prefix=fp))
         target_name = target.__name__
@@ -174,11 +174,11 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
                 FlextModelsPydantic.BaseModel))``.
 
         """
-        opts, fp = FlextUtilitiesParserTargets._resolve_opts(options, kwargs)
+        opts, fp = FlextUtilitiesParserTargetsPart01._resolve_opts(options, kwargs)
         if not FlextUtilitiesGuardsTypeModel.model_type(target):
             raise TypeError(c.ERR_PARSER_TARGET_NOT_BASEMODEL.format(field_prefix=fp))
         if value is None:
-            return FlextUtilitiesParserTargets._parse_with_default(
+            return FlextUtilitiesParserTargetsPart01._parse_with_default(
                 opts,
                 c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
             ).unwrap()
@@ -201,4 +201,4 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         return validation_result.unwrap()
 
 
-__all__: list[str] = ["FlextUtilitiesParserTargets"]
+__all__: list[str] = ["FlextUtilitiesParserTargetsPart01"]

@@ -46,7 +46,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         }
 
         payload = cast("t.JsonDict", metadata["payload"])
-        tm.that(isinstance(payload, dict), truth=True)
+        tm.that(payload, is_=dict)
         tm.that(isinstance(normalized_modes, list), truth=True)
 
         command_spec = m.GuardCheckSpec.model_validate({
@@ -110,10 +110,9 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(guarded_payload, eq=payload)
         tm.that(fallback_tags, eq=["cli"])
         tm.that(guarded_attempt, eq=2)
-        tm.that(isinstance(failed_guard_result, p.Result), truth=True)
-        assert isinstance(failed_guard_result, p.Result)
-        tm.fail(failed_guard_result)
-        tm.that(
-            cast("str", failed_guard_result.error),
-            eq="Guard validation raised ValueError: invalid metadata",
-        )
+        tm.that(failed_guard_result, is_=p.Result)
+        if isinstance(failed_guard_result, p.Result):
+            tm.that(
+                tm.fail(failed_guard_result),
+                eq="Guard validation raised ValueError: invalid metadata",
+            )

@@ -180,12 +180,13 @@ class TestsFlextEnforcementIntegration:
         # The public FlextMroViolation export is a genuine Warning subclass and
         # is the exact category a caller can filter on.
         """Test every emitted warning is the public category."""
-        tm.that(issubclass(e.MroViolation, Warning), truth=True)
+        tm.that(e.MroViolation, where=Warning.__subclasscheck__)
         tm.that(
             all("violates FLEXT" in message for message in violation_messages),
             truth=True,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("fragment", "rule"),
         [
@@ -204,7 +205,6 @@ class TestsFlextEnforcementIntegration:
             ("Constant 'GROUPS' declared", "classvar_constant_outside_constants"),
         ],
     )
-    @staticmethod
     def test_rule_violation_is_reported_in_warning_text(
         violation_messages: t.StrSequence,
         fragment: str,
@@ -218,6 +218,7 @@ class TestsFlextEnforcementIntegration:
             msg=f"rule={rule!r}: no warning contained {fragment!r}",
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         "class_name",
         [
@@ -233,7 +234,6 @@ class TestsFlextEnforcementIntegration:
             "TestsFlextBadClassVarConstant",
         ],
     )
-    @staticmethod
     def test_each_violating_class_is_named_in_a_warning(
         violation_messages: t.StrSequence,
         class_name: str,

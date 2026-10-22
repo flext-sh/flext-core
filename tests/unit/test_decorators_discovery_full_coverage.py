@@ -2,7 +2,7 @@
 
 Exercises the PUBLIC contract end-to-end: the ``d.factory`` decorator is the
 real producer of factory metadata and ``u.scan_module`` is its consumer. Tests
-assert only observable output (the returned ``(name, config)`` pairs and the
+verify only observable output (the returned ``(name, config)`` pairs and the
 public config model state), never how the metadata is stored on the function.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
@@ -83,11 +83,11 @@ class TestsFlextDecoratorsDiscovery:
 
         tm.that(u.scan_module(mod), eq=[])
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("singleton", "lazy"),
         [(False, True), (True, False), (True, True), (False, False)],
     )
-    @staticmethod
     def test_scan_module_preserves_config_metadata(
         *,
         singleton: bool,

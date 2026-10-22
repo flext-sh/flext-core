@@ -16,13 +16,11 @@ from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._utilities import FlextUtilitiesBeartypeEngine
-from flext_core._utilities._enforcement_collect_parts import (
-    FlextUtilitiesEnforcementCollect,
-)
 from flext_core._utilities._enforcement_parts import PREDICATE_BINDINGS
+from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 
-class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
+class FlextUtilitiesEnforcementPart02(FlextUtilitiesEnforcementCollect):
     """Rule-driven runtime enforcement (static-only)."""
 
     _MODEL_CONSTRUCTION_CATEGORIES: ClassVar[frozenset[c.EnforcementCategory]] = (
@@ -71,7 +69,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             detail = FlextUtilitiesBeartypeEngine.apply(kind, params, *args)
             if detail is not None:
                 violations.append(
-                    FlextUtilitiesEnforcement._violation(
+                    FlextUtilitiesEnforcementPart02._violation(
                         tag,
                         location,
                         qualname,
@@ -107,7 +105,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         )
         if "[" in target.__name__:
             return
-        yield from FlextUtilitiesEnforcement._category_items(
+        yield from FlextUtilitiesEnforcementPart02._category_items(
             cast(
                 "type[FlextModelsPydantic.BaseModel | BaseSettings]",
                 target,
@@ -142,16 +140,18 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             # classes subclass BaseModel, so this check matches is_model while
             # handing _field_items exactly one type[BaseModel].
             if issubclass(target, FlextModelsPydantic.BaseModel):
-                items = FlextUtilitiesEnforcement._field_items(target, tag)
+                items = FlextUtilitiesEnforcementPart02._field_items(target, tag)
         elif category is c.EnforcementCategory.MODEL_CLASS:
             if is_model:
                 items = iter(((target.__qualname__, (target,)),))
         elif category is c.EnforcementCategory.ATTR:
             rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
             if rule_layer.lower() == effective_layer:
-                items = FlextUtilitiesEnforcement._attr_items(target, effective_layer)
+                items = FlextUtilitiesEnforcementPart02._attr_items(
+                    target, effective_layer
+                )
         elif category is c.EnforcementCategory.NAMESPACE:
-            items = FlextUtilitiesEnforcement._namespace_items(
+            items = FlextUtilitiesEnforcementPart02._namespace_items(
                 target,
                 tag,
                 effective_layer,
@@ -177,9 +177,9 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
 
         """
         iterator = (
-            FlextUtilitiesEnforcement._iter_effective
+            FlextUtilitiesEnforcementPart02._iter_effective
             if tag == "proto_inner_kind"
-            else FlextUtilitiesEnforcement._iter_inner
+            else FlextUtilitiesEnforcementPart02._iter_inner
         )
         for name, value in iterator(node):
             nested = f"{path}.{name}"
@@ -211,19 +211,21 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
         """
         violations: list[FlextModelsEnforcement.Violation] = []
         deferred: list[FlextModelsEnforcement.DeferredInspection] = []
-        effective_layer = layer or FlextUtilitiesEnforcement.detect_layer(target) or ""
+        effective_layer = (
+            layer or FlextUtilitiesEnforcementPart02.detect_layer(target) or ""
+        )
         qn = target.__qualname__
         for tag, category in c.ENFORCEMENT_TAG_CATEGORY.items():
             if categories is not None and category not in categories:
                 continue
             rule_layer = c.ENFORCEMENT_TAG_LAYER.get(tag, "")
-            items = FlextUtilitiesEnforcement._items_for(
+            items = FlextUtilitiesEnforcementPart02._items_for(
                 target,
                 tag,
                 category,
                 effective_layer,
             )
-            report = FlextUtilitiesEnforcement._apply_rule(
+            report = FlextUtilitiesEnforcementPart02._apply_rule(
                 target,
                 tag,
                 qn,
@@ -237,7 +239,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                 and tag in c.ENFORCEMENT_RECURSIVE_TAGS
                 and rule_layer.lower() == effective_layer
             ):
-                for _name, inner in FlextUtilitiesEnforcement._iter_inner(target):
+                for _name, inner in FlextUtilitiesEnforcementPart02._iter_inner(target):
                     if isinstance(
                         inner,
                         EnumType,
@@ -246,7 +248,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
                         target.__qualname__,
                     ):
                         continue
-                    nested = FlextUtilitiesEnforcement.check(
+                    nested = FlextUtilitiesEnforcementPart02.check(
                         inner,
                         layer=effective_layer,
                     )
@@ -266,7 +268,7 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             The resulting ``me.Report``.
 
         """
-        return FlextUtilitiesEnforcement._check(target, layer=layer)
+        return FlextUtilitiesEnforcementPart02._check(target, layer=layer)
 
     @staticmethod
     def check_model_construction(
@@ -278,10 +280,10 @@ class FlextUtilitiesEnforcement(FlextUtilitiesEnforcementCollect):
             The resulting ``me.Report``.
 
         """
-        return FlextUtilitiesEnforcement._check(
+        return FlextUtilitiesEnforcementPart02._check(
             target,
-            categories=FlextUtilitiesEnforcement._MODEL_CONSTRUCTION_CATEGORIES,
+            categories=FlextUtilitiesEnforcementPart02._MODEL_CONSTRUCTION_CATEGORIES,
         )
 
 
-__all__: list[str] = ["FlextUtilitiesEnforcement"]
+__all__: list[str] = ["FlextUtilitiesEnforcementPart02"]

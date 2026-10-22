@@ -505,7 +505,7 @@ class TestsFlextCoreContext:
         """Extended scopes retain metadata, hooks and independent storage."""
 
         def on_event(value: t.Scalar) -> t.JsonPayload:
-            return value
+            return u.normalize_to_json_value(value)
 
         metadata = m.Metadata(attributes={"source": "runtime"})
         state = u.create_context_runtime(metadata)

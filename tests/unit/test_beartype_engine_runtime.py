@@ -56,8 +56,8 @@ class TestsFlextCoreBeartypeEngineRuntime(
         conf = flext_core.u.build_beartype_conf()
 
         # Assert
-        tm.that(isinstance(conf, BeartypeConf), truth=True)
-        assert conf.strategy is BeartypeStrategy.O0
+        tm.that(conf, is_=BeartypeConf)
+        tm.that(conf.strategy, where=lambda strategy: strategy is BeartypeStrategy.O0)
         tm.that(conf.violation_type, none=True)
 
     @pytest.mark.parametrize(
@@ -106,8 +106,8 @@ class TestsFlextCoreBeartypeEngineRuntime(
         # Assert
         combined_output = result.stdout + result.stderr
         tm.that(result.outcome.raw_return_code, eq=0, msg=combined_output)
-        assert f"runtime_exc {expected_exc}" in result.stdout
-        assert "warning_count 0" in result.stdout
+        tm.that(result.stdout, has=f"runtime_exc {expected_exc}")
+        tm.that(result.stdout, has="warning_count 0")
 
     def test_claw_without_flext_skip_configuration_breaks_flext_core_import(
         self,
@@ -146,4 +146,4 @@ class TestsFlextCoreBeartypeEngineRuntime(
         # Assert: import must not silently succeed; stdout proves the success
         # print never executed.
         tm.that(result.outcome.raw_return_code, ne=0)
-        assert "unexpected_success" not in result.stdout
+        tm.that(result.stdout, lacks="unexpected_success")

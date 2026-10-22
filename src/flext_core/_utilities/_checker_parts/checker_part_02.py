@@ -19,7 +19,7 @@ from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities._checker_parts import checker_part_01
 
 
-class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
+class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
     @classmethod
     def _extract_message_type_from_parameter(
         cls,
@@ -207,4 +207,4 @@ class FlextUtilitiesChecker(checker_part_01.FlextUtilitiesChecker):
         return cls._handle_instance_check(message_type, origin_type)
 
 
-__all__: list[str] = ["FlextUtilitiesChecker"]
+__all__: list[str] = ["FlextUtilitiesCheckerPart02"]

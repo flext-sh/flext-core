@@ -59,6 +59,19 @@ factory auto-registration) passes one private write path. That path raises
   `logger`, `context`, `command_bus`);
 - the value fails its record validation, for example a factory that is not callable.
 
+Factories and resources use `p.FactoryCallable` and `p.ResourceCallable`: the
+container invokes them without arguments and their declared result is the existing
+service-value contract. Resources reuse the factory callable type. A callable
+registered with `bind` is returned directly, so its parameter list remains its
+own contract. These aliases originate in `_typings/services.py` and are specialized
+by the container protocols.
+
+`m.ServiceRegistration.service` validates the registration contract directly.
+Native mappings and sequences are not wrapped in `m.ConfigMap` or `m.ObjectList`;
+existing models and callable collaborators retain their identity. Factory and
+resource outputs cross the same admission model, but resolution returns the
+original service reference, not a normalized or reconstructed validation result.
+
 The reserved core services resolve normally but stay out of `has`, `names` and `drop`.
 To replace a public registration, `drop` it first.
 

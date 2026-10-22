@@ -16,6 +16,7 @@ from tests import c, m, tm, u, utilities
 class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
     """Tests for ``FlextUtilitiesText``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "message"),
         [
@@ -24,7 +25,6 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
             pytest.param("   ", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="blank"),
         ],
     )
-    @staticmethod
     def test_public_text_helpers_reject_blank_bootstrap_inputs(
         value: str | None,
         message: str,
@@ -33,6 +33,7 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
         with pytest.raises(ValueError, match=message):
             u.safe_string(value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("raw", "expected_id", "expected_key"),
         [
@@ -46,7 +47,6 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
             pytest.param("__x__", "--x--", "x", id="underscore-padding"),
         ],
     )
-    @staticmethod
     def test_public_text_helpers_derive_stable_identifiers(
         raw: str,
         expected_id: str,
@@ -65,6 +65,7 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
         tm.that(normalized_key, eq=expected_key)
         tm.that(normalized_key.isalnum() or not normalized_key, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "value",
         [
@@ -73,7 +74,6 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
             pytest.param("Fleet Sync_App v2", id="app-name"),
         ],
     )
-    @staticmethod
     def test_public_text_helpers_are_idempotent(value: str) -> None:
         """Re-applying the helpers to their own output is a fixed point."""
         cleaned = u.safe_string(value)

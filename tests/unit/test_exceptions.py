@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 class TestsFlextCoreExceptions:
     """Behavioral contract of the FlextExceptions facade."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         "subclass",
         [
@@ -42,16 +43,16 @@ class TestsFlextCoreExceptions:
             e.AttributeAccessError,
         ],
     )
-    @staticmethod
     def test_facade_exposes_typed_errors_as_base_error_subclasses(
         subclass: type[e.BaseError],
     ) -> None:
         # Act / Assert — every typed error is reachable on the facade and is a
         # catchable member of the BaseError hierarchy.
         """Test facade exposes typed errors as base error subclasses."""
-        tm.that(issubclass(subclass, e.BaseError), truth=True)
-        tm.that(issubclass(subclass, Exception), truth=True)
+        tm.that(subclass, where=e.BaseError.__subclasscheck__)
+        tm.that(subclass, where=Exception.__subclasscheck__)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("error", "expected_domain"),
         [
@@ -63,7 +64,6 @@ class TestsFlextCoreExceptions:
             (e.FlextTimeoutError("slow"), c.ErrorDomain.TIMEOUT),
         ],
     )
-    @staticmethod
     def test_error_domain_routes_typed_errors(
         error: e.BaseError,
         expected_domain: str,
@@ -96,7 +96,7 @@ class TestsFlextCoreExceptions:
         with pytest.raises(e.BaseError) as excinfo:
             raise e.NotFoundError(message, resource_type="user", resource_id="u-1")
         raised = cast("e.NotFoundError", excinfo.value)
-        tm.that(isinstance(raised, e.NotFoundError), truth=True)
+        tm.that(raised, is_=e.NotFoundError)
         tm.that(raised.resource_type, eq="user")
         tm.that(raised.resource_id, eq="u-1")
 
@@ -113,11 +113,11 @@ class TestsFlextCoreExceptions:
         tm.that(error.correlation_id, none=False)
         tm.that(str(error.correlation_id).startswith("exc_"), truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("declared", "expected"),
         [("int", int), (str, str), ("dict", dict)],
     )
-    @staticmethod
     def test_type_error_resolves_type_names_to_types(
         declared: type | str,
         expected: type,
@@ -252,14 +252,14 @@ class TestsFlextCoreExceptions:
         default_result = result.unwrap_or(unwrap_default)
         tm.that(default_result is unwrap_default, truth=True)
 
-    @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
     @staticmethod
+    @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
     def test_enforcement_violations_are_raisable_exception_types(
         violation: type[Exception],
     ) -> None:
         # Assert — enforcement violations are exposed on the facade and raise.
         """Test enforcement violations are raisable exception types."""
-        tm.that(issubclass(violation, Exception), truth=True)
+        tm.that(violation, where=Exception.__subclasscheck__)
         message = "enforcement breach"
         with pytest.raises(violation):
             raise violation(message)

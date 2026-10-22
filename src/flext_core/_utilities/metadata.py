@@ -16,21 +16,6 @@ class FlextUtilitiesMetadata:
     """Sanitize structured diagnostics without creating another logging engine."""
 
     @staticmethod
-    def _redact_text_values(
-        text: str, values: t.StrSequence, replacement: str | None
-    ) -> str:
-        """Replace nonempty sensitive values in a textual payload.
-
-        Returns:
-            The text with all declared values redacted.
-
-        """
-        for secret in values:
-            if secret:
-                text = text.replace(secret, replacement or "")
-        return text
-
-    @staticmethod
     def redact_metadata(
         value: t.JsonMapping,
         *,
@@ -47,7 +32,7 @@ class FlextUtilitiesMetadata:
             Sanitized JSON data, without changing the supplied value.
 
         """
-        protected = frozenset(key.casefold() for key in keys)
+        protected = frozenset(map(str.casefold, keys))
         adapter = FlextUtilitiesTypingAdapterJson.json_value_adapter()
 
         def text_payload(text: str) -> str:
@@ -59,15 +44,17 @@ class FlextUtilitiesMetadata:
                 cleaned = redact(decoded)
                 if cleaned != decoded:
                     text = adapter.dump_json(cleaned).decode()
-            return FlextUtilitiesMetadata._redact_text_values(text, values, replacement)
+            for secret in filter(None, values):
+                text = text.replace(secret, replacement or "")
+            return text
 
         def redact(item: t.JsonValue) -> t.JsonValue:
             if isinstance(item, dict):
-                return mapping(item)
-            if isinstance(item, list):
-                return [redact(nested) for nested in item]
-            if isinstance(item, str):
-                return text_payload(item)
+                item = mapping(item)
+            elif isinstance(item, list):
+                item = [redact(nested) for nested in item]
+            elif isinstance(item, str):
+                item = text_payload(item)
             return item
 
         def mapping(item: t.JsonMapping) -> t.JsonDict:

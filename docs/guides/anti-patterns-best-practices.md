@@ -45,7 +45,7 @@ Use explicit bind/factory loops.
 ```python
 from __future__ import annotations
 
-from flext_core import p, r
+from flext_core import p, r, t
 
 
 def validate_payload(payload: t.StrDict) -> p.Result[t.StrDict]:

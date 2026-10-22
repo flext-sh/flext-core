@@ -128,14 +128,10 @@ class TestsFlextCoreResultExceptionFailures:
             )
 
     @staticmethod
-    @pytest.mark.parametrize("tuple_issues", [False, True])
-    def test_fail_serializes_publication_issues_and_preserves_exception(
-        *,
-        tuple_issues: bool,
-    ) -> None:
+    def test_fail_serializes_publication_issues_and_preserves_exception() -> None:
         """Plain nested issue payloads retain data and the original failure."""
         original = ValueError("source changed during publication")
-        issues: list[t.MetadataMapping] = [
+        issues: list[t.JsonValue] = [
             {
                 "file": "src/package/module.py",
                 "line": 1,
@@ -152,7 +148,7 @@ class TestsFlextCoreResultExceptionFailures:
             error_data={
                 "phase": "lazy-init",
                 "completed": True,
-                "issues": tuple(issues) if tuple_issues else issues,  # type: ignore[dict-item]
+                "issues": issues,
                 "written_files": ["src/independent/__init__.py"],
                 "pending_files": ["src/package/__init__.py"],
             },

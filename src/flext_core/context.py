@@ -82,7 +82,7 @@ class FlextContext(flext_context.FlextContextState, FlextUtilitiesContext):
             A successful storage result.
 
         """
-        self.data.root.update({key: value})
+        self.data.root[key] = value
         return FlextResult[bool].ok(value=True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:

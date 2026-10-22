@@ -13,7 +13,9 @@ from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_02
 
 
-class FlextModelsContextScope(flextmodelscontextscope_part_02.FlextModelsContextScope):
+class FlextModelsContextScopePart03(
+    flextmodelscontextscope_part_02.FlextModelsContextScopePart02
+):
     class ContextContainerState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized container binding state for `FlextContext`."""
 
@@ -36,4 +38,4 @@ class FlextModelsContextScope(flextmodelscontextscope_part_02.FlextModelsContext
             return self.container is not None
 
 
-__all__: list[str] = ["FlextModelsContextScope"]
+__all__: list[str] = ["FlextModelsContextScopePart03"]

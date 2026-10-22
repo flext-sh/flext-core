@@ -116,7 +116,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(
                             return 1
 
 
-                    assert isinstance(ProbeImpl(), ProbeProtocol)
+                    print("probe_protocol", isinstance(ProbeImpl(), ProbeProtocol))
                 """,
             },
         )
@@ -132,7 +132,8 @@ class TestsFlextCoreBeartypeEngineClawPackages(
 
         # Assert
         tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
-        assert "claw_import_ok" in result.stdout
+        tm.that(result.stdout, has="claw_import_ok")
+        tm.that(result.stdout, has="probe_protocol True")
 
     def test_claw_supports_recursive_aliases_in_synthetic_package(
         self,
@@ -171,7 +172,7 @@ class TestsFlextCoreBeartypeEngineClawPackages(
 
         # Assert: import succeeds and the aliased runtime value is intact.
         tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
-        assert "aliasprobe_value x" in result.stdout
+        tm.that(result.stdout, has="aliasprobe_value x")
 
     def test_checking_claw_enforces_typing_extensions_aliases(
         self,
@@ -250,11 +251,11 @@ class TestsFlextCoreBeartypeEngineClawPackages(
 
         # Assert: conforming calls pass and both aliases reject a wrong value.
         tm.that(result.outcome.raw_return_code, eq=0, msg=result.stderr)
-        assert "conforming_ok" in result.stdout
-        assert "accepted" not in result.stdout, result.stdout
-        assert "violation take_int" in result.stdout
-        assert "violation take_count" in result.stdout
-        assert "violation take_json" in result.stdout
+        tm.that(result.stdout, has="conforming_ok")
+        tm.that(result.stdout, lacks="accepted", msg=result.stdout)
+        tm.that(result.stdout, has="violation take_int")
+        tm.that(result.stdout, has="violation take_count")
+        tm.that(result.stdout, has="violation take_json")
 
     def test_claw_config_imports_flext_core_without_error(self) -> None:
         """The factory conf lets beartype_package instrument flext_core itself."""
@@ -281,4 +282,4 @@ class TestsFlextCoreBeartypeEngineClawPackages(
         # Assert: instrumentation succeeds and the public facade stays intact.
         combined_output = result.stdout + result.stderr
         tm.that(result.outcome.raw_return_code, eq=0, msg=combined_output)
-        assert "flext_core_facade True" in combined_output
+        tm.that(combined_output, has="flext_core_facade True")

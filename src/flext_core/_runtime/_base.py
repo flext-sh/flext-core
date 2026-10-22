@@ -30,7 +30,6 @@ class FlextRuntimeBase(FlextUtilitiesBase):
     @staticmethod
     def resolve_effective_log_level(
         *,
-        trace: bool,
         debug: bool,
         log_level: t.LogLevel,
         log_level_explicit: bool = True,
@@ -41,7 +40,6 @@ class FlextRuntimeBase(FlextUtilitiesBase):
             The resulting ``t.LogLevel``.
 
         """
-        _ = trace
         if debug and not log_level_explicit:
             return c.LogLevel.DEBUG
         return log_level

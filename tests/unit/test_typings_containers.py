@@ -28,13 +28,14 @@ class TestsFlextCoreJsonPayload:
     """Payloads admit native JSON containers and explicitly declared model leaves."""
 
     @staticmethod
-    def test_direct_models_survive_runtime_payload_validation() -> None:
-        """The runtime contract preserves a model leaf without serializing it."""
+    def test_models_are_not_accepted_as_json_payloads() -> None:
+        """Models must be serialized before crossing the JSON boundary."""
         model = m.ConfigMap(root={"name": "sample"})
-        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
-            TypeForm(t.JsonPayload)
+        adapter: flext_tests.m.TypeAdapter[t.JsonValue] = u.type_adapter(
+            TypeForm(t.JsonValue)
         )
-        tm.ok(adapter.validate_python(model) is model)
+        with pytest.raises(flext_tests.m.ValidationError):
+            adapter.validate_python(model)
 
     @staticmethod
     def test_nested_json_survives_runtime_payload_validation() -> None:
@@ -49,8 +50,8 @@ class TestsFlextCoreJsonPayload:
     def test_models_inside_json_collections_require_an_owned_model_contract() -> None:
         """The JSON branch must not silently admit arbitrary model instances."""
         model = m.Metadata(attributes={"name": "sample"})
-        adapter: flext_tests.m.TypeAdapter[t.JsonPayload] = u.type_adapter(
-            TypeForm(t.JsonPayload)
+        adapter: flext_tests.m.TypeAdapter[t.JsonValue] = u.type_adapter(
+            TypeForm(t.JsonValue)
         )
         with pytest.raises(flext_tests.m.ValidationError):
             adapter.validate_python({"items": [{"model": model}]})
@@ -91,11 +92,11 @@ class TestsFlextCoreTypingsContainers:
         with pytest.raises(KeyError):
             _ = d["missing"]
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("present", "expected"),
         [("key", True), ("missing", False)],
     )
-    @staticmethod
     def test_dict_contains_reports_membership(
         present: str,
         *,
@@ -235,11 +236,11 @@ class TestsFlextCoreTypingsContainers:
 
     # ---- c.SCALAR_TYPES: runtime scalar contract ---------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         "scalar",
         ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)],
     )
-    @staticmethod
     def test_scalar_types_accepts_every_scalar(
         *,
         scalar: str | float | bool | datetime,
@@ -247,8 +248,8 @@ class TestsFlextCoreTypingsContainers:
         """SCALAR_TYPES is an isinstance-usable tuple covering all scalar kinds."""
         tm.ok(isinstance(scalar, c.SCALAR_TYPES))
 
-    @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     @staticmethod
+    @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
         nonscalar: list[str] | t.MappingKV[str, int] | tuple[str],
     ) -> None:

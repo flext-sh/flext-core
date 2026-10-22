@@ -10,19 +10,33 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from flext_core._utilities._beartype._helpers_parts.helpers_part_01 import (
+        FlextUtilitiesBeartypeHelpersPart01,
+    )
+    from flext_core._utilities._beartype._helpers_parts.helpers_part_02 import (
+        FlextUtilitiesBeartypeHelpersPart02,
+    )
     from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
-        FlextUtilitiesBeartypeHelpers,
+        FlextUtilitiesBeartypeHelpersPart03,
     )
 
 
-__all__: tuple[str, ...] = ("FlextUtilitiesBeartypeHelpers",)
+__all__: tuple[str, ...] = (
+    "FlextUtilitiesBeartypeHelpersPart01",
+    "FlextUtilitiesBeartypeHelpersPart02",
+    "FlextUtilitiesBeartypeHelpersPart03",
+)
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextUtilitiesBeartypeHelpers": ".helpers_part_03"}),
+    MappingProxyType({
+        "FlextUtilitiesBeartypeHelpersPart01": ".helpers_part_01",
+        "FlextUtilitiesBeartypeHelpersPart02": ".helpers_part_02",
+        "FlextUtilitiesBeartypeHelpersPart03": ".helpers_part_03",
+    }),
     public_exports=__all__,
-)[0]
+)

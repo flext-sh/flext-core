@@ -75,8 +75,7 @@ class FlextService[TDomainResult = p.Base](x):
 
     def __init_subclass__(cls, **kwargs: Unpack[m.ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
-        _ = kwargs
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         cls._instance = None
 
     @classmethod

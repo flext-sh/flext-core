@@ -14,9 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from types import EllipsisType
-from typing import TYPE_CHECKING, ClassVar, dataclass_transform, overload
+from typing import dataclass_transform
 
 import pydantic
 import pydantic_settings
@@ -38,9 +36,7 @@ from pydantic import (
     WrapValidator,
 )
 from pydantic.fields import FieldInfo
-from typing_extensions import TypeForm
 
-from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
 from flext_core._typings.native_export import FlextTypingNativeExport
 
 
@@ -55,14 +51,10 @@ class FlextModelsPydantic:
         RootModel: Container model for single validated values/collections
     """
 
-    # Preserve the native overloads and field-specifier identity without a wrapper.
     Field = FlextTypingNativeExport(pydantic.Field)
     FieldInfo = FieldInfo
 
-    if TYPE_CHECKING:
-        PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
-    else:
-        PrivateAttr = staticmethod(pydantic.PrivateAttr)
+    PrivateAttr = FlextTypingNativeExport(pydantic.PrivateAttr)
 
     @dataclass_transform(
         kw_only_default=True,
@@ -91,53 +83,10 @@ class FlextModelsPydantic:
         """Canonical settings configuration exported through the models facade."""
 
     field_validator = FlextTypingNativeExport(pydantic.field_validator)
-    # Why (abstraction boundary): ENFORCE-070 makes flext-core the sole owner of
-    # pydantic, and the tier-whitelist gate rejects a bare ``pydantic`` import in
-    # every downstream project. A name that this facade does not re-export
-    # therefore has no compliant spelling at all: the consumer must either import
-    # pydantic directly (gate violation) or reach forward into a later layer
-    # (namespace chain violation). ``model_validator`` is the canonical
-    # model-level counterpart of ``field_validator`` above, and its absence alone
-    # forced bare pydantic imports across 32 downstream modules.
-    # Re-export native decorators with their complete upstream overload sets.
     model_validator = FlextTypingNativeExport(pydantic.model_validator)
-    field_serializer: ClassVar[FlextProtocolsBase.FieldSerializerFactory] = (
-        pydantic.field_serializer
-    )
-    model_serializer: ClassVar[FlextProtocolsBase.ModelSerializerFactory] = (
-        pydantic.model_serializer
-    )
-    computed_field: ClassVar[FlextProtocolsBase.ComputedFieldFactory] = (
-        pydantic.computed_field
-    )
-
-    @overload
-    @staticmethod
-    def empty[ContractT](contract: TypeForm[ContractT]) -> Callable[[], ContractT]: ...
-
-    @overload
-    @staticmethod
-    def empty[ContractT](
-        *, contract_factory: Callable[[], TypeForm[ContractT]]
-    ) -> Callable[[], ContractT]: ...
-
-    @staticmethod
-    def empty[ContractT](
-        contract: TypeForm[ContractT] | EllipsisType = ...,
-        *,
-        contract_factory: Callable[[], TypeForm[ContractT]] | None = None,
-    ) -> Callable[[], ContractT]:
-        from flext_core._utilities.pydantic import FlextUtilitiesPydantic
-
-        if contract_factory is None:
-            if isinstance(contract, EllipsisType):
-                msg = "empty requires a collection contract or contract_factory"
-                raise TypeError(msg)
-            return FlextUtilitiesPydantic.empty(contract)
-        if isinstance(contract, EllipsisType):
-            return FlextUtilitiesPydantic.empty(contract_factory=contract_factory)
-        msg = "empty accepts either contract or contract_factory, not both"
-        raise TypeError(msg)
+    field_serializer = FlextTypingNativeExport(pydantic.field_serializer)
+    model_serializer = FlextTypingNativeExport(pydantic.model_serializer)
+    computed_field = FlextTypingNativeExport(pydantic.computed_field)
 
     # Annotation constraints and tagged-union discrimination
     Discriminator = Discriminator

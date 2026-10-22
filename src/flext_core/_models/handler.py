@@ -21,7 +21,6 @@ from flext_core._models import (
     FlextModelsContainers,
     FlextModelsPydantic,
 )
-from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsHandler:
@@ -38,10 +37,12 @@ class FlextModelsHandler:
             exclude=True,
         )
         message_type: t.RegistryBindingKey | None = FlextModelsPydantic.Field(
-            default=None, description="Explicit message type or route name"
+            default=None,
+            description="Explicit message type or route name",
         )
         is_event: bool = FlextModelsPydantic.Field(
-            default=False, description="Whether this binding subscribes to events"
+            default=False,
+            description="Whether this binding subscribes to events",
         )
 
     class HandlerRegistrationReport(FlextModelsBase.ArbitraryTypesModel):
@@ -154,7 +155,7 @@ class FlextModelsHandler:
             default_factory=lambda: FlextModelsContainers.Dict(root={}),
         )
 
-        @FlextUtilitiesPydantic.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def execution_time_ms(self) -> float:
             """Elapsed execution time in milliseconds (0 until started)."""

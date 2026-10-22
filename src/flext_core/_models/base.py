@@ -15,7 +15,7 @@ from __future__ import annotations
 from flext_core._models._base_parts import flextmodelsbase_part_03
 
 
-class FlextModelsBase(flextmodelsbase_part_03.FlextModelsBase):
+class FlextModelsBase(flextmodelsbase_part_03.FlextModelsBasePart03):
     """Public facade for FlextModelsBase."""
 
 

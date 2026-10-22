@@ -61,7 +61,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         snapshot = e.resolve_metrics_snapshot()
 
         # Assert
-        tm.that(isinstance(snapshot, m.ExceptionMetricsSnapshot), truth=True)
+        tm.that(snapshot, is_=m.ExceptionMetricsSnapshot)
 
     @staticmethod
     def test_cleared_state_reports_no_exceptions() -> None:
@@ -89,6 +89,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         tm.that(snapshot.has_exceptions is True, truth=True)
         tm.that(snapshot.exception_counts[e.ValidationError.__qualname__], eq=1)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("recorded", "expected_total", "expected_unique"),
         [
@@ -108,7 +109,6 @@ class TestsFlextCoreExceptionsPublicMetrics:
             ),
         ],
     )
-    @staticmethod
     def test_totals_and_unique_counts_track_recorded_exceptions(
         recorded: Sequence[type[BaseException]],
         expected_total: int,

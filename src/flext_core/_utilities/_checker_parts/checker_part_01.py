@@ -13,7 +13,7 @@ from __future__ import annotations
 from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
-class FlextUtilitiesChecker:
+class FlextUtilitiesCheckerPart01:
     """Handler type checking utilities for h complexity reduction.
 
     Extracts type introspection and compatibility logic from h
@@ -81,4 +81,4 @@ class FlextUtilitiesChecker:
         return expected_type is FlextTypesServices.JsonPayload
 
 
-__all__: list[str] = ["FlextUtilitiesChecker"]
+__all__: list[str] = ["FlextUtilitiesCheckerPart01"]

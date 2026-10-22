@@ -85,10 +85,10 @@ class TestsFlextCoreResultFactoryDip:
         """Test concrete results satisfy result protocol at runtime."""
         ok_result: p.Result[str] = r[str].ok("value")
         fail_result: p.Result[str] = r[str].fail("boom")
-        tm.that(isinstance(ok_result, p.Result), truth=True)
-        tm.that(isinstance(fail_result, p.Result), truth=True)
-        tm.that(isinstance(ok_result, p.SuccessCheckable), truth=True)
-        tm.that(isinstance(fail_result, p.SuccessCheckable), truth=True)
+        tm.that(ok_result, is_=p.Result)
+        tm.that(fail_result, is_=p.Result)
+        tm.that(ok_result, is_=p.SuccessCheckable)
+        tm.that(fail_result, is_=p.SuccessCheckable)
 
     @staticmethod
     def test_flow_through_normalizes_returned_success_onto_facade() -> None:
@@ -317,7 +317,7 @@ class TestsFlextCoreResultFactoryDip:
 
 def _assert_redacted(error_data: object, password: str, token: str) -> None:
     text = str(error_data)
-    assert "password" not in text
-    assert "token" not in text
-    assert password not in text
-    assert token not in text
+    tm.that(text, lacks="password")
+    tm.that(text, lacks="token")
+    tm.that(text, lacks=password)
+    tm.that(text, lacks=token)

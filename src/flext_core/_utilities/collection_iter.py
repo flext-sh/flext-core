@@ -77,15 +77,13 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @staticmethod
     def filter[TItem, TMapped](
-        items: t.SequenceOf[TItem] | t.VariadicTuple[TItem] | t.MappingKV[str, TItem],
+        items: t.SequenceOf[TItem] | t.MappingKV[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped] | None = None,
     ) -> (
         t.SequenceOf[TItem]
         | t.SequenceOf[TMapped]
-        | t.VariadicTuple[TItem]
-        | t.VariadicTuple[TMapped]
         | t.MappingKV[str, TItem]
         | t.MappingKV[str, TMapped]
     ):
@@ -93,15 +91,12 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
         Returns:
             The resulting ``t.SequenceOf[TItem] | t.SequenceOf[TMapped] |
-                t.VariadicTuple[TItem] | t.VariadicTuple[TMapped] | t.MappingKV[str,
-                TItem] | t.MappingKV[str, TMapped]``.
+                t.MappingKV[str, TItem] | t.MappingKV[str, TMapped]``.
 
         """
         filtered_output: (
             t.SequenceOf[TItem]
             | t.SequenceOf[TMapped]
-            | t.VariadicTuple[TItem]
-            | t.VariadicTuple[TMapped]
             | t.MappingKV[str, TItem]
             | t.MappingKV[str, TMapped]
         )
@@ -174,14 +169,12 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @staticmethod
     def map[TItem, TMapped](
         items: t.SequenceOf[TItem]
-        | t.VariadicTuple[TItem]
         | t.MappingKV[str, TItem]
         | set[TItem]
         | frozenset[TItem],
         mapper: Callable[[TItem], TMapped],
     ) -> (
         t.SequenceOf[TMapped]
-        | t.VariadicTuple[TMapped]
         | t.MappingKV[str, TMapped]
         | set[TMapped]
         | frozenset[TMapped]
@@ -189,8 +182,8 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
         """Unified map function — preserves container type.
 
         Returns:
-            The resulting ``t.SequenceOf[TMapped] | t.VariadicTuple[TMapped] |
-                t.MappingKV[str, TMapped] | set[TMapped] | frozenset[TMapped]``.
+            The resulting ``t.SequenceOf[TMapped] | t.MappingKV[str, TMapped] |
+                set[TMapped] | frozenset[TMapped]``.
 
         """
         if isinstance(items, list):
@@ -201,7 +194,9 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
             return {k: mapper(v) for k, v in items.items()}
         if isinstance(items, set):
             return {mapper(item) for item in items}
-        return frozenset(mapper(item) for item in items)
+        if isinstance(items, frozenset):
+            return frozenset(mapper(item) for item in items)
+        return [mapper(item) for item in items]
 
 
 __all__: list[str] = ["FlextUtilitiesCollectionIter"]

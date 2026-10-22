@@ -11,12 +11,11 @@ from typing import Annotated, Literal
 
 from pydantic import Discriminator, Field
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._models._enforcement import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
-from flext_core._typings import FlextTypingBase
 
 type _EnforcementPredicateParams = (
     FlextModelsEnforcementParams.FieldShapeParams
@@ -60,24 +59,24 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         kind: Literal["model_config"] = "model_config"
         forbid_v1_config: bool = False
         require_extra_forbid: bool = False
-        allowed_extra_values: FlextTypingBase.StrSequence = ()
+        allowed_extra_values: t.StrSequence = ()
         require_frozen_for_value_objects: bool = False
 
     class LooseSymbolParams(FlextModelsEnforcementModelBase):
         """Parameters for LOOSE_SYMBOL predicate."""
 
         kind: Literal["loose_symbol"] = "loose_symbol"
-        allowed_prefixes: FlextTypingBase.StrSequence = ()
+        allowed_prefixes: t.StrSequence = ()
         require_future_annotations: bool = False
-        required_canonical_files: FlextTypingBase.StrSequence = ()
+        required_canonical_files: t.StrSequence = ()
         require_settings_base: bool = False
 
     class ImportBlacklistParams(FlextModelsEnforcementModelBase):
         """Parameters for IMPORT_BLACKLIST predicate."""
 
         kind: Literal["import_blacklist"] = "import_blacklist"
-        forbidden_modules: FlextTypingBase.StrSequence = ()
-        forbidden_symbols: FlextTypingBase.StrSequence = ()
+        forbidden_modules: t.StrSequence = ()
+        forbidden_symbols: t.StrSequence = ()
         private_package_only: bool = False
         detect_cycles: bool = False
 
@@ -105,15 +104,15 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for ALIAS_REBIND predicate."""
 
         kind: Literal["alias_rebind"] = "alias_rebind"
-        canonical_files: FlextTypingBase.StrSequence = ()
-        alias_names: FlextTypingBase.StrSequence = ()
+        canonical_files: t.StrSequence = ()
+        alias_names: t.StrSequence = ()
         expected_form: str = ""
 
     class CompatibilityAliasParams(FlextModelsEnforcementModelBase):
         """Parameters for COMPATIBILITY_ALIAS predicate."""
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
-        alias_renames: FlextTypingBase.StrMapping = Field(
+        alias_renames: t.StrMapping = Field(
             default_factory=lambda: MappingProxyType[str, str]({}),
             validate_default=True,
         )
@@ -125,14 +124,14 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """
 
         kind: Literal["library_import"] = "library_import"
-        modules: FlextTypingBase.StrSequence = ()
+        modules: t.StrSequence = ()
         """Owned library roots selected by the rule; empty selects all owners."""
 
     class DuplicateSymbolParams(FlextModelsEnforcementModelBase):
         """Parameters for DUPLICATE_SYMBOL predicate."""
 
         kind: Literal["duplicate_symbol"] = "duplicate_symbol"
-        hierarchy: FlextTypingBase.StrSequence = ()
+        hierarchy: t.StrSequence = ()
         symbol_kinds: frozenset[str] = frozenset()
 
     class DeprecatedSyntaxParams(FlextModelsEnforcementModelBase):
@@ -145,7 +144,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Parameters for METHOD_SHAPE predicate."""
 
         kind: Literal["method_shape"] = "method_shape"
-        forbidden_prefixes: FlextTypingBase.StrMapping = Field(
+        forbidden_prefixes: t.StrMapping = Field(
             default_factory=lambda: MappingProxyType[str, str]({}),
             validate_default=True,
         )

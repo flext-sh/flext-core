@@ -12,15 +12,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence, Set as AbstractSet
 from pathlib import Path
-from types import EllipsisType, MappingProxyType
-from typing import (
-    TYPE_CHECKING,
-    Annotated,
-    ClassVar,
-    TypeAliasType,
-    get_args,
-    get_origin,
-)
+from types import EllipsisType
+from typing import Annotated, TypeAliasType, get_args, get_origin
 
 from pydantic import (
     AfterValidator,
@@ -30,6 +23,9 @@ from pydantic import (
     SkipValidation,
     WrapSerializer,
     WrapValidator,
+    computed_field,
+    field_serializer,
+    model_serializer,
     validate_call,
     with_config,
 )
@@ -37,6 +33,8 @@ from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
 from flext_core import _models, c, p, t
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.native_export import FlextTypingNativeExport
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
@@ -54,8 +52,7 @@ class FlextUtilitiesPydantic(
     Use u.* / up.* instead.
     """
 
-    # Inherit field/default factories without re-inferring generic descriptors.
-    StaticExport = t
+    Field = FlextTypingNativeExport(FlextModelsPydantic.Field)
     SkipValidation = SkipValidation
 
     AfterValidator = AfterValidator
@@ -64,62 +61,18 @@ class FlextUtilitiesPydantic(
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    if TYPE_CHECKING:
-        validate_call: ClassVar[p.ValidateCall] = validate_call
-    else:
-        validate_call = staticmethod(validate_call)
-    with_config = staticmethod(with_config)
+    computed_field = FlextTypingNativeExport(computed_field)
+    field_serializer = FlextTypingNativeExport(field_serializer)
+    model_serializer = FlextTypingNativeExport(model_serializer)
+    validate_call = FlextTypingNativeExport(validate_call)
+    with_config = FlextTypingNativeExport(with_config)
 
-    from_json = staticmethod(from_json)
-    to_json = to_json
-    to_jsonable_python = to_jsonable_python
-
-    _registerable_adapter: ClassVar[t.ValueAdapter[p.RegisterableService] | None] = None
-    _collaborator_adapter: ClassVar[t.ValueAdapter[p.RegistryCollaborator] | None] = (
-        None
-    )
-    _json_model_adapter: ClassVar[
-        t.ValueAdapter[p.Model[t.JsonPayload] | p.HasModelDump] | None
-    ] = None
+    from_json = FlextTypingNativeExport(from_json)
+    to_json = FlextTypingNativeExport(to_json)
+    to_jsonable_python = FlextTypingNativeExport(to_jsonable_python)
 
     @staticmethod
-    def normalize_registerable_service(value: p.GuardInput) -> p.RegisterableService:
-        """Validate against the registration field's single declared SDK schema.
-
-        Returns:
-            The SDK-validated service value or unchanged collaborator port.
-
-        """
-        adapter: t.ValueAdapter[p.RegisterableService] | None = (
-            FlextUtilitiesPydantic._registerable_adapter
-        )
-        if adapter is None:
-            registration = _models.FlextModelsContainer.ServiceRegistration
-            adapter = FlextUtilitiesBase.type_adapter(
-                registration.model_fields["service"].rebuild_annotation(),
-                config=registration.model_config,
-            )
-            FlextUtilitiesPydantic._registerable_adapter = adapter
-        collaborator: t.ValueAdapter[p.RegistryCollaborator] | None = (
-            FlextUtilitiesPydantic._collaborator_adapter
-        )
-        if collaborator is None:
-            collaborator = FlextUtilitiesBase.type_adapter(
-                TypeForm(p.RegistryCollaborator),
-                config=_models.FlextModelsContainer.ServiceRegistration.model_config,
-            )
-            FlextUtilitiesPydantic._collaborator_adapter = collaborator
-        if collaborator.validator.isinstance_python(value):
-            return adapter.validate_python(value)
-        models = _models.FlextModelsContainers
-        if isinstance(value, Mapping):
-            value = models.ConfigMap.model_validate(value)
-        elif isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
-            value = models.ObjectList.model_validate(value)
-        return adapter.validate_python(value)
-
-    @staticmethod
-    def normalize_to_container(value: p.GuardInput) -> t.RuntimeData | BaseModel:
+    def normalize_to_container(value: p.GuardInput) -> t.JsonPayload:
         """Preserve model identity and use native JSON for supported data shapes.
 
         Returns:
@@ -158,29 +111,13 @@ class FlextUtilitiesPydantic(
         value: p.GuardInput | p.ModelInput,
         adapter: t.ValueAdapter[OutputT],
     ) -> OutputT:
-        model_adapter = FlextUtilitiesPydantic._json_model_adapter
-        if model_adapter is None:
-            model_adapter = FlextUtilitiesBase.type_adapter(
-                TypeForm(p.Model[t.JsonPayload] | p.HasModelDump),
-                config=_models.FlextModelsBase.ArbitraryTypesModel.model_config,
-            )
-            FlextUtilitiesPydantic._json_model_adapter = model_adapter
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            if isinstance(value, MappingProxyType):
-                payload = dict(value)
-            elif hasattr(value, "model_dump") and hasattr(value, "__pydantic_core_schema__"):
-                payload = value.model_dump(mode="json")
-            elif model_adapter.validator.isinstance_python(value) and not isinstance(value, Mapping):
-                payload = model_adapter.validate_python(value).model_dump(mode="json")
-            else:
-                payload = value
-        if isinstance(payload, Mapping):
-            payload = _models.FlextModelsContainers.ConfigMap.model_validate(
-                to_jsonable_python(payload)
-            ).root
+        if isinstance(value, p.HasModelDump):
+            return adapter.validate_python(value.model_dump(mode="json"), strict=True)
+        payload = (
+            _models.FlextModelsContainers.ConfigMap.model_validate(value).root
+            if isinstance(value, Mapping)
+            else value
+        )
         return adapter.validate_python(to_jsonable_python(payload), strict=True)
 
     @staticmethod
@@ -219,12 +156,18 @@ class FlextUtilitiesPydantic(
         """
         if value is None:
             return None
-        return FlextUtilitiesPydantic.normalize_to_json_mapping(value)
+        payload = (
+            value.model_dump(mode="json")
+            if isinstance(value, p.HasModelDump)
+            else value
+        )
+        parsed = _models.FlextModelsContainers.ConfigMap.model_validate(payload)
+        return FlextUtilitiesPydantic.normalize_to_json_mapping(parsed)
 
     @staticmethod
     def normalize_metadata_input_mapping(
         value: p.MetadataInput,
-    ) -> t.MappingKV[str, t.JsonPayload | None] | None:
+    ) -> t.JsonMapping | None:
         """Validate string-keyed metadata before serializing its values.
 
         Returns:
@@ -233,13 +176,7 @@ class FlextUtilitiesPydantic(
         """
         if value is None:
             return None
-        payload = (
-            value.model_dump(mode="json")
-            if isinstance(value, p.HasModelDump)
-            else value
-        )
-        parsed = _models.FlextModelsContainers.ConfigMap.model_validate(payload)
-        return FlextUtilitiesPydantic.normalize_to_json_mapping(parsed)
+        return FlextUtilitiesPydantic.normalize_to_json_mapping(value)
 
     @staticmethod
     def validate_metadata_attributes(value: p.MetadataInput) -> t.JsonMapping:

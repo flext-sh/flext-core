@@ -87,18 +87,53 @@ class TestsFlextCoreDecoratorsCombined:
         tm.that(business_operation.__name__, eq="business_operation")
 
     @staticmethod
-    def test_railway_preserves_a_preexisting_result() -> None:
-        """A preexisting result retains its identity and successful payload."""
-        original = r[str].ok("already_wrapped")
+    @pytest.mark.parametrize("succeeds", (True, False))
+    @pytest.mark.parametrize(
+        "decorator",
+        (d.railway(), d.combined(railway_enabled=True)),
+    )
+    def test_railway_preserves_a_preexisting_result(
+        decorator: p.RailwayDecorator,
+        *,
+        succeeds: bool,
+    ) -> None:
+        """Existing success and failure results retain their original identity."""
+        original = (
+            r[str].ok("already_wrapped") if succeeds else r[str].fail("already_failed")
+        )
 
-        @d.railway()
+        @decorator
         def returns_result() -> p.Result[str]:
             return original
 
-        outcome = returns_result()
+        outcome: p.Result[str] = returns_result()
 
         tm.ok(outcome is original)
-        tm.that(tm.ok(outcome), eq="already_wrapped")
+        if succeeds:
+            tm.ok(outcome, eq="already_wrapped")
+        else:
+            tm.fail(outcome)
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "decorator",
+        (d.railway(), d.combined(railway_enabled=True)),
+    )
+    def test_railway_normalizes_a_mixed_return_contract(
+        decorator: p.RailwayDecorator,
+    ) -> None:
+        """A mixed raw/result callable always exposes one result layer."""
+        original = r[str].ok("wrapped")
+
+        @decorator
+        def returns_mixed(*, prewrapped: bool) -> str | p.Result[str]:
+            return original if prewrapped else "raw"
+
+        wrapped: p.Result[str] = returns_mixed(prewrapped=True)
+        raw: p.Result[str] = returns_mixed(prewrapped=False)
+
+        tm.ok(wrapped is original)
+        tm.ok(raw, eq="raw")
 
     @staticmethod
     def test_retry_succeeds_after_transient_failure() -> None:
@@ -177,11 +212,11 @@ class TestsFlextCoreDecoratorsCombined:
         tm.ok(outcome, eq="success")
         tm.that(attempts, eq=2)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("timeout_seconds", "should_raise"),
         [(5.0, False), (0.001, True)],
     )
-    @staticmethod
     def test_timeout_enforces_duration_budget(
         timeout_seconds: float,
         *,

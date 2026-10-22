@@ -21,7 +21,7 @@ BARE_VIOLATION: FlextTypingBase.StrMapping = {}
 BINARY_ARITY: int = 2
 
 
-class FlextUtilitiesBeartypeClassVisitor:
+class FlextUtilitiesBeartypeClassVisitorPart01:
     """CLASS_PLACEMENT + PROTOCOL_TREE + MRO_SHAPE + LOOSE_SYMBOL visitors."""
 
     @staticmethod
@@ -128,4 +128,4 @@ class FlextUtilitiesBeartypeClassVisitor:
         return NO_VIOLATION
 
 
-__all__: list[str] = ["FlextUtilitiesBeartypeClassVisitor"]
+__all__: list[str] = ["FlextUtilitiesBeartypeClassVisitorPart01"]

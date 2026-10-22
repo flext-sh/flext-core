@@ -16,8 +16,8 @@ from flext_core._handlers_parts import flexthandlers_part_03
 from flext_core._utilities import FlextUtilitiesHandler
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    flexthandlers_part_03.FlextHandlers[MessageT_contra, ResultT],
+class FlextHandlersPart04[MessageT_contra, ResultT](
+    flexthandlers_part_03.FlextHandlersPart03[MessageT_contra, ResultT],
 ):
     def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
@@ -109,7 +109,6 @@ class FlextHandlers[MessageT_contra, ResultT](
         this base implementation doesn't use instance state.
 
         """
-        _ = self
         if data is None:
             return r[bool].fail_op(
                 "validate handler message",
@@ -131,4 +130,4 @@ class FlextHandlers[MessageT_contra, ResultT](
             _ = self.record_metric(c.WarningLevel.ERROR, error)
 
 
-__all__: list[str] = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlersPart04"]

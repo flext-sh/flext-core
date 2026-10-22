@@ -20,14 +20,16 @@ if TYPE_CHECKING:
     from collections.abc import Iterator
 
 
-class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelpers):
+class FlextUtilitiesBeartypeHelpersPart02(
+    helpers_part_01.FlextUtilitiesBeartypeHelpersPart01
+):
     @staticmethod
     def unwrap_annotated(
         hint: FlextTypingBase.TypeFormSpecifier | None,
         *,
         owner: _types_mod.ModuleType | type | None = None,
     ) -> FlextTypingBase.TypeFormSpecifier | None:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart02
         current = hint
         while current is not None:
             current = h.unwrap_type_alias(current, owner=owner)
@@ -125,7 +127,7 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelper
 
     @staticmethod
     def runtime_wrapper_module_for(target: type) -> _types_mod.ModuleType | None:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart02
         module = h.runtime_module_for(target)
         if module is None:
             return None
@@ -184,4 +186,4 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_01.FlextUtilitiesBeartypeHelper
         return None
 
 
-__all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]
+__all__: list[str] = ["FlextUtilitiesBeartypeHelpersPart02"]

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from flext_core._typings import FlextTypesServices
 
 
-class FlextExceptionsBase:
+class FlextExceptionsBasePart03:
     """BaseError and all typed exception subclasses."""
 
     class BaseError(FlextBaseErrorStateMixin, Exception):
@@ -306,4 +306,4 @@ class FlextExceptionsBase:
             )
 
 
-__all__: list[str] = ["FlextExceptionsBase"]
+__all__: list[str] = ["FlextExceptionsBasePart03"]

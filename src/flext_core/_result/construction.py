@@ -32,7 +32,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     @abstractmethod
     def _create_success[V](value: V) -> p.Result[V]:
         """Construct a payload through the concrete facade's MRO owner."""
-        raise NotImplementedError
+        raise NotImplementedError(value)
 
     @staticmethod
     @abstractmethod
@@ -43,7 +43,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         exception: BaseException | None,
     ) -> p.Result[Never]:
         """Construct normalized failure state through the concrete facade."""
-        raise NotImplementedError
+        raise NotImplementedError(f"{error}|{error_code}|{error_data}|{exception}")
 
     @staticmethod
     def require_error(source: p.FailureLike) -> str:
@@ -326,7 +326,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
             return cls._failure(str(exc), exception=exc)
 
     @staticmethod
-    def successful_result[ValueT](obj: ValueT) -> bool:
+    def successful_result(obj: p.SuccessCheckable | t.JsonPayload) -> bool:
         """Check whether an object is a successful result instance.
 
         Returns:
@@ -336,7 +336,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
-    def failed_result[ValueT](obj: ValueT) -> bool:
+    def failed_result(obj: p.SuccessCheckable | t.JsonPayload) -> bool:
         """Check whether an object is a failed result instance.
 
         Returns:

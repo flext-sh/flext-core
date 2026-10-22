@@ -38,7 +38,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         report = u.check(_PrivateHelper)
 
         tm.that(report.empty, truth=True)
-        assert _MISSING_PREFIX not in report
+        tm.that(report, where=lambda value: _MISSING_PREFIX not in value)
 
     @staticmethod
     def test_generic_bracket_specialization_has_no_namespace_violation() -> None:
@@ -49,7 +49,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         report = u.check(fake)
 
         tm.that(report.empty, truth=True)
-        assert _MISSING_PREFIX not in report
+        tm.that(report, where=lambda value: _MISSING_PREFIX not in value)
 
     @staticmethod
     def test_inner_class_qualname_exempts_prefix_check() -> None:
@@ -60,7 +60,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         report = u.check(fake)
 
-        assert _MISSING_PREFIX not in report
+        tm.that(report, where=lambda value: _MISSING_PREFIX not in value)
 
     @staticmethod
     def test_facade_root_name_exempts_prefix_check() -> None:
@@ -70,7 +70,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         report = u.check(fake)
 
-        assert _MISSING_PREFIX not in report
+        tm.that(report, where=lambda value: _MISSING_PREFIX not in value)
 
     @staticmethod
     def test_flext_core_class_missing_prefix_is_flagged() -> None:
@@ -86,8 +86,8 @@ class TestsFlextCoreEnforcementNamespacePart01:
         report = u.check(offender)
 
         tm.that(report, truth=True)
-        assert len(report) >= 1
-        assert _MISSING_PREFIX in report
+        tm.that(len(report), gte=1)
+        tm.that(report, where=lambda value: _MISSING_PREFIX in value)
         prefix_violations = [
             v for v in report.violations if _MISSING_PREFIX in v.message
         ]
@@ -95,7 +95,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         violation = prefix_violations[0]
         tm.that(violation.layer, eq="Namespace")
         tm.that(violation.qualname, eq="Widget")
-        assert '"Flext"' in violation.message
+        tm.that(violation.message, has='"Flext"')
 
     @staticmethod
     def test_flext_core_class_with_prefix_is_clean() -> None:
@@ -106,8 +106,9 @@ class TestsFlextCoreEnforcementNamespacePart01:
         report = u.check(compliant)
 
         tm.that(report.empty, truth=True)
-        assert _MISSING_PREFIX not in report
+        tm.that(report, where=lambda value: _MISSING_PREFIX not in value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("class_name", "flagged"),
         [
@@ -117,7 +118,6 @@ class TestsFlextCoreEnforcementNamespacePart01:
             ("FlextModelsMixins", True),
         ],
     )
-    @staticmethod
     def test_tests_module_requires_tests_prefix_composition(
         class_name: str,
         *,
@@ -129,7 +129,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
 
         report = u.check(target)
 
-        assert (_MISSING_PREFIX in report) is flagged
+        tm.that(report, where=lambda value: (_MISSING_PREFIX in value) is flagged)
 
     @staticmethod
     def _namespace_tree(qualname: str, children: _NamespaceTree) -> type:

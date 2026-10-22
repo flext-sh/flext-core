@@ -152,8 +152,8 @@ class TestsFlextCoreUtilitiesReliability:
         tm.that(result.failure, truth=True)
         tm.that("still broken" in (result.error or ""), truth=True)
 
-    @pytest.mark.parametrize("invalid_attempts", [0, -1])
     @staticmethod
+    @pytest.mark.parametrize("invalid_attempts", [0, -1])
     def test_retry_rejects_non_positive_max_attempts(
         invalid_attempts: int,
     ) -> None:

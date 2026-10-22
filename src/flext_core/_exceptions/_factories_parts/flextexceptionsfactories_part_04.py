@@ -15,8 +15,8 @@ if TYPE_CHECKING:
     from flext_core import r
 
 
-class FlextExceptionsFactories(
-    flextexceptionsfactories_part_03.FlextExceptionsFactories
+class FlextExceptionsFactoriesPart04(
+    flextexceptionsfactories_part_03.FlextExceptionsFactoriesPart03
 ):
     @staticmethod
     def fail_conflict[TResult](
@@ -37,18 +37,18 @@ class FlextExceptionsFactories(
             R[T].fail with a canonical conflict message.
 
         """
-        options, error = FlextExceptionsFactories._resolve_options(options)
+        options, error = FlextExceptionsFactoriesPart04._resolve_options(options)
         params = m.ConflictErrorParams(
             resource_type=resource_type,
             resource_id=resource_id,
             conflict_reason=reason,
         )
-        msg = FlextExceptionsFactories._failure_message(
+        msg = FlextExceptionsFactoriesPart04._failure_message(
             f"create {resource_type} {resource_id!r}",
             params=params,
             error=error,
         )
-        return FlextExceptionsFactories._fail_result(
+        return FlextExceptionsFactoriesPart04._fail_result(
             msg,
             params,
             options=options,
@@ -57,4 +57,4 @@ class FlextExceptionsFactories(
         )
 
 
-__all__: list[str] = ["FlextExceptionsFactories"]
+__all__: list[str] = ["FlextExceptionsFactoriesPart04"]

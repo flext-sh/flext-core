@@ -11,11 +11,11 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
+from flext_core import t
 from flext_core._models._enforcement import (
     FlextModelsEnforcementBase,
     FlextModelsEnforcementModelBase,
 )
-from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
@@ -30,7 +30,7 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         """
 
         kind: Literal["flext_infra_rule"] = "flext_infra_rule"
-        rule_ids: Annotated[FlextTypingBase.StrSequence, Field(min_length=1)]
+        rule_ids: Annotated[t.StrSequence, Field(min_length=1)]
 
     class EnforcementRuntimeWarningSource(FlextModelsEnforcementModelBase):
         """Rule backed by a ``warnings`` category raised at runtime."""
@@ -63,10 +63,8 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
 
         kind: Literal["transformer", "rope", "manual"]
         target: str
-        params: FlextTypingBase.JsonMapping = Field(
-            default_factory=lambda: MappingProxyType[
-                str, FlextTypesPydantic.JsonValue
-            ]({}),
+        params: t.JsonMapping = Field(
+            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
             validate_default=True,
         )
         safe: bool = True

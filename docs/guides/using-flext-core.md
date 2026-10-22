@@ -1,182 +1,100 @@
-<!-- AUTO-GENERATED FILE — regenerate through `make gen` from the workspace root. -->
-<!-- Source of truth: `<workspace-root>/docs/guides/using-flext-core.md`; adjust that workspace source, never this member projection. -->
-
-# flext-core - Using flext-core
-
-> Project profile: `flext-core`
+# Using flext-core 0.12
 
 <!-- TOC START -->
 
-- [Aliases](#aliases)
-- [Result flow](#result-flow)
-- [Settings](#settings)
-- [Container](#container)
-- [Logging](#logging)
-- [Service runtime](#service-runtime)
-- [Good practices](#good-practices)
-- [Bad practices](#bad-practices)
-- [Related](#related)
+- [Current public API](#current-public-api)
+- [Need -> capability -> benefit](#need-capability-benefit)
+- [Construction and execution](#construction-and-execution)
+- [What flext-core must not absorb](#what-flext-core-must-not-absorb)
+- [Validation and release boundary](#validation-and-release-boundary)
 
 <!-- TOC END -->
 
-`flext_core` is the base package for result flow, settings, container wiring, logging,
-and service runtime.
+This guide describes the public interfaces present in the 0.12 development line.
+Source availability is not evidence that the complete fleet or published artifacts
+have passed release acceptance.
 
-## Aliases
+The [0.13 contracts](../architecture/v0.13-contracts.md) are a separate planning
+document. Do not replace current imports with those proposed interfaces while
+finishing 0.12.
 
-Import canonical aliases from the package root:
+## Current public API
 
-The examples below import only the aliases they consume from `flext_core`.
+The current lazy root exports include `c`, `t`, `p`, `m`, `u`, the operational
+aliases `r`, `e`, `x`, `h`, `d`, `s`, and their declared long class names.
+`core` currently resolves to the registry/dispatcher execution instance exposed
+by `api.py`; it is not a module containing `Service` or `Result` classes.
 
-| Alias | Purpose                            |
-| ----- | ---------------------------------- |
-| `c`   | constants / constants namespace    |
-| `d`   | decorators                         |
-| `e`   | errors / exceptions                |
-| `h`   | handlers                           |
-| `m`   | models / Pydantic helpers          |
-| `p`   | protocols                          |
-| `r`   | result (`FlextResult`)             |
-| `s`   | service / runtime (`FlextService`) |
-| `t`   | typings                            |
-| `u`   | utilities                          |
-| `x`   | mixins / execution                 |
+Consumer code imports declared symbols from `flext_core`, not private parts.
+Model fields and service metadata use the models owned by `m`; dependency and
+return annotations use the relevant contracts from `p` and aliases from `t`.
 
-**Important:** `s` is the service/runtime alias. Settings classes (`FlextSettings`,
-`FlextCliSettings`, `FlextTestsSettings`) have no short alias.
+## Need -> capability -> benefit
 
-## Result flow
+| Need | Capability | Benefit |
+| --- | --- | --- |
+| Service foundation | `s[T]` / `FlextService[T]` | Shared service validation and lifecycle; `T` is the result payload type, not the settings type |
+| Railway results | `r[T]` / `FlextResult[T]` | One failure-preserving result implementation |
+| Typed ports | `t.Port[p.X]` | Constructor-level dependency injection without service locators |
+| Data validation | `m` presets and `u.validate_value` | Shared typed boundaries; choose a strict preset when strict validation is required |
+| Configuration | `FlextConfig`, `FlextSettings`, `config`, `settings` | Existing configuration and settings contracts; application-specific objects remain consumer-owned |
+| Handlers | `h` / `FlextHandlers` | Existing typed operation metadata and registration |
+| Lazy exports | Declared root exports | Deferred loading of requested components; not a guarantee that accessing a component has no initialization effects |
 
-Use `r[T]` to construct explicit success or domain-failure results. Do not convert
-unexpected runtime exceptions into success or ad-hoc error dictionaries.
-
-```python
-from __future__ import annotations
-
-from math import isclose
-
-from flext_core import p, r
-
-
-def safe_divide(a: float, b: float) -> p.Result[float]:
-    """Divide two floats, rejecting a zero divisor.
-
-    Returns:
-        The resulting ``p.Result[float]``.
-
-    """
-    if b == 0:
-        return r[float].fail("division_by_zero")
-    return r[float].ok(a / b)
-
-
-quotient_result = safe_divide(10, 2)
-zero_result = safe_divide(10, 0)
-expected_quotient = 5.0
-if not quotient_result.success:
-    message = "Expected division success"
-    raise RuntimeError(message)
-if not isclose(quotient_result.value, expected_quotient):
-    message = "Unexpected division quotient"
-    raise RuntimeError(message)
-if not zero_result.failure:
-    message = "Expected zero divisor failure"
-    raise RuntimeError(message)
-```
-
-## Settings
+## Construction and execution
 
 ```python
-from flext_core import FlextSettings
+from flext_core import r
 
-settings = FlextSettings.fetch_global()
-snapshot = settings.model_dump()
-if not isinstance(snapshot, dict):
-    message = "Expected dict settings snapshot"
-    raise TypeError(message)
+result = r[int].ok(7)
+print(result.unwrap())
 ```
 
-Subprojects extend `FlextSettings` with their own `env_prefix`:
+An application composition root constructs adapters and passes them to its
+services. A dependency uses `t.Port[p.X]`, with a runtime-checkable protocol and
+an excluded field declaration, so service construction validates the supplied
+collaborator without serializing it into the request or response.
 
-```python
-from flext_core import FlextSettings, m
+Service `execute()` returns `p.Result[T]`. Project-specific bases may add their
+own settings and options through MRO; inheriting directly from `s` is not a
+replacement for those local specializations.
 
+The existing `fetch_global()` service accessor builds without arguments. It is
+not a way to supply required ports. `with_settings()` creates an isolated
+settings snapshot; it is not equivalent to retaining an injected settings object
+by reference.
 
-class GreetingSettings(FlextSettings):
-    """Settings for the greeting demo with its own env prefix."""
+The [registry example](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/examples/ex_12_flext_registry.py) exercises public
+registration, discovery and handler behavior. Its
+[service](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/examples/ex_12_registry_support.py) consumes a
+[registry port](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/examples/_models/ex12.py); the
+[composition example](https://github.com/flext-sh/flext-core/blob/0.12.0-dev/examples/ex_12_registry_plugins.py) demonstrates
+shared and isolated registries. For the corresponding service and port rules,
+see [service patterns](service-patterns.md).
 
-    model_config = m.SettingsConfigDict(env_prefix="GREETING_", extra="forbid")
+## What flext-core must not absorb
+
+- CLI frameworks and command rendering belong to `flext-cli`.
+- Code generation, AST/Rope analysis, locks and Git belong to `flext-infra`.
+- Pytest fixtures and matchers belong to `flext-tests`.
+- Domain adapters and LDAP/LDIF/Meltano semantics belong to their packages.
+- Application authorization and use cases belong to the application.
+
+## Validation and release boundary
+
+From the containing FLEXT workspace root, use the canonical member commands:
+
+```bash
+make -f flext-core/Makefile examples
+make -f flext-core/Makefile docs
+make -f flext-core/Makefile tests
 ```
 
-## Container
+Examples exercise the public runtime; docs checks validate the documentation
+contract; tests provide additional behavioral evidence. Passing one does not
+prove the others, the whole fleet, or an installed release candidate.
 
-```python
-from flext_core import FlextContainer, p
-
-container = FlextContainer()
-container.bind("service", "ready")
-resolved: p.Result[str] = container.resolve("service", type_cls=str)
-
-expected_service = "ready"
-if not resolved.success:
-    message = "Expected typed resolution success"
-    raise RuntimeError(message)
-if resolved.value != expected_service:
-    message = "Unexpected resolved service value"
-    raise RuntimeError(message)
-```
-
-## Logging
-
-```python
-from flext_core import u
-
-logger = u.fetch_logger(__name__)
-logger.info("user.created", user_id=42)
-```
-
-## Service runtime
-
-```python
-from typing import override
-
-from flext_core import p, r, s
-
-
-class GreetingService(s[str]):
-    """Service greeting through its execute entry point."""
-
-    @override
-    def execute(self) -> p.Result[str]:
-        return r[str].ok("Hello!")
-
-
-runtime = GreetingService.fetch_global()
-result = runtime.execute()
-expected_greeting = "Hello!"
-if not result.success:
-    message = "Expected service execution success"
-    raise RuntimeError(message)
-if result.value != expected_greeting:
-    message = "Unexpected service greeting"
-    raise RuntimeError(message)
-```
-
-## Good practices
-
-- Use aliases instead of importing nested modules directly.
-- Use `r[T]` for fallible paths.
-- Reset singletons in tests with `FlextSettings.reset_for_testing()` and
-  `FlextContainer.reset_for_testing()`.
-- Remember: `s` = service/runtime, never settings.
-
-## Bad practices
-
-Do not instantiate the base service to execute domain logic: its `execute()` raises
-`NotImplementedError`. Implement the typed operation in a concrete service, and obtain
-its singleton through `fetch_global()`.
-
-## Related
-
-- `flext-core/src/flext_core/README.md`
-- Foundation API reference
+Removing operational aliases, changing `core` into a typed module namespace and
+rewiring consumer bases are 0.13 proposals. They are not prerequisites to close
+the 0.12 documentation slice or permission to publish the 0.12 release. Release
+acceptance remains with Bead `flext-1wjg1`.

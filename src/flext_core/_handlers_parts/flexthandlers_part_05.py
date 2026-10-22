@@ -16,8 +16,8 @@ from flext_core._handlers_parts import flexthandlers_part_04
 from flext_core._utilities import FlextUtilitiesHandler
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    flexthandlers_part_04.FlextHandlers[MessageT_contra, ResultT],
+class FlextHandlersPart05[MessageT_contra, ResultT](
+    flexthandlers_part_04.FlextHandlersPart04[MessageT_contra, ResultT],
 ):
     def _run_pipeline(
         self,
@@ -140,4 +140,4 @@ class FlextHandlers[MessageT_contra, ResultT](
         return self.handle(message)
 
 
-__all__: list[str] = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlersPart05"]

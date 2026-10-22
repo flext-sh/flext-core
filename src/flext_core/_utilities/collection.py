@@ -2,7 +2,7 @@
 
 The heavy lifting lives in `collection_iter.py` (filter/map overloads) and
 `collection_merge.py` (merge strategies). This file keeps just the small
-helpers (count, find, process, normalize_domain_event_data) so it remains
+helpers (count, find, process) so it remains
 under the 200-LOC cap (logical LOC, AGENTS.md §3.1).
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -12,13 +12,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
+from functools import partial
 
 from flext_core import FlextResult, c, p, t
-from flext_core._models import FlextModelsContainers
 from flext_core._utilities import (
     FlextUtilitiesCollectionIter,
     FlextUtilitiesCollectionMerge,
-    FlextUtilitiesPydantic,
 )
 
 
@@ -27,29 +26,6 @@ class FlextUtilitiesCollection(
     FlextUtilitiesCollectionMerge,
 ):
     """Facade composing iter + merge utilities; small helpers live here."""
-
-    @staticmethod
-    def normalize_domain_event_data(
-        value: FlextModelsContainers.ConfigMap | t.JsonMapping | None,
-    ) -> t.JsonMapping:
-        """Normalize domain event payloads into plain flat mappings.
-
-        Returns:
-            The resulting ``t.JsonMapping``.
-
-        """
-        if value is None:
-            empty_data: t.JsonMapping = {}
-            return empty_data
-        raw_source = (
-            value.root if isinstance(value, FlextModelsContainers.ConfigMap) else value
-        )
-        normalized: t.MutableJsonMapping = {}
-        for key, item in raw_source.items():
-            if item is None:
-                continue
-            normalized[key] = FlextUtilitiesPydantic.normalize_to_json_value(item)
-        return normalized
 
     @staticmethod
     def count[TItem](
@@ -107,14 +83,11 @@ class FlextUtilitiesCollection(
         """
         results: MutableSequence[TMapped] = []
         for item in items:
-            item_typed: TItem = item
-            if predicate is not None and (not predicate(item_typed)):
+            if predicate is not None and not predicate(item):
                 continue
-
-            def process_item(current_item: TItem = item_typed) -> TMapped:
-                return processor(current_item)
-
-            process_result = FlextResult[TMapped].create_from_callable(process_item)
+            process_result = FlextResult[TMapped].create_from_callable(
+                partial(processor, item)
+            )
             if process_result.failure:
                 return FlextResult[Sequence[TMapped]].fail(
                     c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
@@ -124,8 +97,7 @@ class FlextUtilitiesCollection(
                     error_code=process_result.error_code,
                     exception=process_result.exception,
                 )
-            processed_item: TMapped = process_result.unwrap()
-            results.append(processed_item)
+            results.append(process_result.unwrap())
         return FlextResult[Sequence[TMapped]].ok(results)
 
 

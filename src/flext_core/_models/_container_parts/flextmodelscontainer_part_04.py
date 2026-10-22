@@ -19,7 +19,9 @@ from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._container_parts import flextmodelscontainer_part_03
 
 
-class FlextModelsContainer(flextmodelscontainer_part_03.FlextModelsContainer):
+class FlextModelsContainerPart04(
+    flextmodelscontainer_part_03.FlextModelsContainerPart03
+):
     class FactoryDecoratorConfig(FlextModelsBase.ImmutableValueModel):
         """Configuration extracted from @d.factory() decorator.
 
@@ -65,4 +67,4 @@ class FlextModelsContainer(flextmodelscontainer_part_03.FlextModelsContainer):
         ] = True
 
 
-__all__: list[str] = ["FlextModelsContainer"]
+__all__: list[str] = ["FlextModelsContainerPart04"]

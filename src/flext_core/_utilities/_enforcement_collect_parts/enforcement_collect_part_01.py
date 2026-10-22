@@ -32,7 +32,7 @@ _ERR_ENFORCEMENT_NAMESPACE_SOURCE = (
 )
 
 
-class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
+class FlextUtilitiesEnforcementCollectPart01(FlextUtilitiesEnforcementEmit):
     """Project resolution + rule-input iterators."""
 
     @staticmethod
@@ -43,8 +43,10 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             The pyproject root that physically owns the target source.
 
         """
-        source_file = FlextUtilitiesEnforcementCollect._resolve_target_source_file(
-            target,
+        source_file = (
+            FlextUtilitiesEnforcementCollectPart01._resolve_target_source_file(
+                target,
+            )
         )
         if source_file is None:
             return None
@@ -103,7 +105,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
         """
         try:
-            project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
+            project_root = FlextUtilitiesEnforcementCollectPart01._owning_project_root(
+                target
+            )
         except RuntimeError:
             project_root = None
         if project_root is None:
@@ -138,7 +142,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
         if not top:
             return None
-        src = FlextUtilitiesEnforcementCollect._discover_src_package(target)
+        src = FlextUtilitiesEnforcementCollectPart01._discover_src_package(target)
         if src is None:
             if top == "fence":
                 return None
@@ -146,7 +150,9 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             class_stem_override = None
         else:
             class_stem_override = None
-            project_root = FlextUtilitiesEnforcementCollect._owning_project_root(target)
+            project_root = FlextUtilitiesEnforcementCollectPart01._owning_project_root(
+                target
+            )
             if project_root is not None:
                 try:
                     document = (
@@ -200,7 +206,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
 
     @staticmethod
     def _iter_effective(target: type) -> Iterator[tuple[str, type]]:
-        direct = list(FlextUtilitiesEnforcementCollect._iter_inner(target))
+        direct = list(FlextUtilitiesEnforcementCollectPart01._iter_inner(target))
         if direct:
             yield from direct
             return
@@ -208,7 +214,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         for base in target.__mro__[1:]:
             if base is object:
                 continue
-            for name, value in FlextUtilitiesEnforcementCollect._iter_inner(base):
+            for name, value in FlextUtilitiesEnforcementCollectPart01._iter_inner(base):
                 if name not in seen:
                     seen.add(name)
                     yield name, value
@@ -268,7 +274,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         target: type,
         layer: str,
     ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
-        accept = FlextUtilitiesEnforcementCollect._attr_filter(target, layer)
+        accept = FlextUtilitiesEnforcementCollectPart01._attr_filter(target, layer)
         qn = target.__qualname__
         for name, value in vars(target).items():
             if accept(name, value):
@@ -295,7 +301,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         layer = (
             effective_layer
-            or FlextUtilitiesEnforcementCollect.detect_layer(target)
+            or FlextUtilitiesEnforcementCollectPart01.detect_layer(target)
             or ""
         )
 
@@ -303,7 +309,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
             node: type,
             path: str,
         ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
-            for name, value in FlextUtilitiesEnforcementCollect._iter_inner(node):
+            for name, value in FlextUtilitiesEnforcementCollectPart01._iter_inner(node):
                 full = f"{path}.{name}"
                 yield full, (value, layer)
                 if not isinstance(value, EnumType):
@@ -312,4 +318,4 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         yield from walk(target, qn)
 
 
-__all__: list[str] = ["FlextUtilitiesEnforcementCollect"]
+__all__: list[str] = ["FlextUtilitiesEnforcementCollectPart01"]

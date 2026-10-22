@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from functools import partial
-from typing import TYPE_CHECKING, override
+from typing import TYPE_CHECKING, Any, override
 
 from flext_core import c, e, m, p, r, s, t, u
 
@@ -18,9 +18,9 @@ if TYPE_CHECKING:
 class FlextRegistry(s[bool], m.RegistryOptions):
     """Coordinate the injected runtime without another dispatch or storage engine."""
 
-    def __init_subclass__(cls, **kwargs: t.Scalar | t.ScalarMapping) -> None:
+    def __init_subclass__(cls, **kwargs: Any) -> None:
         """Keep explicitly selected class-scope plugins local to each subclass."""
-        super().__init_subclass__()
+        super().__init_subclass__(**kwargs)
         cls._class_plugin_storage = {}
 
     @override
@@ -81,7 +81,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegistrationDetails]`` containing the registration details or
-              an error if registration failed.
+                an error if registration failed.
 
         """
         outcome = self.dispatcher.register_handlers((
@@ -104,7 +104,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegistrySummary]`` containing the summary of the registration
-              process or an error if registration failed.
+                process or an error if registration failed.
 
         """
         return self._register_batch(
@@ -122,7 +122,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegistrySummary]`` containing the summary of the registration
-              process or an error if registration failed.
+                process or an error if registration failed.
 
         """
         return self._register_batch(
@@ -223,7 +223,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[p.RegisterableService]`` containing the requested plugin or an
-              error if not found.
+                error if not found.
 
         """
         key = u.registry_plugin_key(category, name)
@@ -252,7 +252,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         Returns:
             A ``p.Result[t.StrSequence]`` containing the list of registered plugin
-              names.
+                names.
 
         """
         key_prefix = u.registry_plugin_key(category)

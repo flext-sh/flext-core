@@ -46,12 +46,16 @@ if not rejected_value.failure:
 
 ## Example: Runtime wiring
 
-```python
-from flext_core import FlextContainer, FlextSettings
+Supply core settings through a scoped registration; `settings` is a reserved name
+and cannot be registered with `bind`.
 
-container = FlextContainer()
+```python
+from flext_core import FlextContainer, FlextSettings, m
+
 settings = FlextSettings.fetch_global()
-_ = container.bind("settings", settings)
+container = FlextContainer.shared().scope(
+    registration=m.ServiceRegistrationSpec(settings=settings),
+)
 
 resolved = container.resolve("settings")
 if not resolved.success:

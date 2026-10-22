@@ -19,7 +19,7 @@ from flext_core import FlextExceptions, FlextResult, c, p, t
 from flext_core._utilities import FlextUtilitiesLoggingConfig
 
 
-class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
+class FlextUtilitiesLoggingContextPart01(FlextUtilitiesLoggingConfig):
     """Native context-local bindings; scopes track key ownership, never values."""
 
     _scope_keys: ClassVar[ContextVar[t.MappingKV[str, frozenset[str]]]] = ContextVar(
@@ -114,4 +114,4 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             return FlextExceptions.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
 
 
-__all__: list[str] = ["FlextUtilitiesLoggingContext"]
+__all__: list[str] = ["FlextUtilitiesLoggingContextPart01"]

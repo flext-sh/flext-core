@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 import pytest
 
@@ -241,3 +242,62 @@ class TestsFlextModelsProjectMetadata:
         tool_config = m.ProjectToolFlext()
 
         tm.that(tool_config.project.budget, none=True)
+
+    @staticmethod
+    @pytest.mark.parametrize("payload", [{}, {"docs": {}}])
+    def test_documentation_language_defaults_for_existing_metadata(
+        payload: t.JsonMapping,
+    ) -> None:
+        """Existing metadata retains the English presentation default."""
+        tool_config = m.ProjectToolFlext.model_validate(payload)
+
+        tm.that(tool_config.docs.documentation_language, eq="en")
+        rebuilt = m.ProjectToolFlext.model_validate_json(tool_config.model_dump_json())
+        tm.that(rebuilt, eq=tool_config)
+
+    @staticmethod
+    @pytest.mark.parametrize("language", ["en", "pt-BR"])
+    def test_documentation_language_round_trips(
+        language: t.DocumentationLanguage,
+    ) -> None:
+        """Supported presentation languages survive the public document boundary."""
+        document = m.PyprojectDocument.model_validate({
+            "tool": {"flext": {"docs": {"documentation_language": language}}},
+        })
+
+        rebuilt = m.PyprojectDocument.model_validate_json(document.model_dump_json())
+        tm.that(rebuilt.tool.flext.docs.documentation_language, eq=language)
+
+    @staticmethod
+    @pytest.mark.parametrize("language", ["pt", "pt-br", "fr", "", None, 1])
+    def test_documentation_language_rejects_unsupported_values(
+        language: t.JsonValue,
+    ) -> None:
+        """Unknown locales and non-language values fail instead of falling back."""
+        with pytest.raises(c.ValidationError, match="literal_error"):
+            m.ProjectToolFlext.model_validate({
+                "docs": {"documentation_language": language},
+            })
+
+    @staticmethod
+    def test_documentation_language_preserves_forbidden_extras() -> None:
+        """Adding the supported leaf does not loosen other documentation keys."""
+        with pytest.raises(c.ValidationError, match="extra_forbidden"):
+            m.ProjectToolFlext.model_validate({
+                "docs": {"documentation_language": "pt-BR", "unknown_locale": "pt"},
+            })
+
+    @staticmethod
+    @pytest.mark.parametrize("mode", ["validation", "serialization"])
+    def test_documentation_language_schema_is_finite(
+        mode: Literal["validation", "serialization"],
+    ) -> None:
+        """Both schema modes expose an optional finite string with strict extras."""
+        schema = m.ProjectToolFlextDocs.model_json_schema(mode=mode)
+        language_schema = schema["properties"]["documentation_language"]
+
+        tm.that(language_schema["default"], eq="en")
+        tm.that(schema["additionalProperties"], eq=False)
+        tm.that("documentation_language" in schema.get("required", []), truth=False)
+        tm.that(schema["$defs"]["DocumentationLanguage"]["type"], eq="string")
+        tm.that(schema["$defs"]["DocumentationLanguage"]["enum"], eq=["en", "pt-BR"])

@@ -21,7 +21,7 @@ from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesEnforcement
 
 
-class FlextModelsBase:
+class FlextModelsBasePart01:
     """Container for base model classes - Tier 0, 100% standalone."""
 
     class EnforcedModel(FlextModelsPydantic.BaseModel):
@@ -111,4 +111,4 @@ class FlextModelsBase:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
 
-__all__: list[str] = ["FlextModelsBase"]
+__all__: list[str] = ["FlextModelsBasePart01"]

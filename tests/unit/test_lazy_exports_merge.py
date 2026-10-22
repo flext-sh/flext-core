@@ -76,16 +76,18 @@ class TestsFlextCoreLazyExportsMerge:
             "try:\n"
             f"    normalized = normalize_lazy_imports('pkg', {raw_literal})\n"
             "except TypeError as exc:\n"
-            "    assert exc.__cause__ is not None\n"
-            "    print('rejected')\n"
+            "    print('rejected', exc.__cause__ is not None)\n"
             "else:\n"
-            "    assert normalized['Alpha'] in ('pkg.alpha', ('pkg.alpha', 'Alpha'))\n"
-            "    print('accepted')\n"
+            "    print('accepted', normalized['Alpha'] in "
+            "('pkg.alpha', ('pkg.alpha', 'Alpha')))\n"
         )
         result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
         tm.that(result.success, truth=True, msg=result.error)
         tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
-        tm.that(result.value.stdout.strip(), eq="accepted" if accepted else "rejected")
+        tm.that(
+            result.value.stdout.strip(),
+            eq="accepted True" if accepted else "rejected True",
+        )
         tm.that(result.value.stderr, eq="")
 
     @staticmethod
@@ -147,6 +149,7 @@ class TestsFlextCoreLazyExportsMerge:
         with pytest.raises(ValueError, match="relative lazy-import paths"):
             merge_lazy_imports((".child",), {})
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("module_path", "raw", "expected"),
         [
@@ -176,7 +179,6 @@ class TestsFlextCoreLazyExportsMerge:
             ),
         ],
     )
-    @staticmethod
     def test_normalize_map_resolves_relative_and_preserves_absolute(
         module_path: str,
         raw: t.LazyImportMap,
@@ -206,8 +208,8 @@ class TestsFlextCoreLazyExportsMerge:
 
             getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)
-            assert getattr_fn("module") is child_module
-            assert lazy.cache_stats["module_cache"] >= 1
+            tm.that(getattr_fn("module"), where=lambda value: value is child_module)
+            tm.that(lazy.cache_stats["module_cache"], gte=1)
         finally:
             sys.modules.pop(package_name, None)
             sys.modules.pop(module_name, None)
@@ -233,7 +235,7 @@ class TestsFlextCoreLazyExportsMerge:
             getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)
             getattr_fn("module")
-            assert lazy.cache_stats["module_cache"] >= 1
+            tm.that(lazy.cache_stats["module_cache"], gte=1)
 
             lazy.reset()
 

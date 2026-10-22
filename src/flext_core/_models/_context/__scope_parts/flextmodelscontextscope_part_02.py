@@ -13,12 +13,12 @@ from typing import Annotated
 from flext_core import t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
-    FlextModelsContextScope as FlextModelsContextScopeBase,
+    FlextModelsContextScopePart01,
 )
 from flext_core._protocols import FlextProtocolsContainer
 
 
-class FlextModelsContextScope(FlextModelsContextScopeBase):
+class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Mutable context metadata, hooks, statistics and scope-variable registry."""
 
@@ -34,12 +34,12 @@ class FlextModelsContextScope(FlextModelsContextScopeBase):
             description="Lifecycle hooks keyed by event name",
         )
         statistics: Annotated[
-            FlextModelsContextScopeBase.ContextStatistics,
+            FlextModelsContextScopePart01.ContextStatistics,
             FlextModelsPydantic.Field(
                 description="Operation counters for this context instance"
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=FlextModelsContextScopeBase.ContextStatistics,
+            default_factory=FlextModelsContextScopePart01.ContextStatistics,
         )
         active: bool = FlextModelsPydantic.Field(
             default=True, description="Whether the context accepts operations"
@@ -62,4 +62,4 @@ class FlextModelsContextScope(FlextModelsContextScopeBase):
         )
 
 
-__all__: t.StrSequence = ("FlextModelsContextScope",)
+__all__: t.StrSequence = ("FlextModelsContextScopePart02",)

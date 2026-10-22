@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core._protocols._logging_parts import flextprotocolslogging_part_03
 
 
-class FlextProtocolsLogging(flextprotocolslogging_part_03.FlextProtocolsLogging):
+class FlextProtocolsLogging(flextprotocolslogging_part_03.FlextProtocolsLoggingPart03):
     """Public facade for FlextProtocolsLogging."""
 
 

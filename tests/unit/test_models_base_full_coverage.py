@@ -64,10 +64,14 @@ class TestsFlextCoreModelsBaseFullCoverage:
         bad_value: t.Scalar | t.SequenceOf[str],
     ) -> None:
         """Test metadata attributes non mapping rejected."""
-        assert c.ValidationError is m.ValidationError, (
-            f"constants binding {c.ValidationError!r} ({id(c.ValidationError)}) "
-            f"differs from model SDK binding {m.ValidationError!r} "
-            f"({id(m.ValidationError)})"
+        tm.that(
+            c.ValidationError,
+            where=lambda error_type: error_type is m.ValidationError,
+            msg=(
+                f"constants binding {c.ValidationError!r} ({id(c.ValidationError)}) "
+                f"differs from model SDK binding {m.ValidationError!r} "
+                f"({id(m.ValidationError)})"
+            ),
         )
         with pytest.raises(c.ValidationError) as failure:
             m.Metadata.model_validate({"attributes": bad_value})

@@ -24,6 +24,16 @@ class TestsFlextCorePydanticDeclarations:
     """Behavioral contract for the advanced pydantic facade exports."""
 
     @staticmethod
+    def test_field_preserves_shared_identity_and_required_metadata() -> None:
+        """Both public facades share the factory and preserve required fields."""
+        tm.ok(m.Field is u.Field)
+        exported = m.Field(description="Native field metadata")
+        utility = u.Field(description=exported.description)
+        tm.that(utility.description, eq=exported.description)
+        tm.ok(exported.is_required())
+        tm.ok(utility.is_required())
+
+    @staticmethod
     def test_field_required_defaults_factories_and_aliases() -> None:
         """Native field declarations retain validation and serialization behavior."""
 
@@ -398,11 +408,9 @@ class TestsFlextCorePydanticDeclarations:
             "animal": {"kind": "dog", "bark": "woof"},
         })
 
-        tm.that(
-            isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog), truth=True
-        )
-        assert isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog)
-        tm.that(pet.animal.bark, eq="woof")
+        tm.that(pet.animal, is_=TestsFlextCorePydanticDeclarations._Dog)
+        if isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog):
+            tm.that(pet.animal.bark, eq="woof")
 
         with pytest.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Pet.model_validate({
@@ -475,9 +483,7 @@ class TestsFlextCorePydanticDeclarations:
 
         vector = adapter.validate_python({"x": 1, "y": 2})
 
-        tm.that(
-            isinstance(vector, TestsFlextCorePydanticDeclarations._Vector), truth=True
-        )
+        tm.that(vector, is_=TestsFlextCorePydanticDeclarations._Vector)
         tm.that((vector.x, vector.y), eq=(1, 2))
 
         with pytest.raises(m.ValidationError):

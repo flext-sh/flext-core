@@ -23,9 +23,13 @@ _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
-    type ModelInput = t.ModelInput[FlextProtocolsResult.HasModelDump]
-    type ConfigModelInput = t.ConfigModelInput[FlextProtocolsResult.HasModelDump]
-    type MetadataInput = t.MetadataInput[FlextProtocolsResult.HasModelDump]
+    type ModelInput = t.ModelInput[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    type ConfigModelInput = t.ConfigModelInput[
+        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
+    ]
+    type MetadataInput = t.MetadataInput[
+        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
+    ]
 
     @runtime_checkable
     class ResultView(Protocol[_ResultViewT_co]):
@@ -174,6 +178,24 @@ class FlextProtocolsResult:
         """Covariant structural railway interface over result operations and state."""
 
     @runtime_checkable
+    class RailwayDecorator(Protocol):
+        """Wrap raw returns once and preserve already returned results."""
+
+        @overload
+        def __call__[**PCallback, TValue](
+            self,
+            func: Callable[PCallback, FlextProtocolsResult.Result[TValue]],
+            /,
+        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+
+        @overload
+        def __call__[**PCallback, TValue](
+            self,
+            func: Callable[PCallback, TValue | FlextProtocolsResult.Result[TValue]],
+            /,
+        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+
+    @runtime_checkable
     class SuccessCheckable(Protocol):
         @property
         def success(self) -> bool: ...
@@ -196,13 +218,15 @@ class FlextProtocolsResult:
         def matches_error_domain(self, domain: str) -> bool: ...
 
     @runtime_checkable
-    class HasModelDump(Protocol):
+    class HasModelDump[DumpT: t.JsonPayload | t.MetadataMapping = t.MetadataMapping](
+        Protocol
+    ):
         def model_dump(
             self,
             *,
             mode: str = "python",
             exclude: set[str] | None = None,
-        ) -> t.MappingKV[str, t.JsonPayload | None]: ...
+        ) -> DumpT: ...
 
 
 __all__: list[str] = ["FlextProtocolsResult"]

@@ -64,7 +64,7 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         _exc_val: BaseException | None,
         _exc_tb: TracebackType | None,
     ) -> None:
-        pass
+        _ = _exc_type, _exc_val, _exc_tb
 
     def __or__[D](self, default: D) -> T | D:
         """Return the payload on success, otherwise ``default``."""

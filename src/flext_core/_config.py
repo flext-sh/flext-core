@@ -16,6 +16,11 @@ Each library gets its own namespaced subclass (``class FlextCliConfig(FlextConfi
 with flat fields composed via MRO; a domain prefix (``cli_``/``mcp_``) is optional,
 only to organize. Fields are unique at the subclass root.
 
+Only ``fetch_global`` publishes a root. Direct construction is isolated; once
+published, the root identity is stable. ``reset_for_testing`` reloads current
+sources into that root only after complete validation, keeping imported handles
+live without making config writable to consumers.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -37,7 +42,7 @@ from pydantic_settings import (
 )
 
 from flext_core._constants.config import FlextConstantsConfig
-from flext_core._settings import app_env_prefix, platform_config_root
+from flext_core._settings import FlextSettings
 from flext_core.config_sources import FlextStrictYamlConfigSource
 
 
@@ -89,7 +94,9 @@ class FlextConfig(BaseSettings):
 
         """
         namespace = cls._package_namespace()
-        override = os.environ.get(f"{app_env_prefix(namespace)}CONFIG_DIR")
+        override = os.environ.get(
+            f"{FlextSettings.app_env_prefix(namespace)}CONFIG_DIR"
+        )
         if override:
             return Path(override)
         package = cls.__module__.partition(".")[0]
@@ -103,7 +110,7 @@ class FlextConfig(BaseSettings):
         (``$XDG_CONFIG_HOME/<namespace>`` on Linux). Packaged defaults stay
         immutable; anything declared here overlays them.
         """
-        return platform_config_root() / cls._package_namespace()
+        return FlextSettings.platform_config_root() / cls._package_namespace()
 
     @classmethod
     def _yaml_files_in(cls, directory: Path) -> list[Path]:
@@ -221,39 +228,48 @@ class FlextConfig(BaseSettings):
         )
 
     @classmethod
-    def fetch_global(cls) -> Self:
-        """Return the shared frozen singleton (lazy; built on first access).
+    def _load_sources(cls) -> Self:
+        """Validate current sources with their declaring owner in failure notes.
 
         Returns:
-            The shared frozen singleton instance of the config.
+            A fully validated, unpublished config candidate.
 
         Raises:
             ValidationError: If the configuration is invalid.
 
         """
-        instance = cls.__dict__.get("_instance")
-        if isinstance(instance, cls):
-            return instance
+        try:
+            return cls()
+        except ValidationError as error:
+            sources = ", ".join(str(path) for path in cls._config_source_files())
+            error.add_note(
+                f"Configuration owner: {inspect.getfile(cls)}; sources: {sources}"
+            )
+            raise
+
+    @classmethod
+    def fetch_global(cls) -> Self:
+        """Return the shared frozen root, publishing only after validation."""
         with cls._lock:
             instance = cls.__dict__.get("_instance")
             if isinstance(instance, cls):
                 return instance
-            try:
-                created = cls()
-            except ValidationError as error:
-                sources = ", ".join(str(path) for path in cls._config_source_files())
-                error.add_note(
-                    f"Configuration owner: {inspect.getfile(cls)}; sources: {sources}"
-                )
-                raise
+            created = cls._load_sources()
             cls._instance = created
             return created
 
     @classmethod
     def reset_for_testing(cls) -> None:
-        """Drop the singleton slot for test isolation."""
+        """Reload a published root in place; keep unused concrete classes lazy.
+
+        Repoint through the real environment seam, then restore and reset again.
+        Invalid sources leave the published reference and validated state intact.
+        """
         with cls._lock:
-            cls._instance = None
+            instance = cls.__dict__.get("_instance")
+            if isinstance(instance, cls):
+                validated = cls._load_sources()
+                instance.__setstate__(validated.__getstate__())
 
 
 config: FlextConfig = FlextConfig.fetch_global()

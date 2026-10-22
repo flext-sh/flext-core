@@ -12,12 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._container_parts import (
-    FlextModelsContainer as FlextModelsContainerPartFinal,
+from flext_core._models._container_parts.flextmodelscontainer_part_04 import (
+    FlextModelsContainerPart04,
 )
 
 
-class FlextModelsContainer(FlextModelsContainerPartFinal):
+class FlextModelsContainer(FlextModelsContainerPart04):
     """Public facade for FlextModelsContainer."""
 
 

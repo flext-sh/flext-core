@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 class TestsFlextCoreExceptionsTypedMetrics:
     """Tests for ``FlextCoreExceptionsTypedMetrics``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("factory", "expected_type"),
         [
@@ -82,7 +83,6 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
-    @staticmethod
     def test_typed_exception_is_expected_type_and_raisable(
         factory: Callable[[], e.BaseError],
         expected_type: type[e.BaseError],
@@ -93,13 +93,14 @@ class TestsFlextCoreExceptionsTypedMetrics:
 
         # Assert: public identity + message contract, and it behaves as an exception
         tm.that(isinstance(error, expected_type), truth=True)
-        tm.that(isinstance(error, Exception), truth=True)
+        tm.that(error, is_=Exception)
         tm.that(error.message, eq="Test message")
         with pytest.raises(expected_type) as caught:
             raise error
         tm.that(caught.value is error, truth=True)
         tm.that(caught.value.message, eq="Test message")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("factory", "expected_domain"),
         [
@@ -117,7 +118,6 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
-    @staticmethod
     def test_error_code_maps_to_routing_domain(
         factory: Callable[[], e.BaseError],
         expected_domain: str,
@@ -143,6 +143,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         tm.that(error.message in rendered, truth=True)
         tm.that(rendered, eq=f"[{error.error_code}] {error.message}")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("factory", "attribute", "expected_value"),
         [
@@ -180,7 +181,6 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
-    @staticmethod
     def test_typed_exception_exposes_structured_fields(
         factory: Callable[[], e.BaseError],
         attribute: str,
@@ -265,7 +265,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         metrics = e.resolve_metrics_snapshot()
 
         # Assert: public snapshot contract
-        tm.that(isinstance(metrics, m.ExceptionMetricsSnapshot), truth=True)
+        tm.that(metrics, is_=m.ExceptionMetricsSnapshot)
         tm.that(metrics.total_exceptions, eq=3)
         tm.that(metrics.unique_exception_types, eq=2)
         tm.that(metrics.has_exceptions is True, truth=True)

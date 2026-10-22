@@ -15,15 +15,11 @@ import sys
 import types
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_core import FlextContainer
-from tests import c, d, e, m, p, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, d, e, m, p, t, tm, u
 
 
 class TestsFlextCoreContainerTruthful:
@@ -33,8 +29,8 @@ class TestsFlextCoreContainerTruthful:
     def _shared_with_auto_registration() -> None:
         _ = FlextContainer.shared(auto_register_factories=True)
 
-    @pytest.mark.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
     @staticmethod
+    @pytest.mark.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
     def test_public_writes_reject_reserved_names(
         name: str,
         clean_container: p.Container,
@@ -128,11 +124,11 @@ class TestsFlextCoreContainerTruthful:
     def test_mapping_registration_keeps_input_and_serializes_its_payload(
         clean_container: p.Container,
     ) -> None:
-        """Registration normalizes a validated copy without altering caller data."""
+        """An explicitly validated model retains the caller's payload values."""
         instant = datetime.now(UTC)
         path = Path("registered-payload")
-        payload: t.MappingKV[str, datetime | Path] = {"created": instant, "path": path}
-        _ = clean_container.bind("mapping-payload", payload)
+        payload: t.MutableMetadataMapping = {"created": instant, "path": path}
+        _ = clean_container.bind("mapping-payload", m.ConfigMap(root=payload))
         value = tm.ok(clean_container.resolve("mapping-payload", type_cls=m.ConfigMap))
         tm.that(
             value.model_dump(mode="json"),
@@ -148,11 +144,13 @@ class TestsFlextCoreContainerTruthful:
         """The registry model port admits list output, not only named fields."""
         instant = datetime.now(UTC)
         path = Path("sequence-payload")
-        payload: t.SequenceOf[str | Path | datetime] = ["entry", path, instant]
-        _ = clean_container.bind("sequence-payload", payload)
+        payload: t.ListOf[t.JsonPayload] = ["entry", path, instant]
+        registered = m.ObjectList(root=payload)
+        _ = clean_container.bind("sequence-payload", registered)
         value = tm.ok(
             clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
         )
+        tm.that(value, where=lambda resolved: resolved is registered)
         tm.that(
             value.model_dump(mode="json"),
             eq=u.normalize_to_json_value(payload),
@@ -166,7 +164,9 @@ class TestsFlextCoreContainerTruthful:
     ) -> None:
         """A nested Pydantic value retains its own validated serialization."""
         metadata = m.Metadata()
-        _ = clean_container.bind("model-payload", {"metadata": metadata})
+        _ = clean_container.bind(
+            "model-payload", m.ConfigMap(root={"metadata": metadata})
+        )
         value = tm.ok(clean_container.resolve("model-payload", type_cls=m.ConfigMap))
         tm.that(
             value.model_dump(mode="json"),

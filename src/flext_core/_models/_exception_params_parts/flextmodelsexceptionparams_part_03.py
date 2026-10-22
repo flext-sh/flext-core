@@ -20,11 +20,11 @@ from flext_core._models._exception_params_parts import (
 )
 
 
-class FlextModelsExceptionParams(
-    flextmodelsexceptionparams_part_02.FlextModelsExceptionParams
+class FlextModelsExceptionParamsPart03(
+    flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart02
 ):
     class OperationErrorParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
     ):
         """Validated params for OperationError."""
 
@@ -42,7 +42,7 @@ class FlextModelsExceptionParams(
         ] = None
 
     class ServiceLookupParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams,
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
     ):
         """Validated params for service lookup and narrowing failures."""
 
@@ -57,7 +57,7 @@ class FlextModelsExceptionParams(
         ] = None
 
     class RegistryPluginParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
     ):
         """Validated params for registry plugin registration lifecycle."""
 
@@ -90,7 +90,7 @@ class FlextModelsExceptionParams(
         ] = None
 
     class AttributeAccessErrorParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel
+        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
     ):
         """Validated params for AttributeAccessError."""
 
@@ -116,4 +116,4 @@ class FlextModelsExceptionParams(
         ] = None
 
 
-__all__: list[str] = ["FlextModelsExceptionParams"]
+__all__: list[str] = ["FlextModelsExceptionParamsPart03"]

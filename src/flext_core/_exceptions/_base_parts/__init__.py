@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._exceptions._base_parts.flextexceptionsbase_part_01 import (
@@ -20,23 +20,23 @@ if TYPE_CHECKING:
         FlextBaseErrorStateMixin,
     )
     from flext_core._exceptions._base_parts.flextexceptionsbase_part_03 import (
-        FlextExceptionsBase,
+        FlextExceptionsBasePart03,
     )
 
 
 __all__: tuple[str, ...] = (
     "FlextBaseErrorMetadataMixin",
     "FlextBaseErrorStateMixin",
-    "FlextExceptionsBase",
+    "FlextExceptionsBasePart03",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
         "FlextBaseErrorMetadataMixin": ".flextexceptionsbase_part_01",
         "FlextBaseErrorStateMixin": ".flextexceptionsbase_part_02",
-        "FlextExceptionsBase": ".flextexceptionsbase_part_03",
+        "FlextExceptionsBasePart03": ".flextexceptionsbase_part_03",
     }),
     public_exports=__all__,
-)[0]
+)

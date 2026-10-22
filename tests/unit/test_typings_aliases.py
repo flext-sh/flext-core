@@ -22,27 +22,6 @@ import pytest
 
 import flext_core
 from tests import c, p, t, tm
-from tests.unit._typings_support import FLAT_ALIAS_NAMES, PUBLIC_ALIAS_NAMES
-
-LEGACY_GENERIC_NAMES: t.VariadicTuple[str] = (
-    "EnumT",
-    "MessageT_contra",
-    "P",
-    "R",
-    "ResultT",
-    "RootValueT",
-    "T",
-    "T_DomainResult",
-    "T_Model",
-    "T_Namespace",
-    "T_Settings",
-    "T_co",
-    "T_contra",
-    "TRuntime",
-    "U",
-    "TV",
-    "TV_co",
-)
 
 
 class TestsFlextCoreTypingsAliases:
@@ -75,8 +54,8 @@ class TestsFlextCoreTypingsAliases:
         tm.that(values.pop("last"), eq=4)
         tm.that(values, eq={"first": 1, "second": 2, "third": 3})
 
-    @pytest.mark.parametrize("alias_name", PUBLIC_ALIAS_NAMES)
     @staticmethod
+    @pytest.mark.parametrize("alias_name", c.Tests.PUBLIC_ALIAS_NAMES)
     def test_public_alias_reachable_through_facade(alias_name: str) -> None:
         """Every declared public alias resolves to a real object on ``t``."""
         # Arrange / Act
@@ -84,15 +63,15 @@ class TestsFlextCoreTypingsAliases:
         # Assert - attribute exists and is a concrete (non-None) alias object.
         tm.that(resolved, ne=None)
 
-    @pytest.mark.parametrize("alias_name", FLAT_ALIAS_NAMES)
     @staticmethod
+    @pytest.mark.parametrize("alias_name", c.Tests.FLAT_ALIAS_NAMES)
     def test_flat_mapping_alias_reachable_through_facade(alias_name: str) -> None:
         """Every flat mapping alias resolves to a real object on ``t``."""
         resolved = getattr(t, alias_name)
         tm.that(resolved, ne=None)
 
-    @pytest.mark.parametrize("legacy_name", LEGACY_GENERIC_NAMES)
     @staticmethod
+    @pytest.mark.parametrize("legacy_name", c.Tests.LEGACY_GENERIC_NAMES)
     def test_flext_core_hides_shared_generic_helpers(legacy_name: str) -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
         tm.fail(hasattr(flext_core, legacy_name))
@@ -125,6 +104,7 @@ class TestsFlextCoreTypingsAliases:
             eq=(str, int, float, bool, datetime, Path, list, dict, tuple),
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "is_primitive", "is_numeric", "is_scalar"),
         [
@@ -137,7 +117,6 @@ class TestsFlextCoreTypingsAliases:
             ([1, 2], False, False, False),
         ],
     )
-    @staticmethod
     def test_type_check_tuples_classify_values(
         value: p.AttributeProbe,
         *,
@@ -150,6 +129,7 @@ class TestsFlextCoreTypingsAliases:
         tm.that(isinstance(value, c.NUMERIC_TYPES), eq=is_numeric)
         tm.that(isinstance(value, c.SCALAR_TYPES), eq=is_scalar)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "value",
         [
@@ -164,7 +144,6 @@ class TestsFlextCoreTypingsAliases:
             (1,),
         ],
     )
-    @staticmethod
     def test_container_and_collection_tuple_accepts_every_container_value(
         value: p.AttributeProbe,
     ) -> None:

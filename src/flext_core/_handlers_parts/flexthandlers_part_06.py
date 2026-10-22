@@ -20,8 +20,8 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextHandlers[MessageT_contra, ResultT](
-    flexthandlers_part_05.FlextHandlers[MessageT_contra, ResultT],
+class FlextHandlersPart06[MessageT_contra, ResultT](
+    flexthandlers_part_05.FlextHandlersPart05[MessageT_contra, ResultT],
 ):
     def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
         """Initialize the handler, forwarding configuration to its owner.
@@ -34,7 +34,7 @@ class FlextHandlers[MessageT_contra, ResultT](
             settings: Optional handler configuration model.
 
         """
-        flexthandlers_part_01.FlextHandlers[MessageT_contra, ResultT].__init__(
+        flexthandlers_part_01.FlextHandlersPart01[MessageT_contra, ResultT].__init__(
             self, settings=settings
         )
 
@@ -67,7 +67,7 @@ class FlextHandlers[MessageT_contra, ResultT](
 
         """
 
-        class CallableHandler(FlextHandlers[t.Scalar, t.Scalar]):
+        class CallableHandler(FlextHandlersPart06[t.Scalar, t.Scalar]):
             """Dynamic handler created from callable."""
 
             _handler_fn: Callable[[t.Scalar], t.Scalar]
@@ -128,4 +128,4 @@ class FlextHandlers[MessageT_contra, ResultT](
             return self.handle(message)
 
 
-__all__: list[str] = ["FlextHandlers"]
+__all__: list[str] = ["FlextHandlersPart06"]

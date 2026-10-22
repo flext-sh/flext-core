@@ -87,8 +87,8 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         tm.that(read(), eq="model-value")
 
     # --- d.log_operation -------------------------------------------------
-    @pytest.mark.parametrize("payload", ["success", "", "multi word result"])
     @staticmethod
+    @pytest.mark.parametrize("payload", ["success", "", "multi word result"])
     def test_log_operation_returns_wrapped_value_unchanged(payload: str) -> None:
         """Test log operation returns wrapped value unchanged."""
 
@@ -108,6 +108,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
         tm.that(compute(), eq=42)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("exc_type", "message"),
         [
@@ -116,7 +117,6 @@ class TestsFlextCoreDecoratorsInjectionLogging:
             (KeyError, "missing"),
         ],
     )
-    @staticmethod
     def test_log_operation_propagates_wrapped_exception(
         exc_type: type[Exception],
         message: str,

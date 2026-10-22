@@ -17,6 +17,7 @@ from tests import tm
 class TestsFlextCoreLazyRelativePackages:
     """Resolve real standard-library modules through the public lazy mapping API."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("package", "relative", "absolute"),
         [
@@ -26,7 +27,6 @@ class TestsFlextCoreLazyRelativePackages:
             ("xml.dom", "..", "xml"),
         ],
     )
-    @staticmethod
     def test_string_targets_resolve_to_the_real_module(
         package: str,
         relative: str,
@@ -35,20 +35,20 @@ class TestsFlextCoreLazyRelativePackages:
         """Both sibling and current-package paths identify importable modules."""
         normalized = normalize_lazy_imports(package, {"module": relative})
         target = normalized["module"]
-        tm.that(isinstance(target, str), truth=True)
-        assert isinstance(target, str)
-        tm.that(
-            importlib.import_module(target) is importlib.import_module(absolute),
-            truth=True,
-        )
+        tm.that(target, is_=str)
+        if isinstance(target, str):
+            tm.that(
+                importlib.import_module(target),
+                where=lambda module: module is importlib.import_module(absolute),
+            )
 
     @staticmethod
     def test_symbol_target_resolves_parent_package() -> None:
         """A symbol mapping preserves its attribute while resolving its module."""
         normalized = normalize_lazy_imports("xml.etree", {"Node": ("..dom", "Node")})
         target = normalized["Node"]
-        tm.that(isinstance(target, tuple), truth=True)
-        module_name, attribute = target
+        tm.that(target, is_=tuple)
+        module_name, attribute = target[0], target[1]
         module = importlib.import_module(module_name)
         expected = importlib.import_module("xml.dom")
         tm.that(getattr(module, attribute) is expected.Node, truth=True)
@@ -59,6 +59,7 @@ class TestsFlextCoreLazyRelativePackages:
         with pytest.raises(ImportError):
             normalize_lazy_imports("xml", {"module": "..dom"})
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("package", "relative"),
         [
@@ -68,7 +69,6 @@ class TestsFlextCoreLazyRelativePackages:
             ("xml.dom", ".."),
         ],
     )
-    @staticmethod
     def test_merge_loads_relative_child_packages(
         package: str,
         relative: str,

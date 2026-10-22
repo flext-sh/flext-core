@@ -8,12 +8,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c
-from flext_core._models import FlextModelsBase, FlextModelsContainers
-from flext_core._protocols import FlextProtocolsResult
+from flext_core import FlextRuntime, c, m, p
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesServices, FlextTypingBase
+    from flext_core import t
 
 
 class FlextExceptionsHelpers:
@@ -21,61 +19,56 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def _normalized_source_entries(
-        context: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]
-        | FlextProtocolsResult.HasModelDump
-        | None,
-        extra_kwargs: FlextTypingBase.MappingKV[
-            str,
-            FlextTypesServices.JsonPayload | None,
-        ],
-    ) -> tuple[tuple[str, FlextTypingBase.JsonValue], ...]:
+        context: p.MetadataInput,
+        extra_kwargs: t.MetadataMapping,
+    ) -> tuple[tuple[str, t.JsonValue], ...]:
         """Collect normalized metadata entries from context and kwargs once.
 
         Returns:
             The resulting ``tuple[tuple[str, tb.JsonValue], ...]``.
 
         """
-        entries: list[tuple[str, FlextTypingBase.JsonValue]] = []
+        entries: list[tuple[str, t.JsonValue]] = []
         source_values = (context, extra_kwargs)
         for source_value in source_values:
             if source_value is None:
                 continue
-            source_mapping = FlextModelsContainers.ConfigMap.model_validate(
+            source_mapping = (
                 source_value.model_dump(mode="json")
-                if isinstance(source_value, FlextProtocolsResult.HasModelDump)
+                if isinstance(source_value, p.HasModelDump)
                 else source_value
-            ).model_dump(mode="json")
+            )
             for key, value in source_mapping.items():
                 if value is not None:
-                    entries.append((key, value))
+                    entries.append((key, FlextRuntime.normalize_to_json_value(value)))
         return tuple(entries)
 
     @staticmethod
     def safe_metadata(
-        value: FlextProtocolsResult.HasModelDump
-        | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]
-        | FlextTypingBase.JsonValue
+        value: p.HasModelDump
+        | t.MappingKV[str, t.JsonPayload | None]
+        | t.JsonValue
         | None,
-    ) -> FlextModelsBase.Metadata | None:
+    ) -> m.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model.
 
         Returns:
-            The resulting ``FlextModelsBase.Metadata | None``.
+            The resulting ``m.Metadata | None``.
 
         """
-        if value is None or isinstance(value, FlextModelsBase.Metadata):
+        if value is None or isinstance(value, m.Metadata):
             return value
-        return FlextModelsBase.Metadata.model_validate({
+        return m.Metadata.model_validate({
             c.FIELD_ATTRIBUTES: (
                 value.model_dump(mode="json")
-                if isinstance(value, FlextProtocolsResult.HasModelDump)
+                if isinstance(value, p.HasModelDump)
                 else value
             )
         })
 
     @staticmethod
     def safe_optional_str(
-        value: FlextTypesServices.JsonPayload | type | None,
+        value: t.JsonPayload | type | None,
     ) -> str | None:
         """Extract optional strict string from dynamic values.
 
@@ -91,15 +84,10 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_context_map(
-        context: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]
-        | FlextProtocolsResult.HasModelDump
-        | None,
-        extra_kwargs: FlextTypingBase.MappingKV[
-            str,
-            FlextTypesServices.JsonPayload | None,
-        ],
+        context: p.MetadataInput,
+        extra_kwargs: t.MetadataMapping,
         excluded_keys: set[str] | frozenset[str] | None = None,
-    ) -> FlextTypingBase.JsonDict:
+    ) -> t.JsonDict:
         """Build normalized context map from context and kwargs.
 
         Returns:
@@ -118,15 +106,10 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_param_map(
-        context: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None]
-        | FlextProtocolsResult.HasModelDump
-        | None,
-        extra_kwargs: FlextTypingBase.MappingKV[
-            str,
-            FlextTypesServices.JsonPayload | None,
-        ],
+        context: p.MetadataInput,
+        extra_kwargs: t.MetadataMapping,
         keys: set[str] | frozenset[str],
-    ) -> FlextTypingBase.JsonDict:
+    ) -> t.JsonDict:
         """Build parameter map restricted to declared param keys.
 
         Returns:

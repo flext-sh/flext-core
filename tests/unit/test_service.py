@@ -62,7 +62,7 @@ class TestsFlextService(FlextTestsCase):
         result = m.Tests.ServiceUserService().execute()
 
         payload = result.value
-        tm.that(isinstance(payload, m.Tests.ServiceUserData), truth=True)
+        tm.that(payload, is_=m.Tests.ServiceUserData)
         tm.that(payload.user_id, eq=1)
         tm.that(payload.name, eq="test_user")
 
@@ -116,11 +116,11 @@ class TestsFlextService(FlextTestsCase):
 
     # --- ServiceUserData: public model state -----------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("user_id", "name"),
         [(1, "test_user"), (2, "other"), (99, "édge-café")],
     )
-    @staticmethod
     def test_service_user_data_round_trips_public_state(
         user_id: int,
         name: str,
@@ -148,24 +148,24 @@ class TestsFlextService(FlextTestsCase):
         """Test settings expose tests namespace."""
         settings = m.Tests.ServiceUserService().settings
 
-        tm.that(isinstance(settings, FlextTestsSettings), truth=True)
-        assert isinstance(settings, FlextTestsSettings)
-        tm.that(isinstance(settings.Tests, m.BaseModel), truth=True)
+        tm.that(settings, is_=FlextTestsSettings)
+        if isinstance(settings, FlextTestsSettings):
+            tm.that(settings.Tests, is_=m.BaseModel)
 
     def test_fetch_settings_returns_typed_tests_settings(self) -> None:
         """Test fetch settings returns typed tests settings."""
         with self._PureService.isolated_test_runtime():
             settings = self._PureService.fetch_settings()
 
-            tm.that(isinstance(settings, FlextTestsSettings), truth=True)
-            tm.that(isinstance(settings.Tests, m.BaseModel), truth=True)
+            tm.that(settings, is_=FlextTestsSettings)
+            tm.that(settings.Tests, is_=m.BaseModel)
 
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         """Test fetch logger matches shared service logger."""
         with self._PureService.isolated_test_runtime():
-            assert (
-                self._PureService.fetch_logger()
-                is self._PureService.fetch_global().logger
+            tm.that(
+                self._PureService.fetch_logger(),
+                where=lambda logger: logger is self._PureService.fetch_global().logger,
             )
 
     # --- with_settings(): runtime snapshot -------------------------------
@@ -205,5 +205,5 @@ class TestsFlextService(FlextTestsCase):
         service = m.Tests.ServiceUserService()
 
         with service.track("load_users") as metrics:
-            tm.that(isinstance(metrics, Mapping), truth=True)
+            tm.that(metrics, is_=Mapping)
             tm.that(metrics["operation_name"], eq="load_users")

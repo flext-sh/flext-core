@@ -67,6 +67,7 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(params.resource_type, eq="user")
         tm.that(params.resource_id, eq="42")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("resource_type", "resource_id"),
         [
@@ -77,7 +78,6 @@ class TestsFlextModelsExceptionParamsResources:
         ],
         ids=["user", "order", "invoice", "all-none"],
     )
-    @staticmethod
     def test_not_found_error_params_resource_variants(
         resource_type: str | None,
         resource_id: str | None,
@@ -138,12 +138,12 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(params.window_seconds, eq=60)
         tm.that(params.retry_after, eq=1.5)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "retry_after",
         [1, 1.5, 0, None],
         ids=["int", "float", "zero", "none"],
     )
-    @staticmethod
     def test_rate_limit_error_params_retry_after_types(
         retry_after: float | None,
     ) -> None:

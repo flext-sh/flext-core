@@ -41,16 +41,16 @@ class TestsFlextCoreTypingsNew:
         with pytest.raises(c.ValidationError):
             u.primitives_adapter().validate_python([1])
 
-    @pytest.mark.parametrize(("valid", "invalid"), [(7, "7"), (0, 1.5)])
     @staticmethod
+    @pytest.mark.parametrize(("valid", "invalid"), [(7, "7"), (0, 1.5)])
     def test_int_adapter_is_strict(valid: int, invalid: t.Scalar) -> None:
         """int_adapter accepts real ints and rejects coercible non-ints."""
         tm.that(u.int_adapter().validate_python(valid), eq=valid)
         with pytest.raises(c.ValidationError):
             u.int_adapter().validate_python(invalid)
 
-    @pytest.mark.parametrize("bad", [5, b"bytes"])
     @staticmethod
+    @pytest.mark.parametrize("bad", [5, b"bytes"])
     def test_str_adapter_rejects_non_str(bad: t.Scalar) -> None:
         """str_adapter is strict: non-string inputs are rejected."""
         tm.that(u.str_adapter().validate_python("hi"), eq="hi")
@@ -79,8 +79,8 @@ class TestsFlextCoreTypingsNew:
         data: t.JsonList = [1, "a", None]
         tm.that(u.json_list_adapter().validate_python(data), eq=data)
 
-    @pytest.mark.parametrize(("valid", "invalid"), [(1, 0), (8080, 70000)])
     @staticmethod
+    @pytest.mark.parametrize(("valid", "invalid"), [(1, 0), (8080, 70000)])
     def test_port_number_adapter_enforces_range(valid: int, invalid: int) -> None:
         """port_number_adapter accepts in-range ports and rejects out-of-range."""
         tm.that(u.port_number_adapter().validate_python(valid), eq=valid)

@@ -22,7 +22,7 @@ from flext_core._typings import FlextTypesServices, FlextTypingBase
 from flext_core._utilities._checker_parts import checker_part_02
 
 
-class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
+class FlextUtilitiesCheckerPart03(checker_part_02.FlextUtilitiesCheckerPart02):
     @classmethod
     def _extract_generic_message_types(
         cls,
@@ -197,4 +197,4 @@ class FlextUtilitiesChecker(checker_part_02.FlextUtilitiesChecker):
         raise TypeError(msg_type_error)
 
 
-__all__: list[str] = ["FlextUtilitiesChecker"]
+__all__: list[str] = ["FlextUtilitiesCheckerPart03"]

@@ -73,7 +73,7 @@ class TestsFlextCoreLazyMembers:
             nested = cast("type", Namespace.Nested)
             tm.that(callable(who), truth=True)
             tm.that(callable(twice), truth=True)
-            tm.that(isinstance(nested, type), truth=True)
+            tm.that(nested, is_=type)
             tm.that(who(), eq="Namespace")
             tm.that(twice(4), eq=8)
             tm.that(nested.__qualname__, eq="Mixin.Nested")

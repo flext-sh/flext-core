@@ -186,6 +186,7 @@ class FlextUtilitiesLoggingStream:
             traceback: TracebackType | None,
             /,
         ) -> None:
+            _ = exc_type, exc_value, traceback
             self.close()
 
         def _check_open(self) -> None:

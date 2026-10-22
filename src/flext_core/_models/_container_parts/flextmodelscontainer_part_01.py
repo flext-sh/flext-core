@@ -15,7 +15,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated
 
-import flext_core
 from flext_core import c, p, t
 from flext_core._models import (
     FlextModelsBase,
@@ -25,7 +24,7 @@ from flext_core._models import (
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
-class FlextModelsContainer:
+class FlextModelsContainerPart01:
     """Container models namespace for DI and service registry."""
 
     class RegistrationEnvelope(FlextModelsBase.ArbitraryTypesModel):
@@ -94,17 +93,6 @@ class FlextModelsContainer:
             ),
         ] = ()
 
-        @FlextModelsPydantic.field_validator("service", mode="before")
-        @classmethod
-        def _validate_service(cls, value: p.GuardInput) -> p.RegisterableService:
-            """Apply the utility-owned admission at the native field boundary.
-
-            Returns:
-                The admitted service.
-
-            """
-            return flext_core.u.normalize_registerable_service(value)
-
         @FlextModelsPydantic.computed_field
         @property
         def service_type(self) -> str:
@@ -131,4 +119,4 @@ class FlextModelsContainer:
         ]
 
 
-__all__: list[str] = ["FlextModelsContainer"]
+__all__: list[str] = ["FlextModelsContainerPart01"]

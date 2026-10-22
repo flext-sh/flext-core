@@ -14,7 +14,7 @@ from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesMapperAccess
 
 
-class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
+class FlextUtilitiesMapperExtractPart01(FlextUtilitiesMapperAccess):
     """Path-based ``extract`` method and its helpers."""
 
     @staticmethod
@@ -79,11 +79,15 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         else:
             key_part, array_match = part, ""
 
-        get_result = FlextUtilitiesMapperExtract._extract_get_value(current, key_part)
-        next_val, early_result = FlextUtilitiesMapperExtract._extract_resolve_result(
-            get_result,
-            default=context.default,
-            required=context.required,
+        get_result = FlextUtilitiesMapperExtractPart01._extract_get_value(
+            current, key_part
+        )
+        next_val, early_result = (
+            FlextUtilitiesMapperExtractPart01._extract_resolve_result(
+                get_result,
+                default=context.default,
+                required=context.required,
+            )
         )
         if early_result is not None:
             return None, early_result
@@ -95,12 +99,14 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
                 and not isinstance(next_val, c.STR_BYTES_TYPES)
                 else FlextRuntime.normalize_to_container(next_val)
             )
-            index_result = FlextUtilitiesMapperExtract._extract_handle_array_index(
-                narrowed_for_index,
-                array_match,
+            index_result = (
+                FlextUtilitiesMapperExtractPart01._extract_handle_array_index(
+                    narrowed_for_index,
+                    array_match,
+                )
             )
             next_val, early_result = (
-                FlextUtilitiesMapperExtract._extract_resolve_result(
+                FlextUtilitiesMapperExtractPart01._extract_resolve_result(
                     index_result,
                     default=context.default,
                     required=context.required,
@@ -114,23 +120,20 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
     @staticmethod
     def _extract_seed_current(
         data: p.AccessibleData,
-    ) -> t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None:
+    ) -> t.JsonPayload | None:
         """Build the initial ``current`` cursor for path traversal.
 
         Returns:
-            The resulting ``t.JsonPayload | t.JsonMapping |
-                FlextModelsContainers.ConfigMap | None``.
+            The original model or the payload cursor for path traversal.
 
         """
-        seed_current: (
-            t.JsonPayload | t.JsonMapping | FlextModelsContainers.ConfigMap | None
-        ) = None
+        seed_current: t.JsonPayload | None = None
         if isinstance(data, FlextModelsPydantic.BaseModel):
             seed_current = data
         elif isinstance(data, Mapping):
             seed_current = m.ConfigMap(
                 root={
-                    k: FlextUtilitiesMapperExtract._normalize_accessible_value(v)
+                    k: FlextUtilitiesMapperExtractPart01._normalize_accessible_value(v)
                     for k, v in data.items()
                 },
             )
@@ -145,4 +148,4 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         return seed_current
 
 
-__all__: list[str] = ["FlextUtilitiesMapperExtract"]
+__all__: list[str] = ["FlextUtilitiesMapperExtractPart01"]

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, cast
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
-    from flext_core.flextlazy_part_02 import FlextLazy
+    from flext_core.lazy import FlextLazy
     from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 

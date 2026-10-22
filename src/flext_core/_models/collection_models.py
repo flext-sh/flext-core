@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import Annotated
 
 from flext_core import t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
@@ -21,14 +21,6 @@ class FlextModelsCollections:
 
     class TransformSpec(FlextModelsBase.ArbitraryTypesModel):
         """Knob spec for the mapper normalization pipeline stages."""
-
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(
-                extra="forbid",
-                validate_assignment=True,
-                arbitrary_types_allowed=True,
-            )
-        )
 
         normalize: Annotated[
             bool,

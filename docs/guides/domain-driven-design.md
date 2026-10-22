@@ -50,7 +50,7 @@ if not short_sku.failure:
 ```python
 from __future__ import annotations
 
-from flext_core import p, r
+from flext_core import p, r, t
 
 
 def validate_sku(sku: str) -> p.Result[str]:

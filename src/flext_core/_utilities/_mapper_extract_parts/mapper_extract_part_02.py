@@ -12,7 +12,9 @@ from flext_core._utilities import FlextUtilitiesGuards
 from flext_core._utilities._mapper_extract_parts import mapper_extract_part_01
 
 
-class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExtract):
+class FlextUtilitiesMapperExtractPart02(
+    mapper_extract_part_01.FlextUtilitiesMapperExtractPart01
+):
     @staticmethod
     def _extract_path_parts(
         data: p.AccessibleData,
@@ -23,10 +25,10 @@ class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExt
         separator: str = ".",
     ) -> p.Result[t.JsonPayload]:
         parts = path.split(separator)
-        current = FlextUtilitiesMapperExtract._extract_seed_current(data)
+        current = FlextUtilitiesMapperExtractPart02._extract_seed_current(data)
         for i, part in enumerate(parts):
             if current is None:
-                return FlextUtilitiesMapperExtract._extract_fail_or_default(
+                return FlextUtilitiesMapperExtractPart02._extract_fail_or_default(
                     FlextExceptions.render_template(
                         c.ERR_TEMPLATE_PATH_IS_NONE,
                         path=separator.join(parts[:i]),
@@ -35,7 +37,7 @@ class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExt
                     required=required,
                 )
             current, early_return = (
-                FlextUtilitiesMapperExtract._extract_resolve_path_part(
+                FlextUtilitiesMapperExtractPart02._extract_resolve_path_part(
                     current,
                     part,
                     context=m.ExtractResolvePathPartContext.model_validate({
@@ -48,14 +50,15 @@ class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExt
             if early_return is not None:
                 return early_return
         if current is None:
-            return FlextUtilitiesMapperExtract._extract_fail_or_default(
+            return FlextUtilitiesMapperExtractPart02._extract_fail_or_default(
                 c.ERR_TEMPLATE_EXTRACTED_VALUE_IS_NONE,
                 default=default,
                 required=required,
             )
-        return FlextResult[t.JsonPayload].ok(
-            current if FlextUtilitiesGuards.container_value(current) else str(current),
+        value = (
+            current if FlextUtilitiesGuards.container_value(current) else str(current)
         )
+        return FlextResult[t.JsonPayload].ok(value)
 
     @staticmethod
     def extract(
@@ -73,7 +76,7 @@ class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExt
 
         """
         try:
-            return FlextUtilitiesMapperExtract._extract_path_parts(
+            return FlextUtilitiesMapperExtractPart02._extract_path_parts(
                 data,
                 path,
                 default=default,
@@ -95,4 +98,4 @@ class FlextUtilitiesMapperExtract(mapper_extract_part_01.FlextUtilitiesMapperExt
             )
 
 
-__all__: list[str] = ["FlextUtilitiesMapperExtract"]
+__all__: list[str] = ["FlextUtilitiesMapperExtractPart02"]

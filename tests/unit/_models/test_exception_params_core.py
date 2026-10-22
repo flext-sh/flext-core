@@ -58,6 +58,7 @@ class TestsFlextModelsExceptionParamsCore:
         tm.that(params.field, eq="email")
         tm.that(params.value, eq="bad@")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("field", "value"),
         [
@@ -69,7 +70,6 @@ class TestsFlextModelsExceptionParamsCore:
         ],
         ids=["str-value", "int-value", "float-value", "bool-value", "all-none"],
     )
-    @staticmethod
     def test_validation_error_params_scalar_values(
         field: str | None,
         value: t.JsonValue,
@@ -121,18 +121,19 @@ class TestsFlextModelsExceptionParamsCore:
         tm.that(params.port, eq=5432)
         tm.that(params.timeout, eq=5.5)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "timeout_val",
         [5, 5.5, 0, None],
         ids=["int-timeout", "float-timeout", "zero", "none"],
     )
-    @staticmethod
     def test_connection_error_params_timeout_types(
         timeout_val: float | None,
     ) -> None:
         params = m.ConnectionErrorParams(timeout=timeout_val)
         tm.that(params.timeout, eq=timeout_val)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("host", "port", "expected"),
         [
@@ -143,7 +144,6 @@ class TestsFlextModelsExceptionParamsCore:
         ],
         ids=["host-and-port", "host-only", "port-only", "neither"],
     )
-    @staticmethod
     def test_connection_target_formats_host_port(
         host: str | None,
         port: int | None,
@@ -172,12 +172,12 @@ class TestsFlextModelsExceptionParamsCore:
         tm.that(params.timeout_seconds, eq=30)
         tm.that(params.operation, eq="dispatch")
 
+    @staticmethod
     @pytest.mark.parametrize(
         "seconds",
         [30, 30.0, 0.5],
         ids=["int", "float", "fraction"],
     )
-    @staticmethod
     def test_timeout_error_params_numeric_seconds(seconds: float) -> None:
         params = m.TimeoutErrorParams(timeout_seconds=seconds)
         tm.that(params.timeout_seconds, eq=seconds)

@@ -35,7 +35,7 @@ if result.value != expected_value:
 ```python
 from __future__ import annotations
 
-from flext_core import p, r
+from flext_core import p, r, t
 
 
 def create_user(command: t.StrDict) -> p.Result[t.StrDict]:

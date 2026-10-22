@@ -35,8 +35,8 @@ class TestsFlextCoreResultCallablesFold:
         tm.that(result.unwrap_or_else(lambda: "unused"), eq=payload)
         tm.that(result | "unused", eq=payload)
 
-    @pytest.mark.parametrize("value", [True, False, 0, 1, "", "value"])
     @staticmethod
+    @pytest.mark.parametrize("value", [True, False, 0, 1, "", "value"])
     def test_ok_carries_value_as_success(*, value: bool | int | str) -> None:
         """ok() yields a success whose value is the wrapped payload."""
         result = r[bool | int | str].ok(value)

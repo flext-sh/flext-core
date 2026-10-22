@@ -127,6 +127,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         tm.that(any("[const_mutable]" in text for text in texts), truth=True)
         tm.that(any("[ENFORCE-079]" in text for text in texts), truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("case", "factory"),
         [
@@ -142,7 +143,6 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ("clean_class", lambda: make_class("FlextSyntheticCleanConstants", {})),
         ],
     )
-    @staticmethod
     def test_run_layer_stays_silent_for_exempt_or_clean_classes(
         case: str,
         factory: _ClassFactory,
@@ -158,6 +158,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
     # check — Report.violations public contract                          #
     # ------------------------------------------------------------------ #
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("name", "body"),
         [
@@ -171,7 +172,6 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ("implicit_constant", {"GROUPS": frozenset({"foo"})}),
         ],
     )
-    @staticmethod
     def test_check_flags_constant_declared_outside_constants(
         name: str,
         body: t.MutableMappingKV[str, p.AttributeProbe],
@@ -187,12 +187,13 @@ class TestsFlextCoreEnforcementNamespacePart02:
         matches = [v for v in report.violations if v.rule_id == "ENFORCE-079"]
         tm.that(matches, truth=True, msg=f"{name}: expected an ENFORCE-079 violation")
         violation = matches[0]
-        assert "Constant 'GROUPS' declared" in violation.message
+        tm.that(violation.message, has="Constant 'GROUPS' declared")
         tm.that(violation.qualname, eq="FlextSyntheticCli")
         tm.that(violation.agents_md_anchor, truth=True)
         tm.that(violation.severity, truth=True)
         tm.that(violation.layer, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("case", "body", "module"),
         [
@@ -231,7 +232,6 @@ class TestsFlextCoreEnforcementNamespacePart02:
             ),
         ],
     )
-    @staticmethod
     def test_check_exempts_permitted_constant_shapes(
         case: str,
         body: t.MutableMappingKV[str, p.AttributeProbe],

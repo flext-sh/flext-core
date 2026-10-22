@@ -34,6 +34,7 @@ class TestsFlextCoreDecorators:
         tm.that(outcome.success, truth=True)
         tm.that(outcome.value, eq="value")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("raised", "message"),
         [
@@ -43,7 +44,6 @@ class TestsFlextCoreDecorators:
             (RuntimeError("boom"), "boom"),
         ],
     )
-    @staticmethod
     def test_railway_converts_exception_to_failure_result(
         raised: Exception,
         message: str,

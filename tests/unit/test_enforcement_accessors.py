@@ -33,8 +33,8 @@ def _inheritance_violations(cls: type) -> list[m.Violation]:
 class TestsFlextCoreEnforcementAccessors:
     """Public enforcement behavior: what ``u.check`` reports to a caller."""
 
-    @pytest.mark.parametrize("prefix", ["get_user", "set_config", "is_ready"])
     @staticmethod
+    @pytest.mark.parametrize("prefix", ["get_user", "set_config", "is_ready"])
     def test_forbidden_accessor_prefix_is_flagged(prefix: str) -> None:
         # Arrange
         """Test forbidden accessor prefix is flagged."""
@@ -54,8 +54,8 @@ class TestsFlextCoreEnforcementAccessors:
         tm.that(f'"{prefix}"' in message, truth=True)
         tm.that("fetch_" in message or "computed_field" in message, truth=True)
 
-    @pytest.mark.parametrize("prefix", ["fetch_remote", "resolve_ref", "compute_total"])
     @staticmethod
+    @pytest.mark.parametrize("prefix", ["fetch_remote", "resolve_ref", "compute_total"])
     def test_domain_verb_method_is_allowed(prefix: str) -> None:
         # Arrange
         """Test domain verb method is allowed."""

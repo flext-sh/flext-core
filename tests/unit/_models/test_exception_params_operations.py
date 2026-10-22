@@ -20,12 +20,12 @@ from tests.unit._models._exception_params_support import (
 
 
 class TestsFlextCoreExceptionParamsOperations:
+    @staticmethod
     @pytest.mark.parametrize(
         "model_cls",
         TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
-    @staticmethod
     def test_no_arg_construction_yields_all_none_fields(
         model_cls: type[m.ParamsModel],
     ) -> None:
@@ -33,22 +33,22 @@ class TestsFlextCoreExceptionParamsOperations:
         for value in instance.model_dump().values():
             tm.that(value, none=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "model_cls",
         TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
-    @staticmethod
     def test_unknown_field_is_rejected(model_cls: type[m.ParamsModel]) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("expected", "actual"),
         [("str", "int"), ("list", "dict"), ("BaseModel", "NoneType")],
         ids=["str-int", "list-dict", "model-none"],
     )
-    @staticmethod
     def test_type_error_params_exposes_expected_and_actual(
         expected: str,
         actual: str,
@@ -73,6 +73,7 @@ class TestsFlextCoreExceptionParamsOperations:
         tm.that(params.attribute_name, eq="token")
         tm.that(params.attribute_context, eq={"owner": "session"})
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("host", "port", "expected_target"),
         [
@@ -82,7 +83,6 @@ class TestsFlextCoreExceptionParamsOperations:
         ],
         ids=["host-port", "host-only", "neither"],
     )
-    @staticmethod
     def test_connection_target_formats_host_and_port(
         host: str | None,
         port: int | None,
@@ -91,6 +91,7 @@ class TestsFlextCoreExceptionParamsOperations:
         params = m.ConnectionErrorParams(host=host, port=port)
         tm.that(params.connection_target, eq=expected_target)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("model_cls", "payload"),
         [
@@ -100,7 +101,6 @@ class TestsFlextCoreExceptionParamsOperations:
         ],
         ids=["field-int", "port-str", "expected-type-int"],
     )
-    @staticmethod
     def test_strict_typing_rejects_wrong_type(
         model_cls: type[m.ParamsModel],
         payload: t.JsonMapping,
@@ -114,6 +114,7 @@ class TestsFlextCoreExceptionParamsOperations:
         wrong_value = 123
         tm.rejects_assignment(params, "field", wrong_value, expected=c.ValidationError)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "params",
         [
@@ -127,7 +128,6 @@ class TestsFlextCoreExceptionParamsOperations:
         ],
         ids=["connection", "authorization", "rate-limit"],
     )
-    @staticmethod
     def test_model_dump_roundtrip_preserves_values(params: m.ParamsModel) -> None:
         rebuilt = type(params).model_validate(params.model_dump())
         tm.that(rebuilt.model_dump(), eq=params.model_dump())

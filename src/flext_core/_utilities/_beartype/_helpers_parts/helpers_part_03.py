@@ -24,7 +24,9 @@ if TYPE_CHECKING:
     from flext_core._typings import FlextTypingBase
 
 
-class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelpers):
+class FlextUtilitiesBeartypeHelpersPart03(
+    helpers_part_02.FlextUtilitiesBeartypeHelpersPart02
+):
     @staticmethod
     def module_filename_for(module: _types_mod.ModuleType) -> str | None:
         filename = getattr(module, "__file__", None)
@@ -45,7 +47,7 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
 
     @staticmethod
     def count_union_members(hint: FlextTypingBase.TypeHintSpecifier | None) -> int:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart03
         h2 = h.unwrap_type_alias(hint)
         if h2 is None or get_origin(h2) not in {UnionType, Union}:
             return 0
@@ -53,7 +55,7 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
 
     @staticmethod
     def matches_str_none_union(hint: FlextTypingBase.TypeFormSpecifier | None) -> bool:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart03
         h2 = h.unwrap_type_alias(hint)
         if h2 is None or get_origin(h2) not in {UnionType, Union}:
             return False
@@ -65,7 +67,7 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
         *,
         owner: _types_mod.ModuleType | type | None = None,
     ) -> bool:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart03
         return h.contains_any_recursive(alias_value, seen=set(), owner=owner)
 
     @staticmethod
@@ -91,7 +93,7 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
         *,
         owner: _types_mod.ModuleType | type | None = None,
     ) -> bool:
-        h = FlextUtilitiesBeartypeHelpers
+        h = FlextUtilitiesBeartypeHelpersPart03
         mk = h.mutable_default_factory_kind(factory)
         if mk is list:
             exp = MutableSequence
@@ -122,4 +124,4 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
         )
 
 
-__all__: list[str] = ["FlextUtilitiesBeartypeHelpers"]
+__all__: list[str] = ["FlextUtilitiesBeartypeHelpersPart03"]

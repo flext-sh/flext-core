@@ -11,17 +11,18 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import p, t
+    from flext_core import t
+    from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsResult
 
 
-class FlextProtocolsContext:
+class FlextProtocolsContextPart01:
     """Protocols for context and runtime bootstrap options."""
 
     @runtime_checkable
     class ContextRead(Protocol):
         """Read-only context operations."""
 
-        def get(self, key: str) -> p.Result[t.JsonPayload]:
+        def get(self, key: str) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Get a context value by key."""
             ...
 
@@ -45,7 +46,9 @@ class FlextProtocolsContext:
     class ContextWrite(Protocol):
         """Write context operations."""
 
-        def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
+        def set(
+            self, key: str, value: t.JsonPayload
+        ) -> FlextProtocolsResult.Result[bool]:
             """Set a context value in the context scope."""
             ...
 
@@ -85,7 +88,9 @@ class FlextProtocolsContext:
     class ContextMetadataAccess(Protocol):
         """Context metadata read/write operations."""
 
-        def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
+        def resolve_metadata(
+            self, key: str
+        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
             """Get a metadata value by key."""
             ...
 
@@ -117,15 +122,17 @@ class FlextProtocolsContext:
         """Protocol for the service-scoped context namespace."""
 
         @staticmethod
-        def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
+        def fetch_service(
+            service_name: str,
+        ) -> FlextProtocolsResult.Result[FlextProtocolsContainer.RegisterableService]:
             """Resolve a service from the configured container."""
             ...
 
         @staticmethod
         def register_service(
             service_name: str,
-            service: p.RegisterableService,
-        ) -> p.Result[bool]:
+            service: FlextProtocolsContainer.RegisterableService,
+        ) -> FlextProtocolsResult.Result[bool]:
             """Register a service through the configured container."""
             ...
 
@@ -152,4 +159,4 @@ class FlextProtocolsContext:
             ...
 
 
-__all__: list[str] = ["FlextProtocolsContext"]
+__all__: list[str] = ["FlextProtocolsContextPart01"]

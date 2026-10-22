@@ -62,11 +62,11 @@ class TestsFlextCoreModelsContainer:
         with pytest.raises(KeyError):
             _ = cfg["absent"]
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("key", "default", "expected"),
         [("a", None, 1), ("absent", None, None), ("absent", 99, 99)],
     )
-    @staticmethod
     def test_config_map_get_returns_value_or_default(
         key: str,
         default: int | None,
@@ -76,11 +76,11 @@ class TestsFlextCoreModelsContainer:
         cfg = m.ConfigMap(root={"a": 1})
         tm.that(cfg.get(key, default), eq=expected)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("key", "present"),
         [("a", True), ("b", True), ("missing", False)],
     )
-    @staticmethod
     def test_config_map_contains_reflects_membership(
         key: str,
         *,
@@ -95,8 +95,8 @@ class TestsFlextCoreModelsContainer:
         """Test config map len counts entries."""
         tm.that(len(m.ConfigMap(root={"a": 1, "b": 2, "c": 3})), eq=3)
 
-    @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
     @staticmethod
+    @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
     def test_config_map_bool_reflects_emptiness(
         root: t.UserOverridesMapping,
         *,
@@ -216,8 +216,8 @@ class TestsFlextCoreModelsContainer:
         """Test object list len counts elements."""
         tm.that(len(m.ObjectList(root=["a", 1])), eq=2)
 
-    @pytest.mark.parametrize(("root", "truthy"), [([], False), (["a"], True)])
     @staticmethod
+    @pytest.mark.parametrize(("root", "truthy"), [([], False), (["a"], True)])
     def test_object_list_bool_reflects_emptiness(
         root: list[t.JsonPayload],
         *,

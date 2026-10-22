@@ -6,6 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._logging_context_parts import FlextUtilitiesLoggingContext
+from flext_core._utilities._logging_context_parts.logging_context_part_02 import (
+    FlextUtilitiesLoggingContextPart02,
+)
+
+
+class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextPart02):
+    """Compose logging context through its internal part hierarchy."""
+
 
 __all__: list[str] = ["FlextUtilitiesLoggingContext"]

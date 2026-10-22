@@ -96,6 +96,7 @@ class TestsFlextCoreHandlersProperties(
 
         tm.fail(result, contains=c.Tests.VALIDATION_FAILED_FOR_TEST)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "handler_type",
         [
@@ -105,7 +106,6 @@ class TestsFlextCoreHandlersProperties(
             c.HandlerType.SAGA,
         ],
     )
-    @staticmethod
     def test_handler_type_is_reflected_in_mode(
         handler_type: c.HandlerType,
     ) -> None:

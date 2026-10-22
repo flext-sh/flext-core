@@ -31,6 +31,7 @@ class TestsFlextBeartypeEngineAnnotations(
 ):
     """Contract of the beartype annotation-inspection engine."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("hint", "expected"),
         [
@@ -46,7 +47,6 @@ class TestsFlextBeartypeEngineAnnotations(
             (None, False),
         ],
     )
-    @staticmethod
     def test_contains_any_reports_presence_of_any(
         hint: t.TypeHintSpecifier | None,
         *,
@@ -64,6 +64,7 @@ class TestsFlextBeartypeEngineAnnotations(
         annotation = m.ContextRuntimeState.model_fields[field_name].annotation
         tm.that(u.contains_any(annotation), eq=False, msg=repr(annotation))
 
+    @staticmethod
     @pytest.mark.parametrize(
         "alias_name",
         [
@@ -74,7 +75,6 @@ class TestsFlextBeartypeEngineAnnotations(
             "OptionalAnyAlias",
         ],
     )
-    @staticmethod
     def test_contains_any_rejects_invalid_source_hints(
         tmp_path: Path, alias_name: str
     ) -> None:
@@ -105,6 +105,7 @@ class TestsFlextBeartypeEngineAnnotations(
         """Bare mutable collection origins are flagged with their name."""
         tm.that(u.has_forbidden_collection_origin(hint, self.FORBIDDEN), eq=expected)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("hint", "expected"),
         [
@@ -116,7 +117,6 @@ class TestsFlextBeartypeEngineAnnotations(
             (None, 0),
         ],
     )
-    @staticmethod
     def test_count_union_members_excludes_none(
         hint: t.TypeHintSpecifier | None,
         *,
@@ -125,6 +125,7 @@ class TestsFlextBeartypeEngineAnnotations(
         """count_union_members counts non-None members; 0 for non-unions."""
         tm.that(u.count_union_members(hint), eq=expected)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("hint", "expected"),
         [
@@ -136,7 +137,6 @@ class TestsFlextBeartypeEngineAnnotations(
             (None, False),
         ],
     )
-    @staticmethod
     def test_matches_str_none_union_requires_str_and_none(
         hint: t.TypeHintSpecifier | None,
         *,
@@ -145,6 +145,7 @@ class TestsFlextBeartypeEngineAnnotations(
         """Union matches iff both str and None are members."""
         tm.that(u.matches_str_none_union(hint) is expected, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("alias_name", "expected"),
         [
@@ -154,7 +155,6 @@ class TestsFlextBeartypeEngineAnnotations(
             (None, False),
         ],
     )
-    @staticmethod
     def test_alias_contains_any_unwraps_alias_values(
         tmp_path: Path,
         alias_name: str | None,

@@ -31,6 +31,7 @@ class TestsFlextCoreUtilitiesSettings:
         os.chdir(self._original_cwd)
         FlextContainer.reset_for_testing()
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("trace", "debug", "requested", "expected"),
         [
@@ -42,7 +43,6 @@ class TestsFlextCoreUtilitiesSettings:
             (False, False, c.LogLevel.WARNING, c.LogLevel.WARNING),
         ],
     )
-    @staticmethod
     def test_effective_log_level_preserves_explicit_severity(
         *,
         trace: bool,

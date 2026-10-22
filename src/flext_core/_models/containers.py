@@ -96,8 +96,8 @@ class FlextModelsContainers:
         def get(
             self,
             key: str,
-            default: t.JsonPayload | None = None,
-        ) -> t.JsonPayload | None:
+            default: t.JsonPayload = None,
+        ) -> t.JsonPayload:
             """Return the payload stored under ``key``.
 
             Args:

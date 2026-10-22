@@ -17,8 +17,8 @@ from flext_core._utilities import FlextUtilitiesBeartypeEngine
 from flext_core._utilities._enforcement_collect_parts import enforcement_collect_part_01
 
 
-class FlextUtilitiesEnforcementCollect(
-    enforcement_collect_part_01.FlextUtilitiesEnforcementCollect
+class FlextUtilitiesEnforcementCollectPart02(
+    enforcement_collect_part_01.FlextUtilitiesEnforcementCollectPart01
 ):
     @staticmethod
     def _ns_nested_mro(
@@ -27,7 +27,7 @@ class FlextUtilitiesEnforcementCollect(
         project: FlextTypingBase.StrPair,
     ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         top = (getattr(target, "__module__", "") or "").split(".", 1)[0]
-        if top and top == FlextUtilitiesEnforcementCollect._discover_src_package(
+        if top and top == FlextUtilitiesEnforcementCollectPart02._discover_src_package(
             target,
         ):
             return
@@ -93,7 +93,7 @@ class FlextUtilitiesEnforcementCollect(
                 )
             ):
                 yield value.__qualname__, (root, value)
-                yield from FlextUtilitiesEnforcementCollect._ns_nested_classes(
+                yield from FlextUtilitiesEnforcementCollectPart02._ns_nested_classes(
                     root,
                     value,
                 )
@@ -120,10 +120,10 @@ class FlextUtilitiesEnforcementCollect(
         ):
             return
         qn = target.__qualname__
-        project = FlextUtilitiesEnforcementCollect._project(target)
+        project = FlextUtilitiesEnforcementCollectPart02._project(target)
         if project is None:
             return
-        cls = FlextUtilitiesEnforcementCollect
+        cls = FlextUtilitiesEnforcementCollectPart02
         # The collection strategy is rule data; an unknown strategy is a data
         # defect and raises instead of collecting nothing.
         collect = c.ENFORCEMENT_TAG_COLLECT[tag]
@@ -147,4 +147,4 @@ class FlextUtilitiesEnforcementCollect(
                 raise ValueError(msg)
 
 
-__all__: list[str] = ["FlextUtilitiesEnforcementCollect"]
+__all__: list[str] = ["FlextUtilitiesEnforcementCollectPart02"]

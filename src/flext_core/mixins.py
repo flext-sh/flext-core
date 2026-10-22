@@ -9,10 +9,10 @@ from __future__ import annotations
 from contextlib import contextmanager
 
 from flext_core import FlextContext, c, m, p, t, u
-from flext_core._models import FlextMixins as FlextMixinsState
+from flext_core._models import flext_mixins
 
 
-class FlextMixins(FlextMixinsState):
+class FlextMixins(flext_mixins.FlextMixins):
     """Consume model-owned state and the canonical runtime through MRO."""
 
     @property
@@ -73,10 +73,7 @@ class FlextMixins(FlextMixinsState):
         stats["operation_count"] = u.to_int(stats.get("operation_count", 0)) + 1
         try:
             with FlextContext.timed_operation(operation_name) as metrics:
-                metrics_map: t.MutableMappingKV[str, t.JsonPayload] = {
-                    key: u.normalize_to_container(value)
-                    for key, value in metrics.root.items()
-                }
+                metrics_map = metrics.root
                 metrics_map["operation_count"] = stats["operation_count"]
                 try:
                     yield metrics_map

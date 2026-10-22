@@ -55,12 +55,21 @@ class TestsFlextResultTransforms:
     @staticmethod
     def test_map_error_rewrites_failure_message() -> None:
         """map_error transforms the error of a failure and preserves its state."""
-        result: p.Result[str] = r[str].fail("original error")
+        cause = ValueError("root cause")
+        result: p.Result[str] = r[str].fail(
+            "original error",
+            error_code="E_ORIGINAL",
+            error_data={"key": "value"},
+            exception=cause,
+        )
 
         transformed = result.map_error(lambda e: f"PREFIX: {e}")
 
         tm.fail(transformed)
         tm.that(transformed.error, eq="PREFIX: original error")
+        tm.that(transformed.error_code, eq=result.error_code)
+        tm.that(transformed.error_data, eq=result.error_data)
+        tm.that(transformed.exception is cause, truth=True)
 
     @staticmethod
     def test_map_error_leaves_success_untouched() -> None:
@@ -71,6 +80,7 @@ class TestsFlextResultTransforms:
 
         tm.ok(unchanged)
         tm.that(unchanged.value, eq="value")
+        tm.that(unchanged is success, truth=True)
 
     @staticmethod
     def test_recover_converts_failure_to_success() -> None:
@@ -136,11 +146,11 @@ class TestsFlextResultTransforms:
         tm.ok(tapped is success)
         tm.that(tuple(errors), eq=())
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "predicate_ceiling", "expect_success"),
         [(10, 5, True), (10, 20, False), (6, 5, True), (5, 5, False)],
     )
-    @staticmethod
     def test_filter_keeps_or_drops_success_by_predicate(
         value: int,
         predicate_ceiling: int,
@@ -200,11 +210,11 @@ class TestsFlextResultTransforms:
         tm.fail(result)
         tm.that(result.error, eq="stop")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("result", "fallback", "expected"),
         [(r[int].ok(7), 42, 7), (r[int].fail("missing"), 42, 42)],
     )
-    @staticmethod
     def test_unwrap_or_returns_value_or_fallback(
         result: p.Result[int],
         fallback: int,

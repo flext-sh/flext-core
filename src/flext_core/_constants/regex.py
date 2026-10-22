@@ -14,7 +14,7 @@ import re
 from typing import TYPE_CHECKING, ClassVar, Final
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
+    from flext_core import t
 
 
 class FlextConstantsRegex:
@@ -41,6 +41,11 @@ class FlextConstantsRegex:
         r"|^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
     )
     "Pattern for hostnames (domain names) or IPv4 addresses."
+    PATTERN_DNS_DOMAIN: Final[str] = (
+        r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+        r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*$"
+    )
+    "RFC 1123 ASCII DNS labels, including single-label service namespaces."
     PATTERN_LDAP_DN: Final[str] = (
         r"^[A-Za-z][\w-]*[ \t]*+=[ \t]*+[^\s,][^,\r\n]*"
         r"(?:,[ \t]*+[A-Za-z][\w-]*[ \t]*+=[ \t]*+[^\s,][^,\r\n]*)*$"
@@ -63,39 +68,35 @@ class FlextConstantsRegex:
     "Matches one normalized PASS/FAIL/GENERATED summary line emitted by examples."
 
     # === Pre-compiled regex authorities (consumers MUST use these) ===
-    PATTERN_ENFORCE_RULE_ID_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    PATTERN_ENFORCE_RULE_ID_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_ENFORCE_RULE_ID,
     )
-    PATTERN_SEMVER_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    PATTERN_SEMVER_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_SEMVER,
     )
-    PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE: ClassVar[FlextTypingBase.RegexPattern] = (
-        re.compile(
-            PATTERN_IDENTIFIER_WITH_UNDERSCORE,
-        )
+    PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE: ClassVar[t.RegexPattern] = re.compile(
+        PATTERN_IDENTIFIER_WITH_UNDERSCORE,
     )
-    PATTERN_ISO8601_TIMESTAMP_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    PATTERN_ISO8601_TIMESTAMP_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_ISO8601_TIMESTAMP,
     )
-    PATTERN_HOSTNAME_OR_IP_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    PATTERN_HOSTNAME_OR_IP_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_HOSTNAME_OR_IP,
     )
-    PATTERN_LDAP_DN_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    PATTERN_LDAP_DN_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_LDAP_DN,
     )
-    PATTERN_IDENTIFIER_LOWERCASE_RE: ClassVar[FlextTypingBase.RegexPattern] = (
-        re.compile(
-            PATTERN_IDENTIFIER_LOWERCASE,
-        )
+    PATTERN_IDENTIFIER_LOWERCASE_RE: ClassVar[t.RegexPattern] = re.compile(
+        PATTERN_IDENTIFIER_LOWERCASE,
     )
-    CAMEL_TO_SNAKE_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    CAMEL_TO_SNAKE_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_CAMEL_TO_SNAKE,
     )
-    FORBIDDEN_FACADE_IMPORT_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    FORBIDDEN_FACADE_IMPORT_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_FORBIDDEN_FACADE_IMPORT,
         flags=re.MULTILINE,
     )
-    PATTERN_EXAMPLE_RESULT_LINE_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    PATTERN_EXAMPLE_RESULT_LINE_RE: ClassVar[t.RegexPattern] = re.compile(
         PATTERN_EXAMPLE_RESULT_LINE,
     )
 

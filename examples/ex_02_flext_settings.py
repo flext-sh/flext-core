@@ -91,7 +91,7 @@ class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):
         self.audit_check("fetch_global.identity", global_instance is first)
         FlextSettings.reset_for_testing()
         third = FlextSettings.fetch_global()
-        self.audit_check("reset_for_testing.recreates_singleton", third is not first)
+        self.audit_check("reset_for_testing.preserves_singleton", third is first)
         test_a = self._TestConfig.fetch_global()
         test_b = self._TestConfig.fetch_global()
         self.audit_check("subclass.singleton_identity", test_a is test_b)
@@ -102,9 +102,8 @@ class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):
         self.section("update_global_and_clone")
         FlextSettings.reset_for_testing()
         base = FlextSettings.fetch_global()
-        self.audit_check("update_global.before.log_level", base.log_level)
         updated = FlextSettings.update_global(log_level="ERROR", debug=True)
-        self.audit_check("update_global.replaces_instance", updated is not base)
+        self.audit_check("update_global.preserves_instance", updated is base)
         self.audit_check(
             "update_global.installed_as_singleton",
             FlextSettings.fetch_global() is updated,

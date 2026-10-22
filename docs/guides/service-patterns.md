@@ -8,6 +8,7 @@
 - [Composition root](#composition-root)
 - [Settings and the runtime hook](#settings-and-the-runtime-hook)
 - [Operations are the API](#operations-are-the-api)
+- [Registry composition](#registry-composition)
 - [Failures](#failures)
 - [Forbidden forms](#forbidden-forms)
 - [examples-backed service flows](#examples-backed-service-flows)

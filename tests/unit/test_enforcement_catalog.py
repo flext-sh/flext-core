@@ -92,13 +92,12 @@ class TestsFlextEnforcementCatalog:
         )
         tm.that(runtime, truth=True)
         for rule in runtime:
-            tm.that(
-                isinstance(rule.source, m.EnforcementRuntimeWarningSource), truth=True
-            )
-            assert isinstance(rule.source, m.EnforcementRuntimeWarningSource)
-            module_name, _, class_name = rule.source.category.rpartition(".")
-            category = getattr(importlib.import_module(module_name), class_name)
-            tm.that(issubclass(category, Warning), truth=True)
+            source = rule.source
+            tm.that(source, is_=m.EnforcementRuntimeWarningSource)
+            if isinstance(source, m.EnforcementRuntimeWarningSource):
+                module_name, _, class_name = source.category.rpartition(".")
+                category = getattr(importlib.import_module(module_name), class_name)
+                tm.that(category, where=lambda value: issubclass(value, Warning))
 
     @staticmethod
     def test_fix_action_rules_match_declared_constants() -> None:
@@ -174,4 +173,4 @@ class TestsFlextEnforcementCatalog:
     def test_every_rule_severity_is_an_enum_member() -> None:
         """Test every rule severity is an enum member."""
         for rule in u.build_canonical_catalog().rules:
-            tm.that(isinstance(rule.severity, c.EnforcementRuleSeverity), truth=True)
+            tm.that(rule.severity, is_=c.EnforcementRuleSeverity)

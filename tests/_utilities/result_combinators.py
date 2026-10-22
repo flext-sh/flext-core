@@ -23,6 +23,16 @@ class TestsFlextUtilitiesResultCombinators:
         return value * 2
 
     @staticmethod
+    def is_even(value: int) -> bool:
+        """Return whether an integer is even."""
+        return value % 2 == 0
+
+    @staticmethod
+    def is_odd(value: int) -> bool:
+        """Return whether an integer is odd."""
+        return value % 2 != 0
+
+    @staticmethod
     def increment(value: int) -> p.Result[int]:
         """Increment one integer into a successful result.
 

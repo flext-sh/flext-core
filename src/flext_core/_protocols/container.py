@@ -21,7 +21,9 @@ from flext_core._protocols import (
 from flext_core._protocols._container_parts import flextprotocolscontainer_part_03
 
 
-class FlextProtocolsContainer(flextprotocolscontainer_part_03.FlextProtocolsContainer):
+class FlextProtocolsContainer(
+    flextprotocolscontainer_part_03.FlextProtocolsContainerPart03
+):
     """Public facade for FlextProtocolsContainer."""
 
     type ProtocolGuardInput = (

@@ -17,7 +17,6 @@ from flext_core._models import (
     FlextModelsHandler,
     FlextModelsPydantic,
 )
-from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextModelsRegistry:
@@ -78,13 +77,13 @@ class FlextModelsRegistry:
             validate_default=True,
         )
 
-        @FlextUtilitiesPydantic.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def failure(self) -> bool:
             """Indicate whether the batch registration had errors."""
             return bool(self.errors)
 
-        @FlextUtilitiesPydantic.computed_field
+        @FlextModelsPydantic.computed_field
         @property
         def success(self) -> bool:
             """Indicate whether the batch registration fully succeeded."""
