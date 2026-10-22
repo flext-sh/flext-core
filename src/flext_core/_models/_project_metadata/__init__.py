@@ -13,16 +13,16 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01 import (
+    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_01 import (
         FlextModelsProjectMetadataContract,
     )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_03 import (
+    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_03 import (
         FlextModelsProjectMetadataAggregates,
     )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_04 import (
+    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_04 import (
         FlextModelsProjectMetadataDocument,
     )
-    from flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05 import (
+    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_05 import (
         FlextModelsPyprojectIngressContract,
     )
 

@@ -91,8 +91,9 @@ class TestsFlextCoreEnforcementReports:
     def test_report_membership_ignores_non_string_fragments() -> None:
         """Test report membership ignores non string fragments."""
         report = m.Report(violations=[_hard_violation(message="boom")])
+        numeric_fragment = 123
 
-        tm.that(report, where=lambda value: 123 not in value)
+        tm.that(report, where=lambda value: numeric_fragment not in value)
         tm.that(report, where=lambda value: None not in value)
 
     @staticmethod

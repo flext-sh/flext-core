@@ -13,11 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._exceptions import (
-        _base_parts as _base_parts,
-        _factories_parts as _factories_parts,
-    )
-    from flext_core._exceptions._base_parts import (
+    from flext_core._exceptions import _base as _base, _factories as _factories
+    from flext_core._exceptions._base import (
         FlextBaseErrorMetadataMixin,
         FlextBaseErrorStateMixin,
     )
@@ -38,24 +35,24 @@ __all__: tuple[str, ...] = (
     "FlextExceptionsMetrics",
     "FlextExceptionsTemplate",
     "FlextExceptionsTypes",
-    "_base_parts",
-    "_factories_parts",
+    "_base",
+    "_factories",
 )
 
 __getattr__ = install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextBaseErrorMetadataMixin": "._base_parts.flextexceptionsbase_part_01",
-        "FlextBaseErrorStateMixin": "._base_parts.flextexceptionsbase_part_02",
+        "FlextBaseErrorMetadataMixin": "._base.flextexceptionsbase_part_01",
+        "FlextBaseErrorStateMixin": "._base.flextexceptionsbase_part_02",
         "FlextExceptionsBase": ".base",
         "FlextExceptionsFactories": ".factories",
         "FlextExceptionsHelpers": ".helpers",
         "FlextExceptionsMetrics": ".metrics",
         "FlextExceptionsTemplate": ".template",
         "FlextExceptionsTypes": ".exception_types",
-        "_base_parts": "._base_parts",
-        "_factories_parts": "._factories_parts",
+        "_base": "._base",
+        "_factories": "._factories",
     }),
     public_exports=__all__,
 )[0]

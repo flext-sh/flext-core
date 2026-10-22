@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._checker_parts.checker_part_01 import (
+    from flext_core._utilities._checker.checker_part_01 import (
         FlextUtilitiesCheckerPart01,
     )
-    from flext_core._utilities._checker_parts.checker_part_02 import (
+    from flext_core._utilities._checker.checker_part_02 import (
         FlextUtilitiesCheckerPart02,
     )
-    from flext_core._utilities._checker_parts.checker_part_03 import (
+    from flext_core._utilities._checker.checker_part_03 import (
         FlextUtilitiesCheckerPart03,
     )
 

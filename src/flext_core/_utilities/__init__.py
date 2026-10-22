@@ -15,14 +15,14 @@ from flext_core import install_lazy_exports
 if TYPE_CHECKING:
     from flext_core._utilities import (
         _beartype as _beartype,
-        _checker_parts as _checker_parts,
-        _enforcement_collect_parts as _enforcement_collect_parts,
-        _enforcement_parts as _enforcement_parts,
-        _logging_config_parts as _logging_config_parts,
-        _logging_context_parts as _logging_context_parts,
-        _mapper_access_parts as _mapper_access_parts,
-        _mapper_extract_parts as _mapper_extract_parts,
-        _parser_targets_parts as _parser_targets_parts,
+        _checker as _checker,
+        _enforcement as _enforcement,
+        _enforcement_collect as _enforcement_collect,
+        _logging_config as _logging_config,
+        _logging_context as _logging_context,
+        _mapper_access as _mapper_access,
+        _mapper_extract as _mapper_extract,
+        _parser_targets as _parser_targets,
     )
     from flext_core._utilities._beartype import (
         FlextUtilitiesBeartypeAliasVisitor,
@@ -56,7 +56,7 @@ if TYPE_CHECKING:
     from flext_core._utilities._guards_type_protocol_string import (
         FlextUtilitiesGuardsTypeProtocolStringMixin,
     )
-    from flext_core._utilities._logging_config_parts import FlextUtilitiesLoggingStream
+    from flext_core._utilities._logging_config import FlextUtilitiesLoggingStream
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
@@ -185,14 +185,14 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesTypingAdapterJson",
     "FlextUtilitiesTypingAdapterScalars",
     "_beartype",
-    "_checker_parts",
-    "_enforcement_collect_parts",
-    "_enforcement_parts",
-    "_logging_config_parts",
-    "_logging_context_parts",
-    "_mapper_access_parts",
-    "_mapper_extract_parts",
-    "_parser_targets_parts",
+    "_checker",
+    "_enforcement",
+    "_enforcement_collect",
+    "_logging_config",
+    "_logging_context",
+    "_mapper_access",
+    "_mapper_extract",
+    "_parser_targets",
     "alias_first_violation",
     "bound_names",
     "declarations",
@@ -258,7 +258,7 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesLogging": ".logging",
         "FlextUtilitiesLoggingConfig": ".logging_config",
         "FlextUtilitiesLoggingContext": ".logging_context",
-        "FlextUtilitiesLoggingStream": "._logging_config_parts.logging_stream",
+        "FlextUtilitiesLoggingStream": "._logging_config.logging_stream",
         "FlextUtilitiesMapper": ".mapper",
         "FlextUtilitiesMapperAccess": ".mapper_access",
         "FlextUtilitiesMapperExtract": ".mapper_extract",
@@ -278,17 +278,15 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesTypingAdapterJson": ".typeadapter_json",
         "FlextUtilitiesTypingAdapterScalars": ".typeadapter_scalars",
         "_beartype": "._beartype",
-        "_checker_parts": "._checker_parts",
-        "_enforcement_collect_parts": "._enforcement_collect_parts",
-        "_enforcement_parts": "._enforcement_parts",
-        "_logging_config_parts": "._logging_config_parts",
-        "_logging_context_parts": "._logging_context_parts",
-        "_mapper_access_parts": "._mapper_access_parts",
-        "_mapper_extract_parts": "._mapper_extract_parts",
-        "_parser_targets_parts": "._parser_targets_parts",
-        "alias_first_violation": (
-            "._beartype._class_visitor_parts.class_visitor_part_02_01"
-        ),
+        "_checker": "._checker",
+        "_enforcement_collect": "._enforcement_collect",
+        "_enforcement": "._enforcement",
+        "_logging_config": "._logging_config",
+        "_logging_context": "._logging_context",
+        "_mapper_access": "._mapper_access",
+        "_mapper_extract": "._mapper_extract",
+        "_parser_targets": "._parser_targets",
+        "alias_first_violation": ("._beartype._class_visitor.class_visitor_part_02_01"),
         "bound_names": "._beartype._module_source_scan",
         "declarations": "._beartype._module_source_scan",
         "declared_union_members": "._beartype._field_union_scan",

@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._handlers_parts.flexthandlers_part_01 import FlextHandlersPart01
-    from flext_core._handlers_parts.flexthandlers_part_02 import FlextHandlersPart02
-    from flext_core._handlers_parts.flexthandlers_part_03 import FlextHandlersPart03
-    from flext_core._handlers_parts.flexthandlers_part_04 import FlextHandlersPart04
-    from flext_core._handlers_parts.flexthandlers_part_05 import FlextHandlersPart05
-    from flext_core._handlers_parts.flexthandlers_part_06 import FlextHandlersPart06
-    from flext_core._handlers_parts.flexthandlers_part_07 import FlextHandlersPart07
+    from flext_core._handlers.flexthandlers_part_01 import FlextHandlersPart01
+    from flext_core._handlers.flexthandlers_part_02 import FlextHandlersPart02
+    from flext_core._handlers.flexthandlers_part_03 import FlextHandlersPart03
+    from flext_core._handlers.flexthandlers_part_04 import FlextHandlersPart04
+    from flext_core._handlers.flexthandlers_part_05 import FlextHandlersPart05
+    from flext_core._handlers.flexthandlers_part_06 import FlextHandlersPart06
+    from flext_core._handlers.flexthandlers_part_07 import FlextHandlersPart07
 
 
 __all__: tuple[str, ...] = (

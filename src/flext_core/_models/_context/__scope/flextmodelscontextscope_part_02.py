@@ -12,7 +12,7 @@ from typing import Annotated
 
 from flext_core import t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._context.__scope_parts.flextmodelscontextscope_part_01 import (
+from flext_core._models._context.__scope.flextmodelscontextscope_part_01 import (
     FlextModelsContextScopePart01,
 )
 from flext_core._protocols import FlextProtocolsContainer

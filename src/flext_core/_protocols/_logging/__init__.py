@@ -13,13 +13,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._protocols._logging_parts.flextprotocolslogging_part_01 import (
+    from flext_core._protocols._logging.flextprotocolslogging_part_01 import (
         FlextProtocolsLoggingPart01,
     )
-    from flext_core._protocols._logging_parts.flextprotocolslogging_part_02 import (
+    from flext_core._protocols._logging.flextprotocolslogging_part_02 import (
         FlextProtocolsLoggingPart02,
     )
-    from flext_core._protocols._logging_parts.flextprotocolslogging_part_03 import (
+    from flext_core._protocols._logging.flextprotocolslogging_part_03 import (
         FlextProtocolsLoggingPart03,
     )
 

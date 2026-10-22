@@ -13,7 +13,7 @@ from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesProjectMetadata
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
-from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
+from flext_core._utilities._beartype._class_visitor.class_visitor_part_01 import (
     BINARY_ARITY,
     NO_VIOLATION,
 )

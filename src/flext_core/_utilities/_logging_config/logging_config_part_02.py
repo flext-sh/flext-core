@@ -27,7 +27,7 @@ from structlog.tracebacks import ExceptionDictTransformer
 from structlog.typing import Processor
 
 from flext_core import c, m, p, t
-from flext_core._utilities._logging_config_parts import logging_config_part_01
+from flext_core._utilities._logging_config import logging_config_part_01
 from flext_core._utilities.metadata import FlextUtilitiesMetadata
 
 

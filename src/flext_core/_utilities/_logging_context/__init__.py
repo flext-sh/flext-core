@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._logging_context_parts.logging_context_part_01 import (
+    from flext_core._utilities._logging_context.logging_context_part_01 import (
         FlextUtilitiesLoggingContextPart01,
     )
-    from flext_core._utilities._logging_context_parts.logging_context_part_02 import (
+    from flext_core._utilities._logging_context.logging_context_part_02 import (
         FlextUtilitiesLoggingContextPart02,
     )
 

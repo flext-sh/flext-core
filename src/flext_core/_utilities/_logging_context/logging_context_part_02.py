@@ -14,7 +14,7 @@ from typing_extensions import TypeForm
 from flext_core import FlextRuntime, p, t
 from flext_core._models import FlextModelsBase
 from flext_core._utilities import FlextUtilitiesBase
-from flext_core._utilities._logging_context_parts import logging_context_part_01
+from flext_core._utilities._logging_context import logging_context_part_01
 
 
 class FlextUtilitiesLoggingContextPart02(

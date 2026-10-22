@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsResult
-from flext_core._protocols._context_parts.flextprotocolscontext_part_01 import (
+from flext_core._protocols._context.flextprotocolscontext_part_01 import (
     FlextProtocolsContextPart01,
 )
 

@@ -15,7 +15,7 @@ from flext_core._protocols import (
     FlextProtocolsLogging,
     FlextProtocolsSettings,
 )
-from flext_core._protocols._context_parts.flextprotocolscontext_part_01 import (
+from flext_core._protocols._context.flextprotocolscontext_part_01 import (
     FlextProtocolsContextPart01,
 )
 

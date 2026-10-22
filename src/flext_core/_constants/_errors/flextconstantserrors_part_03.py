@@ -10,7 +10,7 @@ from typing import ClassVar
 
 from pydantic import ValidationError as _PydanticValidationError
 
-from flext_core._constants._errors_parts.flextconstantserrors_part_02 import (
+from flext_core._constants._errors.flextconstantserrors_part_02 import (
     FlextConstantsErrorsRuntimeExceptions as _RuntimeExceptions,
 )
 

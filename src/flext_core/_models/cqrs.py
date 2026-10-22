@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core import c, t
 from flext_core._models import FlextModelsBase
-from flext_core._models._cqrs_parts import flextmodelscqrs_part_01
+from flext_core._models._cqrs import flextmodelscqrs_part_01
 from flext_core._utilities import FlextUtilitiesGenerators
 
 

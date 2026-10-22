@@ -17,7 +17,7 @@ from typing import Annotated, ClassVar, Self
 
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._base_parts import flextmodelsbase_part_02
+from flext_core._models._base import flextmodelsbase_part_02
 from flext_core._utilities import FlextUtilitiesGenerators
 
 

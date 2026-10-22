@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 import structlog
 
 from flext_core import c, m, p, t
-from flext_core._utilities._logging_config_parts.logging_stream import (
+from flext_core._utilities._logging_config.logging_stream import (
     FlextUtilitiesLoggingStream,
 )
 

@@ -92,7 +92,7 @@ class FlextHandlersPart01[MessageT_contra, ResultT](x):
 
         """
         super().__init_subclass__()
-        if cls.__module__.startswith("flext_core._handlers_parts"):
+        if cls.__module__.startswith("flext_core._handlers"):
             return
         if "[" in cls.__qualname__:
             return

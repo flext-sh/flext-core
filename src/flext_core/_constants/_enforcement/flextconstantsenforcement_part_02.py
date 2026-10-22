@@ -9,7 +9,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core._constants._enforcement_parts import FlextConstantsEnforcementEnums
+from flext_core._constants._enforcement import FlextConstantsEnforcementEnums
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

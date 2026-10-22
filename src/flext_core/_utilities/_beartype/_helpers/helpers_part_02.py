@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Annotated, ClassVar, ForwardRef, get_args, get
 from flext_core import c
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeTypeAliases
-from flext_core._utilities._beartype._helpers_parts import helpers_part_01
+from flext_core._utilities._beartype._helpers import helpers_part_01
 
 if TYPE_CHECKING:
     from collections.abc import Iterator

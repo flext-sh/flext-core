@@ -13,14 +13,14 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._enforcement_collect_parts import (
+    from flext_core._utilities._enforcement_collect import (
         enforcement_collect_part_01 as _owner_0,
     )
 
     FlextUtilitiesEnforcementCollectPart01 = (
         _owner_0.FlextUtilitiesEnforcementCollectPart01
     )
-    from flext_core._utilities._enforcement_collect_parts import (
+    from flext_core._utilities._enforcement_collect import (
         enforcement_collect_part_02 as _owner_1,
     )
 

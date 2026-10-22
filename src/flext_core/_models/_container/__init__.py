@@ -13,16 +13,16 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._container_parts.flextmodelscontainer_part_01 import (
+    from flext_core._models._container.flextmodelscontainer_part_01 import (
         FlextModelsContainerPart01,
     )
-    from flext_core._models._container_parts.flextmodelscontainer_part_02 import (
+    from flext_core._models._container.flextmodelscontainer_part_02 import (
         FlextModelsContainerPart02,
     )
-    from flext_core._models._container_parts.flextmodelscontainer_part_03 import (
+    from flext_core._models._container.flextmodelscontainer_part_03 import (
         FlextModelsContainerPart03,
     )
-    from flext_core._models._container_parts.flextmodelscontainer_part_04 import (
+    from flext_core._models._container.flextmodelscontainer_part_04 import (
         FlextModelsContainerPart04,
     )
 

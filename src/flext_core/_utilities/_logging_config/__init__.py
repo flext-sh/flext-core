@@ -13,16 +13,16 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._logging_config_parts.logging_config_part_01 import (
+    from flext_core._utilities._logging_config.logging_config_part_01 import (
         FlextUtilitiesLoggingConfigPart01,
     )
-    from flext_core._utilities._logging_config_parts.logging_config_part_02 import (
+    from flext_core._utilities._logging_config.logging_config_part_02 import (
         FlextUtilitiesLoggingConfigPart02,
     )
-    from flext_core._utilities._logging_config_parts.logging_config_part_03 import (
+    from flext_core._utilities._logging_config.logging_config_part_03 import (
         FlextUtilitiesLoggingConfigPart03,
     )
-    from flext_core._utilities._logging_config_parts.logging_stream import (
+    from flext_core._utilities._logging_config.logging_stream import (
         FlextUtilitiesLoggingStream,
     )
 

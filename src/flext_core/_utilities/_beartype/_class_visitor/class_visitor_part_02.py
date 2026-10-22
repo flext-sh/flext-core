@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities._beartype._class_visitor_parts import (
+from flext_core._utilities._beartype._class_visitor import (
     class_visitor_part_01,
     class_visitor_part_02_01,
     class_visitor_part_02_02,
 )
-from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
+from flext_core._utilities._beartype._class_visitor.class_visitor_part_01 import (
     NO_VIOLATION,
 )
 

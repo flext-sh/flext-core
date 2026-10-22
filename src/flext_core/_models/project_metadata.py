@@ -14,7 +14,7 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models._project_metadata_parts import (
+from flext_core._models._project_metadata import (
     flextmodelsprojectmetadata_part_03,
     flextmodelsprojectmetadata_part_04,
     flextmodelsprojectmetadata_part_05,

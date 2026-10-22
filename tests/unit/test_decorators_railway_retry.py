@@ -132,12 +132,13 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         # Arrange
         """Test retry recovers after transient failures."""
         attempts = 0
+        budget = 3
 
-        @d.retry(max_attempts=3, delay_seconds=0.001)
+        @d.retry(max_attempts=budget, delay_seconds=0.001)
         def flaky_operation() -> str:
             nonlocal attempts
             attempts += 1
-            if attempts < 3:
+            if attempts < budget:
                 error_msg = f"Attempt {attempts} failed"
                 raise RuntimeError(error_msg)
             return "success"
@@ -147,7 +148,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
 
         # Assert
         tm.that(value, eq="success")
-        tm.that(attempts, eq=3)
+        tm.that(attempts, eq=budget)
 
     @staticmethod
     def test_retry_forwards_arguments_to_wrapped_callable() -> None:

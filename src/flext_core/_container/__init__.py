@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._container_parts.flextcontainertestingops_part_01 import (
+    from flext_core._container.flextcontainertestingops_part_01 import (
         FlextContainerTestingOps,
     )
 

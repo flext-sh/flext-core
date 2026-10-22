@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, m
 from flext_core._exceptions import FlextExceptionsHelpers
-from flext_core._exceptions._base_parts import FlextBaseErrorMetadataMixin
+from flext_core._exceptions._base import FlextBaseErrorMetadataMixin
 
 if TYPE_CHECKING:
     from collections.abc import Mapping

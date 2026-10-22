@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._parser_targets_parts.parser_targets_part_02 import (
+from flext_core._utilities._parser_targets.parser_targets_part_02 import (
     FlextUtilitiesParserTargetsPart02,
 )
 

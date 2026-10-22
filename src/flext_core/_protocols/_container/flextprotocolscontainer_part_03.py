@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_core._protocols._container_parts import flextprotocolscontainer_part_02
+from flext_core._protocols._container import flextprotocolscontainer_part_02
 
 if TYPE_CHECKING:
     from flext_core._protocols import (

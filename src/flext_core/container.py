@@ -32,7 +32,7 @@ from flext_core import (
     t,
     u,
 )
-from flext_core._container_parts import FlextContainerTestingOps
+from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping

@@ -14,7 +14,7 @@ from flext_core import c
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities import FlextUtilitiesBeartypeEngine
-from flext_core._utilities._enforcement_collect_parts import enforcement_collect_part_01
+from flext_core._utilities._enforcement_collect import enforcement_collect_part_01
 
 
 class FlextUtilitiesEnforcementCollectPart02(

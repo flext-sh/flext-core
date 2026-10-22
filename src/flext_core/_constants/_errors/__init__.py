@@ -13,19 +13,19 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._constants._errors_parts.flextconstantserrors_part_01 import (
+    from flext_core._constants._errors.flextconstantserrors_part_01 import (
         FlextConstantsErrorsMessages,
     )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_02 import (
+    from flext_core._constants._errors.flextconstantserrors_part_02 import (
         FlextConstantsErrorsRuntimeExceptions,
     )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_03 import (
+    from flext_core._constants._errors.flextconstantserrors_part_03 import (
         FlextConstantsErrorsValidationExceptions,
     )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_04 import (
+    from flext_core._constants._errors.flextconstantserrors_part_04 import (
         FlextConstantsErrorsDomainParser,
     )
-    from flext_core._constants._errors_parts.flextconstantserrors_part_05 import (
+    from flext_core._constants._errors.flextconstantserrors_part_05 import (
         FlextConstantsErrorsRuntimeSettings,
     )
 

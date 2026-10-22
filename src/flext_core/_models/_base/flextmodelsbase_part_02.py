@@ -21,7 +21,7 @@ from pydantic import ConfigDict
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._base_parts import FlextModelsBasePart01
+from flext_core._models._base import FlextModelsBasePart01
 from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesPydantic
 
 

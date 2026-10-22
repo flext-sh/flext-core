@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._context import __scope_parts as __scope_parts
-    from flext_core._models._context.__scope_parts import (
+    from flext_core._models._context import __scope as __scope
+    from flext_core._models._context.__scope import (
         FlextModelsContextScopePart01,
         FlextModelsContextScopePart02,
         FlextModelsContextScopePart03,
@@ -35,7 +35,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsContextScopePart02",
     "FlextModelsContextScopePart03",
     "FlextModelsContextTokens",
-    "__scope_parts",
+    "__scope",
 )
 
 install_lazy_exports(
@@ -46,17 +46,11 @@ install_lazy_exports(
         "FlextModelsContextExport": "._export",
         "FlextModelsContextMetadata": "._metadata",
         "FlextModelsContextScope": "._scope",
-        "FlextModelsContextScopePart01": (
-            ".__scope_parts.flextmodelscontextscope_part_01"
-        ),
-        "FlextModelsContextScopePart02": (
-            ".__scope_parts.flextmodelscontextscope_part_02"
-        ),
-        "FlextModelsContextScopePart03": (
-            ".__scope_parts.flextmodelscontextscope_part_03"
-        ),
+        "FlextModelsContextScopePart01": (".__scope.flextmodelscontextscope_part_01"),
+        "FlextModelsContextScopePart02": (".__scope.flextmodelscontextscope_part_02"),
+        "FlextModelsContextScopePart03": (".__scope.flextmodelscontextscope_part_03"),
         "FlextModelsContextTokens": "._tokens",
-        "__scope_parts": ".__scope_parts",
+        "__scope": ".__scope",
     }),
     public_exports=__all__,
 )

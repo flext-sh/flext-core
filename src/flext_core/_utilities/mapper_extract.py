@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._mapper_extract_parts.mapper_extract_part_02 import (
+from flext_core._utilities._mapper_extract.mapper_extract_part_02 import (
     FlextUtilitiesMapperExtractPart02,
 )
 

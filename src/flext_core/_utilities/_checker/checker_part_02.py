@@ -16,7 +16,7 @@ from typing import get_origin, get_type_hints
 
 from flext_core import FlextResult, c, p
 from flext_core._typings import FlextTypesServices, FlextTypingBase
-from flext_core._utilities._checker_parts import checker_part_01
+from flext_core._utilities._checker import checker_part_01
 
 
 class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):

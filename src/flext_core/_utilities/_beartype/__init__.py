@@ -14,15 +14,13 @@ from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._beartype import (
-        _class_visitor_parts as _class_visitor_parts,
-        _helpers_parts as _helpers_parts,
+        _class_visitor as _class_visitor,
+        _helpers as _helpers,
     )
     from flext_core._utilities._beartype._alias_visitor import (
         FlextUtilitiesBeartypeAliasVisitor,
     )
-    from flext_core._utilities._beartype._class_visitor_parts import (
-        alias_first_violation,
-    )
+    from flext_core._utilities._beartype._class_visitor import alias_first_violation
     from flext_core._utilities._beartype._field_union_scan import declared_union_members
     from flext_core._utilities._beartype._import_blacklist_visitor import (
         FlextUtilitiesBeartypeImportBlacklistVisitor,
@@ -87,8 +85,8 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeModuleSource",
     "FlextUtilitiesBeartypeModuleVisitor",
     "FlextUtilitiesBeartypeTypeAliases",
-    "_class_visitor_parts",
-    "_helpers_parts",
+    "_class_visitor",
+    "_helpers",
     "alias_first_violation",
     "bound_names",
     "declarations",
@@ -119,9 +117,9 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesBeartypeModuleSource": ".module_source",
         "FlextUtilitiesBeartypeModuleVisitor": ".module_visitor",
         "FlextUtilitiesBeartypeTypeAliases": ".type_aliases",
-        "_class_visitor_parts": "._class_visitor_parts",
-        "_helpers_parts": "._helpers_parts",
-        "alias_first_violation": ("._class_visitor_parts.class_visitor_part_02_01"),
+        "_class_visitor": "._class_visitor",
+        "_helpers": "._helpers",
+        "alias_first_violation": ("._class_visitor.class_visitor_part_02_01"),
         "bound_names": "._module_source_scan",
         "declarations": "._module_source_scan",
         "declared_union_members": "._field_union_scan",

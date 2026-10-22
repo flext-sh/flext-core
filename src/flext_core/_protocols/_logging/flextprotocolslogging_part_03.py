@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols._logging_parts.flextprotocolslogging_part_02 import (
+from flext_core._protocols._logging.flextprotocolslogging_part_02 import (
     FlextProtocolsLoggingPart02,
 )
 

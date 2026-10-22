@@ -14,7 +14,7 @@ from typing import Annotated
 
 from flext_core import t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._exception_params_parts import (
+from flext_core._models._exception_params import (
     flextmodelsexceptionparams_part_01,
     flextmodelsexceptionparams_part_02,
 )

@@ -14,7 +14,7 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
 from flext_core._models import FlextModelsContainers
-from flext_core._utilities._mapper_access_parts import mapper_access_part_01
+from flext_core._utilities._mapper_access import mapper_access_part_01
 
 
 class FlextUtilitiesMapperAccessPart02(

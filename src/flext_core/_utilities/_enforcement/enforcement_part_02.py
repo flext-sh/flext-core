@@ -16,7 +16,7 @@ from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._utilities import FlextUtilitiesBeartypeEngine
-from flext_core._utilities._enforcement_parts import PREDICATE_BINDINGS
+from flext_core._utilities._enforcement import PREDICATE_BINDINGS
 from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 

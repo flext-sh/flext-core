@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from examples._shared_parts.shared_part_01 import ExamplesFlextSharedBase
-    from examples._shared_parts.shared_part_02 import ExamplesFlextShared
+    from examples._shared.shared_part_01 import ExamplesFlextSharedBase
+    from examples._shared.shared_part_02 import ExamplesFlextShared
 
 
 __all__: tuple[str, ...] = ("ExamplesFlextShared", "ExamplesFlextSharedBase")

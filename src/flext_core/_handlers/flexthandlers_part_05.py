@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, p, r
-from flext_core._handlers_parts import flexthandlers_part_04
+from flext_core._handlers import flexthandlers_part_04
 from flext_core._utilities import FlextUtilitiesHandler
 
 

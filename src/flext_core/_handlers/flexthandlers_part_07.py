@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 from typing_extensions import TypeForm
 
 from flext_core import p, t, u
-from flext_core._handlers_parts import flexthandlers_part_06
+from flext_core._handlers import flexthandlers_part_06
 
 if TYPE_CHECKING:
     from types import ModuleType

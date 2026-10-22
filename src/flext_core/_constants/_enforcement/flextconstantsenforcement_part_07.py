@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar
 
+from flext_core._constants._enforcement import FlextConstantsEnforcementRules
 from flext_core._constants._enforcement_data import FlextConstantsEnforcementData
-from flext_core._constants._enforcement_parts import FlextConstantsEnforcementRules
 
 if TYPE_CHECKING:
     from flext_core import t

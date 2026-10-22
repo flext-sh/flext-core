@@ -10,7 +10,7 @@ from typing import Annotated
 
 from flext_core import p
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._context.__scope_parts import flextmodelscontextscope_part_02
+from flext_core._models._context.__scope import flextmodelscontextscope_part_02
 
 
 class FlextModelsContextScopePart03(

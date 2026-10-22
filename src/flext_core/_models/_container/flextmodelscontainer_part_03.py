@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Annotated, ClassVar
 
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._container_parts import flextmodelscontainer_part_02
+from flext_core._models._container import flextmodelscontainer_part_02
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsContainer,

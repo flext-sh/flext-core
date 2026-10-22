@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import c
 from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import FlextUtilitiesBeartypeEngine
-from flext_core._utilities._enforcement_parts import enforcement_part_02
+from flext_core._utilities._enforcement import enforcement_part_02
 
 
 class FlextUtilitiesEnforcementPart03(

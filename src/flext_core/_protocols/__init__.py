@@ -14,9 +14,9 @@ from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._protocols import (
-        _container_parts as _container_parts,
-        _context_parts as _context_parts,
-        _logging_parts as _logging_parts,
+        _container as _container,
+        _context as _context,
+        _logging as _logging,
     )
     from flext_core._protocols.base import FlextProtocolsBase
     from flext_core._protocols.config import FlextProtocolsConfig
@@ -45,9 +45,9 @@ __all__: tuple[str, ...] = (
     "FlextProtocolsResult",
     "FlextProtocolsService",
     "FlextProtocolsSettings",
-    "_container_parts",
-    "_context_parts",
-    "_logging_parts",
+    "_container",
+    "_context",
+    "_logging",
 )
 
 __getattr__ = install_lazy_exports(
@@ -66,9 +66,9 @@ __getattr__ = install_lazy_exports(
         "FlextProtocolsResult": ".result",
         "FlextProtocolsService": ".service",
         "FlextProtocolsSettings": ".settings",
-        "_container_parts": "._container_parts",
-        "_context_parts": "._context_parts",
-        "_logging_parts": "._logging_parts",
+        "_container": "._container",
+        "_context": "._context",
+        "_logging": "._logging",
     }),
     public_exports=__all__,
 )[0]

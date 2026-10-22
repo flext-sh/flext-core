@@ -13,9 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._cqrs_parts.flextmodelscqrs_part_01 import (
-        FlextModelsCqrsPart01,
-    )
+    from flext_core._models._cqrs.flextmodelscqrs_part_01 import FlextModelsCqrsPart01
 
 
 __all__: tuple[str, ...] = ("FlextModelsCqrsPart01",)

@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 from flext_core import c, t
 from flext_core._utilities import FlextUtilitiesModel
-from flext_core._utilities._parser_targets_parts import parser_targets_part_01
+from flext_core._utilities._parser_targets import parser_targets_part_01
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping

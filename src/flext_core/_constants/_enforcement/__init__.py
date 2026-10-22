@@ -13,25 +13,25 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_01 import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_01 import (
         FlextConstantsEnforcementEnums,
     )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_02 import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_02 import (
         FlextConstantsEnforcementRuntime,
     )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_03 import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_03 import (
         FlextConstantsEnforcementNamespace,
     )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_04 import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_04 import (
         FlextConstantsEnforcementRules,
     )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_06 import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_06 import (
         FlextConstantsEnforcementTargets,
     )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_07 import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_07 import (
         FlextConstantsEnforcementSmellData,
     )
-    from flext_core._constants._enforcement_parts.flextconstantsenforcement_part_08 import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_08 import (
         FlextConstantsEnforcementFixActions,
     )
 

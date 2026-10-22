@@ -13,15 +13,9 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._base_parts.flextmodelsbase_part_01 import (
-        FlextModelsBasePart01,
-    )
-    from flext_core._models._base_parts.flextmodelsbase_part_02 import (
-        FlextModelsBasePart02,
-    )
-    from flext_core._models._base_parts.flextmodelsbase_part_03 import (
-        FlextModelsBasePart03,
-    )
+    from flext_core._models._base.flextmodelsbase_part_01 import FlextModelsBasePart01
+    from flext_core._models._base.flextmodelsbase_part_02 import FlextModelsBasePart02
+    from flext_core._models._base.flextmodelsbase_part_03 import FlextModelsBasePart03
 
 
 __all__: tuple[str, ...] = (

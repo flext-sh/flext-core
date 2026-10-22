@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from flext_core import FlextResult, c, p
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._typings import FlextTypesServices, FlextTypingBase
-from flext_core._utilities._checker_parts import checker_part_02
+from flext_core._utilities._checker import checker_part_02
 
 
 class FlextUtilitiesCheckerPart03(checker_part_02.FlextUtilitiesCheckerPart02):

@@ -60,10 +60,9 @@ class FlextConstantsLogging:
         "flext_core/_bound_logger.py",
         "flext_core/_utilities/logging.py",
         "flext_core/_utilities/logging_context.py",
-        "flext_core/_utilities/_logging_context_parts/",
+        "flext_core/_utilities/_logging_context/",
         "flext_core/_utilities/logging_config.py",
-        "flext_core/_utilities/logging_processors.py",
-        "flext_core/_utilities/logging_observability.py",
+        "flext_core/_utilities/_logging_config/",
     })
 
     # Exceptions caught by context binding / unbinding helpers

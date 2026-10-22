@@ -6,6 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples._shared_parts import ExamplesFlextShared
+from examples._shared import ExamplesFlextShared
 
 __all__: list[str] = ["ExamplesFlextShared"]

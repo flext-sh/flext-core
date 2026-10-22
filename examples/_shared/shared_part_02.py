@@ -10,7 +10,7 @@ import sys
 from typing import cast
 
 from examples import m, p, r, t
-from examples._shared_parts import ExamplesFlextSharedBase
+from examples._shared import ExamplesFlextSharedBase
 
 
 class ExamplesFlextShared(ExamplesFlextSharedBase):

@@ -13,10 +13,10 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._mapper_extract_parts.mapper_extract_part_01 import (
+    from flext_core._utilities._mapper_extract.mapper_extract_part_01 import (
         FlextUtilitiesMapperExtractPart01,
     )
-    from flext_core._utilities._mapper_extract_parts.mapper_extract_part_02 import (
+    from flext_core._utilities._mapper_extract.mapper_extract_part_02 import (
         FlextUtilitiesMapperExtractPart02,
     )
 

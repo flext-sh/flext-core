@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._checker_parts.checker_part_03 import (
-    FlextUtilitiesCheckerPart03,
-)
+from flext_core._utilities._checker.checker_part_03 import FlextUtilitiesCheckerPart03
 
 
 class FlextUtilitiesChecker(FlextUtilitiesCheckerPart03):

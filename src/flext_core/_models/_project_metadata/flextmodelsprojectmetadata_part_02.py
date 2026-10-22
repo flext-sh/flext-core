@@ -12,7 +12,7 @@ from typing import Annotated, Self
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
 from flext_core import c, t
-from flext_core._models._project_metadata_parts import (
+from flext_core._models._project_metadata import (
     flextmodelsprojectmetadata_part_01,
     flextmodelsprojectmetadata_part_05,
 )

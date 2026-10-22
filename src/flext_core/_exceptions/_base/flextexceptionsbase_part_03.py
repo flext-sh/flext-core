@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, m
 from flext_core._exceptions import FlextExceptionsHelpers
-from flext_core._exceptions._base_parts import FlextBaseErrorStateMixin
+from flext_core._exceptions._base import FlextBaseErrorStateMixin
 from flext_core._typings import FlextTypingBase
 
 if TYPE_CHECKING:

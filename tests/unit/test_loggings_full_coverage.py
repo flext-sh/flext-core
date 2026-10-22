@@ -273,5 +273,5 @@ class TestsFlextLoggings:
         tm.ok(result)
         tm.ok(marker in output)
         tm.ok("tests/unit/test_loggings_full_coverage.py" in output)
-        tm.fail("_logging_context_parts" in output)
-        tm.fail("_loggings_parts" in output)
+        for internal_path in c.LOGGING_INTERNAL_PATH_FRAGMENTS:
+            tm.fail(internal_path in output)
