@@ -28,6 +28,21 @@ class FlextUtilitiesModel:
         options: FlextModelsConfig.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> t.MappingKV[str, t.JsonPayload]:
+        """Unified Pydantic serialization with options.
+
+        Generic replacement for: model.model_dump() with consistent return type.
+
+        Args:
+            model: Pydantic model instance to serialize.
+            options: Optional Pydantic model_dump arguments within the settings model.
+            **kwargs: Inline serialization options mapped to ModelDumpOptions;
+                invalid options fail loudly instead of silently falling
+                back to defaults.
+
+        Returns:
+            Dictionary representation of the model.
+
+        """
         opts = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,

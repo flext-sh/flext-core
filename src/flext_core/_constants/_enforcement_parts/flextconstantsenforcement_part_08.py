@@ -14,7 +14,16 @@ if TYPE_CHECKING:
 
 
 class FlextConstantsEnforcementFixActions:
-    """Fix-action metadata consumed by flext-infra enforcement fixers."""
+    """Fix-action metadata consumed by flext-infra enforcement fixers.
+
+    A rule whose repair is a syntax-node codemod rule declares no fix action
+    here. ENFORCE-026, ENFORCE-027, ENFORCE-028, ENFORCE-091, ENFORCE-092 and
+    ENFORCE-094 once drove a whole-file regex transformer that could not tell
+    code from a docstring, comment or string: it rewrote the documentation of
+    the defects it forbids and turned ``typing.List[`` into
+    ``typing.t.SequenceOf[``. Their violations stay reported; the flext-infra
+    ast-grep rules applied by ``make mod`` own the rewrite.
+    """
 
     _PYDANTIC_SYMBOLS_TO_REPLACE: Final[t.JsonDict] = {
         "BaseModel": "m.BaseModel",

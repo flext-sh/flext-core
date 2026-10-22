@@ -75,6 +75,10 @@ class FlextConfig(BaseSettings):
         FLEXT distribution owns ``<import-package-with-dashes>`` without
         naming itself anywhere (``flext_core`` -> ``flext-core``,
         ``ai_hub`` -> ``ai-hub``).
+
+        Returns:
+            The namespace segment owned by the declaring package.
+
         """
         package = cls.__module__.split(".", 1)[0]
         return package.replace("_", "-")
@@ -109,12 +113,21 @@ class FlextConfig(BaseSettings):
         Lives under the platform config root scoped by the package namespace
         (``$XDG_CONFIG_HOME/<namespace>`` on Linux). Packaged defaults stay
         immutable; anything declared here overlays them.
+
+        Returns:
+            The operator's optional preference directory for this package.
+
         """
         return FlextSettings.platform_config_root() / cls._package_namespace()
 
     @classmethod
     def _yaml_files_in(cls, directory: Path) -> list[Path]:
-        """Return every YAML file in one directory, sorted for deterministic merge."""
+        """Return every YAML file in one directory, sorted for deterministic merge.
+
+        Returns:
+            Every YAML file in one directory, sorted for deterministic merge.
+
+        """
         return sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml"))
 
     @classmethod

@@ -369,6 +369,12 @@ class FlextUtilitiesContext:
     def update_context_operation(
         state: p.ContextRuntimeState, operation: str
     ) -> p.ContextRuntimeState:
+        """Copy state with the existing counter and operation-metric updates.
+
+        Returns:
+            The state with updated operation statistics.
+
+        """
         counters: t.MappingKV[str, int] = {
             "sets": state.statistics.sets,
             "gets": state.statistics.gets,

@@ -16,6 +16,8 @@ from typing import ClassVar
 
 
 class FlextConstantsConfig:
+    """SSOT for declarative config loading defaults (ADR-005)."""
+
     YAML_CONFIG_SECTION: ClassVar[str | None] = None
 
     """SSOT for declarative config loading defaults (ADR-005)."""
