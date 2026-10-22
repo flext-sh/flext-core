@@ -53,7 +53,6 @@ $(error Current Make executable has no physical path: $(MAKE_COMMAND))
 endif
 .DEFAULT_GOAL := help
 
-
 # Approval fixes its context before any topology, activation or credential read.
 ifneq ($(filter pre-commit,$(MAKECMDGOALS)),)
 override CI := Y
@@ -199,7 +198,7 @@ override PYTEST_RUN_TIMEOUT_SECONDS := 120
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests_enforcement
-override PYTEST_PROGRESS_ARGS := --verbose
+override PYTEST_PROGRESS_ARGS := --verbose --failed-first
 override PYTEST_REPORT_ARGS := -ra --durations=25 --durations-min=0.001 --tb=short
 override PYTEST_DIAG_ARGS := -rA --durations=0 --tb=long --showlocals
 override PYTEST_PARALLEL_WORKERS := 1
@@ -453,8 +452,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
-BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-docs profile-docs-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject typings gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-docs profile-docs-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject typings gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -633,13 +632,24 @@ endif
 override FLEXT_INFRA_PYTHON := $(RUNTIME_PYTHON)
 override UV_LOCAL_PROJECT := $(RUNTIME_ROOT)/.flext/uv/local
 override UV_STANDALONE_PROJECT := $(RUNTIME_ROOT)/.flext/uv/standalone
-
+override EDITABLE_SUPPLIER_ACTIVE :=
+ifneq ($(strip $(FLEXT_INFRA_EDITABLE_SUPPLIER_ROOT)),)
+ifneq ($(realpath $(FLEXT_INFRA_EDITABLE_SUPPLIER_ROOT)),$(RUNTIME_ROOT))
+ifneq ($(strip $(GITHUB_ACTIONS)),true)
+override EDITABLE_SUPPLIER_ACTIVE := Y
+endif
+endif
+endif
+override UPG_RESOLUTION_PROJECTS := "$(PROJECT_ROOT)/.flext/uv/local" "$(PROJECT_ROOT)/.flext/uv/standalone"
+ifneq ($(EDITABLE_SUPPLIER_ACTIVE),)
+override UPG_RESOLUTION_PROJECTS := "$(RUNTIME_ROOT)/.flext/uv/editable"
+endif
 ifeq ($(strip $(GITHUB_ACTIONS)),true)
 override UV_PROJECT := $(UV_STANDALONE_PROJECT)
+else ifneq ($(EDITABLE_SUPPLIER_ACTIVE),)
+override UV_PROJECT := $(RUNTIME_ROOT)/.flext/uv/editable
 else
-
 override UV_PROJECT := $(UV_LOCAL_PROJECT)
-
 endif
 override UV_PROJECT_ENVIRONMENT := $(RUNTIME_VENV)
 override VIRTUAL_ENV := $(RUNTIME_VENV)
@@ -814,7 +824,7 @@ _bootstrap_setup_tools: _builtin_require_workspace
 .PHONY: _builtin_require_upg_lock_owner
 _builtin_require_upg_lock_owner:
 	@set -eu; \
-	for resolution in "$(PROJECT_ROOT)/.flext/uv/local" "$(PROJECT_ROOT)/.flext/uv/standalone"; do \
+	for resolution in $(UPG_RESOLUTION_PROJECTS); do \
 		owner="$$($(UV) workspace dir --project "$$resolution")"; \
 		if [ "$${owner}" != "$$resolution" ]; then \
 			printf 'ERROR[upg] UV lock owner is %s, not %s; regenerate the native resolution inputs before upgrading.\n' "$${owner}" "$$resolution" >&2; \
@@ -833,6 +843,15 @@ _builtin_require_upg_lock_owner:
 # and extra. The topology-derived tool.uv.sources selects each member's live
 # editable path in the committed lock; CI's --no-editable keeps frozen builds.
 # Attached projects inherit this root's lock and never install over its graph.
+EDITABLE_RESOLUTION_RECIPE = set -eu; \
+	supplier="$(FLEXT_INFRA_EDITABLE_SUPPLIER_ROOT)"; \
+	case "$$supplier" in (/*) ;; (*) printf 'ERROR: editable supplier root must be an absolute path\n' >&2; exit 2 ;; esac; \
+	if [ ! -d "$$supplier" ]; then printf 'ERROR: editable supplier root is not a directory: %s\n' "$$supplier" >&2; exit 2; fi; \
+	supplier_resolution="$$supplier/.flext/uv/local"; \
+	if [ ! -f "$$supplier_resolution/uv.lock" ]; then printf 'ERROR: selected supplier has no native bootstrap lock: %s\n' "$$supplier_resolution" >&2; exit 2; fi; \
+	desired_python="$$(mise -C "$(RUNTIME_ROOT)" which python)"; \
+	bootstrap_infra() { env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT $(UV) run --isolated --frozen --all-groups --project "$$supplier_resolution" --python "$$desired_python" -m flext_infra "$$@"; }; \
+	bootstrap_infra codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
 INSTALL_RUNTIME_RECIPE = set -eu; \
 	trap 'if [ -n "$${FLEXT_SETUP_CREDENTIAL_STORE:-}" ]; then rm -f "$$FLEXT_SETUP_CREDENTIAL_STORE"; fi' EXIT; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
@@ -850,6 +869,9 @@ INSTALL_RUNTIME_RECIPE = set -eu; \
 		exit 2; \
 	fi; \
 	mise -C "$(RUNTIME_ROOT)" config ls --json; \
+	if [ -n "$(EDITABLE_SUPPLIER_ACTIVE)" ]; then \
+		$$credential_env $(UV) lock --check --project "$(UV_PROJECT)" --python "$$desired_python"; \
+	fi; \
 	$$credential_env $(UV) sync --project "$(UV_PROJECT)" --python "$$desired_python" $(UV_SYNC_FLAGS) --frozen --link-mode "$(UV_LINK_MODE)"
 SETUP_ENVIRONMENT_RECIPE = $(INSTALL_RUNTIME_RECIPE); \
 	setup_scope="self"; \
@@ -1401,6 +1423,60 @@ _activated-profile-test-report: _builtin_require_environment
 
 
 	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-test-report,$(call RUN_PUBLIC,profile-test-report))
+
+endif
+
+
+
+
+
+
+profile-docs: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'profile-docs' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-docs,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-docs)
+
+.PHONY: _activated-profile-docs
+
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-docs _custom-profile-docs post-profile-docs,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-docs: _builtin-profile-docs
+_builtin-profile-docs: _builtin_require_environment
+else
+
+
+_activated-profile-docs: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-docs,$(call RUN_PUBLIC,profile-docs))
+
+endif
+
+
+
+
+
+
+profile-docs-report: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'profile-docs-report' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-docs-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-docs-report)
+
+.PHONY: _activated-profile-docs-report
+
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-profile-docs-report _custom-profile-docs-report post-profile-docs-report,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-profile-docs-report: _builtin-profile-docs-report
+_builtin-profile-docs-report: _builtin_require_environment
+else
+
+
+_activated-profile-docs-report: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-docs-report,$(call RUN_PUBLIC,profile-docs-report))
 
 endif
 
@@ -2096,6 +2172,33 @@ gen-pyproject: _builtin_require_workspace _builtin_require_interpreter
 
 
 
+
+typings: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' 'typings' "$(PROJECT_ROOT)" 'standalone'
+
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-typings,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-typings)
+
+.PHONY: _activated-typings
+
+# Without hooks, Make resolves the guarded builtin and its environment
+# prerequisite once in this process instead of repeating it in a submake.
+ifeq ($(filter pre-typings _custom-typings post-typings,$(CUSTOM_DECLARED_TARGETS)),)
+_activated-typings: _builtin-typings
+_builtin-typings: _builtin_require_environment
+else
+
+
+_activated-typings: _builtin_require_environment
+
+
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-typings,$(call RUN_PUBLIC,typings))
+
+endif
+
+
+
+
+
 # This operation consumes the declared physical runtime without activating the
 # environment file it may itself regenerate.
 gen-editor: _builtin_require_workspace _builtin_require_interpreter
@@ -2424,9 +2527,9 @@ _builtin-pre-commit: _builtin_require_environment
 # before bootstrap, installation, hooks or lock resolution.
 ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
 upg: TOOL_BOOTSTRAP_LIFECYCLE := _upg_lifecycle
-
+ifeq ($(EDITABLE_SUPPLIER_ACTIVE),)
 upg: TOOL_BOOTSTRAP_RESOLVE := 1
-
+endif
 upg: _bootstrap_setup_tools
 else
 upg: _builtin_require_workspace
@@ -2514,6 +2617,14 @@ profile-test-report:
 	@printf '  %-16s %s\n' 'profile-test-report' 'Render the parent pytest profile and the aggregated child profiles from that run.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-test-report to execute it.'
 
+profile-docs:
+	@printf '  %-16s %s\n' 'profile-docs' 'Profile the complete configured mutating documentation lifecycle and retain reached phase profiles on native failure.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-docs to execute it.'
+
+profile-docs-report:
+	@printf '  %-16s %s\n' 'profile-docs-report' 'Render only the latest documentation profiling run, including explicit lifecycle and phase completion states.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-docs-report to execute it.'
+
 profile-environment:
 	@printf '  %-16s %s\n' 'profile-environment' 'Profile the canonical environment provenance guard without invoking that guard as a prerequisite.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-environment to execute it.'
@@ -2583,7 +2694,7 @@ status:
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make status to execute it.'
 
 verify-clean:
-	@printf '  %-16s %s\n' 'verify-clean' 'Verify managed artifacts and generated documentation against their sources, then reject staged, unstaged, untracked changes and stash entries through the public Git service.'
+	@printf '  %-16s %s\n' 'verify-clean' 'Audit documentation consistency and report the current Git state without rejecting concurrent work or requiring cleanup.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make verify-clean to execute it.'
 
 docs:
@@ -2629,6 +2740,10 @@ gen-footprint:
 gen-pyproject:
 	@printf '  %-16s %s\n' 'gen-pyproject' 'Regenerate this project'"'"'s analyzer and dependency metadata through guarded publication.'
 	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen-pyproject to execute it.'
+
+typings:
+	@printf '  %-16s %s\n' 'typings' 'Detect published typing dependencies and generate, package, and install missing third-party stubs through native Pyright and UV.'
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make typings to execute it.'
 
 gen-editor:
 	@printf '  %-16s %s\n' 'gen-editor' 'Project editor settings, analyzer configuration, and Git ignores without generating Python facades.'
@@ -2754,6 +2869,10 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'profile-test-report' 'Render the parent pytest profile and the aggregated child profiles from that run.';
 
+	@printf '  %-16s %s\n' 'profile-docs' 'Profile the complete configured mutating documentation lifecycle and retain reached phase profiles on native failure.';
+
+	@printf '  %-16s %s\n' 'profile-docs-report' 'Render only the latest documentation profiling run, including explicit lifecycle and phase completion states.';
+
 	@printf '  %-16s %s\n' 'profile-environment' 'Profile the canonical environment provenance guard without invoking that guard as a prerequisite.';
 
 	@printf '  %-16s %s\n' 'profile-environment-report' 'Render the profile retained by the canonical environment provenance guard.';
@@ -2788,7 +2907,7 @@ _builtin-help:
 
 	@printf '  %-16s %s\n' 'status' 'Report the resolved runtime and repository state.';
 
-	@printf '  %-16s %s\n' 'verify-clean' 'Verify managed artifacts and generated documentation against their sources, then reject staged, unstaged, untracked changes and stash entries through the public Git service.';
+	@printf '  %-16s %s\n' 'verify-clean' 'Audit documentation consistency and report the current Git state without rejecting concurrent work or requiring cleanup.';
 
 	@printf '  %-16s %s\n' 'docs' 'Generate, fix, format, and check documentation.';
 
@@ -2811,6 +2930,8 @@ _builtin-help:
 	@printf '  %-16s %s\n' 'gen-footprint' 'Inspect the pending generation journal and physical effect footprint without generation planning, participant leases, recovery, or publication.';
 
 	@printf '  %-16s %s\n' 'gen-pyproject' 'Regenerate this project'"'"'s analyzer and dependency metadata through guarded publication.';
+
+	@printf '  %-16s %s\n' 'typings' 'Detect published typing dependencies and generate, package, and install missing third-party stubs through native Pyright and UV.';
 
 	@printf '  %-16s %s\n' 'gen-editor' 'Project editor settings, analyzer configuration, and Git ignores without generating Python facades.';
 
@@ -3119,9 +3240,14 @@ endif
 # Local setup provisions declared gitlinks. CI consumes the committed lock
 # without initializing member checkouts.
 _builtin_setup_environment: $(if $(filter true,$(GITHUB_ACTIONS)),,_builtin_setup_submodules)
-	+@if [ "$(PROJECT_ROOT)" != "$(RUNTIME_ROOT)" ]; then \
+	+@set -eu; \
+	if [ "$(PROJECT_ROOT)" != "$(RUNTIME_ROOT)" ]; then \
 		"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -f "$(RUNTIME_ROOT)/Makefile" setup; \
 	else \
+		if [ -n "$(EDITABLE_SUPPLIER_ACTIVE)" ]; then \
+			printf 'setup: selected live supplier requires native view reconciliation; delegating lock writes to make upg\n'; \
+			$(SELF_MAKE) upg; \
+		fi; \
 		$(SETUP_ENVIRONMENT_RECIPE); \
 	fi
 # End SECTION: setup environment
@@ -3170,12 +3296,25 @@ _builtin-upg-sources: _builtin_require_environment
 		--git-source-ref-from "$(SOURCE_REF_FROM)" --git-source-ref-to "$(SOURCE_REF_TO)"
 
 _upg_lifecycle: _builtin_setup_submodules
+ifneq ($(EDITABLE_SUPPLIER_ACTIVE),)
+	@$(EDITABLE_RESOLUTION_RECIPE)
+endif
 	@set -eu; \
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac
-
-	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope all
+ifneq ($(EDITABLE_SUPPLIER_ACTIVE),)
+	+@$(SELF_MAKE) _upg_resolve_locks
+	@$(SELF_MAKE) _upg_install_runtime
+	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
+	@$(SELF_MAKE) _builtin_typings_prepare
+	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
+	@$(SELF_MAKE) _upg_reconcile_locks
+	@$(SELF_MAKE) _upg_install_runtime
+	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
+	+@$(SELF_MAKE) _upg_refresh_member_locks
+	$(call RUN_PUBLIC_POST,upg)
+else
 	+@$(SELF_MAKE) _upg_resolve_locks
 	@$(SELF_MAKE) _upg_install_runtime
 	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope all
@@ -3190,7 +3329,7 @@ _upg_lifecycle: _builtin_setup_submodules
 		--apply --rewrite-constraints --projects .
 	$(call RUN_PUBLIC_PRODUCE,gen)
 	+@$(SELF_MAKE) _upg_converge
-
+endif
 
 # Reparse the projected dispatcher before resolving the declared native tool
 # locks. Each writable FLEXT member retains its own lock for independent setup;
@@ -3210,6 +3349,8 @@ _upg_refresh_member_locks:
 # current Makefile selects the new recipes without restarting the upgrade or
 # repeating generation and installation.
 _upg_converge:
+	@$(SELF_MAKE) _builtin_typings_prepare
+	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope all
 	@$(SELF_MAKE) _upg_reconcile_locks
 
 	@$(SELF_MAKE) _builtin_setup_environment
@@ -3221,16 +3362,16 @@ _upg_converge:
 _upg_resolve_locks: _builtin_require_upg_lock_owner
 	@set -eu; \
 	desired_python="$$(mise -C "$(RUNTIME_ROOT)" which python)"; \
-	for resolution in "$(PROJECT_ROOT)/.flext/uv/local" "$(PROJECT_ROOT)/.flext/uv/standalone"; do \
+	for resolution in $(UPG_RESOLUTION_PROJECTS); do \
 		printf 'upg: upgrading UV lock for %s\n' "$$resolution"; \
-		$(UV) lock --project "$$resolution" --python "$$desired_python" --upgrade --refresh; \
+		$(UV) lock --project "$$resolution" --python "$$desired_python" $(if $(EDITABLE_SUPPLIER_ACTIVE),,--upgrade --refresh); \
 		$(UV) lock --check --project "$$resolution" --python "$$desired_python"; \
 	done
 
 _upg_reconcile_locks: _builtin_require_upg_lock_owner
 	@set -eu; \
 	desired_python="$$(mise -C "$(RUNTIME_ROOT)" which python)"; \
-	for resolution in "$(PROJECT_ROOT)/.flext/uv/local" "$(PROJECT_ROOT)/.flext/uv/standalone"; do \
+	for resolution in $(UPG_RESOLUTION_PROJECTS); do \
 		printf 'upg: reconciling UV lock for %s\n' "$$resolution"; \
 		$(UV) lock --project "$$resolution" --python "$$desired_python"; \
 		$(UV) lock --check --project "$$resolution" --python "$$desired_python"; \
@@ -3571,8 +3712,7 @@ _builtin_status_diagnostics: _builtin_require_environment
 	fi
 	@git -C "$(PROJECT_ROOT)" status --short
 
-# `docs` is a docs-only lifecycle (generate, fix,
-# fmt, validate, audit); the actions render from make.docs.actions and never
+# `docs` is a docs-only lifecycle; the actions render from make.docs.actions and never
 # depend on the workspace-wide codegen conform — docs actions render their
 # own outputs from the live configuration and sources.
 _builtin_docs_all:
@@ -3582,6 +3722,41 @@ _builtin_docs_all:
 		case "$$action" in fix|fmt) mode=--apply ;; esac; \
 		$(PROJECT_FLEXT_INFRA) docs "$$action" --repository-root "$(PROJECT_ROOT)" --output-dir ".reports/docs" $$mode --projects .; \
 	done
+
+# The same lifecycle and guarded effects, with one retained profile per phase.
+# Unique run directories and explicit completion markers exclude stale evidence.
+_builtin-profile-docs: _builtin_require_environment
+	@set -eu; \
+	mkdir -p "$(PROFILE_REPORTS_DIR)"; \
+	profile_dir="$$(mktemp -d "$(PROFILE_REPORTS_DIR)/docs.XXXXXX")"; \
+	printf '%s\n' incomplete > "$$profile_dir/status"; \
+	printf '%s\n' $(DOCS_ACTIONS) > "$$profile_dir/actions"; \
+	printf '%s\n' "$$profile_dir" > "$(PROFILE_REPORTS_DIR)/docs.latest"; \
+	printf 'docs profile run=%s\n' "$$profile_dir"; \
+	for action in $(DOCS_ACTIONS); do \
+		mode=; \
+		case "$$action" in fix|fmt) mode=--apply ;; esac; \
+		printf '%s\n' started > "$$profile_dir/$$action.status"; \
+		$(PROJECT_INFRA_RUN) -m flext_infra._profile_entry "$$profile_dir/$$action.pstats" docs "$$action" --repository-root "$(PROJECT_ROOT)" --output-dir ".reports/docs" $$mode --projects .; \
+		printf '%s\n' complete > "$$profile_dir/$$action.status"; \
+	done; \
+	printf '%s\n' complete > "$$profile_dir/status"
+
+_builtin-profile-docs-report: _builtin_require_environment
+	@set -eu; \
+	cd "$(PROJECT_ROOT)"; \
+	IFS= read -r profile_dir < "$(PROFILE_REPORTS_DIR)/docs.latest"; \
+	IFS= read -r status < "$$profile_dir/status"; \
+	printf 'docs profile run=%s status=%s\n' "$$profile_dir" "$$status"; \
+	while IFS= read -r action; do \
+		if [ ! -f "$$profile_dir/$$action.status" ]; then \
+			printf 'docs phase=%s status=not-reached\n' "$$action"; \
+			continue; \
+		fi; \
+		IFS= read -r status < "$$profile_dir/$$action.status"; \
+		printf 'docs phase=%s status=%s\n' "$$action" "$$status"; \
+		$(PROJECT_INFRA_RUN) -m flext_infra._cprofile_entry "$$profile_dir/$$action.pstats"; \
+	done < "$$profile_dir/actions"
 
 _builtin_clean_generated:
 
@@ -3671,7 +3846,7 @@ export FLEXT_NEW_YEAR := $(value YEAR)
 
 
 _builtin-project-new: _builtin_require_interpreter
-	@$(PROJECT_FLEXT_INFRA) codegen new --repository-root "$(PROJECT_ROOT)" --apply --name "$$FLEXT_NEW_NAME" --kind "$$FLEXT_NEW_KIND" --output-root "$$FLEXT_NEW_OUTPUT_ROOT" --provider "$$FLEXT_NEW_PROVIDER" --repository-url "$$FLEXT_NEW_REPOSITORY_URL" --repository-branch "$$FLEXT_NEW_REPOSITORY_BRANCH" --flext-repository-url "$$FLEXT_NEW_FLEXT_REPOSITORY_URL" --flext-repository-ref "$$FLEXT_NEW_FLEXT_REPOSITORY_REF" --license "$$FLEXT_NEW_LICENSE" --author-name "$$FLEXT_NEW_AUTHOR_NAME" --author-email "$$FLEXT_NEW_AUTHOR_EMAIL" --upstream "$$FLEXT_NEW_UPSTREAM" --flext-source "$$FLEXT_NEW_FLEXT_SOURCE" --year "$$FLEXT_NEW_YEAR"
+	@$(PROJECT_FLEXT_INFRA) codegen new --repository-root "$(PROJECT_ROOT)" --apply-changes --name "$$FLEXT_NEW_NAME" --kind "$$FLEXT_NEW_KIND" --output-root "$$FLEXT_NEW_OUTPUT_ROOT" --provider "$$FLEXT_NEW_PROVIDER" --repository-url "$$FLEXT_NEW_REPOSITORY_URL" --repository-branch "$$FLEXT_NEW_REPOSITORY_BRANCH" --flext-repository-url "$$FLEXT_NEW_FLEXT_REPOSITORY_URL" --flext-repository-ref "$$FLEXT_NEW_FLEXT_REPOSITORY_REF" --license "$$FLEXT_NEW_LICENSE" --author-name "$$FLEXT_NEW_AUTHOR_NAME" --author-email "$$FLEXT_NEW_AUTHOR_EMAIL" --upstream "$$FLEXT_NEW_UPSTREAM" --flext-source "$$FLEXT_NEW_FLEXT_SOURCE" --year "$$FLEXT_NEW_YEAR"
 
 
 _builtin_gen_all: _builtin_require_interpreter
@@ -3685,6 +3860,16 @@ _builtin-gen-footprint: _builtin_require_interpreter
 
 _builtin-gen-pyproject: _builtin_require_interpreter
 	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
+
+_builtin_typings_prepare: _builtin_require_interpreter
+	@$(PROJECT_FLEXT_INFRA) deps detect --repository-root "$(PROJECT_ROOT)" --apply --apply-typings
+
+_builtin-typings: _builtin_require_environment
+	+@$(SELF_MAKE) _builtin_typings_prepare
+	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(RUNTIME_ROOT)" --what pyproject --scope self
+	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" _upg_reconcile_locks
+	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" _builtin_setup_environment
+	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
 
 _builtin-gen-editor: _builtin_require_interpreter
 	@set -eu; \
