@@ -43,7 +43,7 @@ class TestsFlextExamplesExecution:
         )
         tm.that(output.stderr, lacks="Traceback")
         tm.that(
-            re.search("\\b\\w*Warning:", output.stderr), none=True, msg=output.stderr
+            re.search(r"\b\w*Warning:", output.stderr), none=True, msg=output.stderr
         )
 
     @staticmethod
@@ -95,7 +95,7 @@ class TestsFlextExamplesExecution:
         tm.that(stdout, lacks="FAIL")
         tm.that(stderr, lacks="Traceback")
         tm.that(stderr, lacks="FlextMroViolation")
-        tm.that(re.search("\\b\\w*Warning:", stderr), none=True, msg=stderr)
+        tm.that(re.search(r"\b\w*Warning:", stderr), none=True, msg=stderr)
 
         check_match = tm.not_none(
             re.search(c.Tests.EXAMPLE_CHECK_COUNT_PATTERN, stdout)

@@ -145,8 +145,9 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
                 """Initialize the validation-failing handler with optional settings."""
                 super().__init__(settings=settings)
 
+            @staticmethod
             @override
-            def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
+            def validate_message(data: t.JsonPayload) -> p.Result[bool]:
                 _ = data
                 return r[bool].fail(c.Tests.VALIDATION_FAILED_FOR_TEST)
 

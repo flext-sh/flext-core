@@ -265,19 +265,18 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.ok(clean_container.resolve("scoped-service").failure)
 
     @staticmethod
-    @pytest.mark.parametrize("trace", [False, True])
-    def test_trace_does_not_change_explicit_threshold(*, trace: bool) -> None:
-        """Tracing never overrides an explicitly elected logging threshold."""
+    def test_debug_does_not_change_explicit_threshold() -> None:
+        """Debug never overrides an explicitly elected logging threshold."""
         selected = c.LogLevel.WARNING
         tm.that(
             u.resolve_effective_log_level(
-                trace=trace, debug=True, log_level=selected, log_level_explicit=True
+                debug=True, log_level=selected, log_level_explicit=True
             ),
             eq=selected,
         )
         tm.that(
             u.resolve_effective_log_level(
-                trace=trace, debug=True, log_level=selected, log_level_explicit=False
+                debug=True, log_level=selected, log_level_explicit=False
             ),
             eq=c.LogLevel.DEBUG,
         )

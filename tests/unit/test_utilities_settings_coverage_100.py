@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Never
 
 import pytest
 
@@ -33,26 +32,22 @@ class TestsFlextCoreUtilitiesSettings:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("trace", "debug", "requested", "expected"),
+        ("debug", "requested", "expected"),
         [
-            (True, False, c.LogLevel.ERROR, c.LogLevel.ERROR),
-            (True, True, c.LogLevel.WARNING, c.LogLevel.WARNING),
-            (False, True, c.LogLevel.WARNING, c.LogLevel.WARNING),
-            (False, True, c.LogLevel.ERROR, c.LogLevel.ERROR),
-            (False, False, c.LogLevel.ERROR, c.LogLevel.ERROR),
-            (False, False, c.LogLevel.WARNING, c.LogLevel.WARNING),
+            (True, c.LogLevel.WARNING, c.LogLevel.WARNING),
+            (True, c.LogLevel.ERROR, c.LogLevel.ERROR),
+            (False, c.LogLevel.ERROR, c.LogLevel.ERROR),
+            (False, c.LogLevel.WARNING, c.LogLevel.WARNING),
         ],
     )
     def test_effective_log_level_preserves_explicit_severity(
         *,
-        trace: bool,
         debug: bool,
         requested: c.LogLevel,
         expected: c.LogLevel,
     ) -> None:
         """Explicit severity wins debug; trace never changes the threshold."""
         resolved = u.resolve_effective_log_level(
-            trace=trace,
             debug=debug,
             log_level=requested,
         )
@@ -75,7 +70,6 @@ class TestsFlextCoreUtilitiesSettings:
                 process_environment=u.resolve_process_environment(),
                 log_level=str(
                     u.resolve_effective_log_level(
-                        trace=True,
                         debug=False,
                         log_level=c.LogLevel.ERROR,
                     ),
@@ -109,60 +103,3 @@ class TestsFlextCoreUtilitiesSettings:
         tm.that(cwd_resolved, eq=str(default_env_file.resolve()))
         tm.that(override_resolved, eq=missing_override)
         tm.that(fallback_resolved, eq=c.ENV_FILE_DEFAULT)
-
-    @staticmethod
-    def test_register_factory_reports_success_and_resolvable_service() -> None:
-        """Test register factory reports success and resolvable service."""
-        container = FlextContainer()
-        container.clear()
-        expected_env_file = FlextSettings.resolve_env_file()
-        expected_summary = m.ConfigMap(
-            root={
-                "env_file": expected_env_file,
-                "log_level": u.resolve_effective_log_level(
-                    trace=False,
-                    debug=True,
-                    log_level=c.LogLevel.WARNING,
-                ),
-            }
-        )
-
-        success_result = u.register_factory(
-            container,
-            "settings_summary",
-            lambda: expected_summary,
-        )
-        resolved_summary = container.resolve("settings_summary", type_cls=m.ConfigMap)
-
-        tm.ok(success_result)
-        tm.ok(success_result.value)
-        tm.ok(resolved_summary)
-        summary = resolved_summary.value
-        tm.ok(summary is expected_summary)
-        tm.that(
-            summary.root,
-            eq={
-                "env_file": expected_env_file,
-                "log_level": c.LogLevel.WARNING,
-            },
-        )
-
-    @staticmethod
-    def test_register_factory_surfaces_factory_failure_as_result() -> None:
-        """Test register factory surfaces factory failure as result."""
-        container = FlextContainer()
-        container.clear()
-        error_message = "factory exploded"
-
-        def failing_factory() -> Never:
-            raise RuntimeError(error_message)
-
-        failure_result = u.register_factory(
-            container,
-            "broken_settings_summary",
-            failing_factory,
-        )
-
-        tm.fail(failure_result)
-        tm.that(failure_result.error, none=False)
-        tm.that(error_message in str(failure_result.error), truth=True)

@@ -19,14 +19,13 @@ from typing import TYPE_CHECKING, ClassVar, cast
 
 import yaml
 
-from flext_core import c
+from flext_core import c, r
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesReliability,
 )
 from flext_core.config_sources import FlextStrictYamlConfigSource
-from flext_core.result import r
 
 if TYPE_CHECKING:
     from flext_core import p

@@ -6,11 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._runtime import FlextRuntimeBase
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
-class FlextRuntime(FlextRuntimeBase, FlextUtilitiesPydantic):
+class FlextRuntime(FlextUtilitiesPydantic):
     """Expose runtime normalization and validation helpers.
 
     Runtime primitives and Pydantic normalization retain their existing

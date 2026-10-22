@@ -190,7 +190,8 @@ class TestsFlextUtilitiesPydantic:
         payload = TestsFlextUtilitiesPydantic._AliasFactoryContract(**values)
         tm.that(payload.model_label == "model", truth=True)
         tm.that(payload.utility_label == "utility", truth=True)
-        tm.that(payload.model_value == payload.utility_value == "", truth=True)
+        tm.that(payload.model_value, eq="")
+        tm.that(payload.utility_value, eq="")
         tm.that(
             TestsFlextUtilitiesPydantic._AliasFactoryContract.model_validate_json(
                 payload.model_dump_json(by_alias=True),

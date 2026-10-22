@@ -276,25 +276,9 @@ class FlextSettings(BaseSettings):
                 root = path.path[0]
                 if not isinstance(root, str):
                     continue
-                value: FlextSettings._FieldValue | PydanticUndefinedType
-                value = source_values.get(root, PydanticUndefined)
-                for key in path.path[1:]:
-                    try:
-                        if isinstance(value, Mapping):
-                            value = next(
-                                (item for name, item in value.items() if name == key),
-                                PydanticUndefined,
-                            )
-                        elif isinstance(value, (list, tuple, bytes)) and isinstance(
-                            key, int
-                        ):
-                            value = value[key]
-                        else:
-                            value = PydanticUndefined
-                    except (KeyError, IndexError, TypeError):
-                        value = PydanticUndefined
-                    if value is PydanticUndefined:
-                        break
+                value = cls._alias_path_value(
+                    source_values.get(root, PydanticUndefined), path.path[1:]
+                )
                 if not isinstance(value, PydanticUndefinedType):
                     field_values[name] = value
                     consumed.add(root)
@@ -304,6 +288,36 @@ class FlextSettings(BaseSettings):
         }
         values.update(field_values)
         return values
+
+    @staticmethod
+    def _alias_path_value(
+        value: FlextSettings._FieldValue | PydanticUndefinedType,
+        keys: Sequence[str | int],
+    ) -> FlextSettings._FieldValue | PydanticUndefinedType:
+        """Follow the remaining segments of one validation-alias path.
+
+        Mapping segments select by key; integer segments index sequences within
+        bounds. Any other step leaves the alias unresolved.
+
+        Returns:
+            The value the path reaches, or ``PydanticUndefined`` when it is absent.
+
+        """
+        for key in keys:
+            if isinstance(value, Mapping):
+                value = next(
+                    (item for name, item in value.items() if name == key),
+                    PydanticUndefined,
+                )
+            elif (
+                isinstance(value, (list, tuple, bytes))
+                and isinstance(key, int)
+                and -len(value) <= key < len(value)
+            ):
+                value = value[key]
+            else:
+                return PydanticUndefined
+        return value
 
     @classmethod
     def _validate_candidate[ModelT: BaseModel, ValueT](

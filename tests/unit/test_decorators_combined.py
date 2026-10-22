@@ -194,13 +194,14 @@ class TestsFlextCoreDecoratorsCombined:
         # Arrange
         """Test stacking railway over retry recovers then wraps."""
         attempts = 0
+        succeeding_attempt = 2
 
         @d.railway()
         @d.retry(max_attempts=3, delay_seconds=0.001)
         def flaky_with_railway() -> str:
             nonlocal attempts
             attempts += 1
-            if attempts < 2:
+            if attempts < succeeding_attempt:
                 error_msg = "Retry me"
                 raise RuntimeError(error_msg)
             return "success"
@@ -210,7 +211,7 @@ class TestsFlextCoreDecoratorsCombined:
 
         # Assert
         tm.ok(outcome, eq="success")
-        tm.that(attempts, eq=2)
+        tm.that(attempts, eq=succeeding_attempt)
 
     @staticmethod
     @pytest.mark.parametrize(

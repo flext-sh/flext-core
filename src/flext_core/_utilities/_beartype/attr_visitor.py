@@ -11,6 +11,8 @@ from pathlib import Path
 from types import MappingProxyType
 from typing import ClassVar, get_origin
 
+from pydantic_settings import BaseSettings
+
 from flext_core import c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
@@ -155,6 +157,10 @@ class FlextUtilitiesBeartypeAttrVisitor:
         """
         module_name = getattr(target, "__module__", "") or ""
         if module_name.endswith("._constants") or "._constants." in module_name:
+            return None
+        # A settings/config owner (BaseSettings lineage) is the layer-zero SSOT
+        # that constants consume (ADR-005); it never imports ``_constants``.
+        if BaseSettings in target.__mro__:
             return None
         if name in c.ENFORCEMENT_CLASSVAR_EXEMPT_NAMES:
             return None

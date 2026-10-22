@@ -14,15 +14,14 @@ from __future__ import annotations
 
 from typing import ClassVar
 
+from flext_core._config import FlextConfig
+
 
 class FlextConstantsConfig:
     """SSOT for declarative config loading defaults (ADR-005)."""
 
-    YAML_CONFIG_SECTION: ClassVar[str | None] = None
-
-    """SSOT for declarative config loading defaults (ADR-005)."""
-
-    CONFIG_DIR_NAME: ClassVar[str] = "config"
+    CONFIG_DIR_NAME: ClassVar[str] = FlextConfig.CONFIG_DIR_NAME
+    """Owned by the layer-zero config; constants consume config, never the reverse."""
     CONFIG_SCHEMAS_DIR_NAME: ClassVar[str] = "schemas"
     CONFIG_TEMPLATES_DIR_NAME: ClassVar[str] = "templates"
     CONFIG_SETTINGS_FILE_NAME: ClassVar[str] = "settings.yaml"

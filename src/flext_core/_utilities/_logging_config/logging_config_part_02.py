@@ -36,7 +36,7 @@ class FlextUtilitiesLoggingConfigPart02(
 ):
     @staticmethod
     def level_based_context_filter(
-        logger: p.OutputLogger | None,
+        _logger: p.OutputLogger | None,
         method_name: str,
         event_dict: p.LoggingEvent,
     ) -> p.LoggingEvent:

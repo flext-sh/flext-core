@@ -44,7 +44,9 @@ class FlextUtilitiesBeartypeTypeAliases:
             TypeError: If the owner has no inspectable defining module.
 
         """
-        namespace: dict[str, FlextProtocolsBase.AttributeProbe] = dict(vars(builtins))
+        namespace: FlextTypingBase.MutableMappingKV[
+            str, FlextProtocolsBase.AttributeProbe
+        ] = dict(vars(builtins))
         if isinstance(owner, ModuleType):
             namespace.update(vars(owner))
             return namespace

@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities._beartype._class_visitor_parts import class_visitor_part_01
-from flext_core._utilities._beartype._class_visitor_parts._parts import (
+from flext_core._utilities._beartype._class_visitor_parts import (
+    class_visitor_part_01,
     class_visitor_part_02_01,
     class_visitor_part_02_02,
 )

@@ -159,17 +159,18 @@ class TestsFlextCoreDecorators:
     def test_retry_retries_until_success() -> None:
         """Test retry retries until success."""
         calls = {"n": 0}
+        succeeding_call = 2
 
         @d.retry(max_attempts=3, delay_seconds=0.001)
         def flaky() -> str:
             calls["n"] += 1
-            if calls["n"] < 2:
+            if calls["n"] < succeeding_call:
                 msg = "transient"
                 raise ValueError(msg)
             return "ok"
 
         tm.that(flaky(), eq="ok")
-        tm.that(calls["n"], eq=2)
+        tm.that(calls["n"], eq=succeeding_call)
 
     @staticmethod
     def test_combined_applies_injection_on_standard_path(

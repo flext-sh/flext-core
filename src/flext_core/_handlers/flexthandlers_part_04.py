@@ -82,7 +82,8 @@ class FlextHandlersPart04[MessageT_contra, ResultT](
             value,
         )
 
-    def validate_message(self, data: MessageT_contra) -> p.Result[bool]:
+    @staticmethod
+    def validate_message(data: MessageT_contra) -> p.Result[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -105,8 +106,8 @@ class FlextHandlersPart04[MessageT_contra, ResultT](
             >>> if result.failure:
             ...     u.Cli.print(f"Validation error: {result.error}")
 
-        Note: self is required for subclass override compatibility, even though
-        this base implementation doesn't use instance state.
+        Note: the base check reads no handler state, so it is a static method;
+        subclasses override it with their own static domain validation.
 
         """
         if data is None:

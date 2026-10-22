@@ -146,15 +146,6 @@ class TestsFlextUtilities(FlextTestsUtilities):
                     return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
-            @override
-            def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
-                if data is None:
-                    return r[bool].fail_op(
-                        "validate handler message",
-                        c.ERR_MESSAGE_CANNOT_BE_NONE,
-                    )
-                return r[bool].ok(value=True)
-
         class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for validation."""
 
@@ -162,8 +153,9 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
+            @staticmethod
             @override
-            def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
+            def validate_message(data: t.JsonPayload) -> p.Result[bool]:
                 return (
                     r[bool].ok(value=True)
                     if data

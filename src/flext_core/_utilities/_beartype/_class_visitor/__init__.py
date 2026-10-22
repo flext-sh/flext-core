@@ -15,10 +15,8 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_core._utilities._beartype._class_visitor_parts import (
         _parts as _parts,
-        class_visitor_part_01 as _owner_0,
-    )
-    from flext_core._utilities._beartype._class_visitor_parts._parts import (
         alias_first_violation,
+        class_visitor_part_01 as _owner_0,
     )
 
     FlextUtilitiesBeartypeClassVisitorPart01 = (

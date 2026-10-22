@@ -287,7 +287,7 @@ __getattr__ = install_lazy_exports(
         "_mapper_extract_parts": "._mapper_extract_parts",
         "_parser_targets_parts": "._parser_targets_parts",
         "alias_first_violation": (
-            "._beartype._class_visitor_parts._parts.class_visitor_part_02_01"
+            "._beartype._class_visitor_parts.class_visitor_part_02_01"
         ),
         "bound_names": "._beartype._module_source_scan",
         "declarations": "._beartype._module_source_scan",

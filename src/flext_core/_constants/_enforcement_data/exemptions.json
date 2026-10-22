@@ -78,8 +78,6 @@
     "ADAPTERS": "Adapter-strategy factory registry owned by its service family; relocating it to _constants inverts constants->services.",
     "PROJECTORS": "Projector factory registry owned by its service family; relocating it to _constants inverts constants->services.",
     "COMMANDS": "CLI command-service registry; relocating it to _constants inverts constants->services.",
-    "CONFIG_FILENAMES": "FlextConfig filename hook read through cls per subclass; FlextConfig must not import _constants.",
-    "YAML_CONFIG_SECTION": "FlextConfig YAML-section hook read through cls per subclass; FlextConfig must not import _constants.",
     "METADATA_DEPENDENCIES": "libcst MetadataDependent class attribute read before instantiation; a framework binding, not a constant."
   },
   "core_path_markers": [

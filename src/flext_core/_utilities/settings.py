@@ -14,22 +14,22 @@ from __future__ import annotations
 
 import os
 
-# AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): p/t MUST stay a RUNTIME import.
-# beartype.claw evaluates annotations at runtime; moving FlextProtocols/FlextTypes
+# AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): t MUST stay a RUNTIME import.
+# beartype.claw evaluates annotations at runtime; moving FlextTypes
 # under TYPE_CHECKING raises NameError at import (test_beartype_engine_claw_packages).
 # Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
 # model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
-from flext_core.protocols import p
-from flext_core.result import r
-from flext_core.typings import t
+from flext_core import t
 
 
 class FlextUtilitiesSettings:
-    """Settings utilities for environment resolution and DI registration.
+    """Settings utilities resolving the inherited process environment for consumers.
 
     ``resolve_env_file`` was deleted: it duplicated the settings-layer owner
     (``FlextSettings.resolve_env_file``) without namespace support. Chain law:
     the algorithm and its protocol constants live once in ``_settings.py``.
+    ``register_factory`` was deleted: no runtime consumer called it; the
+    container's own ``factory``/``resolve`` contract is the registration owner.
     """
 
     @staticmethod
@@ -41,24 +41,6 @@ class FlextUtilitiesSettings:
 
         """
         return dict(os.environ)
-
-    @staticmethod
-    def register_factory(
-        container: p.Container,
-        name: str,
-        factory: p.FactoryCallable,
-    ) -> p.Result[bool]:
-        """Register factory in DI container, verifying resolution succeeds.
-
-        Returns:
-            The resulting ``p.Result[bool]``.
-
-        """
-        _ = container.factory(name, factory)
-        resolved = container.resolve(name)
-        if resolved.failure:
-            return r[bool].from_failure(resolved)
-        return r[bool].ok(value=True)
 
 
 __all__: t.MutableSequenceOf[str] = ["FlextUtilitiesSettings"]

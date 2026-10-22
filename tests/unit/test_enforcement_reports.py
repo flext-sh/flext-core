@@ -238,7 +238,10 @@ class TestsFlextCoreEnforcementReports:
         tm.that(len(caught), eq=2)
         tm.that(
             str(caught[0].message),
-            eq="\nX.Y violates FLEXT Model HARD rules:\n  - boom [ENFORCE-001]\n\nFix: See AGENTS.md §3.1 and search for ENFORCE-001.",
+            eq=(
+                "\nX.Y violates FLEXT Model HARD rules:\n  - boom [ENFORCE-001]\n\n"
+                "Fix: See AGENTS.md §3.1 and search for ENFORCE-001."
+            ),
         )
         tm.that(
             str(caught[1].message).startswith("\nX.Z violates FLEXT Model HARD rules"),

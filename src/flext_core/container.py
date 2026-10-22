@@ -75,7 +75,12 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         | p.ServiceRegistrationSpec
         | None = None,
     ) -> Self:
-        """Create or return the global singleton instance."""
+        """Create or return the global singleton instance.
+
+        ``registration`` mirrors the ``__init__`` signature the constructor
+        protocol forwards here; ``__init__`` alone applies it.
+        """
+        _ = registration
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:

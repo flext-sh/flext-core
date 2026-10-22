@@ -41,7 +41,6 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core._constants.config import FlextConstantsConfig
 from flext_core._settings import FlextSettings
 from flext_core.config_sources import FlextStrictYamlConfigSource
 
@@ -57,6 +56,8 @@ class FlextConfig(BaseSettings):
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
     CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
+    CONFIG_DIR_NAME: ClassVar[str] = "config"
+    """Packaged resource directory holding the declaring package's YAML files."""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
@@ -104,7 +105,7 @@ class FlextConfig(BaseSettings):
         if override:
             return Path(override)
         package = cls.__module__.partition(".")[0]
-        return Path(str(files(package) / FlextConstantsConfig.CONFIG_DIR_NAME))
+        return Path(str(files(package) / cls.CONFIG_DIR_NAME))
 
     @classmethod
     def _user_config_dir(cls) -> Path:
@@ -234,7 +235,6 @@ class FlextConfig(BaseSettings):
             FlextStrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_source_files(),
-                yaml_config_section=FlextConstantsConfig.YAML_CONFIG_SECTION,
                 deep_merge=True,
                 transform=cls._transform_loaded_yaml,
             ),
