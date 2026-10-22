@@ -17,6 +17,7 @@ from tests import tm
 class TestsFlextCoreLazyRelativePackages:
     """Resolve real standard-library modules through the public lazy mapping API."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("package", "relative", "absolute"),
         [
@@ -26,7 +27,6 @@ class TestsFlextCoreLazyRelativePackages:
             ("xml.dom", "..", "xml"),
         ],
     )
-    @staticmethod
     def test_string_targets_resolve_to_the_real_module(
         package: str,
         relative: str,
@@ -59,6 +59,7 @@ class TestsFlextCoreLazyRelativePackages:
         with pytest.raises(ImportError):
             normalize_lazy_imports("xml", {"module": "..dom"})
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("package", "relative"),
         [
@@ -68,7 +69,6 @@ class TestsFlextCoreLazyRelativePackages:
             ("xml.dom", ".."),
         ],
     )
-    @staticmethod
     def test_merge_loads_relative_child_packages(
         package: str,
         relative: str,

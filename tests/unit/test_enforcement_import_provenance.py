@@ -21,6 +21,7 @@ from tests import tm, u
 class TestsFlextEnforcementImportProvenance:
     """Exercise real imported consumer modules through the public query."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("binding", "rule", "rejected"),
         [
@@ -95,7 +96,6 @@ class TestsFlextEnforcementImportProvenance:
         ],
     )
     @pytest.mark.parametrize("module_name", ["consumer", "_consumer"])
-    @staticmethod
     def test_real_consumer_import_contract(
         tmp_path: Path,
         binding: str,

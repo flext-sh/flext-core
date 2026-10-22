@@ -54,6 +54,7 @@ class TestsFlextCoreEnforcementNamespace:
 
     __test__ = True
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("name", "qualname", "module"),
         [
@@ -89,7 +90,6 @@ class TestsFlextCoreEnforcementNamespace:
             ),
         ],
     )
-    @staticmethod
     def test_exempt_or_compliant_targets_report_no_prefix_violation(
         name: str,
         qualname: str,
@@ -294,6 +294,7 @@ class_stem_override = "XmlAPI"
 
         tm.that(recorded, eq=[])
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("name", "body", "module_override", "expect_enforce_079"),
         [
@@ -357,7 +358,6 @@ class_stem_override = "XmlAPI"
             ),
         ],
     )
-    @staticmethod
     def test_constant_placement_governs_enforce_079(
         name: str,
         body: t.MappingKV[str, t.StrMapping | frozenset[str] | None],

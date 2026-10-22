@@ -141,11 +141,11 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         tm.that(handler.handler_name, eq="ConfiguredName")
         tm.that(handler.mode, eq=c.HandlerType.EVENT)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "scenario",
         u.TestsFlextFlextHandlers.HANDLER_TYPES,
     )
-    @staticmethod
     def test_mode_reflects_requested_handler_type(
         scenario: u.TestsFlextFlextHandlers.HandlerTypeScenario,
     ) -> None:

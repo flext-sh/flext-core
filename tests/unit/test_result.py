@@ -57,11 +57,11 @@ class TestsFlextCoreResult:
         tm.that(result.error_data, eq={"field": "name"})
         tm.that(result.exception is cause, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("success", "default", "expected"),
         [(True, 0, 7), (False, 0, 0), (False, 99, 99)],
     )
-    @staticmethod
     def test_unwrap_or_returns_value_or_default(
         *,
         success: bool,
@@ -152,8 +152,8 @@ class TestsFlextCoreResult:
 
         tm.ok(recovered, eq=-1)
 
-    @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
     @staticmethod
+    @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
     def test_filter_keeps_or_rejects_by_predicate(
         *,
         value: int,

@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 class TestsFlextCoreExceptionsBase:
     """Tests for ``FlextCoreExceptionsBase``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         "subclass",
         [
@@ -31,7 +32,6 @@ class TestsFlextCoreExceptionsBase:
             e.ConfigurationError,
         ],
     )
-    @staticmethod
     def test_typed_exceptions_are_base_error_subclasses(
         subclass: type[e.BaseError],
     ) -> None:
@@ -75,9 +75,8 @@ class TestsFlextCoreExceptionsBase:
         with pytest.raises(e.BaseError) as excinfo:
             raise error
         raised = excinfo.value
-        tm.that(raised, is_=e.ValidationError)
-        if isinstance(raised, e.ValidationError):
-            tm.that(raised.field, eq="email")
+        tm.ok(raised is error)
+        tm.that(error.field, eq="email")
         tm.that("bad" in str(raised), truth=True)
 
     @staticmethod
@@ -192,11 +191,11 @@ class TestsFlextCoreExceptionsBase:
         )
         tm.that(cast("dict[str, object]", result.error_data)["actual_type"], eq="str")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("field", "value", "cause"),
         [("name", "", "empty"), ("email", "bad", "invalid")],
     )
-    @staticmethod
     def test_fail_validation_returns_structured_failure(
         field: str,
         value: str,

@@ -29,8 +29,8 @@ class TestsFlextCoreContainerTruthful:
     def _shared_with_auto_registration() -> None:
         _ = FlextContainer.shared(auto_register_factories=True)
 
-    @pytest.mark.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
     @staticmethod
+    @pytest.mark.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
     def test_public_writes_reject_reserved_names(
         name: str,
         clean_container: p.Container,

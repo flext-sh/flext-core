@@ -26,11 +26,11 @@ class TestsFlextCoreTypingsValidationNumbers:
         Strips surrounding whitespace, rejects blank.
         """
 
+        @staticmethod
         @pytest.mark.parametrize(
             ("value", "expected"),
             [("hello", "hello"), ("  hello  ", "hello"), ("\tspaced\n", "spaced")],
         )
-        @staticmethod
         def test_strips_surrounding_whitespace(value: str, expected: str) -> None:
             """A non-blank value is returned with surrounding whitespace removed."""
             adapter: m.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
@@ -39,8 +39,8 @@ class TestsFlextCoreTypingsValidationNumbers:
 
             tm.that(result, eq=expected)
 
-        @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
         @staticmethod
+        @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
         def test_rejects_blank_or_whitespace_only(value: str) -> None:
             """An empty or whitespace-only value raises the public ValidationError."""
             adapter: m.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
@@ -48,6 +48,7 @@ class TestsFlextCoreTypingsValidationNumbers:
             with pytest.raises(c.ValidationError):
                 adapter.validate_python(value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("alias", "value"),
         [
@@ -73,7 +74,6 @@ class TestsFlextCoreTypingsValidationNumbers:
             (t.HttpStatusCode, 599),
         ],
     )
-    @staticmethod
     def test_accepts_valid_value_returns_input_unchanged(
         alias: type[str | int],
         value: str | int,
@@ -85,6 +85,7 @@ class TestsFlextCoreTypingsValidationNumbers:
 
         tm.that(result, eq=value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("alias", "value"),
         [
@@ -104,7 +105,6 @@ class TestsFlextCoreTypingsValidationNumbers:
             (t.HttpStatusCode, 600),
         ],
     )
-    @staticmethod
     def test_rejects_out_of_bound_value_raises_validation_error(
         alias: type[str | int],
         value: str | int,
@@ -115,11 +115,11 @@ class TestsFlextCoreTypingsValidationNumbers:
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "alias",
         [t.PositiveInt, t.NonNegativeInt, t.PortNumber, t.HttpStatusCode],
     )
-    @staticmethod
     def test_validation_is_idempotent_for_accepted_values(
         alias: type[int],
     ) -> None:

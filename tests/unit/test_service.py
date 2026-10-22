@@ -116,11 +116,11 @@ class TestsFlextService(FlextTestsCase):
 
     # --- ServiceUserData: public model state -----------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("user_id", "name"),
         [(1, "test_user"), (2, "other"), (99, "édge-café")],
     )
-    @staticmethod
     def test_service_user_data_round_trips_public_state(
         user_id: int,
         name: str,

@@ -20,12 +20,12 @@ if TYPE_CHECKING:
 class TestsFlextCoreContainerConfig:
     """Exercise the public container configuration contract."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         "settings",
         m.Tests.ContainerScenarios.CONFIG_SCENARIOS,
         ids=str,
     )
-    @staticmethod
     def test_configure_container(
         settings: t.MappingKV[str, t.JsonPayload],
         clean_container: p.Container,

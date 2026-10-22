@@ -397,11 +397,11 @@ class TestsFlextEnforcementModels:
             truth=False,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("module", "expect_prefix_violation"),
         [("flext_core.synthetic_module", True), ("fence", False)],
     )
-    @staticmethod
     def test_class_prefix_enforced_only_for_knowable_projects(
         module: str,
         *,

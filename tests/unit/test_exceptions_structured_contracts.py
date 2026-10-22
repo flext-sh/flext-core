@@ -23,11 +23,11 @@ from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFa
 class TestsFlextCoreExceptionsStructuredContracts:
     """Public-contract behavior of structured errors and failure results."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
-    @staticmethod
     def test_structured_errors_expose_public_contract(
         _name: str,
         factory: ErrorFactory,
@@ -51,11 +51,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
         for key, value in expected_payload.items():
             tm.that(error.metadata.attributes[key], eq=value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("_name", "factory", "expected_domain", "expected_code", "_expected_payload"),
         STRUCTURED_ERRORS,
     )
-    @staticmethod
     def test_structured_errors_are_raisable_and_preserve_contract(
         _name: str,
         factory: ErrorFactory,
@@ -129,11 +129,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
         tm.that(error.metadata.attributes["reason"], eq="constraint")
         tm.that(error.metadata.attributes["attempt"], eq=2)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
-    @staticmethod
     def test_failure_factories_return_public_result_contract(
         _name: str,
         factory: FailureFactory,
@@ -156,11 +156,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
         for key, value in expected_data.items():
             tm.that(result_data[key], eq=value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("_name", "factory", "_expected_fragment", "expected_code", "_expected_data"),
         FAILURES,
     )
-    @staticmethod
     def test_failure_results_honor_combinator_contract(
         _name: str,
         factory: FailureFactory,

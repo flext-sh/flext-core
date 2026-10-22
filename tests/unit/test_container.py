@@ -171,12 +171,12 @@ class TestsFlextCoreContainer:
             msg="Scope-local registrations must not leak back to the parent",
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         "overrides",
         [None, {"custom_key": "custom_value"}],
         ids=["none", "mapping"],
     )
-    @staticmethod
     def test_apply_returns_self_for_fluent_chaining(
         overrides: t.UserOverridesMapping | None,
         clean_container: p.Container,

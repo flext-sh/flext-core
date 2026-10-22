@@ -45,6 +45,7 @@ def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
 class TestsFlextUtilitiesProjectMetadataRead:
     """Tests for ``FlextUtilitiesProjectMetadataRead``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("project_name", "expected_stem"),
         [
@@ -52,7 +53,6 @@ class TestsFlextUtilitiesProjectMetadataRead:
             ("flext-core", "Flext"),
         ],
     )
-    @staticmethod
     def test_derive_class_stem_produces_pascal_case_from_project_name(
         project_name: str,
         expected_stem: str,
@@ -188,6 +188,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
         result = _read(tmp_path)
         tm.ok(result.failure)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("body", "match_pattern"),
         [
@@ -196,7 +197,6 @@ class TestsFlextUtilitiesProjectMetadataRead:
         ],
         ids=["missing_name", "missing_version"],
     )
-    @staticmethod
     def test_read_project_metadata_fails_on_incomplete_pyproject(
         tmp_path: Path,
         body: str,

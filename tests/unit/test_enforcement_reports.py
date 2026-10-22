@@ -282,11 +282,11 @@ class TestsFlextCoreEnforcementReports:
 
         tm.that(recorded, eq=[])
 
+    @staticmethod
     @pytest.mark.parametrize(
         "mode",
         [c.EnforcementMode.OFF, c.EnforcementMode.WARN, c.EnforcementMode.STRICT],
     )
-    @staticmethod
     def test_emit_empty_report_is_silent_in_every_mode(
         mode: c.EnforcementMode,
     ) -> None:
@@ -297,6 +297,7 @@ class TestsFlextCoreEnforcementReports:
 
         tm.that(recorded, eq=[])
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("rule_id", "anchor", "expected_fix"),
         [
@@ -310,7 +311,6 @@ class TestsFlextCoreEnforcementReports:
             ("", "", "Fix: See AGENTS.md § Model governance."),
         ],
     )
-    @staticmethod
     def test_emit_fix_guidance_falls_back_by_rule_id_and_anchor(
         rule_id: str,
         anchor: str,

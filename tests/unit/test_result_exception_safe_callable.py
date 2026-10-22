@@ -152,12 +152,12 @@ class TestsFlextCoreResultExceptionSafeCallable(
         tm.that(result.exception, none=False)
         tm.that(result.exception, is_=TypeError)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "exception_type",
         [OSError, IndexError],
         ids=("os-error", "lookup-index-error"),
     )
-    @staticmethod
     def test_safe_captures_boundary_exceptions(
         exception_type: type[Exception],
     ) -> None:

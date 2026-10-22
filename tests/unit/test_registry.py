@@ -352,11 +352,11 @@ class TestsFlextCoreRegistry:
         """Test unregister unknown plugin fails."""
         tm.that(registry.unregister_plugin("validators", "absent").failure, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("errors", "expected_success"),
         [((), True), (("boom",), False)],
     )
-    @staticmethod
     def test_summary_success_reflects_error_state(
         errors: t.VariadicTuple[str],
         *,

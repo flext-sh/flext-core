@@ -34,11 +34,11 @@ class TestsFlextCoreDocumentedPatterns:
         tm.that(first.value, eq=expected.value)
         tm.that(second, eq=expected.value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("seed", "transform", "expected"),
         [(1, (1).__add__, 2), (10, (3).__mul__, 30), (-5, abs, 5)],
     )
-    @staticmethod
     def test_map_transforms_success_value(
         seed: int,
         transform: Callable[[int], int],
@@ -95,11 +95,11 @@ class TestsFlextCoreDocumentedPatterns:
         tm.ok(result.failure)
         tm.that(result.error, eq="stopped")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("result", "expected"),
         [(r[str].ok("flext"), 5), (r[str].fail("missing"), 0)],
     )
-    @staticmethod
     def test_map_or_returns_default_on_failure(
         result: p.Result[str],
         expected: int,
@@ -180,6 +180,7 @@ class TestsFlextCoreDocumentedPatterns:
         tm.that(error_data["resource_type"], eq="user")
         tm.that(error_data["resource_id"], eq="u-2")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("raw_email", "expect_success", "expected_value"),
         [
@@ -189,7 +190,6 @@ class TestsFlextCoreDocumentedPatterns:
             ("   ", False, None),
         ],
     )
-    @staticmethod
     def test_validation_normalizes_or_fails(
         raw_email: str | None,
         expected_value: str | None,

@@ -67,6 +67,7 @@ class TestsFlextCoreVersion:
         release = ".".join(str(part) for part in FlextVersion.__version_info__)
         tm.ok(FlextVersion.__version__.startswith(release))
 
+    @staticmethod
     @pytest.mark.parametrize(
         "version",
         [
@@ -79,7 +80,6 @@ class TestsFlextCoreVersion:
             "4!1.2.3rc4.post5.dev6+local.7",
         ],
     )
-    @staticmethod
     def test_subclass_version_info_is_the_release_triple(
         version: str,
         tmp_path: Path,
@@ -94,8 +94,8 @@ class TestsFlextCoreVersion:
         tm.that(VersionContract.__version__, eq=version)
         tm.that(VersionContract.__version_info__, eq=(1, 2, 3))
 
-    @pytest.mark.parametrize("version", ["1.2", "1.2.3.4", "1.2.3garbage"])
     @staticmethod
+    @pytest.mark.parametrize("version", ["1.2", "1.2.3.4", "1.2.3garbage"])
     def test_subclass_rejects_non_semantic_release_metadata(
         version: str,
         tmp_path: Path,

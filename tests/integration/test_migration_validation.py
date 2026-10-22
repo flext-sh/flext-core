@@ -28,11 +28,11 @@ class TestsFlextCoreMigrationValidation:
 
     # Section: Result contract
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [("user_123", "user_123"), ("", ""), ("A B C", "A B C")],
     )
-    @staticmethod
     def test_ok_result_exposes_wrapped_value(value: str, expected: str) -> None:
         """A successful result reports success and returns the wrapped value."""
         result: p.Result[str] = r[str].ok(value)
@@ -61,11 +61,11 @@ class TestsFlextCoreMigrationValidation:
         with pytest.raises(RuntimeError):
             result.unwrap()
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("result", "default", "expected"),
         [(r[int].ok(42), 0, 42), (r[int].fail("missing"), 7, 7)],
     )
-    @staticmethod
     def test_unwrap_or_returns_default_only_on_failure(
         result: p.Result[int],
         default: int,

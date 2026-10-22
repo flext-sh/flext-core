@@ -153,8 +153,8 @@ class TestsFlextUtilitiesPydantic:
             m.FieldInfo.from_field(default_factory=None),
         ]
 
-    @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
     @staticmethod
+    @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
     def test_required_collections_reject_missing_values(missing_name: str) -> None:
         """Required fields reject omission and retain the supplied values."""
         partial: t.JsonDict = {"model_values": {}, "utility_values": {}}
@@ -240,6 +240,7 @@ class TestsFlextUtilitiesPydantic:
             """Whether the default reader resolved to the builtin input."""
             return self._reader is input
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("raw_name", "expected_name"),
         [
@@ -248,7 +249,6 @@ class TestsFlextUtilitiesPydantic:
             ("alan", "Alan"),
         ],
     )
-    @staticmethod
     def test_field_validator_normalizes_aliased_name(
         raw_name: str,
         expected_name: str,

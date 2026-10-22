@@ -212,6 +212,7 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # matches_type — string specs
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "spec", "expected"),
         [
@@ -227,7 +228,6 @@ class TestsFlextCoreGuards:
             ("x", "none", False),
         ],
     )
-    @staticmethod
     def test_matches_type_string_spec_reflects_runtime_type(
         value: p.ProtocolGuardInput | None,
         spec: str,
@@ -236,6 +236,7 @@ class TestsFlextCoreGuards:
     ) -> None:
         tm.that(u.matches_type(value, spec) is expected, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "spec", "expected"),
         [
@@ -248,7 +249,6 @@ class TestsFlextCoreGuards:
             ([], "list_non_empty", False),
         ],
     )
-    @staticmethod
     def test_matches_type_non_empty_specs_require_content(
         value: p.ProtocolGuardInput,
         spec: str,
@@ -266,11 +266,11 @@ class TestsFlextCoreGuards:
     def test_matches_type_unknown_string_spec_returns_false() -> None:
         tm.that(u.matches_type("x", "no_such_spec") is False, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "spec",
         ["string_non_empty", "dict_non_empty", "list_non_empty"],
     )
-    @staticmethod
     def test_matches_type_excludes_pydantic_models_from_non_empty_specs(
         spec: str,
     ) -> None:
@@ -284,6 +284,7 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # matches_type — type and tuple specs
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "spec", "expected"),
         [
@@ -294,7 +295,6 @@ class TestsFlextCoreGuards:
             (5.0, (int, str), False),
         ],
     )
-    @staticmethod
     def test_matches_type_type_and_tuple_specs(
         value: p.ProtocolGuardInput,
         spec: type | t.VariadicTuple[type],
@@ -311,6 +311,7 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # container — recursive JSON-compatibility contract
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         "value",
         [
@@ -326,17 +327,16 @@ class TestsFlextCoreGuards:
             {},
         ],
     )
-    @staticmethod
     def test_container_accepts_scalars_and_nested_json(
         value: p.ProtocolGuardInput,
     ) -> None:
         tm.that(u.container_value(value) is True, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "value",
         [None, object(), [1, object()], {"a": object()}, {"a": [object()]}],
     )
-    @staticmethod
     def test_container_rejects_none_and_non_json_members(
         value: p.ProtocolGuardInput | None,
     ) -> None:
@@ -379,6 +379,7 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # scalar / primitive
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -391,7 +392,6 @@ class TestsFlextCoreGuards:
             (None, False),
         ],
     )
-    @staticmethod
     def test_scalar_identifies_scalar_values(
         value: t.JsonValue,
         *,
@@ -399,6 +399,7 @@ class TestsFlextCoreGuards:
     ) -> None:
         tm.that(u.scalar(value) is expected, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -410,7 +411,6 @@ class TestsFlextCoreGuards:
             ({"k": 1}, False),
         ],
     )
-    @staticmethod
     def test_primitive_identifies_primitive_values(
         value: t.JsonValue,
         *,
@@ -461,6 +461,7 @@ class TestsFlextCoreGuards:
             },
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -471,7 +472,6 @@ class TestsFlextCoreGuards:
             ({"k": 1}, False),
         ],
     )
-    @staticmethod
     def test_list_like_excludes_strings_and_bytes(
         value: t.JsonValue | bytes | tuple[int, ...],
         *,
@@ -488,6 +488,7 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # emptiness / non-empty guards
     # ------------------------------------------------------------------
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
@@ -501,7 +502,6 @@ class TestsFlextCoreGuards:
             (0, False),
         ],
     )
-    @staticmethod
     def test_empty_value_reports_absence_or_empty_containers(
         value: t.JsonValue,
         *,
@@ -509,11 +509,11 @@ class TestsFlextCoreGuards:
     ) -> None:
         tm.that(u.empty_value(value) is expected, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [("x", True), (" a ", True), ("", False), ("   ", False), (1, False)],
     )
-    @staticmethod
     def test_string_non_empty_requires_non_blank_string(
         value: p.GuardInput,
         *,
@@ -560,6 +560,7 @@ class TestsFlextCoreGuards:
         tm.that(u.instance_of(5, int) is True, truth=True)
         tm.that(u.instance_of("x", int) is False, truth=True)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "container", "expected"),
         [
@@ -571,7 +572,6 @@ class TestsFlextCoreGuards:
             (1, "not-a-real-container", False),
         ],
     )
-    @staticmethod
     def test_in_membership_only_for_true_containers(
         value: p.GuardInput,
         container: p.GuardInput,

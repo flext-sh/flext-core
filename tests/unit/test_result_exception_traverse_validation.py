@@ -26,11 +26,11 @@ class TestsFlextCoreResultExceptionTraverseValidation(
 ):
     """Tests for ``FlextCoreResultExceptionTraverseValidation``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         "raised",
         [ValueError("item error"), TypeError("bad type"), KeyError("missing")],
     )
-    @staticmethod
     def test_traverse_fail_fast_carries_originating_failure_exception(
         raised: Exception,
     ) -> None:
@@ -225,11 +225,11 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         tm.ok(mapped.exception is exc)
         tm.that(result.unwrap_or(-1), eq=-1)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [(True, True), (False, False), (42, 42)],
     )
-    @staticmethod
     def test_ok_reports_success_and_wraps_value(
         *,
         value: bool | int,

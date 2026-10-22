@@ -41,8 +41,8 @@ class TestsFlextCoreEnforcement:
 
         tm.that(u.check(compliant).violations, eq=[])
 
-    @pytest.mark.parametrize("builtin", [int, str, dict])
     @staticmethod
+    @pytest.mark.parametrize("builtin", [int, str, dict])
     def test_builtin_class_flagged_missing_project_prefix(builtin: type) -> None:
         """Types without a project prefix raise a Namespace class-prefix finding."""
         report = u.check(builtin)
@@ -66,6 +66,7 @@ class TestsFlextCoreEnforcement:
             eq=True,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("class_name", "member"),
         [
@@ -74,7 +75,6 @@ class TestsFlextCoreEnforcement:
             ("FlextCoreAccessedIs", "is_ready"),
         ],
     )
-    @staticmethod
     def test_accessor_prefix_method_is_flagged(
         class_name: str,
         member: str,
@@ -85,8 +85,8 @@ class TestsFlextCoreEnforcement:
         report = u.check(cls)
         tm.that(messages(report, fragment=f'accessor method "{member}"'), truth=True)
 
-    @pytest.mark.parametrize("member", ["fetch_remote", "build_widget"])
     @staticmethod
+    @pytest.mark.parametrize("member", ["fetch_remote", "build_widget"])
     def test_non_accessor_prefix_method_allowed(member: str) -> None:
         """Verb-prefixed methods that are not accessors raise no accessor finding."""
         cls = make_class("FlextCoreAccessedOk", {member: synthetic_method})
@@ -94,6 +94,7 @@ class TestsFlextCoreEnforcement:
         report = u.check(cls)
         tm.that(messages(report, fragment="accessor method"), truth=False)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("class_name", "declares_settings_base", "expect_finding"),
         [
@@ -102,7 +103,6 @@ class TestsFlextCoreEnforcement:
             ("FlextCoreService", False, False),
         ],
     )
-    @staticmethod
     def test_declared_settings_model_requires_flext_settings(
         class_name: str,
         *,

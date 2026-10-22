@@ -63,11 +63,11 @@ class TestsFlextCoreSettingsValidationAlias:
         # Assert — declared default surfaces through the public field.
         tm.that(settings.pandoc_bin, eq="pandoc")
 
+    @staticmethod
     @pytest.mark.parametrize(
         "override_value",
         ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"],
     )
-    @staticmethod
     def test_update_global_applies_and_propagates_override(
         override_value: str,
     ) -> None:

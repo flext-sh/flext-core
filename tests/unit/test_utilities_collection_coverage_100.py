@@ -53,6 +53,7 @@ class TestsFlextCoreUtilitiesCollection:
 
     # --- map -------------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("items", "mapper", "expected"),
         [
@@ -64,7 +65,6 @@ class TestsFlextCoreUtilitiesCollection:
             (range(3), u.Tests.double, [0, 2, 4]),
         ],
     )
-    @staticmethod
     def test_map_applies_function_to_each_element(
         items: t.SequenceOf[int] | t.MappingKV[str, int] | set[int] | frozenset[int],
         mapper: Callable[[int], int],
@@ -75,6 +75,7 @@ class TestsFlextCoreUtilitiesCollection:
 
     # --- find ------------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("items", "predicate", "expected", "expect_found"),
         [
@@ -83,7 +84,6 @@ class TestsFlextCoreUtilitiesCollection:
             ([1, 3, 5], (2).__eq__, None, False),
         ],
     )
-    @staticmethod
     def test_find_returns_matching_element_or_failure(
         *,
         items: t.SequenceOf[int] | t.MappingKV[str, int],
@@ -112,6 +112,7 @@ class TestsFlextCoreUtilitiesCollection:
 
     # --- filter ----------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("items", "predicate", "mapper", "expected"),
         [
@@ -136,7 +137,6 @@ class TestsFlextCoreUtilitiesCollection:
             (range(4), u.Tests.is_even, None, [0, 2]),
         ],
     )
-    @staticmethod
     def test_filter_keeps_matching_and_optionally_maps(
         items: t.SequenceOf[int] | t.MappingKV[str, int],
         predicate: Callable[[int], bool],
@@ -148,11 +148,11 @@ class TestsFlextCoreUtilitiesCollection:
 
     # --- count -----------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("items", "predicate", "expected"),
         [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], u.Tests.is_even, 2)],
     )
-    @staticmethod
     def test_count_returns_total_or_matching(
         items: t.SequenceOf[int],
         predicate: Callable[[int], bool] | None,
@@ -163,6 +163,7 @@ class TestsFlextCoreUtilitiesCollection:
 
     # --- process ---------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("items", "processor", "predicate", "expected"),
         [
@@ -171,7 +172,6 @@ class TestsFlextCoreUtilitiesCollection:
             ([], u.Tests.double, None, []),
         ],
     )
-    @staticmethod
     def test_process_applies_processor_with_optional_predicate(
         items: t.SequenceOf[int],
         processor: Callable[[int], int],

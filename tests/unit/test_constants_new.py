@@ -75,6 +75,7 @@ class TestsFlextConstantsNew:
         tm.that(c.DEFAULT_RETRIES, lte=c.MAX_RETRIES)
 
     # -------------------------------------------------- StrEnum wire semantics
+    @staticmethod
     @pytest.mark.parametrize(
         "domain_enum",
         [
@@ -89,7 +90,6 @@ class TestsFlextConstantsNew:
             c.ParserCase,
         ],
     )
-    @staticmethod
     def test_domain_enums_are_string_valued_for_routing(
         domain_enum: type[enum.Enum],
     ) -> None:
@@ -105,11 +105,11 @@ class TestsFlextConstantsNew:
             tm.ok(isinstance(member, str))
             tm.that(str(member), eq=member.value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "domain_enum",
         [c.Status, c.ErrorDomain, c.LogLevel, c.Environment, c.SerializationFormat],
     )
-    @staticmethod
     def test_domain_enum_value_lookup_roundtrips(
         domain_enum: type[enum.StrEnum],
     ) -> None:
@@ -132,19 +132,19 @@ class TestsFlextConstantsNew:
         tm.ok(bool(falsy))
         tm.ok(truthy.isdisjoint(falsy))
 
+    @staticmethod
     @pytest.mark.parametrize(
         "token",
         tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY),
     )
-    @staticmethod
     def test_boolean_tokens_are_lowercase_and_spaceless(token: str) -> None:
         """Validation token sets remain normalized (lowercase, no whitespace)."""
         tm.that(token, eq=token.lower())
         tm.ok(" " not in token)
 
     # -------------------------------------------------- identifier regex rules
-    @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
     @staticmethod
+    @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
     def test_app_id_cases_match_core_identifier_regex(
         raw_app_id: str,
         normalized: str,
@@ -156,8 +156,8 @@ class TestsFlextConstantsNew:
         _ = raw_app_id
         tm.ok(bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)))
 
-    @pytest.mark.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
     @staticmethod
+    @pytest.mark.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
     def test_safe_string_valid_cases_align_with_parser_tokens(
         raw: str,
         expected: str,
@@ -170,8 +170,8 @@ class TestsFlextConstantsNew:
             eq=not has_inner_space,
         )
 
-    @pytest.mark.parametrize(("raw", "_reason"), c.Tests.SAFE_STRING_INVALID_CASES)
     @staticmethod
+    @pytest.mark.parametrize(("raw", "_reason"), c.Tests.SAFE_STRING_INVALID_CASES)
     def test_safe_string_invalid_cases_do_not_match_identifier_regex(
         raw: str | None,
         _reason: str,
@@ -183,6 +183,7 @@ class TestsFlextConstantsNew:
             eq=False,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         "version",
         [
@@ -196,20 +197,20 @@ class TestsFlextConstantsNew:
             "1.2.3+linux.x86_64",
         ],
     )
-    @staticmethod
     def test_version_pattern_accepts_semver_and_pep440(version: str) -> None:
         """Version validation accepts published and normalized metadata forms."""
         tm.ok(bool(c.PATTERN_SEMVER_RE.fullmatch(version)))
 
+    @staticmethod
     @pytest.mark.parametrize(
         "version",
         ["1.2", "1.2.3rc", "1.2.3+", "1.2.3..rc0", "1.2.3-"],
     )
-    @staticmethod
     def test_version_pattern_rejects_incomplete_versions(version: str) -> None:
         """Version validation rejects incomplete prerelease and local segments."""
         tm.fail(bool(c.PATTERN_SEMVER_RE.fullmatch(version)))
 
+    @staticmethod
     @pytest.mark.parametrize(
         "distinguished_name",
         [
@@ -218,18 +219,17 @@ class TestsFlextConstantsNew:
             "uid=user-123,dc=example",
         ],
     )
-    @staticmethod
     def test_ldap_dn_pattern_accepts_complete_components(
         distinguished_name: str,
     ) -> None:
         """LDAP DN validation accepts complete comma-delimited components."""
         tm.ok(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)))
 
+    @staticmethod
     @pytest.mark.parametrize(
         "distinguished_name",
         ["", "=value", "CN=", "CN=   ", "CN=value,", "1CN=value"],
     )
-    @staticmethod
     def test_ldap_dn_pattern_rejects_incomplete_components(
         distinguished_name: str,
     ) -> None:

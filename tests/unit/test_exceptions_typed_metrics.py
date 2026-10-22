@@ -25,6 +25,7 @@ if TYPE_CHECKING:
 class TestsFlextCoreExceptionsTypedMetrics:
     """Tests for ``FlextCoreExceptionsTypedMetrics``."""
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("factory", "expected_type"),
         [
@@ -82,7 +83,6 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
-    @staticmethod
     def test_typed_exception_is_expected_type_and_raisable(
         factory: Callable[[], e.BaseError],
         expected_type: type[e.BaseError],
@@ -100,6 +100,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         tm.that(caught.value is error, truth=True)
         tm.that(caught.value.message, eq="Test message")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("factory", "expected_domain"),
         [
@@ -117,7 +118,6 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
-    @staticmethod
     def test_error_code_maps_to_routing_domain(
         factory: Callable[[], e.BaseError],
         expected_domain: str,
@@ -143,6 +143,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         tm.that(error.message in rendered, truth=True)
         tm.that(rendered, eq=f"[{error.error_code}] {error.message}")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("factory", "attribute", "expected_value"),
         [
@@ -180,7 +181,6 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
         ],
     )
-    @staticmethod
     def test_typed_exception_exposes_structured_fields(
         factory: Callable[[], e.BaseError],
         attribute: str,

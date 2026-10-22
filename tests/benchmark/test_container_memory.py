@@ -40,8 +40,8 @@ def get_memory_usage() -> int:
 class TestsFlextContainerMemory:
     """Memory usage benchmarks for container operations."""
 
-    @pytest.mark.benchmark
     @staticmethod
+    @pytest.mark.benchmark
     def test_memory_with_services() -> None:
         """Benchmark memory usage with registered services."""
         container = FlextContainer.shared()
@@ -58,8 +58,8 @@ class TestsFlextContainerMemory:
             msg="Registering 100 services must stay within the memory budget",
         )
 
-    @pytest.mark.benchmark
     @staticmethod
+    @pytest.mark.benchmark
     def test_memory_with_factories() -> None:
         """Benchmark memory usage with registered factories."""
         container = FlextContainer.shared()
@@ -86,8 +86,8 @@ class TestsFlextContainerMemory:
             msg="Registering 100 factories must stay within the memory budget",
         )
 
-    @pytest.mark.benchmark
     @staticmethod
+    @pytest.mark.benchmark
     def test_memory_leak_detection() -> None:
         """Detect potential memory leaks in resource lifecycle."""
         gc.collect()

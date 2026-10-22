@@ -23,8 +23,8 @@ class TestsFlextResultOperations:
 
     # --- creation + terminal state --------------------------------------
 
-    @pytest.mark.parametrize("value", ["success", "", "multi word value"])
     @staticmethod
+    @pytest.mark.parametrize("value", ["success", "", "multi word value"])
     def test_ok_reports_success_and_exposes_value(value: str) -> None:
         """r.ok is success, carries the value, and has no error."""
         result: p.Result[str] = r[str].ok(value)
@@ -36,8 +36,8 @@ class TestsFlextResultOperations:
         tm.that(result.unwrap(), eq=value)
         tm.that(result.error, none=True)
 
-    @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
     @staticmethod
+    @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
     def test_fail_reports_failure_and_preserves_error(message: str) -> None:
         """r.fail is failure, preserves the error message, and has no value."""
         result: p.Result[str] = r[str].fail(message)
@@ -47,8 +47,8 @@ class TestsFlextResultOperations:
         tm.fail(bool(result))
         tm.that(result.error, eq=message)
 
-    @pytest.mark.parametrize("message", ["boom", "denied"])
     @staticmethod
+    @pytest.mark.parametrize("message", ["boom", "denied"])
     def test_value_and_unwrap_raise_on_failure(message: str) -> None:
         """Accessing value or unwrap on a failure raises with the error message."""
         result: p.Result[str] = r[str].fail(message)
@@ -60,6 +60,7 @@ class TestsFlextResultOperations:
 
     # --- unwrap_or / | default ------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("result", "default", "expected"),
         [
@@ -68,7 +69,6 @@ class TestsFlextResultOperations:
         ],
         ids=["success-keeps-value", "failure-yields-default"],
     )
-    @staticmethod
     def test_unwrap_or_returns_value_on_success_default_on_failure(
         result: p.Result[str],
         default: str,
@@ -177,12 +177,12 @@ class TestsFlextResultOperations:
 
     # --- filter ----------------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected_success"),
         [(10, True), (3, False)],
         ids=["predicate-passes", "predicate-fails"],
     )
-    @staticmethod
     def test_filter_keeps_value_when_predicate_holds(
         value: int,
         *,
@@ -199,12 +199,12 @@ class TestsFlextResultOperations:
 
     # --- boolean protocol ------------------------------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("result", "expected"),
         [(r[str].ok("value"), True), (r[str].fail("error"), False)],
         ids=["success-truthy", "failure-falsy"],
     )
-    @staticmethod
     def test_bool_reflects_success_state(
         result: p.Result[str],
         *,

@@ -42,12 +42,12 @@ class TestsFlextCoreContainerRegistration:
             msg="FlextContainer must return the same singleton instance",
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         "scenario",
         m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
     )
-    @staticmethod
     def test_bind_registers_and_resolves_service(
         scenario: m.Tests.ServiceScenario,
         clean_container: p.Container,
@@ -106,12 +106,12 @@ class TestsFlextCoreContainerRegistration:
             expected_error="missing_service",
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         "return_value",
         ["created_string", 42],
         ids=["string", "int"],
     )
-    @staticmethod
     def test_factory_registers_and_produces_value(
         return_value: t.JsonValue,
         clean_container: p.Container,

@@ -36,8 +36,8 @@ class TestsFlextCoreEnforcementWarningVisibility:
     # plugin autoload and exercises only pytest core so the integration boundary
     # remains deterministic and fits the config-owned regular-item budget.
 
-    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     @staticmethod
+    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     def test_enforcement_categories_are_userwarnings(
         category: type[c.FlextMroViolation],
     ) -> None:
@@ -53,8 +53,8 @@ class TestsFlextCoreEnforcementWarningVisibility:
         """Test smell violation is a mro violation."""
         tm.that(c.FlextSmellViolation, where=c.FlextMroViolation.__subclasscheck__)
 
-    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     @staticmethod
+    @pytest.mark.parametrize("category", [c.FlextMroViolation, c.FlextSmellViolation])
     def test_emitted_violation_is_observable_with_message(
         category: type[c.FlextMroViolation],
     ) -> None:

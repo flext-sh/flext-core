@@ -153,6 +153,7 @@ class TestsFlextCoreResultExceptionMapping:
         tm.ok(recovered.failure)
         tm.ok(recovered.exception is recovery_exc)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "combinator",
         [
@@ -167,7 +168,6 @@ class TestsFlextCoreResultExceptionMapping:
             "tap_error",
         ],
     )
-    @staticmethod
     def test_callback_exception_becomes_carried_failure(
         combinator: Literal[
             "map",

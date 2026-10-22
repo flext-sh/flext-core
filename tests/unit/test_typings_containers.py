@@ -92,11 +92,11 @@ class TestsFlextCoreTypingsContainers:
         with pytest.raises(KeyError):
             _ = d["missing"]
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("present", "expected"),
         [("key", True), ("missing", False)],
     )
-    @staticmethod
     def test_dict_contains_reports_membership(
         present: str,
         *,
@@ -236,11 +236,11 @@ class TestsFlextCoreTypingsContainers:
 
     # ---- c.SCALAR_TYPES: runtime scalar contract ---------------------------
 
+    @staticmethod
     @pytest.mark.parametrize(
         "scalar",
         ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)],
     )
-    @staticmethod
     def test_scalar_types_accepts_every_scalar(
         *,
         scalar: str | float | bool | datetime,
@@ -248,8 +248,8 @@ class TestsFlextCoreTypingsContainers:
         """SCALAR_TYPES is an isinstance-usable tuple covering all scalar kinds."""
         tm.ok(isinstance(scalar, c.SCALAR_TYPES))
 
-    @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     @staticmethod
+    @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
         nonscalar: list[str] | t.MappingKV[str, int] | tuple[str],
     ) -> None:

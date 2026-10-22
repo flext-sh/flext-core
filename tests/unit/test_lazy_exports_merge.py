@@ -149,6 +149,7 @@ class TestsFlextCoreLazyExportsMerge:
         with pytest.raises(ValueError, match="relative lazy-import paths"):
             merge_lazy_imports((".child",), {})
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("module_path", "raw", "expected"),
         [
@@ -178,7 +179,6 @@ class TestsFlextCoreLazyExportsMerge:
             ),
         ],
     )
-    @staticmethod
     def test_normalize_map_resolves_relative_and_preserves_absolute(
         module_path: str,
         raw: t.LazyImportMap,

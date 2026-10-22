@@ -82,11 +82,11 @@ class TestsFlextCoreBeartypeEngine(
             eq=False,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("name", "expected"),
         [("run", True), ("do_thing", True), ("_private", False), ("__dunder__", False)],
     )
-    @staticmethod
     def test_attr_accept_public_rejects_underscore_names(
         name: str,
         *,
@@ -98,6 +98,7 @@ class TestsFlextCoreBeartypeEngine(
             truth=True,
         )
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("name", "expected"),
         [
@@ -108,7 +109,6 @@ class TestsFlextCoreBeartypeEngine(
             ("_private", False),
         ],
     )
-    @staticmethod
     def test_attr_accept_utility_excludes_exempt_and_private(
         name: str,
         *,
@@ -134,8 +134,8 @@ class TestsFlextCoreBeartypeEngine(
             eq=True,
         )
 
-    @pytest.mark.parametrize("name", ["_private", "model_fields", "__doc__"])
     @staticmethod
+    @pytest.mark.parametrize("name", ["_private", "model_fields", "__doc__"])
     def test_attr_accept_constants_rejects_private_and_skip_names(
         name: str,
     ) -> None:

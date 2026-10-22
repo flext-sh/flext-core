@@ -108,6 +108,7 @@ class TestsFlextCoreEnforcementNamespacePart01:
         tm.that(report.empty, truth=True)
         tm.that(report, where=lambda value: _MISSING_PREFIX not in value)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("class_name", "flagged"),
         [
@@ -117,7 +118,6 @@ class TestsFlextCoreEnforcementNamespacePart01:
             ("FlextModelsMixins", True),
         ],
     )
-    @staticmethod
     def test_tests_module_requires_tests_prefix_composition(
         class_name: str,
         *,

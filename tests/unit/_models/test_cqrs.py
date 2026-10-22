@@ -177,11 +177,11 @@ class TestsFlextCoreCqrs:
         tm.that(query.pagination.size, eq=5)
         tm.that(query.pagination.offset, eq=5)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "invalid_pagination",
         [{"page": 0, "size": -5}, {"size": c.MAX_PAGE_SIZE + 1}, {"page": -1}],
     )
-    @staticmethod
     def test_query_rejects_invalid_pagination(
         invalid_pagination: t.MappingKV[str, t.Scalar],
     ) -> None:
@@ -222,11 +222,11 @@ class TestsFlextCoreCqrs:
         # Assert
         tm.that(pagination.limit, eq=25)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("page", "size", "expected_offset"),
         [(1, 10, 0), (2, 10, 10), (3, 20, 40), (5, 50, 200)],
     )
-    @staticmethod
     def test_pagination_offset_is_derived_from_page_and_size(
         page: int,
         size: int,
@@ -238,11 +238,11 @@ class TestsFlextCoreCqrs:
         # Assert
         tm.that(pagination.offset, eq=expected_offset)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "invalid_kwargs",
         [{"size": c.MAX_PAGE_SIZE + 1}, {"page": 0}, {"page": -3}, {"size": 0}],
     )
-    @staticmethod
     def test_pagination_rejects_out_of_range_values(
         invalid_kwargs: t.MappingKV[str, int],
     ) -> None:

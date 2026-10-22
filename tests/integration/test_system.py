@@ -58,11 +58,11 @@ class TestsFlextCoreSystem:
         tm.that(r[str].ok("real").unwrap_or("default"), eq="real")
         tm.that(r[str].fail("boom").unwrap_or("default"), eq="default")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("start", "expected"),
         [("dados_iniciais", "processado-DADOS-INICIAIS"), ("abc", "processado-ABC")],
     )
-    @staticmethod
     def test_map_chain_transforms_success_value(
         start: str,
         expected: str,
@@ -87,6 +87,7 @@ class TestsFlextCoreSystem:
         tm.ok(result.failure)
         tm.that(result.error, eq="boom")
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("data", "expect_success", "expected"),
         [
@@ -94,7 +95,6 @@ class TestsFlextCoreSystem:
             ("dados_invalido", False, "dados_invalidos"),
         ],
     )
-    @staticmethod
     def test_flat_map_chains_or_short_circuits(
         data: str,
         expected: str,
@@ -164,6 +164,7 @@ class TestsFlextCoreSystem:
         """The default timeout constant is a positive numeric value."""
         tm.that(c.DEFAULT_TIMEOUT_SECONDS, is_=(int, float), gt=0)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("code", "expected"),
         [
@@ -171,7 +172,6 @@ class TestsFlextCoreSystem:
             (c.ErrorCode.CONFIG_ERROR, "CONFIG_ERROR"),
         ],
     )
-    @staticmethod
     def test_error_codes_render_as_their_string_value(
         code: str,
         expected: str,
@@ -184,6 +184,7 @@ class TestsFlextCoreSystem:
     # FlextExceptions family contract                                     #
     # ------------------------------------------------------------------ #
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("factory", "message", "code"),
         [
@@ -191,7 +192,6 @@ class TestsFlextCoreSystem:
             (e.OperationError, "operacao_falhada", c.ErrorCode.OPERATION_ERROR.value),
         ],
     )
-    @staticmethod
     def test_exception_carries_code_and_message_publicly(
         factory: type[e.BaseError],
         message: str,
@@ -244,11 +244,11 @@ class TestsFlextCoreSystem:
 
         tm.that(timestamp, is_=str, empty=False)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [("payload", True), ("", False), ("   ", False)],
     )
-    @staticmethod
     def test_string_non_empty_reports_meaningful_content(
         value: str,
         *,

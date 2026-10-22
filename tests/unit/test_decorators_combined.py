@@ -86,12 +86,12 @@ class TestsFlextCoreDecoratorsCombined:
         # Assert: functools.wraps identity is part of the public contract.
         tm.that(business_operation.__name__, eq="business_operation")
 
+    @staticmethod
     @pytest.mark.parametrize("succeeds", (True, False))
     @pytest.mark.parametrize(
         "decorator",
         (d.railway(), d.combined(railway_enabled=True)),
     )
-    @staticmethod
     def test_railway_preserves_a_preexisting_result(
         decorator: p.RailwayDecorator,
         *,
@@ -114,11 +114,11 @@ class TestsFlextCoreDecoratorsCombined:
         else:
             tm.fail(outcome)
 
+    @staticmethod
     @pytest.mark.parametrize(
         "decorator",
         (d.railway(), d.combined(railway_enabled=True)),
     )
-    @staticmethod
     def test_railway_normalizes_a_mixed_return_contract(
         decorator: p.RailwayDecorator,
     ) -> None:
@@ -212,11 +212,11 @@ class TestsFlextCoreDecoratorsCombined:
         tm.ok(outcome, eq="success")
         tm.that(attempts, eq=2)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("timeout_seconds", "should_raise"),
         [(5.0, False), (0.001, True)],
     )
-    @staticmethod
     def test_timeout_enforces_duration_budget(
         timeout_seconds: float,
         *,
