@@ -135,11 +135,12 @@ class TestsFlextService(FlextTestsCase):
 
     def test_fetch_global_returns_the_shared_singleton(self) -> None:
         """Test fetch global returns the shared singleton."""
-        first = type(self.service).fetch_global()
-        second = type(self.service).fetch_global()
+        with self._PureService.isolated_test_runtime() as service:
+            first = self._PureService.fetch_global()
+            second = self._PureService.fetch_global()
 
-        tm.that(first is self.service, truth=True)
-        tm.that(second is first, truth=True)
+            tm.that(first is service, truth=True)
+            tm.that(second is first, truth=True)
 
     # --- settings / logger public accessors ------------------------------
 
