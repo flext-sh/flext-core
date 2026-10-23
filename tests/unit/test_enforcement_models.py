@@ -138,6 +138,45 @@ class TestsFlextEnforcementModels:
         )
 
     @staticmethod
+    def test_native_typed_mapping_factory_preserves_readonly_contract() -> None:
+        """Typed dict construction satisfies a read-only mapping declaration."""
+
+        class _M(m.ArbitraryTypesModel):
+            data: Annotated[t.StrMapping, m.Field(description="Typed mapping")] = (
+                m.Field(default_factory=dict[str, str], validate_default=True)
+            )
+
+        first = _M()
+        second = _M()
+        tm.that(first.data, eq={})
+        tm.that(first.data, is_=dict)
+        tm.that(first.data is second.data, eq=False)
+        tm.that(
+            messages(u.check(_M), fragment="no_raw_collections_field_default"),
+            truth=False,
+        )
+        tm.that(_M.model_validate({"data": {"key": "value"}}).data, eq={"key": "value"})
+        with pytest.raises(m.ValidationError):
+            _M.model_validate({"data": {"key": []}})
+
+    @staticmethod
+    def test_native_typed_mapping_factory_rejects_incompatible_arguments() -> None:
+        """Typed factories cannot claim a different mapping element contract."""
+        with pytest.warns(
+            c.FlextMroViolation, match="no_raw_collections_field_default"
+        ):
+
+            class _M(m.ArbitraryTypesModel):
+                data: Annotated[t.StrMapping, m.Field(description="Typed mapping")] = (
+                    m.Field(default_factory=dict[int, int], validate_default=True)
+                )
+
+        tm.that(
+            messages(u.check(_M), fragment="no_raw_collections_field_default"),
+            truth=True,
+        )
+
+    @staticmethod
     def test_mutable_sequence_list_factory_passes() -> None:
         """Test mutable sequence list factory passes."""
 

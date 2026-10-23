@@ -113,9 +113,16 @@ class FlextUtilitiesBeartypeHelpersPart03(
             resolved = h.resolve_type_alias_value(org, owner=owner)
             if resolved is None:
                 return False
+            norm = resolved
             org = get_origin(resolved) or resolved
         tgt = org or norm
-        return tgt is exp
+        factory_args = get_args(factory)
+        return tgt is exp or (
+            bool(factory_args)
+            and factory_args == get_args(norm)
+            and isinstance(tgt, type)
+            and issubclass(mk, tgt)
+        )
 
     @staticmethod
     def has_relaxed_extra_base(target: type) -> bool:
