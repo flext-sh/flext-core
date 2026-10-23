@@ -16,12 +16,12 @@ from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities._beartype import (
+    FlextUtilitiesBeartypeFieldUnionScan,
     FlextUtilitiesBeartypeHelpers,
-    declared_union_members,
 )
 
 
-class FlextUtilitiesBeartypeFieldVisitor:
+class FlextUtilitiesBeartypeFieldVisitor(FlextUtilitiesBeartypeFieldUnionScan):
     """FIELD_SHAPE + MODEL_CONFIG visitors via Pydantic introspection."""
 
     @staticmethod
@@ -215,7 +215,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         """
         if not params.forbid_inline_union:
             return None
-        inline_union_arms = declared_union_members(declared_annotation)
+        inline_union_arms = cls._declared_union_members(declared_annotation)
         if inline_union_arms > params.max_union_arms:
             return {"arms": str(inline_union_arms)}
         return None

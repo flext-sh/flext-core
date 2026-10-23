@@ -66,6 +66,22 @@ class FlextConstantsEnforcementNamespace:
     )
     """Class name suffix → layer name mapping for cross-layer detection."""
 
+    ENFORCEMENT_MODULE_EXEMPT_FILES: ClassVar[frozenset[str]] = frozenset({
+        "__init__.py",
+        "__main__.py",
+        "conftest.py",
+    })
+    """Entry-point and package files exempt from module-alias checks."""
+
+    ENFORCEMENT_VISITOR_PAIR_ARITY: ClassVar[int] = 2
+    """Argument count of the two-operand visitor call shapes."""
+
+    ENFORCEMENT_MIN_FACADE_BASES: ClassVar[int] = 2
+    """Fewest bases a facade needs before alias-first ordering applies."""
+
+    ENFORCEMENT_MIN_FAMILY_MODULE_PARTS: ClassVar[int] = 2
+    """Fewest dotted segments a module path needs to name a private family."""
+
     # --- Violation message shape (single parameterized template) ---
     #
     # One template covers every violation: the check supplies the

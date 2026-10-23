@@ -121,28 +121,6 @@
       },
       "recursive": true
     },
-    "cross_project_duplicate": {
-      "category": "namespace",
-      "collect": "target",
-      "problem": "{qn} duplicated across {owners} (AGENTS.md §2.3, §3.5)",
-      "fix": "Move the symbol to the highest project in hierarchy and re-export.",
-      "predicate": "duplicate_symbol",
-      "params": {
-        "kind": "duplicate_symbol",
-        "hierarchy": [
-          "flext-core",
-          "flext-cli",
-          "flext-infra"
-        ],
-        "symbol_kinds": [
-          "BaseModel",
-          "Protocol",
-          "StrEnum",
-          "TypeAlias",
-          "frozenset_const"
-        ]
-      }
-    },
     "cross_protocol": {
       "category": "namespace",
       "collect": "cross_layer",
