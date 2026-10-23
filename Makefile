@@ -306,10 +306,15 @@ git_root="$$(git -C "$${project_root}" rev-parse --show-toplevel)"; \
 git_root="$$(cd "$${git_root}" && pwd -P)"; \
 case "$${project_root}/" in ("$${git_root}/"*) ;; (*) printf 'ERROR: physical Git root does not contain this project: %s\n' "$${git_root}" >&2; exit 2 ;; esac; \
 if [ "$${GITHUB_ACTIONS:-}" = "true" ]; then printf '%s\n' "$${project_root}"; exit 0; fi; \
-superproject="$$(git -C "$${project_root}" rev-parse --show-superproject-working-tree)"; \
-if [ -n "$${superproject}" ] && [ -f "$${superproject}/pyproject.toml" ]; then \
-	cd "$${superproject}" && pwd -P; \
-	exit 0; \
+attached="$$(git -C "$${git_root}" rev-parse --show-superproject-working-tree)"; \
+if [ -n "$${attached}" ] && [ -f "$${attached}/pyproject.toml" ]; then \
+	attached="$$(cd "$${attached}" && pwd -P)"; \
+	member_keys="$$(git -C "$${attached}" config --file .gitmodules --name-only --get-regexp '^submodule\..*\.path$$')"; \
+	for member_key in $${member_keys}; do \
+		member_path="$$(git -C "$${attached}" config --file .gitmodules --get "$${member_key}")"; \
+		if [ "$${attached}/$${member_path}" -ef "$${git_root}" ]; then printf '%s\n' "$${attached}"; exit 0; fi; \
+	done; \
+	printf 'ERROR: attached runtime has no original member declaration: %s\n' "$${git_root}" >&2; exit 2; \
 fi; \
 reader_root=; \
 parent="$$(dirname "$${project_root}")"; \
@@ -432,11 +437,21 @@ case "$(strip $(MAKECMDGOALS))" in (setup|upg) \
 	export MISE_SHIMS_DIR="$${mise_bootstrap_root}/$${mise_receipt}/shims"; \
 	}; \
 		mise_qualify; \
-		"$${mise_bootstrap_bin}" -C "$${reader_root}" install --locked --yes "uv"; \
 	} >&2; \
 	reader_mise="$${mise_bootstrap_bin}"; \
 ;; esac; \
 uv_requested="$$("$${reader_mise}" -C "$${reader_root}" tool "uv" --requested)"; \
+case "$(strip $(MAKECMDGOALS))" in (setup|upg) \
+	uv_active="$$("$${reader_mise}" -C "$${reader_root}" tool "uv" --active)"; \
+	uv_installed="$$("$${reader_mise}" -C "$${reader_root}" tool "uv" --installed)"; \
+	uv_present=; \
+	for uv_version in $${uv_installed}; do \
+		if [ "$${uv_version}" = "$${uv_active}" ]; then uv_present=Y; fi; \
+	done; \
+	if [ -z "$${uv_present}" ]; then \
+		"$${reader_mise}" -C "$${reader_root}" install --locked --yes "uv" >&2; \
+	fi; \
+;; esac; \
 uv_binary="$$("$${reader_mise}" -C "$${reader_root}" which "uv" --tool "uv@$${uv_requested}")"; \
 if [ ! -x "$${uv_binary}" ]; then printf 'ERROR: native workspace reader is not provisioned; run make setup\n' >&2; exit 2; fi; \
 owner="$$("$${uv_binary}" workspace dir --project "$${project_root}")"; \
@@ -452,8 +467,8 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-docs profile-docs-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject typings gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
-BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-docs profile-docs-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject typings gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PUBLIC_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-docs profile-docs-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+BUILTIN_VERBS := help setup pre-commit upg upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-docs profile-docs-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs clean bootstrap-candidate release-plan release-version release-tag release-build publication gen gen-footprint gen-pyproject gen-editor initialize project-new mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -819,6 +834,9 @@ _bootstrap_setup_tools:
 	"$${mise_bootstrap_bin}" -C "$(PROJECT_ROOT)" exec -- env "PATH=$$(dirname "$${mise_bootstrap_bin}"):$${MISE_SHIMS_DIR}:$${PATH}" "CI=$(CI)" $(SELF_MAKE) $(TOOL_BOOTSTRAP_LIFECYCLE); \
 	bootstrap_stage=complete; bootstrap_completed=true
 _bootstrap_setup_tools: _builtin_require_workspace
+ifneq ($(EDITABLE_SUPPLIER_ACTIVE),)
+_bootstrap_setup_tools: _builtin_require_editable_supplier
+endif
 
 # UV, not Git attachment or runtime environment selection, owns lock discovery.
 .PHONY: _builtin_require_upg_lock_owner
@@ -843,12 +861,16 @@ _builtin_require_upg_lock_owner:
 # and extra. The topology-derived tool.uv.sources selects each member's live
 # editable path in the committed lock; CI's --no-editable keeps frozen builds.
 # Attached projects inherit this root's lock and never install over its graph.
-EDITABLE_RESOLUTION_RECIPE = set -eu; \
+EDITABLE_SUPPLIER_PREFLIGHT = set -eu; \
 	supplier="$(FLEXT_INFRA_EDITABLE_SUPPLIER_ROOT)"; \
 	case "$$supplier" in (/*) ;; (*) printf 'ERROR: editable supplier root must be an absolute path\n' >&2; exit 2 ;; esac; \
 	if [ ! -d "$$supplier" ]; then printf 'ERROR: editable supplier root is not a directory: %s\n' "$$supplier" >&2; exit 2; fi; \
 	supplier_resolution="$$supplier/.flext/uv/local"; \
-	if [ ! -f "$$supplier_resolution/uv.lock" ]; then printf 'ERROR: selected supplier has no native bootstrap lock: %s\n' "$$supplier_resolution" >&2; exit 2; fi; \
+	if [ ! -f "$$supplier_resolution/uv.lock" ]; then printf 'ERROR: selected supplier has no native bootstrap lock: %s\n' "$$supplier_resolution" >&2; exit 2; fi
+.PHONY: _builtin_require_editable_supplier
+_builtin_require_editable_supplier:
+	@$(EDITABLE_SUPPLIER_PREFLIGHT)
+EDITABLE_RESOLUTION_RECIPE = $(EDITABLE_SUPPLIER_PREFLIGHT); \
 	desired_python="$$(mise -C "$(RUNTIME_ROOT)" which python)"; \
 	bootstrap_infra() { env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT $(UV) run --isolated --frozen --all-groups --project "$$supplier_resolution" --python "$$desired_python" -m flext_infra "$$@"; }; \
 	bootstrap_infra codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
@@ -954,1554 +976,179 @@ endef
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
 .PHONY: _builtin_gen_init _builtin_gen_all
 
+
+VERB_DESCRIPTION_help := Show the complete selector-free public interface.
+
+VERB_DESCRIPTION_setup := Install the declared locks, publish local runtime bindings, and provision hooks.
+
+VERB_DESCRIPTION_pre-commit := Approve a commit through the CI check partition and incremental tests with the persistent testmon database.
+
+VERB_DESCRIPTION_upg := Resolve the newest declared releases, write the uv and mise locks, then prove the upgraded tree still converges; gates stay with make check.
+
+VERB_DESCRIPTION_upg-sources := Migrate an explicitly selected dependency Git reference in the root and its declared member manifests before resolving their locks.
+
+VERB_DESCRIPTION_validate-lifecycle := Execute the declared public runtime acceptance steps serially, with root-owned mutation fanout and typed first-failure receipts.
+
+VERB_DESCRIPTION_build := Build the project distribution artifacts.
+
+VERB_DESCRIPTION_examples := Run this repository'"'"'s explicitly declared public runtime examples module.
+
+VERB_DESCRIPTION_check := Check the configured quality gates and projection conformance without writes.
+
+VERB_DESCRIPTION_check-pyright := Run the complete configured Pyright analysis and retain its native gate receipt.
+
+VERB_DESCRIPTION_census := Inventory constants, duplicate declarations and placement across every declared first-party project.
+
+VERB_DESCRIPTION_census-constants := Apply identity-proven constants consumer rewrites through the workspace census and publish its complete report.
+
+VERB_DESCRIPTION_smells := Run the strict code-smell audit as a dedicated gate.
+
+VERB_DESCRIPTION_test := Run incremental tests through the persistent testmon cache.
+
+VERB_DESCRIPTION_tests := Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.
+
+VERB_DESCRIPTION_test-full := Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.
+
+VERB_DESCRIPTION_test-file := Run one complete declared test file once, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).
+
+VERB_DESCRIPTION_file-gate := Run configured canonical read-only gates on one literal FILE=<repository-relative path>; invalid selection and missing gate owners fail loud.
+
+VERB_DESCRIPTION_profile-test := Profile the canonical pytest entry and its collection children on the same persistent testmon database, without the outer bounded-gate wrapper.
+
+VERB_DESCRIPTION_profile-test-report := Render the parent pytest profile and the aggregated child profiles from that run.
+
+VERB_DESCRIPTION_profile-docs := Profile the complete configured mutating documentation lifecycle and retain reached phase profiles on native failure.
+
+VERB_DESCRIPTION_profile-docs-report := Render only the latest documentation profiling run, including explicit lifecycle and phase completion states.
+
+VERB_DESCRIPTION_profile-environment := Profile the canonical environment provenance guard without invoking that guard as a prerequisite.
+
+VERB_DESCRIPTION_profile-environment-report := Render the profile retained by the canonical environment provenance guard.
+
+VERB_DESCRIPTION_profile-lanes := Profile the complete read-only workspace lane audit and retain its native failure outcome.
+
+VERB_DESCRIPTION_profile-lanes-report := Render the retained profile of the complete workspace lane audit.
+
+VERB_DESCRIPTION_profile-mod := Profile the canonical mutating codemod lifecycle and retain the profile on failure.
+
+VERB_DESCRIPTION_profile-mod-report := Render the canonical codemod profile from the last profiling invocation.
+
+VERB_DESCRIPTION_profile-mod-rules := Profile the complete read-only rule diagnostic and retain its native failure outcome.
+
+VERB_DESCRIPTION_profile-mod-rules-report := Render the profile of the complete read-only rule diagnostic.
+
+VERB_DESCRIPTION_profile-codemod := Profile the canonical read-only codemod gate for one literal FILE, preserving native findings and interruption evidence.
+
+VERB_DESCRIPTION_profile-codemod-report := Render the retained profile of the canonical read-only codemod gate.
+
+VERB_DESCRIPTION_fmt := Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.
+
+VERB_DESCRIPTION_fix := Apply conformance repairs and the configured fixable gates.
+
+VERB_DESCRIPTION_fix-namespace := Apply the canonical namespace enforcer to the selected workspace; the same relocation cascade runs as a callback phase of make mod.
+
+VERB_DESCRIPTION_fix-accessors := Migrate accessor names owned by the rename catalog'"'"'s origin package and every resolved consumer; homonyms are skipped with a warning; the same origin-aware rewrite runs as a callback phase of make mod.
+
+VERB_DESCRIPTION_fix-toolchain := Reinstall one explicitly selected declared tool from its current lock, then prove the complete native toolchain.
+
+VERB_DESCRIPTION_audit := Inspect environment, dependency, and workspace ownership health.
+
+VERB_DESCRIPTION_status := Report the resolved runtime and repository state.
+
+VERB_DESCRIPTION_verify-clean := Audit documentation consistency and report the current Git state without rejecting concurrent work or requiring cleanup.
+
+VERB_DESCRIPTION_docs := Generate, fix, format, and check documentation.
+
+VERB_DESCRIPTION_clean := Remove every declared disposable artifact.
+
+VERB_DESCRIPTION_bootstrap-candidate := Bootstrap declared candidate worktrees with this branch-matched generator.
+
+VERB_DESCRIPTION_release-plan := Resolve the release decision through the public protocol.
+
+VERB_DESCRIPTION_release-version := Materialize the planned version.
+
+VERB_DESCRIPTION_release-tag := Tag the verified release commit.
+
+VERB_DESCRIPTION_release-build := Build the release receipt and artifacts.
+
+VERB_DESCRIPTION_publication := Publish only receipt-attested release artifacts.
+
+VERB_DESCRIPTION_gen := Regenerate declared projections with guarded publication per participant, without repairing authored inputs or resolving locks.
+
+VERB_DESCRIPTION_gen-footprint := Inspect the pending generation journal and physical effect footprint without generation planning, participant leases, recovery, or publication.
+
+VERB_DESCRIPTION_gen-pyproject := Regenerate this project'"'"'s analyzer and dependency metadata through guarded publication.
+
+VERB_DESCRIPTION_gen-editor := Project editor settings, analyzer configuration, and Git ignores without generating Python facades.
+
+VERB_DESCRIPTION_initialize := Bootstrap this target'"'"'s own declaration and canonical Makefile.
+
+VERB_DESCRIPTION_project-new := Create a new project through the canonical scaffold service using explicitly declared identity inputs.
+
+VERB_DESCRIPTION_mod := Apply the declared structural codemods; committed rule-test snapshots are verified, never rewritten.
+
+VERB_DESCRIPTION_mod-types := Apply the declared source type-contract migrations through the native AST fixed point.
+
+VERB_DESCRIPTION_mod-rules := Evaluate the declared AST and text rule catalogs across every governed project without rewriting sources; publish occurrence evidence by rule and repository.
+
+VERB_DESCRIPTION_mod-text := Apply the declared Sed text rules with exact receipts and guarded publication.
+
+VERB_DESCRIPTION_mod-text-candidate := Apply declared Sed text rules to the configured candidate workspace.
+
+VERB_DESCRIPTION_mod-snapshots := Regenerate the owned ast-grep rule-test snapshots from their tests for a reviewed commit.
+
+VERB_DESCRIPTION_waza := Validate provider-neutral governance semantics with Waza.
+
+VERB_DESCRIPTION_duplication := Run the canonical jscpd duplicate-code gate.
+
+VERB_DESCRIPTION_sonarcloud-sync := Write the SSOT SonarCloud issue exclusions to the server-side project settings (requires SONAR_TOKEN).
+
+VERB_DESCRIPTION_sonarcloud-issues := Read unresolved new-code SonarCloud issues on the published integration branch (requires SONAR_TOKEN).
+
+VERB_HELP_LINE = printf '  %-16s %s\n' '$(1)' '$(VERB_DESCRIPTION_$(1))'
 # OPTIONS=Y (or HELP=Y) displays a built-in verb's contract without effects:
 # no prerequisite, hook or handler of that verb runs. A script verb keeps its
 # entry, and the promoted dispatcher renders its contract per WHAT.
 VERB_CONTRACT := $(filter 1 TRUE Y YES true y yes True Yes,$(OPTIONS) $(HELP))
 ifeq ($(VERB_CONTRACT),)
+PROFILE_VERBS_PLAIN := gen gen-footprint gen-pyproject gen-editor project-new
+PROFILE_VERBS_DISPATCH := help clean
+PROFILE_VERBS_ACTIVATED := pre-commit upg-sources validate-lifecycle build examples check check-pyright census census-constants smells test tests test-full test-file file-gate profile-test profile-test-report profile-docs profile-docs-report profile-environment profile-environment-report profile-lanes profile-lanes-report profile-mod profile-mod-report profile-mod-rules profile-mod-rules-report profile-codemod profile-codemod-report fmt fix fix-namespace fix-accessors fix-toolchain audit status verify-clean docs bootstrap-candidate release-plan release-version release-tag release-build publication initialize mod mod-types mod-rules mod-text mod-text-candidate mod-snapshots waza duplication sonarcloud-sync sonarcloud-issues
+PROFILE_VERBS_INTERPRETER := profile-environment profile-environment-report status initialize
+PROFILE_VERBS_HOOKED := $(foreach v,$(filter-out $(PROFILE_VERBS_INTERPRETER),$(PROFILE_VERBS_ACTIVATED)),$(if $(filter pre-$(v) _custom-$(v) post-$(v),$(CUSTOM_DECLARED_TARGETS)),$(v)))
+PROFILE_VERBS_DIRECT := $(filter-out $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INTERPRETER),$(PROFILE_VERBS_ACTIVATED))
+PROFILE_VERBS_ROUTED := $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INTERPRETER)
+
+$(PROFILE_VERBS_PLAIN): %: _builtin_require_workspace _builtin_require_interpreter
+	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'standalone'
+	$(call RUN_PUBLIC,$@)
 
 
+$(PROFILE_VERBS_DISPATCH):
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-$@,$(call RUN_PUBLIC,$@))
 
 
-help:
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-help,$(call RUN_PUBLIC,help))
-
-
-
-
-
-
-pre-commit: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'pre-commit' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-pre-commit,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-pre-commit)
-
-.PHONY: _activated-pre-commit
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-pre-commit _custom-pre-commit post-pre-commit,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-pre-commit: _builtin-pre-commit
-_builtin-pre-commit: _builtin_require_environment
-else
-
-
-_activated-pre-commit: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-pre-commit,$(call RUN_PUBLIC,pre-commit))
-
+$(PROFILE_VERBS_ACTIVATED): %: _builtin_require_workspace
+	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'standalone'
+	$(if $(filter status,$@),@$(GITHUB_AUTH_DIAGNOSTICS))
+	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-$@,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-$@)
+.PHONY: $(addprefix _activated-,$(PROFILE_VERBS_ACTIVATED))
+ifneq ($(strip $(PROFILE_VERBS_DIRECT)),)
+$(addprefix _activated-,$(PROFILE_VERBS_DIRECT)): _activated-%: _builtin-%
+$(addprefix _builtin-,$(PROFILE_VERBS_DIRECT)): _builtin_require_environment
 endif
-
-
-
-
-
-
-upg-sources: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'upg-sources' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-upg-sources,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-upg-sources)
-
-.PHONY: _activated-upg-sources
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-upg-sources _custom-upg-sources post-upg-sources,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-upg-sources: _builtin-upg-sources
-_builtin-upg-sources: _builtin_require_environment
-else
-
-
-_activated-upg-sources: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-upg-sources,$(call RUN_PUBLIC,upg-sources))
-
+ifneq ($(strip $(PROFILE_VERBS_HOOKED)),)
+$(addprefix _activated-,$(PROFILE_VERBS_HOOKED)): _builtin_require_environment
 endif
-
-
-
-
-
-
-validate-lifecycle: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'validate-lifecycle' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-validate-lifecycle,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-validate-lifecycle)
-
-.PHONY: _activated-validate-lifecycle
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-validate-lifecycle _custom-validate-lifecycle post-validate-lifecycle,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-validate-lifecycle: _builtin-validate-lifecycle
-_builtin-validate-lifecycle: _builtin_require_environment
-else
-
-
-_activated-validate-lifecycle: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-validate-lifecycle,$(call RUN_PUBLIC,validate-lifecycle))
-
+ifneq ($(strip $(PROFILE_VERBS_INTERPRETER)),)
+$(addprefix _activated-,$(PROFILE_VERBS_INTERPRETER)): _builtin_require_interpreter
 endif
-
-
-
-
-
-
-build: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'build' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-build,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-build)
-
-.PHONY: _activated-build
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-build _custom-build post-build,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-build: _builtin-build
-_builtin-build: _builtin_require_environment
-else
-
-
-_activated-build: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-build,$(call RUN_PUBLIC,build))
-
+ifneq ($(strip $(PROFILE_VERBS_ROUTED)),)
+$(addprefix _activated-,$(PROFILE_VERBS_ROUTED)): _activated-%:
+	$(if $(filter status,$*),+@$(SELF_MAKE) _builtin_status_import_observation)
+	$(if $(filter status,$*),+@$(SELF_MAKE) _builtin_require_environment)
+	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-$*,$(call RUN_PUBLIC,$*))
 endif
-
-
-
-
-
-
-examples: _builtin_require_workspace _builtin_require_examples
-	@printf '==> %s | project=%s | profile=%s\n' 'examples' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-examples,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-examples)
-
-.PHONY: _activated-examples
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-examples _custom-examples post-examples,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-examples: _builtin-examples
-_builtin-examples: _builtin_require_environment
-else
-
-
-_activated-examples: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-examples,$(call RUN_PUBLIC,examples))
-
-endif
-
-
-
-
-
-
-check: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'check' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-check,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-check)
-
-.PHONY: _activated-check
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-check _custom-check post-check,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-check: _builtin-check
-_builtin-check: _builtin_require_environment
-else
-
-
-_activated-check: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-check,$(call RUN_PUBLIC,check))
-
-endif
-
-
-
-
-
-
-check-pyright: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'check-pyright' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-check-pyright,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-check-pyright)
-
-.PHONY: _activated-check-pyright
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-check-pyright _custom-check-pyright post-check-pyright,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-check-pyright: _builtin-check-pyright
-_builtin-check-pyright: _builtin_require_environment
-else
-
-
-_activated-check-pyright: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-check-pyright,$(call RUN_PUBLIC,check-pyright))
-
-endif
-
-
-
-
-
-
-census: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'census' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-census,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-census)
-
-.PHONY: _activated-census
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-census _custom-census post-census,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-census: _builtin-census
-_builtin-census: _builtin_require_environment
-else
-
-
-_activated-census: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-census,$(call RUN_PUBLIC,census))
-
-endif
-
-
-
-
-
-
-census-constants: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'census-constants' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-census-constants,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-census-constants)
-
-.PHONY: _activated-census-constants
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-census-constants _custom-census-constants post-census-constants,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-census-constants: _builtin-census-constants
-_builtin-census-constants: _builtin_require_environment
-else
-
-
-_activated-census-constants: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-census-constants,$(call RUN_PUBLIC,census-constants))
-
-endif
-
-
-
-
-
-
-smells: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'smells' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-smells,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-smells)
-
-.PHONY: _activated-smells
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-smells _custom-smells post-smells,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-smells: _builtin-smells
-_builtin-smells: _builtin_require_environment
-else
-
-
-_activated-smells: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-smells,$(call RUN_PUBLIC,smells))
-
-endif
-
-
-
-
-
-
-test: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'test' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-test,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-test)
-
-.PHONY: _activated-test
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-test _custom-test post-test,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-test: _builtin-test
-_builtin-test: _builtin_require_environment
-else
-
-
-_activated-test: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-test,$(call RUN_PUBLIC,test))
-
-endif
-
-
-
-
-
-
-tests: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'tests' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-tests,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-tests)
-
-.PHONY: _activated-tests
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-tests _custom-tests post-tests,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-tests: _builtin-tests
-_builtin-tests: _builtin_require_environment
-else
-
-
-_activated-tests: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-tests,$(call RUN_PUBLIC,tests))
-
-endif
-
-
-
-
-
-
-test-full: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'test-full' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-test-full,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-test-full)
-
-.PHONY: _activated-test-full
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-test-full _custom-test-full post-test-full,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-test-full: _builtin-test-full
-_builtin-test-full: _builtin_require_environment
-else
-
-
-_activated-test-full: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-test-full,$(call RUN_PUBLIC,test-full))
-
-endif
-
-
-
-
-
-
-test-file: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'test-file' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-test-file,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-test-file)
-
-.PHONY: _activated-test-file
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-test-file _custom-test-file post-test-file,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-test-file: _builtin-test-file
-_builtin-test-file: _builtin_require_environment
-else
-
-
-_activated-test-file: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-test-file,$(call RUN_PUBLIC,test-file))
-
-endif
-
-
-
-
-
-
-file-gate: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'file-gate' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-file-gate,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-file-gate)
-
-.PHONY: _activated-file-gate
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-file-gate _custom-file-gate post-file-gate,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-file-gate: _builtin-file-gate
-_builtin-file-gate: _builtin_require_environment
-else
-
-
-_activated-file-gate: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-file-gate,$(call RUN_PUBLIC,file-gate))
-
-endif
-
-
-
-
-
-
-profile-test: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-test' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-test,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-test)
-
-.PHONY: _activated-profile-test
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-test _custom-profile-test post-profile-test,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-test: _builtin-profile-test
-_builtin-profile-test: _builtin_require_environment
-else
-
-
-_activated-profile-test: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-test,$(call RUN_PUBLIC,profile-test))
-
-endif
-
-
-
-
-
-
-profile-test-report: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-test-report' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-test-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-test-report)
-
-.PHONY: _activated-profile-test-report
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-test-report _custom-profile-test-report post-profile-test-report,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-test-report: _builtin-profile-test-report
-_builtin-profile-test-report: _builtin_require_environment
-else
-
-
-_activated-profile-test-report: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-test-report,$(call RUN_PUBLIC,profile-test-report))
-
-endif
-
-
-
-
-
-
-profile-docs: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-docs' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-docs,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-docs)
-
-.PHONY: _activated-profile-docs
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-docs _custom-profile-docs post-profile-docs,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-docs: _builtin-profile-docs
-_builtin-profile-docs: _builtin_require_environment
-else
-
-
-_activated-profile-docs: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-docs,$(call RUN_PUBLIC,profile-docs))
-
-endif
-
-
-
-
-
-
-profile-docs-report: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-docs-report' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-docs-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-docs-report)
-
-.PHONY: _activated-profile-docs-report
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-docs-report _custom-profile-docs-report post-profile-docs-report,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-docs-report: _builtin-profile-docs-report
-_builtin-profile-docs-report: _builtin_require_environment
-else
-
-
-_activated-profile-docs-report: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-docs-report,$(call RUN_PUBLIC,profile-docs-report))
-
-endif
-
-
-
-
-
-
-profile-environment: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-environment' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-environment,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-environment)
-
-.PHONY: _activated-profile-environment
-
-
-_activated-profile-environment: _builtin_require_interpreter
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-environment,$(call RUN_PUBLIC,profile-environment))
-
-
-
-
-
-
-profile-environment-report: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-environment-report' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-environment-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-environment-report)
-
-.PHONY: _activated-profile-environment-report
-
-
-_activated-profile-environment-report: _builtin_require_interpreter
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-environment-report,$(call RUN_PUBLIC,profile-environment-report))
-
-
-
-
-
-
-profile-lanes: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-lanes' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-lanes,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-lanes)
-
-.PHONY: _activated-profile-lanes
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-lanes _custom-profile-lanes post-profile-lanes,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-lanes: _builtin-profile-lanes
-_builtin-profile-lanes: _builtin_require_environment
-else
-
-
-_activated-profile-lanes: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-lanes,$(call RUN_PUBLIC,profile-lanes))
-
-endif
-
-
-
-
-
-
-profile-lanes-report: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-lanes-report' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-lanes-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-lanes-report)
-
-.PHONY: _activated-profile-lanes-report
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-lanes-report _custom-profile-lanes-report post-profile-lanes-report,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-lanes-report: _builtin-profile-lanes-report
-_builtin-profile-lanes-report: _builtin_require_environment
-else
-
-
-_activated-profile-lanes-report: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-lanes-report,$(call RUN_PUBLIC,profile-lanes-report))
-
-endif
-
-
-
-
-
-
-profile-mod: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-mod' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-mod,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-mod)
-
-.PHONY: _activated-profile-mod
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-mod _custom-profile-mod post-profile-mod,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-mod: _builtin-profile-mod
-_builtin-profile-mod: _builtin_require_environment
-else
-
-
-_activated-profile-mod: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod,$(call RUN_PUBLIC,profile-mod))
-
-endif
-
-
-
-
-
-
-profile-mod-report: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-mod-report' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-mod-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-mod-report)
-
-.PHONY: _activated-profile-mod-report
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-mod-report _custom-profile-mod-report post-profile-mod-report,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-mod-report: _builtin-profile-mod-report
-_builtin-profile-mod-report: _builtin_require_environment
-else
-
-
-_activated-profile-mod-report: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-report,$(call RUN_PUBLIC,profile-mod-report))
-
-endif
-
-
-
-
-
-
-profile-mod-rules: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-mod-rules' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-mod-rules,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-mod-rules)
-
-.PHONY: _activated-profile-mod-rules
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-mod-rules _custom-profile-mod-rules post-profile-mod-rules,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-mod-rules: _builtin-profile-mod-rules
-_builtin-profile-mod-rules: _builtin_require_environment
-else
-
-
-_activated-profile-mod-rules: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-rules,$(call RUN_PUBLIC,profile-mod-rules))
-
-endif
-
-
-
-
-
-
-profile-mod-rules-report: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-mod-rules-report' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-mod-rules-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-mod-rules-report)
-
-.PHONY: _activated-profile-mod-rules-report
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-mod-rules-report _custom-profile-mod-rules-report post-profile-mod-rules-report,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-mod-rules-report: _builtin-profile-mod-rules-report
-_builtin-profile-mod-rules-report: _builtin_require_environment
-else
-
-
-_activated-profile-mod-rules-report: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-mod-rules-report,$(call RUN_PUBLIC,profile-mod-rules-report))
-
-endif
-
-
-
-
-
-
-profile-codemod: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-codemod' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-codemod,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-codemod)
-
-.PHONY: _activated-profile-codemod
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-codemod _custom-profile-codemod post-profile-codemod,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-codemod: _builtin-profile-codemod
-_builtin-profile-codemod: _builtin_require_environment
-else
-
-
-_activated-profile-codemod: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-codemod,$(call RUN_PUBLIC,profile-codemod))
-
-endif
-
-
-
-
-
-
-profile-codemod-report: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'profile-codemod-report' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-profile-codemod-report,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-profile-codemod-report)
-
-.PHONY: _activated-profile-codemod-report
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-profile-codemod-report _custom-profile-codemod-report post-profile-codemod-report,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-profile-codemod-report: _builtin-profile-codemod-report
-_builtin-profile-codemod-report: _builtin_require_environment
-else
-
-
-_activated-profile-codemod-report: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-profile-codemod-report,$(call RUN_PUBLIC,profile-codemod-report))
-
-endif
-
-
-
-
-
-
-fmt: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'fmt' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-fmt,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fmt)
-
-.PHONY: _activated-fmt
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-fmt _custom-fmt post-fmt,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-fmt: _builtin-fmt
-_builtin-fmt: _builtin_require_environment
-else
-
-
-_activated-fmt: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fmt,$(call RUN_PUBLIC,fmt))
-
-endif
-
-
-
-
-
-
-fix: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'fix' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-fix,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fix)
-
-.PHONY: _activated-fix
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-fix _custom-fix post-fix,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-fix: _builtin-fix
-_builtin-fix: _builtin_require_environment
-else
-
-
-_activated-fix: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix,$(call RUN_PUBLIC,fix))
-
-endif
-
-
-
-
-
-
-fix-namespace: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'fix-namespace' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-fix-namespace,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fix-namespace)
-
-.PHONY: _activated-fix-namespace
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-fix-namespace _custom-fix-namespace post-fix-namespace,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-fix-namespace: _builtin-fix-namespace
-_builtin-fix-namespace: _builtin_require_environment
-else
-
-
-_activated-fix-namespace: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix-namespace,$(call RUN_PUBLIC,fix-namespace))
-
-endif
-
-
-
-
-
-
-fix-accessors: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'fix-accessors' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-fix-accessors,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fix-accessors)
-
-.PHONY: _activated-fix-accessors
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-fix-accessors _custom-fix-accessors post-fix-accessors,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-fix-accessors: _builtin-fix-accessors
-_builtin-fix-accessors: _builtin_require_environment
-else
-
-
-_activated-fix-accessors: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix-accessors,$(call RUN_PUBLIC,fix-accessors))
-
-endif
-
-
-
-
-
-
-fix-toolchain: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'fix-toolchain' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-fix-toolchain,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-fix-toolchain)
-
-.PHONY: _activated-fix-toolchain
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-fix-toolchain _custom-fix-toolchain post-fix-toolchain,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-fix-toolchain: _builtin-fix-toolchain
-_builtin-fix-toolchain: _builtin_require_environment
-else
-
-
-_activated-fix-toolchain: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-fix-toolchain,$(call RUN_PUBLIC,fix-toolchain))
-
-endif
-
-
-
-
-
-
-audit: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'audit' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-audit,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-audit)
-
-.PHONY: _activated-audit
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-audit _custom-audit post-audit,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-audit: _builtin-audit
-_builtin-audit: _builtin_require_environment
-else
-
-
-_activated-audit: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-audit,$(call RUN_PUBLIC,audit))
-
-endif
-
-
-
-
-
-
-status: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'status' "$(PROJECT_ROOT)" 'standalone'
-
-	@$(GITHUB_AUTH_DIAGNOSTICS)
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-status,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-status)
-
-.PHONY: _activated-status
-
-
-_activated-status: _builtin_require_interpreter
-	+@$(SELF_MAKE) _builtin_status_import_observation
-	+@$(SELF_MAKE) _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-status,$(call RUN_PUBLIC,status))
-
-
-
-
-
-
-verify-clean: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'verify-clean' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-verify-clean,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-verify-clean)
-
-.PHONY: _activated-verify-clean
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-verify-clean _custom-verify-clean post-verify-clean,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-verify-clean: _builtin-verify-clean
-_builtin-verify-clean: _builtin_require_environment
-else
-
-
-_activated-verify-clean: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-verify-clean,$(call RUN_PUBLIC,verify-clean))
-
-endif
-
-
-
-
-
-
-docs: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'docs' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-docs,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-docs)
-
-.PHONY: _activated-docs
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-docs _custom-docs post-docs,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-docs: _builtin-docs
-_builtin-docs: _builtin_require_environment
-else
-
-
-_activated-docs: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-docs,$(call RUN_PUBLIC,docs))
-
-endif
-
-
-
-
-
-
-clean:
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-clean,$(call RUN_PUBLIC,clean))
-
-
-
-
-
-
-bootstrap-candidate: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'bootstrap-candidate' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-bootstrap-candidate,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-bootstrap-candidate)
-
-.PHONY: _activated-bootstrap-candidate
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-bootstrap-candidate _custom-bootstrap-candidate post-bootstrap-candidate,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-bootstrap-candidate: _builtin-bootstrap-candidate
-_builtin-bootstrap-candidate: _builtin_require_environment
-else
-
-
-_activated-bootstrap-candidate: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-bootstrap-candidate,$(call RUN_PUBLIC,bootstrap-candidate))
-
-endif
-
-
-
-
-
-
-release-plan: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'release-plan' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-release-plan,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-plan)
-
-.PHONY: _activated-release-plan
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-release-plan _custom-release-plan post-release-plan,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-release-plan: _builtin-release-plan
-_builtin-release-plan: _builtin_require_environment
-else
-
-
-_activated-release-plan: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-plan,$(call RUN_PUBLIC,release-plan))
-
-endif
-
-
-
-
-
-
-release-version: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'release-version' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-release-version,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-version)
-
-.PHONY: _activated-release-version
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-release-version _custom-release-version post-release-version,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-release-version: _builtin-release-version
-_builtin-release-version: _builtin_require_environment
-else
-
-
-_activated-release-version: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-version,$(call RUN_PUBLIC,release-version))
-
-endif
-
-
-
-
-
-
-release-tag: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'release-tag' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-release-tag,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-tag)
-
-.PHONY: _activated-release-tag
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-release-tag _custom-release-tag post-release-tag,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-release-tag: _builtin-release-tag
-_builtin-release-tag: _builtin_require_environment
-else
-
-
-_activated-release-tag: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-tag,$(call RUN_PUBLIC,release-tag))
-
-endif
-
-
-
-
-
-
-release-build: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'release-build' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-release-build,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-release-build)
-
-.PHONY: _activated-release-build
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-release-build _custom-release-build post-release-build,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-release-build: _builtin-release-build
-_builtin-release-build: _builtin_require_environment
-else
-
-
-_activated-release-build: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-release-build,$(call RUN_PUBLIC,release-build))
-
-endif
-
-
-
-
-
-
-publication: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'publication' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-publication,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-publication)
-
-.PHONY: _activated-publication
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-publication _custom-publication post-publication,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-publication: _builtin-publication
-_builtin-publication: _builtin_require_environment
-else
-
-
-_activated-publication: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-publication,$(call RUN_PUBLIC,publication))
-
-endif
-
-
-
-
-
-# This operation consumes the declared physical runtime without activating the
-# environment file it may itself regenerate.
-gen: _builtin_require_workspace _builtin_require_interpreter
-	@printf '==> %s | project=%s | profile=%s\n' 'gen' "$(PROJECT_ROOT)" 'standalone'
-	$(call RUN_PUBLIC,gen)
-
-
-
-
-# This operation consumes the declared physical runtime without activating the
-# environment file it may itself regenerate.
-gen-footprint: _builtin_require_workspace _builtin_require_interpreter
-	@printf '==> %s | project=%s | profile=%s\n' 'gen-footprint' "$(PROJECT_ROOT)" 'standalone'
-	$(call RUN_PUBLIC,gen-footprint)
-
-
-
-
-# This operation consumes the declared physical runtime without activating the
-# environment file it may itself regenerate.
-gen-pyproject: _builtin_require_workspace _builtin_require_interpreter
-	@printf '==> %s | project=%s | profile=%s\n' 'gen-pyproject' "$(PROJECT_ROOT)" 'standalone'
-	$(call RUN_PUBLIC,gen-pyproject)
-
-
-
-
-
-typings: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'typings' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-typings,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-typings)
-
-.PHONY: _activated-typings
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-typings _custom-typings post-typings,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-typings: _builtin-typings
-_builtin-typings: _builtin_require_environment
-else
-
-
-_activated-typings: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-typings,$(call RUN_PUBLIC,typings))
-
-endif
-
-
-
-
-
-# This operation consumes the declared physical runtime without activating the
-# environment file it may itself regenerate.
-gen-editor: _builtin_require_workspace _builtin_require_interpreter
-	@printf '==> %s | project=%s | profile=%s\n' 'gen-editor' "$(PROJECT_ROOT)" 'standalone'
-	$(call RUN_PUBLIC,gen-editor)
-
-
-
-
-
-initialize: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'initialize' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-initialize,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-initialize)
-
-.PHONY: _activated-initialize
-
-
-_activated-initialize: _builtin_require_interpreter
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-initialize,$(call RUN_PUBLIC,initialize))
-
-
-
-
-
-# This operation consumes the declared physical runtime without activating the
-# environment file it may itself regenerate.
-project-new: _builtin_require_workspace _builtin_require_interpreter
-	@printf '==> %s | project=%s | profile=%s\n' 'project-new' "$(PROJECT_ROOT)" 'standalone'
-	$(call RUN_PUBLIC,project-new)
-
-
-
-
-
-mod: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'mod' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-mod,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod)
-
-.PHONY: _activated-mod
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-mod _custom-mod post-mod,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-mod: _builtin-mod
-_builtin-mod: _builtin_require_environment
-else
-
-
-_activated-mod: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod,$(call RUN_PUBLIC,mod))
-
-endif
-
-
-
-
-
-
-mod-types: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'mod-types' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-mod-types,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod-types)
-
-.PHONY: _activated-mod-types
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-mod-types _custom-mod-types post-mod-types,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-mod-types: _builtin-mod-types
-_builtin-mod-types: _builtin_require_environment
-else
-
-
-_activated-mod-types: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-types,$(call RUN_PUBLIC,mod-types))
-
-endif
-
-
-
-
-
-
-mod-rules: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'mod-rules' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-mod-rules,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod-rules)
-
-.PHONY: _activated-mod-rules
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-mod-rules _custom-mod-rules post-mod-rules,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-mod-rules: _builtin-mod-rules
-_builtin-mod-rules: _builtin_require_environment
-else
-
-
-_activated-mod-rules: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-rules,$(call RUN_PUBLIC,mod-rules))
-
-endif
-
-
-
-
-
-
-mod-text: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'mod-text' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-mod-text,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod-text)
-
-.PHONY: _activated-mod-text
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-mod-text _custom-mod-text post-mod-text,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-mod-text: _builtin-mod-text
-_builtin-mod-text: _builtin_require_environment
-else
-
-
-_activated-mod-text: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-text,$(call RUN_PUBLIC,mod-text))
-
-endif
-
-
-
-
-
-
-mod-text-candidate: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'mod-text-candidate' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-mod-text-candidate,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod-text-candidate)
-
-.PHONY: _activated-mod-text-candidate
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-mod-text-candidate _custom-mod-text-candidate post-mod-text-candidate,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-mod-text-candidate: _builtin-mod-text-candidate
-_builtin-mod-text-candidate: _builtin_require_environment
-else
-
-
-_activated-mod-text-candidate: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-text-candidate,$(call RUN_PUBLIC,mod-text-candidate))
-
-endif
-
-
-
-
-
-
-mod-snapshots: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'mod-snapshots' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-mod-snapshots,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-mod-snapshots)
-
-.PHONY: _activated-mod-snapshots
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-mod-snapshots _custom-mod-snapshots post-mod-snapshots,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-mod-snapshots: _builtin-mod-snapshots
-_builtin-mod-snapshots: _builtin_require_environment
-else
-
-
-_activated-mod-snapshots: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-mod-snapshots,$(call RUN_PUBLIC,mod-snapshots))
-
-endif
-
-
-
-
-
-
-waza: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'waza' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-waza,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-waza)
-
-.PHONY: _activated-waza
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-waza _custom-waza post-waza,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-waza: _builtin-waza
-_builtin-waza: _builtin_require_environment
-else
-
-
-_activated-waza: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-waza,$(call RUN_PUBLIC,waza))
-
-endif
-
-
-
-
-
-
-duplication: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'duplication' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-duplication,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-duplication)
-
-.PHONY: _activated-duplication
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-duplication _custom-duplication post-duplication,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-duplication: _builtin-duplication
-_builtin-duplication: _builtin_require_environment
-else
-
-
-_activated-duplication: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-duplication,$(call RUN_PUBLIC,duplication))
-
-endif
-
-
-
-
-
-
-sonarcloud-sync: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'sonarcloud-sync' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-sonarcloud-sync,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-sonarcloud-sync)
-
-.PHONY: _activated-sonarcloud-sync
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-sonarcloud-sync _custom-sonarcloud-sync post-sonarcloud-sync,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-sonarcloud-sync: _builtin-sonarcloud-sync
-_builtin-sonarcloud-sync: _builtin_require_environment
-else
-
-
-_activated-sonarcloud-sync: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-sonarcloud-sync,$(call RUN_PUBLIC,sonarcloud-sync))
-
-endif
-
-
-
-
-
-
-sonarcloud-issues: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' 'sonarcloud-issues' "$(PROJECT_ROOT)" 'standalone'
-
-	+@$(if $(filter Y,$(CI)),$(SELF_MAKE) _activated-sonarcloud-issues,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-sonarcloud-issues)
-
-.PHONY: _activated-sonarcloud-issues
-
-# Without hooks, Make resolves the guarded builtin and its environment
-# prerequisite once in this process instead of repeating it in a submake.
-ifeq ($(filter pre-sonarcloud-issues _custom-sonarcloud-issues post-sonarcloud-issues,$(CUSTOM_DECLARED_TARGETS)),)
-_activated-sonarcloud-issues: _builtin-sonarcloud-issues
-_builtin-sonarcloud-issues: _builtin_require_environment
-else
-
-
-_activated-sonarcloud-issues: _builtin_require_environment
-
-
-	$(if $(filter Y,$(CI)),+@$(SELF_MAKE) _builtin-sonarcloud-issues,$(call RUN_PUBLIC,sonarcloud-issues))
-
-endif
-
-
 
 
 # `setup` keeps its own recipe (it must not require the environment it is about
@@ -2536,268 +1183,19 @@ upg: _builtin_require_workspace
 	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" upg
 endif
 else
-
-help:
-	@printf '  %-16s %s\n' 'help' 'Show the complete selector-free public interface.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make help to execute it.'
-
-setup:
-	@printf '  %-16s %s\n' 'setup' 'Install the declared locks, publish local runtime bindings, and provision hooks.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make setup to execute it.'
-
-pre-commit:
-	@printf '  %-16s %s\n' 'pre-commit' 'Approve a commit through the CI check partition and incremental tests with the persistent testmon database.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make pre-commit to execute it.'
-
-upg:
-	@printf '  %-16s %s\n' 'upg' 'Resolve the newest declared releases, write the uv and mise locks, then prove the upgraded tree still converges; gates stay with make check.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make upg to execute it.'
-
-upg-sources:
-	@printf '  %-16s %s\n' 'upg-sources' 'Migrate an explicitly selected dependency Git reference in the root and its declared member manifests before resolving their locks.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make upg-sources to execute it.'
-
-validate-lifecycle:
-	@printf '  %-16s %s\n' 'validate-lifecycle' 'Execute the declared public runtime acceptance steps serially, with root-owned mutation fanout and typed first-failure receipts.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make validate-lifecycle to execute it.'
-
-build:
-	@printf '  %-16s %s\n' 'build' 'Build the project distribution artifacts.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make build to execute it.'
-
-examples:
-	@printf '  %-16s %s\n' 'examples' 'Run this repository'"'"'s explicitly declared public runtime examples module.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make examples to execute it.'
-
-check:
-	@printf '  %-16s %s\n' 'check' 'Check the configured quality gates and projection conformance without writes.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make check to execute it.'
-
-check-pyright:
-	@printf '  %-16s %s\n' 'check-pyright' 'Run the complete configured Pyright analysis and retain its native gate receipt.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make check-pyright to execute it.'
-
-census:
-	@printf '  %-16s %s\n' 'census' 'Inventory constants, duplicate declarations and placement across every declared first-party project.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make census to execute it.'
-
-census-constants:
-	@printf '  %-16s %s\n' 'census-constants' 'Apply identity-proven constants consumer rewrites through the workspace census and publish its complete report.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make census-constants to execute it.'
-
-smells:
-	@printf '  %-16s %s\n' 'smells' 'Run the strict code-smell audit as a dedicated gate.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make smells to execute it.'
-
-test:
-	@printf '  %-16s %s\n' 'test' 'Run incremental tests through the persistent testmon cache.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test to execute it.'
-
-tests:
-	@printf '  %-16s %s\n' 'tests' 'Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make tests to execute it.'
-
-test-full:
-	@printf '  %-16s %s\n' 'test-full' 'Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-full to execute it.'
-
-test-file:
-	@printf '  %-16s %s\n' 'test-file' 'Run one complete declared test file once, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make test-file to execute it.'
-
-file-gate:
-	@printf '  %-16s %s\n' 'file-gate' 'Run configured canonical read-only gates on one literal FILE=<repository-relative path>; invalid selection and missing gate owners fail loud.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make file-gate to execute it.'
-
-profile-test:
-	@printf '  %-16s %s\n' 'profile-test' 'Profile the canonical pytest entry and its collection children on the same persistent testmon database, without the outer bounded-gate wrapper.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-test to execute it.'
-
-profile-test-report:
-	@printf '  %-16s %s\n' 'profile-test-report' 'Render the parent pytest profile and the aggregated child profiles from that run.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-test-report to execute it.'
-
-profile-docs:
-	@printf '  %-16s %s\n' 'profile-docs' 'Profile the complete configured mutating documentation lifecycle and retain reached phase profiles on native failure.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-docs to execute it.'
-
-profile-docs-report:
-	@printf '  %-16s %s\n' 'profile-docs-report' 'Render only the latest documentation profiling run, including explicit lifecycle and phase completion states.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-docs-report to execute it.'
-
-profile-environment:
-	@printf '  %-16s %s\n' 'profile-environment' 'Profile the canonical environment provenance guard without invoking that guard as a prerequisite.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-environment to execute it.'
-
-profile-environment-report:
-	@printf '  %-16s %s\n' 'profile-environment-report' 'Render the profile retained by the canonical environment provenance guard.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-environment-report to execute it.'
-
-profile-lanes:
-	@printf '  %-16s %s\n' 'profile-lanes' 'Profile the complete read-only workspace lane audit and retain its native failure outcome.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-lanes to execute it.'
-
-profile-lanes-report:
-	@printf '  %-16s %s\n' 'profile-lanes-report' 'Render the retained profile of the complete workspace lane audit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-lanes-report to execute it.'
-
-profile-mod:
-	@printf '  %-16s %s\n' 'profile-mod' 'Profile the canonical mutating codemod lifecycle and retain the profile on failure.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod to execute it.'
-
-profile-mod-report:
-	@printf '  %-16s %s\n' 'profile-mod-report' 'Render the canonical codemod profile from the last profiling invocation.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod-report to execute it.'
-
-profile-mod-rules:
-	@printf '  %-16s %s\n' 'profile-mod-rules' 'Profile the complete read-only rule diagnostic and retain its native failure outcome.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod-rules to execute it.'
-
-profile-mod-rules-report:
-	@printf '  %-16s %s\n' 'profile-mod-rules-report' 'Render the profile of the complete read-only rule diagnostic.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-mod-rules-report to execute it.'
-
-profile-codemod:
-	@printf '  %-16s %s\n' 'profile-codemod' 'Profile the canonical read-only codemod gate for one literal FILE, preserving native findings and interruption evidence.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-codemod to execute it.'
-
-profile-codemod-report:
-	@printf '  %-16s %s\n' 'profile-codemod-report' 'Render the retained profile of the canonical read-only codemod gate.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make profile-codemod-report to execute it.'
-
-fmt:
-	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fmt to execute it.'
-
-fix:
-	@printf '  %-16s %s\n' 'fix' 'Apply conformance repairs and the configured fixable gates.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fix to execute it.'
-
-fix-namespace:
-	@printf '  %-16s %s\n' 'fix-namespace' 'Apply the canonical namespace enforcer to the selected workspace; the same relocation cascade runs as a callback phase of make mod.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fix-namespace to execute it.'
-
-fix-accessors:
-	@printf '  %-16s %s\n' 'fix-accessors' 'Migrate accessor names owned by the rename catalog'"'"'s origin package and every resolved consumer; homonyms are skipped with a warning; the same origin-aware rewrite runs as a callback phase of make mod.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fix-accessors to execute it.'
-
-fix-toolchain:
-	@printf '  %-16s %s\n' 'fix-toolchain' 'Reinstall one explicitly selected declared tool from its current lock, then prove the complete native toolchain.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make fix-toolchain to execute it.'
-
-audit:
-	@printf '  %-16s %s\n' 'audit' 'Inspect environment, dependency, and workspace ownership health.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make audit to execute it.'
-
-status:
-	@printf '  %-16s %s\n' 'status' 'Report the resolved runtime and repository state.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make status to execute it.'
-
-verify-clean:
-	@printf '  %-16s %s\n' 'verify-clean' 'Audit documentation consistency and report the current Git state without rejecting concurrent work or requiring cleanup.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make verify-clean to execute it.'
-
-docs:
-	@printf '  %-16s %s\n' 'docs' 'Generate, fix, format, and check documentation.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make docs to execute it.'
-
-clean:
-	@printf '  %-16s %s\n' 'clean' 'Remove every declared disposable artifact.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make clean to execute it.'
-
-bootstrap-candidate:
-	@printf '  %-16s %s\n' 'bootstrap-candidate' 'Bootstrap declared candidate worktrees with this branch-matched generator.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make bootstrap-candidate to execute it.'
-
-release-plan:
-	@printf '  %-16s %s\n' 'release-plan' 'Resolve the release decision through the public protocol.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-plan to execute it.'
-
-release-version:
-	@printf '  %-16s %s\n' 'release-version' 'Materialize the planned version.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-version to execute it.'
-
-release-tag:
-	@printf '  %-16s %s\n' 'release-tag' 'Tag the verified release commit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-tag to execute it.'
-
-release-build:
-	@printf '  %-16s %s\n' 'release-build' 'Build the release receipt and artifacts.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make release-build to execute it.'
-
-publication:
-	@printf '  %-16s %s\n' 'publication' 'Publish only receipt-attested release artifacts.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make publication to execute it.'
-
-gen:
-	@printf '  %-16s %s\n' 'gen' 'Regenerate declared projections with guarded publication per participant, without repairing authored inputs or resolving locks.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen to execute it.'
-
-gen-footprint:
-	@printf '  %-16s %s\n' 'gen-footprint' 'Inspect the pending generation journal and physical effect footprint without generation planning, participant leases, recovery, or publication.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen-footprint to execute it.'
-
-gen-pyproject:
-	@printf '  %-16s %s\n' 'gen-pyproject' 'Regenerate this project'"'"'s analyzer and dependency metadata through guarded publication.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen-pyproject to execute it.'
-
-typings:
-	@printf '  %-16s %s\n' 'typings' 'Detect published typing dependencies and generate, package, and install missing third-party stubs through native Pyright and UV.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make typings to execute it.'
-
-gen-editor:
-	@printf '  %-16s %s\n' 'gen-editor' 'Project editor settings, analyzer configuration, and Git ignores without generating Python facades.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make gen-editor to execute it.'
-
-initialize:
-	@printf '  %-16s %s\n' 'initialize' 'Bootstrap this target'"'"'s own declaration and canonical Makefile.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make initialize to execute it.'
-
-project-new:
-	@printf '  %-16s %s\n' 'project-new' 'Create a new project through the canonical scaffold service using explicitly declared identity inputs.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make project-new to execute it.'
-
-mod:
-	@printf '  %-16s %s\n' 'mod' 'Apply the declared structural codemods; committed rule-test snapshots are verified, never rewritten.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod to execute it.'
-
-mod-types:
-	@printf '  %-16s %s\n' 'mod-types' 'Apply the declared source type-contract migrations through the native AST fixed point.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-types to execute it.'
-
-mod-rules:
-	@printf '  %-16s %s\n' 'mod-rules' 'Evaluate the declared AST and text rule catalogs across every governed project without rewriting sources; publish occurrence evidence by rule and repository.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-rules to execute it.'
-
-mod-text:
-	@printf '  %-16s %s\n' 'mod-text' 'Apply the declared Sed text rules with exact receipts and guarded publication.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-text to execute it.'
-
-mod-text-candidate:
-	@printf '  %-16s %s\n' 'mod-text-candidate' 'Apply declared Sed text rules to the configured candidate workspace.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-text-candidate to execute it.'
-
-mod-snapshots:
-	@printf '  %-16s %s\n' 'mod-snapshots' 'Regenerate the owned ast-grep rule-test snapshots from their tests for a reviewed commit.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make mod-snapshots to execute it.'
-
-waza:
-	@printf '  %-16s %s\n' 'waza' 'Validate provider-neutral governance semantics with Waza.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make waza to execute it.'
-
-duplication:
-	@printf '  %-16s %s\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make duplication to execute it.'
-
-sonarcloud-sync:
-	@printf '  %-16s %s\n' 'sonarcloud-sync' 'Write the SSOT SonarCloud issue exclusions to the server-side project settings (requires SONAR_TOKEN).'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make sonarcloud-sync to execute it.'
-
-sonarcloud-issues:
-	@printf '  %-16s %s\n' 'sonarcloud-issues' 'Read unresolved new-code SonarCloud issues on the published integration branch (requires SONAR_TOKEN).'
-	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make sonarcloud-issues to execute it.'
-
+$(BUILTIN_VERBS):
+	@$(call VERB_HELP_LINE,$@)
+	@printf '%s\n' 'OPTIONS=Y displays this contract without effects; run make $@ to execute it.'
 endif
+SCRIPT_VERBS_PLAIN :=
+SCRIPT_VERBS_DISPATCH :=
+SCRIPT_VERBS_ACTIVATED :=
+SCRIPT_VERBS_INTERPRETER :=
+SCRIPT_VERBS_HOOKED := $(foreach v,$(filter-out $(SCRIPT_VERBS_INTERPRETER),$(SCRIPT_VERBS_ACTIVATED)),$(if $(filter pre-$(v) _custom-$(v) post-$(v),$(CUSTOM_DECLARED_TARGETS)),$(v)))
+SCRIPT_VERBS_DIRECT := $(filter-out $(SCRIPT_VERBS_HOOKED) $(SCRIPT_VERBS_INTERPRETER),$(SCRIPT_VERBS_ACTIVATED))
+SCRIPT_VERBS_ROUTED := $(SCRIPT_VERBS_HOOKED) $(SCRIPT_VERBS_INTERPRETER)
+
+
 
 
 .PHONY: _setup_lifecycle
@@ -2827,138 +1225,8 @@ _setup_activated:
 	esac
 
 _builtin-help:
-	@printf '%s\n' 'flext-core [standalone]' '';
-
-	@printf '  %-16s %s\n' 'help' 'Show the complete selector-free public interface.';
-
-	@printf '  %-16s %s\n' 'setup' 'Install the declared locks, publish local runtime bindings, and provision hooks.';
-
-	@printf '  %-16s %s\n' 'pre-commit' 'Approve a commit through the CI check partition and incremental tests with the persistent testmon database.';
-
-	@printf '  %-16s %s\n' 'upg' 'Resolve the newest declared releases, write the uv and mise locks, then prove the upgraded tree still converges; gates stay with make check.';
-
-	@printf '  %-16s %s\n' 'upg-sources' 'Migrate an explicitly selected dependency Git reference in the root and its declared member manifests before resolving their locks.';
-
-	@printf '  %-16s %s\n' 'validate-lifecycle' 'Execute the declared public runtime acceptance steps serially, with root-owned mutation fanout and typed first-failure receipts.';
-
-	@printf '  %-16s %s\n' 'build' 'Build the project distribution artifacts.';
-
-	@printf '  %-16s %s\n' 'examples' 'Run this repository'"'"'s explicitly declared public runtime examples module.';
-
-	@printf '  %-16s %s\n' 'check' 'Check the configured quality gates and projection conformance without writes.';
-
-	@printf '  %-16s %s\n' 'check-pyright' 'Run the complete configured Pyright analysis and retain its native gate receipt.';
-
-	@printf '  %-16s %s\n' 'census' 'Inventory constants, duplicate declarations and placement across every declared first-party project.';
-
-	@printf '  %-16s %s\n' 'census-constants' 'Apply identity-proven constants consumer rewrites through the workspace census and publish its complete report.';
-
-	@printf '  %-16s %s\n' 'smells' 'Run the strict code-smell audit as a dedicated gate.';
-
-	@printf '  %-16s %s\n' 'test' 'Run incremental tests through the persistent testmon cache.';
-
-	@printf '  %-16s %s\n' 'tests' 'Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.';
-
-	@printf '  %-16s %s\n' 'test-full' 'Run incremental tests first, then the complete eligible suite using the same persistent testmon database, without a time limit.';
-
-	@printf '  %-16s %s\n' 'test-file' 'Run one complete declared test file once, slow items included, with the same persistent testmon cache (FILE=<repository-relative path>).';
-
-	@printf '  %-16s %s\n' 'file-gate' 'Run configured canonical read-only gates on one literal FILE=<repository-relative path>; invalid selection and missing gate owners fail loud.';
-
-	@printf '  %-16s %s\n' 'profile-test' 'Profile the canonical pytest entry and its collection children on the same persistent testmon database, without the outer bounded-gate wrapper.';
-
-	@printf '  %-16s %s\n' 'profile-test-report' 'Render the parent pytest profile and the aggregated child profiles from that run.';
-
-	@printf '  %-16s %s\n' 'profile-docs' 'Profile the complete configured mutating documentation lifecycle and retain reached phase profiles on native failure.';
-
-	@printf '  %-16s %s\n' 'profile-docs-report' 'Render only the latest documentation profiling run, including explicit lifecycle and phase completion states.';
-
-	@printf '  %-16s %s\n' 'profile-environment' 'Profile the canonical environment provenance guard without invoking that guard as a prerequisite.';
-
-	@printf '  %-16s %s\n' 'profile-environment-report' 'Render the profile retained by the canonical environment provenance guard.';
-
-	@printf '  %-16s %s\n' 'profile-lanes' 'Profile the complete read-only workspace lane audit and retain its native failure outcome.';
-
-	@printf '  %-16s %s\n' 'profile-lanes-report' 'Render the retained profile of the complete workspace lane audit.';
-
-	@printf '  %-16s %s\n' 'profile-mod' 'Profile the canonical mutating codemod lifecycle and retain the profile on failure.';
-
-	@printf '  %-16s %s\n' 'profile-mod-report' 'Render the canonical codemod profile from the last profiling invocation.';
-
-	@printf '  %-16s %s\n' 'profile-mod-rules' 'Profile the complete read-only rule diagnostic and retain its native failure outcome.';
-
-	@printf '  %-16s %s\n' 'profile-mod-rules-report' 'Render the profile of the complete read-only rule diagnostic.';
-
-	@printf '  %-16s %s\n' 'profile-codemod' 'Profile the canonical read-only codemod gate for one literal FILE, preserving native findings and interruption evidence.';
-
-	@printf '  %-16s %s\n' 'profile-codemod-report' 'Render the retained profile of the canonical read-only codemod gate.';
-
-	@printf '  %-16s %s\n' 'fmt' 'Apply ruff format --preview and every declared formatter gate. Ruff is the rule; change code, never ruff.';
-
-	@printf '  %-16s %s\n' 'fix' 'Apply conformance repairs and the configured fixable gates.';
-
-	@printf '  %-16s %s\n' 'fix-namespace' 'Apply the canonical namespace enforcer to the selected workspace; the same relocation cascade runs as a callback phase of make mod.';
-
-	@printf '  %-16s %s\n' 'fix-accessors' 'Migrate accessor names owned by the rename catalog'"'"'s origin package and every resolved consumer; homonyms are skipped with a warning; the same origin-aware rewrite runs as a callback phase of make mod.';
-
-	@printf '  %-16s %s\n' 'fix-toolchain' 'Reinstall one explicitly selected declared tool from its current lock, then prove the complete native toolchain.';
-
-	@printf '  %-16s %s\n' 'audit' 'Inspect environment, dependency, and workspace ownership health.';
-
-	@printf '  %-16s %s\n' 'status' 'Report the resolved runtime and repository state.';
-
-	@printf '  %-16s %s\n' 'verify-clean' 'Audit documentation consistency and report the current Git state without rejecting concurrent work or requiring cleanup.';
-
-	@printf '  %-16s %s\n' 'docs' 'Generate, fix, format, and check documentation.';
-
-	@printf '  %-16s %s\n' 'clean' 'Remove every declared disposable artifact.';
-
-	@printf '  %-16s %s\n' 'bootstrap-candidate' 'Bootstrap declared candidate worktrees with this branch-matched generator.';
-
-	@printf '  %-16s %s\n' 'release-plan' 'Resolve the release decision through the public protocol.';
-
-	@printf '  %-16s %s\n' 'release-version' 'Materialize the planned version.';
-
-	@printf '  %-16s %s\n' 'release-tag' 'Tag the verified release commit.';
-
-	@printf '  %-16s %s\n' 'release-build' 'Build the release receipt and artifacts.';
-
-	@printf '  %-16s %s\n' 'publication' 'Publish only receipt-attested release artifacts.';
-
-	@printf '  %-16s %s\n' 'gen' 'Regenerate declared projections with guarded publication per participant, without repairing authored inputs or resolving locks.';
-
-	@printf '  %-16s %s\n' 'gen-footprint' 'Inspect the pending generation journal and physical effect footprint without generation planning, participant leases, recovery, or publication.';
-
-	@printf '  %-16s %s\n' 'gen-pyproject' 'Regenerate this project'"'"'s analyzer and dependency metadata through guarded publication.';
-
-	@printf '  %-16s %s\n' 'typings' 'Detect published typing dependencies and generate, package, and install missing third-party stubs through native Pyright and UV.';
-
-	@printf '  %-16s %s\n' 'gen-editor' 'Project editor settings, analyzer configuration, and Git ignores without generating Python facades.';
-
-	@printf '  %-16s %s\n' 'initialize' 'Bootstrap this target'"'"'s own declaration and canonical Makefile.';
-
-	@printf '  %-16s %s\n' 'project-new' 'Create a new project through the canonical scaffold service using explicitly declared identity inputs.';
-
-	@printf '  %-16s %s\n' 'mod' 'Apply the declared structural codemods; committed rule-test snapshots are verified, never rewritten.';
-
-	@printf '  %-16s %s\n' 'mod-types' 'Apply the declared source type-contract migrations through the native AST fixed point.';
-
-	@printf '  %-16s %s\n' 'mod-rules' 'Evaluate the declared AST and text rule catalogs across every governed project without rewriting sources; publish occurrence evidence by rule and repository.';
-
-	@printf '  %-16s %s\n' 'mod-text' 'Apply the declared Sed text rules with exact receipts and guarded publication.';
-
-	@printf '  %-16s %s\n' 'mod-text-candidate' 'Apply declared Sed text rules to the configured candidate workspace.';
-
-	@printf '  %-16s %s\n' 'mod-snapshots' 'Regenerate the owned ast-grep rule-test snapshots from their tests for a reviewed commit.';
-
-	@printf '  %-16s %s\n' 'waza' 'Validate provider-neutral governance semantics with Waza.';
-
-	@printf '  %-16s %s\n' 'duplication' 'Run the canonical jscpd duplicate-code gate.';
-
-	@printf '  %-16s %s\n' 'sonarcloud-sync' 'Write the SSOT SonarCloud issue exclusions to the server-side project settings (requires SONAR_TOKEN).';
-
-	@printf '  %-16s %s\n' 'sonarcloud-issues' 'Read unresolved new-code SonarCloud issues on the published integration branch (requires SONAR_TOKEN).';
-
+	@printf '%s\n' 'flext-core [standalone]' ''
+	@$(foreach verb,$(PUBLIC_VERBS),$(call VERB_HELP_LINE,$(verb));)
 
 # A project owns the sources declared by its manifest. The generated setup
 # reconciler validates every initialized checkout before mutation, initializes
@@ -3307,8 +1575,6 @@ ifneq ($(EDITABLE_SUPPLIER_ACTIVE),)
 	+@$(SELF_MAKE) _upg_resolve_locks
 	@$(SELF_MAKE) _upg_install_runtime
 	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
-	@$(SELF_MAKE) _builtin_typings_prepare
-	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
 	@$(SELF_MAKE) _upg_reconcile_locks
 	@$(SELF_MAKE) _upg_install_runtime
 	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
@@ -3339,20 +1605,36 @@ _upg_provision_tools:
 	@mise -C "$(PROJECT_ROOT)" lock --bump
 	@mise -C "$(PROJECT_ROOT)" install --locked --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"
 
-# Member lock resolution is independent of root tool provisioning: an editable
-# supplier keeps the runtime's pins while members refresh their standalone locks.
+# Writable FLEXT members keep their own native locks for independent setup.
+UPG_LOCK_MEMBERS :=
+
+# Every member .mise.toml is the root's toolchain projection, so its mise.lock
+# is the root resolution, published once instead of resolved again per member;
+# a member manifest that differs fails loud. An editable supplier keeps the
+# runtime's pins while members refresh their own UV views.
 .PHONY: _upg_refresh_member_locks
 _upg_refresh_member_locks:
-
+	+@set -eu; \
+	for member in $(UPG_LOCK_MEMBERS); do \
+		if ! cmp -s "$(PROJECT_ROOT)/.mise.toml" "$(PROJECT_ROOT)/$$member/.mise.toml"; then \
+			printf 'ERROR: %s/.mise.toml differs from the root toolchain projection; run make gen\n' "$$member" >&2; \
+			exit 2; \
+		fi; \
+		cp "$(PROJECT_ROOT)/mise.lock" "$(PROJECT_ROOT)/$$member/mise.lock.upg"; \
+		mv "$(PROJECT_ROOT)/$$member/mise.lock.upg" "$(PROJECT_ROOT)/$$member/mise.lock"; \
+		"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(PROJECT_ROOT)" -f "$(PROJECT_ROOT)/$$member/Makefile" _upg_resolve_locks; \
+	done
 
 # Complete the upgrade against the projections just published. Re-reading the
 # current Makefile selects the new recipes without restarting the upgrade or
 # repeating generation and installation.
 _upg_converge:
-	@$(SELF_MAKE) _builtin_typings_prepare
 	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope all
 	@$(SELF_MAKE) _upg_reconcile_locks
-
+	+@set -eu; \
+	for member in $(UPG_LOCK_MEMBERS); do \
+		"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(PROJECT_ROOT)" -f "$(PROJECT_ROOT)/$$member/Makefile" _upg_reconcile_locks; \
+	done
 	@$(SELF_MAKE) _builtin_setup_environment
 	@$(SELF_MAKE) _builtin_require_mise
 	@$(PROJECT_FLEXT_INFRA) deps verify-locks --repository-root "$(PROJECT_ROOT)"
@@ -3790,19 +2072,19 @@ _builtin_clean_generated:
 # commit; `build` writes the artifact receipt; `publish` uploads exactly what
 # the receipt attests (INDEX=Y adds the package index).
 _builtin_release_plan: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --phase plan $(if $(strip $(PR_TITLE)),--pr-title "$(PR_TITLE)")
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase plan $(if $(strip $(PR_TITLE)),--pr-title "$(PR_TITLE)")
 
 _builtin_release_version: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --phase version --apply
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase version --apply
 
 _builtin_release_tag: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --phase tag --apply
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase tag --apply
 
 _builtin_release_build: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --phase build --apply
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase build --apply
 
 _builtin_release_publish: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --phase publish --apply $(if $(filter Y,$(INDEX)),--index)
+	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase publish --apply $(if $(filter Y,$(INDEX)),--index)
 
 # Generation uses the shared planner and transaction publisher for the declared
 # projections. It never repairs authored declarations or resolves dependencies.
@@ -3860,16 +2142,6 @@ _builtin-gen-footprint: _builtin_require_interpreter
 
 _builtin-gen-pyproject: _builtin_require_interpreter
 	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what pyproject --scope self
-
-_builtin_typings_prepare: _builtin_require_interpreter
-	@$(PROJECT_FLEXT_INFRA) deps detect --repository-root "$(PROJECT_ROOT)" --apply --apply-typings
-
-_builtin-typings: _builtin_require_environment
-	+@$(SELF_MAKE) _builtin_typings_prepare
-	@$(PROJECT_FLEXT_INFRA) codegen generate --root "$(RUNTIME_ROOT)" --what pyproject --scope self
-	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" _upg_reconcile_locks
-	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" _builtin_setup_environment
-	@$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(RUNTIME_ROOT)"
 
 _builtin-gen-editor: _builtin_require_interpreter
 	@set -eu; \

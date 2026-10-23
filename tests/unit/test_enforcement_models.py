@@ -14,15 +14,15 @@ from typing import Annotated
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesEnforcement
+from flext_core import FlextUtilitiesEnforcement
 from tests import c, m, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations, messages
-
-type _BARE_DICT_TYPE = t.MappingKV[str, str]
 
 
 class TestsFlextEnforcementModels:
     """Tests for ``FlextEnforcementModels``."""
+
+    type BareDictType = t.MappingKV[str, str]
 
     @staticmethod
     def test_fix_action_defaults_are_independent_validated_json_mappings() -> None:
@@ -83,7 +83,7 @@ class TestsFlextEnforcementModels:
             target = source.BadModel
             if not isinstance(target, type):
                 pytest.fail("Invalid source fixture did not declare a model class")
-            tm.ok(bool(messages(u.check(target), fragment="Any")))
+            tm.that(messages(u.check(target), fragment="Any"), truth=True)
 
     @staticmethod
     def test_typed_field_passes() -> None:
@@ -99,7 +99,9 @@ class TestsFlextEnforcementModels:
         """Test bare dict detected."""
 
         class _M(m.ArbitraryTypesModel):
-            data: _BARE_DICT_TYPE = m.Field(default_factory=dict, description="d")
+            data: TestsFlextEnforcementModels.BareDictType = m.Field(
+                default_factory=dict, description="d"
+            )
 
         tm.that(
             messages(u.check(_M), fragment="no_raw_collections_field_default"),
@@ -301,129 +303,171 @@ class TestsFlextEnforcementModels:
 
         tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
 
+    class TestsDeclarationPolicy:
+        """Field declaration, model configuration, and class-prefix policy."""
 
-class TestsFlextEnforcementDeclarationPolicy:
-    """Field declaration, model configuration, and class-prefix policy."""
-
-    @staticmethod
-    def test_sequence_list_factory_detected() -> None:
-        """Test sequence list factory detected."""
-
-        class _M(m.ArbitraryTypesModel):
-            items: Annotated[t.StrSequence, m.Field(description="d")] = m.Field(
-                default_factory=list
-            )
-
-        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=True)
-
-    @staticmethod
-    def test_sequence_alias_nested_owner_list_factory_detected() -> None:
-        """A genuinely read-only origin remains rejected before element resolution."""
-
-        class _M(m.ArbitraryTypesModel):
-            class Value(m.ContractModel):
-                name: Annotated[str, m.Field(description="Value name")] = "x"
-
-            items: t.SequenceOf[_M.Value] = m.Field(
-                default_factory=list,
-                validate_default=True,
-                description="Read-only sequence of nested values.",
-            )
-
-        tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=True)
-
-    @staticmethod
-    def test_missing_description_detected() -> None:
-        """Test missing description detected."""
-
-        class _M(m.ArbitraryTypesModel):
-            name: str = "test"
-
-        tm.that(messages(u.check(_M), fragment="missing description"), truth=True)
-
-    @staticmethod
-    def test_description_present_passes() -> None:
-        """Test description present passes."""
-
-        class _M(m.ArbitraryTypesModel):
-            name: Annotated[str, m.Field(description="A name")] = "test"
-
-        tm.that(messages(u.check(_M), fragment="missing description"), truth=False)
-
-    @staticmethod
-    def test_v1_config_class_detected() -> None:
-        """Test v1 config class detected."""
-        with pytest.warns(DeprecationWarning, match="class-based"):
+        @staticmethod
+        def test_sequence_list_factory_detected() -> None:
+            """Test sequence list factory detected."""
 
             class _M(m.ArbitraryTypesModel):
-                class Config:
-                    extra = "forbid"
+                items: Annotated[t.StrSequence, m.Field(description="d")] = m.Field(
+                    default_factory=list
+                )
 
+            tm.that(
+                messages(u.check(_M), fragment="read-only field contract"), truth=True
+            )
+
+        @staticmethod
+        def test_sequence_alias_nested_owner_list_factory_detected() -> None:
+            """A read-only origin remains rejected before element resolution."""
+
+            class _M(m.ArbitraryTypesModel):
+                class Value(m.ContractModel):
+                    name: Annotated[str, m.Field(description="Value name")] = "x"
+
+                items: t.SequenceOf[_M.Value] = m.Field(
+                    default_factory=list,
+                    validate_default=True,
+                    description="Read-only sequence of nested values.",
+                )
+
+            tm.that(
+                messages(u.check(_M), fragment="read-only field contract"), truth=True
+            )
+
+        @staticmethod
+        def test_missing_description_detected() -> None:
+            """Test missing description detected."""
+
+            class _M(m.ArbitraryTypesModel):
+                name: str = "test"
+
+            tm.that(messages(u.check(_M), fragment="missing description"), truth=True)
+
+        @staticmethod
+        def test_description_present_passes() -> None:
+            """Test description present passes."""
+
+            class _M(m.ArbitraryTypesModel):
+                name: Annotated[str, m.Field(description="A name")] = "test"
+
+            tm.that(messages(u.check(_M), fragment="missing description"), truth=False)
+
+        @staticmethod
+        def test_constrained_alias_field_descriptions_pass() -> None:
+            """Merged metadata retains descriptions alongside alias constraints."""
+
+            class _M(m.StrictBoundaryModel):
+                name: Annotated[t.NonEmptyStr, m.Field(description="Asset filename")]
+                digest: Annotated[
+                    str | None,
+                    m.Field(default=None, description="Optional native digest"),
+                ] = None
+                state: Annotated[t.NonEmptyStr, m.Field(description="Upload state")]
+                id: Annotated[t.PositiveInt, m.Field(description="Release identifier")]
+                tag_name: Annotated[t.NonEmptyStr, m.Field(description="Release tag")]
+
+            tm.that(messages(u.check(_M), fragment="missing description"), truth=False)
+            instance = _M(name="asset", state="uploaded", id=1, tag_name="v1")
+            tm.that(instance.digest, eq=None)
+            tm.that(messages(u.check(_M), fragment="missing description"), truth=False)
+            with pytest.raises(m.ValidationError):
+                _M(name="", state="uploaded", id=1, tag_name="v1")
+            with pytest.raises(m.ValidationError):
+                _M(name="asset", state="uploaded", id=0, tag_name="v1")
+
+        @staticmethod
+        def test_constrained_alias_missing_description_detected() -> None:
+            """Alias constraints never substitute for a field description."""
+
+            class _M(m.StrictBoundaryModel):
+                name: t.NonEmptyStr
+                id: t.PositiveInt
+
+            violations = messages(u.check(_M), fragment="missing description")
+            tm.that(len(violations), eq=2)
+            tm.that(any('Field "name"' in item for item in violations), truth=True)
+            tm.that(any('Field "id"' in item for item in violations), truth=True)
+
+        @staticmethod
+        def test_v1_config_class_detected() -> None:
+            """Test v1 config class detected."""
+            with pytest.warns(DeprecationWarning, match="class-based"):
+
+                class _M(m.ArbitraryTypesModel):
+                    class Config:
+                        extra = "forbid"
+
+                    name: Annotated[str, m.Field(description="d")] = "x"
+
+            tm.that(messages(u.check(_M), fragment="Pydantic v1"), truth=True)
+
+        @staticmethod
+        def test_flexible_internal_allows_ignore() -> None:
+            """Test flexible internal allows ignore."""
+
+            class _M(m.FlexibleInternalModel):
                 name: Annotated[str, m.Field(description="d")] = "x"
 
-        tm.that(messages(u.check(_M), fragment="Pydantic v1"), truth=True)
+            tm.that(messages(u.check(_M), fragment="extra"), truth=False)
 
-    @staticmethod
-    def test_flexible_internal_allows_ignore() -> None:
-        """Test flexible internal allows ignore."""
+        @staticmethod
+        def test_mode_default_is_warn() -> None:
+            """Test mode default is warn."""
+            tm.that(c.ENFORCEMENT_MODE is c.EnforcementMode.WARN, truth=True)
 
-        class _M(m.FlexibleInternalModel):
-            name: Annotated[str, m.Field(description="d")] = "x"
+        @staticmethod
+        def test_enforcement_rules_loaded() -> None:
+            """Test enforcement rules loaded."""
+            tm.that(len(c.ENFORCEMENT_TAG_CATEGORY) > 0, truth=True)
+            tm.that(
+                all(
+                    cat in c.EnforcementCategory
+                    for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
+                ),
+                truth=True,
+            )
+            # Every runtime rule row carries its own problem/fix text.
+            tm.that(
+                set(c.ENFORCEMENT_TAG_CATEGORY) <= set(c.ENFORCEMENT_RULES_TEXT),
+                truth=True,
+            )
 
-        tm.that(messages(u.check(_M), fragment="extra"), truth=False)
+        @staticmethod
+        def test_canonical_flext_core_class_satisfies_prefix_contract() -> None:
+            """A correctly named core class raises no class-prefix violation."""
+            tm.that(
+                messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix"),
+                truth=False,
+            )
 
-    @staticmethod
-    def test_mode_default_is_warn() -> None:
-        """Test mode default is warn."""
-        tm.that(c.ENFORCEMENT_MODE is c.EnforcementMode.WARN, truth=True)
-
-    @staticmethod
-    def test_enforcement_rules_loaded() -> None:
-        """Test enforcement rules loaded."""
-        tm.that(len(c.ENFORCEMENT_TAG_CATEGORY) > 0, truth=True)
-        tm.that(
-            all(
-                cat in c.EnforcementCategory
-                for cat in c.ENFORCEMENT_TAG_CATEGORY.values()
-            ),
-            truth=True,
+        @staticmethod
+        @pytest.mark.parametrize(
+            ("module", "expect_prefix_violation"),
+            [("flext_core.synthetic_module", True), ("fence", False)],
         )
-        # Every runtime rule row carries its own problem/fix text.
-        tm.that(
-            set(c.ENFORCEMENT_TAG_CATEGORY) <= set(c.ENFORCEMENT_RULES_TEXT), truth=True
-        )
+        def test_class_prefix_enforced_only_for_knowable_projects(
+            module: str,
+            *,
+            expect_prefix_violation: bool,
+        ) -> None:
+            """Core demands its prefix; synthetic doc-fence modules stay silent.
 
-    @staticmethod
-    def test_canonical_flext_core_class_satisfies_prefix_contract() -> None:
-        """A correctly named ``flext_core`` class raises no class-prefix violation."""
-        tm.that(
-            messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix"),
-            truth=False,
-        )
+            A misnamed class inside the canonical ``flext_core`` src layer must be
+            reported as missing the derived ``Flext`` project prefix, while a class
+            whose module is a synthetic markdown code-fence (``fence``) is unknowable
+            and must never have a prefix invented for it.
+            """
+            misnamed: type = type("CreateUserService", (), {})
+            misnamed.__module__ = module
+            misnamed.__qualname__ = "CreateUserService"
 
-    @staticmethod
-    @pytest.mark.parametrize(
-        ("module", "expect_prefix_violation"),
-        [("flext_core.synthetic_module", True), ("fence", False)],
-    )
-    def test_class_prefix_enforced_only_for_knowable_projects(
-        module: str,
-        *,
-        expect_prefix_violation: bool,
-    ) -> None:
-        """``flext_core`` demands the ``Flext`` prefix; doc-fence modules stay silent.
+            hits = messages(u.check(misnamed), fragment="class_prefix")
 
-        A misnamed class inside the canonical ``flext_core`` src layer must be
-        reported as missing the derived ``Flext`` project prefix, while a class
-        whose module is a synthetic markdown code-fence (``fence``) is unknowable
-        and must never have a prefix invented for it.
-        """
-        misnamed: type = type("CreateUserService", (), {})
-        misnamed.__module__ = module
-        misnamed.__qualname__ = "CreateUserService"
-
-        hits = messages(u.check(misnamed), fragment="class_prefix")
-
-        tm.that(bool(hits) is expect_prefix_violation, truth=True)
-        if expect_prefix_violation:
-            tm.that(any('prefix "Flext"' in message for message in hits), truth=True)
+            tm.that(bool(hits) is expect_prefix_violation, truth=True)
+            if expect_prefix_violation:
+                tm.that(
+                    any('prefix "Flext"' in message for message in hits), truth=True
+                )

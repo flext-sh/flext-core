@@ -232,17 +232,9 @@ class TestsFlextCoreServiceOperations:
         def _status(self) -> p.Result[bool]:
             return r[bool].ok(self.ready)
 
-        def status(self) -> p.Result[bool]:
-            """Expose the operation for the missing-docstring scenario.
-
-            Returns:
-                The instance's readiness result.
-
-            """
-            return self._status()
-
-        # Discovery must see an undocumented method with its typed binding intact.
-        status.__doc__ = None
+        # The public operation is bound to a non-public function, which needs
+        # no docstring: discovery reaches ``status`` with ``__doc__`` unset.
+        status = _status
 
     class PlainReturnService(OperationService):
         """Operation returning a plain value."""
