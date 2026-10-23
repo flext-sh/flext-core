@@ -127,10 +127,11 @@ class TestsFlextCoreUtilitiesReliability:
         """Test retry catches retryable exception then succeeds."""
         attempts: list[int] = []
         transient = ValueError("boom")
+        expected_attempts = 2
 
         def op() -> p.Result[int]:
             attempts.append(len(attempts))
-            if len(attempts) < 2:
+            if len(attempts) < expected_attempts:
                 raise transient
             return r[int].ok(self.SUCCESS_VALUE)
 

@@ -21,11 +21,19 @@ import structlog.contextvars
 from flext_core import FlextContext, c, h, m, p, r, t, u
 from tests import tm
 
+pytestmark = pytest.mark.usefixtures("isolate_process_context")
+
+
+@pytest.fixture
+def isolate_process_context() -> Iterator[None]:
+    """Keep process-global contextvars from leaking across responsibility groups."""
+    FlextContext.clear_context()
+    yield
+    FlextContext.clear_context()
+
 
 class TestsFlextCoreContext:
     """Contract: scope store + metadata + process-global contextvar operations."""
-
-    pytestmark = pytest.mark.usefixtures("_isolate_process_context")
 
     class CorrelationHandler(h[str, str]):
         """Handler returning the identifier selected by public call scoping."""
@@ -33,14 +41,6 @@ class TestsFlextCoreContext:
         @override
         def handle(self, message: str) -> p.Result[str]:
             return r[str].ok(FlextContext.ensure_correlation_id())
-
-    @staticmethod
-    @pytest.fixture
-    def _isolate_process_context() -> Iterator[None]:
-        """Keep process-global contextvars from leaking across tests."""
-        FlextContext.clear_context()
-        yield
-        FlextContext.clear_context()
 
     # --- scope store -----------------------------------------------------
 
@@ -187,6 +187,10 @@ class TestsFlextCoreContext:
 
     # --- metadata --------------------------------------------------------
 
+
+class TestsFlextCoreContextMetadata:
+    """Metadata, correlation identifiers, and scoped operation names."""
+
     @staticmethod
     def test_apply_metadata_then_resolve_metadata_returns_stored_value() -> None:
         """Resolve the value previously applied to context metadata."""
@@ -329,6 +333,10 @@ class TestsFlextCoreContext:
             "service_name" in FlextContext.export_full_context(),
             eq=False,
         )
+
+
+class TestsFlextCoreContextIsolation:
+    """Context exports, nested scopes, and runtime isolation."""
 
     @staticmethod
     def test_export_full_context_includes_active_correlation_id() -> None:

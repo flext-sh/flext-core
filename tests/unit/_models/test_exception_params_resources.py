@@ -124,6 +124,10 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(data["resource_id"], eq="inv-99")
         tm.that(data["conflict_reason"], eq="duplicate_entry")
 
+
+class TestsFlextModelsResourceLimitParams:
+    """Rate-limit and circuit-breaker exception payload contracts."""
+
     @staticmethod
     def test_rate_limit_error_params_defaults() -> None:
         params = m.RateLimitErrorParams()

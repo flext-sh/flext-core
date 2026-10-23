@@ -59,7 +59,7 @@ def _install_package(root: Path, package: str, defaults: str) -> ModuleType:
     return importlib.import_module(f"{package}._config")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def isolate_import_state() -> Iterator[None]:
     """Drop synthetic packages from the import cache between tests."""
     original_path = list(sys.path)
@@ -72,6 +72,8 @@ def isolate_import_state() -> Iterator[None]:
 
 class TestPackagedConfigWithUserPreferences:
     """Packaged defaults plus optional user overlay, keyed by package namespace."""
+
+    pytestmark = pytest.mark.usefixtures("isolate_import_state")
 
     @staticmethod
     def _install_packaged(

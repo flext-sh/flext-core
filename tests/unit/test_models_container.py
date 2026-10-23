@@ -188,6 +188,10 @@ class TestsFlextCoreModelsContainer:
     # ConfigMap — serialization
     # ------------------------------------------------------------------ #
 
+
+class TestsFlextCoreContainerSerialization:
+    """Mapping serialization and ordered object-list contracts."""
+
     @staticmethod
     def test_config_map_model_dump_returns_plain_mapping() -> None:
         """Test config map model dump returns plain mapping."""

@@ -205,9 +205,9 @@ class TestsFlextCoreGuards:
         tm.that(subject is result, truth=True)
         tm.that(subject.value is handle, truth=True)
         tm.that(u.result_like(r[str].ok("value")), truth=True)
-        tm.that(u.result_like(False), truth=False)
+        tm.that(u.result_like(value=False), truth=False)
         tm.that(u.result_view(handle), truth=False)
-        tm.that(u.result_view(True), truth=False)
+        tm.that(u.result_view(value=True), truth=False)
 
     # ------------------------------------------------------------------
     # matches_type — string specs
@@ -379,6 +379,11 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # scalar / primitive
     # ------------------------------------------------------------------
+
+
+class TestsFlextCoreScalarAndCollectionGuards:
+    """Scalar classification and collection membership contracts."""
+
     @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),

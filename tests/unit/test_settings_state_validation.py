@@ -141,7 +141,8 @@ class TestsFlextCoreSettingsStateValidation:
             serialized: int = 3
 
             @m.field_serializer("serialized")
-            def serialize_value(self, value: int) -> str:
+            @staticmethod
+            def serialize_value(value: int) -> str:
                 return f"rendered:{value}"
 
         selected_required = "required-input"
@@ -258,7 +259,7 @@ class TestsFlextCoreSettingsStateValidation:
 
     @staticmethod
     @pytest.mark.parametrize("tuple_key", [False, True])
-    def test_invalid_mapping_keys_preserve_published_state(tuple_key: bool) -> None:
+    def test_invalid_mapping_keys_preserve_published_state(*, tuple_key: bool) -> None:
         """Frozen model keys, including tuple members, cannot bypass constraints."""
 
         class PortKey(m.BaseModel, frozen=True):

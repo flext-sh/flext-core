@@ -24,7 +24,13 @@ if TYPE_CHECKING:
 class TestsFlextCoreServiceOperations:
     """Public-contract tests for lazy operation discovery."""
 
-    class CommandService(s[bool]):
+    class OperationService(s[bool]):
+        """Instance-owned readiness and response formatting for real operations."""
+
+        ready: bool = True
+        response_prefix: str = ""
+
+    class CommandService(OperationService):
         """Service with one request operation and one input-less operation."""
 
         counter: t.Port[p.Tests.Counter] = m.Field(
@@ -52,7 +58,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[str]``.
 
             """
-            return r[str].ok(request.command_name)
+            return r[str].ok(self.response_prefix + request.command_name)
 
         def status(self) -> p.Result[bool]:
             """Report readiness.
@@ -61,11 +67,11 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(value=True)
+            return r[bool].ok(self.ready)
 
         @property
         def label(self) -> str:
-            """Provide a property, which is not an operation."""
+            """A property, which is not an operation."""
             return self.__class__.__name__
 
         @classmethod
@@ -108,7 +114,7 @@ class TestsFlextCoreServiceOperations:
             """
             return r[bool].ok(value=True)
 
-    class ReadSide(s[bool]):
+    class ReadSide(OperationService):
         """Sibling declaring ``run``."""
 
         def run(self) -> p.Result[bool]:
@@ -118,9 +124,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(value=True)
+            return r[bool].ok(self.ready)
 
-    class WriteSide(s[bool]):
+    class WriteSide(OperationService):
         """Sibling also declaring ``run``."""
 
         def run(self) -> p.Result[bool]:
@@ -130,7 +136,7 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(value=False)
+            return r[bool].ok(not self.ready)
 
     class CollidingService(ReadSide, WriteSide):
         """Composes two siblings that both declare ``run``."""
@@ -151,7 +157,7 @@ class TestsFlextCoreServiceOperations:
     class EmptyService(s[bool]):
         """Service without operations."""
 
-    class AsyncService(s[bool]):
+    class AsyncService(OperationService):
         """Operation declared async."""
 
         async def fetch(self) -> p.Result[bool]:
@@ -161,9 +167,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(value=True)
+            return r[bool].ok(self.ready)
 
-    class GenericService(s[bool]):
+    class GenericService(OperationService):
         """Operation declaring type parameters."""
 
         def echo[V: p.Base](self, request: V) -> p.Result[V]:
@@ -173,9 +179,11 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[V]``.
 
             """
+            if not self.ready:
+                return r[V].fail("Service is not ready")
             return r[V].ok(request)
 
-    class TwoRequestService(s[bool]):
+    class TwoRequestService(OperationService):
         """Operation taking two requests."""
 
         def join(
@@ -189,9 +197,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(left == right)
+            return r[bool].ok(self.ready and left == right)
 
-    class KeywordOnlyService(s[bool]):
+    class KeywordOnlyService(OperationService):
         """Operation with a keyword-only request."""
 
         def send(self, *, request: m.Tests.DispatchRequest) -> p.Result[bool]:
@@ -201,9 +209,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(bool(request))
+            return r[bool].ok(self.ready and bool(request))
 
-    class DefaultRequestService(s[bool]):
+    class DefaultRequestService(OperationService):
         """Operation whose request has a default."""
 
         def send(
@@ -216,19 +224,27 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(request is None)
+            return r[bool].ok(self.ready and request is None)
 
-    class UndocumentedService(s[bool]):
+    class UndocumentedService(OperationService):
         """Operation without a docstring."""
 
         def _status(self) -> p.Result[bool]:
-            return r[bool].ok(value=True)
+            return r[bool].ok(self.ready)
 
-        # The public operation is bound to a non-public function, which needs
-        # no docstring: discovery reaches ``status`` with ``__doc__`` unset.
-        status = _status
+        def status(self) -> p.Result[bool]:
+            """Expose the operation for the missing-docstring scenario.
 
-    class PlainReturnService(s[bool]):
+            Returns:
+                The instance's readiness result.
+
+            """
+            return self._status()
+
+        # Discovery must see an undocumented method with its typed binding intact.
+        status.__doc__ = None
+
+    class PlainReturnService(OperationService):
         """Operation returning a plain value."""
 
         def status(self) -> bool:
@@ -238,9 +254,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``bool``.
 
             """
-            return True
+            return self.ready
 
-    class UnionRequestService(s[bool]):
+    class UnionRequestService(OperationService):
         """Operation whose request annotation is not a dotted name."""
 
         def send(self, request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
@@ -250,9 +266,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(bool(request))
+            return r[bool].ok(self.ready and bool(request))
 
-    class ScalarRequestService(s[bool]):
+    class ScalarRequestService(OperationService):
         """Operation whose request is not a Pydantic model."""
 
         def lookup(self, request: str) -> p.Result[str]:
@@ -262,9 +278,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[str]``.
 
             """
-            return r[str].ok(request)
+            return r[str].ok(self.response_prefix + request)
 
-    class TypeCheckingOnlyService(s[bool]):
+    class TypeCheckingOnlyService(OperationService):
         """Operation whose request is imported only under TYPE_CHECKING."""
 
         def configure(self, request: FlextSettings) -> p.Result[bool]:
@@ -274,9 +290,9 @@ class TestsFlextCoreServiceOperations:
                 The resulting ``p.Result[bool]``.
 
             """
-            return r[bool].ok(bool(request))
+            return r[bool].ok(self.ready and bool(request))
 
-    class MissingMetadataService(s[bool]):
+    class MissingMetadataService(OperationService):
         """A Protocol request without its explicit schema association."""
 
         def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
@@ -286,9 +302,9 @@ class TestsFlextCoreServiceOperations:
                 The requested command name in a successful result.
 
             """
-            return r[str].ok(request.command_name)
+            return r[str].ok(self.response_prefix + request.command_name)
 
-    class AliasedRequestService(s[bool]):
+    class AliasedRequestService(OperationService):
         """A quoted t alias resolves to the same Protocol without eval."""
 
         @h.handler(command=m.Tests.DispatchRequest)
@@ -299,9 +315,9 @@ class TestsFlextCoreServiceOperations:
                 The requested command name in a successful result.
 
             """
-            return r[str].ok(request.command_name)
+            return r[str].ok(self.response_prefix + request.command_name)
 
-    class ConcreteRequestService(s[bool]):
+    class ConcreteRequestService(OperationService):
         """A model annotation cannot replace the public Protocol contract."""
 
         @h.handler(command=m.Tests.DispatchRequest)
@@ -312,9 +328,9 @@ class TestsFlextCoreServiceOperations:
                 The requested command name in a successful result.
 
             """
-            return r[str].ok(request.command_name)
+            return r[str].ok(self.response_prefix + request.command_name)
 
-    class MismatchedMetadataService(s[bool]):
+    class MismatchedMetadataService(OperationService):
         """The explicit schema must provide every consumed Protocol member."""
 
         @h.handler(command=m.Value)
@@ -326,9 +342,9 @@ class TestsFlextCoreServiceOperations:
 
             """
             # mismatched metadata path
-            return r[str].ok(request.command_name)
+            return r[str].ok(self.response_prefix + request.command_name)
 
-    class NonModelMetadataService(s[bool]):
+    class NonModelMetadataService(OperationService):
         """A metadata command class is not necessarily a request model."""
 
         @h.handler(command=str)
@@ -339,9 +355,9 @@ class TestsFlextCoreServiceOperations:
                 The requested command name in a successful result.
 
             """
-            return r[str].ok(request.command_name)
+            return r[str].ok(self.response_prefix + request.command_name)
 
-    class InputlessMetadataService(s[bool]):
+    class InputlessMetadataService(OperationService):
         """An input-less operation cannot consume declared command metadata."""
 
         @h.handler(command=m.Tests.DispatchRequest)
@@ -352,7 +368,7 @@ class TestsFlextCoreServiceOperations:
                 A successful readiness result.
 
             """
-            return r[str].ok("ready")
+            return r[str].ok(self.response_prefix + "ready")
 
     # --- Discovery -------------------------------------------------------
 
@@ -369,6 +385,7 @@ class TestsFlextCoreServiceOperations:
         )
         tm.ok(operations[0].handler is self.CommandService.dispatch)
 
+    @staticmethod
     @pytest.mark.parametrize(
         ("service_type", "defect"),
         [
@@ -380,7 +397,6 @@ class TestsFlextCoreServiceOperations:
         ],
     )
     def test_request_metadata_has_one_explicit_contract(
-        self,
         service_type: type[p.Service[bool]],
         defect: str,
     ) -> None:

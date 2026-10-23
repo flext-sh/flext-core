@@ -36,9 +36,10 @@ class TestsFlextCoreResultExceptionTraverseValidation(
     ) -> None:
         # Arrange
         """Test traverse fail fast carries originating failure exception."""
+        rejected = 2
 
         def process(value: int) -> p.Result[int]:
-            if value == 2:
+            if value == rejected:
                 return r[int].fail("boom", exception=raised)
             return r[int].ok(value * 2)
 
@@ -54,9 +55,10 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         # Arrange
         """Test traverse fail fast wraps callback exception."""
         exc = RuntimeError("traverse callback failed")
+        rejected = 2
 
         def process(value: int) -> p.Result[int]:
-            if value == 2:
+            if value == rejected:
                 raise exc
             return r[int].ok(value * 2)
 
@@ -88,11 +90,12 @@ class TestsFlextCoreResultExceptionTraverseValidation(
     def test_traverse_accumulate_reports_every_failure() -> None:
         # Arrange
         """Test traverse accumulate reports every failure."""
+        rejected = 3
 
         def process(value: int) -> p.Result[int]:
             if value == 1:
                 return r[int].fail("error 1", exception=ValueError("error 1"))
-            if value == 3:
+            if value == rejected:
                 return r[int].fail("error 2", exception=TypeError("error 2"))
             return r[int].ok(value * 2)
 

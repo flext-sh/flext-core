@@ -173,7 +173,8 @@ class TestsFlextResultTransforms:
         """Filter never runs its predicate on a failure and preserves the error."""
         result: p.Result[int] = r[int].fail("error")
 
-        filtered = result.filter(lambda x: x > 5)
+        threshold = 5
+        filtered = result.filter(lambda x: x > threshold)
 
         tm.fail(filtered)
         tm.that(filtered.error, eq="error")
@@ -223,6 +224,10 @@ class TestsFlextResultTransforms:
         """unwrap_or yields the success value, or the fallback on failure."""
         tm.that(result.unwrap_or(fallback), eq=expected)
 
+
+class TestsFlextResultSequenceTransforms:
+    """Sequential flow and traversal contracts."""
+
     @staticmethod
     def test_flow_through_chains_multiple_operations() -> None:
         """flow_through pipes a value through successive fallible steps."""
@@ -267,9 +272,10 @@ class TestsFlextResultTransforms:
     @staticmethod
     def test_traverse_fails_fast_on_first_failure() -> None:
         """Traverse stops at the first item that maps to a failure."""
+        rejected = 2
         result = r.traverse(
             [1, 2, 3],
-            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
+            lambda x: r[int].fail("error") if x == rejected else r[int].ok(x),
         )
 
         _ = u.Tests.assert_failure(result)

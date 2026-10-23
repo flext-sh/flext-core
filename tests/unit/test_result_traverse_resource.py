@@ -43,9 +43,10 @@ class TestsFlextResultTraverseResource:
     def test_traverse_fail_fast_true() -> None:
         """Test traverse with fail_fast=True (default) stops on first failure."""
         items = [1, 2, 3]
+        rejected = 2
         result = r.traverse(
             items,
-            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
+            lambda x: r[int].fail("error") if x == rejected else r[int].ok(x),
             fail_fast=True,
         )
         _ = u.Tests.assert_failure(result)

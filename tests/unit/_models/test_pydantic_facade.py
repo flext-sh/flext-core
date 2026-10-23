@@ -88,7 +88,7 @@ class TestsFlextCorePydanticDeclarations:
 
     @staticmethod
     @pytest.mark.parametrize("json_input", [False, True])
-    def test_protocol_field_boundary(json_input: bool) -> None:
+    def test_protocol_field_boundary(*, json_input: bool) -> None:
         box = (
             TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate_json(
                 '{"item":{"rawName":" alice ","visits":2}}',

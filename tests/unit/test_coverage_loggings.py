@@ -24,8 +24,10 @@ if TYPE_CHECKING:
 class TestsFlextCoverageLoggings:
     """Tests for ``FlextCoverageLoggings``."""
 
+    pytestmark = pytest.mark.usefixtures("restore_logging")
+
     @staticmethod
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def restore_logging() -> Generator[None]:
         """Select an observable severity without assuming the configured default."""
         original_settings, original_options = u.logging_settings(), u.logging_options()

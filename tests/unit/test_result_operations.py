@@ -191,7 +191,8 @@ class TestsFlextResultOperations:
         """Filter keeps a success only when the predicate is satisfied."""
         result: p.Result[int] = r[int].ok(value)
 
-        filtered = result.filter(lambda x: x > 5)
+        threshold = 5
+        filtered = result.filter(lambda x: x > threshold)
 
         tm.that(filtered.success is expected_success, truth=True)
         if expected_success:

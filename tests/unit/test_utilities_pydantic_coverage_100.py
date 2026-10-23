@@ -321,7 +321,7 @@ class TestsFlextUtilitiesPydantic:
             doubled: int = value * 2
             return doubled
 
-        tm.that(double_positive(4) == 8, truth=True)
+        tm.that(double_positive(4), eq=8)
         with pytest.raises(m.ValidationError):
             double_positive(-1)
 

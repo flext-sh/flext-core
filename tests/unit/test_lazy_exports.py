@@ -46,33 +46,33 @@ def _install_alpha(
     return module_globals
 
 
+@pytest.fixture
+def registered_alpha_module() -> Iterator[tuple[str, type]]:
+    """Register a real child module exposing ``Alpha`` and return its name.
+
+    Yields:
+        Each ``tuple[str, type]``.
+
+    """
+    lazy.reset()
+    module_name = "test_lazy_pkg.alpha"
+    child = ModuleType(module_name)
+
+    class Alpha:
+        pass
+
+    child.__dict__["Alpha"] = Alpha
+    sys.modules["test_lazy_pkg"] = ModuleType("test_lazy_pkg")
+    sys.modules[module_name] = child
+    try:
+        yield module_name, Alpha
+    finally:
+        sys.modules.pop("test_lazy_pkg", None)
+        sys.modules.pop(module_name, None)
+
+
 class TestsFlextCoreLazyExports:
     """Behavioral contract: what the lazy export surface promises callers."""
-
-    @staticmethod
-    @pytest.fixture
-    def registered_alpha_module() -> Iterator[tuple[str, type]]:
-        """Register a real child module exposing ``Alpha`` and return its name.
-
-        Yields:
-            Each ``tuple[str, type]``.
-
-        """
-        lazy.reset()
-        module_name = "test_lazy_pkg.alpha"
-        child = ModuleType(module_name)
-
-        class Alpha:
-            pass
-
-        child.__dict__["Alpha"] = Alpha
-        sys.modules["test_lazy_pkg"] = ModuleType("test_lazy_pkg")
-        sys.modules[module_name] = child
-        try:
-            yield module_name, Alpha
-        finally:
-            sys.modules.pop("test_lazy_pkg", None)
-            sys.modules.pop(module_name, None)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -443,6 +443,10 @@ class TestsFlextCoreLazyExports:
         # Assert
         tm.that(resolved, where=lambda value: value is alpha_cls)
         tm.that(module_globals["Alpha"], where=lambda value: value is alpha_cls)
+
+
+class TestsFlextCoreLazyExportCaching:
+    """In-progress import rebinding and completed export caching."""
 
     @staticmethod
     @pytest.fixture

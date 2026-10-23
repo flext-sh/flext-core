@@ -68,6 +68,7 @@ class TestsFlextCoreLazyExportsMerge:
     def test_fresh_normalizer_validates_the_public_lazy_entry_shape(
         tmp_path: Path,
         raw_literal: str,
+        *,
         accepted: bool,
     ) -> None:
         """The entry contract accepts strings/pairs and rejects malformed maps."""

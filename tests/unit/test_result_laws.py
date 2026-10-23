@@ -110,12 +110,16 @@ class TestsFlextCoreResultLaws:
     @staticmethod
     def test_filter_keeps_success_when_predicate_passes() -> None:
         """Test filter keeps success when predicate passes."""
-        tm.that(r[int].ok(20).filter(lambda v: v > 10).success is True, truth=True)
+        threshold = 10
+        tm.that(
+            r[int].ok(20).filter(lambda v: v > threshold).success is True, truth=True
+        )
 
     @staticmethod
     def test_filter_converts_success_to_failure_when_predicate_fails() -> None:
         """Test filter converts success to failure when predicate fails."""
-        filtered = r[int].ok(5).filter(lambda v: v > 10)
+        threshold = 10
+        filtered = r[int].ok(5).filter(lambda v: v > threshold)
         tm.that(filtered.failure is True, truth=True)
 
     @staticmethod
@@ -166,6 +170,10 @@ class TestsFlextCoreResultLaws:
     # ------------------------------------------------------------------ #
     # tap side-effect contract (returns the same result)                 #
     # ------------------------------------------------------------------ #
+
+
+class TestsFlextCoreResultAlgebra:
+    """Observation and functor/monad laws over public results."""
 
     @staticmethod
     def test_tap_runs_effect_on_success_and_returns_result() -> None:

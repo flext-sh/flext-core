@@ -179,6 +179,10 @@ class TestsFlextCoreTypingsContainers:
 
     # ---- m.ConfigMap: shares the mapping contract --------------------------
 
+
+class TestsFlextCoreTypedCollectionAliases:
+    """Config maps, object lists, and scalar/tuple alias contracts."""
+
     @staticmethod
     def test_configmap_getitem_returns_settings() -> None:
         """m.ConfigMap exposes configuration values by key."""

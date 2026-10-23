@@ -107,6 +107,10 @@ class TestsFlextModelsExceptionParamsCore:
         tm.that(data["config_key"], eq="api_key")
         tm.that(data["config_source"], eq="vault")
 
+
+class TestsFlextModelsConnectionAndAuthenticationParams:
+    """Connection, timeout, and authentication exception payload contracts."""
+
     @staticmethod
     def test_connection_error_params_defaults() -> None:
         params = m.ConnectionErrorParams()

@@ -301,6 +301,10 @@ class TestsFlextEnforcementModels:
 
         tm.that(messages(u.check(_M), fragment="read-only field contract"), truth=False)
 
+
+class TestsFlextEnforcementDeclarationPolicy:
+    """Field declaration, model configuration, and class-prefix policy."""
+
     @staticmethod
     def test_sequence_list_factory_detected() -> None:
         """Test sequence list factory detected."""

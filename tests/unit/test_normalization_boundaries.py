@@ -225,6 +225,10 @@ class TestsFlextCoreNormalizationBoundaries:
         scope = clean_container.scope(registration=spec)
         tm.fail(scope.resolve("invalid-payload"))
 
+
+class TestsFlextCoreRuntimeNormalization:
+    """Timestamp, pagination, composition, and runtime policy boundaries."""
+
     @staticmethod
     def test_timestamp_validator_preserves_aware_timezone() -> None:
         """Naive timestamps gain UTC while aware timestamps retain identity."""

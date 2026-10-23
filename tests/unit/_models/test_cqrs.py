@@ -118,6 +118,11 @@ class TestsFlextCoreCqrs:
     # ------------------------------------------------------------------ #
     # Query
     # ------------------------------------------------------------------ #
+
+
+class TestsFlextCoreQuery:
+    """Query identity, filters, and pagination contracts."""
+
     @staticmethod
     def test_query_message_type_discriminator_is_query() -> None:
         # Act / Assert

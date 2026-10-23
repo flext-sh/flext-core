@@ -35,8 +35,10 @@ class TestsFlextLoggings:
     Covers create, bind, log, track, and strict returns.
     """
 
+    pytestmark = pytest.mark.usefixtures("restore_logging")
+
     @staticmethod
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def restore_logging() -> Generator[None]:
         """Exercise all standard severities, then restore the captured policy."""
         original_settings, original_options = u.logging_settings(), u.logging_options()
