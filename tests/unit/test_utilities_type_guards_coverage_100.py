@@ -8,12 +8,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from tests import m, p, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCoreUtilitiesTypeGuards:
@@ -63,7 +60,7 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(u.matches_type(payload["tags"], "list_non_empty"), truth=True)
         tm.that(u.matches_type(payload["attempt_count"], (int, float)), truth=True)
         tm.that(u.matches_type(payload["command_name"], str), truth=True)
-        tm.that(u.string_non_empty(payload["correlation_id"]), truth=True)
+        tm.that(u.string_non_empty(payload[c.ContextKey.CORRELATION_ID]), truth=True)
         tm.that(u.chk(payload["command_name"], command_spec), truth=True)
         tm.that(u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0]), truth=True)
         tm.that(

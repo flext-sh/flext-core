@@ -131,6 +131,7 @@ class TestsFlextLoggingStages:
         consumer = (
             "import contextlib, io, logging, sys\n"
             "from flext_core import m, u\n"
+            "from flext_tests import tm\n"
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=True, log_level=logging.INFO))\n"
             "logger = u.create_module_logger('tests.logging.native.failure')\n"
@@ -145,11 +146,11 @@ class TestsFlextLoggingStages:
             "        logger.info('second failed event')\n"
             "    except ValueError as second:\n"
             "        if second is not first:\n"
-            "            raise AssertionError('native failure identity changed')\n"
+            "            tm.reject('native failure identity changed')\n"
             "        sys.stderr = previous_stderr\n"
             "        raise first\n"
-            "    raise AssertionError('second event did not fail')\n"
-            "raise AssertionError('closed native stream did not fail')\n"
+            "    tm.reject('second event did not fail')\n"
+            "tm.reject('closed native stream did not fail')\n"
         )
         executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
         tm.fail(u.Cli.process_succeeded(executed.outcome))
@@ -477,7 +478,7 @@ class TestsFlextLoggingNativeEmission:
         tm.ok(result.success)
         tm.that(registrations, eq=["native"])
         tm.ok("emitted native event" in stream.getvalue())
-        tm.ok("operation" in stream.getvalue())
+        tm.ok(c.ContextScope.OPERATION in stream.getvalue())
         tm.ok("native" in stream.getvalue())
 
     @staticmethod
@@ -507,7 +508,10 @@ class TestsFlextLoggingNativeEmission:
         record = observed[0]
         rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(structured.getvalue())))
         tm.that(record.message, eq="delivered once")
-        tm.that(rendered["correlation_id"], eq=record.context["correlation_id"])
+        tm.that(
+            rendered[c.ContextKey.CORRELATION_ID],
+            eq=record.context[c.ContextKey.CORRELATION_ID],
+        )
         sanitized = u.Cli.json_as_mapping(record.context["payload"])
         tm.that(rendered["payload"], eq=sanitized)
         tm.that(sanitized["count"], eq=2)
@@ -637,7 +641,7 @@ class TestsFlextLoggingNativeEmission:
         tm.that(len(observed), eq=1)
         tm.that(old.getvalue(), lacks="after replacement")
         rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(current.getvalue())))
-        tm.that(rendered["operation"], eq="bound")
+        tm.that(rendered[c.ContextScope.OPERATION], eq="bound")
         tm.that(rendered["event"], eq="after replacement")
 
     @staticmethod

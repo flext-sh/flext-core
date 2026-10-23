@@ -22,7 +22,7 @@ class FlextHandlersPart05[MessageT_contra, ResultT](
     def _run_pipeline(
         self,
         message: MessageT_contra,
-        operation: str = c.DEFAULT_HANDLER_MODE,
+        operation: str = c.HandlerMode.COMMAND,
     ) -> p.Result[ResultT]:
         """Run the handler execution pipeline (internal).
 
@@ -44,7 +44,7 @@ class FlextHandlersPart05[MessageT_contra, ResultT](
             self._config_model.handler_mode,
         )
         valid_operations = {
-            c.DEFAULT_HANDLER_MODE,
+            c.HandlerMode.COMMAND,
             c.HandlerMode.QUERY,
             c.HandlerType.EVENT.value,
         }
@@ -84,7 +84,7 @@ class FlextHandlersPart05[MessageT_contra, ResultT](
     def dispatch_message(
         self,
         message: MessageT_contra,
-        operation: str = c.DEFAULT_HANDLER_MODE,
+        operation: str = c.HandlerMode.COMMAND,
     ) -> p.Result[ResultT]:
         """Dispatch message through the handler execution pipeline.
 

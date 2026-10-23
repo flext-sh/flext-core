@@ -7,12 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
-from tests import c, e
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, e, t
 
 type ErrorFactory = Callable[[], e.BaseError]
 
@@ -58,7 +54,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
         ),
         c.ErrorDomain.TIMEOUT.value,
         c.ErrorCode.TIMEOUT_ERROR,
-        {"timeout_seconds": 30, "operation": "dispatch"},
+        {"timeout_seconds": 30, c.ContextScope.OPERATION: "dispatch"},
     ),
     (
         "authentication",
@@ -69,7 +65,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
         ),
         c.ErrorDomain.AUTH.value,
         c.ErrorCode.AUTHENTICATION_ERROR,
-        {"auth_method": "token", "user_id": "u-1"},
+        {"auth_method": "token", c.ContextKey.USER_ID: "u-1"},
     ),
     (
         "authorization",
@@ -81,7 +77,7 @@ STRUCTURED_ERRORS: t.SequenceOf[
         ),
         c.ErrorDomain.AUTH.value,
         c.ErrorCode.AUTHORIZATION_ERROR,
-        {"user_id": "u-1", "resource": "admin.panel", "permission": "write"},
+        {c.ContextKey.USER_ID: "u-1", "resource": "admin.panel", "permission": "write"},
     ),
     (
         "not_found",
@@ -116,7 +112,11 @@ STRUCTURED_ERRORS: t.SequenceOf[
         ),
         c.ErrorDomain.NETWORK.value,
         c.ErrorCode.EXTERNAL_SERVICE_ERROR,
-        {"service_name": "payments", "failure_count": 5, "reset_timeout": 60},
+        {
+            c.ContextKey.SERVICE_NAME: "payments",
+            "failure_count": 5,
+            "reset_timeout": 60,
+        },
     ),
     (
         "type_error",

@@ -30,7 +30,7 @@ class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
         """Exercise fluent registration and configuration APIs."""
         self.section("fluent_and_settings")
         fluent = {
-            "service_name": f"svc.{self.rand_str(6)}",
+            c.ContextKey.SERVICE_NAME: f"svc.{self.rand_str(6)}",
             "factory_name": f"svc.{self.rand_str(6)}",
             "resource_name": f"svc.{self.rand_str(6)}",
             "service_value": self.rand_str(10),
@@ -54,7 +54,7 @@ class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
         """
         max_factories = self.rand_int(1, 1000)
         with_service_result = container.bind(
-            fluent["service_name"],
+            fluent[c.ContextKey.SERVICE_NAME],
             fluent["service_value"],
         )
         with_factory_result = container.factory(
@@ -110,8 +110,10 @@ class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
         self.audit_check(
             "with_service.get.value_matches",
             (
-                container.resolve(fluent["service_name"], type_cls=str).value
-                if container.resolve(fluent["service_name"], type_cls=str).success
+                container.resolve(fluent[c.ContextKey.SERVICE_NAME], type_cls=str).value
+                if container.resolve(
+                    fluent[c.ContextKey.SERVICE_NAME], type_cls=str
+                ).success
                 else ""
             )
             == fluent["service_value"],

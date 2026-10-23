@@ -6,15 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 from flext_core import FlextContainer
-from tests import c, e, m, p, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, e, m, p, t, tm, u
 
 
 class TestsFlextCoreContainerRegistration:

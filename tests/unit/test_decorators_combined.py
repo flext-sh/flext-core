@@ -7,15 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import d, e, r, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import d, e, p, r, tm
 
 
 class TestsFlextCoreDecoratorsCombined:

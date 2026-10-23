@@ -14,7 +14,7 @@ from tests._utilities import TestsFlextUtilitiesServiceFactoriesMixin
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests import t
+from tests import t
 
 
 class TestsFlextUtilitiesCaseServiceFactoriesMixin(

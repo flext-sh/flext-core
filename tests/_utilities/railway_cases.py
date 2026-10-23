@@ -6,12 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from tests import c
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, t
 
 
 class TestsFlextUtilitiesRailwayCasesMixin:

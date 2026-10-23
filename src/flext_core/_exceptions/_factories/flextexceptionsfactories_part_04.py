@@ -31,7 +31,7 @@ class FlextExceptionsFactoriesPart04(
 
         Usage::
 
-            return e.fail_conflict("user", user_id, "already active")
+            return e.fail_conflict(c.ContextScope.USER, user_id, "already active")
 
         Returns:
             R[T].fail with a canonical conflict message.

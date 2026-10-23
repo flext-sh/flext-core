@@ -11,14 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import r, t, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import p, r, t, tm
 
 
 class TestsFlextCoreResultCallablesFold:

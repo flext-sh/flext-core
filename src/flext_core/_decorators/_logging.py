@@ -184,7 +184,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 "success": False,
                 "error": str(exc),
                 "error_type": exc.__class__.__name__,
-                "operation": spec.op_name,
+                c.ContextScope.OPERATION: spec.op_name,
             }
             if spec.correlation_id is not None:
                 exc_kw[c.ContextKey.CORRELATION_ID] = spec.correlation_id

@@ -13,15 +13,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_core import FlextContainer
-from tests import m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import m, p, t, tm, u
 
 
 class TestsFlextCoreContainer:

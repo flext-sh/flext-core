@@ -20,7 +20,7 @@ from tests import r, tm, u
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests import p
+from tests import p
 
 
 def _floor_divide(dividend: int, divisor: int) -> int:
@@ -78,8 +78,7 @@ class TestsFlextResultTransforms:
 
         unchanged = success.map_error(lambda e: f"PREFIX: {e}")
 
-        tm.ok(unchanged)
-        tm.that(unchanged.value, eq="value")
+        tm.ok(unchanged, eq="value")
         tm.that(unchanged is success, truth=True)
 
     @staticmethod
@@ -163,8 +162,7 @@ class TestsFlextResultTransforms:
         filtered = result.filter(lambda x: x > predicate_ceiling)
 
         if expect_success:
-            tm.ok(filtered)
-            tm.that(filtered.value, eq=value)
+            tm.ok(filtered, eq=value)
         else:
             tm.fail(filtered)
 
@@ -184,8 +182,7 @@ class TestsFlextResultTransforms:
         """Map applies the function to a success value."""
         result = r[int].ok(3).map(lambda x: x + 1)
 
-        tm.ok(result)
-        tm.that(result.value, eq=4)
+        tm.ok(result, eq=4)
 
     @staticmethod
     def test_map_is_noop_on_failure() -> None:
@@ -200,8 +197,7 @@ class TestsFlextResultTransforms:
         """flat_map chains a result-returning function on a success."""
         result = r[int].ok(3).flat_map(lambda x: r[int].ok(x * 2))
 
-        tm.ok(result)
-        tm.that(result.value, eq=6)
+        tm.ok(result, eq=6)
 
     @staticmethod
     def test_flat_map_short_circuits_on_failure() -> None:
@@ -240,8 +236,7 @@ class TestsFlextResultSequenceTransforms:
 
         final = r[int].ok(5).flow_through(add_one, multiply_two)
 
-        tm.ok(final)
-        tm.that(final.value, eq=12)
+        tm.ok(final, eq=12)
 
     @staticmethod
     def test_flow_through_stops_on_first_failure() -> None:

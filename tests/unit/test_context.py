@@ -18,8 +18,8 @@ from typing import override
 import pytest
 import structlog.contextvars
 
-from flext_core import FlextContext, c, h, m, p, r, t, u
-from tests import tm
+from flext_core import FlextContext, h, m, p, t, u
+from tests import c, r, tm
 
 pytestmark = pytest.mark.usefixtures("isolate_process_context")
 
@@ -182,8 +182,8 @@ class TestsFlextCoreContext:
             user_id="user-1",
         )
 
-        tm.ok(ctx.get("operation_id"), eq="op-1")
-        tm.ok(ctx.get("user_id"), eq="user-1")
+        tm.ok(ctx.get(c.ContextKey.OPERATION_ID), eq="op-1")
+        tm.ok(ctx.get(c.ContextKey.USER_ID), eq="user-1")
 
     # --- metadata --------------------------------------------------------
 
@@ -327,10 +327,10 @@ class TestsFlextCoreContextMetadata:
             version="1.2.0",
         ):
             exported = FlextContext.export_full_context()
-            tm.that(exported["service_name"], eq="billing")
-            tm.that(exported["service_version"], eq="1.2.0")
+            tm.that(exported[c.ContextKey.SERVICE_NAME], eq="billing")
+            tm.that(exported[c.ContextKey.SERVICE_VERSION], eq="1.2.0")
         tm.that(
-            "service_name" in FlextContext.export_full_context(),
+            c.ContextKey.SERVICE_NAME in FlextContext.export_full_context(),
             eq=False,
         )
 
@@ -343,7 +343,7 @@ class TestsFlextCoreContextIsolation:
         """Include the active correlation identifier in full export."""
         FlextContext.apply_correlation_id("corr-xyz")
         exported = FlextContext.export_full_context()
-        tm.that(exported["correlation_id"], eq="corr-xyz")
+        tm.that(exported[c.ContextKey.CORRELATION_ID], eq="corr-xyz")
 
     @staticmethod
     def test_export_full_context_is_empty_after_clear() -> None:

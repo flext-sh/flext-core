@@ -61,17 +61,17 @@ class TestsFlextCoreExceptionParamsOperations:
     def test_operation_error_params_serialize_field_values() -> None:
         params = m.OperationErrorParams(operation="save_state", reason="disk_full")
         data = params.model_dump()
-        tm.that(data["operation"], eq="save_state")
+        tm.that(data[c.ContextScope.OPERATION], eq="save_state")
         tm.that(data["reason"], eq="disk_full")
 
     @staticmethod
     def test_attribute_access_error_params_preserve_mapping_context() -> None:
         params = m.AttributeAccessErrorParams(
             attribute_name="token",
-            attribute_context={"owner": "session"},
+            attribute_context={"owner": c.ContextScope.SESSION},
         )
         tm.that(params.attribute_name, eq="token")
-        tm.that(params.attribute_context, eq={"owner": "session"})
+        tm.that(params.attribute_context, eq={"owner": c.ContextScope.SESSION})
 
     @staticmethod
     @pytest.mark.parametrize(

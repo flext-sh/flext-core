@@ -11,14 +11,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final, cast
+from typing import Final, cast
 
 import pytest
 
-from tests import c, e, m, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, e, m, p, tm
 
 
 class TestsFlextCoreExceptions:
@@ -94,10 +91,12 @@ class TestsFlextCoreExceptions:
         """
         message = "not found"
         with pytest.raises(e.BaseError) as excinfo:
-            raise e.NotFoundError(message, resource_type="user", resource_id="u-1")
+            raise e.NotFoundError(
+                message, resource_type=c.ContextScope.USER, resource_id="u-1"
+            )
         raised = cast("e.NotFoundError", excinfo.value)
         tm.that(raised, is_=e.NotFoundError)
-        tm.that(raised.resource_type, eq="user")
+        tm.that(raised.resource_type, eq=c.ContextScope.USER)
         tm.that(raised.resource_id, eq="u-1")
 
     @staticmethod
@@ -171,13 +170,16 @@ class TestsFlextCoreExceptions:
     @staticmethod
     def test_fail_conflict_returns_structured_failure() -> None:
         """Test fail conflict returns structured failure."""
-        result: p.Result[bool] = e.fail_conflict("user", "u-1", "already active")
+        result: p.Result[bool] = e.fail_conflict(
+            c.ContextScope.USER, "u-1", "already active"
+        )
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
         tm.that(result.error_code, eq=c.ErrorCode.ALREADY_EXISTS)
         tm.that(result.error_data, none=False)
         tm.that(
-            cast("dict[str, object]", result.error_data)["resource_type"], eq="user"
+            cast("dict[str, object]", result.error_data)["resource_type"],
+            eq=c.ContextScope.USER,
         )
         tm.that(cast("dict[str, object]", result.error_data)["resource_id"], eq="u-1")
 
@@ -191,7 +193,10 @@ class TestsFlextCoreExceptions:
         tm.that(result.error_code, eq=c.ErrorCode.AUTHENTICATION_ERROR)
         tm.that(result.error_data, none=False)
         tm.that(cast("dict[str, object]", result.error_data)["auth_method"], eq="ldap")
-        tm.that(cast("dict[str, object]", result.error_data)["user_id"], eq="user1")
+        tm.that(
+            cast("dict[str, object]", result.error_data)[c.ContextKey.USER_ID],
+            eq="user1",
+        )
 
     @staticmethod
     def test_fail_authz_returns_structured_failure() -> None:
@@ -201,7 +206,9 @@ class TestsFlextCoreExceptions:
         tm.that(result.error, none=False)
         tm.that(result.error_code, eq=c.ErrorCode.AUTHORIZATION_ERROR)
         tm.that(result.error_data, none=False)
-        tm.that(cast("dict[str, object]", result.error_data)["user_id"], eq="u-1")
+        tm.that(
+            cast("dict[str, object]", result.error_data)[c.ContextKey.USER_ID], eq="u-1"
+        )
         tm.that(
             cast("dict[str, object]", result.error_data)["resource"], eq="admin.panel"
         )
@@ -230,7 +237,8 @@ class TestsFlextCoreExceptions:
         tm.that(result.error_code, eq=c.ErrorCode.TIMEOUT_ERROR)
         tm.that(result.error_data, none=False)
         tm.that(
-            cast("dict[str, object]", result.error_data)["operation"], eq="fetch_users"
+            cast("dict[str, object]", result.error_data)[c.ContextScope.OPERATION],
+            eq="fetch_users",
         )
         tm.that(
             cast("dict[str, object]", result.error_data)["timeout_seconds"],

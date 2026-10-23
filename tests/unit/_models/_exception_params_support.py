@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import m
+from tests import c, m
 
 
 class TestsFlextModelsExceptionParamsSupport:
@@ -40,6 +40,6 @@ class TestsFlextModelsExceptionParamsSupport:
         "rate-limit",
         "circuit-breaker",
         "type-error",
-        "operation",
+        c.ContextScope.OPERATION,
         "attribute-access",
     )

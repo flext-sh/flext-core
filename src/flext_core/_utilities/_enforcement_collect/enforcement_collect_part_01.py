@@ -55,7 +55,7 @@ class FlextUtilitiesEnforcementCollectPart01(FlextUtilitiesEnforcementEmit):
         if not top:
             return None
         for parent in source.parents:
-            if not (parent / "pyproject.toml").is_file():
+            if not (parent / c.PYPROJECT_FILENAME).is_file():
                 continue
             try:
                 relative = source.relative_to(parent)

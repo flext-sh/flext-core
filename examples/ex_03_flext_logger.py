@@ -11,7 +11,7 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from typing import override
 
-from examples import ExamplesFlextShared, p, u
+from examples import ExamplesFlextShared, c, p, u
 
 
 def _raise_value_error(message: str) -> None:
@@ -93,10 +93,10 @@ class ExamplesFlextLogger(ExamplesFlextShared):
             "bind_global_context.ok",
             self._ok(u.bind_global_context(application="examples.ex_03")),
         )
-        self.audit_check("global.info.ok", self._ok(logger.info("global")))
+        self.audit_check("global.info.ok", self._ok(logger.info(c.ContextScope.GLOBAL)))
         self.audit_check(
             "unbind_global_context.ok",
-            self._ok(u.unbind_global_context("application")),
+            self._ok(u.unbind_global_context(c.ContextScope.APPLICATION)),
         )
         self.audit_check("clear_global_context.ok", self._ok(u.clear_global_context()))
 
@@ -174,15 +174,15 @@ class ExamplesFlextLogger(ExamplesFlextShared):
         logger = u.fetch_logger("examples.ex_03.scoped")
         self.audit_check(
             "bind_context.application.ok",
-            self._ok(u.bind_context("application", application="app")),
+            self._ok(u.bind_context(c.ContextScope.APPLICATION, application="app")),
         )
         self.audit_check(
             "bind_context.request.ok",
-            self._ok(u.bind_context("request", request_id="req-1")),
+            self._ok(u.bind_context(c.ContextScope.REQUEST, request_id="req-1")),
         )
         self.audit_check(
             "bind_context.operation.ok",
-            self._ok(u.bind_context("operation", operation="demo")),
+            self._ok(u.bind_context(c.ContextScope.OPERATION, operation="demo")),
         )
         self.audit_check(
             "bind_context.tenant.ok",
@@ -191,12 +191,14 @@ class ExamplesFlextLogger(ExamplesFlextShared):
         self.audit_check("scoped_context.info.ok", self._ok(logger.info("scoped")))
         self.audit_check(
             "clear_scope.application.ok",
-            self._ok(u.clear_scope("application")),
+            self._ok(u.clear_scope(c.ContextScope.APPLICATION)),
         )
-        self.audit_check("clear_scope.request.ok", self._ok(u.clear_scope("request")))
+        self.audit_check(
+            "clear_scope.request.ok", self._ok(u.clear_scope(c.ContextScope.REQUEST))
+        )
         self.audit_check(
             "clear_scope.operation.ok",
-            self._ok(u.clear_scope("operation")),
+            self._ok(u.clear_scope(c.ContextScope.OPERATION)),
         )
 
     @override

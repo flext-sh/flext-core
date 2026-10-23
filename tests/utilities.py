@@ -82,7 +82,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             def dispatch_message(
                 self,
                 message: t.JsonPayload,
-                operation: str = c.DEFAULT_HANDLER_MODE,
+                operation: str = c.HandlerMode.COMMAND,
             ) -> p.Result[t.JsonPayload]:
                 handler_mode = getattr(
                     self._config_model.handler_mode,
@@ -90,7 +90,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                     self._config_model.handler_mode,
                 )
                 valid_operations = {
-                    c.DEFAULT_HANDLER_MODE,
+                    c.HandlerMode.COMMAND,
                     c.HandlerMode.QUERY,
                     c.HandlerType.EVENT.value,
                 }
@@ -196,12 +196,12 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         HANDLER_TYPES: ClassVar[Sequence[HandlerTypeScenario]] = [
             HandlerTypeScenario(
-                name="command",
+                name=c.HandlerMode.COMMAND,
                 handler_type=c.HandlerType.COMMAND,
                 handler_mode=c.HandlerType.COMMAND,
             ),
             HandlerTypeScenario(
-                name="query",
+                name=c.HandlerMode.QUERY,
                 handler_type=c.HandlerType.QUERY,
                 handler_mode=c.HandlerType.QUERY,
             ),

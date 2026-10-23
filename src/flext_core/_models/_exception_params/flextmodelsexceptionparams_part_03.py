@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import t
+from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._exception_params import (
     flextmodelsexceptionparams_part_01,
@@ -111,7 +111,7 @@ class FlextModelsExceptionParamsPart03(
                     "Context payload describing the state during access failure."
                 ),
                 title="Attribute Context",
-                examples=[{"owner": "session"}],
+                examples=[{"owner": c.ContextScope.SESSION}],
             ),
         ] = None
 

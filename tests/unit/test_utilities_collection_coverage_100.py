@@ -16,7 +16,7 @@ from tests import c, m, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import t
+from tests import t
 
 
 class TestsFlextCoreUtilitiesCollection:
@@ -94,8 +94,7 @@ class TestsFlextCoreUtilitiesCollection:
         """Test find returns matching element or failure."""
         result = u.find(items, predicate)
         if expect_found:
-            tm.ok(result)
-            tm.that(result.value, eq=expected)
+            tm.ok(result, eq=expected)
         else:
             tm.fail(result)
 
@@ -180,8 +179,7 @@ class TestsFlextCoreUtilitiesCollection:
     ) -> None:
         """Test process applies processor with optional predicate."""
         result = u.process(items, processor, predicate=predicate)
-        tm.ok(result)
-        tm.that(result.value, eq=expected)
+        tm.ok(result, eq=expected)
 
     @staticmethod
     def test_process_uppercases_each_string() -> None:

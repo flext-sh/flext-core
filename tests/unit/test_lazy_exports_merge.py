@@ -31,7 +31,7 @@ from tests import tm, u
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import t
+from tests import t
 
 
 def _register_alpha_child(child_package_name: str, alpha_module_name: str) -> None:

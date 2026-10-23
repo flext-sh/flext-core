@@ -12,15 +12,12 @@ import sys
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from types import ModuleType
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
-from tests import tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import t, tm, u
 
 
 def _install_alpha(

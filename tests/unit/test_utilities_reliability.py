@@ -20,7 +20,7 @@ from tests import m, r, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p
+from tests import p
 
 
 def _counting_operation(

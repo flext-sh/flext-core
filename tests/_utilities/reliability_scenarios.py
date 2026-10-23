@@ -13,7 +13,7 @@ from tests import m
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from tests import t
+from tests import t
 
 
 class TestsFlextUtilitiesReliabilityScenariosMixin:

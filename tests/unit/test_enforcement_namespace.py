@@ -31,7 +31,7 @@ from tests.unit._enforcement_support import make_class
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import t
+from tests import t
 
 _PREFIX_FRAGMENT = "class name missing project prefix"
 
@@ -198,7 +198,7 @@ class TestsFlextCoreEnforcementNamespace:
         root = tmp_path / "sample"
         package = root / "src" / "xmlapi"
         package.mkdir(parents=True)
-        (root / "pyproject.toml").write_text(
+        (root / c.PYPROJECT_FILENAME).write_text(
             """
 [project]
 name = "xml-api"

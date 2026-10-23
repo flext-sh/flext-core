@@ -17,7 +17,7 @@ from tests import c, m, p, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests import t
+from tests import t
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
     ("debug", True),

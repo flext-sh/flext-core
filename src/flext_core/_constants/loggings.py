@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar
 
+from flext_core._constants import FlextConstantsFile
+
 
 class FlextConstantsLogging:
     """SSOT for logging level enumeration and log message templates."""
@@ -43,9 +45,9 @@ class FlextConstantsLogging:
 
     # Workspace / path detection
     REPOSITORY_ROOT_MARKERS: ClassVar[frozenset[str]] = frozenset({
-        "pyproject.toml",
-        ".git",
-        "poetry.lock",
+        FlextConstantsFile.PYPROJECT_FILENAME,
+        FlextConstantsFile.GIT_DIR_NAME,
+        FlextConstantsFile.POETRY_LOCK_FILENAME,
     })
     VENV_DIR_NAME: ClassVar[str] = ".venv"
     MODULE_FRAME_NAME: ClassVar[str] = "<module>"

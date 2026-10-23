@@ -10,15 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
 import tests.utilities
-from tests import c, r, tm
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, p, r, t, tm
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(

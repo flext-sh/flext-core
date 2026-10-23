@@ -77,7 +77,7 @@ class FlextExceptionsFactoriesPart03(
             timeout_seconds=timeout_seconds,
             operation=operation,
         )
-        op_label = operation or "operation"
+        op_label = operation or c.ContextScope.OPERATION
         msg = FlextExceptionsFactoriesPart03._failure_message(
             f"{op_label} (timeout={timeout_seconds}s)",
             params=params,

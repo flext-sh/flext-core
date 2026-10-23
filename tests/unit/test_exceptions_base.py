@@ -7,14 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 
-from tests import c, e, m, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, e, m, p, tm
 
 
 class TestsFlextCoreExceptionsBase:
@@ -94,7 +91,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(result.error_data, none=False)
         tm.not_none(result.error_data)
         tm.that(
-            cast("dict[str, object]", result.error_data)["operation"],
+            cast("dict[str, object]", result.error_data)[c.ContextScope.OPERATION],
             eq="register service",
         )
         tm.that(cast("dict[str, object]", result.error_data)["reason"], eq="boom")
@@ -182,7 +179,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(result.error_data, none=False)
         tm.not_none(result.error_data)
         tm.that(
-            cast("dict[str, object]", result.error_data)["service_name"],
+            cast("dict[str, object]", result.error_data)[c.ContextKey.SERVICE_NAME],
             eq="connection",
         )
         tm.that(

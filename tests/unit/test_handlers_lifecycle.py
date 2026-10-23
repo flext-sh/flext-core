@@ -6,14 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 
-from tests import c, h, m, r, t, tm, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, h, m, p, r, t, tm, u
 
 
 class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
@@ -23,7 +20,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         """Test default config exposes command mode and given name."""
         settings = u.Tests.create_handler_config("h_default", "Default Handler")
         handler = self.ConcreteTestHandler(settings=settings)
-        tm.that(handler.mode, eq=c.DEFAULT_HANDLER_MODE)
+        tm.that(handler.mode, eq=c.HandlerMode.COMMAND)
         tm.that(handler.handler_name, eq="Default Handler")
 
     def test_custom_config_exposes_requested_mode_and_name(self) -> None:
@@ -125,7 +122,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         result = handler.dispatch_message("payload", c.HandlerMode.QUERY)
         tm.that(result.failure, truth=True)
         tm.that(result.error, none=False)
-        tm.that("query" in str(result.error), truth=True)
+        tm.that(c.HandlerMode.QUERY in str(result.error), truth=True)
 
     @pytest.mark.parametrize(
         ("label", "message"),

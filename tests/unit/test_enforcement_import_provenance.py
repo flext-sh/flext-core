@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from flext_core import FlextStrictYamlConfigSource
-from tests import tm, u
+from tests import c, tm, u
 
 
 class TestsFlextEnforcementImportProvenance:
@@ -107,7 +107,7 @@ class TestsFlextEnforcementImportProvenance:
         """Facade dependencies are legal; direct imports and rename exports fail."""
         package = tmp_path / "flext_probe"
         package.mkdir()
-        (tmp_path / "pyproject.toml").write_text(
+        (tmp_path / c.PYPROJECT_FILENAME).write_text(
             '[project]\nname = "flext-probe"\nversion = "0.0.0"\n',
             encoding="utf-8",
         )

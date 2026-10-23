@@ -6,15 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, override
+from typing import Annotated, override
 
 from flext_tests import r
 
-from tests import c, m, s, t
+from tests import c, m, p, s, t
 from tests._models import TestsFlextModelsMixins
-
-if TYPE_CHECKING:
-    from tests import p
 
 
 class TestsFlextUtilitiesRailwayServicesMixin:

@@ -99,8 +99,6 @@ class FlextConstantsInfrastructure:
         COMMAND = "command"
         QUERY = "query"
 
-    DEFAULT_HANDLER_MODE: ClassVar[str] = HandlerMode.COMMAND
-
     @unique
     class BackoffStrategy(StrEnum):
         """Retry backoff strategy identifiers."""
@@ -108,7 +106,6 @@ class FlextConstantsInfrastructure:
         EXPONENTIAL = "exponential"
         LINEAR = "linear"
 
-    DEFAULT_BACKOFF_STRATEGY: ClassVar[str] = BackoffStrategy.EXPONENTIAL
     MAX_RETRY_ATTEMPTS: ClassVar[int] = 3
     DEFAULT_RETRY_DELAY_SECONDS: ClassVar[int] = 1
     DEFAULT_CIRCUIT_BREAKER_RECOVERY_TIMEOUT: ClassVar[int] = (

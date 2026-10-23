@@ -143,7 +143,7 @@ class TestsFlextCoreUtilitiesGenerators:
                 options=m.GenerateOptions(parts=("users",), length=7),
             ),
             transaction_id=u.generate(
-                kind="transaction",
+                kind=c.ContextScope.TRANSACTION,
                 options=m.GenerateOptions(parts=("sync", 42), length=9),
             ),
             saga_id=u.generate(

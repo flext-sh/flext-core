@@ -68,7 +68,7 @@ class FlextExceptionsBasePart03:
                     for key in (
                         "error_code",
                         "context",
-                        "correlation_id",
+                        c.ContextKey.CORRELATION_ID,
                         "auto_correlation",
                         "auto_log",
                         "merged_kwargs",
@@ -296,7 +296,7 @@ class FlextExceptionsBasePart03:
                         if options.metadata is not None
                         else preserved_metadata
                     ),
-                    "correlation_id": (
+                    c.ContextKey.CORRELATION_ID: (
                         options.correlation_id
                         if options.correlation_id is not None
                         else declared_correlation_id

@@ -36,7 +36,11 @@ class FlextModelsContextTokens:
             FlextModelsPydantic.Field(
                 pattern=c.PATTERN_IDENTIFIER_WITH_UNDERSCORE,
                 description="Context variable key (alphanumeric, underscore)",
-                examples=["correlation_id", "service_name", "user_id"],
+                examples=[
+                    c.ContextKey.CORRELATION_ID,
+                    c.ContextKey.SERVICE_NAME,
+                    c.ContextKey.USER_ID,
+                ],
             ),
         ]
         previous_value: Annotated[
@@ -63,7 +67,7 @@ class FlextModelsContextTokens:
             t.NonEmptyStr,
             FlextModelsPydantic.Field(
                 description="Unique key for the context variable",
-                examples=["user_id", "request_id", "session_id"],
+                examples=[c.ContextKey.USER_ID, c.ContextKey.REQUEST_ID, "session_id"],
             ),
         ]
         old_value: Annotated[

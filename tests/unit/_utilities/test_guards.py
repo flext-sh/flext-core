@@ -71,7 +71,7 @@ class TestsFlextCoreGuards:
             def __iter__(self) -> Iterator[p.AttributeProbe]:
                 events.append("iter")
                 message = "unexpected mapping iteration"
-                raise AssertionError(message)
+                tm.reject(message)
 
             @override
             def __len__(self) -> int:

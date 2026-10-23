@@ -7,16 +7,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import Final
 
 import pytest
 
 from flext_core import FlextContainer
 from flext_core.__version__ import __version__
-from tests import e, p, r, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import e, p, r, t, tm, u
 
 pytestmark = [pytest.mark.integration]
 
@@ -133,7 +130,7 @@ class TestsFlextCoreIntegration:
         def create_result() -> str:
             processed: p.Result[str] = r[str].ok(f"processed_{input_data}")
             if not processed.success:
-                raise AssertionError(processed.error)
+                tm.reject(processed.error)
             value: str = processed.value
             return value
 

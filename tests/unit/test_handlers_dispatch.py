@@ -6,14 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, override
+from typing import override
 
 import pytest
 
-from tests import c, h, r, t, tm, u
-
-if TYPE_CHECKING:
-    from tests import m, p
+from tests import c, h, m, p, r, t, tm, u
 
 
 class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
@@ -84,14 +81,19 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
             settings=self._command_settings("dispatch_ok"),
         )
 
-        result = handler.dispatch_message("test_message", operation="command")
+        result = handler.dispatch_message(
+            "test_message", operation=c.HandlerMode.COMMAND
+        )
 
         _ = u.Tests.assert_success(result, expected_value="processed_test_message")
 
     @pytest.mark.parametrize(
-        ("operation", "expected_error"),
+        (c.ContextScope.OPERATION, "expected_error"),
         [
-            ("query", "Handler with mode 'command' cannot execute query pipelines"),
+            (
+                c.HandlerMode.QUERY,
+                "Handler with mode 'command' cannot execute query pipelines",
+            ),
             ("event", "Handler with mode 'command' cannot execute event pipelines"),
         ],
     )
@@ -128,7 +130,9 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
             settings=self._command_settings("dispatch_cannot_handle"),
         )
 
-        result = handler.dispatch_message("test_message", operation="command")
+        result = handler.dispatch_message(
+            "test_message", operation=c.HandlerMode.COMMAND
+        )
 
         _ = u.Tests.assert_failure(
             result,
@@ -155,7 +159,9 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
             settings=self._command_settings("dispatch_validation_failure"),
         )
 
-        result = handler.dispatch_message("test_message", operation="command")
+        result = handler.dispatch_message(
+            "test_message", operation=c.HandlerMode.COMMAND
+        )
 
         _ = u.Tests.assert_failure(
             result,
@@ -182,7 +188,9 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
             settings=self._command_settings("dispatch_exception"),
         )
 
-        result = handler.dispatch_message("test_message", operation="command")
+        result = handler.dispatch_message(
+            "test_message", operation=c.HandlerMode.COMMAND
+        )
 
         _ = u.Tests.assert_failure(
             result,

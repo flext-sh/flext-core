@@ -11,17 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import tm, u
+from tests import c, p, tm, u
 from tests.integration.service_lifecycle_cases import (
     TestsFlextFlextServiceLifecycleCases,
 )
-
-if TYPE_CHECKING:
-    from tests import p
 
 _FETCH_CALL_COUNT = 2
 
@@ -55,7 +50,7 @@ class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
     # ------------------------------------------------------------------ #
     # UserQueryService.fetch_user — value derivation contract
     # ------------------------------------------------------------------ #
-    @pytest.mark.parametrize("user_id", ["test_user_123", "abc", "user-42"])
+    @pytest.mark.parametrize(c.ContextKey.USER_ID, ["test_user_123", "abc", "user-42"])
     def test_fetch_user_derives_default_entity(self, user_id: str) -> None:
         """fetch_user() derives a default entity from the requested id."""
         service = self.UserQueryService()

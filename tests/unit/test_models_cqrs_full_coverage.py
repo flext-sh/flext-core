@@ -106,7 +106,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(query.pagination, is_=m.Pagination)
         tm.that(query.pagination.page, eq=c.FIRST_PAGE_INDEX)
         tm.that(query.pagination.size, eq=c.DEFAULT_PAGE_SIZE)
-        tm.that(query.message_type, eq="query")
+        tm.that(query.message_type, eq=c.HandlerMode.QUERY)
 
     @staticmethod
     def test_query_coerces_pagination_mapping_including_stringified_ints() -> None:
@@ -165,7 +165,7 @@ class TestsFlextCoreModelsCqrs:
         """Test command has default type and generated id."""
         command = m.Command()
 
-        tm.that(command.message_type, eq="command")
+        tm.that(command.message_type, eq=c.HandlerMode.COMMAND)
         tm.that(command.command_type, eq=c.DEFAULT_COMMAND_TYPE)
         tm.that(command.command_id.startswith("cmd_"), truth=True)
 
@@ -235,8 +235,8 @@ class TestsFlextCoreModelsCqrs:
     @pytest.mark.parametrize(
         ("payload", "expected_cls"),
         [
-            ({"message_type": "command", "command_type": "run"}, m.Command),
-            ({"message_type": "query", "filters": {}}, m.Query),
+            ({"message_type": c.HandlerMode.COMMAND, "command_type": "run"}, m.Command),
+            ({"message_type": c.HandlerMode.QUERY, "filters": {}}, m.Query),
             (
                 {
                     "message_type": "event",

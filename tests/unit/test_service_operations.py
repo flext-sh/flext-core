@@ -435,7 +435,7 @@ class TestsFlextCoreServiceOperations:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("service_type", "operation", "defect"),
+        ("service_type", c.ContextScope.OPERATION, "defect"),
         [
             (AsyncService, "fetch", c.ERR_SERVICE_OPERATION_ASYNC),
             (GenericService, "echo", c.ERR_SERVICE_OPERATION_GENERIC),

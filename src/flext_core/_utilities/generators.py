@@ -49,7 +49,7 @@ class FlextUtilitiesGenerators:
             "correlation": "corr",
             "entity": "ent",
             "batch": c.ProcessingMode.BATCH,
-            "transaction": "txn",
+            c.ContextScope.TRANSACTION: "txn",
             "saga": "saga",
             c.HandlerType.EVENT: "evt",
             c.HandlerType.COMMAND: "cmd",

@@ -10,15 +10,11 @@ from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING
 
 import pytest
 from typing_extensions import TypeForm
 
-from tests import c, e, m, r, t, tm, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, e, m, p, r, t, tm, u
 
 
 class TestsFlextCoreNormalizationBoundaries:

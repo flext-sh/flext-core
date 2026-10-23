@@ -85,7 +85,7 @@ class FlextModelsHandler:
             FlextModelsPydantic.Field(
                 default=c.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
-                examples=["command", "query", "event"],
+                examples=[c.HandlerMode.COMMAND, c.HandlerMode.QUERY, "event"],
             ),
         ] = c.HandlerType.COMMAND
         timestamp: Annotated[
@@ -135,7 +135,7 @@ class FlextModelsHandler:
             c.HandlerType,
             FlextModelsPydantic.Field(
                 description="Mode of handler execution",
-                examples=["command", "query", "event"],
+                examples=[c.HandlerMode.COMMAND, c.HandlerMode.QUERY, "event"],
             ),
         ]
         started_at: Annotated[

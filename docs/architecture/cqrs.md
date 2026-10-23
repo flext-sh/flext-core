@@ -70,7 +70,7 @@ self._context_stack: t.SequenceOf[t.JsonMapping] = []
 self._metrics = {}
 
 Typical runtime interactions:
-handler.push_context({"operation": "create_user"})
+handler.push_context({c.ContextScope.OPERATION: "create_user"})
 handler.record_metric("users_created", 1)
 metrics = handler.get_metrics()
 handler.pop_context()
