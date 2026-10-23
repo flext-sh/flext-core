@@ -85,6 +85,7 @@ class TestsFlextTypeAliasResolution:
         tm.that(tm.ok(parsed), eq=42)
         tree = u.parse_module(type_aliases)
         tm.that(tree, is_=ast.Module)
+        tm.that(u.parse_module(type_aliases), where=lambda value: value is tree)
         tm.that(
             any(
                 isinstance(node, ast.ClassDef)

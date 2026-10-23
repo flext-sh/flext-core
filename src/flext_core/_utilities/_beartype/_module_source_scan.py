@@ -17,12 +17,22 @@ class FlextUtilitiesBeartypeModuleSourceScan:
     """Read module source as AST and walk its lexical scopes and declarations."""
 
     @staticmethod
-    @functools.cache
     def parse_module(module: ModuleType) -> ast.Module:
         """Read the defining source of one module as an AST.
 
         Returns:
             The resulting ``ast.Module``.
+
+        """
+        return FlextUtilitiesBeartypeModuleSourceScan._parse_module(module)
+
+    @staticmethod
+    @functools.cache
+    def _parse_module(module: ModuleType) -> ast.Module:
+        """Cache source inspection without erasing the public module signature.
+
+        Returns:
+            The shared AST for the exact module instance.
 
         """
         return ast.parse(inspect.getsource(module), filename=inspect.getfile(module))
@@ -90,7 +100,7 @@ class FlextUtilitiesBeartypeModuleSourceScan:
             ],
         ]
     ]:
-        """Yield every type-alias declaration with its lexical scopes and qualified path.
+        """Yield type-alias declarations with lexical scopes and qualified paths.
 
         Yields:
             Each ``(path, declaration, scopes)`` triple.

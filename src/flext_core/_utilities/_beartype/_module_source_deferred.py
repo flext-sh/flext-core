@@ -22,21 +22,20 @@ from flext_core._utilities._beartype import FlextUtilitiesBeartypeModuleSourcePr
 class FlextUtilitiesBeartypeModuleSourceDeferred(
     FlextUtilitiesBeartypeModuleSourceProvenance
 ):
-    """Prove a type alias is deferred behind provably-stable ``TYPE_CHECKING`` imports."""
+    """Prove alias deferral behind stable ``TYPE_CHECKING`` imports."""
 
-    @staticmethod
+    @classmethod
     @functools.lru_cache(maxsize=65536)
-    def _scope_bindings(scope: ast.AST) -> t.MappingKV[str, tuple[ast.AST, ...]]:
+    def _scope_bindings(cls, scope: ast.AST) -> t.MappingKV[str, tuple[ast.AST, ...]]:
         """Index each binding once in its lexical scope, retaining duplicate owners.
 
         Returns:
             The nodes that bind each name without entering a nested scope.
 
         """
-        source = FlextUtilitiesBeartypeModuleSourceDeferred
         bindings: t.MutableMappingKV[str, list[ast.AST]] = {}
-        for node in source._scope_node_tuple(scope):
-            for name in source._bound_names(node):
+        for node in cls._scope_node_tuple(scope):
+            for name in cls._bound_names(node):
                 bindings.setdefault(name, []).append(node)
         return {name: tuple(nodes) for name, nodes in bindings.items()}
 

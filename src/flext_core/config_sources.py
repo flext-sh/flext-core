@@ -46,9 +46,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             node: Node,
             *,
             deep: bool = False,
-        ) -> JsonValue:
-            _ = node, deep
-            raise NotImplementedError
+        ) -> JsonValue: ...
 
     class UniqueKeyLoader(SafeLoader):
         """Safe YAML loader rejecting duplicate and non-string mapping keys.

@@ -64,7 +64,6 @@ class FlextConstantsEnforcementEnums:
         CLASSVAR_CONSTANT = "classvar_constant"
         COMPATIBILITY_ALIAS = "compatibility_alias"
         DEPRECATED_SYNTAX = "deprecated_syntax"
-        DUPLICATE_SYMBOL = "duplicate_symbol"
         FIELD_SHAPE = "field_shape"
         IMPORT_BLACKLIST = "import_blacklist"
         LIBRARY_IMPORT = "library_import"

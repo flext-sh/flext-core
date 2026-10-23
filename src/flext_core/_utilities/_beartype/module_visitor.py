@@ -60,7 +60,7 @@ def _is_module_alias_candidate(name: str, value: type) -> bool:
 
 
 class FlextUtilitiesBeartypeModuleVisitor:
-    """LOC_CAP + MODULE_ALIAS + DUPLICATE_SYMBOL visitors."""
+    """LOC_CAP and MODULE_ALIAS visitors."""
 
     @staticmethod
     def _loc_cap_module(
@@ -172,24 +172,6 @@ class FlextUtilitiesBeartypeModuleVisitor:
             ),
             _NO_VIOLATION,
         )
-
-    @staticmethod
-    def v_duplicate_symbol(
-        _params: FlextModelsEnforcement.DuplicateSymbolParams,
-        _target: type,
-    ) -> FlextTypingBase.StrMapping | None:
-        """DUPLICATE_SYMBOL — workspace cross-project SSOT (Phase 3 hook).
-
-        Implementation lives in the workspace walker, not the per-class
-        runtime hook — needs the cross-project symbol index that only the
-        walker can build. Returns None at runtime.
-
-        Returns:
-            The resulting ``t.StrMapping | None``.
-
-        """
-        _ = (_params, _target)
-        return _NO_VIOLATION
 
 
 __all__: tuple[str, ...] = ("FlextUtilitiesBeartypeModuleVisitor",)

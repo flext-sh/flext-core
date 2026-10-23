@@ -17,19 +17,18 @@ from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 class FlextUtilitiesBeartypeFieldUnionScan:
     """Count declared union arms without expanding type aliases."""
 
-    @staticmethod
-    def _ast_union_members(node: ast.expr) -> tuple[ast.expr, ...]:
+    @classmethod
+    def _ast_union_members(cls, node: ast.expr) -> tuple[ast.expr, ...]:
         """Return only the top-level members written in a union expression.
 
         Returns:
             Only the top-level members written in a union expression.
 
         """
-        scan = FlextUtilitiesBeartypeFieldUnionScan
         if isinstance(node, ast.BinOp) and isinstance(node.op, ast.BitOr):
             return (
-                *scan._ast_union_members(node.left),
-                *scan._ast_union_members(node.right),
+                *cls._ast_union_members(node.left),
+                *cls._ast_union_members(node.right),
             )
         if isinstance(node, ast.Subscript) and (
             (isinstance(node.value, ast.Name) and node.value.id == "Union")
