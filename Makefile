@@ -2074,8 +2074,14 @@ _builtin_clean_generated:
 _builtin_release_plan: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase plan $(if $(strip $(PR_TITLE)),--pr-title "$(PR_TITLE)")
 
+export FLEXT_LANE_CHECKPOINT_REF := $(value LANE_CHECKPOINT_REF)
 _builtin_release_version: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase version --apply
+	@set -eu; set --; \
+	if [ -n "$$FLEXT_LANE_CHECKPOINT_REF" ]; then \
+		ownership="$$($(PROJECT_FLEXT_INFRA) workspace lane-ownership --repo-root "$(PROJECT_ROOT)" --checkpoint-ref "$$FLEXT_LANE_CHECKPOINT_REF")"; \
+		set -- --ownership "$$ownership"; \
+	fi; \
+	$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase version --apply "$$@"
 
 _builtin_release_tag: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase tag --apply
