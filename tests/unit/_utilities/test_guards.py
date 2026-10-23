@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections import UserList
+from collections.abc import Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import MappingProxyType
@@ -265,6 +266,23 @@ class TestsFlextCoreGuards:
     @staticmethod
     def test_matches_type_unknown_string_spec_returns_false() -> None:
         tm.that(u.matches_type("x", "no_such_spec") is False, truth=True)
+
+    @staticmethod
+    def test_matches_type_inspects_native_mapping_and_sequence_views() -> None:
+        """Inspection preserves abstract collections without JSON admission."""
+        mapping: t.JsonMapping = MappingProxyType({"native": 1})
+        mutable_mapping: t.MutableMappingKV[str, t.JsonValue] = {"native": 1}
+        sequence: t.StrSequence = UserList(["native"])
+        mutable_sequence: t.MutableSequenceOf[str] = ["native"]
+        tm.ok(u.matches_type(mapping, Mapping))
+        tm.ok(u.matches_type(mutable_mapping, dict))
+        tm.fail(u.matches_type(mapping, dict))
+        tm.ok(u.matches_type(sequence, Sequence))
+        tm.ok(u.matches_type(sequence, "list_non_empty"))
+        tm.ok(u.matches_type(mutable_sequence, (list, tuple)))
+        tm.fail(u.matches_type(sequence, (list, tuple)))
+        tm.fail(u.matches_type(sequence, Mapping))
+        tm.fail(u.matches_type(mapping, "no_such_spec"))
 
     @staticmethod
     @pytest.mark.parametrize(

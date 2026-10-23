@@ -96,7 +96,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: type[TValue],
-        data: t.JsonPayload | t.FlatContainer,
+        data: t.ValidationInput[p.Model],
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -106,7 +106,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: t.ValueAdapter[TValue],
-        data: t.JsonPayload | t.FlatContainer,
+        data: t.ValidationInput[p.Model],
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -115,12 +115,15 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: t.ValueAdapter[TValue] | type[TValue],
-        data: t.JsonPayload | t.FlatContainer,
+        data: t.ValidationInput[p.Model],
         *,
         from_json: bool = False,
         strict: bool | None = None,
     ) -> p.Result[TValue]:
         """Validate one value through a model class or TypeAdapter.
+
+        Python inputs retain their native types until the target validates them.
+        JSON inputs still require encoded text or bytes at the runtime boundary.
 
         Returns:
             The resulting ``p.Result[TValue]``.

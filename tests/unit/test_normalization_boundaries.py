@@ -46,6 +46,19 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.that(u.normalize_to_container([None]), eq=[None])
 
     @staticmethod
+    def test_scalar_mapping_json_admission_preserves_native_boundary() -> None:
+        """Scalar mappings cannot promise bytes accepted by the JSON map schema."""
+        timestamp = datetime(2026, 1, 1, tzinfo=UTC)
+        supported: t.MetadataMapping = {"timestamp": timestamp, "active": True}
+        expected = u.json_dict_adapter().validate_python(
+            u.to_jsonable_python(supported), strict=True
+        )
+        tm.that(u.normalize_to_json_mapping(supported), eq=expected)
+        unsupported: t.ScalarMapping = {"encoded": b"native"}
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate(unsupported)
+
+    @staticmethod
     def test_json_serialization_rejects_unknown_input() -> None:
         """Unsupported native values fail at JSON admission."""
         with pytest.raises(ValueError, match="Unable to serialize unknown type"):
@@ -152,6 +165,27 @@ class TestsFlextCoreNormalizationBoundaries:
         first, second = m.Metadata(), m.Metadata()
         tm.that(first.attributes, eq=second.attributes)
         tm.fail(first.attributes is second.attributes)
+
+    @staticmethod
+    def test_validate_value_accepts_native_model_inputs() -> None:
+        """Schema validation admits readonly metadata and retains model identity."""
+        attributes: t.JsonMapping = MappingProxyType({"source": "native"})
+        payload = {"attributes": attributes}
+        metadata = tm.ok(u.validate_value(m.Metadata, payload))
+        tm.that(metadata.attributes, eq=attributes)
+        model: p.Model = metadata
+        tm.ok(tm.ok(u.validate_value(m.Metadata, model)) is metadata)
+        inputs: t.ValidationInput[p.Model] = [
+            model,
+            MappingProxyType({"attributes": attributes}),
+        ]
+        adapter = u.type_adapter(TypeForm(t.MutableSequenceOf[m.Metadata]))
+        validated = tm.ok(u.validate_value(adapter, inputs))
+        tm.ok(validated[0] is metadata)
+        tm.that(validated[1].attributes, eq=attributes)
+        encoded = b"native"
+        tm.ok(tm.ok(u.validate_value(bytes, encoded)) is encoded)
+        tm.fail(u.validate_value(m.ConfigMap, {"raw": encoded}))
 
     @staticmethod
     def test_registration_uses_native_payload_and_metadata_contracts() -> None:

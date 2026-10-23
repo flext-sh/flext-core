@@ -87,6 +87,10 @@ class TestsFlextCoreResultFactoryDip:
         fail_result: p.Result[str] = r[str].fail("boom")
         tm.that(ok_result, is_=p.Result)
         tm.that(fail_result, is_=p.Result)
+        tm.that(ok_result, is_=p.ResultView)
+        tm.that(fail_result, is_=p.ResultView)
+        tm.that(ok_result, is_=p.ResultState)
+        tm.that(fail_result, is_=p.ResultState)
         tm.that(ok_result, is_=p.SuccessCheckable)
         tm.that(fail_result, is_=p.SuccessCheckable)
 

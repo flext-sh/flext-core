@@ -87,6 +87,33 @@ class FlextUtilitiesFamilySurface:
         return MappingProxyType(module_names)
 
     @staticmethod
+    def family_discovery_candidates() -> FlextTypingBase.VariadicTuple[
+        FlextTypingBase.StrPair
+    ]:
+        """Elect installed roots inspected before their family contract is known.
+
+        Returns:
+            Normalized distribution names paired with their native import names.
+
+        """
+        module_by_distribution = (
+            FlextUtilitiesFamilySurface._module_names_by_distribution()
+        )
+        candidates: list[FlextTypingBase.StrPair] = []
+        for dist in FlextUtilitiesProjectMetadata.installed_distributions():
+            raw_name = dist.metadata["Name"] or ""
+            name = raw_name.lower().replace("-", "_")
+            if FlextUtilitiesFamilySurface.distribution_in_family_discovery(
+                name,
+                FlextUtilitiesProjectMetadata.distribution_requirement_names(dist),
+            ):
+                candidates.append((
+                    name,
+                    module_by_distribution.get(raw_name.lower(), name),
+                ))
+        return tuple(candidates)
+
+    @staticmethod
     @functools.lru_cache(maxsize=1)
     def _surface_snapshot() -> tuple[
         tuple[
@@ -114,21 +141,12 @@ class FlextUtilitiesFamilySurface:
                 FlextTypingBase.MappingKV[str, FlextTypingBase.StrPair | str],
             ]
         ] = []
-        module_by_distribution = (
-            FlextUtilitiesFamilySurface._module_names_by_distribution()
-        )
-        for dist in FlextUtilitiesProjectMetadata.installed_distributions():
-            raw_name = dist.metadata["Name"] or ""
-            name = raw_name.lower().replace("-", "_")
-            if not FlextUtilitiesFamilySurface.distribution_in_family_discovery(
-                name,
-                FlextUtilitiesProjectMetadata.distribution_requirement_names(dist),
-            ):
-                continue
+        for (
+            name,
+            module_name,
+        ) in FlextUtilitiesFamilySurface.family_discovery_candidates():
             try:
-                module = importlib.import_module(
-                    module_by_distribution.get(raw_name.lower(), name),
-                )
+                module = importlib.import_module(module_name)
             except ImportError:
                 # The requirement edge only nominates the member; the published
                 # contract is the structural proof. A member whose root package

@@ -35,6 +35,21 @@ class FlextTypesServices:
         | datetime
     )
 
+    type ValidationInput[TModel] = (
+        FlextTypesServices.JsonPayload
+        | bytes
+        | bytearray
+        | FlextTypesServices.ModelInput[
+            TModel | FlextTypesServices.MetadataMapping | bytes | bytearray
+        ]
+        | FlextTypingBase.SequenceOf[
+            FlextTypesServices.JsonPayload
+            | FlextTypesServices.ModelInput[
+                TModel | FlextTypesServices.MetadataMapping | bytes | bytearray
+            ]
+        ]
+    )
+
     type ServiceLeaf[T] = FlextTypingBase.Scalar | FlextTypesServices.JsonPayload | T
     type ServiceValue[T] = (
         FlextTypesServices.ServiceLeaf[T]
@@ -86,6 +101,7 @@ class FlextTypesServices:
     ]
     type LogArgument[T] = (
         FlextTypesServices.JsonPayload
+        | FlextTypingBase.JsonMapping
         | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]
         | T
     )
@@ -94,6 +110,10 @@ class FlextTypesServices:
         | BaseException
         | FlextTypesServices.LoggingExceptionInfo
     )
+    type LogPositionalValue[T] = (
+        FlextTypesServices.LogValue[T | FlextTypingBase.ScalarMapping]
+        | FlextTypingBase.SequenceOf[tuple[FlextTypesPydantic.JsonValue, ...]]
+    )
     type LoggingNativeRecord = LogRecord
     type LoggingNativeFormatter = Formatter
     type LoggingNativeHandlers = list[Handler]
@@ -101,7 +121,7 @@ class FlextTypesServices:
         FlextTypesServices.LogValue[T]
         | type[BaseException]
         | FlextTypesServices.LoggingTraceback
-        | tuple[FlextTypesServices.LogValue[T], ...]
+        | tuple[FlextTypesServices.LogPositionalValue[T], ...]
     )
     type LoggingEvent[T] = MutableMapping[str, FlextTypesServices.LoggingEventValue[T]]
     type LoggingContext[T] = FlextTypingBase.DictKV[
@@ -126,7 +146,7 @@ class FlextTypesServices:
     type ModelInput[T] = (
         FlextTypesPydantic.JsonValue
         | T
-        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
+        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue | T]
     )
     type ConfigModelInput[T] = (
         T | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]

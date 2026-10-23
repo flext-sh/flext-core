@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, override
+from collections.abc import Callable
+from typing import TYPE_CHECKING, ClassVar, Self, override
 
 import pytest
 
@@ -234,7 +235,7 @@ class TestsFlextCoreServiceOperations:
 
         # The public operation is bound to a non-public function, which needs
         # no docstring: discovery reaches ``status`` with ``__doc__`` unset.
-        status = _status
+        status: ClassVar[Callable[[Self], p.Result[bool]]] = _status
 
     class PlainReturnService(OperationService):
         """Operation returning a plain value."""
@@ -427,7 +428,8 @@ class TestsFlextCoreServiceOperations:
 
     def test_malformed_service_class_is_created_without_error(self) -> None:
         """Discovery is lazy: class creation never checks operation shape."""
-        tm.ok(self.UndocumentedService().status().unwrap())
+        service = self.UndocumentedService()
+        tm.ok(self.UndocumentedService.status(service).unwrap())
 
     # --- Failures --------------------------------------------------------
 

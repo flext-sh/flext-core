@@ -118,7 +118,7 @@ class FlextProtocolsLoggingPart01:
         def info(
             self,
             msg: str,
-            *args: FlextProtocolsLoggingPart01.LogValue,
+            *args: t.LogPositionalValue[FlextProtocolsBase.Model],
             **kw: FlextProtocolsLoggingPart01.LogValue,
         ) -> FlextProtocolsLoggingPart01.LogResult:
             """Log info message."""

@@ -168,7 +168,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         self,
         level: t.LogLevel | str,
         event: str,
-        *args: p.LogValue,
+        *args: t.LogPositionalValue[p.Model],
         **context: p.LogValue,
     ) -> p.LogResult:
         """Emit once, preserving original business identity and saved traceback.
@@ -203,7 +203,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         self,
         level: t.LogLevel | str,
         event: str,
-        args: tuple[p.LogValue, ...],
+        args: tuple[t.LogPositionalValue[p.Model], ...],
         context: t.MappingKV[str, p.LogValue],
         selected_info: t.LoggingExceptionInfo | None,
     ) -> None:
@@ -249,7 +249,12 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         """
         return self._log(c.LogLevel.ERROR, msg, *args, **kw)
 
-    def info(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
+    def info(
+        self,
+        msg: str,
+        *args: t.LogPositionalValue[p.Model],
+        **kw: p.LogValue,
+    ) -> p.LogResult:
         """Emit ordinary INFO through the native pipeline.
 
         Returns:

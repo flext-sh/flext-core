@@ -59,7 +59,9 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str(
-        value: t.JsonPayload | t.StrictValue | None, *, default: str | None = None
+        value: t.JsonPayload | t.StrictValue | t.JsonMapping | t.StrSequence | None,
+        *,
+        default: str | None = None,
     ) -> str:
         """Convert value to string, formatting floats as integers when possible.
 
@@ -108,7 +110,7 @@ class FlextUtilitiesConversion:
             return [str(value)]
 
     @staticmethod
-    def to_int(value: t.JsonPayload | None, *, default: int = 0) -> int:
+    def to_int(value: t.JsonPayload | t.Scalar | None, *, default: int = 0) -> int:
         """Convert value to int with safe fallback; bool returns default.
 
         Returns:

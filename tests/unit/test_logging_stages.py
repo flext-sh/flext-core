@@ -897,6 +897,28 @@ class TestsFlextLoggingNativeEmission:
         tm.that(event["event"], eq="named sam")
         tm.fail("positional_args" in event)
 
+        stream.seek(0)
+        stream.truncate()
+        arguments: t.ScalarMapping = {"actor": b"sam"}
+        error_data: t.JsonMapping = {"source": "native"}
+        tm.ok(logger.info("named %(actor)s", arguments, error_data=error_data))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        tm.that(event["event"], eq="named b'sam'")
+        tm.that(event["error_data"], eq=error_data)
+
+        stream.seek(0)
+        stream.truncate()
+        rows: t.MutableSequenceOf[tuple[str, t.JsonValue]] = [
+            ("stream", {"replication_key": None}),
+        ]
+        tm.ok(logger.info("rows %s", rows))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        tm.that(event["event"], eq=f"rows {rows}")
+        with pytest.raises(TypeError):
+            logger.info("invalid numeric %d", rows)
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate({"rows": rows})
+
     @staticmethod
     def exercise_async_stream_failure() -> None:
         """Observe a real closed stream in an isolated logging process."""

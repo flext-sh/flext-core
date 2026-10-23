@@ -28,6 +28,8 @@ class FlextProtocolsContainer(
 
     type ProtocolGuardInput = (
         t.JsonPayload
+        | t.JsonMapping
+        | t.StrSequence
         | t.TypeHintSpecifier
         | Callable[..., t.JsonPayload]
         | FlextProtocolsContainer.Container
