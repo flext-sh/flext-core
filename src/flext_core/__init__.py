@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import services as services
     from flext_core.__version__ import (
         FlextVersion,
         __author__,
@@ -143,7 +142,6 @@ __all__: tuple[str, ...] = (
     "r",
     "resolve_lazy_members",
     "s",
-    "services",
     "settings",
     "t",
     "u",
@@ -218,7 +216,6 @@ install_lazy_exports(
         "r": ".result",
         "resolve_lazy_members": ".lazy",
         "s": ".service",
-        "services": ".services",
         "settings": "._settings",
         "t": ".typings",
         "u": ".utilities",

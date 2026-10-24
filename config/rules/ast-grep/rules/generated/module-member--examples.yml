@@ -1,0 +1,174 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+fix: $NAME
+id: module-member--examples
+language: Python
+message: Import the member from its package, not through a `examples` module object.
+rule:
+  all:
+  - kind: attribute
+  - any:
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_models)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:ExamplesFlextModelsErrors|ExamplesFlextModelsEx00|ExamplesFlextModelsEx01|ExamplesFlextModelsEx02|ExamplesFlextModelsEx03|ExamplesFlextModelsEx04|ExamplesFlextModelsEx05|ExamplesFlextModelsEx07|ExamplesFlextModelsEx08|ExamplesFlextModelsEx10|ExamplesFlextModelsEx11|ExamplesFlextModelsEx12|ExamplesFlextModelsEx14|ExamplesFlextModelsOutput|ExamplesFlextSharedHandle|ExamplesFlextSharedPerson)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_shared)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:ExamplesFlextShared|ExamplesFlextSharedBase)$
+  - inside:
+      all:
+      - has:
+          all:
+          - has:
+              field: module_name
+              regex: ^(?:examples)$
+          - has:
+              kind: dotted_name
+              not:
+                inside:
+                  field: module_name
+                  kind: import_from_statement
+              pattern: $PKG
+          kind: import_from_statement
+          stopBy: end
+      - not:
+          has:
+            all:
+            - pattern: $NAME
+            - matches: local-binding
+            stopBy: end
+      - not:
+          has:
+            all:
+            - pattern: $PKG
+            - matches: local-binding
+            stopBy: end
+      kind: module
+      stopBy: end
+utils:
+  binding:
+    any:
+    - inside:
+        kind: import_from_statement
+        stopBy: end
+    - inside:
+        kind: import_statement
+        stopBy: end
+    - inside:
+        kind: future_import_statement
+        stopBy: end
+    - inside:
+        field: name
+        kind: class_definition
+    - inside:
+        field: name
+        kind: function_definition
+    - inside:
+        kind: parameters
+    - inside:
+        kind: lambda_parameters
+    - inside:
+        kind: typed_parameter
+    - inside:
+        kind: list_splat_pattern
+    - inside:
+        kind: dictionary_splat_pattern
+    - inside:
+        field: name
+        kind: default_parameter
+    - inside:
+        field: name
+        kind: typed_default_parameter
+    - inside:
+        field: left
+        kind: assignment
+    - inside:
+        field: left
+        kind: augmented_assignment
+    - inside:
+        field: left
+        kind: for_statement
+    - inside:
+        field: left
+        kind: for_in_clause
+    - inside:
+        field: name
+        kind: named_expression
+    - inside:
+        kind: as_pattern_target
+    - inside:
+        kind: global_statement
+    - inside:
+        kind: nonlocal_statement
+    - inside:
+        kind: type_parameter
+        stopBy: end
+    - inside:
+        kind: case_pattern
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: assignment
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: for_statement
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: for_in_clause
+        stopBy: end
+    kind: identifier
+  local-binding:
+    all:
+    - matches: binding
+    - not:
+        inside:
+          kind: import_from_statement
+          stopBy: end
+    - not:
+        inside:
+          kind: import_statement
+          stopBy: end
+  use:
+    all:
+    - kind: identifier
+    - not:
+        matches: binding
+    - not:
+        inside:
+          field: attribute
+          kind: attribute
+    - not:
+        inside:
+          field: name
+          kind: keyword_argument

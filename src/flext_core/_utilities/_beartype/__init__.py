@@ -13,10 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._beartype import (
-        _class_visitor as _class_visitor,
-        _helpers as _helpers,
-    )
     from flext_core._utilities._beartype._alias_visitor import (
         FlextUtilitiesBeartypeAliasVisitor,
     )
@@ -103,8 +99,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeModuleSourceScan",
     "FlextUtilitiesBeartypeModuleVisitor",
     "FlextUtilitiesBeartypeTypeAliases",
-    "_class_visitor",
-    "_helpers",
     "alias_first_violation",
 )
 
@@ -135,8 +129,6 @@ install_lazy_exports(
         "FlextUtilitiesBeartypeModuleSourceScan": "._module_source_scan",
         "FlextUtilitiesBeartypeModuleVisitor": ".module_visitor",
         "FlextUtilitiesBeartypeTypeAliases": ".type_aliases",
-        "_class_visitor": "._class_visitor",
-        "_helpers": "._helpers",
         "alias_first_violation": "._class_visitor.alias_rules",
     }),
     public_exports=__all__,

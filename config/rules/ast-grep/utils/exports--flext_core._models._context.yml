@@ -2,4 +2,4 @@
 id: exports--flext_core._models._context
 language: Python
 rule:
-  regex: ^(?:FlextModelsContextData|FlextModelsContextExport|FlextModelsContextMetadata|FlextModelsContextScope|FlextModelsContextScopePart01|FlextModelsContextScopePart02|FlextModelsContextScopePart03|FlextModelsContextTokens|__scope)$
+  regex: ^(?:FlextModelsContextData|FlextModelsContextExport|FlextModelsContextMetadata|FlextModelsContextScope|FlextModelsContextScopePart01|FlextModelsContextScopePart02|FlextModelsContextScopePart03|FlextModelsContextTokens)$

@@ -13,11 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._protocols import (
-        _container as _container,
-        _context as _context,
-        _logging as _logging,
-    )
     from flext_core._protocols._container import (
         FlextProtocolsContainerPart01,
         FlextProtocolsContainerPart02,
@@ -69,9 +64,6 @@ __all__: tuple[str, ...] = (
     "FlextProtocolsResult",
     "FlextProtocolsService",
     "FlextProtocolsSettings",
-    "_container",
-    "_context",
-    "_logging",
 )
 
 install_lazy_exports(
@@ -99,9 +91,6 @@ install_lazy_exports(
         "FlextProtocolsResult": ".result",
         "FlextProtocolsService": ".service",
         "FlextProtocolsSettings": ".settings",
-        "_container": "._container",
-        "_context": "._context",
-        "_logging": "._logging",
     }),
     public_exports=__all__,
 )

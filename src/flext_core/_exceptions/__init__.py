@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._exceptions import _base as _base, _factories as _factories
     from flext_core._exceptions._base import (
         FlextBaseErrorMetadataMixin,
         FlextBaseErrorStateMixin,
@@ -47,8 +46,6 @@ __all__: tuple[str, ...] = (
     "FlextExceptionsMetrics",
     "FlextExceptionsTemplate",
     "FlextExceptionsTypes",
-    "_base",
-    "_factories",
 )
 
 install_lazy_exports(
@@ -76,8 +73,6 @@ install_lazy_exports(
         "FlextExceptionsMetrics": ".metrics",
         "FlextExceptionsTemplate": ".template",
         "FlextExceptionsTypes": ".exception_types",
-        "_base": "._base",
-        "_factories": "._factories",
     }),
     public_exports=__all__,
 )

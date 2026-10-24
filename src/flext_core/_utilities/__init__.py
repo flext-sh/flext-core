@@ -13,17 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities import (
-        _beartype as _beartype,
-        _checker as _checker,
-        _enforcement as _enforcement,
-        _enforcement_collect as _enforcement_collect,
-        _logging_config as _logging_config,
-        _logging_context as _logging_context,
-        _mapper_access as _mapper_access,
-        _mapper_extract as _mapper_extract,
-        _parser_targets as _parser_targets,
-    )
     from flext_core._utilities._beartype import (
         FlextUtilitiesBeartypeAliasVisitor,
         FlextUtilitiesBeartypeAttrVisitor,
@@ -250,15 +239,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesText",
     "FlextUtilitiesTypingAdapterJson",
     "FlextUtilitiesTypingAdapterScalars",
-    "_beartype",
-    "_checker",
-    "_enforcement",
-    "_enforcement_collect",
-    "_logging_config",
-    "_logging_context",
-    "_mapper_access",
-    "_mapper_extract",
-    "_parser_targets",
     "alias_first_violation",
 )
 
@@ -379,15 +359,6 @@ install_lazy_exports(
         "FlextUtilitiesText": ".text",
         "FlextUtilitiesTypingAdapterJson": ".typeadapter_json",
         "FlextUtilitiesTypingAdapterScalars": ".typeadapter_scalars",
-        "_beartype": "._beartype",
-        "_checker": "._checker",
-        "_enforcement": "._enforcement",
-        "_enforcement_collect": "._enforcement_collect",
-        "_logging_config": "._logging_config",
-        "_logging_context": "._logging_context",
-        "_mapper_access": "._mapper_access",
-        "_mapper_extract": "._mapper_extract",
-        "_parser_targets": "._parser_targets",
         "alias_first_violation": "._beartype._class_visitor.alias_rules",
     }),
     public_exports=__all__,

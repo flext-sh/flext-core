@@ -1,0 +1,154 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+fix: '$ANCHOR
+
+  from examples._shared import ExamplesFlextSharedBase'
+id: import-header--examples._shared
+language: Python
+message: Import the names `examples._shared` publishes from it.
+rule:
+  any:
+  - kind: future_import_statement
+  - all:
+    - any:
+      - kind: import_from_statement
+      - kind: import_statement
+    - inside:
+        kind: module
+    - not:
+        follows:
+          any:
+          - kind: import_from_statement
+          - kind: import_statement
+          - kind: future_import_statement
+          stopBy: end
+  inside:
+    has:
+      all:
+      - matches: use
+      - regex: ^(?:ExamplesFlextSharedBase)$
+      - pattern: $USED
+      - not:
+          inside:
+            has:
+              all:
+              - pattern: $USED
+              - matches: binding
+              stopBy: end
+            kind: module
+            stopBy: end
+      stopBy: end
+    kind: module
+  pattern: $ANCHOR
+utils:
+  binding:
+    any:
+    - inside:
+        kind: import_from_statement
+        stopBy: end
+    - inside:
+        kind: import_statement
+        stopBy: end
+    - inside:
+        kind: future_import_statement
+        stopBy: end
+    - inside:
+        field: name
+        kind: class_definition
+    - inside:
+        field: name
+        kind: function_definition
+    - inside:
+        kind: parameters
+    - inside:
+        kind: lambda_parameters
+    - inside:
+        kind: typed_parameter
+    - inside:
+        kind: list_splat_pattern
+    - inside:
+        kind: dictionary_splat_pattern
+    - inside:
+        field: name
+        kind: default_parameter
+    - inside:
+        field: name
+        kind: typed_default_parameter
+    - inside:
+        field: left
+        kind: assignment
+    - inside:
+        field: left
+        kind: augmented_assignment
+    - inside:
+        field: left
+        kind: for_statement
+    - inside:
+        field: left
+        kind: for_in_clause
+    - inside:
+        field: name
+        kind: named_expression
+    - inside:
+        kind: as_pattern_target
+    - inside:
+        kind: global_statement
+    - inside:
+        kind: nonlocal_statement
+    - inside:
+        kind: type_parameter
+        stopBy: end
+    - inside:
+        kind: case_pattern
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: assignment
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: for_statement
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: for_in_clause
+        stopBy: end
+    kind: identifier
+  local-binding:
+    all:
+    - matches: binding
+    - not:
+        inside:
+          kind: import_from_statement
+          stopBy: end
+    - not:
+        inside:
+          kind: import_statement
+          stopBy: end
+  use:
+    all:
+    - kind: identifier
+    - not:
+        matches: binding
+    - not:
+        inside:
+          field: attribute
+          kind: attribute
+    - not:
+        inside:
+          field: name
+          kind: keyword_argument

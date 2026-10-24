@@ -1,0 +1,273 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+fix: $NAME
+id: module-member--flext_core
+language: Python
+message: Import the member from its package, not through a `flext_core` module object.
+rule:
+  all:
+  - kind: attribute
+  - any:
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_constants)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextConstantsBase|FlextConstantsConfig|FlextConstantsCqrs|FlextConstantsEnforcement|FlextConstantsEnforcementData|FlextConstantsEnforcementEnums|FlextConstantsEnforcementFixActions|FlextConstantsEnforcementNamespace|FlextConstantsEnforcementRules|FlextConstantsEnforcementRuntime|FlextConstantsEnforcementSmellData|FlextConstantsEnforcementTargets|FlextConstantsEnvironment|FlextConstantsErrors|FlextConstantsErrorsDomainParser|FlextConstantsErrorsMessages|FlextConstantsErrorsRuntimeExceptions|FlextConstantsErrorsRuntimeSettings|FlextConstantsErrorsValidationExceptions|FlextConstantsFile|FlextConstantsGuards|FlextConstantsInfrastructure|FlextConstantsLogging|FlextConstantsMixins|FlextConstantsProjectMetadata|FlextConstantsPydantic|FlextConstantsRegex|FlextConstantsSerialization|FlextConstantsSettings|FlextConstantsStatus|FlextConstantsTimeout|FlextConstantsValidation|FlextMroViolation|FlextPredicateRule|FlextSmellThresholds)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_container)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextContainerTestingOps)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_decorators)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextDecorators|FlextDecoratorsBase|FlextDecoratorsCombined|FlextDecoratorsLogging|FlextDecoratorsLoggingPayloads|FlextDecoratorsRailway)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_exceptions)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextBaseErrorMetadataMixin|FlextBaseErrorStateMixin|FlextExceptionsBase|FlextExceptionsBasePart03|FlextExceptionsFactories|FlextExceptionsFactoriesPart01|FlextExceptionsFactoriesPart02|FlextExceptionsFactoriesPart03|FlextExceptionsFactoriesPart04|FlextExceptionsHelpers|FlextExceptionsMetrics|FlextExceptionsTemplate|FlextExceptionsTypes)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_handlers)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextHandlersPart01|FlextHandlersPart02|FlextHandlersPart03|FlextHandlersPart04|FlextHandlersPart05|FlextHandlersPart06|FlextHandlersPart07)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_models)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextModelsBase|FlextModelsBasePart01|FlextModelsBasePart02|FlextModelsBasePart03|FlextModelsBuilder|FlextModelsCollections|FlextModelsConfig|FlextModelsContainer|FlextModelsContainerPart01|FlextModelsContainerPart02|FlextModelsContainerPart03|FlextModelsContainerPart04|FlextModelsContainers|FlextModelsContext|FlextModelsContextData|FlextModelsContextExport|FlextModelsContextMetadata|FlextModelsContextScope|FlextModelsContextScopePart01|FlextModelsContextScopePart02|FlextModelsContextScopePart03|FlextModelsContextState|FlextModelsContextTokens|FlextModelsCqrs|FlextModelsCqrsPart01|FlextModelsDomainEvent|FlextModelsEnforcement|FlextModelsEnforcementBase|FlextModelsEnforcementCatalog|FlextModelsEnforcementInspection|FlextModelsEnforcementModelBase|FlextModelsEnforcementParams|FlextModelsEnforcementResolution|FlextModelsEnforcementSources|FlextModelsEntity|FlextModelsErrors|FlextModelsExceptionParams|FlextModelsExceptionParamsPart01|FlextModelsExceptionParamsPart02|FlextModelsExceptionParamsPart03|FlextModelsHandler|FlextModelsNamespace|FlextModelsOptions|FlextModelsProjectMetadata|FlextModelsProjectMetadataAggregates|FlextModelsProjectMetadataContract|FlextModelsProjectMetadataDocument|FlextModelsPydantic|FlextModelsPyprojectIngressContract|FlextModelsRegistry|FlextModelsService|FlextModelsServiceState|FlextModelsSettings)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_protocols)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextProtocolsBase|FlextProtocolsConfig|FlextProtocolsContainer|FlextProtocolsContainerPart01|FlextProtocolsContainerPart02|FlextProtocolsContainerPart03|FlextProtocolsContext|FlextProtocolsContextPart01|FlextProtocolsContextPart02|FlextProtocolsContextPart03|FlextProtocolsHandler|FlextProtocolsLogging|FlextProtocolsLoggingPart01|FlextProtocolsLoggingPart02|FlextProtocolsLoggingPart03|FlextProtocolsProjectMetadata|FlextProtocolsPydantic|FlextProtocolsRegistry|FlextProtocolsResult|FlextProtocolsService|FlextProtocolsSettings)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_result)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextResultBase|FlextResultBehavior|FlextResultComposed|FlextResultComposition|FlextResultConstruction|FlextResultTransforms|FlextResultUnwrap)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_typings)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextTypesAnnotateds|FlextTypesCore|FlextTypesLazy|FlextTypesPydantic|FlextTypesServices|FlextTypingBase|FlextTypingConfig|FlextTypingNativeExport|JsonValue)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:_utilities)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextUtilitiesArgs|FlextUtilitiesBase|FlextUtilitiesBeartypeAliasVisitor|FlextUtilitiesBeartypeAttrVisitor|FlextUtilitiesBeartypeClassVisitor|FlextUtilitiesBeartypeClassVisitorPart01|FlextUtilitiesBeartypeClassVisitorPart02|FlextUtilitiesBeartypeClassVisitorPart03|FlextUtilitiesBeartypeConf|FlextUtilitiesBeartypeDeprecatedVisitor|FlextUtilitiesBeartypeEngine|FlextUtilitiesBeartypeFieldUnionScan|FlextUtilitiesBeartypeFieldVisitor|FlextUtilitiesBeartypeHelpers|FlextUtilitiesBeartypeHelpersPart01|FlextUtilitiesBeartypeHelpersPart02|FlextUtilitiesBeartypeHelpersPart03|FlextUtilitiesBeartypeImportBlacklistVisitor|FlextUtilitiesBeartypeImportVisitor|FlextUtilitiesBeartypeLibraryVisitor|FlextUtilitiesBeartypeMethodVisitor|FlextUtilitiesBeartypeModuleSource|FlextUtilitiesBeartypeModuleSourceDeferred|FlextUtilitiesBeartypeModuleSourceProvenance|FlextUtilitiesBeartypeModuleSourceScan|FlextUtilitiesBeartypeModuleVisitor|FlextUtilitiesBeartypeTypeAliases|FlextUtilitiesChecker|FlextUtilitiesCheckerPart01|FlextUtilitiesCheckerPart02|FlextUtilitiesCheckerPart03|FlextUtilitiesCollection|FlextUtilitiesCollectionIter|FlextUtilitiesCollectionMerge|FlextUtilitiesConfig|FlextUtilitiesConsole|FlextUtilitiesContext|FlextUtilitiesConversion|FlextUtilitiesDiscovery|FlextUtilitiesDispatcherExecute|FlextUtilitiesDomain|FlextUtilitiesEnforcement|FlextUtilitiesEnforcementCollect|FlextUtilitiesEnforcementCollectPart01|FlextUtilitiesEnforcementCollectPart02|FlextUtilitiesEnforcementEmit|FlextUtilitiesEnforcementPart02|FlextUtilitiesEnforcementPart03|FlextUtilitiesEnforcementPart04|FlextUtilitiesEnforcementPart05|FlextUtilitiesEnum|FlextUtilitiesFamilySurface|FlextUtilitiesFiles|FlextUtilitiesGenerators|FlextUtilitiesGuards|FlextUtilitiesGuardsTypeCore|FlextUtilitiesGuardsTypeModel|FlextUtilitiesGuardsTypeProtocol|FlextUtilitiesGuardsTypeProtocolSpecsMixin|FlextUtilitiesGuardsTypeProtocolStringMixin|FlextUtilitiesHandler|FlextUtilitiesLogging|FlextUtilitiesLoggingConfig|FlextUtilitiesLoggingConfigPart01|FlextUtilitiesLoggingConfigPart02|FlextUtilitiesLoggingConfigPart03|FlextUtilitiesLoggingContext|FlextUtilitiesLoggingContextPart01|FlextUtilitiesLoggingContextPart02|FlextUtilitiesLoggingStream|FlextUtilitiesMapper|FlextUtilitiesMapperAccess|FlextUtilitiesMapperAccessPart01|FlextUtilitiesMapperAccessPart02|FlextUtilitiesMapperExtract|FlextUtilitiesMapperExtractPart01|FlextUtilitiesMapperExtractPart02|FlextUtilitiesMetadata|FlextUtilitiesModel|FlextUtilitiesModelOptions|FlextUtilitiesModelRuntime|FlextUtilitiesParser|FlextUtilitiesParserCoerce|FlextUtilitiesParserTargets|FlextUtilitiesParserTargetsPart01|FlextUtilitiesParserTargetsPart02|FlextUtilitiesProjectMetadata|FlextUtilitiesPydantic|FlextUtilitiesReliability|FlextUtilitiesRuntimeViolationRegistry|FlextUtilitiesSettings|FlextUtilitiesText|FlextUtilitiesTypingAdapterJson|FlextUtilitiesTypingAdapterScalars|PREDICATE_BINDINGS|alias_first_violation)$
+    - all:
+      - has:
+          field: object
+          kind: identifier
+          pattern: $PKG
+          regex: ^(?:services)$
+      - has:
+          field: attribute
+          kind: identifier
+          pattern: $NAME
+          regex: ^(?:FlextServiceDispatcher|FlextServiceRegistry)$
+  - inside:
+      all:
+      - has:
+          all:
+          - has:
+              field: module_name
+              regex: ^(?:flext_core)$
+          - has:
+              kind: dotted_name
+              not:
+                inside:
+                  field: module_name
+                  kind: import_from_statement
+              pattern: $PKG
+          kind: import_from_statement
+          stopBy: end
+      - not:
+          has:
+            all:
+            - pattern: $NAME
+            - matches: local-binding
+            stopBy: end
+      - not:
+          has:
+            all:
+            - pattern: $PKG
+            - matches: local-binding
+            stopBy: end
+      kind: module
+      stopBy: end
+utils:
+  binding:
+    any:
+    - inside:
+        kind: import_from_statement
+        stopBy: end
+    - inside:
+        kind: import_statement
+        stopBy: end
+    - inside:
+        kind: future_import_statement
+        stopBy: end
+    - inside:
+        field: name
+        kind: class_definition
+    - inside:
+        field: name
+        kind: function_definition
+    - inside:
+        kind: parameters
+    - inside:
+        kind: lambda_parameters
+    - inside:
+        kind: typed_parameter
+    - inside:
+        kind: list_splat_pattern
+    - inside:
+        kind: dictionary_splat_pattern
+    - inside:
+        field: name
+        kind: default_parameter
+    - inside:
+        field: name
+        kind: typed_default_parameter
+    - inside:
+        field: left
+        kind: assignment
+    - inside:
+        field: left
+        kind: augmented_assignment
+    - inside:
+        field: left
+        kind: for_statement
+    - inside:
+        field: left
+        kind: for_in_clause
+    - inside:
+        field: name
+        kind: named_expression
+    - inside:
+        kind: as_pattern_target
+    - inside:
+        kind: global_statement
+    - inside:
+        kind: nonlocal_statement
+    - inside:
+        kind: type_parameter
+        stopBy: end
+    - inside:
+        kind: case_pattern
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: assignment
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: for_statement
+        stopBy: end
+    - inside:
+        any:
+        - kind: pattern_list
+        - kind: tuple_pattern
+        - kind: list_pattern
+        inside:
+          field: left
+          kind: for_in_clause
+        stopBy: end
+    kind: identifier
+  local-binding:
+    all:
+    - matches: binding
+    - not:
+        inside:
+          kind: import_from_statement
+          stopBy: end
+    - not:
+        inside:
+          kind: import_statement
+          stopBy: end
+  use:
+    all:
+    - kind: identifier
+    - not:
+        matches: binding
+    - not:
+        inside:
+          field: attribute
+          kind: attribute
+    - not:
+        inside:
+          field: name
+          kind: keyword_argument

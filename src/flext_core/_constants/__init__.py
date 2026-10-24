@@ -13,11 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._constants import (
-        _enforcement as _enforcement,
-        _enforcement_data as _enforcement_data,
-        _errors as _errors,
-    )
     from flext_core._constants._enforcement import (
         FlextConstantsEnforcementEnums,
         FlextConstantsEnforcementFixActions,
@@ -99,9 +94,6 @@ __all__: tuple[str, ...] = (
     "FlextMroViolation",
     "FlextPredicateRule",
     "FlextSmellThresholds",
-    "_enforcement",
-    "_enforcement_data",
-    "_errors",
 )
 
 install_lazy_exports(
@@ -161,9 +153,6 @@ install_lazy_exports(
         "FlextMroViolation": ".enforcement",
         "FlextPredicateRule": "._enforcement_data.flextpredicaterule",
         "FlextSmellThresholds": "._enforcement_data.flextsmellthresholds",
-        "_enforcement": "._enforcement",
-        "_enforcement_data": "._enforcement_data",
-        "_errors": "._errors",
     }),
     public_exports=__all__,
 )

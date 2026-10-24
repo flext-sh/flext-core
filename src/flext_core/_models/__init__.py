@@ -13,15 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models import (
-        _base as _base,
-        _container as _container,
-        _context as _context,
-        _cqrs as _cqrs,
-        _enforcement as _enforcement,
-        _exception_params as _exception_params,
-        _project_metadata as _project_metadata,
-    )
     from flext_core._models._base import (
         FlextModelsBasePart01,
         FlextModelsBasePart02,
@@ -143,13 +134,6 @@ __all__: tuple[str, ...] = (
     "FlextModelsService",
     "FlextModelsServiceState",
     "FlextModelsSettings",
-    "_base",
-    "_container",
-    "_context",
-    "_cqrs",
-    "_enforcement",
-    "_exception_params",
-    "_project_metadata",
 )
 
 install_lazy_exports(
@@ -221,13 +205,6 @@ install_lazy_exports(
         "FlextModelsService": ".service",
         "FlextModelsServiceState": ".flext_mixins",
         "FlextModelsSettings": ".settings",
-        "_base": "._base",
-        "_container": "._container",
-        "_context": "._context",
-        "_cqrs": "._cqrs",
-        "_enforcement": "._enforcement",
-        "_exception_params": "._exception_params",
-        "_project_metadata": "._project_metadata",
     }),
     public_exports=__all__,
 )
