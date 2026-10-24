@@ -16,7 +16,7 @@ from flext_core import c, p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
 
-class FlextModelsExceptionParamsPart01:
+class FlextModelsExceptionParamsBase:
     """Validated parameter models for the FLEXT exception hierarchy."""
 
     class ParamsModel(FlextModelsBase.ArbitraryTypesModel):
@@ -206,4 +206,4 @@ class FlextModelsExceptionParamsPart01:
             return f"{host}:{self.port}"
 
 
-__all__: list[str] = ["FlextModelsExceptionParamsPart01"]
+__all__: list[str] = ["FlextModelsExceptionParamsBase"]

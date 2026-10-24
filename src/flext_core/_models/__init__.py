@@ -45,9 +45,9 @@ if TYPE_CHECKING:
         FlextModelsEnforcementSources,
     )
     from flext_core._models._exception_params import (
-        FlextModelsExceptionParamsPart01,
-        FlextModelsExceptionParamsPart02,
-        FlextModelsExceptionParamsPart03,
+        FlextModelsExceptionParamsBase,
+        FlextModelsExceptionParamsOperationErrors,
+        FlextModelsExceptionParamsServiceErrors,
     )
     from flext_core._models._project_metadata import (
         FlextModelsProjectMetadataAggregates,
@@ -118,9 +118,9 @@ __all__: tuple[str, ...] = (
     "FlextModelsEntity",
     "FlextModelsErrors",
     "FlextModelsExceptionParams",
-    "FlextModelsExceptionParamsPart01",
-    "FlextModelsExceptionParamsPart02",
-    "FlextModelsExceptionParamsPart03",
+    "FlextModelsExceptionParamsBase",
+    "FlextModelsExceptionParamsOperationErrors",
+    "FlextModelsExceptionParamsServiceErrors",
     "FlextModelsHandler",
     "FlextModelsNamespace",
     "FlextModelsOptions",
@@ -183,9 +183,11 @@ install_lazy_exports(
         "FlextModelsEntity": ".entity",
         "FlextModelsErrors": ".errors",
         "FlextModelsExceptionParams": ".exception_params",
-        "FlextModelsExceptionParamsPart01": "._exception_params.base",
-        "FlextModelsExceptionParamsPart02": "._exception_params.service_errors",
-        "FlextModelsExceptionParamsPart03": "._exception_params.operation_errors",
+        "FlextModelsExceptionParamsBase": "._exception_params.base",
+        "FlextModelsExceptionParamsOperationErrors": (
+            "._exception_params.operation_errors"
+        ),
+        "FlextModelsExceptionParamsServiceErrors": "._exception_params.service_errors",
         "FlextModelsHandler": ".handler",
         "FlextModelsNamespace": ".namespace",
         "FlextModelsOptions": ".options",

@@ -13,7 +13,9 @@ from __future__ import annotations
 from flext_core._models._exception_params import operation_errors
 
 
-class FlextModelsExceptionParams(operation_errors.FlextModelsExceptionParamsPart03):
+class FlextModelsExceptionParams(
+    operation_errors.FlextModelsExceptionParamsOperationErrors
+):
     """Public facade for FlextModelsExceptionParams."""
 
 

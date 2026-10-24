@@ -13,30 +13,28 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._exception_params.base import (
-        FlextModelsExceptionParamsPart01,
-    )
+    from flext_core._models._exception_params.base import FlextModelsExceptionParamsBase
     from flext_core._models._exception_params.operation_errors import (
-        FlextModelsExceptionParamsPart03,
+        FlextModelsExceptionParamsOperationErrors,
     )
     from flext_core._models._exception_params.service_errors import (
-        FlextModelsExceptionParamsPart02,
+        FlextModelsExceptionParamsServiceErrors,
     )
 
 
 __all__: tuple[str, ...] = (
-    "FlextModelsExceptionParamsPart01",
-    "FlextModelsExceptionParamsPart02",
-    "FlextModelsExceptionParamsPart03",
+    "FlextModelsExceptionParamsBase",
+    "FlextModelsExceptionParamsOperationErrors",
+    "FlextModelsExceptionParamsServiceErrors",
 )
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextModelsExceptionParamsPart01": ".base",
-        "FlextModelsExceptionParamsPart02": ".service_errors",
-        "FlextModelsExceptionParamsPart03": ".operation_errors",
+        "FlextModelsExceptionParamsBase": ".base",
+        "FlextModelsExceptionParamsOperationErrors": ".operation_errors",
+        "FlextModelsExceptionParamsServiceErrors": ".service_errors",
     }),
     public_exports=__all__,
 )
