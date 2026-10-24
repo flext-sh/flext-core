@@ -22,7 +22,7 @@ from tests import r, tm
 if TYPE_CHECKING:
     from typing import Literal, Never
 
-    from tests import p
+from tests import p
 
 
 class TestsFlextCoreResultExceptionMapping:
@@ -160,12 +160,8 @@ class TestsFlextCoreResultExceptionMapping:
             "map",
             "flat_map",
             "flow_through",
-            "map_error",
-            "recover",
-            "lash",
             "filter",
             "tap",
-            "tap_error",
         ],
     )
     def test_callback_exception_becomes_carried_failure(
@@ -173,12 +169,8 @@ class TestsFlextCoreResultExceptionMapping:
             "map",
             "flat_map",
             "flow_through",
-            "map_error",
-            "recover",
-            "lash",
             "filter",
             "tap",
-            "tap_error",
         ],
     ) -> None:
         """Test callback exception becomes carried failure."""
@@ -190,12 +182,6 @@ class TestsFlextCoreResultExceptionMapping:
         def reject_result(_value: int) -> p.Result[int]:
             raise exc
 
-        def reject_error(_error: str) -> Never:
-            raise exc
-
-        def reject_recovery(_error: str) -> p.Result[int]:
-            raise exc
-
         match combinator:
             case "map":
                 result = r[int].ok(5).map(reject_value)
@@ -203,16 +189,38 @@ class TestsFlextCoreResultExceptionMapping:
                 result = r[int].ok(5).flat_map(reject_result)
             case "flow_through":
                 result = r[int].ok(5).flow_through(reject_result)
+            case "filter":
+                result = r[int].ok(5).filter(reject_value)
+            case "tap":
+                result = r[int].ok(5).tap(reject_value)
+
+        tm.ok(result.failure)
+        tm.ok(result.exception is exc)
+        tm.that(result.error, eq=str(exc))
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "combinator", ["map_error", "recover", "lash", "tap_error"]
+    )
+    def test_error_callback_exception_becomes_carried_failure(
+        combinator: Literal["map_error", "recover", "lash", "tap_error"],
+    ) -> None:
+        """Failure-branch callbacks retain the exact raised exception."""
+        exc = RuntimeError("callback failed")
+
+        def reject_error(_error: str) -> Never:
+            raise exc
+
+        def reject_recovery(_error: str) -> p.Result[int]:
+            raise exc
+
+        match combinator:
             case "map_error":
                 result = r[int].fail("error").map_error(reject_error)
             case "recover":
                 result = r[int].fail("error").recover(reject_error)
             case "lash":
                 result = r[int].fail("error").lash(reject_recovery)
-            case "filter":
-                result = r[int].ok(5).filter(reject_value)
-            case "tap":
-                result = r[int].ok(5).tap(reject_value)
             case "tap_error":
                 result = r[int].fail("error").tap_error(reject_error)
 

@@ -18,14 +18,16 @@ from tests import c, m, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests import p, t
+from tests import p, t
 
 
 class TestsFlextCoverageLoggings:
     """Tests for ``FlextCoverageLoggings``."""
 
+    pytestmark = pytest.mark.usefixtures("restore_logging")
+
     @staticmethod
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def restore_logging() -> Generator[None]:
         """Select an observable severity without assuming the configured default."""
         original_settings, original_options = u.logging_settings(), u.logging_options()
@@ -58,13 +60,10 @@ class TestsFlextCoverageLoggings:
         Returns:
             The resulting ``p.Result[bool]``.
 
-        Raises:
-            AssertionError: If Expected result to not be None.
-
         """
         if result is None:
             msg = "Expected result to not be None"
-            raise AssertionError(msg)
+            tm.reject(msg)
         tm.ok(result.success)
         tm.ok(result.value)
         return result
@@ -95,9 +94,9 @@ class TestsFlextCoverageLoggings:
     @pytest.mark.parametrize(
         ("scope", "context"),
         [
-            ("application", {"app_name": "test-app"}),
-            ("request", {"correlation_id": "flext-123"}),
-            ("operation", {"operation": "sync-users"}),
+            (c.ContextScope.APPLICATION, {"app_name": "test-app"}),
+            (c.ContextScope.REQUEST, {c.ContextKey.CORRELATION_ID: "flext-123"}),
+            (c.ContextScope.OPERATION, {c.ContextScope.OPERATION: "sync-users"}),
         ],
     )
     def test_clear_scope_returns_success_for_bound_scopes(

@@ -9,14 +9,10 @@ from __future__ import annotations
 from re import escape
 from time import monotonic
 from types import ModuleType
-from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, h, m, p, r, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, h, m, p, r, t, tm, u
 
 
 class TestsFlextHandlerDiscovery:
@@ -34,7 +30,7 @@ class TestsFlextHandlerDiscovery:
         decorated = h.handler(command=m.Command, priority=priority)(operation)
         module = u.Tests.handler_module("declared_handlers", operation=decorated)
         name, found, metadata = h.Discovery.scan_module(module)[0]
-        tm.that(name, eq="operation")
+        tm.that(name, eq=c.ContextScope.OPERATION)
         tm.that(decorated is operation)
         tm.that(found is operation)
         tm.that(metadata.command is m.Command)
@@ -94,7 +90,7 @@ class TestsFlextHandlerDiscovery:
 
         decorated = h.handler(command=m.Command)(operation)
         module = ModuleType("variadic_handlers")
-        module.__dict__["operation"] = decorated
+        module.__dict__[c.ContextScope.OPERATION] = decorated
         found = h.Discovery.scan_module(module)[0][1]
         request = m.Command()
         expected = f"start:{u.resolve_message_route(request)}:a,b:end"
@@ -120,12 +116,12 @@ class TestsFlextHandlerDiscovery:
             return module
 
         setattr(operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command))
-        module.__dict__["operation"] = operation
+        module.__dict__[c.ContextScope.OPERATION] = operation
         found = h.Discovery.scan_module(module)[0][1]
         tm.that(found is operation)
         tm.that(received, empty=True)
         dispatcher = u.build_dispatcher()
-        report = tm.ok(
+        report: p.HandlerRegistrationReport = tm.ok(
             dispatcher.register_handlers((
                 m.HandlerRegistration(
                     handler=found, message_type=c.DEFAULT_COMMAND_TYPE
@@ -163,7 +159,7 @@ class TestsFlextHandlerDiscovery:
             h.handler(command=m.Command, priority=-1)(operation)
 
     @staticmethod
-    @pytest.mark.parametrize("command", [m.Command, m.Event])
+    @pytest.mark.parametrize(c.HandlerMode.COMMAND, [m.Command, m.Event])
     def test_stacked_declarations_leave_original_metadata_unchanged(
         command: type,
     ) -> None:
@@ -262,9 +258,9 @@ class TestsFlextHandlerDiscovery:
 
         module = u.Tests.handler_module("unimported_handlers", operation=operation)
         saved = h.Discovery.scan_module(module)[0][1]
-        vars(module)["operation"] = replacement
+        vars(module)[c.ContextScope.OPERATION] = replacement
         tm.that(h.Discovery.scan_module(module)[0][1] is replacement)
-        del vars(module)["operation"]
+        del vars(module)[c.ContextScope.OPERATION]
         tm.that(h.Discovery.scan_module(module), empty=True)
         tm.that(saved is operation)
         tm.that(saved(m.Command()) is outcome)
@@ -306,8 +302,11 @@ class TestsFlextHandlerDiscovery:
     @pytest.mark.parametrize(
         ("service_type", "names"),
         [
-            (u.Tests.HandlerService, ("create", "delete", "query")),
-            (u.Tests.InheritedHandlerService, ("create", "delete", "query")),
+            (u.Tests.HandlerService, ("create", "delete", c.HandlerMode.QUERY)),
+            (
+                u.Tests.InheritedHandlerService,
+                ("create", "delete", c.HandlerMode.QUERY),
+            ),
             (u.Tests.PrivateHandlerService, ("_private",)),
             (u.Tests.DescriptorHandlerService, ("class_method", "static")),
         ],
@@ -331,7 +330,7 @@ class TestsFlextHandlerDiscovery:
         metadata = dict(h.Discovery.scan_class(u.Tests.HandlerService))
         tm.that(metadata["create"].command is m.Command)
         tm.that(metadata["delete"].command is m.Event)
-        tm.that(metadata["query"].command is m.Tests.RegistryQuery)
+        tm.that(metadata[c.HandlerMode.QUERY].command is m.Tests.RegistryQuery)
         request = m.Command(command_type="request-forwarded")
         tm.that(
             tm.ok(u.Tests.HandlerService().create(request)), eq=request.command_type

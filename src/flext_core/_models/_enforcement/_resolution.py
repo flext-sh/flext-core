@@ -6,10 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Literal
+from typing import Literal
 
-from flext_core import p
-from flext_core._models import FlextModelsPydantic
+from flext_core import p, t
 from flext_core._models._enforcement import FlextModelsEnforcementModelBase
 
 
@@ -19,13 +18,8 @@ class FlextModelsEnforcementResolution:
     class ResolvedAlias(FlextModelsEnforcementModelBase):
         """A lazy alias evaluated successfully, retaining its runtime value."""
 
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(
-                arbitrary_types_allowed=True,
-            )
-        )
         status: Literal["resolved"] = "resolved"
-        value: p.AttributeProbe
+        value: t.Port[p.AttributeProbe]
 
     class DeferredAlias(FlextModelsEnforcementModelBase):
         """Source-proven imports prevent runtime evaluation of a declared alias."""

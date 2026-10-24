@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._exceptions._base_parts.flextexceptionsbase_part_03 import (
+from flext_core._exceptions._base.flextexceptionsbase_part_03 import (
     FlextExceptionsBasePart03,
 )
 

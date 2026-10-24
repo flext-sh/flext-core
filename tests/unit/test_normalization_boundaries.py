@@ -10,15 +10,11 @@ from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from types import MappingProxyType, ModuleType
-from typing import TYPE_CHECKING
 
 import pytest
 from typing_extensions import TypeForm
 
-from tests import c, e, m, r, t, tm, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, e, m, p, r, t, tm, u
 
 
 class TestsFlextCoreNormalizationBoundaries:
@@ -44,6 +40,19 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.ok(u.normalize_to_json_value(None) is None)
         tm.ok(u.normalize_to_container(None) is None)
         tm.that(u.normalize_to_container([None]), eq=[None])
+
+    @staticmethod
+    def test_scalar_mapping_json_admission_preserves_native_boundary() -> None:
+        """Scalar mappings cannot promise bytes accepted by the JSON map schema."""
+        timestamp = datetime(2026, 1, 1, tzinfo=UTC)
+        supported: t.MetadataMapping = {"timestamp": timestamp, "active": True}
+        expected = u.json_dict_adapter().validate_python(
+            u.to_jsonable_python(supported), strict=True
+        )
+        tm.that(u.normalize_to_json_mapping(supported), eq=expected)
+        unsupported: t.ScalarMapping = {"encoded": b"native"}
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate(unsupported)
 
     @staticmethod
     def test_json_serialization_rejects_unknown_input() -> None:
@@ -114,7 +123,7 @@ class TestsFlextCoreNormalizationBoundaries:
         adapter = u.type_adapter(TypeForm(int), config=m.ConfigDict(strict=True))
         tm.that(adapter.validate_python(1), eq=1)
         with pytest.raises(m.ValidationError, match="int_type"):
-            adapter.validate_python("1")
+            adapter.validate_python(c.ParserBooleanToken.ONE)
 
     @staticmethod
     def test_container_preserves_models_and_unwraps_root_payloads() -> None:
@@ -152,6 +161,29 @@ class TestsFlextCoreNormalizationBoundaries:
         first, second = m.Metadata(), m.Metadata()
         tm.that(first.attributes, eq=second.attributes)
         tm.fail(first.attributes is second.attributes)
+
+    @staticmethod
+    def test_validate_value_accepts_native_model_inputs() -> None:
+        """Schema validation admits readonly metadata and retains model identity."""
+        attributes: t.JsonMapping = MappingProxyType({"source": "native"})
+        payload = {"attributes": attributes}
+        metadata: m.Metadata = tm.ok(u.validate_value(m.Metadata, payload))
+        tm.that(metadata.attributes, eq=attributes)
+        model: p.Model = metadata
+        tm.ok(tm.ok(u.validate_value(m.Metadata, model)) is metadata)
+        inputs: t.ValidationInput[p.Model] = [
+            model,
+            MappingProxyType({"attributes": attributes}),
+        ]
+        adapter = u.type_adapter(TypeForm(t.MutableSequenceOf[m.Metadata]))
+        validated: t.MutableSequenceOf[m.Metadata] = tm.ok(
+            u.validate_value(adapter, inputs)
+        )
+        tm.ok(validated[0] is metadata)
+        tm.that(validated[1].attributes, eq=attributes)
+        encoded = b"native"
+        tm.ok(tm.ok(u.validate_value(bytes, encoded)) is encoded)
+        tm.fail(u.validate_value(m.ConfigMap, {"raw": encoded}))
 
     @staticmethod
     def test_registration_uses_native_payload_and_metadata_contracts() -> None:
@@ -225,6 +257,10 @@ class TestsFlextCoreNormalizationBoundaries:
         scope = clean_container.scope(registration=spec)
         tm.fail(scope.resolve("invalid-payload"))
 
+
+class TestsFlextCoreRuntimeNormalization:
+    """Timestamp, pagination, composition, and runtime policy boundaries."""
+
     @staticmethod
     def test_timestamp_validator_preserves_aware_timezone() -> None:
         """Naive timestamps gain UTC while aware timestamps retain identity."""
@@ -265,19 +301,18 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.ok(clean_container.resolve("scoped-service").failure)
 
     @staticmethod
-    @pytest.mark.parametrize("trace", [False, True])
-    def test_trace_does_not_change_explicit_threshold(*, trace: bool) -> None:
-        """Tracing never overrides an explicitly elected logging threshold."""
+    def test_debug_does_not_change_explicit_threshold() -> None:
+        """Debug never overrides an explicitly elected logging threshold."""
         selected = c.LogLevel.WARNING
         tm.that(
             u.resolve_effective_log_level(
-                trace=trace, debug=True, log_level=selected, log_level_explicit=True
+                debug=True, log_level=selected, log_level_explicit=True
             ),
             eq=selected,
         )
         tm.that(
             u.resolve_effective_log_level(
-                trace=trace, debug=True, log_level=selected, log_level_explicit=False
+                debug=True, log_level=selected, log_level_explicit=False
             ),
             eq=c.LogLevel.DEBUG,
         )

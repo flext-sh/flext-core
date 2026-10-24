@@ -20,7 +20,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextExamplesExecution:
@@ -29,7 +29,7 @@ class TestsFlextExamplesExecution:
     @pytest.mark.parametrize("module_name", c.Tests.NON_GOLDEN_EXAMPLE_MODULES)
     def test_non_golden_example_module_executes(self, module_name: str) -> None:
         """The module executes its class entry without a free-function shim."""
-        output = tm.ok(
+        output: p.Cli.CommandOutput = tm.ok(
             u.Cli.run_raw(
                 [sys.executable, "-m", module_name],
                 cwd=self._repo_root(),
@@ -43,7 +43,7 @@ class TestsFlextExamplesExecution:
         )
         tm.that(output.stderr, lacks="Traceback")
         tm.that(
-            re.search("\\b\\w*Warning:", output.stderr), none=True, msg=output.stderr
+            re.search(r"\b\w*Warning:", output.stderr), none=True, msg=output.stderr
         )
 
     @staticmethod
@@ -81,7 +81,7 @@ class TestsFlextExamplesExecution:
         script_path = repo_root / c.Tests.EXAMPLES_DIR / script_name
         actual_path = script_path.with_suffix(".actual")
         expected_path = script_path.with_suffix(".expected")
-        output = tm.ok(
+        output: p.Cli.CommandOutput = tm.ok(
             u.Cli.run_raw(
                 [sys.executable, "-m", module_name],
                 cwd=repo_root,
@@ -95,7 +95,7 @@ class TestsFlextExamplesExecution:
         tm.that(stdout, lacks="FAIL")
         tm.that(stderr, lacks="Traceback")
         tm.that(stderr, lacks="FlextMroViolation")
-        tm.that(re.search("\\b\\w*Warning:", stderr), none=True, msg=stderr)
+        tm.that(re.search(r"\b\w*Warning:", stderr), none=True, msg=stderr)
 
         check_match = tm.not_none(
             re.search(c.Tests.EXAMPLE_CHECK_COUNT_PATTERN, stdout)

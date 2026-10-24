@@ -125,7 +125,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         tm.that(error.error_domain, eq=c.ErrorDomain.INTERNAL.value)
         tm.that(error.correlation_id, eq="corr-123")
         tm.that(error.metadata.attributes["scope"], eq="users")
-        tm.that(error.metadata.attributes["operation"], eq="insert_user")
+        tm.that(error.metadata.attributes[c.ContextScope.OPERATION], eq="insert_user")
         tm.that(error.metadata.attributes["reason"], eq="constraint")
         tm.that(error.metadata.attributes["attempt"], eq=2)
 

@@ -147,7 +147,6 @@ class TestsFlextCoreDocumentedPatterns:
     @staticmethod
     def test_flow_through_pipes_success_into_next_step() -> None:
         """Flow through sends a success value into the next result step."""
-
         # Act
         result = r[int].ok(1).flow_through(u.Tests.increment)
 
@@ -161,7 +160,7 @@ class TestsFlextCoreDocumentedPatterns:
 
         def fetch_profile_name(user_id: str) -> p.Result[str]:
             if user_id != "u-1":
-                return e.fail_not_found("user", user_id)
+                return e.fail_not_found(c.ContextScope.USER, user_id)
             return r[str].ok("Ada")
 
         # Act
@@ -177,7 +176,7 @@ class TestsFlextCoreDocumentedPatterns:
         tm.that(missing.error_code, eq="NOT_FOUND_ERROR")
         tm.that(missing.error, eq="User 'u-2' not found")
         error_data = tm.not_none(missing.error_data)
-        tm.that(error_data["resource_type"], eq="user")
+        tm.that(error_data["resource_type"], eq=c.ContextScope.USER)
         tm.that(error_data["resource_id"], eq="u-2")
 
     @staticmethod

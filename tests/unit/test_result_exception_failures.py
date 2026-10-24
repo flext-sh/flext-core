@@ -13,14 +13,11 @@ from __future__ import annotations
 
 from pathlib import Path
 from traceback import format_exception, walk_tb
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 import pytest
 
-from tests import c, m, r, t, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, m, p, r, t, tm
 
 
 class TestsFlextCoreResultExceptionFailures:
@@ -333,7 +330,7 @@ class TestsFlextCoreResultExceptionFailures:
             }
         ).model_dump_json()
         payload: t.JsonDict = {
-            "request": [
+            c.ContextScope.REQUEST: [
                 {
                     key.swapcase(): "nested-secret",
                     "PrivateTenant": "nested-private",

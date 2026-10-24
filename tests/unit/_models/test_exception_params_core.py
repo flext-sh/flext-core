@@ -7,14 +7,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, m, tm
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm
 
 
 class TestsFlextModelsExceptionParamsCore:
@@ -106,6 +102,10 @@ class TestsFlextModelsExceptionParamsCore:
         data = params.model_dump()
         tm.that(data["config_key"], eq="api_key")
         tm.that(data["config_source"], eq="vault")
+
+
+class TestsFlextModelsConnectionAndAuthenticationParams:
+    """Connection, timeout, and authentication exception payload contracts."""
 
     @staticmethod
     def test_connection_error_params_defaults() -> None:
@@ -202,4 +202,4 @@ class TestsFlextModelsExceptionParamsCore:
         )
         data = params.model_dump()
         tm.that(data["auth_method"], eq="oauth2")
-        tm.that(data["user_id"], eq="svc-account")
+        tm.that(data[c.ContextKey.USER_ID], eq="svc-account")

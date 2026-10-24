@@ -48,9 +48,9 @@ class FlextUtilitiesGenerators:
         kind_prefix_map: t.StrMapping = {
             "correlation": "corr",
             "entity": "ent",
-            "batch": c.ProcessingMode.BATCH,
-            "transaction": "txn",
-            "saga": "saga",
+            c.ProcessingMode.BATCH: c.ProcessingMode.BATCH,
+            c.ContextScope.TRANSACTION: "txn",
+            c.HandlerType.SAGA: c.HandlerType.SAGA,
             c.HandlerType.EVENT: "evt",
             c.HandlerType.COMMAND: "cmd",
             c.HandlerType.QUERY: "qry",

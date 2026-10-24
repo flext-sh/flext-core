@@ -12,12 +12,13 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from flext_core import t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsContainers,
     FlextModelsPydantic,
 )
+from flext_core.constants import c
+from flext_core.typings import t
 
 
 class FlextModelsDomainEvent:
@@ -33,10 +34,10 @@ class FlextModelsDomainEvent:
     ):
         """Base class for domain events."""
 
-        message_type: Literal["event"] = FlextModelsPydantic.Field(
-            default="event",
+        message_type: Literal[c.HandlerType.EVENT] = FlextModelsPydantic.Field(
+            default=c.HandlerType.EVENT,
             frozen=True,
-            description="Message type discriminator for union routing - always 'event'",
+            description="Immutable event discriminator for union routing.",
             validate_default=True,
         )
         event_type: Annotated[

@@ -18,7 +18,7 @@ from flext_core._protocols import (
     FlextProtocolsService,
     FlextProtocolsSettings,
 )
-from flext_core._protocols._container_parts import flextprotocolscontainer_part_03
+from flext_core._protocols._container import flextprotocolscontainer_part_03
 
 
 class FlextProtocolsContainer(
@@ -28,6 +28,8 @@ class FlextProtocolsContainer(
 
     type ProtocolGuardInput = (
         t.JsonPayload
+        | t.JsonMapping
+        | t.StrSequence
         | t.TypeHintSpecifier
         | Callable[..., t.JsonPayload]
         | FlextProtocolsContainer.Container

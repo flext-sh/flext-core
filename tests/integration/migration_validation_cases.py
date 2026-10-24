@@ -14,7 +14,7 @@ from tests import r, t, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p
+from tests import p
 
 
 def capture_output[T](

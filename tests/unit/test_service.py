@@ -21,7 +21,7 @@ from typing import override
 import pytest
 from flext_tests import FlextTestsCase, FlextTestsSettings
 
-from tests import m, p, r, s, tm
+from tests import c, m, p, r, s, tm
 
 
 class TestsFlextService(FlextTestsCase):
@@ -118,7 +118,7 @@ class TestsFlextService(FlextTestsCase):
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("user_id", "name"),
+        (c.ContextKey.USER_ID, "name"),
         [(1, "test_user"), (2, "other"), (99, "édge-café")],
     )
     def test_service_user_data_round_trips_public_state(
@@ -128,18 +128,19 @@ class TestsFlextService(FlextTestsCase):
         """Test service user data round trips public state."""
         data = m.Tests.ServiceUserData(user_id=user_id, name=name)
 
-        tm.that(data.model_dump(), eq={"user_id": user_id, "name": name})
+        tm.that(data.model_dump(), eq={c.ContextKey.USER_ID: user_id, "name": name})
         tm.that(data, eq=m.Tests.ServiceUserData(user_id=user_id, name=name))
 
     # --- fetch_global(): shared-runtime singleton ------------------------
 
     def test_fetch_global_returns_the_shared_singleton(self) -> None:
         """Test fetch global returns the shared singleton."""
-        first = type(self.service).fetch_global()
-        second = type(self.service).fetch_global()
+        with self._PureService.isolated_test_runtime() as service:
+            first = self._PureService.fetch_global()
+            second = self._PureService.fetch_global()
 
-        tm.that(first is self.service, truth=True)
-        tm.that(second is first, truth=True)
+            tm.that(first is service, truth=True)
+            tm.that(second is first, truth=True)
 
     # --- settings / logger public accessors ------------------------------
 
@@ -206,4 +207,4 @@ class TestsFlextService(FlextTestsCase):
 
         with service.track("load_users") as metrics:
             tm.that(metrics, is_=Mapping)
-            tm.that(metrics["operation_name"], eq="load_users")
+            tm.that(metrics[c.ContextKey.OPERATION_NAME], eq="load_users")

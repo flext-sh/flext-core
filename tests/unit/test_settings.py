@@ -19,7 +19,7 @@ from typing import Self
 import pytest
 
 from flext_core import FlextSettings, settings
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreSettings:
@@ -419,7 +419,7 @@ class TestsFlextCoreSettings:
         snapshot = child.clone(labels={"names": ["snapshot"]})
         plain_snapshot = child.clone()
         derived = ChildSettings.fetch_global(overrides={})
-        ChildSettings.update_global(labels={"names": ["global"]})
+        ChildSettings.update_global(labels={"names": [c.ContextScope.GLOBAL]})
         tm.ok(child is ChildSettings.fetch_global())
         tm.that(snapshot.labels.names, eq=["snapshot"])
         for isolated in (parent, sibling, plain_snapshot, derived):

@@ -217,7 +217,7 @@ class TestsFlextCoreServiceBootstrap:
         """A value that does not satisfy the port protocol fails validation."""
         with pytest.raises(m.ValidationError):
             u.Tests.CountingService.model_validate({
-                "counter": c.Tests.DEFAULT_ERROR_MESSAGE,
+                c.MetricType.COUNTER: c.Tests.DEFAULT_ERROR_MESSAGE,
             })
 
     def test_port_rejects_a_non_conforming_value_on_assignment(self) -> None:
@@ -296,7 +296,7 @@ class TestsFlextCoreServiceBootstrap:
                 str(raised),
                 eq=c.ERR_SERVICE_PORT_TYPE.format(
                     service="ConcretePortService",
-                    field="counter",
+                    field=c.MetricType.COUNTER,
                     port_type=u.Tests.MemoryCounter,
                 ),
             )

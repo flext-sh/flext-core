@@ -38,7 +38,9 @@ class FlextModelsRegistry:
         _registered_keys: set[str] = FlextModelsPydantic.PrivateAttr(
             default_factory=set[str],
         )
-        _class_plugin_storage: ClassVar[dict[str, p.RegisterableService]] = {}
+        _class_plugin_storage: ClassVar[
+            t.MutableMappingKV[str, p.RegisterableService]
+        ] = {}
 
     class RegistrySummary(FlextModelsEntity.Value):
         """Aggregated outcome for batch handler registration tracking."""

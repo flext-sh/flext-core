@@ -106,9 +106,13 @@ class TestsFlextCoreDispatcher:
             received.append(message)
             return r[t.JsonPayload].ok(value=True)
 
-        tm.ok(dispatcher.register_handler(handler, message_type="event", is_event=True))
-        first = m.Event(event_type="event", aggregate_id="dispatcher")
-        second = m.Event(event_type="event", aggregate_id="dispatcher")
+        tm.ok(
+            dispatcher.register_handler(
+                handler, message_type=c.HandlerType.EVENT, is_event=True
+            )
+        )
+        first = m.Event(event_type=c.HandlerType.EVENT, aggregate_id="dispatcher")
+        second = m.Event(event_type=c.HandlerType.EVENT, aggregate_id="dispatcher")
         tm.ok(dispatcher.publish((first, second) if sequence else first))
         tm.that(len(received), eq=2 if sequence else 1)
         tm.that(received[0] is first)
@@ -168,7 +172,7 @@ class TestsFlextCoreDispatcher:
         original, other = u.Tests.AutoSubscriber(), u.Tests.AutoSubscriber()
         first = original.handle
         tm.ok(dispatcher.register_handler(first, message_type="bound"))
-        repeat = tm.ok(
+        repeat: p.HandlerRegistrationReport = tm.ok(
             dispatcher.register_handlers((
                 m.HandlerRegistration(handler=original.handle, message_type="bound"),
             ))
@@ -222,7 +226,7 @@ class TestsFlextCoreDispatcher:
         def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("original")
 
-        report = tm.ok(
+        report: p.HandlerRegistrationReport = tm.ok(
             dispatcher.register_handlers((
                 m.HandlerRegistration(
                     handler=handler, message_type=c.DEFAULT_COMMAND_TYPE
@@ -249,7 +253,7 @@ class TestsFlextCoreDispatcher:
             calls.append("second")
             return r[t.JsonPayload].ok(value=True)
 
-        report = tm.ok(
+        report: p.HandlerRegistrationReport = tm.ok(
             dispatcher.register_handlers(
                 tuple(
                     m.HandlerRegistration(

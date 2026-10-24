@@ -190,7 +190,8 @@ class TestsFlextUtilitiesPydantic:
         payload = TestsFlextUtilitiesPydantic._AliasFactoryContract(**values)
         tm.that(payload.model_label == "model", truth=True)
         tm.that(payload.utility_label == "utility", truth=True)
-        tm.that(payload.model_value == payload.utility_value == "", truth=True)
+        tm.that(payload.model_value, eq="")
+        tm.that(payload.utility_value, eq="")
         tm.that(
             TestsFlextUtilitiesPydantic._AliasFactoryContract.model_validate_json(
                 payload.model_dump_json(by_alias=True),
@@ -320,7 +321,7 @@ class TestsFlextUtilitiesPydantic:
             doubled: int = value * 2
             return doubled
 
-        tm.that(double_positive(4) == 8, truth=True)
+        tm.that(double_positive(4), eq=8)
         with pytest.raises(m.ValidationError):
             double_positive(-1)
 

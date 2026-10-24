@@ -13,7 +13,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
+from types import NoneType, UnionType
+from typing import Annotated, TypeAliasType, TypeVar, Union, get_args, get_origin
 
 import pydantic
 import pydantic_core
@@ -32,7 +34,6 @@ class FlextTypesPydantic:
     type ConfigDict = pydantic.ConfigDict
     type ComputedFieldInfo = pydantic.fields.ComputedFieldInfo
     type FieldInfo = pydantic.fields.FieldInfo
-    constr = pydantic.constr
     type StrictStr = pydantic.StrictStr
     type EmailStr = pydantic.EmailStr
     type NameEmail = pydantic.NameEmail
@@ -41,15 +42,9 @@ class FlextTypesPydantic:
     # on the m/c facades for except/isinstance (TypeAliasType is not catchable).
     type ValidationError = pydantic.ValidationError
 
-    # Numeric constraints (callables — remain attributes)
-    conint = pydantic.conint
-    confloat = pydantic.confloat
-    conbytes = pydantic.conbytes
-    conlist = pydantic.conlist
-    conset = pydantic.conset
-    condate = pydantic.condate
-    condecimal = pydantic.condecimal
-    confrozenset = pydantic.confrozenset
+    # Numeric constraints. The upstream ``con*`` factories are discouraged for
+    # removal in Pydantic 3 (pydantic/types.py:167-174@v2.14.1); constraints are
+    # ``Annotated[..., m.Field(...)]`` / ``StringConstraints`` aliases instead.
     type PositiveInt = pydantic.PositiveInt
     type NonNegativeInt = pydantic.NonNegativeInt
     type NegativeInt = pydantic.NegativeInt
@@ -159,6 +154,16 @@ class FlextTypesPydantic:
     type ErrorTypeInfo = pydantic_core.ErrorTypeInfo
     type InitErrorDetails = pydantic_core.InitErrorDetails
 
+    # Annotation validators and serializers (runtime markers placed in
+    # ``Annotated`` metadata); t owns every annotation marker type.
+    AfterValidator = pydantic.AfterValidator
+    BeforeValidator = pydantic.BeforeValidator
+    PlainValidator = pydantic.PlainValidator
+    WrapValidator = pydantic.WrapValidator
+    PlainSerializer = pydantic.PlainSerializer
+    WrapSerializer = pydantic.WrapSerializer
+    GetPydanticSchema = pydantic.GetPydanticSchema
+
     # Annotation and alias helper types (runtime markers / classes)
     AliasGenerator = pydantic.AliasGenerator
     AliasChoices = pydantic.AliasChoices
@@ -169,18 +174,86 @@ class FlextTypesPydantic:
     WithJsonSchema = pydantic.WithJsonSchema
     SkipJsonSchema = pydantic_json_schema.SkipJsonSchema
     SerializeAsAny = pydantic.SerializeAsAny
-    SkipValidation = pydantic.SkipValidation
     AllowInfNan = pydantic.AllowInfNan
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
-    OnErrorOmit = pydantic.OnErrorOmit
 
-    # Dependency port: a field typed by a ``@runtime_checkable`` Protocol from
-    # ``p``. Pydantic validates the value with ``isinstance`` on construction and
-    # on assignment, and the port never enters the JSON Schema. Declare the field
-    # with ``m.Field(exclude=True, description=...)``: field-level metadata cannot
-    # live inside a type alias.
-    type Port[P] = pydantic_json_schema.SkipJsonSchema[P]
+    class PortInstanceOf:
+        """Schema marker validating a port value with ``isinstance``.
+
+        Pydantic's ``InstanceOf`` needs one class and does not see through
+        PEP 695 aliases (``t.LoggingWriteCompletion``, ``p.*`` aliases). This
+        marker resolves aliases, generic origins and unions to the classes
+        ``isinstance`` accepts, so no model needs ``arbitrary_types_allowed``.
+        """
+
+        @classmethod
+        def __get_pydantic_core_schema__(
+            cls,
+            source: type,
+            handler: pydantic.GetCoreSchemaHandler,
+        ) -> core_schema.CoreSchema:
+            """Return the ``isinstance`` schema for ``source``."""
+            del handler
+            return cls.instance_schema(source)
+
+        @classmethod
+        def instance_schema(
+            cls,
+            target: type,
+            bound: Mapping[TypeVar, type] | None = None,
+        ) -> core_schema.CoreSchema:
+            """Resolve ``target`` to ``is_instance``/``none``/union schemas.
+
+            ``bound`` maps the type parameters of an enclosing generic alias
+            to the arguments it was subscripted with.
+            """
+            scope = bound or {}
+            if isinstance(target, TypeVar):
+                return (
+                    cls.instance_schema(scope[target])
+                    if target in scope
+                    else core_schema.any_schema()
+                )
+            if isinstance(target, TypeAliasType):
+                return cls.instance_schema(target.__value__, scope)
+            origin = get_origin(target)
+            args = get_args(target)
+            if isinstance(origin, TypeAliasType):
+                return cls.instance_schema(
+                    origin.__value__,
+                    {
+                        **scope,
+                        **dict(
+                            zip(
+                                origin.__type_params__,
+                                (scope.get(arg, arg) for arg in args),
+                                strict=False,
+                            )
+                        ),
+                    },
+                )
+            if origin in {Union, UnionType}:
+                return core_schema.union_schema([
+                    cls.instance_schema(member, scope) for member in args
+                ])
+            if origin is Annotated:
+                return cls.instance_schema(args[0], scope)
+            if target is None or target is NoneType:
+                return core_schema.none_schema()
+            return core_schema.is_instance_schema(origin or target)
+
+    # Dependency port: a field typed by a class, normally a
+    # ``@runtime_checkable`` Protocol from ``p``, or an alias over such classes.
+    # ``PortInstanceOf`` validates the value with ``isinstance`` on
+    # construction and on assignment; the port never enters the JSON Schema.
+    # Declare the field with ``m.Field(exclude=True, description=...)``:
+    # field-level metadata cannot live inside a type alias.
+    type Port[P] = Annotated[
+        P,
+        PortInstanceOf(),
+        pydantic_json_schema.SkipJsonSchema(),
+    ]
 
 
 __all__: list[str] = ["FlextTypesPydantic", "JsonValue"]

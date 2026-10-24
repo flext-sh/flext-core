@@ -14,14 +14,11 @@ from __future__ import annotations
 
 import sys
 import types
-from typing import TYPE_CHECKING, Never
+from typing import Never
 
 import pytest
 
-from tests import tm, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import p, tm, u
 
 _OUTSIDE_CONTEXT = "Working outside of application context"
 _PROBE_MODULE = "probe_module_with_proxy"

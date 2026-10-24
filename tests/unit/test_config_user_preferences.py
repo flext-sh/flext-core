@@ -20,6 +20,7 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Iterator
+from importlib.metadata import distribution
 from pathlib import Path
 from types import ModuleType
 
@@ -59,7 +60,7 @@ def _install_package(root: Path, package: str, defaults: str) -> ModuleType:
     return importlib.import_module(f"{package}._config")
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def isolate_import_state() -> Iterator[None]:
     """Drop synthetic packages from the import cache between tests."""
     original_path = list(sys.path)
@@ -72,6 +73,8 @@ def isolate_import_state() -> Iterator[None]:
 
 class TestPackagedConfigWithUserPreferences:
     """Packaged defaults plus optional user overlay, keyed by package namespace."""
+
+    pytestmark = pytest.mark.usefixtures("isolate_import_state")
 
     @staticmethod
     def _install_packaged(
@@ -320,6 +323,84 @@ class TestPackagedConfigWithUserPreferences:
             module = importlib.import_module("synthpkg_missing.declared")
             with pytest.raises(FileNotFoundError, match="declared config directory"):
                 module.DeclaredConfig.fetch_global()
+
+    @staticmethod
+    @pytest.mark.parametrize("layout", ["site-packages", "src"])
+    @pytest.mark.parametrize("installed", [True, False])
+    @pytest.mark.parametrize(
+        "owner_names",
+        [("resource-owner",), ("resource-owner", "competing-owner")],
+    )
+    def test_distribution_owns_recorded_defaults_independently_of_import_layout(
+        tmp_path: Path,
+        layout: str,
+        owner_names: tuple[str, ...],
+        *,
+        installed: bool,
+    ) -> None:
+        """Recorded wheel resources own defaults even with editable Python code."""
+        with u.Tests.env_vars_context(
+            env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
+        ):
+            package = "synthpkg_distribution_resource"
+            source_root = tmp_path / layout
+            _install_package(source_root, package, "greeting: source\n")
+            (source_root / package / "declared.py").write_text(
+                "from typing import ClassVar\n"
+                f"from {package}._config import SynthConfig\n"
+                "class DeclaredConfig(SynthConfig):\n"
+                "    CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = (\n"
+                "        'defaults.yaml',)\n",
+                encoding="utf-8",
+            )
+            site = tmp_path / "site-packages"
+            for name in owner_names:
+                metadata = site / f"{name.replace('-', '_')}-1.0.dist-info"
+                metadata.mkdir(parents=True)
+                (metadata / "METADATA").write_text(
+                    f"Metadata-Version: 2.1\nName: {name}\nVersion: 1.0\n",
+                    encoding="utf-8",
+                )
+                (metadata / "RECORD").write_text(
+                    f"{package}/config/defaults.yaml,,\n",
+                    encoding="utf-8",
+                )
+            config_dir = site / package / "config"
+            default = config_dir / "defaults.yaml"
+            if installed:
+                config_dir.mkdir(parents=True, exist_ok=True)
+                default.write_text("greeting: installed\n", encoding="utf-8")
+            elif default.exists():
+                default.unlink()
+            sys.path.insert(0, str(site))
+            module = importlib.import_module(f"{package}.declared")
+            tm.that(
+                Path(
+                    str(
+                        distribution("resource-owner").locate_file(
+                            f"{package}/config/defaults.yaml",
+                        )
+                    )
+                ),
+                eq=default,
+            )
+            tm.that(module.DeclaredConfig.CONFIG_FILENAMES, eq=("defaults.yaml",))
+
+            if len(owner_names) > 1:
+                with pytest.raises(
+                    RuntimeError, match="multiple installed distributions"
+                ):
+                    module.DeclaredConfig.fetch_global()
+            elif installed:
+                tm.that(module.DeclaredConfig.fetch_global().greeting, eq="installed")
+            else:
+                error = (
+                    "declared config files"
+                    if layout == "site-packages"
+                    else "declared config directory"
+                )
+                with pytest.raises(FileNotFoundError, match=error):
+                    module.DeclaredConfig.fetch_global()
 
     @staticmethod
     def test_explicit_config_dir_env_override_replaces_the_root(

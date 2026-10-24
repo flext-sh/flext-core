@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-from flext_core._constants._enforcement_parts import FlextConstantsEnforcementRules
+from flext_core._constants._enforcement import FlextConstantsEnforcementRules
 from flext_core._typings import FlextTypingBase
 
 

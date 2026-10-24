@@ -30,8 +30,8 @@ class ExamplesFlextContainerRegistration(ExamplesFlextShared):
         self._registered_resource_name = ""
         self._registered_missing_name = ""
         self._registered_bad_factory_name = ""
-        self._factory_calls = {"count": 0}
-        self._resource_calls = {"count": 0}
+        self._factory_calls = {c.Aggregation.COUNT: 0}
+        self._resource_calls = {c.Aggregation.COUNT: 0}
 
     @staticmethod
     def _write_outcome(write: Callable[[], p.Container]) -> p.Result[bool]:
@@ -113,8 +113,8 @@ class ExamplesFlextContainerRegistration(ExamplesFlextShared):
         factory_calls = self._factory_calls
 
         def _factory_counter() -> int:
-            factory_calls["count"] += 1
-            return factory_calls["count"]
+            factory_calls[c.Aggregation.COUNT] += 1
+            return factory_calls[c.Aggregation.COUNT]
 
         register_factory_ok = container.factory(factory_name, _factory_counter)
         factory_duplicate = self._write_outcome(
@@ -147,8 +147,8 @@ class ExamplesFlextContainerRegistration(ExamplesFlextShared):
         resource_calls = self._resource_calls
 
         def _resource_data() -> t.IntMapping:
-            resource_calls["count"] += 1
-            return {self.rand_str(4): resource_calls["count"]}
+            resource_calls[c.Aggregation.COUNT] += 1
+            return {self.rand_str(4): resource_calls[c.Aggregation.COUNT]}
 
         register_resource_ok = container.resource(resource_name, _resource_data)
         cross_kind = self._write_outcome(
@@ -182,12 +182,12 @@ class ExamplesFlextContainerRegistration(ExamplesFlextShared):
         self.audit_check("get.factory.success", get_factory.success)
         self.audit_check(
             "get.factory.invoked_per_resolve",
-            self._factory_calls["count"],
+            self._factory_calls[c.Aggregation.COUNT],
         )
         self.audit_check("get.resource.success", get_resource.success)
         self.audit_check(
             "get.resource.invoked_per_resolve",
-            self._resource_calls["count"],
+            self._resource_calls[c.Aggregation.COUNT],
         )
         self.audit_check("get.missing.failure", get_missing.failure)
         self.audit_check("get.bad_factory.failure", get_bad_factory.failure)

@@ -20,7 +20,7 @@ from tests import m, r, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import p
+from tests import p
 
 
 def _counting_operation(
@@ -127,10 +127,11 @@ class TestsFlextCoreUtilitiesReliability:
         """Test retry catches retryable exception then succeeds."""
         attempts: list[int] = []
         transient = ValueError("boom")
+        expected_attempts = 2
 
         def op() -> p.Result[int]:
             attempts.append(len(attempts))
-            if len(attempts) < 2:
+            if len(attempts) < expected_attempts:
                 raise transient
             return r[int].ok(self.SUCCESS_VALUE)
 

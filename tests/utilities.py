@@ -82,7 +82,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
             def dispatch_message(
                 self,
                 message: t.JsonPayload,
-                operation: str = c.DEFAULT_HANDLER_MODE,
+                operation: str = c.HandlerMode.COMMAND,
             ) -> p.Result[t.JsonPayload]:
                 handler_mode = getattr(
                     self._config_model.handler_mode,
@@ -90,7 +90,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
                     self._config_model.handler_mode,
                 )
                 valid_operations = {
-                    c.DEFAULT_HANDLER_MODE,
+                    c.HandlerMode.COMMAND,
                     c.HandlerMode.QUERY,
                     c.HandlerType.EVENT.value,
                 }
@@ -146,15 +146,6 @@ class TestsFlextUtilities(FlextTestsUtilities):
                     return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
-            @override
-            def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
-                if data is None:
-                    return r[bool].fail_op(
-                        "validate handler message",
-                        c.ERR_MESSAGE_CANNOT_BE_NONE,
-                    )
-                return r[bool].ok(value=True)
-
         class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for validation."""
 
@@ -162,8 +153,9 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
+            @staticmethod
             @override
-            def validate_message(self, data: t.JsonPayload) -> p.Result[bool]:
+            def validate_message(data: t.JsonPayload) -> p.Result[bool]:
                 return (
                     r[bool].ok(value=True)
                     if data
@@ -204,22 +196,22 @@ class TestsFlextUtilities(FlextTestsUtilities):
 
         HANDLER_TYPES: ClassVar[Sequence[HandlerTypeScenario]] = [
             HandlerTypeScenario(
-                name="command",
+                name=c.HandlerMode.COMMAND,
                 handler_type=c.HandlerType.COMMAND,
                 handler_mode=c.HandlerType.COMMAND,
             ),
             HandlerTypeScenario(
-                name="query",
+                name=c.HandlerMode.QUERY,
                 handler_type=c.HandlerType.QUERY,
                 handler_mode=c.HandlerType.QUERY,
             ),
             HandlerTypeScenario(
-                name="event",
+                name=c.HandlerType.EVENT,
                 handler_type=c.HandlerType.EVENT,
                 handler_mode=c.HandlerType.EVENT,
             ),
             HandlerTypeScenario(
-                name="saga",
+                name=c.HandlerType.SAGA,
                 handler_type=c.HandlerType.SAGA,
                 handler_mode=c.HandlerType.SAGA,
             ),
@@ -386,7 +378,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
     class TestsFlextBeartypeEngine:
         """Shared beartype engine test support."""
 
-        FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
+        FORBIDDEN: frozenset[str] = frozenset({"dict", c.Action.LIST, "set"})
 
         @staticmethod
         def _run_python(script: str, cwd: Path) -> p.Cli.CommandOutput:

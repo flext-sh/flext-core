@@ -179,6 +179,10 @@ class TestsFlextCoreTypingsContainers:
 
     # ---- m.ConfigMap: shares the mapping contract --------------------------
 
+
+class TestsFlextCoreTypedCollectionAliases:
+    """Config maps, object lists, and scalar/tuple alias contracts."""
+
     @staticmethod
     def test_configmap_getitem_returns_settings() -> None:
         """m.ConfigMap exposes configuration values by key."""
@@ -249,7 +253,7 @@ class TestsFlextCoreTypingsContainers:
         tm.ok(isinstance(scalar, c.SCALAR_TYPES))
 
     @staticmethod
-    @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
+    @pytest.mark.parametrize("nonscalar", [[c.Action.LIST], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
         nonscalar: list[str] | t.MappingKV[str, int] | tuple[str],
     ) -> None:

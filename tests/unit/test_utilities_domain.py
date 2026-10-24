@@ -10,13 +10,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections import UserDict, UserList
+from types import MappingProxyType
+
 import pytest
 
-from tests import tm, u
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreUtilitiesDomain:
     """Public-contract behavior of the value-conversion utilities."""
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        "value",
+        [
+            MappingProxyType({"native": [None, True]}),
+            UserDict({"native": [None, True]}),
+            UserList(["native", "view"]),
+            ("native", "view"),
+        ],
+    )
+    def test_to_str_preserves_native_collection_formatting(
+        value: t.JsonMapping | t.StrSequence,
+    ) -> None:
+        """Abstract collections use native string formatting, not JSON admission."""
+        tm.that(u.to_str(value), eq=str(value))
 
     # ----------------------------------------------------------------- join
     @staticmethod
@@ -100,7 +119,7 @@ class TestsFlextCoreUtilitiesDomain:
         [
             ("single", ["single"]),
             (["a", "b"], ["a", "b"]),
-            ([1, 2], ["1", "2"]),
+            ([1, 2], [c.ParserBooleanToken.ONE, "2"]),
             (None, []),
         ],
     )
@@ -143,6 +162,12 @@ class TestsFlextCoreUtilitiesDomain:
     def test_to_int_invalid_uses_default() -> None:
         """Test to int invalid uses default."""
         tm.that(u.to_int("nope", default=99), eq=99)
+
+    @staticmethod
+    @pytest.mark.parametrize("value", [b"7", b"invalid"])
+    def test_to_int_bytes_retain_default_branch(value: bytes) -> None:
+        """Bytes are not numeric strings in this conversion contract."""
+        tm.that(u.to_int(value, default=99), eq=99)
 
     # ------------------------------------------------------------- to_float
     @staticmethod

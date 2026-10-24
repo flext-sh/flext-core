@@ -37,7 +37,8 @@ from typing import Annotated, ClassVar
 
 from flext_core import m
 from flext_core.models import FlextModelsNamespace
-from tests import u
+from tests import c, r
+from tests import c, u
 
 
 class TestsFlextBadAnyField(m.ArbitraryTypesModel):

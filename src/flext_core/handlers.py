@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._handlers_parts.flexthandlers_part_07 import FlextHandlersPart07
+from flext_core._handlers.flexthandlers_part_07 import FlextHandlersPart07
 
 if TYPE_CHECKING:
     from flext_core import p

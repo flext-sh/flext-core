@@ -66,7 +66,7 @@ class TestsFlextUtilitiesParserScenariosMixin:
         ),
         m.Tests.PublicParseCase(
             name="string-to-bool",
-            input_value="true",
+            input_value=c.ParserBooleanToken.TRUE,
             target=bool,
             should_succeed=True,
             expected_value=True,

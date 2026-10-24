@@ -333,7 +333,7 @@ def fetch_profile_name(user_id: str) -> p.Result[str]:
     """
     expected_user_id = "u-1"
     if user_id != expected_user_id:
-        return e.fail_not_found("user", user_id)
+        return e.fail_not_found(c.ContextScope.USER, user_id)
     return r[str].ok("Ada")
 
 
@@ -375,7 +375,7 @@ failed_parse_error_data = failed_parse.error_data
 if failed_parse_error_data is None:
     message = "Expected operation error data"
     raise RuntimeError(message)
-if failed_parse_error_data["operation"] != "parse age":
+if failed_parse_error_data[c.ContextScope.OPERATION] != "parse age":
     message = "Unexpected operation error payload"
     raise RuntimeError(message)
 ```
@@ -397,7 +397,7 @@ error = e.ValidationError(
     field="email",
     value="bad",
     auto_correlation=True,
-    context={"scope": "profile-service", "user_id": "u-1"},
+    context={"scope": "profile-service", c.ContextKey.USER_ID: "u-1"},
 )
 
 if error.field != "email":
@@ -744,7 +744,11 @@ attempts: AttemptState = RetryState()
 
 
 @d.railway(error_code="RETRY_EXAMPLE")
-@d.retry(max_attempts=expected_attempts, delay_seconds=0.01, backoff_strategy="linear")
+@d.retry(
+    max_attempts=expected_attempts,
+    delay_seconds=0.01,
+    backoff_strategy=c.BackoffStrategy.LINEAR,
+)
 def flaky_operation(state: AttemptState, required_attempts: int, value: int) -> int:
     """Fail twice before returning a stable value.
 

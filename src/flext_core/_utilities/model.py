@@ -12,11 +12,14 @@ from importlib import import_module
 from typing import overload
 
 from pydantic import TypeAdapter
-from typing_extensions import TypeForm
 
 from flext_core import FlextExceptions, FlextResult, c, p, t
 from flext_core._models import FlextModelsConfig, FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesArgs, FlextUtilitiesBase
+from flext_core._utilities import (
+    FlextUtilitiesArgs,
+    FlextUtilitiesBase,
+    FlextUtilitiesTypingAdapterJson,
+)
 
 
 class FlextUtilitiesModel:
@@ -28,15 +31,28 @@ class FlextUtilitiesModel:
         options: FlextModelsConfig.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> t.MappingKV[str, t.JsonPayload]:
+        """Unified Pydantic serialization with options.
+
+        Generic replacement for: model.model_dump() with consistent return type.
+
+        Args:
+            model: Pydantic model instance to serialize.
+            options: Optional Pydantic model_dump arguments within the settings model.
+            **kwargs: Inline serialization options mapped to ModelDumpOptions;
+                invalid options fail loudly instead of silently falling
+                back to defaults.
+
+        Returns:
+            Dictionary representation of the model.
+
+        """
         opts = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
             FlextModelsConfig.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
-        dumped: t.JsonMapping = FlextUtilitiesBase.type_adapter(
-            TypeForm(t.JsonMapping)
-        ).validate_python(
+        dumped: t.JsonMapping = FlextUtilitiesTypingAdapterJson.json_mapping_adapter().validate_python(
             model.model_dump(mode="json", **opts_dict),
         )
         return dumped
@@ -81,7 +97,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: type[TValue],
-        data: t.JsonPayload | t.FlatContainer,
+        data: t.ValidationInput[p.Model],
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -91,7 +107,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: t.ValueAdapter[TValue],
-        data: t.JsonPayload | t.FlatContainer,
+        data: t.ValidationInput[p.Model],
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -100,12 +116,15 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: t.ValueAdapter[TValue] | type[TValue],
-        data: t.JsonPayload | t.FlatContainer,
+        data: t.ValidationInput[p.Model],
         *,
         from_json: bool = False,
         strict: bool | None = None,
     ) -> p.Result[TValue]:
         """Validate one value through a model class or TypeAdapter.
+
+        Python inputs retain their native types until the target validates them.
+        JSON inputs still require encoded text or bytes at the runtime boundary.
 
         Returns:
             The resulting ``p.Result[TValue]``.

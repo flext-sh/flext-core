@@ -11,7 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections import UserList
+from collections.abc import Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from types import MappingProxyType
@@ -20,7 +21,7 @@ from typing import override
 import pytest
 
 from flext_core import p, t
-from tests import m, r, tm, u
+from tests import c, m, r, tm, u
 
 
 class TestsFlextCoreGuards:
@@ -70,7 +71,7 @@ class TestsFlextCoreGuards:
             def __iter__(self) -> Iterator[p.AttributeProbe]:
                 events.append("iter")
                 message = "unexpected mapping iteration"
-                raise AssertionError(message)
+                tm.reject(message)
 
             @override
             def __len__(self) -> int:
@@ -205,9 +206,9 @@ class TestsFlextCoreGuards:
         tm.that(subject is result, truth=True)
         tm.that(subject.value is handle, truth=True)
         tm.that(u.result_like(r[str].ok("value")), truth=True)
-        tm.that(u.result_like(False), truth=False)
+        tm.that(u.result_like(value=False), truth=False)
         tm.that(u.result_view(handle), truth=False)
-        tm.that(u.result_view(True), truth=False)
+        tm.that(u.result_view(value=True), truth=False)
 
     # ------------------------------------------------------------------
     # matches_type — string specs
@@ -222,7 +223,7 @@ class TestsFlextCoreGuards:
             (1.5, "float", True),
             (True, "bool", True),
             ({"k": "v"}, "mapping", True),
-            ([1, 2], "list", True),
+            ([1, 2], c.Action.LIST, True),
             ((1, 2), "tuple", True),
             (None, "none", True),
             ("x", "none", False),
@@ -265,6 +266,23 @@ class TestsFlextCoreGuards:
     @staticmethod
     def test_matches_type_unknown_string_spec_returns_false() -> None:
         tm.that(u.matches_type("x", "no_such_spec") is False, truth=True)
+
+    @staticmethod
+    def test_matches_type_inspects_native_mapping_and_sequence_views() -> None:
+        """Inspection preserves abstract collections without JSON admission."""
+        mapping: t.JsonMapping = MappingProxyType({"native": 1})
+        mutable_mapping: t.MutableMappingKV[str, t.JsonValue] = {"native": 1}
+        sequence: t.StrSequence = UserList(["native"])
+        mutable_sequence: t.MutableSequenceOf[str] = ["native"]
+        tm.ok(u.matches_type(mapping, Mapping))
+        tm.ok(u.matches_type(mutable_mapping, dict))
+        tm.fail(u.matches_type(mapping, dict))
+        tm.ok(u.matches_type(sequence, Sequence))
+        tm.ok(u.matches_type(sequence, "list_non_empty"))
+        tm.ok(u.matches_type(mutable_sequence, (list, tuple)))
+        tm.fail(u.matches_type(sequence, (list, tuple)))
+        tm.fail(u.matches_type(sequence, Mapping))
+        tm.fail(u.matches_type(mapping, "no_such_spec"))
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -379,6 +397,11 @@ class TestsFlextCoreGuards:
     # ------------------------------------------------------------------
     # scalar / primitive
     # ------------------------------------------------------------------
+
+
+class TestsFlextCoreScalarAndCollectionGuards:
+    """Scalar classification and collection membership contracts."""
+
     @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
@@ -438,7 +461,7 @@ class TestsFlextCoreGuards:
         tm.that(service.counter is counter, truth=True)
         tm.that(service.execute().unwrap(), eq=1)
         tm.that(service.execute().unwrap(), eq=2)
-        tm.that("counter" in service.model_dump(), truth=False)
+        tm.that(c.MetricType.COUNTER in service.model_dump(), truth=False)
         first = m.Tests.HandlerObservations()
         second = m.Tests.HandlerObservations()
         tm.that(type(first.handled) is list, truth=True)
@@ -590,5 +613,5 @@ class TestsFlextCoreGuards:
     def test_type_name_returns_runtime_qualname() -> None:
         tm.that(u.type_name("x") == "str", truth=True)
         tm.that(u.type_name(1) == "int", truth=True)
-        tm.that(u.type_name([1]) == "list", truth=True)
+        tm.that(u.type_name([1]) == c.Action.LIST, truth=True)
         tm.that(u.type_name(None) == "NoneType", truth=True)

@@ -43,7 +43,8 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         exception: BaseException | None,
     ) -> p.Result[Never]:
         """Construct normalized failure state through the concrete facade."""
-        raise NotImplementedError(f"{error}|{error_code}|{error_data}|{exception}")
+        msg = f"{error}|{error_code}|{error_data}|{exception}"
+        raise NotImplementedError(msg)
 
     @staticmethod
     def require_error(source: p.FailureLike) -> str:
@@ -134,7 +135,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         raw_attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
         if raw_attributes is not None:
             payload = cls.validate_error_data(raw_attributes)
-        correlation_id = getattr(exception, "correlation_id", None)
+        correlation_id = getattr(exception, c.ContextKey.CORRELATION_ID, None)
         if isinstance(correlation_id, str) and correlation_id:
             if payload is None:
                 payload = {}

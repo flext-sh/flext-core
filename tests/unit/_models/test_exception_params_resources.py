@@ -38,7 +38,7 @@ class TestsFlextModelsExceptionParamsResources:
             permission="delete",
         )
         data = params.model_dump()
-        tm.that(data["user_id"], eq="admin")
+        tm.that(data[c.ContextKey.USER_ID], eq="admin")
         tm.that(data["resource"], eq="settings")
         tm.that(data["permission"], eq="delete")
 
@@ -63,20 +63,22 @@ class TestsFlextModelsExceptionParamsResources:
 
     @staticmethod
     def test_not_found_error_params_with_values() -> None:
-        params = m.NotFoundErrorParams(resource_type="user", resource_id="42")
-        tm.that(params.resource_type, eq="user")
+        params = m.NotFoundErrorParams(
+            resource_type=c.ContextScope.USER, resource_id="42"
+        )
+        tm.that(params.resource_type, eq=c.ContextScope.USER)
         tm.that(params.resource_id, eq="42")
 
     @staticmethod
     @pytest.mark.parametrize(
         ("resource_type", "resource_id"),
         [
-            ("user", "42"),
+            (c.ContextScope.USER, "42"),
             ("order", "ord-1001"),
             ("invoice", "INV-2024-001"),
             (None, None),
         ],
-        ids=["user", "order", "invoice", "all-none"],
+        ids=[c.ContextScope.USER, "order", "invoice", "all-none"],
     )
     def test_not_found_error_params_resource_variants(
         resource_type: str | None,
@@ -123,6 +125,10 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(data["resource_type"], eq="invoice")
         tm.that(data["resource_id"], eq="inv-99")
         tm.that(data["conflict_reason"], eq="duplicate_entry")
+
+
+class TestsFlextModelsResourceLimitParams:
+    """Rate-limit and circuit-breaker exception payload contracts."""
 
     @staticmethod
     def test_rate_limit_error_params_defaults() -> None:
@@ -188,7 +194,7 @@ class TestsFlextModelsExceptionParamsResources:
             reset_timeout=15,
         )
         data = params.model_dump()
-        tm.that(data["service_name"], eq="auth-svc")
+        tm.that(data[c.ContextKey.SERVICE_NAME], eq="auth-svc")
         tm.that(data["failure_count"], eq=3)
         tm.that(data["reset_timeout"], eq=15)
 

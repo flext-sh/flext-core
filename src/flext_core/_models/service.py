@@ -54,14 +54,14 @@ class FlextModelsService:
         container's command bus).
         """
 
-        settings: t.Port[p.Settings | None] = FlextModelsPydantic.Field(
+        settings: t.Port[p.Settings] | None = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
             description=(
                 "Settings source cloned once into the elected container scope."
             ),
         )
-        settings_type: t.SkipJsonSchema[p.SettingsType | None] = (
+        settings_type: t.Port[p.SettingsType] | None = (
             FlextModelsPydantic.Field(
                 default=None,
                 exclude=True,
@@ -74,12 +74,12 @@ class FlextModelsService:
                 "Key-value overrides applied on top of the loaded configuration."
             ),
         )
-        context: t.Port[p.Context | None] = FlextModelsPydantic.Field(
+        context: t.Port[p.Context] | None = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
             description="Pre-built execution context to inject into the runtime.",
         )
-        container: t.Port[p.Container | None] = FlextModelsPydantic.Field(
+        container: t.Port[p.Container] | None = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
             description=(
@@ -87,7 +87,7 @@ class FlextModelsService:
                 "the runtime preserves."
             ),
         )
-        dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
+        dispatcher: t.Port[p.Dispatcher] | None = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
             description="Pre-built dispatcher injected into the runtime.",

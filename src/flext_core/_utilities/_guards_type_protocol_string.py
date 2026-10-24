@@ -69,7 +69,7 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
     def _string_predicates() -> Mapping[
         str, Callable[[FlextProtocolsContainer.ProtocolGuardInput], bool]
     ]:
-        """Return the canonical ``type_name`` → predicate registry.
+        """Return predicates keyed by Python type names and protocol selectors.
 
         Returns:
             The resulting mapping of exact protocol-input predicates.

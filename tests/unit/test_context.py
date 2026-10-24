@@ -18,14 +18,22 @@ from typing import override
 import pytest
 import structlog.contextvars
 
-from flext_core import FlextContext, c, h, m, p, r, t, u
-from tests import tm
+from flext_core import FlextContext, h, m, p, t, u
+from tests import c, r, tm
+
+pytestmark = pytest.mark.usefixtures("isolate_process_context")
+
+
+@pytest.fixture
+def isolate_process_context() -> Iterator[None]:
+    """Keep process-global contextvars from leaking across responsibility groups."""
+    FlextContext.clear_context()
+    yield
+    FlextContext.clear_context()
 
 
 class TestsFlextCoreContext:
     """Contract: scope store + metadata + process-global contextvar operations."""
-
-    pytestmark = pytest.mark.usefixtures("_isolate_process_context")
 
     class CorrelationHandler(h[str, str]):
         """Handler returning the identifier selected by public call scoping."""
@@ -33,14 +41,6 @@ class TestsFlextCoreContext:
         @override
         def handle(self, message: str) -> p.Result[str]:
             return r[str].ok(FlextContext.ensure_correlation_id())
-
-    @staticmethod
-    @pytest.fixture
-    def _isolate_process_context() -> Iterator[None]:
-        """Keep process-global contextvars from leaking across tests."""
-        FlextContext.clear_context()
-        yield
-        FlextContext.clear_context()
 
     # --- scope store -----------------------------------------------------
 
@@ -85,7 +85,7 @@ class TestsFlextCoreContext:
     def test_clear_removes_every_stored_key() -> None:
         """Remove every stored key when clearing the scope."""
         ctx = FlextContext()
-        ctx.set("a", "1")
+        ctx.set("a", c.ParserBooleanToken.ONE)
         ctx.set("b", "2")
         ctx.clear()
         tm.fail(ctx.get("a"))
@@ -182,10 +182,14 @@ class TestsFlextCoreContext:
             user_id="user-1",
         )
 
-        tm.ok(ctx.get("operation_id"), eq="op-1")
-        tm.ok(ctx.get("user_id"), eq="user-1")
+        tm.ok(ctx.get(c.ContextKey.OPERATION_ID), eq="op-1")
+        tm.ok(ctx.get(c.ContextKey.USER_ID), eq="user-1")
 
     # --- metadata --------------------------------------------------------
+
+
+class TestsFlextCoreContextMetadata:
+    """Metadata, correlation identifiers, and scoped operation names."""
 
     @staticmethod
     def test_apply_metadata_then_resolve_metadata_returns_stored_value() -> None:
@@ -323,19 +327,23 @@ class TestsFlextCoreContext:
             version="1.2.0",
         ):
             exported = FlextContext.export_full_context()
-            tm.that(exported["service_name"], eq="billing")
-            tm.that(exported["service_version"], eq="1.2.0")
+            tm.that(exported[c.ContextKey.SERVICE_NAME], eq="billing")
+            tm.that(exported[c.ContextKey.SERVICE_VERSION], eq="1.2.0")
         tm.that(
-            "service_name" in FlextContext.export_full_context(),
+            c.ContextKey.SERVICE_NAME in FlextContext.export_full_context(),
             eq=False,
         )
+
+
+class TestsFlextCoreContextIsolation:
+    """Context exports, nested scopes, and runtime isolation."""
 
     @staticmethod
     def test_export_full_context_includes_active_correlation_id() -> None:
         """Include the active correlation identifier in full export."""
         FlextContext.apply_correlation_id("corr-xyz")
         exported = FlextContext.export_full_context()
-        tm.that(exported["correlation_id"], eq="corr-xyz")
+        tm.that(exported[c.ContextKey.CORRELATION_ID], eq="corr-xyz")
 
     @staticmethod
     def test_export_full_context_is_empty_after_clear() -> None:
@@ -512,13 +520,13 @@ class TestsFlextCoreContext:
         state = m.ContextRuntimeState.model_validate({
             "metadata": state.metadata,
             "scope_vars": state.scope_vars,
-            "hooks": {"event": (on_event,)},
+            "hooks": {c.HandlerType.EVENT: (on_event,)},
         })
         updated, variable = u.resolve_context_scope_var(state, "custom")
         tm.fail("custom" in state.scope_vars)
         tm.ok(updated.scope_vars["custom"] is variable)
         tm.ok(updated.metadata is state.metadata)
-        tm.that(updated.hooks["event"][0]("payload"), eq="payload")
+        tm.that(updated.hooks[c.HandlerType.EVENT][0]("payload"), eq="payload")
         repeated, existing = u.resolve_context_scope_var(updated, "custom")
         tm.ok(repeated is updated)
         tm.ok(existing is variable)

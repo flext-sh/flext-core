@@ -1,0 +1,82 @@
+"""Enforcement enum constants for FlextConstantsEnforcement.
+
+Enforcement modes own their runtime vocabulary independently of boolean parser
+tokens. Their declarations do not depend on the facade being assembled.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from enum import StrEnum, unique
+
+
+class FlextConstantsEnforcementEnums:
+    """Canonical enforcement enum namespace."""
+
+    class EnforcementMode(StrEnum):
+        """Controls whether violations raise, warn, or are ignored."""
+
+        OFF = "off"
+        STRICT = "strict"
+        WARN = "warn"
+
+    class EnforcementLayer(StrEnum):
+        """Facade layer where a violation is raised."""
+
+        CONSTANTS = "Constants"
+        MODEL = "Model"
+        NAMESPACE = "namespace"
+        PROTOCOLS = "Protocols"
+        TYPES = "Types"
+        UTILITIES = "Utilities"
+
+    class EnforcementSeverity(StrEnum):
+        """Severity label attached to every violation."""
+
+        BEST_PRACTICES = "best practices"
+        HARD_RULES = "HARD rules"
+        NAMESPACE_RULES = "namespace rules"
+
+    @unique
+    class EnforcementRuleSeverity(StrEnum):
+        """Severity scale a catalog rule declares."""
+
+        CRITICAL = "CRITICAL"
+        HIGH = "HIGH"
+        MEDIUM = "MEDIUM"
+        LOW = "LOW"
+
+    @unique
+    class EnforcementSourceKind(StrEnum):
+        """Addressable origin layer for a catalog rule."""
+
+        FLEXT_INFRA_RULE = "flext_infra_rule"
+        RUNTIME_WARNING = "runtime_warning"
+        BEARTYPE = "beartype"
+        CODE_SMELL = "code_smell"
+
+    @unique
+    class EnforcementPredicateKind(StrEnum):
+        """Generic detection predicate keyed by AST/typing shape."""
+
+        ALIAS_REBIND = "alias_rebind"
+        ATTR_SHAPE = "attr_shape"
+        CLASS_PLACEMENT = "class_placement"
+        CLASSVAR_CONSTANT = "classvar_constant"
+        COMPATIBILITY_ALIAS = "compatibility_alias"
+        DEPRECATED_SYNTAX = "deprecated_syntax"
+        FIELD_SHAPE = "field_shape"
+        IMPORT_BLACKLIST = "import_blacklist"
+        LIBRARY_IMPORT = "library_import"
+        LOC_CAP = "loc_cap"
+        LOOSE_SYMBOL = "loose_symbol"
+        METHOD_SHAPE = "method_shape"
+        MODEL_CONFIG = "model_config"
+        MODULE_ALIAS = "module_alias"
+        MRO_SHAPE = "mro_shape"
+        PROTOCOL_TREE = "protocol_tree"
+
+
+__all__ = ["FlextConstantsEnforcementEnums"]

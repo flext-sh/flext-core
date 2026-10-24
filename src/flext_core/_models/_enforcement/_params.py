@@ -27,7 +27,6 @@ type _EnforcementPredicateParams = (
     | FlextModelsEnforcementParams.AliasRebindParams
     | FlextModelsEnforcementParams.CompatibilityAliasParams
     | FlextModelsEnforcementParams.LibraryImportParams
-    | FlextModelsEnforcementParams.DuplicateSymbolParams
     | FlextModelsEnforcementParams.DeprecatedSyntaxParams
     | FlextModelsEnforcementParams.MethodShapeParams
     | FlextModelsEnforcementParams.AttrShapeParams
@@ -126,13 +125,6 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         kind: Literal["library_import"] = "library_import"
         modules: t.StrSequence = ()
         """Owned library roots selected by the rule; empty selects all owners."""
-
-    class DuplicateSymbolParams(FlextModelsEnforcementModelBase):
-        """Parameters for DUPLICATE_SYMBOL predicate."""
-
-        kind: Literal["duplicate_symbol"] = "duplicate_symbol"
-        hierarchy: t.StrSequence = ()
-        symbol_kinds: frozenset[str] = frozenset()
 
     class DeprecatedSyntaxParams(FlextModelsEnforcementModelBase):
         """Parameters for DEPRECATED_SYNTAX predicate."""

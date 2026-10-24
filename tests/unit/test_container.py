@@ -13,15 +13,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_core import FlextContainer
-from tests import m, tm, u
-
-if TYPE_CHECKING:
-    from tests import p, t
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCoreContainer:
@@ -109,7 +105,7 @@ class TestsFlextCoreContainer:
         clean_container: p.Container,
     ) -> None:
         """Clear removes every registered name, leaving an empty container."""
-        clean_container.bind("a", "1")
+        clean_container.bind("a", c.ParserBooleanToken.ONE)
         clean_container.factory("b", u.Tests.create_factory("2"))
         clean_container.clear()
         tm.that(

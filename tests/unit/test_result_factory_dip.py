@@ -87,6 +87,10 @@ class TestsFlextCoreResultFactoryDip:
         fail_result: p.Result[str] = r[str].fail("boom")
         tm.that(ok_result, is_=p.Result)
         tm.that(fail_result, is_=p.Result)
+        tm.that(ok_result, is_=p.ResultView)
+        tm.that(fail_result, is_=p.ResultView)
+        tm.that(ok_result, is_=p.ResultState)
+        tm.that(fail_result, is_=p.ResultState)
         tm.that(ok_result, is_=p.SuccessCheckable)
         tm.that(fail_result, is_=p.SuccessCheckable)
 
@@ -121,7 +125,7 @@ class TestsFlextCoreResultFactoryDip:
 
     @staticmethod
     @pytest.mark.parametrize("failed", [False, True])
-    def test_empty_flow_preserves_original_identity(failed: bool) -> None:
+    def test_empty_flow_preserves_original_identity(*, failed: bool) -> None:
         """A zero-step flow neither reconstructs state nor invokes a callback."""
         source: p.Result[int] = r[int].fail("stopped") if failed else r[int].ok(3)
         result: p.Result[int] = source.flow_through()
@@ -194,6 +198,10 @@ class TestsFlextCoreResultFactoryDip:
             tm.that(isinstance(mapped, FlextResult), truth=True)
             tm.that(isinstance(flat, FlextResult), truth=True)
             tm.that(isinstance(copied, FlextResult), truth=True)
+
+
+class TestsFlextCoreResultFailureFactories:
+    """Foreign failure conversion, validation, and sensitive metadata."""
 
     @staticmethod
     def test_from_failure_rebuilds_foreign_failure_like() -> None:

@@ -267,6 +267,10 @@ class TestsFlextCorePublicApiContract:
         with pytest.raises(exc_type, match="broken"):
             raise exc_type(message)
 
+
+class TestsFlextCoreFacadeLifecycle:
+    """Published metadata and facade registry lifecycle."""
+
     @staticmethod
     def test_version_metadata_is_usable_string() -> None:
         """The package publishes a non-empty ``__version__`` string."""

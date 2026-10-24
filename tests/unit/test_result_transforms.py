@@ -20,7 +20,7 @@ from tests import r, tm, u
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests import p
+from tests import p
 
 
 def _floor_divide(dividend: int, divisor: int) -> int:
@@ -78,8 +78,7 @@ class TestsFlextResultTransforms:
 
         unchanged = success.map_error(lambda e: f"PREFIX: {e}")
 
-        tm.ok(unchanged)
-        tm.that(unchanged.value, eq="value")
+        tm.ok(unchanged, eq="value")
         tm.that(unchanged is success, truth=True)
 
     @staticmethod
@@ -163,8 +162,7 @@ class TestsFlextResultTransforms:
         filtered = result.filter(lambda x: x > predicate_ceiling)
 
         if expect_success:
-            tm.ok(filtered)
-            tm.that(filtered.value, eq=value)
+            tm.ok(filtered, eq=value)
         else:
             tm.fail(filtered)
 
@@ -173,7 +171,8 @@ class TestsFlextResultTransforms:
         """Filter never runs its predicate on a failure and preserves the error."""
         result: p.Result[int] = r[int].fail("error")
 
-        filtered = result.filter(lambda x: x > 5)
+        threshold = 5
+        filtered = result.filter(lambda x: x > threshold)
 
         tm.fail(filtered)
         tm.that(filtered.error, eq="error")
@@ -183,8 +182,7 @@ class TestsFlextResultTransforms:
         """Map applies the function to a success value."""
         result = r[int].ok(3).map(lambda x: x + 1)
 
-        tm.ok(result)
-        tm.that(result.value, eq=4)
+        tm.ok(result, eq=4)
 
     @staticmethod
     def test_map_is_noop_on_failure() -> None:
@@ -199,8 +197,7 @@ class TestsFlextResultTransforms:
         """flat_map chains a result-returning function on a success."""
         result = r[int].ok(3).flat_map(lambda x: r[int].ok(x * 2))
 
-        tm.ok(result)
-        tm.that(result.value, eq=6)
+        tm.ok(result, eq=6)
 
     @staticmethod
     def test_flat_map_short_circuits_on_failure() -> None:
@@ -223,6 +220,10 @@ class TestsFlextResultTransforms:
         """unwrap_or yields the success value, or the fallback on failure."""
         tm.that(result.unwrap_or(fallback), eq=expected)
 
+
+class TestsFlextResultSequenceTransforms:
+    """Sequential flow and traversal contracts."""
+
     @staticmethod
     def test_flow_through_chains_multiple_operations() -> None:
         """flow_through pipes a value through successive fallible steps."""
@@ -235,8 +236,7 @@ class TestsFlextResultTransforms:
 
         final = r[int].ok(5).flow_through(add_one, multiply_two)
 
-        tm.ok(final)
-        tm.that(final.value, eq=12)
+        tm.ok(final, eq=12)
 
     @staticmethod
     def test_flow_through_stops_on_first_failure() -> None:
@@ -267,9 +267,10 @@ class TestsFlextResultTransforms:
     @staticmethod
     def test_traverse_fails_fast_on_first_failure() -> None:
         """Traverse stops at the first item that maps to a failure."""
+        rejected = 2
         result = r.traverse(
             [1, 2, 3],
-            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
+            lambda x: r[int].fail("error") if x == rejected else r[int].ok(x),
         )
 
         _ = u.Tests.assert_failure(result)

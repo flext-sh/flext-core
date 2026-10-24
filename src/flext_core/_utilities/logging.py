@@ -59,7 +59,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = c.Status.SUCCESS if success else c.Status.FAILED
-            context: dict[str, p.LogValue] = {
+            context: t.MutableMappingKV[str, p.LogValue] = {
                 c.MetadataKey.DURATION_SECONDS: elapsed,
                 c.HandlerType.OPERATION: self._operation_name,
                 c.FIELD_STATUS: status,

@@ -99,11 +99,9 @@ class FlextUtilitiesContext:
     OPERATION_START_TIME: ClassVar[p.ContextProxy[datetime]] = StructlogProxyContextVar[
         datetime
     ](c.ContextKey.OPERATION_START_TIME)
-    OPERATION_METADATA: ClassVar[p.ContextProxy[dict[str, t.JsonValue]]] = (
-        StructlogProxyContextVar[dict[str, t.JsonValue]](
-            c.ContextKey.OPERATION_METADATA
-        )
-    )
+    OPERATION_METADATA: ClassVar[p.ContextProxy[t.JsonDict]] = StructlogProxyContextVar[
+        t.JsonDict
+    ](c.ContextKey.OPERATION_METADATA)
 
     @staticmethod
     def create_str_proxy(key: str, default: str | None = None) -> p.ContextProxy[str]:
@@ -129,17 +127,15 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def create_dict_proxy(
-        key: str, default: dict[str, t.JsonValue] | None = None
-    ) -> p.ContextProxy[dict[str, t.JsonValue]]:
+        key: str, default: t.JsonDict | None = None
+    ) -> p.ContextProxy[t.JsonDict]:
         """Create a mapping proxy over the shared structlog storage.
 
         Returns:
             The mapping context proxy.
 
         """
-        return FlextUtilitiesContext.StructlogProxyContextVar[dict[str, t.JsonValue]](
-            key, default
-        )
+        return FlextUtilitiesContext.StructlogProxyContextVar[t.JsonDict](key, default)
 
     @staticmethod
     def resolve_correlation_id() -> str | None:
@@ -242,7 +238,7 @@ class FlextUtilitiesContext:
         """
         start = FlextUtilitiesGenerators.generate_datetime_utc()
         perf = time.perf_counter()
-        payload: dict[str, t.JsonValue] = {
+        payload: t.JsonDict = {
             str(c.MetadataKey.START_TIME): start.isoformat(),
             str(c.ContextKey.OPERATION_NAME): operation_name or "",
         }
@@ -369,17 +365,23 @@ class FlextUtilitiesContext:
     def update_context_operation(
         state: p.ContextRuntimeState, operation: str
     ) -> p.ContextRuntimeState:
+        """Copy state with the existing counter and operation-metric updates.
+
+        Returns:
+            The state with updated operation statistics.
+
+        """
         counters: t.MappingKV[str, int] = {
             "sets": state.statistics.sets,
             "gets": state.statistics.gets,
             "removes": state.statistics.removes,
             "clears": state.statistics.clears,
         }
-        updates: dict[str, t.JsonPayload] = {}
+        updates: t.MutableMappingKV[str, t.JsonPayload] = {}
         counter = f"{operation}s"
         if counter in counters:
             updates[counter] = counters[counter] + 1
-        operations: dict[str, t.JsonValue] = {
+        operations: t.JsonDict = {
             key: value
             for key, value in state.statistics.operations.items()
             if isinstance(value, c.PRIMITIVES_TYPES)

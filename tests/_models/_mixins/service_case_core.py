@@ -6,16 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar, override
+from typing import Annotated, ClassVar, override
 
 from flext_tests import r
 from typing_extensions import TypeForm
 
 from flext_core import m, u
-from tests import s, t
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import p, s, t
 
 
 class TestsFlextModelsServiceCaseCoreMixin:

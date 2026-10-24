@@ -13,7 +13,7 @@ import uuid
 
 import pytest
 
-from tests import t, tm, u
+from tests import c, t, tm, u
 
 type _ConvValue = str | float | int | bool | None
 
@@ -29,7 +29,7 @@ class TestsFlextCoreUtilities:
             (1, "str", False),
             (1, "int", True),
             (True, "bool", True),
-            ([1], "list", True),
+            ([1], c.Action.LIST, True),
             ({}, "dict", True),
             ("abc", "int", False),
         ],
@@ -67,8 +67,8 @@ class TestsFlextCoreUtilities:
     @pytest.mark.parametrize(
         ("value", "expected"),
         [
-            ("true", True),
-            ("false", True),
+            (c.ParserBooleanToken.TRUE, True),
+            (c.ParserBooleanToken.FALSE, True),
             ("non-empty", True),
             (True, True),
             (False, False),
@@ -190,7 +190,7 @@ class TestsFlextCoreUtilities:
     @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [(1, "int"), ("a", "str"), ([], "list")],
+        [(1, "int"), ("a", "str"), ([], c.Action.LIST)],
     )
     def test_type_name_reports_runtime_type_name(
         value: int | str | list[int],

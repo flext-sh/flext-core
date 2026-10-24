@@ -16,7 +16,7 @@ from tests import c, m, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from tests import t
+from tests import t
 
 
 class TestsFlextCoreUtilitiesCollection:
@@ -34,7 +34,7 @@ class TestsFlextCoreUtilitiesCollection:
         repository_root = tmp_path / "flext"
         repository_root.mkdir()
         config_payload = m.ConfigMap.model_validate({
-            "event": "sync-users",
+            c.HandlerType.EVENT: "sync-users",
             "repository_root": repository_root,
             "attempt_count": 2,
             "ignored": None,
@@ -94,8 +94,7 @@ class TestsFlextCoreUtilitiesCollection:
         """Test find returns matching element or failure."""
         result = u.find(items, predicate)
         if expect_found:
-            tm.ok(result)
-            tm.that(result.value, eq=expected)
+            tm.ok(result, eq=expected)
         else:
             tm.fail(result)
 
@@ -180,8 +179,7 @@ class TestsFlextCoreUtilitiesCollection:
     ) -> None:
         """Test process applies processor with optional predicate."""
         result = u.process(items, processor, predicate=predicate)
-        tm.ok(result)
-        tm.that(result.value, eq=expected)
+        tm.ok(result, eq=expected)
 
     @staticmethod
     def test_process_uppercases_each_string() -> None:
@@ -233,7 +231,7 @@ class TestsFlextCoreUtilitiesCollection:
         """Test merge mappings override replaces values."""
         base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
         other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
-        result = u.merge_mappings(base, other, strategy="override")
+        result = u.merge_mappings(base, other, strategy=c.MergeStrategy.OVERRIDE)
         tm.ok(result)
         tm.that(result.value["a"], eq=1)
         tm.that(result.value["c"], eq=3)

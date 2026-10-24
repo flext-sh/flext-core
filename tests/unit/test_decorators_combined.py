@@ -7,15 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from typing import TYPE_CHECKING
 
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import d, e, r, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import d, e, p, r, tm
 
 
 class TestsFlextCoreDecoratorsCombined:
@@ -87,10 +83,10 @@ class TestsFlextCoreDecoratorsCombined:
         tm.that(business_operation.__name__, eq="business_operation")
 
     @staticmethod
-    @pytest.mark.parametrize("succeeds", (True, False))
+    @pytest.mark.parametrize("succeeds", [True, False])
     @pytest.mark.parametrize(
         "decorator",
-        (d.railway(), d.combined(railway_enabled=True)),
+        [d.railway(), d.combined(railway_enabled=True)],
     )
     def test_railway_preserves_a_preexisting_result(
         decorator: p.RailwayDecorator,
@@ -117,7 +113,7 @@ class TestsFlextCoreDecoratorsCombined:
     @staticmethod
     @pytest.mark.parametrize(
         "decorator",
-        (d.railway(), d.combined(railway_enabled=True)),
+        [d.railway(), d.combined(railway_enabled=True)],
     )
     def test_railway_normalizes_a_mixed_return_contract(
         decorator: p.RailwayDecorator,
@@ -194,13 +190,14 @@ class TestsFlextCoreDecoratorsCombined:
         # Arrange
         """Test stacking railway over retry recovers then wraps."""
         attempts = 0
+        succeeding_attempt = 2
 
         @d.railway()
         @d.retry(max_attempts=3, delay_seconds=0.001)
         def flaky_with_railway() -> str:
             nonlocal attempts
             attempts += 1
-            if attempts < 2:
+            if attempts < succeeding_attempt:
                 error_msg = "Retry me"
                 raise RuntimeError(error_msg)
             return "success"
@@ -210,7 +207,7 @@ class TestsFlextCoreDecoratorsCombined:
 
         # Assert
         tm.ok(outcome, eq="success")
-        tm.that(attempts, eq=2)
+        tm.that(attempts, eq=succeeding_attempt)
 
     @staticmethod
     @pytest.mark.parametrize(

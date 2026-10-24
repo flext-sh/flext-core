@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar
 
+from flext_core._constants import FlextConstantsFile
+
 
 class FlextConstantsLogging:
     """SSOT for logging level enumeration and log message templates."""
@@ -43,9 +45,9 @@ class FlextConstantsLogging:
 
     # Workspace / path detection
     REPOSITORY_ROOT_MARKERS: ClassVar[frozenset[str]] = frozenset({
-        "pyproject.toml",
-        ".git",
-        "poetry.lock",
+        FlextConstantsFile.PYPROJECT_FILENAME,
+        FlextConstantsFile.GIT_DIR_NAME,
+        FlextConstantsFile.POETRY_LOCK_FILENAME,
     })
     VENV_DIR_NAME: ClassVar[str] = ".venv"
     MODULE_FRAME_NAME: ClassVar[str] = "<module>"
@@ -60,10 +62,9 @@ class FlextConstantsLogging:
         "flext_core/_bound_logger.py",
         "flext_core/_utilities/logging.py",
         "flext_core/_utilities/logging_context.py",
-        "flext_core/_utilities/_logging_context_parts/",
+        "flext_core/_utilities/_logging_context/",
         "flext_core/_utilities/logging_config.py",
-        "flext_core/_utilities/logging_processors.py",
-        "flext_core/_utilities/logging_observability.py",
+        "flext_core/_utilities/_logging_config/",
     })
 
     # Exceptions caught by context binding / unbinding helpers

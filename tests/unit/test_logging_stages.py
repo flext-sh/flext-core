@@ -33,6 +33,25 @@ if TYPE_CHECKING:
     from typing import Never
 
 
+pytestmark = pytest.mark.usefixtures("restore_logging_options")
+
+
+@pytest.fixture
+def restore_logging_options() -> Generator[None]:
+    """Restore actual captured configuration after each registration."""
+    original_settings, original_options = u.logging_settings(), u.logging_options()
+    try:
+        selected = u.resolve_logging_settings(log_level=c.LogLevel.DEBUG, trace=False)
+        u.configure_structlog(
+            settings=m.StructlogOptions(async_logging=False), runtime_settings=selected
+        )
+        yield
+    finally:
+        u.configure_structlog(
+            settings=original_options, runtime_settings=original_settings
+        )
+
+
 class TestsFlextLoggingStages:
     """Observable contracts of typed event stages and terminal rendering."""
 
@@ -69,7 +88,9 @@ class TestsFlextLoggingStages:
             "with contextlib.redirect_stderr(stream):\n"
             "    structlog.get_logger().info('closed stream')\n"
         )
-        executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
+        executed: p.Cli.CommandOutput = tm.ok(
+            u.Cli.run_raw((sys.executable, "-c", consumer))
+        )
         tm.fail(u.Cli.process_succeeded(executed.outcome))
         tm.fail(executed.outcome.timed_out)
         tm.that(executed.outcome.forwarded_signal, eq=None)
@@ -94,13 +115,13 @@ class TestsFlextLoggingStages:
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=False, console_renderer=False, log_level=logging.INFO))\n"
         )
-        executed = tm.ok(
+        executed: p.Cli.CommandOutput = tm.ok(
             u.Cli.run_raw((sys.executable, "-c", consumer, *events)),
         )
         tm.ok(u.Cli.process_succeeded(executed.outcome))
         tm.fail(executed.outcome.timed_out)
         emitted = tuple(
-            u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))["event"]
+            u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))[c.HandlerType.EVENT]
             for line in executed.stderr.splitlines()
         )
         tm.that(emitted, eq=events)
@@ -112,6 +133,7 @@ class TestsFlextLoggingStages:
         consumer = (
             "import contextlib, io, logging, sys\n"
             "from flext_core import m, u\n"
+            "from flext_tests import tm\n"
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=True, log_level=logging.INFO))\n"
             "logger = u.create_module_logger('tests.logging.native.failure')\n"
@@ -126,38 +148,23 @@ class TestsFlextLoggingStages:
             "        logger.info('second failed event')\n"
             "    except ValueError as second:\n"
             "        if second is not first:\n"
-            "            raise AssertionError('native failure identity changed')\n"
+            "            tm.reject('native failure identity changed')\n"
             "        sys.stderr = previous_stderr\n"
             "        raise first\n"
-            "    raise AssertionError('second event did not fail')\n"
-            "raise AssertionError('closed native stream did not fail')\n"
+            "    tm.reject('second event did not fail')\n"
+            "tm.reject('closed native stream did not fail')\n"
         )
-        executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
+        executed: p.Cli.CommandOutput = tm.ok(
+            u.Cli.run_raw((sys.executable, "-c", consumer))
+        )
         tm.fail(u.Cli.process_succeeded(executed.outcome))
         tm.fail(executed.outcome.timed_out)
         tm.that(executed.outcome.forwarded_signal, eq=None)
         tm.that(executed.stderr, has="ValueError: I/O operation on closed file")
         tm.that(executed.stderr, lacks="AssertionError")
 
-    @pytest.fixture(autouse=True)
-    def restore_logging_options(self) -> Generator[None]:
-        """Restore the actual captured configuration after each registration."""
-        original_settings, original_options = u.logging_settings(), u.logging_options()
-        try:
-            selected = u.resolve_logging_settings(
-                log_level=c.LogLevel.DEBUG, trace=False
-            )
-            u.configure_structlog(
-                settings=m.StructlogOptions(async_logging=False),
-                runtime_settings=selected,
-            )
-            yield
-        finally:
-            u.configure_structlog(
-                settings=original_options, runtime_settings=original_settings
-            )
-
-    def test_ordered_stages_preserve_nested_values_and_render(self) -> None:
+    @staticmethod
+    def test_ordered_stages_preserve_nested_values_and_render() -> None:
         """Stages share an event in order and the final renderer emits it."""
         stream = io.StringIO()
         observed: list[p.LoggingEvent] = []
@@ -205,7 +212,8 @@ class TestsFlextLoggingStages:
         tm.ok('"stage_order": ["first", "second"]' in stream.getvalue())
 
     @pytest.mark.parametrize("entrypoint", ["info", "exception", "trace"])
-    def test_first_stage_failure_escapes_unchanged(self, entrypoint: str) -> None:
+    @staticmethod
+    def test_first_stage_failure_escapes_unchanged(entrypoint: str) -> None:
         """Failure stops the chain and preserves the original exception."""
         stream = io.StringIO()
         visited: list[str] = []
@@ -288,7 +296,8 @@ class TestsFlextLoggingStages:
         tm.ok(info[2] is original_traceback)
         tm.ok("operation failed" in stream.getvalue())
 
-    def test_invalid_registration_is_rejected(self) -> None:
+    @staticmethod
+    def test_invalid_registration_is_rejected() -> None:
         """The options boundary rejects a noncallable stage."""
         with pytest.raises(ValidationError):
             _ = m.StructlogOptions.model_validate({"processing_stages": [1]})
@@ -341,7 +350,8 @@ class TestsFlextLoggingStages:
         tm.fail("exc_info" in rendered)
         tm.that(rendered["exception_message"], eq=str(original))
 
-    def test_exception_triple_is_not_an_ordinary_json_field(self) -> None:
+    @staticmethod
+    def test_exception_triple_is_not_an_ordinary_json_field() -> None:
         """An unsupported exception tuple fails admission before any output."""
         stream = io.StringIO()
         observed: list[p.LoggingRecord] = []
@@ -361,7 +371,8 @@ class TestsFlextLoggingStages:
         tm.that(observed, eq=[])
         tm.that(stream.getvalue(), eq="")
 
-    def test_invalid_callable_signature_raises_at_emission(self) -> None:
+    @staticmethod
+    def test_invalid_callable_signature_raises_at_emission() -> None:
         """An untyped registration cannot hide its native invocation error."""
         stream = io.StringIO()
 
@@ -380,7 +391,8 @@ class TestsFlextLoggingStages:
 
         tm.that(stream.getvalue(), eq="")
 
-    def test_explicit_registration_updates_cached_logger_chain(self) -> None:
+    @staticmethod
+    def test_explicit_registration_updates_cached_logger_chain() -> None:
         """Cached and fresh public loggers consume the elected processing chain."""
         stream = io.StringIO()
         observed: list[str] = []
@@ -398,7 +410,7 @@ class TestsFlextLoggingStages:
             event_dict: p.LoggingEvent,
         ) -> p.LoggingEvent:
             _ = logger, method_name
-            observed.append(str(event_dict["event"]))
+            observed.append(str(event_dict[c.HandlerType.EVENT]))
             return event_dict
 
         replacement = m.StructlogOptions(
@@ -416,9 +428,10 @@ class TestsFlextLoggingStages:
         tm.ok("cached chain" in stream.getvalue())
         tm.ok("replacement chain" in stream.getvalue())
 
+    @staticmethod
     @pytest.mark.parametrize("initial_async", [True, False])
     def test_explicit_synchronous_factory_replaces_previous_factory(
-        self, *, initial_async: bool
+        *, initial_async: bool
     ) -> None:
         """Fresh synchronous loggers replace asynchronous and custom outputs."""
         old_stream = io.StringIO()
@@ -443,7 +456,12 @@ class TestsFlextLoggingStages:
         tm.fail("synchronous replacement" in old_stream.getvalue())
         tm.fail("synchronous replacement" in first_stdout.getvalue())
 
-    def test_registered_native_wrapper_emits_bound_context(self) -> None:
+
+class TestsFlextLoggingNativeEmission:
+    """Native destinations, context ownership, and original exception propagation."""
+
+    @staticmethod
+    def test_registered_native_wrapper_emits_bound_context() -> None:
         """A registered native wrapper executes real context-bound emission."""
         stream = io.StringIO()
         registrations: list[str] = []
@@ -464,10 +482,11 @@ class TestsFlextLoggingStages:
         tm.ok(result.success)
         tm.that(registrations, eq=["native"])
         tm.ok("emitted native event" in stream.getvalue())
-        tm.ok("operation" in stream.getvalue())
+        tm.ok(c.ContextScope.OPERATION in stream.getvalue())
         tm.ok("native" in stream.getvalue())
 
-    def test_native_destinations_share_one_sanitized_observer_event(self) -> None:
+    @staticmethod
+    def test_native_destinations_share_one_sanitized_observer_event() -> None:
         """Native handlers present the same event without duplicating hooks."""
         structured, console = io.StringIO(), io.StringIO()
         password = u.generate_id()
@@ -486,17 +505,22 @@ class TestsFlextLoggingStages:
         with structlog.contextvars.bound_contextvars(correlation_id="real-operation"):
             tm.ok(
                 u.log(
-                    "delivered %s", "once", payload={"password": password, "count": 2}
+                    "delivered %s",
+                    "once",
+                    payload={"password": password, c.Aggregation.COUNT: 2},
                 )
             )
         tm.that(len(observed), eq=1)
         record = observed[0]
         rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(structured.getvalue())))
         tm.that(record.message, eq="delivered once")
-        tm.that(rendered["correlation_id"], eq=record.context["correlation_id"])
+        tm.that(
+            rendered[c.ContextKey.CORRELATION_ID],
+            eq=record.context[c.ContextKey.CORRELATION_ID],
+        )
         sanitized = u.Cli.json_as_mapping(record.context["payload"])
         tm.that(rendered["payload"], eq=sanitized)
-        tm.that(sanitized["count"], eq=2)
+        tm.that(sanitized[c.Aggregation.COUNT], eq=2)
         tm.fail(sanitized["password"] == password)
         tm.that(str(record.context), lacks=password)
         tm.that(console.getvalue(), has="delivered once", lacks=password)
@@ -504,9 +528,8 @@ class TestsFlextLoggingStages:
         for handler in handlers:
             handler.close()
 
-    def test_ordinary_event_is_filtered_without_relabeling_or_changing_caller(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_ordinary_event_is_filtered_without_relabeling_or_changing_caller() -> None:
         """WARNING policy filters ordinary INFO before observers or destinations."""
         first, second = io.StringIO(), io.StringIO()
         observed: list[p.LoggingRecord] = []
@@ -538,13 +561,14 @@ class TestsFlextLoggingStages:
         )
         for stream in (first, second):
             event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
-            tm.that(event["event"], eq=record.message)
+            tm.that(event[c.HandlerType.EVENT], eq=record.message)
             tm.that(
                 event[c.ContextKey.LOGGER_NAME],
                 eq=record.context[c.ContextKey.LOGGER_NAME],
             )
 
-    def test_native_context_ownership_is_thread_and_task_local(self) -> None:
+    @staticmethod
+    def test_native_context_ownership_is_thread_and_task_local() -> None:
         """Concurrent split scope APIs neither leak keys nor erase a parent."""
         observed: list[p.LoggingRecord] = []
         u.configure_structlog(
@@ -597,7 +621,8 @@ class TestsFlextLoggingStages:
                 record.context["logging_scope_isolation"], eq=record.context["marker"]
             )
 
-    def test_bound_cached_logger_observes_factory_and_hook_removal(self) -> None:
+    @staticmethod
+    def test_bound_cached_logger_observes_factory_and_hook_removal() -> None:
         """Binding keeps context, not a stale processor/factory composition."""
         old, current = io.StringIO(), io.StringIO()
         observed: list[p.LoggingRecord] = []
@@ -622,10 +647,11 @@ class TestsFlextLoggingStages:
         tm.that(len(observed), eq=1)
         tm.that(old.getvalue(), lacks="after replacement")
         rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(current.getvalue())))
-        tm.that(rendered["operation"], eq="bound")
-        tm.that(rendered["event"], eq="after replacement")
+        tm.that(rendered[c.ContextScope.OPERATION], eq="bound")
+        tm.that(rendered[c.HandlerType.EVENT], eq="after replacement")
 
-    def test_error_trace_retains_native_chains_without_locals_or_secrets(self) -> None:
+    @staticmethod
+    def test_error_trace_retains_native_chains_without_locals_or_secrets() -> None:
         """ERROR plus trace expands the original cause using native processors."""
         stream = io.StringIO()
         observed: list[p.LoggingRecord] = []
@@ -668,7 +694,8 @@ class TestsFlextLoggingStages:
         tm.that(stream.getvalue(), lacks="filtered detail")
         tm.ok(original.__cause__ is cause)
 
-    def test_business_exception_survives_selected_observer_failure(self) -> None:
+    @staticmethod
+    def test_business_exception_survives_selected_observer_failure() -> None:
         """The selected failure is visible without replacing the original cause."""
         hook_error = OSError("capture unavailable")
         cause = ValueError("business cause")
@@ -702,7 +729,8 @@ class TestsFlextLoggingStages:
         tm.ok(original.__context__ is hook_error)
         tm.that(original.__notes__, has="Logging also failed: OSError")
 
-    def test_native_exception_group_and_original_cause_remain_observable(self) -> None:
+    @staticmethod
+    def test_native_exception_group_and_original_cause_remain_observable() -> None:
         """Group children survive native expansion without serializing raw causes."""
         observed: list[p.LoggingRecord] = []
         stream = io.StringIO()
@@ -727,7 +755,8 @@ class TestsFlextLoggingStages:
         tm.that(stream.getvalue(), has="ValueError")
         tm.that(stream.getvalue(), has="OSError", lacks='"locals"')
 
-    def test_native_handler_sink_failure_escapes(self) -> None:
+    @staticmethod
+    def test_native_handler_sink_failure_escapes() -> None:
         """The native StreamHandler adapter does not swallow a closed stream."""
         stream = io.StringIO()
         handler = u.create_logging_handler(stream=stream)
@@ -743,9 +772,8 @@ class TestsFlextLoggingStages:
             _ = u.log("native sink failure")
         tm.ok(caught.value.__traceback__ is not None)
 
-    def test_saved_native_exception_info_preserves_original_and_supplied_traceback(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_saved_exception_info_preserves_original_and_supplied_traceback() -> None:
         """Outside except, a failed sink never replaces a saved exception tuple."""
 
         def fail_with_cause(
@@ -766,13 +794,13 @@ class TestsFlextLoggingStages:
             except (ValueError, KeyboardInterrupt):
                 saved_tb = original.__traceback__
                 saved: t.LoggingExceptionInfo = type(original), original, saved_tb
-                resolved = u.resolve_logging_exception_info(True)
+                resolved = u.resolve_logging_exception_info(value=True)
                 if resolved is None:
                     pytest.fail("An active exception must resolve to native exc_info")
                 tm.ok(resolved[0] is saved[0])
                 tm.ok(resolved[1] is saved[1])
                 tm.ok(resolved[2] is saved[2])
-                tm.that(u.resolve_logging_exception_info(False), eq=None)
+                tm.that(u.resolve_logging_exception_info(value=False), eq=None)
             else:
                 pytest.fail("The original exception must be raised with its cause")
             try:
@@ -807,9 +835,8 @@ class TestsFlextLoggingStages:
                 restored_tb = restored_tb.tb_next
             tm.ok(restored_tb is saved_tb)
 
-    def test_declared_sensitive_keys_are_casefolded_before_hooks_and_sinks(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_declared_sensitive_keys_are_casefolded_before_hooks_and_sinks() -> None:
         """One shared redactor handles actual keys and embedded JSON uniformly."""
         structured, console = io.StringIO(), io.StringIO()
         observed: list[p.LoggingRecord] = []
@@ -847,7 +874,8 @@ class TestsFlextLoggingStages:
         for text in (structured.getvalue(), console.getvalue(), dumped):
             tm.that(text, lacks=sensitive_value, has="public")
 
-    def test_invalid_policy_and_unbound_selected_handler_have_no_emission(self) -> None:
+    @staticmethod
+    def test_invalid_policy_and_unbound_selected_handler_have_no_emission() -> None:
         """Validation rejects selected incomplete composition before effects."""
         original = u.logging_settings()
         stream = io.StringIO()
@@ -860,9 +888,8 @@ class TestsFlextLoggingStages:
         tm.ok(u.logging_settings() is original)
         tm.that(stream.getvalue(), eq="")
 
-    def test_native_positional_formatter_accepts_mapping_and_filters_before_format(
-        self,
-    ) -> None:
+    @staticmethod
+    def test_native_formatter_accepts_mapping_and_filters_before_format() -> None:
         """Native formatting follows severity election, not a second custom path."""
         stream = io.StringIO()
         u.configure_structlog(
@@ -877,8 +904,30 @@ class TestsFlextLoggingStages:
         tm.that(stream.getvalue(), eq="")
         tm.ok(logger.info("named %(actor)s", {"actor": "sam"}))
         event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
-        tm.that(event["event"], eq="named sam")
+        tm.that(event[c.HandlerType.EVENT], eq="named sam")
         tm.fail("positional_args" in event)
+
+        stream.seek(0)
+        stream.truncate()
+        arguments: t.ScalarMapping = {"actor": b"sam"}
+        error_data: t.JsonMapping = {"source": "native"}
+        tm.ok(logger.info("named %(actor)s", arguments, error_data=error_data))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        tm.that(event[c.HandlerType.EVENT], eq="named b'sam'")
+        tm.that(event["error_data"], eq=error_data)
+
+        stream.seek(0)
+        stream.truncate()
+        rows: t.MutableSequenceOf[tuple[str, t.JsonValue]] = [
+            (c.ProcessingMode.STREAM, {"replication_key": None}),
+        ]
+        tm.ok(logger.info("rows %s", rows))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        tm.that(event[c.HandlerType.EVENT], eq=f"rows {rows}")
+        with pytest.raises(TypeError):
+            logger.info("invalid numeric %d", rows)
+        with pytest.raises(m.ValidationError):
+            m.ConfigMap.model_validate({"rows": rows})
 
     @staticmethod
     def exercise_async_stream_failure() -> None:
@@ -965,7 +1014,7 @@ class TestsFlextLoggingStages:
                     msg = "Public logging did not recover after the pipe drained"
                     raise TimeoutError(msg)
                 tm.that(len(emitted), eq=1)
-                TestsFlextLoggingStages.assert_blocked_pipe_outcome(emitted[0])
+                TestsFlextLoggingNativeEmission.assert_blocked_pipe_outcome(emitted[0])
                 u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
             reader.join(timeout=c.DEFAULT_TIMEOUT_SECONDS)
             if reader.is_alive():

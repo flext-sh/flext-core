@@ -24,7 +24,6 @@ class FlextContextState(FlextModelsBase.ManagedModel):
         FlextModelsPydantic.ConfigDict(
             extra="forbid",
             validate_assignment=False,
-            arbitrary_types_allowed=True,
         )
     )
     data: FlextModelsContainers.ConfigMap = FlextModelsPydantic.Field(

@@ -135,7 +135,7 @@ class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):
             self.audit_check("Settings.fetch_global.type", type(created).__name__)
             self.audit_check(
                 "Settings.fetch_global.service_name",
-                created.model_dump().get("service_name"),
+                created.model_dump().get(c.ContextKey.SERVICE_NAME),
             )
         finally:
             self._restore_env(c.ENV_FILE_ENV_VAR, previous)

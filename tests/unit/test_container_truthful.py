@@ -87,7 +87,9 @@ class TestsFlextCoreContainerTruthful:
         for container in (scoped, nested):
             tm.that(list(container.names()), eq=["public"])
             tm.fail(container.has(c.ServiceName.LOGGER))
-            logger = tm.ok(container.resolve(c.ServiceName.LOGGER))
+            logger: p.RegisterableService = tm.ok(
+                container.resolve(c.ServiceName.LOGGER)
+            )
             tm.ok(isinstance(logger, p.Logger))
             with pytest.raises(e.ValidationError, match="reserved"):
                 _ = container.factory(
@@ -129,7 +131,9 @@ class TestsFlextCoreContainerTruthful:
         path = Path("registered-payload")
         payload: t.MutableMetadataMapping = {"created": instant, "path": path}
         _ = clean_container.bind("mapping-payload", m.ConfigMap(root=payload))
-        value = tm.ok(clean_container.resolve("mapping-payload", type_cls=m.ConfigMap))
+        value: p.Model[t.JsonDict] = tm.ok(
+            clean_container.resolve("mapping-payload", type_cls=m.ConfigMap)
+        )
         tm.that(
             value.model_dump(mode="json"),
             eq=u.normalize_to_json_value(payload),
@@ -147,7 +151,7 @@ class TestsFlextCoreContainerTruthful:
         payload: t.ListOf[t.JsonPayload] = ["entry", path, instant]
         registered = m.ObjectList(root=payload)
         _ = clean_container.bind("sequence-payload", registered)
-        value = tm.ok(
+        value: p.Model[list[t.JsonValue]] = tm.ok(
             clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
         )
         tm.that(value, where=lambda resolved: resolved is registered)
@@ -167,7 +171,9 @@ class TestsFlextCoreContainerTruthful:
         _ = clean_container.bind(
             "model-payload", m.ConfigMap(root={"metadata": metadata})
         )
-        value = tm.ok(clean_container.resolve("model-payload", type_cls=m.ConfigMap))
+        value: p.Model[t.JsonDict] = tm.ok(
+            clean_container.resolve("model-payload", type_cls=m.ConfigMap)
+        )
         tm.that(
             value.model_dump(mode="json"),
             eq={"metadata": metadata.model_dump(mode="json")},

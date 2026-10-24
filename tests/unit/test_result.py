@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from tests import p, r, tm
@@ -160,7 +158,8 @@ class TestsFlextCoreResult:
         keeps: bool,
     ) -> None:
         """Filtering keeps a value passing the predicate, else fails."""
-        filtered = r[int].ok(value).filter(lambda x: x > 5)
+        threshold = 5
+        filtered = r[int].ok(value).filter(lambda x: x > threshold)
 
         tm.that(filtered.success, eq=keeps)
 
@@ -187,6 +186,10 @@ class TestsFlextCoreResult:
 
         tm.fail(result, has="bad")
         tm.that(seen, eq=["bad"])
+
+
+class TestsFlextCoreResultIdentity:
+    """Outcome identity, protocol guards, and forbidden specializations."""
 
     @staticmethod
     def test_success_has_no_error_and_failure_complements_success() -> None:
@@ -225,9 +228,7 @@ class TestsFlextCoreResult:
     def test_parameterized_none_and_object_are_forbidden() -> None:
         """``r[None]`` and ``r[object]`` specializations are rejected."""
         with pytest.raises(ValueError, match="parameterized with None"):
-            # Why: r[None] raises before the value is inspected; cast keeps
-            # the call statically None-typed while proving the runtime guard.
-            r[None].ok(cast("None", True))
+            r[None].ok(value=True)
         with pytest.raises(ValueError, match="parameterized with object"):
             r[object].ok({"k": "v"})
         with pytest.raises(ValueError, match="parameterized with None"):

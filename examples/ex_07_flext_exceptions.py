@@ -70,7 +70,7 @@ class ExamplesFlextExceptions(ExamplesFlextExceptionSubclasses):
         )
         self.audit_check(
             "base.meta.operation",
-            str(base.metadata.attributes.get("operation") or ""),
+            str(base.metadata.attributes.get(c.ContextScope.OPERATION) or ""),
         )
         self.audit_check("base.error_message", base.error_message)
         self.audit_check("base.has_timestamp", base.timestamp > 0)

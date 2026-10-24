@@ -14,16 +14,16 @@ from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities._beartype import (
-        _class_visitor_parts as _class_visitor_parts,
-        _helpers_parts as _helpers_parts,
+        _class_visitor as _class_visitor,
+        _helpers as _helpers,
     )
     from flext_core._utilities._beartype._alias_visitor import (
         FlextUtilitiesBeartypeAliasVisitor,
     )
-    from flext_core._utilities._beartype._class_visitor_parts import (
-        alias_first_violation,
+    from flext_core._utilities._beartype._class_visitor import alias_first_violation
+    from flext_core._utilities._beartype._field_union_scan import (
+        FlextUtilitiesBeartypeFieldUnionScan,
     )
-    from flext_core._utilities._beartype._field_union_scan import declared_union_members
     from flext_core._utilities._beartype._import_blacklist_visitor import (
         FlextUtilitiesBeartypeImportBlacklistVisitor,
     )
@@ -31,17 +31,13 @@ if TYPE_CHECKING:
         FlextUtilitiesBeartypeLibraryVisitor,
     )
     from flext_core._utilities._beartype._module_source_deferred import (
-        deferred_alias,
-        guarded_imports,
+        FlextUtilitiesBeartypeModuleSourceDeferred,
     )
-    from flext_core._utilities._beartype._module_source_provenance import owner_derived
+    from flext_core._utilities._beartype._module_source_provenance import (
+        FlextUtilitiesBeartypeModuleSourceProvenance,
+    )
     from flext_core._utilities._beartype._module_source_scan import (
-        bound_names,
-        declarations,
-        export_names,
-        loads,
-        parse_module,
-        scope_nodes,
+        FlextUtilitiesBeartypeModuleSourceScan,
     )
     from flext_core._utilities._beartype.attr_visitor import (
         FlextUtilitiesBeartypeAttrVisitor,
@@ -78,6 +74,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeAttrVisitor",
     "FlextUtilitiesBeartypeClassVisitor",
     "FlextUtilitiesBeartypeDeprecatedVisitor",
+    "FlextUtilitiesBeartypeFieldUnionScan",
     "FlextUtilitiesBeartypeFieldVisitor",
     "FlextUtilitiesBeartypeHelpers",
     "FlextUtilitiesBeartypeImportBlacklistVisitor",
@@ -85,21 +82,14 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeLibraryVisitor",
     "FlextUtilitiesBeartypeMethodVisitor",
     "FlextUtilitiesBeartypeModuleSource",
+    "FlextUtilitiesBeartypeModuleSourceDeferred",
+    "FlextUtilitiesBeartypeModuleSourceProvenance",
+    "FlextUtilitiesBeartypeModuleSourceScan",
     "FlextUtilitiesBeartypeModuleVisitor",
     "FlextUtilitiesBeartypeTypeAliases",
-    "_class_visitor_parts",
-    "_helpers_parts",
+    "_class_visitor",
+    "_helpers",
     "alias_first_violation",
-    "bound_names",
-    "declarations",
-    "declared_union_members",
-    "deferred_alias",
-    "export_names",
-    "guarded_imports",
-    "loads",
-    "owner_derived",
-    "parse_module",
-    "scope_nodes",
 )
 
 __getattr__ = install_lazy_exports(
@@ -110,6 +100,7 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesBeartypeAttrVisitor": ".attr_visitor",
         "FlextUtilitiesBeartypeClassVisitor": ".class_visitor",
         "FlextUtilitiesBeartypeDeprecatedVisitor": ".deprecated_visitor",
+        "FlextUtilitiesBeartypeFieldUnionScan": "._field_union_scan",
         "FlextUtilitiesBeartypeFieldVisitor": ".field_visitor",
         "FlextUtilitiesBeartypeHelpers": ".helpers",
         "FlextUtilitiesBeartypeImportBlacklistVisitor": "._import_blacklist_visitor",
@@ -117,23 +108,14 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesBeartypeLibraryVisitor": "._library_visitor",
         "FlextUtilitiesBeartypeMethodVisitor": ".method_visitor",
         "FlextUtilitiesBeartypeModuleSource": ".module_source",
+        "FlextUtilitiesBeartypeModuleSourceDeferred": "._module_source_deferred",
+        "FlextUtilitiesBeartypeModuleSourceProvenance": "._module_source_provenance",
+        "FlextUtilitiesBeartypeModuleSourceScan": "._module_source_scan",
         "FlextUtilitiesBeartypeModuleVisitor": ".module_visitor",
         "FlextUtilitiesBeartypeTypeAliases": ".type_aliases",
-        "_class_visitor_parts": "._class_visitor_parts",
-        "_helpers_parts": "._helpers_parts",
-        "alias_first_violation": (
-            "._class_visitor_parts._parts.class_visitor_part_02_01"
-        ),
-        "bound_names": "._module_source_scan",
-        "declarations": "._module_source_scan",
-        "declared_union_members": "._field_union_scan",
-        "deferred_alias": "._module_source_deferred",
-        "export_names": "._module_source_scan",
-        "guarded_imports": "._module_source_deferred",
-        "loads": "._module_source_scan",
-        "owner_derived": "._module_source_provenance",
-        "parse_module": "._module_source_scan",
-        "scope_nodes": "._module_source_scan",
+        "_class_visitor": "._class_visitor",
+        "_helpers": "._helpers",
+        "alias_first_violation": ("._class_visitor.alias_rules"),
     }),
     public_exports=__all__,
 )[0]

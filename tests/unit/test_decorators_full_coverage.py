@@ -9,15 +9,11 @@ from __future__ import annotations
 import time
 import warnings
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
 import pytest
 
 from flext_core import FlextContainer
-from tests import d, e, m, r, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import d, e, m, p, r, tm
 
 
 class TestsFlextCoreDecorators:
@@ -159,17 +155,18 @@ class TestsFlextCoreDecorators:
     def test_retry_retries_until_success() -> None:
         """Test retry retries until success."""
         calls = {"n": 0}
+        succeeding_call = 2
 
         @d.retry(max_attempts=3, delay_seconds=0.001)
         def flaky() -> str:
             calls["n"] += 1
-            if calls["n"] < 2:
+            if calls["n"] < succeeding_call:
                 msg = "transient"
                 raise ValueError(msg)
             return "ok"
 
         tm.that(flaky(), eq="ok")
-        tm.that(calls["n"], eq=2)
+        tm.that(calls["n"], eq=succeeding_call)
 
     @staticmethod
     def test_combined_applies_injection_on_standard_path(

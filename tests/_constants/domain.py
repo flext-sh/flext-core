@@ -9,6 +9,8 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import ClassVar
 
+from flext_core import c
+
 
 class TestsFlextConstantsDomain:
     """Flat domain/path constants for flext-core tests."""
@@ -17,7 +19,7 @@ class TestsFlextConstantsDomain:
     SRC_DIR: ClassVar[str] = "src"
     CORE_PACKAGE_DIR: ClassVar[str] = "flext_core"
     EXAMPLES_DIR: ClassVar[str] = "examples"
-    PYPROJECT_FILENAME: ClassVar[str] = "pyproject.toml"
+    PYPROJECT_FILENAME: ClassVar[str] = c.PYPROJECT_FILENAME
 
     @unique
     class StatusEnum(StrEnum):

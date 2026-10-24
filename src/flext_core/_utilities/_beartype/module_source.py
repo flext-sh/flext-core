@@ -8,34 +8,16 @@ from __future__ import annotations
 
 import ast
 import sys
-from types import ModuleType
-from typing import TypeAliasType, runtime_checkable
+from typing import runtime_checkable
 
-from flext_core._models import FlextModelsEnforcement
-from flext_core._utilities._beartype import (
-    deferred_alias,
-    export_names,
-    loads,
-    owner_derived,
-    parse_module,
-)
+from flext_core._utilities._beartype import FlextUtilitiesBeartypeModuleSourceDeferred
 
 
-class FlextUtilitiesBeartypeModuleSource:
+class FlextUtilitiesBeartypeModuleSource(FlextUtilitiesBeartypeModuleSourceDeferred):
     """Prove a lazy alias's source declaration and unavailable guarded imports."""
 
-    @staticmethod
-    def parse_module(module: ModuleType) -> ast.Module:
-        """Read the defining source without normalizing inspection failures.
-
-        Returns:
-            The resulting ``ast.Module``.
-
-        """
-        return parse_module(module)
-
-    @staticmethod
-    def declares_runtime_checkable(target: type) -> bool:
+    @classmethod
+    def declares_runtime_checkable(cls, target: type) -> bool:
         """Prove from its source that ``target`` is decorated by ``runtime_checkable``.
 
         Each decorator name or dotted path is resolved in the defining module's
@@ -50,7 +32,7 @@ class FlextUtilitiesBeartypeModuleSource:
 
         """
         declaration: ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef
-        declaration = parse_module(sys.modules[target.__module__])
+        declaration = cls.parse_module(sys.modules[target.__module__])
         for name in target.__qualname__.split("."):
             if name == "<locals>":
                 continue
@@ -104,41 +86,7 @@ class FlextUtilitiesBeartypeModuleSource:
         """
         if tree is None:
             return False
-        return name not in export_names(tree) and loads(tree, name)
-
-    @classmethod
-    def owner_derived(cls, tree: ast.Module | None, name: str, owner_root: str) -> bool:
-        """Prove a module-level binding chain is rooted in owner-project imports.
-
-        Follows ``name =`` assignments and attribute chains transitively to
-        the import that rooted the value; only imports from the owner
-        project's own root prove facade provenance. Calls (dynamic
-        imports), relative imports, and unreadable source fail closed, so
-        direct and dynamic acquisition of an owned library keeps violating.
-
-        Returns:
-            The resulting ``bool``.
-
-        """
-        return owner_derived(tree, name, owner_root)
-
-    @classmethod
-    def deferred_alias(
-        cls,
-        alias: TypeAliasType,
-        *,
-        owner: ModuleType | type,
-    ) -> FlextModelsEnforcement.DeferredAlias | None:
-        """Prove deferral from the explicitly supplied declaring owner.
-
-        Ambiguous declarations or bindings propagate the resolver's ValueError
-        unchanged.
-
-        Returns:
-            The resulting ``me.DeferredAlias | None``.
-
-        """
-        return deferred_alias(alias, owner=owner)
+        return name not in cls._export_names(tree) and cls._loads(tree, name)
 
 
 __all__: list[str] = ["FlextUtilitiesBeartypeModuleSource"]

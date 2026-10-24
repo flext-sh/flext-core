@@ -321,9 +321,6 @@ class FlextUtilitiesBeartypeEngine(
         c.EnforcementPredicateKind.MODULE_ALIAS: (
             FlextUtilitiesBeartypeModuleVisitor.v_module_alias
         ),
-        c.EnforcementPredicateKind.DUPLICATE_SYMBOL: (
-            FlextUtilitiesBeartypeModuleVisitor.v_duplicate_symbol
-        ),
         c.EnforcementPredicateKind.DEPRECATED_SYNTAX: (
             FlextUtilitiesBeartypeDeprecatedVisitor.v_deprecated_syntax
         ),

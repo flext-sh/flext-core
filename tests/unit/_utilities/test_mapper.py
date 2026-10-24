@@ -122,6 +122,11 @@ class TestsFlextCoreMapper:
         tm.that(u.deep_eq(payload, payload) is True, truth=True)
 
     # --------------------------------------------------------------------- prop
+
+
+class TestsFlextCoreMapperTransforms:
+    """Property access and mapping transformations."""
+
     @staticmethod
     def test_prop_returns_accessor_extracting_named_value() -> None:
         accessor = u.prop("name")

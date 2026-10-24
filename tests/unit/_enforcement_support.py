@@ -20,8 +20,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import m, p, t
-
+from tests import m, p, t
 
 _INVALID_ANNOTATION_SOURCE = """\
 from collections.abc import Mapping, Sequence

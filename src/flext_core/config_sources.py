@@ -17,15 +17,15 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import IO, Protocol, cast, override
+from typing import IO, ClassVar, cast, override
 
 from pydantic import JsonValue, TypeAdapter
+from pydantic.config import JsonDict
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import ConfigFileSourceType, PathType
 from pydantic_settings.sources.utils import InitState
-from yaml import MappingNode, SafeLoader
-from yaml.constructor import ConstructorError
-from yaml.nodes import Node
+from yaml import MappingNode, SafeLoader, ScalarNode
+from yaml.constructor import ConstructorError, SafeConstructor
 from yaml.resolver import BaseResolver
 
 
@@ -38,17 +38,8 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     reinstantiating the source or overriding ``settings_customise_sources``.
     """
 
-    class _Loader(Protocol):
-        """Typed view of the YAML loader's object-construction boundary."""
-
-        def construct_object(
-            self,
-            node: Node,
-            *,
-            deep: bool = False,
-        ) -> JsonValue:
-            _ = node, deep
-            raise NotImplementedError
+    JSON_VALUE_ADAPTER: ClassVar[TypeAdapter[JsonValue]] = TypeAdapter(JsonValue)
+    """Adapter validating every loaded YAML document; built once per process."""
 
     class UniqueKeyLoader(SafeLoader):
         """Safe YAML loader rejecting duplicate and non-string mapping keys.
@@ -64,7 +55,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             node: MappingNode,
             *,
             deep: bool = False,
-        ) -> dict[str, JsonValue]:
+        ) -> JsonDict:
             """Construct one mapping without silently replacing a declared key.
 
             Merge keys flatten first (SafeLoader semantics): anchored pairs
@@ -78,13 +69,14 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                 ConstructorError: If a key is not a string or is duplicated.
 
             """
-            typed_loader = cast("FlextStrictYamlConfigSource._Loader", loader)
             declared: set[str] = set()
             for key_node, _value_node in node.value:
                 if key_node.tag == "tag:yaml.org,2002:merge":
                     continue
-                key = typed_loader.construct_object(key_node, deep=deep)
-                if not isinstance(key, str):
+                if (
+                    not isinstance(key_node, ScalarNode)
+                    or key_node.tag != BaseResolver.DEFAULT_SCALAR_TAG
+                ):
                     msg = "while constructing a config mapping"
                     raise ConstructorError(
                         msg,
@@ -92,6 +84,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                         "config mapping keys must be strings",
                         key_node.start_mark,
                     )
+                key = loader.construct_scalar(key_node)
                 if key in declared:
                     msg = "while constructing a config mapping"
                     raise ConstructorError(
@@ -102,10 +95,11 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                     )
                 declared.add(key)
             loader.flatten_mapping(node)
-            values: dict[str, JsonValue] = {}
-            for key_node, value_node in node.value:
-                key = typed_loader.construct_object(key_node, deep=deep)
-                if not isinstance(key, str):
+            for key_node, _value_node in node.value:
+                if (
+                    not isinstance(key_node, ScalarNode)
+                    or key_node.tag != BaseResolver.DEFAULT_SCALAR_TAG
+                ):
                     msg = "while constructing a config mapping"
                     raise ConstructorError(
                         msg,
@@ -113,8 +107,9 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                         "config mapping keys must be strings",
                         key_node.start_mark,
                     )
-                values[key] = typed_loader.construct_object(value_node, deep=deep)
-            return values
+            return cast(
+                "JsonDict", SafeConstructor.construct_mapping(loader, node, deep=deep)
+            )
 
     UniqueKeyLoader.add_constructor(
         BaseResolver.DEFAULT_MAPPING_TAG,
@@ -131,7 +126,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         deep_merge: bool = False,
         _init_state: InitState | None = None,
         *,
-        transform: Callable[[dict[str, JsonValue]], dict[str, JsonValue]] | None = None,
+        transform: Callable[[JsonDict], JsonDict] | None = None,
     ) -> None:
         """Initialize the YAML source with an optional deep merge and transform hook.
 
@@ -159,7 +154,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         )
 
     @override
-    def __call__(self) -> dict[str, JsonValue]:
+    def __call__(self) -> JsonDict:
         """Return merged YAML data, applying the transform hook if set."""
         data = super().__call__()
         if self._transform is not None:
@@ -180,7 +175,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         loader = FlextStrictYamlConfigSource.UniqueKeyLoader(stream)
         try:
             # Validate after YAML finishes constructing aliases and nested values.
-            return TypeAdapter(JsonValue).validate_python(
+            return FlextStrictYamlConfigSource.JSON_VALUE_ADAPTER.validate_python(
                 loader.get_single_data(),
                 strict=True,
             )
@@ -188,7 +183,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             loader.dispose()
 
     @override
-    def _read_file(self, file_path: Path | Traversable) -> dict[str, JsonValue]:
+    def _read_file(self, file_path: Path | Traversable) -> JsonDict:
         """Parse one YAML config file exactly once with strict mapping keys.
 
         Returns:
@@ -212,7 +207,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         self,
         files: PathType | Traversable | Sequence[PathType | Traversable] | None,
         deep_merge: bool = False,
-    ) -> dict[str, JsonValue]:
+    ) -> JsonDict:
         """Read multiple YAML files with list-aware deep merge.
 
         The upstream ``deep_update`` only recurses into dicts; when two files
@@ -229,7 +224,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             return {}
         if isinstance(files, str) or not isinstance(files, _Sequence):
             files = [files]
-        merged: dict[str, JsonValue] = {}
+        merged: JsonDict = {}
         for file in files:
             raw_path = _Path(file) if isinstance(file, str) else file
             if not isinstance(raw_path, _Path):
@@ -237,7 +232,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
             file_path = raw_path.expanduser()
             if not file_path.is_file():
                 continue
-            updating: dict[str, JsonValue] = dict(self._read_file(file_path))
+            updating: JsonDict = dict(self._read_file(file_path))
             if deep_merge:
                 merged = self.merge_values(merged, updating)
             else:
@@ -246,9 +241,9 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def merge_values(
-        base: dict[str, JsonValue],
-        updating: dict[str, JsonValue],
-    ) -> dict[str, JsonValue]:
+        base: JsonDict,
+        updating: JsonDict,
+    ) -> JsonDict:
         """Deep-merge two config dicts, concatenating list values.
 
         Args:

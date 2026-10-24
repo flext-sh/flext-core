@@ -130,7 +130,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
             "int": int,
             "float": float,
             "bool": bool,
-            "list": list,
+            c.Action.LIST: list,
             "dict": dict,
             "tuple": tuple,
             "set": set,

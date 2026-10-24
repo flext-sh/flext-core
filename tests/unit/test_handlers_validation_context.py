@@ -179,7 +179,7 @@ class TestsFlextCoreHandlersValidationContext(
         handler = self.ConcreteTestHandler(settings=settings)
         context: t.JsonMapping = u.json_mapping_adapter().validate_python({
             "handler_name": "push_context",
-            "handler_mode": "command",
+            "handler_mode": c.HandlerMode.COMMAND,
         })
 
         # Act
@@ -196,7 +196,7 @@ class TestsFlextCoreHandlersValidationContext(
         _ = u.Tests.assert_success(
             handler.push_context({
                 "handler_name": "pop_context",
-                "handler_mode": "command",
+                "handler_mode": c.HandlerMode.COMMAND,
             }),
         )
 
@@ -295,7 +295,7 @@ class TestsFlextCoreHandlersValidationContext(
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act
-        result = handler.dispatch_message("payload", operation=c.DEFAULT_HANDLER_MODE)
+        result = handler.dispatch_message("payload", operation=c.HandlerMode.COMMAND)
 
         # Assert
         _ = u.Tests.assert_failure(result)

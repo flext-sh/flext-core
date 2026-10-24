@@ -102,7 +102,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         strategy = (
             backoff_strategy
             if backoff_strategy is not None
-            else c.DEFAULT_BACKOFF_STRATEGY
+            else c.BackoffStrategy.EXPONENTIAL
         )
 
         def decorator(
@@ -122,7 +122,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                 retry_settings = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
                     "initial_delay_seconds": delay,
-                    "exponential_backoff": strategy == c.DEFAULT_BACKOFF_STRATEGY,
+                    "exponential_backoff": strategy == c.BackoffStrategy.EXPONENTIAL,
                     "retry_on_exceptions": [],
                     "retry_on_status_codes": [],
                 })
@@ -179,7 +179,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         attempts = retry_settings.max_retries
         delay = retry_settings.initial_delay_seconds
         strategy = (
-            c.DEFAULT_BACKOFF_STRATEGY
+            c.BackoffStrategy.EXPONENTIAL
             if retry_settings.exponential_backoff
             else c.BackoffStrategy.LINEAR
         )
@@ -207,7 +207,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     error=str(exc),
                     error_type=exc.__class__.__name__,
                 )
-                if strategy == c.DEFAULT_BACKOFF_STRATEGY:
+                if strategy == c.BackoffStrategy.EXPONENTIAL:
                     current_delay *= 2
                 elif strategy == c.BackoffStrategy.LINEAR:
                     current_delay += delay

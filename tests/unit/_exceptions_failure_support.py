@@ -7,12 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING
 
-from tests import c, e, m, p
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, e, m, p, t
 
 type FailureFactory = Callable[[], p.Result[bool]]
 
@@ -46,7 +42,7 @@ FAILURES: t.SequenceOf[
         lambda: e.fail_timeout(30, "dispatch"),
         "dispatch",
         c.ErrorCode.TIMEOUT_ERROR,
-        {"timeout_seconds": 30, "operation": "dispatch"},
+        {"timeout_seconds": 30, c.ContextScope.OPERATION: "dispatch"},
     ),
     (
         "auth",
@@ -57,28 +53,32 @@ FAILURES: t.SequenceOf[
         ),
         "authenticate user u-1",
         c.ErrorCode.AUTHENTICATION_ERROR,
-        {"auth_method": "token", "user_id": "u-1"},
+        {"auth_method": "token", c.ContextKey.USER_ID: "u-1"},
     ),
     (
         "authz",
         lambda: e.fail_authz("u-1", "admin.panel", "write"),
         "authorize",
         c.ErrorCode.AUTHORIZATION_ERROR,
-        {"user_id": "u-1", "resource": "admin.panel", "permission": "write"},
+        {c.ContextKey.USER_ID: "u-1", "resource": "admin.panel", "permission": "write"},
     ),
     (
         "conflict",
-        lambda: e.fail_conflict("user", "u-1", "duplicate"),
+        lambda: e.fail_conflict(c.ContextScope.USER, "u-1", "duplicate"),
         "create user",
         c.ErrorCode.ALREADY_EXISTS,
-        {"resource_type": "user", "resource_id": "u-1", "conflict_reason": "duplicate"},
+        {
+            "resource_type": c.ContextScope.USER,
+            "resource_id": "u-1",
+            "conflict_reason": "duplicate",
+        },
     ),
     (
-        "operation",
+        c.ContextScope.OPERATION,
         lambda: e.fail_operation("resolve service", "timeout"),
         "resolve service",
         c.ErrorCode.OPERATION_ERROR,
-        {"operation": "resolve service", "reason": "timeout"},
+        {c.ContextScope.OPERATION: "resolve service", "reason": "timeout"},
     ),
     (
         "not_found",

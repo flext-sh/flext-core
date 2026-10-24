@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._settings import FlextSettings
-from tests import tm
+from flext_core import FlextSettings
+from tests import c, tm
 from tests.integration.settings_integration_factories import (
     TestsFlextFlextSettingsFactories,
 )
@@ -54,8 +54,8 @@ class TestsFlextFlextSettingsPrecedenceCase(TestsFlextFlextSettingsFactories):
             FlextSettings.reset_for_testing()
             with u.Tests.env_vars_context({
                 "FLEXT_LOG_LEVEL": "DEBUG",
-                "FLEXT_DEBUG": "true",
-                "FLEXT_TRACE": "true",
+                "FLEXT_DEBUG": c.ParserBooleanToken.TRUE,
+                "FLEXT_TRACE": c.ParserBooleanToken.TRUE,
             }):
                 from_env = FlextSettings()
                 tm.that(from_env.log_level, eq="DEBUG")

@@ -17,14 +17,11 @@ import sys
 import textwrap
 import warnings
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import pytest
 
-from tests import c, m, tm, u
-
-if TYPE_CHECKING:
-    from tests import t
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreEnforcementWarningVisibility:
@@ -94,7 +91,7 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # Arrange: reconstruct the shipped pytest filterwarnings config so the
         # test fails if a future edit silences enforcement warnings again.
         """Test real filterwarnings keep mro violations visible."""
-        payload = u.config_load(self._PROJECT_ROOT / "pyproject.toml").unwrap()
+        payload = u.config_load(self._PROJECT_ROOT / c.PYPROJECT_FILENAME).unwrap()
         tool = cast("t.JsonMapping", payload.get("tool", {}))
         pytest_tool = cast("t.JsonMapping", tool.get("pytest", {}))
         ini_options = cast("t.JsonMapping", pytest_tool.get("ini_options", {}))
@@ -137,7 +134,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 "no:cacheprovider",
             ],
             cwd=tmp_path,
-            options=m.Cli.ProcessOptions(env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"}),
+            options=m.Cli.ProcessOptions(
+                env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": c.ParserBooleanToken.ONE}
+            ),
         )
 
         # Assert: the warning survives to the caller's output.

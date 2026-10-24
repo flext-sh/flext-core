@@ -14,7 +14,7 @@ from flext_core import c, u
 from flext_core._decorators import FlextDecoratorsLoggingPayloads
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsLogging
-from flext_core._typings import FlextTypingBase
+from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -34,7 +34,6 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         model_config = FlextModelsPydantic.ConfigDict(
             frozen=True,
             extra="forbid",
-            arbitrary_types_allowed=True,
         )
 
         func_name: Annotated[
@@ -54,7 +53,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             ),
         ]
         logger: Annotated[
-            FlextProtocolsLogging.Logger,
+            FlextTypesPydantic.Port[FlextProtocolsLogging.Logger],
             FlextModelsPydantic.Field(
                 description="Logger the execution reports through."
             ),
@@ -184,7 +183,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 "success": False,
                 "error": str(exc),
                 "error_type": exc.__class__.__name__,
-                "operation": spec.op_name,
+                c.ContextScope.OPERATION: spec.op_name,
             }
             if spec.correlation_id is not None:
                 exc_kw[c.ContextKey.CORRELATION_ID] = spec.correlation_id
@@ -194,7 +193,9 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             spec.logger.exception(spec.op_name, exception=exc, **exc_kw)
             raise
         else:
-            spec.logger.debug(
+            # A tracked operation reports its duration at INFO so stage timing
+            # is visible without enabling debug output.
+            (spec.logger.info if spec.track_perf else spec.logger.debug)(
                 "%s_completed",
                 spec.op_name,
                 **cls._success_log_payload(

@@ -16,8 +16,8 @@ from typing import Annotated
 
 import pytest
 
-from flext_core import c, t
-from tests import m, tm
+from flext_core import t
+from tests import c, m, tm
 
 
 class TestsFlextCoreCqrs:
@@ -32,7 +32,7 @@ class TestsFlextCoreCqrs:
         command = m.Command()
 
         # Assert
-        tm.that(command.message_type, eq="command")
+        tm.that(command.message_type, eq=c.HandlerMode.COMMAND)
 
     @staticmethod
     def test_command_message_type_is_immutable() -> None:
@@ -43,7 +43,7 @@ class TestsFlextCoreCqrs:
         tm.rejects_assignment(
             command,
             "message_type",
-            "query",
+            c.HandlerMode.QUERY,
             expected=c.ValidationError,
         )
 
@@ -94,7 +94,7 @@ class TestsFlextCoreCqrs:
         tm.that(
             dumped,
             eq={
-                "message_type": "command",
+                "message_type": c.HandlerMode.COMMAND,
                 "command_type": dumped["command_type"],
                 "command_id": "cmd-1",
                 "issuer_id": None,
@@ -112,16 +112,21 @@ class TestsFlextCoreCqrs:
 
         # Assert
         tm.that(command.name, eq="widget")
-        tm.that(command.message_type, eq="command")
+        tm.that(command.message_type, eq=c.HandlerMode.COMMAND)
         tm.that(command.command_id.startswith("cmd_"), truth=True)
 
     # ------------------------------------------------------------------ #
     # Query
     # ------------------------------------------------------------------ #
+
+
+class TestsFlextCoreQuery:
+    """Query identity, filters, and pagination contracts."""
+
     @staticmethod
     def test_query_message_type_discriminator_is_query() -> None:
         # Act / Assert
-        tm.that(m.Query().message_type, eq="query")
+        tm.that(m.Query().message_type, eq=c.HandlerMode.QUERY)
 
     @staticmethod
     def test_query_message_type_is_immutable() -> None:
@@ -132,7 +137,7 @@ class TestsFlextCoreCqrs:
         tm.rejects_assignment(
             query,
             "message_type",
-            "command",
+            c.HandlerMode.COMMAND,
             expected=c.ValidationError,
         )
 
@@ -199,7 +204,7 @@ class TestsFlextCoreCqrs:
 
         # Assert
         tm.that(query.item_id, eq="7")
-        tm.that(query.message_type, eq="query")
+        tm.that(query.message_type, eq=c.HandlerMode.QUERY)
         tm.that(query.query_id.startswith("query_"), truth=True)
 
     # ------------------------------------------------------------------ #

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._beartype._helpers_parts.helpers_part_03 import (
+from flext_core._utilities._beartype._helpers.helpers_part_03 import (
     FlextUtilitiesBeartypeHelpersPart03,
 )
 

@@ -6,12 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-from tests import c, r, t, tm, u
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import c, p, r, t, tm, u
 
 
 class TestsFlextFlextSystemWorkflowCases:

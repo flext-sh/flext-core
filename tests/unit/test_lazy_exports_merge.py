@@ -31,7 +31,7 @@ from tests import tm, u
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from tests import t
+from tests import t
 
 
 def _register_alpha_child(child_package_name: str, alpha_module_name: str) -> None:
@@ -68,6 +68,7 @@ class TestsFlextCoreLazyExportsMerge:
     def test_fresh_normalizer_validates_the_public_lazy_entry_shape(
         tmp_path: Path,
         raw_literal: str,
+        *,
         accepted: bool,
     ) -> None:
         """The entry contract accepts strings/pairs and rejects malformed maps."""

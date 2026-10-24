@@ -11,16 +11,18 @@ from typing import Final
 
 from pydantic import ConfigDict
 
+from flext_core._settings import FlextSettings
+
 
 class FlextConstantsSettings:
     """SSOT for runtime settings."""
 
     SHORT_UUID_LENGTH: Final[int] = 8
 
-    ENV_FILE_ENV_VAR: Final[str] = "FLEXT_ENV_FILE"
+    ENV_FILE_ENV_VAR: Final[str] = FlextSettings.ENV_FILE_ENV_VAR
     """Bootstrap env var that overrides the .env path (settings protocol owner)."""
 
-    ENV_FILE_DEFAULT: Final[str] = ".env"
+    ENV_FILE_DEFAULT: Final[str] = FlextSettings.ENV_FILE_DEFAULT
 
     EXTRA_CONFIG_FORBID: Final = "forbid"
     EXTRA_CONFIG_IGNORE: Final = "ignore"

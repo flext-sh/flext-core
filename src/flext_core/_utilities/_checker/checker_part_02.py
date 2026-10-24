@@ -1,0 +1,210 @@
+"""Type introspection helpers for dispatcher handler compatibility.
+
+The utilities here mirror the logic previously embedded in ``h``
+to keep handler initialization lighter while still honoring the dispatcher
+protocol expectations for message typing.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import inspect
+from types import FunctionType, MethodType
+from typing import get_origin, get_type_hints
+
+from flext_core import FlextResult, c, p
+from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core._utilities._checker import checker_part_01
+
+
+class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
+    @classmethod
+    def _extract_message_type_from_parameter(
+        cls,
+        parameter: inspect.Parameter,
+        type_hints: FlextTypingBase.MappingKV[
+            str, FlextTypingBase.TypeHintSpecifier | None
+        ],
+        param_name: str,
+    ) -> p.Result[FlextTypingBase.TypeHintSpecifier]:
+        """Extract message type from parameter hints or signature annotation.
+
+        Returns:
+            The resulting ``p.Result[FlextTypingBase.TypeHintSpecifier]``.
+
+        """
+        if param_name in type_hints:
+            hint = type_hints[param_name]
+            if hint is None:
+                return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
+                    c.ERR_CHECKER_TYPE_HINT_NONE
+                )
+            return FlextResult[FlextTypingBase.TypeHintSpecifier].ok(
+                hint if isinstance(hint, (str, type)) else str(hint),
+            )
+        annotation = parameter.annotation
+        if annotation is inspect.Signature.empty:
+            return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
+                c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
+            )
+        return FlextResult[FlextTypingBase.TypeHintSpecifier].ok(
+            annotation if isinstance(annotation, (str, type)) else str(annotation),
+        )
+
+    @classmethod
+    def _get_method_signature(
+        cls,
+        handle_method: FunctionType | MethodType,
+    ) -> p.Result[inspect.Signature]:
+        """Extract signature from handle method, wrapping errors in Result.
+
+        Returns:
+            The resulting ``p.Result[inspect.Signature]``.
+
+        """
+        try:
+            return FlextResult[inspect.Signature].ok(inspect.signature(handle_method))
+        except c.EXC_TYPE_VALIDATION:
+            return FlextResult[inspect.Signature].fail(
+                c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
+            )
+
+    @classmethod
+    def _get_type_hints_safe(
+        cls,
+        handle_method: FunctionType | MethodType,
+        handler_class: type,
+    ) -> FlextTypingBase.MappingKV[str, FlextTypingBase.TypeHintSpecifier | None]:
+        """Safely extract type hints, returning empty dict on error.
+
+        Returns:
+            The resulting mapping of type-hint specifiers, ``None`` for absent.
+
+        """
+        hints: FlextTypingBase.MappingKV[
+            str, FlextTypingBase.TypeHintSpecifier | None
+        ] = {}
+        function = (
+            handle_method.__func__
+            if isinstance(handle_method, MethodType)
+            else handle_method
+        )
+        try:
+            hints = get_type_hints(
+                function,
+                globalns=function.__globals__,
+                localns=dict(vars(handler_class)),
+            )
+        except (NameError, AttributeError, TypeError):
+            hints = {}
+        return hints
+
+    @classmethod
+    def _handle_instance_check(
+        cls,
+        message_type: FlextTypingBase.TypeHintSpecifier,
+        origin_type: FlextTypingBase.TypeHintSpecifier,
+    ) -> bool:
+        """Instance check for non-type objects; returns True on TypeError.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        try:
+            if isinstance(origin_type, type):
+                matched = isinstance(message_type, origin_type) or cls._is_subclass_of(
+                    message_type,
+                    origin_type,
+                )
+            else:
+                matched = True
+        except TypeError:
+            return True
+        else:
+            return matched
+
+    @classmethod
+    def _handle_type_or_origin_check(
+        cls,
+        expected_type: FlextTypingBase.TypeHintSpecifier,
+        message_type: FlextTypingBase.TypeHintSpecifier,
+        origin_type: FlextTypingBase.TypeHintSpecifier,
+        message_origin: FlextTypingBase.TypeHintSpecifier,
+    ) -> bool:
+        """Type checking for types or objects with __origin__.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        try:
+            matched = cls._match_type_or_origin(
+                expected_type,
+                message_type,
+                origin_type,
+                message_origin,
+            )
+        except TypeError:
+            return message_type is expected_type
+        else:
+            return matched
+
+    @classmethod
+    def _match_type_or_origin(
+        cls,
+        expected_type: FlextTypingBase.TypeHintSpecifier,
+        message_type: FlextTypingBase.TypeHintSpecifier,
+        origin_type: FlextTypingBase.TypeHintSpecifier,
+        message_origin: FlextTypingBase.TypeHintSpecifier,
+    ) -> bool:
+        """Resolve the origin/type match without guarding against TypeError.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        if hasattr(message_type, "__origin__"):
+            return message_origin is origin_type
+        if isinstance(origin_type, type):
+            return cls._is_subclass_of(message_type, origin_type)
+        return message_type is expected_type
+
+    @classmethod
+    def _evaluate_type_compatibility(
+        cls,
+        expected_type: FlextTypingBase.TypeHintSpecifier,
+        message_type: FlextTypesServices.MessageTypeSpecifier,
+    ) -> bool:
+        """Evaluate compatibility between expected and actual message types.
+
+        Returns:
+            The resulting ``bool``.
+
+        """
+        object_check = cls._check_object_type_compatibility(expected_type)
+        if object_check:
+            return object_check
+        origin_type = get_origin(expected_type) or expected_type
+        message_origin = get_origin(message_type) or message_type
+        dict_check = cls._check_dict_compatibility(
+            expected_type,
+            message_type,
+            origin_type,
+            message_origin,
+        )
+        if dict_check:
+            return dict_check
+        if isinstance(message_type, type) or hasattr(message_type, "__origin__"):
+            return cls._handle_type_or_origin_check(
+                expected_type,
+                message_type,
+                origin_type,
+                message_origin,
+            )
+        return cls._handle_instance_check(message_type, origin_type)
+
+
+__all__: list[str] = ["FlextUtilitiesCheckerPart02"]

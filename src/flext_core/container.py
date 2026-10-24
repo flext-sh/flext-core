@@ -32,7 +32,7 @@ from flext_core import (
     t,
     u,
 )
-from flext_core._container_parts import FlextContainerTestingOps
+from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
     from collections.abc import Callable, MutableMapping
@@ -75,7 +75,12 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         | p.ServiceRegistrationSpec
         | None = None,
     ) -> Self:
-        """Create or return the global singleton instance."""
+        """Create or return the global singleton instance.
+
+        ``registration`` mirrors the ``__init__`` signature the constructor
+        protocol forwards here; ``__init__`` alone applies it.
+        """
+        _ = registration
         if cls._global_instance is None:
             with cls._global_lock:
                 if cls._global_instance is None:
@@ -600,10 +605,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         non-callable, duplicate or reserved factory raises ``e.ValidationError``.
         """
         module_symbols = vars(caller_module)
+        factory_adapter = u.type_adapter(TypeForm(p.FactoryCallable))
         for factory_name, factory_config in u.scan_module(caller_module):
-            impl = u.type_adapter(TypeForm(p.FactoryCallable)).validate_python(
-                module_symbols[factory_name]
-            )
+            impl = factory_adapter.validate_python(module_symbols[factory_name])
             _ = instance.factory(factory_config.name, impl)
 
     def _apply_explicit_bootstrap(

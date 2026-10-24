@@ -17,7 +17,7 @@ from tests import c, m, p, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
 
-    from tests import t
+from tests import t
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
     ("debug", True),
@@ -35,8 +35,10 @@ class TestsFlextLoggings:
     Covers create, bind, log, track, and strict returns.
     """
 
+    pytestmark = pytest.mark.usefixtures("restore_logging")
+
     @staticmethod
-    @pytest.fixture(autouse=True)
+    @pytest.fixture
     def restore_logging() -> Generator[None]:
         """Exercise all standard severities, then restore the captured policy."""
         original_settings, original_options = u.logging_settings(), u.logging_options()
@@ -123,7 +125,7 @@ class TestsFlextLoggings:
     @staticmethod
     def test_unbind_missing_key_fails_loud(logger: p.Logger) -> None:
         """Test unbind missing key fails loud."""
-        bound = logger.bind(a="1")
+        bound = logger.bind(a=c.ParserBooleanToken.ONE)
         with pytest.raises(KeyError):
             bound.unbind("missing")
 
@@ -273,5 +275,5 @@ class TestsFlextLoggings:
         tm.ok(result)
         tm.ok(marker in output)
         tm.ok("tests/unit/test_loggings_full_coverage.py" in output)
-        tm.fail("_logging_context_parts" in output)
-        tm.fail("_loggings_parts" in output)
+        for internal_path in c.LOGGING_INTERNAL_PATH_FRAGMENTS:
+            tm.fail(internal_path in output)

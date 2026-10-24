@@ -10,9 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._exception_params_parts import (
-    flextmodelsexceptionparams_part_03,
-)
+from flext_core._models._exception_params import flextmodelsexceptionparams_part_03
 
 
 class FlextModelsExceptionParams(

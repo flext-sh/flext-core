@@ -113,7 +113,9 @@ class TestsFlextCoreExceptionsTypedMetrics:
             (lambda: e.FlextTimeoutError("m", timeout_seconds=30.0), "TIMEOUT"),
             (lambda: e.AuthenticationError("m", auth_method="password"), "AUTH"),
             (
-                lambda: e.NotFoundError("m", resource_type="User", resource_id="1"),
+                lambda: e.NotFoundError(
+                    "m", resource_type="User", resource_id=c.ParserBooleanToken.ONE
+                ),
                 "NOT_FOUND",
             ),
         ],
@@ -171,7 +173,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
             ),
             (
                 lambda: e.OperationError("m", operation="dispatch"),
-                "operation",
+                c.ContextScope.OPERATION,
                 "dispatch",
             ),
             (
@@ -221,7 +223,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
             options=m.ExceptionInitOptions(
                 context={
                     "key1": "value1",
-                    "correlation_id": "corr-001",
+                    c.ContextKey.CORRELATION_ID: "corr-001",
                     "metadata": "skip-me",
                 },
             ),
@@ -230,7 +232,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         # Assert: caller-provided context survives; reserved keys are excluded
         attributes = error.metadata.attributes
         tm.that(attributes["key1"], eq="value1")
-        tm.that("correlation_id" not in attributes, truth=True)
+        tm.that(c.ContextKey.CORRELATION_ID not in attributes, truth=True)
         tm.that("metadata" not in attributes, truth=True)
 
     @staticmethod

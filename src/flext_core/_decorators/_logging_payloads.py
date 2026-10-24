@@ -34,7 +34,7 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
             "func_module": func_module,
         }
         if correlation_id:
-            payload["correlation_id"] = correlation_id
+            payload[c.ContextKey.CORRELATION_ID] = correlation_id
         return payload
 
     @staticmethod

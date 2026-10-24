@@ -1,0 +1,27 @@
+"""Project metadata model parts.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from typing import ClassVar
+
+from flext_core._models import FlextModelsPydantic
+from flext_core._models._project_metadata import contract
+
+
+class FlextModelsPyprojectIngressContract(contract.FlextModelsProjectMetadataContract):
+    """Frozen declaration base for standards-owned TOML tables."""
+
+    model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+        FlextModelsPydantic.ConfigDict(
+            frozen=True,
+            extra="ignore",
+            populate_by_name=True,
+        )
+    )
+
+
+__all__: list[str] = ["FlextModelsPyprojectIngressContract"]

@@ -51,7 +51,6 @@ from pydantic import (
     JsonValue,
     SecretBytes,
     SecretStr,
-    TypeAdapter,
     computed_field,
     model_validator,
 )
@@ -81,7 +80,12 @@ class FlextSettings(BaseSettings):
     def _resolve_env_file(
         env_var: str, default: str, namespace: str | None = None
     ) -> str:
-        """Resolve dotenv input before the settings class configuration is built."""
+        """Resolve dotenv input before the settings class configuration is built.
+
+        Returns:
+            The dotenv file path selected for this settings class.
+
+        """
         custom_env_file = os.environ.get(env_var)
         if custom_env_file:
             custom_path = Path(custom_env_file)
@@ -109,7 +113,6 @@ class FlextSettings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
         validate_assignment=True,
-        arbitrary_types_allowed=True,
     )
 
     @staticmethod
@@ -200,7 +203,12 @@ class FlextSettings(BaseSettings):
 
     @classmethod
     def _load_sources(cls, **overrides: FlextSettings._OverrideValue) -> Self:
-        """Validate sources and overrides together, without publishing defaults."""
+        """Validate sources and overrides together, without publishing defaults.
+
+        Returns:
+            A settings instance validated from every source and override.
+
+        """
         env_file = (
             cls.resolve_env_file()
             if cls.ENV_FILE_ENV_VAR in os.environ
@@ -234,7 +242,12 @@ class FlextSettings(BaseSettings):
         model_type: type[BaseModel],
         source_values: Mapping[str, FlextSettings._FieldValue],
     ) -> MutableMapping[str, FlextSettings._FieldValue]:
-        """Resolve native validation aliases into complete field-name input."""
+        """Resolve native validation aliases into complete field-name input.
+
+        Returns:
+            The source values keyed by field name.
+
+        """
         # Native sources may use validation aliases. Resolve those before applying
         # the owner's field-name overrides, including aliases with shared paths.
         field_values = {
@@ -261,25 +274,9 @@ class FlextSettings(BaseSettings):
                 root = path.path[0]
                 if not isinstance(root, str):
                     continue
-                value: FlextSettings._FieldValue | PydanticUndefinedType
-                value = source_values.get(root, PydanticUndefined)
-                for key in path.path[1:]:
-                    try:
-                        if isinstance(value, Mapping):
-                            value = next(
-                                (item for name, item in value.items() if name == key),
-                                PydanticUndefined,
-                            )
-                        elif isinstance(value, (list, tuple, bytes)) and isinstance(
-                            key, int
-                        ):
-                            value = value[key]
-                        else:
-                            value = PydanticUndefined
-                    except (KeyError, IndexError, TypeError):
-                        value = PydanticUndefined
-                    if value is PydanticUndefined:
-                        break
+                value = cls._alias_path_value(
+                    source_values.get(root, PydanticUndefined), path.path[1:]
+                )
                 if not isinstance(value, PydanticUndefinedType):
                     field_values[name] = value
                     consumed.add(root)
@@ -290,11 +287,46 @@ class FlextSettings(BaseSettings):
         values.update(field_values)
         return values
 
+    @staticmethod
+    def _alias_path_value(
+        value: FlextSettings._FieldValue | PydanticUndefinedType,
+        keys: Sequence[str | int],
+    ) -> FlextSettings._FieldValue | PydanticUndefinedType:
+        """Follow the remaining segments of one validation-alias path.
+
+        Mapping segments select by key; integer segments index sequences within
+        bounds. Any other step leaves the alias unresolved.
+
+        Returns:
+            The value the path reaches, or ``PydanticUndefined`` when it is absent.
+
+        """
+        for key in keys:
+            if isinstance(value, Mapping):
+                value = next(
+                    (item for name, item in value.items() if name == key),
+                    PydanticUndefined,
+                )
+            elif (
+                isinstance(value, (list, tuple, bytes))
+                and isinstance(key, int)
+                and -len(value) <= key < len(value)
+            ):
+                value = value[key]
+            else:
+                return PydanticUndefined
+        return value
+
     @classmethod
     def _validate_candidate[ModelT: BaseModel, ValueT](
         cls, candidate: ModelT, values: Mapping[str, ValueT]
     ) -> ModelT:
-        """Validate detached stored state, never a presentation serialization."""
+        """Validate detached stored state, never a presentation serialization.
+
+        Returns:
+            A validated copy of the candidate carrying the given values.
+
+        """
         validated = {
             name: cls._validate_nested(value) for name, value in values.items()
         }
@@ -306,13 +338,23 @@ class FlextSettings(BaseSettings):
     @singledispatchmethod
     @classmethod
     def _validate_nested[ValueT](cls, value: ValueT) -> ValueT:
-        """Keep arbitrary native leaves intact while dispatching stored models."""
+        """Keep arbitrary native leaves intact while dispatching stored models.
+
+        Returns:
+            The value itself, unchanged.
+
+        """
         return value
 
     @_validate_nested.register(BaseModel)
     @classmethod
     def _validate_model[ModelT: BaseModel](cls, value: ModelT) -> ModelT:
-        """Validate a copy so a model resident in a hashed container stays intact."""
+        """Validate a copy so a model resident in a hashed container stays intact.
+
+        Returns:
+            The validated deep copy of the model.
+
+        """
         copied = value.model_copy(deep=True)
         model_type: type[BaseModel] = copied.__class__
         values = {
@@ -343,7 +385,12 @@ class FlextSettings(BaseSettings):
         | set[ValueT]
         | frozenset[ValueT]
     ):
-        """Rebuild containers from validated copies without mutating resident keys."""
+        """Rebuild containers from validated copies without mutating resident keys.
+
+        Returns:
+            A new container of the same kind holding validated copies.
+
+        """
         if isinstance(value, Mapping):
             return {
                 cls._validate_nested(key): cls._validate_nested(nested)
@@ -364,6 +411,10 @@ class FlextSettings(BaseSettings):
 
         With ``overrides`` return an isolated clone; the singleton is not
         mutated (use ``update_global`` for that).
+
+        Returns:
+            The shared per-class singleton (lazy, thread-safe).
+
         """
         with cls._lock:
             instance = cls._instance
@@ -708,9 +759,6 @@ class FlextSettings(BaseSettings):
         if number is None or number < logging.DEBUG:
             msg = f"Invalid log level: {self.log_level}"
             raise ValueError(msg)
-        TypeAdapter(
-            type(self).model_fields["logging_profile"].rebuild_annotation()
-        ).validate_python(self.logging_profile, strict=True)
         return self
 
 

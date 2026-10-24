@@ -23,12 +23,14 @@ _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
-    type ModelInput = t.ModelInput[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    type ModelInput = t.ModelInput[
+        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    ]
     type ConfigModelInput = t.ConfigModelInput[
-        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
+        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
     ]
     type MetadataInput = t.MetadataInput[
-        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
+        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
     ]
 
     @runtime_checkable
@@ -66,23 +68,8 @@ class FlextProtocolsResult:
         def success(self) -> bool: ...
 
     @runtime_checkable
-    class ResultState[T](Protocol):
+    class ResultState[T](ResultView[T], Protocol):
         """Structural state surface of the railway result contract."""
-
-        @property
-        def error(self) -> str | None: ...
-        @property
-        def error_code(self) -> str | None: ...
-        @property
-        def error_data(self) -> t.JsonMapping | None: ...
-        @property
-        def success(self) -> bool: ...
-        @property
-        def exception(self) -> BaseException | None: ...
-        @property
-        def failure(self) -> bool: ...
-        @property
-        def value(self) -> T: ...
 
         def __enter__(self) -> Self: ...
 

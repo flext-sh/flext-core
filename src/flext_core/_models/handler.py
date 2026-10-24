@@ -85,7 +85,11 @@ class FlextModelsHandler:
             FlextModelsPydantic.Field(
                 default=c.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
-                examples=["command", "query", "event"],
+                examples=[
+                    c.HandlerMode.COMMAND,
+                    c.HandlerMode.QUERY,
+                    c.HandlerType.EVENT,
+                ],
             ),
         ] = c.HandlerType.COMMAND
         timestamp: Annotated[
@@ -114,7 +118,6 @@ class FlextModelsHandler:
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
-                arbitrary_types_allowed=True,
                 validate_assignment=True,
                 json_schema_extra={
                     "title": "HandlerExecutionContext",
@@ -135,7 +138,11 @@ class FlextModelsHandler:
             c.HandlerType,
             FlextModelsPydantic.Field(
                 description="Mode of handler execution",
-                examples=["command", "query", "event"],
+                examples=[
+                    c.HandlerMode.COMMAND,
+                    c.HandlerMode.QUERY,
+                    c.HandlerType.EVENT,
+                ],
             ),
         ]
         started_at: Annotated[
@@ -201,7 +208,6 @@ class FlextModelsHandler:
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
                 frozen=True,
-                arbitrary_types_allowed=True,
             )
         )
         command: Annotated[

@@ -27,9 +27,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import csv
 import inspect
 import os
+from importlib.metadata import distributions
 from importlib.resources import files
+from io import StringIO
 from pathlib import Path
 from threading import RLock
 from typing import ClassVar, Self, override
@@ -41,7 +44,6 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core._constants.config import FlextConstantsConfig
 from flext_core._settings import FlextSettings
 from flext_core.config_sources import FlextStrictYamlConfigSource
 
@@ -57,10 +59,12 @@ class FlextConfig(BaseSettings):
     # NOTE (multi-agent): exact-file consumers declare their YAML surface here;
     # the empty default preserves deterministic directory auto-discovery.
     CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
+    CONFIG_DIR_NAME: ClassVar[str] = "config"
+    """Packaged resource directory holding the declaring package's YAML files."""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
-        extra="allow",
+        extra="forbid",
         env_prefix="FLEXT_CONFIG_",
     )
 
@@ -75,6 +79,10 @@ class FlextConfig(BaseSettings):
         FLEXT distribution owns ``<import-package-with-dashes>`` without
         naming itself anywhere (``flext_core`` -> ``flext-core``,
         ``ai_hub`` -> ``ai-hub``).
+
+        Returns:
+            The namespace segment owned by the declaring package.
+
         """
         package = cls.__module__.split(".", 1)[0]
         return package.replace("_", "-")
@@ -83,14 +91,18 @@ class FlextConfig(BaseSettings):
     def _config_dir(cls) -> Path:
         """Resolve the packaged ``config/`` root, independent of the caller's CWD.
 
-        The concrete class's import package owns the resource in editable and
-        wheel installs, regardless of declaration depth or inherited loader.
+        Distribution metadata owns resources recorded separately from Python
+        modules, including force-included data in editable installations.
+        Other resources remain owned by the declaring import package itself.
         Repository overlays are separate explicit consumer inputs, never a
         replacement for a missing packaged default. ``<PACKAGE>_CONFIG_DIR``
         remains the explicit operator relocation.
 
         Returns:
             The resulting ``Path``.
+
+        Raises:
+            RuntimeError: If multiple installed distributions claim the package.
 
         """
         namespace = cls._package_namespace()
@@ -100,7 +112,29 @@ class FlextConfig(BaseSettings):
         if override:
             return Path(override)
         package = cls.__module__.partition(".")[0]
-        return Path(str(files(package) / FlextConstantsConfig.CONFIG_DIR_NAME))
+        resource = Path(package) / cls.CONFIG_DIR_NAME
+        # Repeated sys.path entries may enumerate the same installed owner twice.
+        owners = {
+            (
+                installed.name,
+                installed.version,
+                str(installed.locate_file(resource)),
+            ): installed
+            for installed in distributions()
+            if (record := installed.read_text("RECORD")) is not None
+            and any(
+                row
+                and row[0].startswith(f"{package}/")
+                and Path(row[0]).is_relative_to(resource)
+                for row in csv.reader(StringIO(record))
+            )
+        }
+        if len(owners) > 1:
+            msg = f"multiple installed distributions own config package: {package}"
+            raise RuntimeError(msg)
+        if owners:
+            return Path(str(next(iter(owners.values())).locate_file(resource)))
+        return Path(str(files(package) / cls.CONFIG_DIR_NAME))
 
     @classmethod
     def _user_config_dir(cls) -> Path:
@@ -109,12 +143,21 @@ class FlextConfig(BaseSettings):
         Lives under the platform config root scoped by the package namespace
         (``$XDG_CONFIG_HOME/<namespace>`` on Linux). Packaged defaults stay
         immutable; anything declared here overlays them.
+
+        Returns:
+            The operator's optional preference directory for this package.
+
         """
         return FlextSettings.platform_config_root() / cls._package_namespace()
 
     @classmethod
     def _yaml_files_in(cls, directory: Path) -> list[Path]:
-        """Return every YAML file in one directory, sorted for deterministic merge."""
+        """Return every YAML file in one directory, sorted for deterministic merge.
+
+        Returns:
+            Every YAML file in one directory, sorted for deterministic merge.
+
+        """
         return sorted(directory.glob("*.yaml")) + sorted(directory.glob("*.yml"))
 
     @classmethod
@@ -221,7 +264,6 @@ class FlextConfig(BaseSettings):
             FlextStrictYamlConfigSource(
                 settings_cls,
                 yaml_file=cls._config_source_files(),
-                yaml_config_section=FlextConstantsConfig.YAML_CONFIG_SECTION,
                 deep_merge=True,
                 transform=cls._transform_loaded_yaml,
             ),

@@ -130,39 +130,11 @@ codegen = [
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
 ]
 
-[tool.codespell]
-check-filenames = true
-ignore-words-list = "crate,nd"
-
-[tool.coverage.report]
-exclude_also = [
-  "if _t.TYPE_CHECKING:",
-  "if TYPE_CHECKING:",
-  "if typing.TYPE_CHECKING:",
-]
-precision = 2
-show_missing = true
-skip_covered = false
-
-[tool.coverage.run]
-source = ["src"]
-omit = [
-  "*/dependency_injector/providers.pyx",
-  "*/protocols.py",
-  "*/_protocols/*",
-]
-
-[tool.deptry]
-known_first_party = ["flext_core"]
-
 [tool.flext.docs]
 package_name = "flext_core"
 
 [tool.flext.namespace]
 scan_dirs = ["src"]
-
-[tool.hatch.metadata]
-allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 only-include = ["src/flext_core"]
@@ -179,35 +151,59 @@ only-include = ["src/flext_core"]
 [tool.hatch.build.targets.sdist.force-include]
 "pyproject.toml" = "pyproject.toml"
 
-[tool.mypy]
-mypy_path = ["src"]
-plugins = ["pydantic.mypy"]
-disable_error_code = [
-  "call-arg",
-  "prop-decorator",
-  "has-type",
-  "redundant-cast",
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.codespell]
+check-filenames = true
+ignore-words-list = "crate,nd"
+
+[tool.coverage.report]
+exclude_also = [
+  "if _t.TYPE_CHECKING:",
+  "if TYPE_CHECKING:",
+  "if typing.TYPE_CHECKING:",
 ]
-python_version = "3.13"
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.run]
+omit = [
+  "*/dependency_injector/providers.pyx",
+  "*/protocols.py",
+  "*/_protocols/*",
+]
+source = ["src"]
+
+[tool.deptry]
+known_first_party = ["flext_core"]
+optional_dependencies_dev_groups = []
+
+[tool.mypy]
 allow_redefinition = true
 check_untyped_defs = true
+disable_error_code = ["call-arg", "prop-decorator"]
 explicit_package_bases = true
 extra_checks = true
+follow_imports = "normal"
 follow_untyped_imports = true
 local_partial_types = true
+mypy_path = ["src"]
 namespace_packages = true
 no_implicit_reexport = true
+plugins = ["pydantic.mypy"]
+python_version = "3.13"
 show_traceback = true
 strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 warn_unused_ignores = true
-follow_imports = "normal"
 
 [[tool.mypy.overrides]]
-module = ["rope.*"]
 follow_untyped_imports = true
+module = ["rope.*"]
 
 [tool.pydantic-mypy]
 init_forbid_extra = true
@@ -217,18 +213,58 @@ warn_required_dynamic_aliases = true
 [tool.pyrefly]
 disable-project-excludes-heuristics = true
 project-excludes = [
+  "**/*.bak",
+  "**/*.egg-info/**",
+  "**/*.orig",
+  "**/*.rej",
+  "**/*.swp",
+  "**/.agents-sync-home/**",
+  "**/.agents/**",
+  "**/.archive/**",
+  "**/.beads/**",
+  "**/.benchmarks/**",
+  "**/.bkp/**",
+  "**/.cache/**",
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.gemini/**",
+  "**/.git/**",
+  "**/.hypothesis/**",
+  "**/.kilo/**",
+  "**/.mypy_cache/**",
+  "**/.omo/**",
+  "**/.opencode/**",
+  "**/.pylance_cache/**",
+  "**/.pyrefly_cache/**",
+  "**/.pytest_cache/**",
+  "**/.reports/**",
+  "**/.ruff_cache/**",
+  "**/.serena/**",
+  "**/.snapshots/**",
+  "**/.test-tmp/**",
+  "**/.tmp/**",
+  "**/.tox/**",
+  "**/.venv.*/**",
   "**/.venv/**",
-  "**/__pycache__",
+  "**/.vscode/**",
+  "**/.worktrees/**",
+  "**/__pycache__/**",
   "**/__pyrefly_virtual__/**",
-  "**/node_modules",
+  "**/_tmp_*/**",
+  "**/build/**",
+  "**/dist-packages/**",
+  "**/dist/**",
+  "**/htmlcov/**",
+  "**/incoming/**",
+  "**/legado/**",
+  "**/node_modules/**",
   "**/protos/**",
+  "**/reports/**",
   "**/site-packages/**",
-  "**/typings/**",
-  "**/vendor/**",
+  "**/site/**",
+  "**/target/**",
   "**/venv/**",
-  ".venv/**",
-  "typings/**",
-  "vendor/**",
 ]
 project-includes = [
   "examples/**/*.py*",
@@ -237,7 +273,7 @@ project-includes = [
   "tests/**/*.py*",
 ]
 python-version = "3.13"
-search-path = ["src", "examples", "scripts", "tests", "."]
+search-path = ["src", "."]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -344,54 +380,41 @@ exclude = [
   "**/.git/**",
   "**/.hypothesis/**",
   "**/.kilo/**",
-  "**/.mypy_cache",
   "**/.mypy_cache/**",
   "**/.omo/**",
   "**/.opencode/**",
   "**/.pylance_cache/**",
   "**/.pyrefly_cache/**",
-  "**/.pytest_cache",
   "**/.pytest_cache/**",
   "**/.reports/**",
-  "**/.ruff_cache",
   "**/.ruff_cache/**",
   "**/.serena/**",
   "**/.snapshots/**",
   "**/.test-tmp/**",
   "**/.tmp/**",
   "**/.tox/**",
-  "**/.venv",
   "**/.venv.*/**",
   "**/.venv/**",
   "**/.vscode/**",
   "**/.worktrees/**",
-  "**/__pycache__",
   "**/__pycache__/**",
   "**/__pyrefly_virtual__/**",
   "**/_tmp_*/**",
   "**/build/**",
-  "**/dist-packages",
   "**/dist-packages/**",
   "**/dist/**",
   "**/htmlcov/**",
   "**/incoming/**",
   "**/legado/**",
-  "**/node_modules",
   "**/node_modules/**",
   "**/protos/**",
   "**/reports/**",
-  "**/site-packages",
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
-  "**/venv",
   "**/venv/**",
-  ".git",
-  ".reports",
-  ".venv",
-  "vendor",
 ]
-extraPaths = [".", "src"]
+extraPaths = ["src", "."]
 include = ["conftest.py", "examples", "scripts", "src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
@@ -401,6 +424,7 @@ reportIncompatibleMethodOverride = "error"
 reportInconsistentConstructor = "error"
 reportMissingImports = "error"
 reportMissingModuleSource = "error"
+reportMissingTypeStubs = "none"
 reportPrivateUsage = "error"
 reportUnnecessaryCast = "error"
 reportUnnecessaryComparison = "error"
@@ -413,6 +437,16 @@ typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
 
 [[tool.pyright.executionEnvironments]]
+extraPaths = ["src", "."]
+reportPrivateUsage = "error"
+root = "src"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
+root = "tests"
+
+[[tool.pyright.executionEnvironments]]
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
 root = "examples"
@@ -422,16 +456,6 @@ extraPaths = [".", "src"]
 reportPrivateUsage = "error"
 root = "scripts"
 
-[[tool.pyright.executionEnvironments]]
-extraPaths = ["src"]
-reportPrivateUsage = "error"
-root = "src"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportPrivateUsage = "error"
-root = "tests"
-
 [tool.pytest.ini_options]
 addopts = [
   "--benchmark-disable",
@@ -440,13 +464,13 @@ addopts = [
   "--durations=10",
   "--flext-enforce-strict",
 ]
-flext_slow_timeout_seconds = "30"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
   "once::pytest.PytestAssertRewriteWarning",
 ]
+flext_slow_timeout_seconds = "30"
 markers = [
   "smoke: public-interface smoke tests",
   "unit: unit tests",
@@ -472,17 +496,62 @@ testpaths = ["tests"]
 
 [tool.ruff]
 extend-exclude = [
+  "**/*.bak",
+  "**/*.egg-info/**",
+  "**/*.orig",
+  "**/*.rej",
+  "**/*.swp",
+  "**/.agents-sync-home/**",
+  "**/.agents/**",
   "**/.archive/**",
-  "**/.agents/aihub-hooks/**",
-  "**/.claude/aihub-hooks/**",
-  "**/.codex/aihub-hooks/**",
-  "**/.cursor/aihub-hooks/**",
-  "**/.gemini/aihub-hooks/**",
+  "**/.beads/**",
+  "**/.benchmarks/**",
+  "**/.bkp/**",
+  "**/.cache/**",
+  "**/.claude/**",
+  "**/.codex/**",
+  "**/.cursor/**",
+  "**/.gemini/**",
+  "**/.git/**",
+  "**/.hypothesis/**",
+  "**/.kilo/**",
+  "**/.mypy_cache/**",
+  "**/.omo/**",
+  "**/.opencode/**",
+  "**/.pylance_cache/**",
+  "**/.pyrefly_cache/**",
+  "**/.pytest_cache/**",
+  "**/.reports/**",
+  "**/.ruff_cache/**",
+  "**/.serena/**",
+  "**/.snapshots/**",
+  "**/.test-tmp/**",
+  "**/.tmp/**",
+  "**/.tox/**",
+  "**/.venv.*/**",
+  "**/.venv/**",
+  "**/.vscode/**",
+  "**/.worktrees/**",
+  "**/__pycache__/**",
+  "**/__pyrefly_virtual__/**",
+  "**/_tmp_*/**",
+  "**/build/**",
+  "**/dist-packages/**",
+  "**/dist/**",
+  "**/htmlcov/**",
+  "**/incoming/**",
+  "**/legado/**",
+  "**/node_modules/**",
   "**/protos/**",
+  "**/reports/**",
+  "**/site-packages/**",
+  "**/site/**",
+  "**/target/**",
+  "**/venv/**",
 ]
 fix = false
 line-length = 88
-namespace-packages = ["tests", "examples", "scripts"]
+namespace-packages = ["examples", "scripts", "tests"]
 preview = true
 respect-gitignore = true
 show-fixes = true
@@ -497,6 +566,12 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
+extend-safe-fixes = [
+  "relative-imports",
+  "typing-only-first-party-import",
+  "camelcase-imported-as-lowercase",
+]
+extend-select = ["missing-blank-line-after-last-section"]
 ignore = [
   "missing-trailing-comma",
   "non-empty-init-module",
@@ -505,15 +580,6 @@ ignore = [
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
 ]
-[tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["S101"]
-
-extend-safe-fixes = [
-  "camelcase-imported-as-lowercase",
-  "relative-imports",
-  "typing-only-first-party-import",
-]
-extend-select = ["missing-blank-line-after-last-section"]
 select = ["ALL"]
 unfixable = [
   "multi-value-repeated-key-literal",
@@ -525,125 +591,6 @@ unfixable = [
 
 [tool.ruff.lint.flake8-copyright]
 notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
-
-[tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = [
-  "examples._models.ExamplesFlextSharedHandle",
-  "examples._models.ExamplesFlextSharedPerson",
-  "examples._models.ex04._CommandEnvelope",
-  "examples._models.ex04._EventEnvelope",
-  "examples._models.ex04._QueryEnvelope",
-  "examples._models.ex10.Message",
-  "examples.m.Examples.Handle",
-  "examples.m.Examples.Person",
-  "examples.m.Examples.RegistryLookupOptions",
-  "examples.s",
-  "flext_core.FlextModels",
-  "flext_core.FlextSettings",
-  "flext_core._handlers_parts.flexthandlers_part_01.FlextHandlers",
-  "flext_core._handlers_parts.flexthandlers_part_02.FlextHandlers",
-  "flext_core._handlers_parts.flexthandlers_part_03.FlextHandlers",
-  "flext_core._handlers_parts.flexthandlers_part_04.FlextHandlers",
-  "flext_core._handlers_parts.flexthandlers_part_05.FlextHandlers",
-  "flext_core._handlers_parts.flexthandlers_part_06.FlextHandlers",
-  "flext_core._models.FlextContextState",
-  "flext_core._models.FlextMixins",
-  "flext_core._models.FlextModelsBase.ArbitraryTypesModel",
-  "flext_core._models.FlextModelsBase.ContractModel",
-  "flext_core._models.FlextModelsBase.FlexibleInternalModel",
-  "flext_core._models.FlextModelsBase.FrozenModel",
-  "flext_core._models.FlextModelsBase.FrozenValueModel",
-  "flext_core._models.FlextModelsBase.ImmutableValueModel",
-  "flext_core._models.FlextModelsBase.ManagedModel",
-  "flext_core._models.FlextModelsBase.RetryConfigurationMixin",
-  "flext_core._models.FlextModelsBase.StrictModel",
-  "flext_core._models.FlextModelsBase.TimestampedModel",
-  "flext_core._models.FlextModelsEntity.Value",
-  "flext_core._models.FlextModelsPydantic.BaseModel",
-  "flext_core._models.FlextModelsPydantic.RootModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.ArbitraryTypesModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.DynamicModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.EnforcedModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.EnumManagedModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.FlexibleModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.FlextModelsBase.StrictModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.FrozenModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.ManagedModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.NormalizedModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.StrictManagedModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_01.StrictModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_02.ContractModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_02.FlextModelsBase.ArbitraryTypesModel",
-  "flext_core._models._base_parts.flextmodelsbase_part_02.StrictModel",
-  "flext_core._models._container_parts.flextmodelscontainer_part_01.FlextModelsContainer.RegistrationEnvelope",
-  "flext_core._models._container_parts.flextmodelscontainer_part_01.RegistrationEnvelope",
-  "flext_core._models._enforcement.FlextModelsEnforcementBase.Report",
-  "flext_core._models._enforcement.FlextModelsEnforcementModelBase",
-  "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ExpectedActualTypeParams",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ParamsModel",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.FlextModelsExceptionParams.ResourceIdentityParams",
-  "flext_core._models._exception_params_parts.flextmodelsexceptionparams_part_01.ParamsModel",
-  "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract",
-  "flext_core._models._project_metadata_parts.flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract",
-  "flext_core._models.containers._MappingRootBase",
-  "flext_core._models.entity.Entity",
-  "flext_core._models.entity.Value",
-  "flext_core._models.flext_context.FlextContextState",
-  "flext_core._result.FlextResultBase",
-  "flext_core._result.FlextResultBehavior",
-  "flext_core._result.FlextResultComposed",
-  "flext_core._result.FlextResultComposition",
-  "flext_core._result.FlextResultConstruction",
-  "flext_core._result.FlextResultTransforms",
-  "flext_core._result.FlextResultUnwrap",
-  "flext_core.h",
-  "flext_core.m.ArbitraryTypesModel",
-  "flext_core.m.BaseModel",
-  "flext_core.m.Command",
-  "flext_core.m.ContractModel",
-  "flext_core.m.DomainEvent",
-  "flext_core.m.Entity",
-  "flext_core.m.Event",
-  "flext_core.m.ManagedModel",
-  "flext_core.m.Query",
-  "flext_core.m.RegistryOptions",
-  "flext_core.m.RegistryServiceState",
-  "flext_core.m.Value",
-  "flext_core.s",
-  "flext_core.services.dispatcher.FlextServiceDispatcher",
-  "flext_core.services.registry.FlextServiceRegistry",
-  "flext_core.x",
-  "flext_tests.FlextTestsModels",
-  "flext_tests.FlextTestsModels.Tests",
-  "flext_tests.FlextTestsServiceBase",
-  "flext_tests.h",
-  "flext_tests.models.m.BaseModel",
-  "flext_tests.s",
-  "pydantic.BaseModel",
-  "pydantic.RootModel",
-  "pydantic_settings.BaseSettings",
-  "tests._utilities.TestsFlextUtilitiesRailwayServicesMixin.GetUserService",
-  "tests._utilities.dispatch.HandlerService",
-  "tests._utilities.services.ValidatingService",
-  "tests.h",
-  "tests.m.ArbitraryTypesModel",
-  "tests.m.BaseModel",
-  "tests.m.BaseSettings",
-  "tests.m.ContractModel",
-  "tests.m.Entity",
-  "tests.m.FlexibleModel",
-  "tests.m.FrozenValueModel",
-  "tests.m.Tests.HandlerObservations",
-  "tests.m.Tests.PublicPayload",
-  "tests.m.Value",
-  "tests.s",
-  "tests.unit._models.test_pydantic_facade._Item",
-  "tests.unit.test_service_bootstrap.ConcreteTestService",
-  "tests.unit.test_service_operations.ReadSide",
-  "tests.unit.test_service_operations.WriteSide",
-  "tests.x",
-]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -697,7 +644,7 @@ whitelines = 1
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@1.15.0%2Bdc.4",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@2bf3ad55a32cc117f5321e1467695eba540be97b",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",

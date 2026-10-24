@@ -38,7 +38,7 @@ class FlextModelsConfig:
             ),
         ]
         completion: Annotated[
-            t.LoggingWriteCompletion,
+            t.Port[t.LoggingWriteCompletion],
             FlextModelsPydantic.Field(
                 description=(
                     "Native completion receiving this job's result or first failure."
@@ -52,7 +52,6 @@ class FlextModelsConfig:
         model_config: ClassVar[t.ConfigDict] = FlextModelsPydantic.ConfigDict(
             extra="forbid",
             validate_assignment=True,
-            arbitrary_types_allowed=True,
         )
 
         log_level: Annotated[
@@ -70,19 +69,19 @@ class FlextModelsConfig:
             ),
         ] = None
         processing_stages: Annotated[
-            t.SequenceOf[p.LoggingStage],
+            t.SequenceOf[t.Port[p.LoggingStage]],
             FlextModelsPydantic.Field(
                 description="Ordered typed event stages executed before rendering.",
             ),
         ] = ()
         observers: Annotated[
-            t.SequenceOf[p.LoggingObserver],
+            t.SequenceOf[t.Port[p.LoggingObserver]],
             FlextModelsPydantic.Field(
                 description="Typed observers notified with each sanitized event.",
             ),
         ] = ()
         handlers: Annotated[
-            t.SequenceOf[p.LoggingHandler],
+            t.SequenceOf[t.Port[p.LoggingHandler]],
             FlextModelsPydantic.Field(
                 description="Native logging handlers attached to the runtime.",
             ),
@@ -100,14 +99,14 @@ class FlextModelsConfig:
             ),
         ] = ()
         wrapper_class_factory: Annotated[
-            p.LoggerWrapperFactory | None,
+            t.Port[p.LoggerWrapperFactory] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the bound-logger wrapper class.",
             ),
         ] = None
         logger_factory: Annotated[
-            p.OutputLoggerFactory | None,
+            t.Port[p.OutputLoggerFactory] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Factory building the logger.",
@@ -135,7 +134,6 @@ class FlextModelsConfig:
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
                 frozen=True,
-                arbitrary_types_allowed=True,
             )
         )
 
@@ -284,7 +282,7 @@ class FlextModelsConfig:
                 description="Sanitized structured event context."
             ),
         ]
-        exception: t.SkipJsonSchema[BaseException | None] = FlextModelsPydantic.Field(
+        exception: t.Port[BaseException] | None = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
             repr=False,

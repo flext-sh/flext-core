@@ -11,14 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import pytest
 
-from tests import r, tm
-
-if TYPE_CHECKING:
-    from tests import p
+from tests import p, r, tm
 
 
 class TestsFlextCoreResultChainHelpers:
@@ -115,12 +110,13 @@ class TestsFlextCoreResultChainHelpers:
     @staticmethod
     def test_end_to_end_chain_composes_map_flat_map_filter() -> None:
         """A full railway chain of passing steps yields the final value."""
+        threshold = 5
         result = (
             r[int]
             .ok(3)
             .map(lambda x: x + 1)
             .flat_map(lambda x: r[int].ok(x * 2))
-            .filter(lambda x: x > 5)
+            .filter(lambda x: x > threshold)
         )
 
         tm.that(result.unwrap(), eq=8)
@@ -133,7 +129,8 @@ class TestsFlextCoreResultChainHelpers:
         keeps_success: bool,
     ) -> None:
         """``filter`` keeps success when the predicate holds, else fails it."""
-        result = r[int].ok(value).filter(lambda x: x > 10)
+        threshold = 10
+        result = r[int].ok(value).filter(lambda x: x > threshold)
 
         tm.that(result.success is keeps_success, truth=True)
 
@@ -160,6 +157,10 @@ class TestsFlextCoreResultChainHelpers:
     ) -> None:
         """``unwrap_or_else`` calls the supplier only when the result failed."""
         tm.that(source.unwrap_or_else(lambda: 7), eq=expected)
+
+
+class TestsFlextCoreResultRecoveryAndObservation:
+    """Recovery, folding, and observation preserve the railway contract."""
 
     @staticmethod
     def test_recover_replaces_failure_with_value() -> None:

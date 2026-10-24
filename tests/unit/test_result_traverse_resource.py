@@ -15,7 +15,7 @@ from tests import c, m, r, tm, u
 if TYPE_CHECKING:
     from collections.abc import MutableSequence
 
-    from tests import p, t
+from tests import p, t
 
 
 class TestsFlextResultTraverseResource:
@@ -26,8 +26,7 @@ class TestsFlextResultTraverseResource:
         """Test accumulate_errors with all successes."""
         results = [r[int].ok(1), r[int].ok(2), r[int].ok(3)]
         accumulated = r.accumulate_errors(*results)
-        tm.ok(accumulated)
-        tm.that(accumulated.value, eq=[1, 2, 3])
+        tm.ok(accumulated, eq=[1, 2, 3])
 
     @staticmethod
     def test_accumulate_errors_with_failures() -> None:
@@ -43,9 +42,10 @@ class TestsFlextResultTraverseResource:
     def test_traverse_fail_fast_true() -> None:
         """Test traverse with fail_fast=True (default) stops on first failure."""
         items = [1, 2, 3]
+        rejected = 2
         result = r.traverse(
             items,
-            lambda x: r[int].fail("error") if x == 2 else r[int].ok(x),
+            lambda x: r[int].fail("error") if x == rejected else r[int].ok(x),
             fail_fast=True,
         )
         _ = u.Tests.assert_failure(result)
