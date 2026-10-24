@@ -52,6 +52,8 @@ class FlextConstantsEnforcementTargets:
         "structlog": "flext-core",
         "rich": "flext-cli",
         "rope": "flext-infra",
+        "libcst": "flext-infra",
+        "griffe": "flext-infra",
         "orjson": "flext-cli",
         # Why: flext-core declares pyyaml as its own direct runtime dependency
         # and uses it in _config.py (foundational config loading); flext-cli
