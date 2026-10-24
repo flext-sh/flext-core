@@ -10,11 +10,11 @@ from __future__ import annotations
 
 import math
 
-from pydantic import ConfigDict
-from typing_extensions import TypeForm
-
 from flext_core import c, m, t
-from flext_core._utilities import FlextUtilitiesBase
+from flext_core._utilities import (
+    FlextUtilitiesTypingAdapterJson,
+    FlextUtilitiesTypingAdapterScalars,
+)
 
 
 class FlextUtilitiesConversion:
@@ -74,9 +74,11 @@ class FlextUtilitiesConversion:
         if isinstance(value, str):
             return value
         try:
-            float_value = FlextUtilitiesBase.type_adapter(
-                TypeForm(t.StrictFloat)
-            ).validate_python(value)
+            float_value = (
+                FlextUtilitiesTypingAdapterScalars.float_adapter().validate_python(
+                    value
+                )
+            )
         except m.ValidationError:
             return str(value)
         else:
@@ -102,9 +104,11 @@ class FlextUtilitiesConversion:
         if value_class is str:
             return [str(value)]
         try:
-            list_value = FlextUtilitiesBase.type_adapter(
-                TypeForm(t.JsonList), config=ConfigDict(strict=True)
-            ).validate_python(value)
+            list_value = (
+                FlextUtilitiesTypingAdapterJson.strict_json_list_adapter().validate_python(
+                    value
+                )
+            )
             return [str(item) for item in list_value]
         except m.ValidationError:
             return [str(value)]

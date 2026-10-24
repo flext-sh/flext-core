@@ -23,13 +23,13 @@ from flext_core._protocols._context.flextprotocolscontext_part_01 import (
 class FlextProtocolsContainerPart01:
     """Protocols for DI container behavior."""
 
-    type RegistryCollaborator = (
+    type RegistryCollaborator = t.Port[
         FlextProtocolsBase.Model
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
         | FlextProtocolsContextPart01.Context
         | FlextProtocolsHandler.Dispatcher
-    )
+    ]
     type ServiceValue = t.ServiceValue[RegistryCollaborator]
     type RegisterableService = t.RegisterableService[RegistryCollaborator]
     type FactoryCallable = t.FactoryCallable[RegistryCollaborator]

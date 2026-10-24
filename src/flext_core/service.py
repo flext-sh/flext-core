@@ -53,7 +53,6 @@ class FlextService[TDomainResult = p.Base](x):
 
     model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
         strict=True,
-        arbitrary_types_allowed=True,
         extra="forbid",
         validate_by_name=True,
         validate_by_alias=True,

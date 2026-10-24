@@ -14,7 +14,7 @@ from flext_core import c, u
 from flext_core._decorators import FlextDecoratorsLoggingPayloads
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsLogging
-from flext_core._typings import FlextTypingBase
+from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -34,7 +34,6 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         model_config = FlextModelsPydantic.ConfigDict(
             frozen=True,
             extra="forbid",
-            arbitrary_types_allowed=True,
         )
 
         func_name: Annotated[
@@ -54,7 +53,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             ),
         ]
         logger: Annotated[
-            FlextProtocolsLogging.Logger,
+            FlextTypesPydantic.Port[FlextProtocolsLogging.Logger],
             FlextModelsPydantic.Field(
                 description="Logger the execution reports through."
             ),

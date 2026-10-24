@@ -17,7 +17,7 @@ from __future__ import annotations
 from collections.abc import Callable, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import IO, cast, override
+from typing import IO, ClassVar, cast, override
 
 from pydantic import JsonValue, TypeAdapter
 from pydantic.config import JsonDict
@@ -37,6 +37,9 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     use this to apply env-expansion, filtering, or section reshaping without
     reinstantiating the source or overriding ``settings_customise_sources``.
     """
+
+    JSON_VALUE_ADAPTER: ClassVar[TypeAdapter[JsonValue]] = TypeAdapter(JsonValue)
+    """Adapter validating every loaded YAML document; built once per process."""
 
     class UniqueKeyLoader(SafeLoader):
         """Safe YAML loader rejecting duplicate and non-string mapping keys.
@@ -172,7 +175,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         loader = FlextStrictYamlConfigSource.UniqueKeyLoader(stream)
         try:
             # Validate after YAML finishes constructing aliases and nested values.
-            return TypeAdapter(JsonValue).validate_python(
+            return FlextStrictYamlConfigSource.JSON_VALUE_ADAPTER.validate_python(
                 loader.get_single_data(),
                 strict=True,
             )
