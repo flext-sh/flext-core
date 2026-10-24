@@ -6,7 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, MutableMapping, Set as AbstractSet
+from collections.abc import (
+    Callable,
+    Generator,
+    Iterator,
+    MutableMapping,
+    Set as AbstractSet,
+)
 from concurrent.futures import Future
 from datetime import date, time, tzinfo
 from enum import Enum
@@ -64,7 +70,9 @@ class FlextTypesServices:
         | FlextTypingBase.MappingKV[str, JsonPayloadCollectionValue]
         | FlextTypingBase.SequenceOf[JsonPayloadCollectionValue]
     )
-    type OperationMetricsStream = Iterator[FlextTypingBase.MappingKV[str, JsonPayload]]
+    type OperationMetricsStream = Generator[
+        FlextTypingBase.MappingKV[str, JsonPayload], None, None
+    ]
     type SettingsOverrideLeaf[T] = FlextTypesServices.JsonPayloadLeaf | T
     type SettingsOverrideCollectionValue[T] = (
         FlextTypesServices.SettingsOverrideLeaf[T]

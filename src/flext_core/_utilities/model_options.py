@@ -34,7 +34,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
             The resulting ``p.RuntimeBootstrapOptions``.
 
         Raises:
-            TypeError: If unknown runtime bootstrap source.
+            TypeError: If the runtime bootstrap source has no supported contract.
 
         """
         match source:
@@ -42,14 +42,7 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                 return m.RuntimeBootstrapOptions()
             case m.RuntimeBootstrapOptions():
                 return source
-            case _:
-                if not isinstance(source, p.MixinsInfrastructure):
-                    if isinstance(source, p.RuntimeBootstrapOptions):
-                        return m.RuntimeBootstrapOptions.model_validate(
-                            source, from_attributes=True
-                        )
-                    msg = f"unknown runtime bootstrap source: {source!r}"
-                    raise TypeError(msg)
+            case p.MixinsInfrastructure():
                 declared = (
                     m.RuntimeBootstrapOptions.model_validate(
                         source.runtime_bootstrap_options(),
@@ -68,6 +61,13 @@ class FlextUtilitiesModelOptions(FlextUtilitiesModel):
                     **dict(declared),
                     **{name: value for name, value in seeds if value is not None},
                 })
+            case p.RuntimeBootstrapOptions():
+                return m.RuntimeBootstrapOptions.model_validate(
+                    source, from_attributes=True
+                )
+            case _:
+                msg = f"unknown runtime bootstrap source: {source!r}"
+                raise TypeError(msg)
 
 
 __all__: list[str] = ["FlextUtilitiesModelOptions"]

@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import d, e, r, tm, u
+from tests import d, e, r, tm
 
 if TYPE_CHECKING:
     from tests import p
 
 
-class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
+class TestsFlextCoreDecoratorsCombined:
     """Assert observable behavior of ``d.combined`` and decorator stacking."""
 
     @staticmethod
@@ -49,8 +49,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = operation()
 
         # Assert
-        assert isinstance(outcome, r)
-        assert u.Tests.assert_success(outcome, expected_value="success") == "success"
+        tm.ok(outcome, eq="success")
 
     @staticmethod
     def test_combined_with_railway_captures_exception_as_failure() -> None:
@@ -70,7 +69,6 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = operation()
 
         # Assert: failure is delivered as a value, not a raised exception.
-        assert isinstance(outcome, r)
         assert outcome.failure
         assert outcome.error_code == "COMBINED_FAIL"
         assert outcome.error is not None
@@ -102,21 +100,27 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         tm.that(outcome is original, eq=True)
         tm.that(tm.ok(outcome), eq="already_wrapped")
 
-    def test_retry_succeeds_after_transient_failure(self) -> None:
+    @staticmethod
+    def test_retry_succeeds_after_transient_failure() -> None:
         # Arrange
         """Test retry succeeds after transient failure."""
-        service = self.ServiceWithLogger()
+        attempts = 0
 
         @d.retry(max_attempts=2, delay_seconds=0.001)
         def flaky_method() -> str:
-            return service.flaky_method()
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                message = "First attempt fails"
+                raise RuntimeError(message)
+            return "success"
 
         # Act
         outcome = flaky_method()
 
         # Assert: the operation recovers and the retry count is observable.
         assert outcome == "success"
-        assert service.attempts == 2
+        assert attempts == 2
 
     @staticmethod
     def test_retry_raises_flext_timeout_when_exhausted() -> None:
@@ -148,8 +152,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = stacked_operation()
 
         # Assert: the innermost railway shape survives the logging layers.
-        assert isinstance(outcome, r)
-        assert u.Tests.assert_success(outcome, expected_value="stacked_result")
+        tm.ok(outcome, eq="stacked_result")
 
     @staticmethod
     def test_stacking_railway_over_retry_recovers_then_wraps() -> None:
@@ -171,8 +174,7 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = flaky_with_railway()
 
         # Assert
-        assert isinstance(outcome, r)
-        assert u.Tests.assert_success(outcome, expected_value="success")
+        tm.ok(outcome, eq="success")
         assert attempts == 2
 
     @pytest.mark.parametrize(
@@ -219,6 +221,5 @@ class TestsFlextCoreDecoratorsCombined(u.TestsFlextDecoratorsLegacy):
         outcome = divide(a, b)
 
         # Assert: with a non-zero divisor the railway always succeeds cleanly.
-        assert isinstance(outcome, r)
         assert outcome.success
-        assert u.Tests.assert_success(outcome) == a / b
+        tm.ok(outcome, eq=a / b)

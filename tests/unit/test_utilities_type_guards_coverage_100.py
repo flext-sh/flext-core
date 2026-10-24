@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
-from tests import m, tm, u
+from tests import m, p, tm, u
 
 if TYPE_CHECKING:
     from tests import t
@@ -101,17 +101,12 @@ class TestsFlextCoreUtilitiesTypeGuards:
             return_value=True,
         )
 
-        assert not isinstance(
-            failed_guard_result,
-            (bool, dict, list, str, int, float, type(None)),
-        )
-        failed_guard = failed_guard_result
-
-        tm.that(cast("t.JsonDict", guarded_payload), eq=payload)
-        tm.that(cast("list[str]", fallback_tags), eq=["cli"])
-        tm.that(cast("int", guarded_attempt), eq=2)
-        tm.fail(failed_guard)
+        assert guarded_payload == payload
+        assert fallback_tags == ["cli"]
+        assert guarded_attempt == 2
+        assert isinstance(failed_guard_result, p.Result)
+        tm.fail(failed_guard_result)
         tm.that(
-            failed_guard.error,
+            failed_guard_result.error,
             eq="Guard validation raised ValueError: invalid metadata",
         )

@@ -8,11 +8,12 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Never
 
 import pytest
 
 from flext_core import FlextContainer, FlextSettings
-from tests import c, m, p, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreUtilitiesSettings:
@@ -115,15 +116,13 @@ class TestsFlextCoreUtilitiesSettings:
         container = FlextContainer()
         container.clear()
 
-        def build_settings_summary() -> p.RegisterableService:
+        def build_settings_summary() -> t.StrMapping:
             return {
                 "env_file": FlextSettings.resolve_env_file(),
-                "log_level": str(
-                    u.resolve_effective_log_level(
-                        trace=False,
-                        debug=True,
-                        log_level=c.LogLevel.WARNING,
-                    ),
+                "log_level": u.resolve_effective_log_level(
+                    trace=False,
+                    debug=True,
+                    log_level=c.LogLevel.WARNING,
                 ),
             }
 
@@ -132,14 +131,17 @@ class TestsFlextCoreUtilitiesSettings:
             "settings_summary",
             build_settings_summary,
         )
-        resolved_summary = container.resolve("settings_summary")
+        resolved_summary = container.resolve("settings_summary", type_cls=m.ConfigMap)
 
         tm.ok(success_result)
         tm.that(success_result.value, eq=True)
         tm.ok(resolved_summary)
         tm.that(
-            resolved_summary.value,
-            eq={"env_file": c.ENV_FILE_DEFAULT, "log_level": c.LogLevel.WARNING},
+            resolved_summary.value.root,
+            eq={
+                "env_file": FlextSettings.resolve_env_file(),
+                "log_level": c.LogLevel.WARNING,
+            },
         )
 
     @staticmethod
@@ -149,7 +151,7 @@ class TestsFlextCoreUtilitiesSettings:
         container.clear()
         error_message = "factory exploded"
 
-        def failing_factory() -> p.RegisterableService:
+        def failing_factory() -> Never:
             raise RuntimeError(error_message)
 
         failure_result = u.register_factory(

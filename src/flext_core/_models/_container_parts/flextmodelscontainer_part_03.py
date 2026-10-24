@@ -97,14 +97,14 @@ class FlextModelsContainer(flextmodelscontainer_part_02.FlextModelsContainer):
             ]
             | None
         ) = FlextModelsPydantic.Field(
-            None,
+            default=None,
             title="User Overrides",
             description="User-level configuration overrides applied after defaults.",
             validate_default=True,
         )
         container_config: FlextModelsContainer.ContainerConfig | None = (
             FlextModelsPydantic.Field(
-                None,
+                default=None,
                 title="Container Config",
                 description="Container configuration model controlling DI behavior.",
                 validate_default=True,

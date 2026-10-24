@@ -29,6 +29,7 @@ from tests import c, m, p, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Generator
+    from typing import Never
 
 
 class TestsFlextLoggingStages:
@@ -170,8 +171,9 @@ class TestsFlextLoggingStages:
         logger = u.create_module_logger("tests.logging.stages.ordered")
         payload: t.JsonDict = {"items": [1, {"enabled": True}], "empty": None}
 
+        failure = ValueError("active exception context")
         try:
-            _ = int("active exception context")
+            raise failure
         except ValueError:
             result = logger.info("ordered stages", payload=payload, exc_info=True)
 
@@ -366,7 +368,7 @@ class TestsFlextLoggingStages:
 
         def wrapper_factory() -> type[p.NativeLoggingWrapper]:
             registrations.append("native")
-            return structlog.BoundLogger
+            return structlog.stdlib.BoundLogger
 
         u.configure_structlog(
             settings=m.StructlogOptions(
@@ -395,7 +397,7 @@ class TestsFlextLoggingStages:
         u.configure_structlog(
             runtime_settings=selected,
             settings=m.StructlogOptions(
-                handlers=handlers, observers=(observed.append,)
+                handlers=handlers, observers=(lambda event: observed.append(event),)
             ),
         )
         with structlog.contextvars.bound_contextvars(correlation_id="real-operation"):
@@ -430,7 +432,7 @@ class TestsFlextLoggingStages:
             runtime_settings=selected,
             settings=m.StructlogOptions(
                 handlers=handlers,
-                observers=(observed.append,),
+                observers=(lambda event: observed.append(event),),
             ),
         )
         tm.ok(u.log("ordinary filtered event"))
@@ -461,7 +463,7 @@ class TestsFlextLoggingStages:
         u.configure_structlog(
             settings=m.StructlogOptions(
                 log_level=logging.DEBUG,
-                observers=(observed.append,),
+                observers=(lambda event: observed.append(event),),
                 logger_factory=structlog.PrintLoggerFactory(file=io.StringIO()),
             )
         )
@@ -517,7 +519,7 @@ class TestsFlextLoggingStages:
                 log_level=logging.DEBUG,
                 cache_logger_on_first_use=True,
                 logger_factory=structlog.PrintLoggerFactory(file=old),
-                observers=(observed.append,),
+                observers=(lambda event: observed.append(event),),
             )
         )
         cached = u.fetch_logger("real.cached").bind(operation="bound")
@@ -548,7 +550,7 @@ class TestsFlextLoggingStages:
             runtime_settings=selected,
             settings=m.StructlogOptions(
                 console_renderer=False,
-                observers=(observed.append,),
+                observers=(lambda event: observed.append(event),),
                 redacted_values=(sensitive_value,),
                 logger_factory=structlog.PrintLoggerFactory(file=stream),
             ),
@@ -585,7 +587,8 @@ class TestsFlextLoggingStages:
         cause = ValueError("business cause")
         original = RuntimeError("business failure")
 
-        def capture(_event: p.LoggingRecord) -> None:
+        def capture(event: p.LoggingRecord) -> Never:
+            _ = event
             raise hook_error
 
         u.configure_structlog(
@@ -621,7 +624,7 @@ class TestsFlextLoggingStages:
             runtime_settings=selected,
             settings=m.StructlogOptions(
                 console_renderer=False,
-                observers=(observed.append,),
+                observers=(lambda event: observed.append(event),),
                 logger_factory=structlog.PrintLoggerFactory(file=stream),
             ),
         )
@@ -660,10 +663,10 @@ class TestsFlextLoggingStages:
 
         def fail_with_cause(
             original: ValueError | KeyboardInterrupt, cause: LookupError
-        ) -> None:
+        ) -> Never:
             raise original from cause
 
-        def fail_again(original: ValueError | KeyboardInterrupt) -> None:
+        def fail_again(original: ValueError | KeyboardInterrupt) -> Never:
             raise original
 
         for original in (
@@ -695,7 +698,7 @@ class TestsFlextLoggingStages:
                 settings=m.StructlogOptions(
                     log_level=logging.DEBUG,
                     handlers=(handler,),
-                    observers=(observed.append,),
+                    observers=(lambda event: observed.append(event),),
                 )
             )
             stream.close()
@@ -724,14 +727,14 @@ class TestsFlextLoggingStages:
         options = m.StructlogOptions(
             log_level=logging.DEBUG,
             redacted_keys=(declared_key,),
-            observers=(observed.append,),
+            observers=(lambda event: observed.append(event),),
             handlers=(
                 u.create_logging_handler(stream=structured),
                 u.create_logging_handler(stream=console, console_renderer=True),
             ),
         )
         u.configure_structlog(settings=options)
-        payload = dict.fromkeys(
+        payload: t.JsonDict = dict.fromkeys(
             (declared_key, declared_key.casefold(), declared_key.swapcase()),
             sensitive_value,
         )
@@ -740,7 +743,7 @@ class TestsFlextLoggingStages:
                 "declared sensitive payload",
                 payload={
                     "nested": [payload],
-                    "encoded": u.to_json(payload),
+                    "encoded": tm.ok(u.Cli.json_dumps(payload)),
                     "retained": "public",
                 },
             )
