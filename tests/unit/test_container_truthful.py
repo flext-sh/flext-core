@@ -131,7 +131,7 @@ class TestsFlextCoreContainerTruthful:
         path = Path("registered-payload")
         payload: t.MutableMetadataMapping = {"created": instant, "path": path}
         _ = clean_container.bind("mapping-payload", m.ConfigMap(root=payload))
-        value: p.Model[t.MutableMappingKV[str, t.JsonPayload]] = tm.ok(
+        value: p.Model[t.JsonDict] = tm.ok(
             clean_container.resolve("mapping-payload", type_cls=m.ConfigMap)
         )
         tm.that(
@@ -151,7 +151,7 @@ class TestsFlextCoreContainerTruthful:
         payload: t.ListOf[t.JsonPayload] = ["entry", path, instant]
         registered = m.ObjectList(root=payload)
         _ = clean_container.bind("sequence-payload", registered)
-        value: p.Model[t.ListOf[t.JsonPayload]] = tm.ok(
+        value: p.Model[list[t.JsonValue]] = tm.ok(
             clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
         )
         tm.that(value, where=lambda resolved: resolved is registered)
@@ -171,7 +171,7 @@ class TestsFlextCoreContainerTruthful:
         _ = clean_container.bind(
             "model-payload", m.ConfigMap(root={"metadata": metadata})
         )
-        value: p.Model[t.MutableMappingKV[str, t.JsonPayload]] = tm.ok(
+        value: p.Model[t.JsonDict] = tm.ok(
             clean_container.resolve("model-payload", type_cls=m.ConfigMap)
         )
         tm.that(
