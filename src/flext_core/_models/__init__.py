@@ -155,19 +155,11 @@ __getattr__ = install_lazy_exports(
         "FlextModelsNamespace": ".namespace",
         "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
-        "FlextModelsProjectMetadataAggregates": (
-            "._project_metadata.flextmodelsprojectmetadata_part_03"
-        ),
-        "FlextModelsProjectMetadataContract": (
-            "._project_metadata.flextmodelsprojectmetadata_part_01"
-        ),
-        "FlextModelsProjectMetadataDocument": (
-            "._project_metadata.flextmodelsprojectmetadata_part_04"
-        ),
+        "FlextModelsProjectMetadataAggregates": ("._project_metadata.aggregates"),
+        "FlextModelsProjectMetadataContract": ("._project_metadata.contract"),
+        "FlextModelsProjectMetadataDocument": ("._project_metadata.document"),
         "FlextModelsPydantic": ".pydantic",
-        "FlextModelsPyprojectIngressContract": (
-            "._project_metadata.flextmodelsprojectmetadata_part_05"
-        ),
+        "FlextModelsPyprojectIngressContract": ("._project_metadata.pyproject_ingress"),
         "FlextModelsRegistry": ".registry",
         "FlextModelsService": ".service",
         "FlextModelsSettings": ".settings",

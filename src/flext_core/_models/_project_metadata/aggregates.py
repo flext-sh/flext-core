@@ -11,21 +11,13 @@ from typing import Annotated
 from pydantic import Field
 
 from flext_core import t
-from flext_core._models._project_metadata import (
-    flextmodelsprojectmetadata_part_01,
-    flextmodelsprojectmetadata_part_02,
-    flextmodelsprojectmetadata_part_05,
-)
+from flext_core._models._project_metadata import contract, fields, pyproject_ingress
 
 
-class FlextModelsProjectMetadataAggregates(
-    flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields
-):
+class FlextModelsProjectMetadataAggregates(fields.FlextModelsProjectMetadataFields):
     """Validated PEP 621 and FLEXT aggregate declarations."""
 
-    class Project(
-        flextmodelsprojectmetadata_part_05.FlextModelsPyprojectIngressContract
-    ):
+    class Project(pyproject_ingress.FlextModelsPyprojectIngressContract):
         """Complete owned PEP 621 project metadata used by FLEXT."""
 
         name: Annotated[str, Field(min_length=1)]
@@ -33,20 +25,18 @@ class FlextModelsProjectMetadataAggregates(
         description: str = ""
         authors: Annotated[
             tuple[
-                flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectAuthor,
+                fields.FlextModelsProjectMetadataFields.ProjectAuthor,
                 ...,
             ],
             Field(default=(), description="Project authors"),
         ] = ()
         urls: Annotated[
-            flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectUrls,
+            fields.FlextModelsProjectMetadataFields.ProjectUrls,
             Field(
-                default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectUrls,
+                default_factory=fields.FlextModelsProjectMetadataFields.ProjectUrls,
                 description="Project URLs",
             ),
-        ] = Field(
-            default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectUrls
-        )
+        ] = Field(default_factory=fields.FlextModelsProjectMetadataFields.ProjectUrls)
         requires_python: Annotated[
             str,
             Field(default="", alias="requires-python", description="Python constraint"),
@@ -64,46 +54,44 @@ class FlextModelsProjectMetadataAggregates(
             Field(default=(), description="Project search keywords"),
         ] = ()
 
-    class ProjectToolFlext(
-        flextmodelsprojectmetadata_part_01.FlextModelsProjectMetadataContract
-    ):
+    class ProjectToolFlext(contract.FlextModelsProjectMetadataContract):
         """Complete ``[tool.flext]`` contract."""
 
         project: Annotated[
-            flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextProject,
+            fields.FlextModelsProjectMetadataFields.ProjectToolFlextProject,
             Field(
-                default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextProject,
+                default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextProject,
                 description="Project naming policy",
             ),
         ] = Field(
-            default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextProject,
+            default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextProject,
         )
         docs: Annotated[
-            flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextDocs,
+            fields.FlextModelsProjectMetadataFields.ProjectToolFlextDocs,
             Field(
-                default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextDocs,
+                default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextDocs,
                 description="Documentation policy",
             ),
         ] = Field(
-            default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextDocs
+            default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextDocs
         )
         workspace: Annotated[
-            flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
+            fields.FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
             Field(
-                default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
+                default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
                 description="Workspace attachment policy",
             ),
         ] = Field(
-            default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
+            default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
         )
         namespace: Annotated[
-            flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
+            fields.FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
             Field(
-                default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
+                default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
                 description="Namespace enforcement policy",
             ),
         ] = Field(
-            default_factory=flextmodelsprojectmetadata_part_02.FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
+            default_factory=fields.FlextModelsProjectMetadataFields.ProjectToolFlextNamespace,
         )
 
 
