@@ -5,9 +5,10 @@ Infra:
       namespace_scan_dirs:
       - src
     toolchain:
-      # The promoted integration line owns dependency resolution; make upg
-      # records its exact commits for frozen replay.
+      # flext-infra and flext-tests overrides derive from this project's own
+      # Git URL requirements. flext-cli is not a declared requirement: it
+      # enters only transitively (through flext-infra) and requires flext-core
+      # back by URL, so its override, and the derived scoped self exclusion,
+      # is this project's one non-derivable delta.
       uv_override_dependencies:
         - "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev"
-        - "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev"
-        - "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev"
