@@ -194,7 +194,9 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
             spec.logger.exception(spec.op_name, exception=exc, **exc_kw)
             raise
         else:
-            spec.logger.debug(
+            # A tracked operation reports its duration at INFO so stage timing
+            # is visible without enabling debug output.
+            (spec.logger.info if spec.track_perf else spec.logger.debug)(
                 "%s_completed",
                 spec.op_name,
                 **cls._success_log_payload(

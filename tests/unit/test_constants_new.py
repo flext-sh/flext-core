@@ -135,7 +135,7 @@ class TestsFlextConstantsNew:
     @staticmethod
     @pytest.mark.parametrize(
         "token",
-        tuple(c.PARSER_BOOLEAN_TRUTHY) + tuple(c.PARSER_BOOLEAN_FALSY),
+        sorted(c.PARSER_BOOLEAN_TRUTHY | c.PARSER_BOOLEAN_FALSY),
     )
     def test_boolean_tokens_are_lowercase_and_spaceless(token: str) -> None:
         """Validation token sets remain normalized (lowercase, no whitespace)."""
