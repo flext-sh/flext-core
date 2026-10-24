@@ -123,6 +123,7 @@ class FlextUtilitiesBeartypeHelpersPart03(
         if norm is None:
             return False
         org = get_origin(norm)
+        declared_args = get_args(norm)
         if isinstance(org, TypeAliasType):
             resolved = h.resolve_type_alias_value(org, owner=owner)
             if resolved is None:
@@ -133,7 +134,7 @@ class FlextUtilitiesBeartypeHelpersPart03(
         factory_args = get_args(factory)
         return tgt is exp or (
             bool(factory_args)
-            and factory_args == get_args(norm)
+            and factory_args == declared_args
             and isinstance(tgt, type)
             and issubclass(mk, tgt)
         )
