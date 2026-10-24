@@ -32,7 +32,6 @@ class FlextTypesPydantic:
     type ConfigDict = pydantic.ConfigDict
     type ComputedFieldInfo = pydantic.fields.ComputedFieldInfo
     type FieldInfo = pydantic.fields.FieldInfo
-    constr = pydantic.constr
     type StrictStr = pydantic.StrictStr
     type EmailStr = pydantic.EmailStr
     type NameEmail = pydantic.NameEmail
@@ -41,15 +40,9 @@ class FlextTypesPydantic:
     # on the m/c facades for except/isinstance (TypeAliasType is not catchable).
     type ValidationError = pydantic.ValidationError
 
-    # Numeric constraints (callables — remain attributes)
-    conint = pydantic.conint
-    confloat = pydantic.confloat
-    conbytes = pydantic.conbytes
-    conlist = pydantic.conlist
-    conset = pydantic.conset
-    condate = pydantic.condate
-    condecimal = pydantic.condecimal
-    confrozenset = pydantic.confrozenset
+    # Numeric constraints. The upstream ``con*`` factories are discouraged for
+    # removal in Pydantic 3 (pydantic/types.py:167-174@v2.14.1); constraints are
+    # ``Annotated[..., m.Field(...)]`` / ``StringConstraints`` aliases instead.
     type PositiveInt = pydantic.PositiveInt
     type NonNegativeInt = pydantic.NonNegativeInt
     type NegativeInt = pydantic.NegativeInt
@@ -169,17 +162,17 @@ class FlextTypesPydantic:
     WithJsonSchema = pydantic.WithJsonSchema
     SkipJsonSchema = pydantic_json_schema.SkipJsonSchema
     SerializeAsAny = pydantic.SerializeAsAny
-    SkipValidation = pydantic.SkipValidation
     AllowInfNan = pydantic.AllowInfNan
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
-    OnErrorOmit = pydantic.OnErrorOmit
 
     # Dependency port: a field typed by a ``@runtime_checkable`` Protocol from
-    # ``p``. Pydantic validates the value with ``isinstance`` on construction and
-    # on assignment, and the port never enters the JSON Schema. Declare the field
-    # with ``m.Field(exclude=True, description=...)``: field-level metadata cannot
-    # live inside a type alias.
+    # ``p``, or by a ``p`` alias over such protocols (``p.RegisterableService`` is
+    # a union alias, so ``InstanceOf[P]`` cannot wrap ``P`` as a whole: it needs
+    # a class). Pydantic validates the value with ``isinstance`` on construction
+    # and on assignment, and the port never enters the JSON Schema. Declare the
+    # field with ``m.Field(exclude=True, description=...)``: field-level metadata
+    # cannot live inside a type alias.
     type Port[P] = pydantic_json_schema.SkipJsonSchema[P]
 
 
