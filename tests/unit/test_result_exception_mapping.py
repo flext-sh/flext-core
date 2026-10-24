@@ -20,60 +20,9 @@ import pytest
 from tests import r, tm
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Never
+    from typing import Literal, Never
 
     from tests import p
-
-
-def _raiser(exc: Exception) -> Callable[[int | str], Never]:
-    """Return a one-argument callback that always raises ``exc``.
-
-    Returns:
-        A one-argument callback that always raises ``exc``.
-
-    """
-
-    def _callback(_arg: int | str) -> Never:
-        raise exc
-
-    return _callback
-
-
-def _map_case(exc: Exception) -> p.Result[int]:
-    return r[int].ok(5).map(_raiser(exc))
-
-
-def _flat_map_case(exc: Exception) -> p.Result[int]:
-    return r[int].ok(5).flat_map(_raiser(exc))
-
-
-def _flow_through_case(exc: Exception) -> p.Result[int]:
-    return r[int].ok(5).flow_through(_raiser(exc))
-
-
-def _map_error_case(exc: Exception) -> p.Result[int]:
-    return r[int].fail("error").map_error(_raiser(exc))
-
-
-def _recover_case(exc: Exception) -> p.Result[int]:
-    return r[int].fail("error").recover(_raiser(exc))
-
-
-def _lash_case(exc: Exception) -> p.Result[int]:
-    return r[int].fail("error").lash(_raiser(exc))
-
-
-def _filter_case(exc: Exception) -> p.Result[int]:
-    return r[int].ok(5).filter(_raiser(exc))
-
-
-def _tap_case(exc: Exception) -> p.Result[int]:
-    return r[int].ok(5).tap(_raiser(exc))
-
-
-def _tap_error_case(exc: Exception) -> p.Result[int]:
-    return r[int].fail("error").tap_error(_raiser(exc))
 
 
 class TestsFlextCoreResultExceptionMapping:
@@ -205,27 +154,60 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(recovered.exception is recovery_exc, eq=True)
 
     @pytest.mark.parametrize(
-        "invoke",
-        [
-            pytest.param(_map_case, id="map"),
-            pytest.param(_flat_map_case, id="flat_map"),
-            pytest.param(_flow_through_case, id="flow_through"),
-            pytest.param(_map_error_case, id="map_error"),
-            pytest.param(_recover_case, id="recover"),
-            pytest.param(_lash_case, id="lash"),
-            pytest.param(_filter_case, id="filter"),
-            pytest.param(_tap_case, id="tap"),
-            pytest.param(_tap_error_case, id="tap_error"),
-        ],
+        "combinator",
+        (
+            "map",
+            "flat_map",
+            "flow_through",
+            "map_error",
+            "recover",
+            "lash",
+            "filter",
+            "tap",
+            "tap_error",
+        ),
     )
     @staticmethod
     def test_callback_exception_becomes_carried_failure(
-        invoke: Callable[[Exception], p.Result[int]],
+        combinator: Literal[
+            "map", "flat_map", "flow_through", "map_error", "recover",
+            "lash", "filter", "tap", "tap_error",
+        ],
     ) -> None:
         """Test callback exception becomes carried failure."""
         exc = RuntimeError("callback failed")
 
-        result: p.Result[int] = invoke(exc)
+        def reject_value(_value: int) -> Never:
+            raise exc
+
+        def reject_result(_value: int) -> p.Result[int]:
+            raise exc
+
+        def reject_error(_error: str) -> Never:
+            raise exc
+
+        def reject_recovery(_error: str) -> p.Result[int]:
+            raise exc
+
+        match combinator:
+            case "map":
+                result = r[int].ok(5).map(reject_value)
+            case "flat_map":
+                result = r[int].ok(5).flat_map(reject_result)
+            case "flow_through":
+                result = r[int].ok(5).flow_through(reject_result)
+            case "map_error":
+                result = r[int].fail("error").map_error(reject_error)
+            case "recover":
+                result = r[int].fail("error").recover(reject_error)
+            case "lash":
+                result = r[int].fail("error").lash(reject_recovery)
+            case "filter":
+                result = r[int].ok(5).filter(reject_value)
+            case "tap":
+                result = r[int].ok(5).tap(reject_value)
+            case "tap_error":
+                result = r[int].fail("error").tap_error(reject_error)
 
         tm.that(result.failure, eq=True)
         tm.that(result.exception is exc, eq=True)

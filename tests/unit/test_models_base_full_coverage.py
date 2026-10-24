@@ -64,7 +64,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
         bad_value: t.Scalar | list[str],
     ) -> None:
         """Test metadata attributes non mapping rejected."""
-        with pytest.raises(TypeError, match="attributes must be dict-like"):
+        with pytest.raises(c.ValidationError):
             m.Metadata.model_validate({"attributes": bad_value})
 
     @staticmethod

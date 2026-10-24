@@ -209,20 +209,11 @@ class TestsFlextResultTraverseResource:
         tm.that(success.error_data, none=True)
 
     @staticmethod
-    def test_error_data_property_accepts_model_dump_carrier() -> None:
-        """Result error_data accepts protocol carriers through runtime normalization."""
-
-        class ModelDumpCarrier:
-            @staticmethod
-            def model_dump(
-                *,
-                mode: str = "python",
-            ) -> t.MappingKV[str, t.JsonPayload | None]:
-                _ = mode
-                return {"alpha": 1, "beta": "two"}
-
-        result: p.Result[str] = r[str].fail("error", error_data=ModelDumpCarrier())
-
+    def test_error_data_keeps_a_snapshot_of_the_supplied_model() -> None:
+        """Result metadata retains the validated model's original values."""
+        metadata = m.ConfigMap(root={"alpha": 1, "beta": "two"})
+        result = r[str].fail("error", error_data=metadata)
+        metadata.root["alpha"] = 3
         tm.that(result.error_data, eq={"alpha": 1, "beta": "two"})
 
     @staticmethod

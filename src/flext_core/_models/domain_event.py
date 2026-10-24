@@ -35,7 +35,7 @@ class FlextModelsDomainEvent:
         """Base class for domain events."""
 
         message_type: str = FlextModelsPydantic.Field(
-            "event",
+            default="event",
             frozen=True,
             description="Message type discriminator for union routing - always 'event'",
             validate_default=True,
