@@ -282,7 +282,7 @@ __getattr__ = install_lazy_exports(
         "_mapper_access": "._mapper_access",
         "_mapper_extract": "._mapper_extract",
         "_parser_targets": "._parser_targets",
-        "alias_first_violation": ("._beartype._class_visitor.class_visitor_part_02_01"),
+        "alias_first_violation": ("._beartype._class_visitor.alias_rules"),
     }),
     public_exports=__all__,
 )[0]

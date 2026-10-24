@@ -8,9 +8,8 @@ from __future__ import annotations
 
 from typing import Self
 
-from pydantic import BaseModel, PrivateAttr
-
 from flext_core import c, t
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities import (
@@ -19,7 +18,7 @@ from flext_core._utilities import (
 )
 
 
-class FlextResultBase[T](BaseModel):
+class FlextResultBase[T](FlextModelsPydantic.BaseModel):
     """Internal data container for FlextResult.
 
     Population keeps pydantic's own ``(**data)`` contract; the result family
@@ -27,19 +26,15 @@ class FlextResultBase[T](BaseModel):
     which validate the public fields and then bind the private payload.
     """
 
-    model_config = {
-        "arbitrary_types_allowed": True,
-        "populate_by_name": True,
-        "extra": "forbid",
-    }
+    model_config = FlextModelsPydantic.ConfigDict(extra="forbid")
 
     success: bool = True
     error: str | None = None
     error_code: str | None = None
     error_data: t.JsonDict | None = None
 
-    _payload: T = PrivateAttr()
-    _exception: BaseException | None = PrivateAttr(default=None)
+    _payload: T = FlextModelsPydantic.PrivateAttr()
+    _exception: BaseException | None = FlextModelsPydantic.PrivateAttr(default=None)
 
     @classmethod
     def create_success(cls, value: T) -> Self:

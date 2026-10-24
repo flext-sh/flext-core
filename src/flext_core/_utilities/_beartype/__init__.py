@@ -115,7 +115,7 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesBeartypeTypeAliases": ".type_aliases",
         "_class_visitor": "._class_visitor",
         "_helpers": "._helpers",
-        "alias_first_violation": ("._class_visitor.class_visitor_part_02_01"),
+        "alias_first_violation": ("._class_visitor.alias_rules"),
     }),
     public_exports=__all__,
 )[0]

@@ -38,7 +38,7 @@ class FlextModelsConfig:
             ),
         ]
         completion: Annotated[
-            t.LoggingWriteCompletion,
+            t.Port[t.LoggingWriteCompletion],
             FlextModelsPydantic.Field(
                 description=(
                     "Native completion receiving this job's result or first failure."
@@ -284,7 +284,7 @@ class FlextModelsConfig:
                 description="Sanitized structured event context."
             ),
         ]
-        exception: t.SkipJsonSchema[BaseException | None] = FlextModelsPydantic.Field(
+        exception: t.Port[BaseException] | None = FlextModelsPydantic.Field(
             default=None,
             exclude=True,
             repr=False,

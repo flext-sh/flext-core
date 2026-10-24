@@ -13,10 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._beartype._class_visitor import (
-        class_visitor_part_01 as _owner_0,
-    )
-    from flext_core._utilities._beartype._class_visitor.class_visitor_part_02_01 import (
+    from flext_core._utilities._beartype._class_visitor import visitor_base as _owner_0
+    from flext_core._utilities._beartype._class_visitor.alias_rules import (
         alias_first_violation,
     )
 
@@ -24,15 +22,13 @@ if TYPE_CHECKING:
         _owner_0.FlextUtilitiesBeartypeClassVisitorPart01
     )
     from flext_core._utilities._beartype._class_visitor import (
-        class_visitor_part_02 as _owner_1,
+        visitor_checks as _owner_1,
     )
 
     FlextUtilitiesBeartypeClassVisitorPart02 = (
         _owner_1.FlextUtilitiesBeartypeClassVisitorPart02
     )
-    from flext_core._utilities._beartype._class_visitor import (
-        class_visitor_part_03 as _owner_2,
-    )
+    from flext_core._utilities._beartype._class_visitor import visitor as _owner_2
 
     FlextUtilitiesBeartypeClassVisitorPart03 = (
         _owner_2.FlextUtilitiesBeartypeClassVisitorPart03
@@ -50,10 +46,10 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextUtilitiesBeartypeClassVisitorPart01": ".class_visitor_part_01",
-        "FlextUtilitiesBeartypeClassVisitorPart02": ".class_visitor_part_02",
-        "FlextUtilitiesBeartypeClassVisitorPart03": ".class_visitor_part_03",
-        "alias_first_violation": ".class_visitor_part_02_01",
+        "FlextUtilitiesBeartypeClassVisitorPart01": ".visitor_base",
+        "FlextUtilitiesBeartypeClassVisitorPart02": ".visitor_checks",
+        "FlextUtilitiesBeartypeClassVisitorPart03": ".visitor",
+        "alias_first_violation": ".alias_rules",
     }),
     public_exports=__all__,
 )
