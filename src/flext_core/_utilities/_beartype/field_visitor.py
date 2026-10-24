@@ -61,6 +61,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
         info: FieldInfo,
         *,
         declared_annotation: FlextTypingBase.TypeHintSpecifier | None = None,
+        owner: type | None = None,
     ) -> FlextTypingBase.StrMapping | None:
         """Run field-shape checks in canonical order and return the first hit.
 
@@ -72,13 +73,25 @@ class FlextUtilitiesBeartypeFieldVisitor:
             FlextUtilitiesBeartypeFieldVisitor._check_forbid_any,
             FlextUtilitiesBeartypeFieldVisitor._check_bare_collection,
             FlextUtilitiesBeartypeFieldVisitor._check_mutable_default,
-            FlextUtilitiesBeartypeFieldVisitor._check_raw_default_factory,
-            FlextUtilitiesBeartypeFieldVisitor._check_str_none_empty,
         )
         for check in checks:
             violation = check(params, info)
             if violation is not None:
                 return violation
+        factory_violation = (
+            FlextUtilitiesBeartypeFieldVisitor._check_raw_default_factory(
+                params,
+                info,
+                owner=owner,
+            )
+        )
+        if factory_violation is not None:
+            return factory_violation
+        empty_violation = FlextUtilitiesBeartypeFieldVisitor._check_str_none_empty(
+            params, info
+        )
+        if empty_violation is not None:
+            return empty_violation
         return FlextUtilitiesBeartypeFieldVisitor._check_inline_union(
             params,
             declared_annotation,
@@ -150,6 +163,8 @@ class FlextUtilitiesBeartypeFieldVisitor:
     def _check_raw_default_factory(
         params: FlextModelsEnforcement.FieldShapeParams,
         info: FieldInfo,
+        *,
+        owner: type | None = None,
     ) -> FlextTypingBase.StrMapping | None:
         """Check the forbid_raw_default_factory flag against the factory.
 
@@ -163,6 +178,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
             and not FlextUtilitiesBeartypeHelpers.allows_mutable_default_factory(
                 info.annotation,
                 info.default_factory,
+                owner=owner,
             )
         ):
             return None
@@ -233,6 +249,7 @@ class FlextUtilitiesBeartypeFieldVisitor:
             params,
             info,
             declared_annotation=declared_annotation,
+            owner=model_type,
         )
 
     @classmethod

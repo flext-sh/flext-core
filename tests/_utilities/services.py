@@ -10,7 +10,7 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import r
 
-from tests import c, m, p, s, t
+from tests import c, m, p, s
 from tests._utilities import TestsFlextUtilitiesRailwayServicesMixin
 
 
@@ -35,13 +35,8 @@ class TestsFlextUtilitiesServicesMixin:
             self._value += 1
             return self._value
 
-    class CountingService(s[int]):
+    class CountingService(m.Tests.CountingServiceOptions, s[int]):
         """Service whose only collaborator is the ``p.Tests.Counter`` port."""
-
-        counter: t.Port[p.Tests.Counter] = m.Field(
-            exclude=True,
-            description="Counter port the service advances.",
-        )
 
         @override
         def execute(self) -> p.Result[int]:

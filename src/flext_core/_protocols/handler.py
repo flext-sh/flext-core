@@ -12,12 +12,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
+from flext_core import t
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import c, t
+    from flext_core import c
     from flext_core._protocols import FlextProtocolsContainer
 
 

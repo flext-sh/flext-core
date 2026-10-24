@@ -6,11 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import ast
+import builtins
 import inspect
 import types as _types_mod
 from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
 from types import UnionType
-from typing import TYPE_CHECKING, TypeAliasType, Union, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    ForwardRef,
+    TypeAliasType,
+    Union,
+    get_args,
+    get_origin,
+)
+
+from pydantic import BaseModel
 
 from flext_core import c
 from flext_core._utilities._beartype._helpers_parts import helpers_part_02
@@ -87,46 +99,124 @@ class FlextUtilitiesBeartypeHelpers(helpers_part_02.FlextUtilitiesBeartypeHelper
     def allows_mutable_default_factory(
         hint: FlextTypingBase.TypeFormSpecifier | None,
         factory: type | Callable[..., FlextProtocolsBase.AttributeProbe] | None,
+        *,
+        owner: type | None = None,
     ) -> bool:
         h = FlextUtilitiesBeartypeHelpers
         mk = h.mutable_default_factory_kind(factory)
-        if mk is list:
-            exp = MutableSequence
-        elif mk is dict:
-            exp = MutableMapping
-        elif mk is set:
-            exp = MutableSet
-        else:
+        kinds: FlextTypingBase.MappingKV[type, type] = {
+            list: MutableSequence,
+            dict: MutableMapping,
+            set: MutableSet,
+        }
+        exp = kinds.get(mk) if mk is not None else None
+        if exp is None:
             return False
         norm = h.unwrap_annotated(hint)
-        if norm is None:
-            return False
-        if isinstance(norm, str):
-            en = exp.__name__
-            return bool(en) and (
-                norm == en
-                or norm.startswith((
-                    f"{en}[",
-                    f"{en}Of[",
-                    f"{en}KV[",
-                    f"typing.{en}[",
-                    f"typing.{en}Of[",
-                    f"typing.{en}KV[",
-                    f"collections.abc.{en}[",
-                    f"collections.abc.{en}Of[",
-                    f"collections.abc.{en}KV[",
-                    f"FlextTypingBase.{en}Of[",
-                    f"FlextTypingBase.{en}KV[",
-                ))
-            )
-        org = get_origin(norm)
-        if isinstance(org, TypeAliasType):
-            resolved = h.resolve_type_alias_value(org)
-            if resolved is None:
+        if isinstance(norm, (str, ForwardRef)):
+            if owner is None:
                 return False
-            org = get_origin(resolved) or resolved
-        tgt = org or norm
-        return tgt is exp
+            text = norm if isinstance(norm, str) else norm.__forward_arg__
+            outer = FlextUtilitiesBeartypeHelpers._annotation_outer_type(
+                text, FlextUtilitiesBeartypeHelpers._annotation_namespace(owner)
+            )
+            outer_origin = get_origin(outer)
+            if isinstance(outer_origin, (type, TypeAliasType)):
+                norm = outer_origin
+            elif isinstance(outer, (type, TypeAliasType)):
+                norm = outer
+            else:
+                return False
+        origin = get_origin(norm)
+        if isinstance(origin, TypeAliasType):
+            norm = origin
+        resolved = h.unwrap_annotated(h.unwrap_type_alias(norm))
+        return (get_origin(resolved) or resolved) is exp
+
+    @staticmethod
+    def _annotation_namespace(
+        owner: type,
+    ) -> FlextTypingBase.MutableMappingKV[str, FlextProtocolsBase.AttributeProbe]:
+        """Use live module and class bindings without interpreting private weak refs.
+
+        Returns:
+            Proven bindings; unresolved lexical shadowing remains unavailable.
+
+        """
+        namespace: FlextTypingBase.MutableMappingKV[
+            str, FlextProtocolsBase.AttributeProbe
+        ] = dict(vars(builtins))
+        module = inspect.getmodule(owner)
+        if module is not None:
+            namespace.update(vars(module))
+        if issubclass(owner, BaseModel):
+            parent = owner.__pydantic_parent_namespace__
+            if parent is not None:
+                for name in parent:
+                    namespace[name] = None
+        for base in reversed(owner.__mro__):
+            namespace.update(vars(base))
+        return namespace
+
+    @staticmethod
+    def _annotation_reference(
+        expression: ast.expr,
+        namespace: FlextTypingBase.MappingKV[str, FlextProtocolsBase.AttributeProbe],
+    ) -> FlextProtocolsBase.AttributeProbe | None:
+        """Resolve only declared names and attributes, never executable expressions.
+
+        Returns:
+            The actual namespace binding, or None when it cannot be authenticated.
+
+        """
+        path: list[str] = []
+        while isinstance(expression, ast.Attribute):
+            path.insert(0, expression.attr)
+            expression = expression.value
+        if not isinstance(expression, ast.Name):
+            return None
+        value = namespace.get(expression.id)
+        for name in path:
+            scopes = value.__mro__ if isinstance(value, type) else (value,)
+            value = next(
+                (
+                    vars(scope)[name]
+                    for scope in scopes
+                    if isinstance(scope, (type, _types_mod.ModuleType))
+                    and name in vars(scope)
+                ),
+                None,
+            )
+        return value
+
+    @staticmethod
+    def _annotation_outer_type(
+        source: str,
+        namespace: FlextTypingBase.MappingKV[str, FlextProtocolsBase.AttributeProbe],
+    ) -> FlextProtocolsBase.AttributeProbe | None:
+        """Inspect the outer collection without evaluating unresolved item types.
+
+        Returns:
+            The actual outer type or alias, with Annotated metadata peeled away.
+
+        """
+        expression = ast.parse(source, mode="eval").body
+        while isinstance(expression, ast.Constant) and isinstance(
+            expression.value, str
+        ):
+            expression = ast.parse(expression.value, mode="eval").body
+        while isinstance(expression, ast.Subscript):
+            outer = FlextUtilitiesBeartypeHelpers._annotation_reference(
+                expression.value, namespace
+            )
+            if outer is not Annotated:
+                return outer
+            if not isinstance(expression.slice, ast.Tuple) or not expression.slice.elts:
+                return None
+            expression = expression.slice.elts[0]
+        return FlextUtilitiesBeartypeHelpers._annotation_reference(
+            expression, namespace
+        )
 
     @staticmethod
     def has_relaxed_extra_base(target: type) -> bool:

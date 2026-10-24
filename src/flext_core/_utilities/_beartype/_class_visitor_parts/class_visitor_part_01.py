@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import inspect
+import sys
 from enum import EnumType
 
 from flext_core import c
-from flext_core._models import FlextModelsEnforcement
+from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities._beartype import (
     FlextUtilitiesBeartypeHelpers,
@@ -23,6 +25,87 @@ BINARY_ARITY: int = 2
 
 class FlextUtilitiesBeartypeClassVisitor:
     """CLASS_PLACEMENT + PROTOCOL_TREE + MRO_SHAPE + LOOSE_SYMBOL visitors."""
+
+    @staticmethod
+    def model_state_service_first(
+        target: type,
+        package_name: str,
+        alias_rows: tuple[tuple[str, str, str], ...],
+    ) -> bool:
+        """Recognize model-owned state precedence in the published service facade.
+
+        Pydantic merges direct-base fields right to left. A project's declarative
+        state therefore precedes its native service, unlike operational peers.
+
+        Returns:
+            Whether the first base owns declarations for the native service role.
+
+        """
+        if len(target.__bases__) != BINARY_ARITY or not any(
+            alias == "s" and owner == target.__module__
+            for alias, owner, _ in alias_rows
+        ):
+            return False
+        state, service = target.__bases__
+        model_owners = {
+            f"{package_name}._{owner.rsplit('.', 1)[-1]}"
+            for alias, owner, _ in alias_rows
+            if alias == "m" and owner.startswith(f"{package_name}.")
+        }
+        if not any(
+            state.__module__ == owner or state.__module__.startswith(f"{owner}.")
+            for owner in model_owners
+        ) or not issubclass(state, FlextModelsPydantic.BaseModel):
+            return False
+        # Read the loaded native role, not a class-name lookalike. Importing the
+        # service while foundation models are being declared would create a cycle.
+        native_package = FlextModelsPydantic.__module__.split(".", 1)[0]
+        native_service = next(
+            (
+                vars(sys.modules[path]).get(alias)
+                for alias, path, _ in FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(
+                    native_package
+                )
+                if alias == "s" and path in sys.modules
+            ),
+            None,
+        )
+        if (
+            not isinstance(native_service, type)
+            or native_service not in service.__mro__
+            or native_service in state.__mro__
+            or not state.model_fields
+        ):
+            return False
+        for owner in state.__mro__:
+            if owner in FlextModelsPydantic.BaseModel.__mro__ or (
+                owner in service.__mro__
+                and owner.__module__.split(".", 1)[0] == native_package
+            ):
+                continue
+            if not any(
+                owner.__module__ == origin or owner.__module__.startswith(f"{origin}.")
+                for origin in model_owners
+            ) or not issubclass(owner, FlextModelsPydantic.BaseModel):
+                return False
+            decorators = owner.__pydantic_decorators__
+            declarations = {
+                *decorators.field_validators,
+                *decorators.model_validators,
+                *decorators.field_serializers,
+                *decorators.model_serializers,
+                *decorators.computed_fields,
+            }
+            if any(
+                name not in declarations
+                and (
+                    inspect.isfunction(value)
+                    or isinstance(value, (property, classmethod, staticmethod))
+                )
+                for name, value in vars(owner).items()
+            ):
+                return False
+        return True
 
     @staticmethod
     def v_class_placement(

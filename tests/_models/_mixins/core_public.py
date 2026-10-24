@@ -7,12 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import ClassVar, Self
+from typing import Annotated, ClassVar, Self
 
 from typing_extensions import TypeForm
 
 from flext_core import m, u
-from tests import t
+from tests import p, t
 
 
 class TestsFlextModelsCorePublicMixin:
@@ -114,12 +114,23 @@ class TestsFlextModelsCorePublicMixin:
         process_environment: t.StrMapping
         log_level: str
 
+    class CountingServiceOptions(m.ArbitraryTypesModel):
+        """Declared counter port consumed by the public service test helper."""
+
+        counter: Annotated[
+            t.Port[p.Tests.Counter],
+            m.Field(
+                exclude=True,
+                description="Counter port the service advances.",
+            ),
+        ]
+
     class PublicPayload(m.BaseModel):
         """Payload model used to exercise the public Pydantic facade."""
 
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(populate_by_name=True)
 
-        raw_name: str = u.Field(alias="rawName")
+        raw_name: Annotated[str, m.Field(alias="rawName")]
         visits: int = 0
         _events: list[str] = u.PrivateAttr(default_factory=u.empty(TypeForm(list[str])))
 
