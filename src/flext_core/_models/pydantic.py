@@ -66,17 +66,32 @@ class FlextModelsPydantic:
         | partialmethod[Callable[..., FlextProtocolsBase.AttributeProbe]]
     )
 
-    # Preserve the native overloads and field-specifier identity without a wrapper.
-    Field = pydantic.Field
-
+    # Keep the native callable intact: staticmethod inference otherwise selects
+    # only the first overload, losing defaults and metadata-only declarations.
     if TYPE_CHECKING:
+
+        class _NativeStatic[FunctionT]:
+            """Preserve the complete native callable behind a static descriptor."""
+
+            def __init__(self, function: FunctionT) -> None:
+                self.__func__ = function
+
+            def __get__(
+                self,
+                instance: FlextProtocolsBase.AttributeProbe | None,
+                owner: type | None = None,
+            ) -> FunctionT:
+                return self.__func__
+
+        Field = _NativeStatic(pydantic.Field)
         PrivateAttr: ClassVar[FlextProtocolsPydantic.PrivateAttrFactory]
     else:
+        Field = staticmethod(pydantic.Field)
         PrivateAttr = staticmethod(pydantic.PrivateAttr)
 
     @dataclass_transform(
         kw_only_default=True,
-        field_specifiers=(pydantic.Field, pydantic.PrivateAttr),
+        field_specifiers=(Field.__func__, pydantic.Field, pydantic.PrivateAttr),
     )
     class BaseModel(pydantic.BaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
@@ -89,7 +104,7 @@ class FlextModelsPydantic:
 
     @dataclass_transform(
         kw_only_default=True,
-        field_specifiers=(pydantic.Field, pydantic.PrivateAttr),
+        field_specifiers=(Field.__func__, pydantic.Field, pydantic.PrivateAttr),
     )
     class RootModel[RootValueT](pydantic.RootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
