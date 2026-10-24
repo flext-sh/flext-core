@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from collections.abc import Iterator, Sequence
+from collections.abc import Callable, Iterator, Sequence
 from importlib.metadata import Distribution, DistributionFinder
 from pathlib import Path
 from types import ModuleType
@@ -109,25 +109,14 @@ class TestsFlextCoreUtilitiesProjectMetadata:
 
     @staticmethod
     def test_distribution_requirement_names_normalize_to_import_grammar(
-        tmp_path: Path,
+        fixture_tree: Callable[[str], Path],
     ) -> None:
         """Requirement names keep the import grammar: lowercase underscores.
 
         Version specifiers, extras and environment markers never reach the
         returned name; a malformed line is skipped, never guessed.
         """
-        info = tmp_path / "probe_requirement_dist-1.0.dist-info"
-        info.mkdir()
-        (info / "METADATA").write_text(
-            "Metadata-Version: 2.1\n"
-            "Name: probe-requirement-dist\n"
-            "Version: 1.0\n"
-            "Requires-Dist: flext-cli>=0.12\n"
-            "Requires-Dist: Flext-Api[extra]~=1.0\n"
-            "Requires-Dist: pydantic>=2.11; python_version >= '3.13'\n"
-            "Requires-Dist: some_pkg==2.0\n"
-            "Requires-Dist: ??? malformed\n",
-        )
+        info = fixture_tree("requirement_dist") / "probe_requirement_dist-1.0.dist-info"
         names = u.distribution_requirement_names(Distribution.at(info))
         tm.that(
             names,
