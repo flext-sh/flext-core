@@ -11,10 +11,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from typing_extensions import TypeForm
 
 from flext_core import FlextConfig, FlextStrictYamlConfigSource
 from tests import m, t, tm, u
@@ -35,10 +35,10 @@ class TestsFlextCoreUtilitiesYaml:
         )
         for path, document in zip(paths, documents, strict=True):
             path.write_text(document, encoding="utf-8")
-        baseline: t.JsonDict = u.type_adapter(TypeForm(t.JsonDict)).validate_python(
+        baseline: t.JsonDict = u.type_adapter(t.TypeForm(t.JsonDict)).validate_python(
             u.Yaml.unique_key_load(documents[0]),
         )
-        override: t.JsonDict = u.type_adapter(TypeForm(t.JsonDict)).validate_python(
+        override: t.JsonDict = u.type_adapter(t.TypeForm(t.JsonDict)).validate_python(
             u.Yaml.unique_key_load(documents[1]),
         )
         merged = FlextStrictYamlConfigSource.merge_values(baseline, override)
@@ -85,17 +85,12 @@ class TestsFlextCoreUtilitiesYaml:
             u.Yaml.unique_key_load("top:\n  dup: 1\n  dup: 2\n")
 
     @staticmethod
-    def test_unique_key_load_flattens_merge_keys_with_explicit_override() -> None:
+    def test_unique_key_load_flattens_merge_keys_with_explicit_override(
+        fixture_tree: Callable[[str], Path],
+    ) -> None:
         """Merge keys flatten to defaults; one explicit pair overrides a merged one."""
-        document = (
-            "base: &base\n"
-            "  host: relay\n"
-            "  port: 8080\n"
-            "served:\n"
-            "  <<: *base\n"
-            "  port: 9090\n"
-        )
-        parsed = u.Yaml.unique_key_load(document)
+        document = fixture_tree("yaml_merge_keys") / "override.yaml"
+        parsed = u.Yaml.unique_key_load(document.read_text(encoding="utf-8"))
         tm.that(
             parsed,
             eq={
@@ -105,18 +100,13 @@ class TestsFlextCoreUtilitiesYaml:
         )
 
     @staticmethod
-    def test_unique_key_load_rejects_duplicate_explicit_key_beside_merge() -> None:
+    def test_unique_key_load_rejects_duplicate_explicit_key_beside_merge(
+        fixture_tree: Callable[[str], Path],
+    ) -> None:
         """Flattening a merge never forgives a duplicated explicit key."""
-        document = (
-            "base: &base\n"
-            "  host: relay\n"
-            "served:\n"
-            "  <<: *base\n"
-            "  host: relay\n"
-            "  host: mirror\n"
-        )
+        document = fixture_tree("yaml_merge_keys") / "duplicate_beside_merge.yaml"
         with pytest.raises(u.Yaml.YAMLError, match="duplicate config key"):
-            u.Yaml.unique_key_load(document)
+            u.Yaml.unique_key_load(document.read_text(encoding="utf-8"))
 
     @staticmethod
     def test_unique_key_load_rejects_non_string_keys() -> None:
