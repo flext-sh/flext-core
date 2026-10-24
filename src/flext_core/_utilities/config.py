@@ -15,15 +15,17 @@ import re
 import tomllib
 from collections.abc import Mapping
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, cast
+from typing import TYPE_CHECKING, ClassVar
 
 import yaml
+from pydantic import ValidationError
 
 from flext_core import c, r
 from flext_core._typings.base import FlextTypingBase
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesReliability,
+    FlextUtilitiesTypingAdapterJson,
 )
 from flext_core.config_sources import FlextStrictYamlConfigSource
 
@@ -52,7 +54,9 @@ class FlextUtilitiesConfig:
                 The resulting ``t.JsonValue``.
 
             """
-            return cast("FlextTypingBase.JsonValue", yaml.safe_load(stream))
+            return FlextUtilitiesTypingAdapterJson.json_value_adapter().validate_python(
+                yaml.safe_load(stream),
+            )
 
         @staticmethod
         def safe_dump(
@@ -86,7 +90,9 @@ class FlextUtilitiesConfig:
 
             """
             with path.open(encoding="utf-8") as fh:
-                return cast("FlextTypingBase.JsonValue", yaml.safe_load(fh))
+                return FlextUtilitiesTypingAdapterJson.json_value_adapter().validate_python(
+                    yaml.safe_load(fh),
+                )
 
         @staticmethod
         def unique_key_load(stream: str) -> FlextTypingBase.JsonValue:
@@ -132,6 +138,11 @@ class FlextUtilitiesConfig:
             except OSError as exc:
                 return r[FlextTypingBase.JsonMapping].fail(
                     f"YAML read error: {exc}",
+                    exception=exc,
+                )
+            except ValidationError as exc:
+                return r[FlextTypingBase.JsonMapping].fail(
+                    f"YAML value is not JSON-compatible: {path}: {exc}",
                     exception=exc,
                 )
             if not isinstance(loaded, Mapping):

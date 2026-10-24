@@ -79,7 +79,7 @@ class FlextModelsContainerPart01:
             FlextModelsPydantic.Field(..., description="Service identifier/name"),
         ]
         service: Annotated[
-            t.Port[p.RegisterableService],
+            t.SkipJsonSchema[p.RegisterableService],
             FlextModelsPydantic.Field(
                 ...,
                 description="Service instance (protocols, models, callables)",
