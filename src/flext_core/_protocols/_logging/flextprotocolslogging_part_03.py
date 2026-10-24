@@ -6,15 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
+from flext_core import t
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 from flext_core._protocols._logging.flextprotocolslogging_part_02 import (
     FlextProtocolsLoggingPart02,
 )
-
-if TYPE_CHECKING:
-    from flext_core import t
-    from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 
 class FlextProtocolsLoggingPart03(FlextProtocolsLoggingPart02):
