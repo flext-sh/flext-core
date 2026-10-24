@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """FLEXT Core Constants - Thin MRO Facade.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
@@ -31,24 +32,24 @@ from flext_core._constants import (
 
 class FlextConstants(
     FlextConstantsBase,
-    FlextConstantsTimeout,
-    FlextConstantsEnvironment,
-    FlextConstantsLogging,
-    FlextConstantsFile,
-    FlextConstantsStatus,
-    FlextConstantsRegex,
-    FlextConstantsSerialization,
-    FlextConstantsValidation,
-    FlextConstantsSettings,
     FlextConstantsConfig,
     FlextConstantsCqrs,
+    FlextConstantsEnforcement,
+    FlextConstantsEnvironment,
     FlextConstantsErrors,
+    FlextConstantsFile,
     FlextConstantsGuards,
     FlextConstantsInfrastructure,
+    FlextConstantsLogging,
     FlextConstantsMixins,
-    FlextConstantsEnforcement,
     FlextConstantsProjectMetadata,
     FlextConstantsPydantic,
+    FlextConstantsRegex,
+    FlextConstantsSerialization,
+    FlextConstantsSettings,
+    FlextConstantsStatus,
+    FlextConstantsTimeout,
+    FlextConstantsValidation,
 ):
     """SSOT facade: all constants flat on c.* via MRO composition.
 

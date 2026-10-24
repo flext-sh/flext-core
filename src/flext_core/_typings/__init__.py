@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._typings.annotateds import FlextTypesAnnotateds
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from flext_core._typings.core import FlextTypesCore
     from flext_core._typings.lazy import FlextTypesLazy
     from flext_core._typings.native_export import FlextTypingNativeExport
-    from flext_core._typings.pydantic import FlextTypesPydantic
+    from flext_core._typings.pydantic import FlextTypesPydantic, JsonValue
     from flext_core._typings.services import FlextTypesServices
 
 
@@ -32,9 +32,10 @@ __all__: tuple[str, ...] = (
     "FlextTypingBase",
     "FlextTypingConfig",
     "FlextTypingNativeExport",
+    "JsonValue",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -46,6 +47,7 @@ __getattr__ = install_lazy_exports(
         "FlextTypingBase": ".base",
         "FlextTypingConfig": ".config",
         "FlextTypingNativeExport": ".native_export",
+        "JsonValue": ".pydantic",
     }),
     public_exports=__all__,
-)[0]
+)

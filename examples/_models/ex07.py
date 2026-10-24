@@ -36,5 +36,4 @@ class ExamplesFlextModelsEx07:
         name: str = m.Field(description="Plugin name")
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx07"]

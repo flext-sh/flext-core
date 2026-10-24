@@ -36,5 +36,4 @@ class ExamplesFlextModelsEx14:
         email: str = m.Field(description="Email address of the user.")
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx14"]

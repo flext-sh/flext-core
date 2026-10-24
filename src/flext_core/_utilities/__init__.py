@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._utilities import (
@@ -28,10 +28,16 @@ if TYPE_CHECKING:
         FlextUtilitiesBeartypeAliasVisitor,
         FlextUtilitiesBeartypeAttrVisitor,
         FlextUtilitiesBeartypeClassVisitor,
+        FlextUtilitiesBeartypeClassVisitorPart01,
+        FlextUtilitiesBeartypeClassVisitorPart02,
+        FlextUtilitiesBeartypeClassVisitorPart03,
         FlextUtilitiesBeartypeDeprecatedVisitor,
         FlextUtilitiesBeartypeFieldUnionScan,
         FlextUtilitiesBeartypeFieldVisitor,
         FlextUtilitiesBeartypeHelpers,
+        FlextUtilitiesBeartypeHelpersPart01,
+        FlextUtilitiesBeartypeHelpersPart02,
+        FlextUtilitiesBeartypeHelpersPart03,
         FlextUtilitiesBeartypeImportBlacklistVisitor,
         FlextUtilitiesBeartypeImportVisitor,
         FlextUtilitiesBeartypeLibraryVisitor,
@@ -44,13 +50,49 @@ if TYPE_CHECKING:
         FlextUtilitiesBeartypeTypeAliases,
         alias_first_violation,
     )
+    from flext_core._utilities._checker import (
+        FlextUtilitiesCheckerPart01,
+        FlextUtilitiesCheckerPart02,
+        FlextUtilitiesCheckerPart03,
+    )
+    from flext_core._utilities._enforcement import (
+        FlextUtilitiesEnforcementPart02,
+        FlextUtilitiesEnforcementPart03,
+        FlextUtilitiesEnforcementPart04,
+        FlextUtilitiesEnforcementPart05,
+    )
+    from flext_core._utilities._enforcement_collect import (
+        FlextUtilitiesEnforcementCollectPart01,
+        FlextUtilitiesEnforcementCollectPart02,
+    )
     from flext_core._utilities._guards_type_protocol_specs import (
         FlextUtilitiesGuardsTypeProtocolSpecsMixin,
     )
     from flext_core._utilities._guards_type_protocol_string import (
         FlextUtilitiesGuardsTypeProtocolStringMixin,
     )
-    from flext_core._utilities._logging_config import FlextUtilitiesLoggingStream
+    from flext_core._utilities._logging_config import (
+        FlextUtilitiesLoggingConfigPart01,
+        FlextUtilitiesLoggingConfigPart02,
+        FlextUtilitiesLoggingConfigPart03,
+        FlextUtilitiesLoggingStream,
+    )
+    from flext_core._utilities._logging_context import (
+        FlextUtilitiesLoggingContextPart01,
+        FlextUtilitiesLoggingContextPart02,
+    )
+    from flext_core._utilities._mapper_access import (
+        FlextUtilitiesMapperAccessPart01,
+        FlextUtilitiesMapperAccessPart02,
+    )
+    from flext_core._utilities._mapper_extract import (
+        FlextUtilitiesMapperExtractPart01,
+        FlextUtilitiesMapperExtractPart02,
+    )
+    from flext_core._utilities._parser_targets import (
+        FlextUtilitiesParserTargetsPart01,
+        FlextUtilitiesParserTargetsPart02,
+    )
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
@@ -119,12 +161,18 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeAliasVisitor",
     "FlextUtilitiesBeartypeAttrVisitor",
     "FlextUtilitiesBeartypeClassVisitor",
+    "FlextUtilitiesBeartypeClassVisitorPart01",
+    "FlextUtilitiesBeartypeClassVisitorPart02",
+    "FlextUtilitiesBeartypeClassVisitorPart03",
     "FlextUtilitiesBeartypeConf",
     "FlextUtilitiesBeartypeDeprecatedVisitor",
     "FlextUtilitiesBeartypeEngine",
     "FlextUtilitiesBeartypeFieldUnionScan",
     "FlextUtilitiesBeartypeFieldVisitor",
     "FlextUtilitiesBeartypeHelpers",
+    "FlextUtilitiesBeartypeHelpersPart01",
+    "FlextUtilitiesBeartypeHelpersPart02",
+    "FlextUtilitiesBeartypeHelpersPart03",
     "FlextUtilitiesBeartypeImportBlacklistVisitor",
     "FlextUtilitiesBeartypeImportVisitor",
     "FlextUtilitiesBeartypeLibraryVisitor",
@@ -136,6 +184,9 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesBeartypeModuleVisitor",
     "FlextUtilitiesBeartypeTypeAliases",
     "FlextUtilitiesChecker",
+    "FlextUtilitiesCheckerPart01",
+    "FlextUtilitiesCheckerPart02",
+    "FlextUtilitiesCheckerPart03",
     "FlextUtilitiesCollection",
     "FlextUtilitiesCollectionIter",
     "FlextUtilitiesCollectionMerge",
@@ -148,7 +199,13 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesDomain",
     "FlextUtilitiesEnforcement",
     "FlextUtilitiesEnforcementCollect",
+    "FlextUtilitiesEnforcementCollectPart01",
+    "FlextUtilitiesEnforcementCollectPart02",
     "FlextUtilitiesEnforcementEmit",
+    "FlextUtilitiesEnforcementPart02",
+    "FlextUtilitiesEnforcementPart03",
+    "FlextUtilitiesEnforcementPart04",
+    "FlextUtilitiesEnforcementPart05",
     "FlextUtilitiesEnum",
     "FlextUtilitiesFamilySurface",
     "FlextUtilitiesFiles",
@@ -162,11 +219,20 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesHandler",
     "FlextUtilitiesLogging",
     "FlextUtilitiesLoggingConfig",
+    "FlextUtilitiesLoggingConfigPart01",
+    "FlextUtilitiesLoggingConfigPart02",
+    "FlextUtilitiesLoggingConfigPart03",
     "FlextUtilitiesLoggingContext",
+    "FlextUtilitiesLoggingContextPart01",
+    "FlextUtilitiesLoggingContextPart02",
     "FlextUtilitiesLoggingStream",
     "FlextUtilitiesMapper",
     "FlextUtilitiesMapperAccess",
+    "FlextUtilitiesMapperAccessPart01",
+    "FlextUtilitiesMapperAccessPart02",
     "FlextUtilitiesMapperExtract",
+    "FlextUtilitiesMapperExtractPart01",
+    "FlextUtilitiesMapperExtractPart02",
     "FlextUtilitiesMetadata",
     "FlextUtilitiesModel",
     "FlextUtilitiesModelOptions",
@@ -174,6 +240,8 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesParser",
     "FlextUtilitiesParserCoerce",
     "FlextUtilitiesParserTargets",
+    "FlextUtilitiesParserTargetsPart01",
+    "FlextUtilitiesParserTargetsPart02",
     "FlextUtilitiesProjectMetadata",
     "FlextUtilitiesPydantic",
     "FlextUtilitiesReliability",
@@ -194,7 +262,7 @@ __all__: tuple[str, ...] = (
     "alias_first_violation",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -204,12 +272,22 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesBeartypeAliasVisitor": "._beartype._alias_visitor",
         "FlextUtilitiesBeartypeAttrVisitor": "._beartype.attr_visitor",
         "FlextUtilitiesBeartypeClassVisitor": "._beartype.class_visitor",
+        "FlextUtilitiesBeartypeClassVisitorPart01": (
+            "._beartype._class_visitor.visitor_base"
+        ),
+        "FlextUtilitiesBeartypeClassVisitorPart02": (
+            "._beartype._class_visitor.visitor_checks"
+        ),
+        "FlextUtilitiesBeartypeClassVisitorPart03": "._beartype._class_visitor.visitor",
         "FlextUtilitiesBeartypeConf": ".beartype_conf",
         "FlextUtilitiesBeartypeDeprecatedVisitor": "._beartype.deprecated_visitor",
         "FlextUtilitiesBeartypeEngine": ".beartype_engine",
         "FlextUtilitiesBeartypeFieldUnionScan": "._beartype._field_union_scan",
         "FlextUtilitiesBeartypeFieldVisitor": "._beartype.field_visitor",
         "FlextUtilitiesBeartypeHelpers": "._beartype.helpers",
+        "FlextUtilitiesBeartypeHelpersPart01": "._beartype._helpers.helpers_part_01",
+        "FlextUtilitiesBeartypeHelpersPart02": "._beartype._helpers.helpers_part_02",
+        "FlextUtilitiesBeartypeHelpersPart03": "._beartype._helpers.helpers_part_03",
         "FlextUtilitiesBeartypeImportBlacklistVisitor": (
             "._beartype._import_blacklist_visitor"
         ),
@@ -227,6 +305,9 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesBeartypeModuleVisitor": "._beartype.module_visitor",
         "FlextUtilitiesBeartypeTypeAliases": "._beartype.type_aliases",
         "FlextUtilitiesChecker": ".checker",
+        "FlextUtilitiesCheckerPart01": "._checker.checker_part_01",
+        "FlextUtilitiesCheckerPart02": "._checker.checker_part_02",
+        "FlextUtilitiesCheckerPart03": "._checker.checker_part_03",
         "FlextUtilitiesCollection": ".collection",
         "FlextUtilitiesCollectionIter": ".collection_iter",
         "FlextUtilitiesCollectionMerge": ".collection_merge",
@@ -239,7 +320,17 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesDomain": ".domain",
         "FlextUtilitiesEnforcement": ".enforcement",
         "FlextUtilitiesEnforcementCollect": ".enforcement_collect",
+        "FlextUtilitiesEnforcementCollectPart01": (
+            "._enforcement_collect.enforcement_collect_part_01"
+        ),
+        "FlextUtilitiesEnforcementCollectPart02": (
+            "._enforcement_collect.enforcement_collect_part_02"
+        ),
         "FlextUtilitiesEnforcementEmit": ".enforcement_emit",
+        "FlextUtilitiesEnforcementPart02": "._enforcement.enforcement_part_02",
+        "FlextUtilitiesEnforcementPart03": "._enforcement.enforcement_part_03",
+        "FlextUtilitiesEnforcementPart04": "._enforcement.enforcement_part_04",
+        "FlextUtilitiesEnforcementPart05": "._enforcement.enforcement_part_05",
         "FlextUtilitiesEnum": ".enums",
         "FlextUtilitiesFamilySurface": ".family_surface",
         "FlextUtilitiesFiles": ".files",
@@ -253,11 +344,24 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesHandler": ".handler",
         "FlextUtilitiesLogging": ".logging",
         "FlextUtilitiesLoggingConfig": ".logging_config",
+        "FlextUtilitiesLoggingConfigPart01": "._logging_config.logging_config_part_01",
+        "FlextUtilitiesLoggingConfigPart02": "._logging_config.logging_config_part_02",
+        "FlextUtilitiesLoggingConfigPart03": "._logging_config.logging_config_part_03",
         "FlextUtilitiesLoggingContext": ".logging_context",
+        "FlextUtilitiesLoggingContextPart01": (
+            "._logging_context.logging_context_part_01"
+        ),
+        "FlextUtilitiesLoggingContextPart02": (
+            "._logging_context.logging_context_part_02"
+        ),
         "FlextUtilitiesLoggingStream": "._logging_config.logging_stream",
         "FlextUtilitiesMapper": ".mapper",
         "FlextUtilitiesMapperAccess": ".mapper_access",
+        "FlextUtilitiesMapperAccessPart01": "._mapper_access.mapper_access_part_01",
+        "FlextUtilitiesMapperAccessPart02": "._mapper_access.mapper_access_part_02",
         "FlextUtilitiesMapperExtract": ".mapper_extract",
+        "FlextUtilitiesMapperExtractPart01": "._mapper_extract.mapper_extract_part_01",
+        "FlextUtilitiesMapperExtractPart02": "._mapper_extract.mapper_extract_part_02",
         "FlextUtilitiesMetadata": ".metadata",
         "FlextUtilitiesModel": ".model",
         "FlextUtilitiesModelOptions": ".model_options",
@@ -265,6 +369,8 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesParser": ".parser",
         "FlextUtilitiesParserCoerce": ".parser_coerce",
         "FlextUtilitiesParserTargets": ".parser_targets",
+        "FlextUtilitiesParserTargetsPart01": "._parser_targets.parser_targets_part_01",
+        "FlextUtilitiesParserTargetsPart02": "._parser_targets.parser_targets_part_02",
         "FlextUtilitiesProjectMetadata": ".project_metadata",
         "FlextUtilitiesPydantic": ".pydantic",
         "FlextUtilitiesReliability": ".reliability",
@@ -275,14 +381,14 @@ __getattr__ = install_lazy_exports(
         "FlextUtilitiesTypingAdapterScalars": ".typeadapter_scalars",
         "_beartype": "._beartype",
         "_checker": "._checker",
-        "_enforcement_collect": "._enforcement_collect",
         "_enforcement": "._enforcement",
+        "_enforcement_collect": "._enforcement_collect",
         "_logging_config": "._logging_config",
         "_logging_context": "._logging_context",
         "_mapper_access": "._mapper_access",
         "_mapper_extract": "._mapper_extract",
         "_parser_targets": "._parser_targets",
-        "alias_first_violation": ("._beartype._class_visitor.alias_rules"),
+        "alias_first_violation": "._beartype._class_visitor.alias_rules",
     }),
     public_exports=__all__,
-)[0]
+)

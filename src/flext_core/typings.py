@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Type aliases and generics for the FLEXT ecosystem - Thin MRO Facade.
 
 Zero internal imports - depends only on stdlib, pydantic, pydantic-settings.
@@ -12,20 +13,25 @@ from collections.abc import Mapping
 from typing import TypeVar
 
 from flext_core._typings import (
+    FlextTypesAnnotateds,
     FlextTypesCore,
     FlextTypesLazy,
     FlextTypesPydantic,
     FlextTypesServices,
     FlextTypingBase,
     FlextTypingConfig,
+    FlextTypingNativeExport,
 )
 
 
 class FlextTypes(
     FlextTypingBase,
+    FlextTypesPydantic,
     FlextTypingConfig,
     FlextTypesCore,
+    FlextTypesAnnotateds,
     FlextTypesLazy,
+    FlextTypingNativeExport,
     FlextTypesServices,
 ):
     """Type system foundation for FLEXT ecosystem.

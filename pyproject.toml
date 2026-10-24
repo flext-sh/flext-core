@@ -65,6 +65,7 @@ Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
 dev = [
+  "types-networkx",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "mkdocstrings-python>=2.0.9",
   "actionlint-py>=1.7.12.24",
@@ -142,8 +143,8 @@ only-include = ["src/flext_core"]
 [tool.hatch.build.targets.wheel.sources]
 "src/flext_core" = "flext_core"
 
-[tool.hatch.build.targets.wheel.force-include]
-"pyproject.toml" = "flext_core/pyproject.toml"
+[tool.hatch.build.targets.wheel.extra-metadata]
+"pyproject.toml" = "pyproject.toml"
 
 [tool.hatch.build.targets.sdist]
 only-include = ["src/flext_core"]
@@ -184,6 +185,7 @@ optional_dependencies_dev_groups = []
 allow_redefinition = true
 check_untyped_defs = true
 disable_error_code = ["call-arg", "prop-decorator"]
+exclude = "(?s:(?:.+/)?[^/]*\\.bak)\\Z|(?s:(?:.+/)?[^/]*\\.egg\\-info/.*)\\Z|(?s:(?:.+/)?[^/]*\\.orig)\\Z|(?s:(?:.+/)?[^/]*\\.rej)\\Z|(?s:(?:.+/)?[^/]*\\.swp)\\Z|(?s:(?:.+/)?\\.agents\\-sync\\-home/.*)\\Z|(?s:(?:.+/)?\\.agents/.*)\\Z|(?s:(?:.+/)?\\.archive/.*)\\Z|(?s:(?:.+/)?\\.beads/.*)\\Z|(?s:(?:.+/)?\\.benchmarks/.*)\\Z|(?s:(?:.+/)?\\.bkp/.*)\\Z|(?s:(?:.+/)?\\.cache/.*)\\Z|(?s:(?:.+/)?\\.claude/.*)\\Z|(?s:(?:.+/)?\\.codex/.*)\\Z|(?s:(?:.+/)?\\.cursor/.*)\\Z|(?s:(?:.+/)?\\.gemini/.*)\\Z|(?s:(?:.+/)?\\.git/.*)\\Z|(?s:(?:.+/)?\\.hypothesis/.*)\\Z|(?s:(?:.+/)?\\.kilo/.*)\\Z|(?s:(?:.+/)?\\.mypy_cache/.*)\\Z|(?s:(?:.+/)?\\.omo/.*)\\Z|(?s:(?:.+/)?\\.opencode/.*)\\Z|(?s:(?:.+/)?\\.pylance_cache/.*)\\Z|(?s:(?:.+/)?\\.pyrefly_cache/.*)\\Z|(?s:(?:.+/)?\\.pytest_cache/.*)\\Z|(?s:(?:.+/)?\\.reports/.*)\\Z|(?s:(?:.+/)?\\.ruff_cache/.*)\\Z|(?s:(?:.+/)?\\.serena/.*)\\Z|(?s:(?:.+/)?\\.snapshots/.*)\\Z|(?s:(?:.+/)?\\.test\\-tmp/.*)\\Z|(?s:(?:.+/)?\\.tmp/.*)\\Z|(?s:(?:.+/)?\\.tox/.*)\\Z|(?s:(?:.+/)?\\.venv\\.[^/]*/.*)\\Z|(?s:(?:.+/)?\\.venv/.*)\\Z|(?s:(?:.+/)?\\.vscode/.*)\\Z|(?s:(?:.+/)?\\.worktrees/.*)\\Z|(?s:(?:.+/)?__pycache__/.*)\\Z|(?s:(?:.+/)?__pyrefly_virtual__/.*)\\Z|(?s:(?:.+/)?_tmp_[^/]*/.*)\\Z|(?s:(?:.+/)?build/.*)\\Z|(?s:(?:.+/)?dist\\-packages/.*)\\Z|(?s:(?:.+/)?dist/.*)\\Z|(?s:(?:.+/)?htmlcov/.*)\\Z|(?s:(?:.+/)?incoming/.*)\\Z|(?s:(?:.+/)?legado/.*)\\Z|(?s:(?:.+/)?node_modules/.*)\\Z|(?s:(?:.+/)?protos/.*)\\Z|(?s:(?:.+/)?reports/.*)\\Z|(?s:(?:.+/)?site\\-packages/.*)\\Z|(?s:(?:.+/)?site/.*)\\Z|(?s:(?:.+/)?target/.*)\\Z|(?s:(?:.+/)?tests/fixtures/[^/]+/.*)\\Z|(?s:(?:.+/)?venv/.*)\\Z"
 explicit_package_bases = true
 extra_checks = true
 follow_imports = "normal"
@@ -264,6 +266,7 @@ project-excludes = [
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
+  "**/tests/fixtures/*/**",
   "**/venv/**",
 ]
 project-includes = [
@@ -412,6 +415,7 @@ exclude = [
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
+  "**/tests/fixtures/*/**",
   "**/venv/**",
 ]
 extraPaths = ["src", "."]
@@ -470,6 +474,8 @@ filterwarnings = [
   "module::flext_core._constants.enforcement.FlextMroViolation",
   "once::pytest.PytestAssertRewriteWarning",
 ]
+flext_make_ci_value = "Y"
+flext_make_ci_variable = "CI"
 flext_slow_timeout_seconds = "30"
 markers = [
   "smoke: public-interface smoke tests",
@@ -490,6 +496,7 @@ markers = [
   "requires_engine: native check engine required by this test",
 ]
 minversion = "8.0"
+pytester_example_dir = "tests/fixtures"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
@@ -547,6 +554,7 @@ extend-exclude = [
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
+  "**/tests/fixtures/*/**",
   "**/venv/**",
 ]
 fix = false
@@ -610,6 +618,125 @@ msg = "Use cli.render_table from flext_cli."
 [tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
 msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
 
+[tool.ruff.lint.flake8-type-checking]
+runtime-evaluated-base-classes = [
+  "examples._models.ExamplesFlextSharedHandle",
+  "examples._models.ExamplesFlextSharedPerson",
+  "examples._models.ex04._CommandEnvelope",
+  "examples._models.ex04._EventEnvelope",
+  "examples._models.ex04._QueryEnvelope",
+  "examples._models.ex10.Message",
+  "examples.m.Examples.Handle",
+  "examples.m.Examples.Person",
+  "examples.m.Examples.RegistryLookupOptions",
+  "examples.s",
+  "flext_core.FlextSettings",
+  "flext_core._handlers.flexthandlers_part_01.FlextHandlersPart01",
+  "flext_core._handlers.flexthandlers_part_02.FlextHandlersPart02",
+  "flext_core._handlers.flexthandlers_part_03.FlextHandlersPart03",
+  "flext_core._handlers.flexthandlers_part_04.FlextHandlersPart04",
+  "flext_core._handlers.flexthandlers_part_05.FlextHandlersPart05",
+  "flext_core._handlers.flexthandlers_part_06.FlextHandlersPart06",
+  "flext_core._handlers.flexthandlers_part_07.FlextHandlersPart07",
+  "flext_core._models.FlextModelsBase.ArbitraryTypesModel",
+  "flext_core._models.FlextModelsBase.ContractModel",
+  "flext_core._models.FlextModelsBase.FlexibleInternalModel",
+  "flext_core._models.FlextModelsBase.FrozenModel",
+  "flext_core._models.FlextModelsBase.FrozenValueModel",
+  "flext_core._models.FlextModelsBase.ImmutableValueModel",
+  "flext_core._models.FlextModelsBase.ManagedModel",
+  "flext_core._models.FlextModelsBase.RetryConfigurationMixin",
+  "flext_core._models.FlextModelsBase.StrictModel",
+  "flext_core._models.FlextModelsBase.TimestampedModel",
+  "flext_core._models.FlextModelsEntity.Value",
+  "flext_core._models.FlextModelsPydantic.BaseModel",
+  "flext_core._models.FlextModelsPydantic.RootModel",
+  "flext_core._models._base.FlextModelsBasePart01.StrictModel",
+  "flext_core._models._base.flextmodelsbase_part_01.ArbitraryTypesModel",
+  "flext_core._models._base.flextmodelsbase_part_01.DynamicModel",
+  "flext_core._models._base.flextmodelsbase_part_01.EnforcedModel",
+  "flext_core._models._base.flextmodelsbase_part_01.EnumManagedModel",
+  "flext_core._models._base.flextmodelsbase_part_01.FlexibleModel",
+  "flext_core._models._base.flextmodelsbase_part_01.FrozenModel",
+  "flext_core._models._base.flextmodelsbase_part_01.ManagedModel",
+  "flext_core._models._base.flextmodelsbase_part_01.NormalizedModel",
+  "flext_core._models._base.flextmodelsbase_part_01.StrictManagedModel",
+  "flext_core._models._base.flextmodelsbase_part_01.StrictModel",
+  "flext_core._models._base.flextmodelsbase_part_02.ContractModel",
+  "flext_core._models._base.flextmodelsbase_part_02.FlextModelsBasePart02.ArbitraryTypesModel",
+  "flext_core._models._container.flextmodelscontainer_part_01.FlextModelsContainerPart01.RegistrationEnvelope",
+  "flext_core._models._container.flextmodelscontainer_part_01.RegistrationEnvelope",
+  "flext_core._models._enforcement.FlextModelsEnforcementBase.Report",
+  "flext_core._models._enforcement.FlextModelsEnforcementModelBase",
+  "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
+  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
+  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel",
+  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ResourceIdentityParams",
+  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.ParamsModel",
+  "flext_core._models._project_metadata.contract.FlextModelsProjectMetadataContract",
+  "flext_core._models._project_metadata.pyproject_ingress.FlextModelsPyprojectIngressContract",
+  "flext_core._models.containers._MappingRootBase",
+  "flext_core._models.entity.Entity",
+  "flext_core._models.entity.Value",
+  "flext_core._models.pydantic.FlextModelsPydantic.BaseModel",
+  "flext_core._result.FlextResultBase",
+  "flext_core._result.FlextResultBehavior",
+  "flext_core._result.FlextResultComposed",
+  "flext_core._result.FlextResultComposition",
+  "flext_core._result.FlextResultConstruction",
+  "flext_core._result.FlextResultTransforms",
+  "flext_core._result.FlextResultUnwrap",
+  "flext_core.h",
+  "flext_core.m.ArbitraryTypesModel",
+  "flext_core.m.BaseModel",
+  "flext_core.m.Command",
+  "flext_core.m.ContextState",
+  "flext_core.m.ContractModel",
+  "flext_core.m.DomainEvent",
+  "flext_core.m.Entity",
+  "flext_core.m.Event",
+  "flext_core.m.ManagedModel",
+  "flext_core.m.Query",
+  "flext_core.m.RegistryOptions",
+  "flext_core.m.RegistryServiceState",
+  "flext_core.m.ServiceState",
+  "flext_core.m.Value",
+  "flext_core.s",
+  "flext_core.services.dispatcher.FlextServiceDispatcher",
+  "flext_core.services.registry.FlextServiceRegistry",
+  "flext_core.x",
+  "flext_tests.FlextTestsModels.Tests",
+  "flext_tests.FlextTestsServiceBase",
+  "flext_tests.h",
+  "flext_tests.models.m.BaseModel",
+  "flext_tests.s",
+  "pydantic.BaseModel",
+  "pydantic.RootModel",
+  "pydantic_settings.BaseSettings",
+  "tests._utilities.TestsFlextUtilitiesRailwayServicesMixin.GetUserService",
+  "tests._utilities.dispatch.HandlerService",
+  "tests._utilities.services.ValidatingService",
+  "tests.h",
+  "tests.m.ArbitraryTypesModel",
+  "tests.m.BaseModel",
+  "tests.m.BaseSettings",
+  "tests.m.ContractModel",
+  "tests.m.Entity",
+  "tests.m.ExternalContractModel",
+  "tests.m.FlexibleModel",
+  "tests.m.FrozenValueModel",
+  "tests.m.Tests.HandlerObservations",
+  "tests.m.Tests.PublicPayload",
+  "tests.m.Value",
+  "tests.s",
+  "tests.unit._models.test_pydantic_facade._Item",
+  "tests.unit.test_service_bootstrap.ConcreteTestService",
+  "tests.unit.test_service_operations.OperationService",
+  "tests.unit.test_service_operations.ReadSide",
+  "tests.unit.test_service_operations.WriteSide",
+  "tests.x",
+]
+
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
@@ -644,7 +771,7 @@ whitelines = 1
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@2bf3ad55a32cc117f5321e1467695eba540be97b",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@ff1c992a100ae983baa79188a6a970c2858734de",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",

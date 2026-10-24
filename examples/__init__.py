@@ -10,10 +10,12 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from examples.constants import c
+    from examples.ex_05_flext_mixins import ExamplesFlextMixins
+    from examples.ex_06_flext_context import ExamplesFlextContext
     from examples.models import ExamplesFlextModels, m
     from examples.protocols import p
     from examples.shared import ExamplesFlextShared
@@ -23,6 +25,8 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
+    "ExamplesFlextContext",
+    "ExamplesFlextMixins",
     "ExamplesFlextModels",
     "ExamplesFlextShared",
     "c",
@@ -38,10 +42,12 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
+        "ExamplesFlextContext": ".ex_06_flext_context",
+        "ExamplesFlextMixins": ".ex_05_flext_mixins",
         "ExamplesFlextModels": ".models",
         "ExamplesFlextShared": ".shared",
         "c": ".constants",
@@ -57,4 +63,4 @@ __getattr__ = install_lazy_exports(
         "x": "flext_core",
     }),
     public_exports=__all__,
-)[0]
+)

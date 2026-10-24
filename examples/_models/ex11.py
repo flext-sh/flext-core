@@ -40,5 +40,4 @@ class ExamplesFlextModelsEx11:
         status: Annotated[str, m.Field(description="Processing failure status")] = "bad"
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx11"]

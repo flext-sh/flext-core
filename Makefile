@@ -281,18 +281,18 @@ fi; \
 printf '%s\n' "$${project_root}" )"; \
 scope="$$(git -C "$${reader_root}" rev-parse --show-toplevel)"; \
 scope="$$(cd "$${scope}" && pwd -P)"; \
-unset MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_ENV_FILE UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH; \
+unset MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_ENV_FILE MISE_PYTHON_UV_VENV_AUTO UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH; \
 MISE_CONFIG_DIR="$${reader_root}/.mise"; \
 MISE_SYSTEM_CONFIG_DIR="$${MISE_CONFIG_DIR}"; \
 MISE_GLOBAL_CONFIG_FILE="$${MISE_CONFIG_DIR}/config.toml"; \
 MISE_CEILING_PATHS="$$(dirname "$${reader_root}")"; \
-MISE_LOCKED=1; MISE_AUTO_INSTALL=0; \
-export MISE_CONFIG_DIR MISE_SYSTEM_CONFIG_DIR MISE_GLOBAL_CONFIG_FILE MISE_CEILING_PATHS MISE_LOCKED MISE_AUTO_INSTALL; \
+MISE_AUTO_INSTALL=0; \
+export MISE_CONFIG_DIR MISE_SYSTEM_CONFIG_DIR MISE_GLOBAL_CONFIG_FILE MISE_CEILING_PATHS MISE_AUTO_INSTALL; \
 case "$${OS:-}" in (Windows_NT) reader_mise="$${reader_root}/.bin/mise.exe" ;; (*) reader_mise="$${reader_root}/.bin/mise" ;; esac; \
 if [ -L "$${reader_root}/.bin" ] || [ -L "$${reader_mise}" ]; then printf 'ERROR: Mise acquisition must be physical: %s\n' "$${reader_mise}" >&2; exit 2; fi; \
-reader_mise="$$("$${reader_mise}" -C "$${reader_root}" which mise)"; \
+reader_mise="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which mise)"; \
 if [ "$${OS:-}" = Windows_NT ]; then reader_mise="$$(cygpath --unix "$${reader_mise}")"; fi; \
-uv_binary="$$("$${reader_mise}" -C "$${reader_root}" which "uv")"; \
+uv_binary="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which "uv")"; \
 if [ "$${OS:-}" = Windows_NT ]; then uv_binary="$$(cygpath --unix "$${uv_binary}")"; fi; \
 if [ ! -x "$${uv_binary}" ]; then printf 'ERROR: native workspace reader is not provisioned; run make setup\n' >&2; exit 2; fi; \
 owner="$$("$${uv_binary}" workspace dir --project "$${project_root}")"; \
@@ -415,7 +415,9 @@ override export MISE_GLOBAL_CONFIG_FILE := $(MISE_CONFIG_DIR)/config.toml
 override export MISE_SYSTEM_CONFIG_DIR := $(MISE_CONFIG_DIR)
 # A file override wins over the system directory in native Mise discovery.
 unexport MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_ENV_FILE
-override export MISE_LOCKED := 1
+# No global locked mode: setup installs whatever mise.lock pins and never stops
+# on a stale or incomplete lock (operator-ruling-2026-10-09-setup-resilient);
+# only the runtime reader's discovery calls run locked, scoped to those calls.
 override export MISE_AUTO_INSTALL := 0
 # Project provisioning must never install or resolve tools from host config.
 # The physical runtime owns both its environment and frozen tool identities.
@@ -461,7 +463,7 @@ override FLEXT_INFRA_PYTHON := $(RUNTIME_PYTHON)
 override UV_PROJECT_ENVIRONMENT := $(RUNTIME_VENV)
 override VIRTUAL_ENV := $(RUNTIME_VENV)
 override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
-unexport UV MYPYPATH UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH
+unexport UV MYPYPATH MISE_PYTHON_UV_VENV_AUTO UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH
 export FLEXT_INFRA_PYTHON UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH RUNTIME_ROOT
 
 # Tool provisioning belongs to setup, never to upgrade or generation.
@@ -520,7 +522,7 @@ _bootstrap_setup_tools:
 	fi; \
 	bootstrap_stage=acquisition; \
 	mkdir -p "$(PROJECT_ROOT)/.bin"; \
-	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_MODIFY_PATH=0 MISE_INSTALL_HELP=0; \
+	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_HELP=0; \
 	export MISE_VERSION="2026.10.3"; \
 	case "$${OS:-}" in \
 		(Windows_NT) \
@@ -534,7 +536,7 @@ _bootstrap_setup_tools:
 	esac; \
 	export MISE_SHIMS_DIR="$(PROJECT_ROOT)/.bin/shims"; \
 	bootstrap_stage=tool-install; \
-	"$(BOOTSTRAP_MISE)" -C "$(PROJECT_ROOT)" install --locked --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"; \
+	"$(BOOTSTRAP_MISE)" -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza"; \
 	mise_active="$$("$(BOOTSTRAP_MISE)" -C "$(PROJECT_ROOT)" tool "github:jdx/mise" --active)"; \
 	mise_binary="$$("$(BOOTSTRAP_MISE)" -C "$(PROJECT_ROOT)" which mise)"; \
 	if [ "$${OS:-}" = Windows_NT ]; then mise_binary="$$(cygpath --unix "$${mise_binary}")"; fi; \
@@ -544,7 +546,7 @@ _bootstrap_setup_tools:
 	printf 'setup: mise %s provisioning complete\n' "$${mise_active}"; \
 	printf 'setup: entering lifecycle (submodules, environment, hooks) make=%s\n' "$(SELF_MAKE_EXECUTABLE)"; \
 	bootstrap_stage=lifecycle; \
-	MISE_AUTO_INSTALL=0 "$${mise_binary}" -C "$(PROJECT_ROOT)" exec -- env "PATH=$$(dirname "$${mise_binary}"):$${MISE_SHIMS_DIR}:$${PATH}" "CI=$(CI)" $(SELF_MAKE) $(TOOL_BOOTSTRAP_LIFECYCLE); \
+	MISE_AUTO_INSTALL=0 "$${mise_binary}" -C "$(PROJECT_ROOT)" exec -- env "CI=$(CI)" $(SELF_MAKE) $(TOOL_BOOTSTRAP_LIFECYCLE); \
 	bootstrap_stage=complete; bootstrap_completed=true
 _bootstrap_setup_tools: _builtin_require_workspace
 
@@ -553,7 +555,10 @@ _bootstrap_setup_tools: _builtin_require_workspace
 # repository. Locally, the mutating verbs fmt/fix/mod then carry that same
 # member-own verb to every governed member (fleet_fanout); CI never fans out.
 # Local and CI consume the same native project/workspace declarations and lock.
-# Only installation mode changes in CI; no resolver or source is substituted.
+# Setup always bootstraps: `uv sync --frozen` installs exactly the committed
+# uv.lock without re-resolving or rewriting it, so manifest drift never blocks
+# provisioning. Check reports drift through `uv lock --check`; only `make upg`
+# writes the lock.
 INSTALL_RUNTIME_RECIPE = set -eu; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
 	desired_python="$$($(MISE) -C "$(RUNTIME_ROOT)" which python)"; \
@@ -562,7 +567,7 @@ INSTALL_RUNTIME_RECIPE = set -eu; \
 		printf 'ERROR[setup] Mise-resolved Python is not executable: %s\n' "$$desired_python" >&2; \
 		exit 2; \
 	fi; \
-	UV_PROJECT_ENVIRONMENT="$(RUNTIME_VENV)" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --locked --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $(SETUP_SYNC_ARGS)
+	UV_PROJECT_ENVIRONMENT="$(RUNTIME_VENV)" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $(SETUP_SYNC_ARGS)
 
 # Reject borrowed environments before bootstrap, activation or custom hooks.
 # Members may use their containing workspace, never an unrelated checkout.
@@ -584,7 +589,7 @@ _builtin_require_workspace:
 # workspace or creating a dependency-resolution file during a runtime command.
 override UV_RUN = env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PATH="$(RUNTIME_BIN):$$PATH" PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --directory "$(PROJECT_ROOT)" --no-project --python "$(RUNTIME_PYTHON)"
 # Native locked workspace membership owns control imports, never caller overlays.
-override PROJECT_INFRA_RUN = env -u MYPYPATH -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH "$(FLEXT_INFRA_PYTHON)"
+override PROJECT_INFRA_RUN = env -u MYPYPATH -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH "$(FLEXT_INFRA_PYTHON)"
 override PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 
 # Setup checks native lock freshness without writing the lock. Native uv selects
@@ -624,10 +629,6 @@ $(call RUN_PUBLIC_POST,$(1))
 endef
 
 
-
-# `make upg` is the only verb that writes uv.lock (`uv lock --upgrade
-# --refresh`, then `uv lock` of the manifest `gen` projected and `uv lock
-# --check`). Setup never writes it (lock law above).
 
 .PHONY: $(PUBLIC_VERBS) $(addprefix _builtin-,$(PUBLIC_VERBS))
 .PHONY: _builtin_gen_all
@@ -715,6 +716,7 @@ setup: _bootstrap_setup_tools
 else
 setup: _builtin_require_workspace
 	+@"$(SELF_MAKE_EXECUTABLE)" --no-print-directory -C "$(RUNTIME_ROOT)" -f "$(RUNTIME_ROOT)/Makefile" setup
+	@$(if $(filter Y,$(CI)),:,direnv allow "$(PROJECT_ROOT)")
 endif
 
 # Upgrade only resolves dependencies and writes locks. Provisioning belongs
@@ -750,23 +752,22 @@ _setup_native_prepare: _builtin_setup_submodules
 	+@$(SELF_MAKE) _setup_lifecycle
 
 _setup_lifecycle: _builtin_require_workspace
-	@$(INSTALL_RUNTIME_RECIPE); \
-	$(PROJECT_FLEXT_INFRA) workspace verify-environment --repository-root "$(PROJECT_ROOT)"; \
+	+@$(INSTALL_RUNTIME_RECIPE); \
 	case "$(strip $(CI)): $(CUSTOM_DECLARED_TARGETS) " in \
 		Y:*) ;; \
 		*" pre-setup "*) $(SELF_MAKE) pre-setup ;; \
 	esac; \
-	$(PROJECT_FLEXT_INFRA) workspace sync-environment --repository-root "$(PROJECT_ROOT)" --scope self $(if $(filter Y,$(CI)),--no-allow-direnv,--allow-direnv); \
+	$(if $(filter Y,$(CI)),,direnv allow "$(PROJECT_ROOT)";) \
 	$(if $(filter Y,$(CI)),$(SELF_MAKE) _setup_activated,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _setup_activated)
 
-# Setup consumes the native locked inputs without resolving versions. Required
-# input and native installation failures terminate immediately;
+# Setup installs the committed locks as they are and never rewrites them.
+# Required input and native installation failures terminate immediately;
 # generation and explicit upgrade own their respective repairs. Quality gates
 # remain separate operations and no failure selects another producer or source.
 .PHONY: _setup_activated
 # Check owns quality verdicts after provisioning.
 _setup_activated:
-	@set -eu; \
+	+@set -eu; \
 	case "$(strip $(CI)): $(CUSTOM_DECLARED_TARGETS) " in \
 		Y:*) ;; \
 		*" post-setup "*) $(SELF_MAKE) post-setup ;; \
@@ -776,64 +777,60 @@ _builtin-help:
 	@printf '%s\n' 'flext-core [standalone]' ''
 	@$(foreach verb,$(PUBLIC_VERBS),$(call VERB_HELP_LINE,$(verb));)
 
-# A project owns the sources declared by its manifest. The generated setup
-# reconciler validates every initialized checkout before mutation, initializes
-# only missing modules, and preserves declared branches that fix forward beyond
-# the recorded gitlink.
+# A project owns the sources declared by its manifest. Generated setup
+# initializes only uninitialized governed gitlinks and never touches an
+# initialized checkout.
 .PHONY: _builtin_setup_submodules
 
 # === SECTION: submodule setup (managed) ===
 # Source: template (submodule_setup_recipe.j2)
 # Computed: every checkout discovers governed paths from its own .gitmodules.
 #           An absent management flag participates; an explicit false does not.
-# Rule: setup PROVISIONS an absent or proven unfinished initial clone and
-#       VERIFIES an established checkout. An initial clone has no physical index,
-#       no worktree content, and only its clone reflog entry. Established work
-#       is never destroyed: git checkout, git reset,
-#       fetch, and branch attachment are forbidden. Pin validity is HEAD contains
-#       gitlink. Declared branch is the named integration line;
-#       legacy branch=. still resolves to the superproject named branch if present.
-#       A present checkout may be on its own named change lane. Its branch name is
-#       not a safety boundary: exact containment of the recorded gitlink is.
-#       Nested gitlinks belong to their own setup.
+# Rule: setup INITIALIZES only governed gitlinks that `git submodule status`
+#       reports as uninitialized (leading `-`). An initialized checkout is never
+#       touched: its branch, HEAD, index, and local work stay as they are.
+#       No fetch, no recursion; nested gitlinks belong to their own setup.
 # Free: no
 # End SECTION: submodule setup
-# Why: runners expose umask 002 and `submodule update --init`
-# materializes tracked files as 0664; canonical Mise artifact gates demand
-# exact modes, so provisioning normalizes the umask before checkout.
-# An absent gitlink is cloned at depth 1, the same flag private submodule
-# init uses. Setup's contract is the recorded commit, and a full history
-# cannot finish inside submodule_timeout_seconds when the object database
-# is large. Absent gitlinks clone submodule_jobs at a time; the deadline is
+# Why: a no-op setup costs a constant number of Git processes: one read of
+# the declared paths, one read of every management flag, and one native
+# `git submodule status`, whatever the number of submodules.
+# Runners expose umask 002 and `submodule update --init` materializes tracked
+# files as 0664; canonical Mise artifact gates demand exact modes, so
+# provisioning normalizes the umask before checkout.
+# An uninitialized gitlink is cloned at depth 1, the same flag private
+# submodule init uses: setup's contract is the recorded commit, and a full
+# history cannot finish inside submodule_timeout_seconds when the object
+# database is large. Gitlinks clone submodule_jobs at a time; the deadline is
 # one submodule_timeout_seconds per wave of concurrent clones, so a fresh
 # checkout of the whole fleet gets the same per-clone budget as one member.
-# Derive the physical index from its Git directory: --git-path resolves
-# a final symlink and cannot prove that the index entry itself is absent.
 _builtin_setup_submodules:
-	@set -eu; \
+	@set -euf; \
 	umask 022; \
 	root="$(PROJECT_ROOT)"; \
 	if [ ! -f "$${root}/.gitmodules" ]; then exit 0; fi; \
-	managed=""; \
-	keys=""; \
-	if keys=$$(git -C "$${root}" config -f .gitmodules --name-only --get-regexp '^submodule\..*\.path$$'); then \
-		keys_status=0; \
-	else \
-		keys_status=$$?; \
+	nl=$$(printf '\n_'); nl=$${nl%_}; \
+	if paths=$$(git -C "$${root}" config -f .gitmodules --get-regexp '^submodule\..*\.path$$'); then :; else \
+		status=$$?; [ "$${status}" -eq 1 ] || exit "$${status}"; paths=""; \
 	fi; \
-	if [ "$${keys_status}" -ne 0 ] && [ "$${keys_status}" -ne 1 ]; then \
-		printf 'ERROR: cannot enumerate governed gitlinks\n' >&2; \
-		exit "$${keys_status}"; \
+	if flags=$$(git -C "$${root}" config -f .gitmodules --type=bool --get-regexp '^submodule\..*\.flext-managed$$'); then :; else \
+		status=$$?; [ "$${status}" -eq 1 ] || exit "$${status}"; flags=""; \
 	fi; \
-	for key in $${keys}; do \
-		section=$${key%.path}; \
-		value=$$(git -C "$${root}" config -f .gitmodules --type=bool --get --default true "$${section}.flext-managed"); \
-		case "$${value}" in \
-			true) ;; \
-			false) continue ;; \
-			*) printf 'ERROR: Git returned an invalid management boolean for %s\n' "$${section}" >&2; exit 2 ;; \
+	unmanaged=""; \
+	IFS="$${nl}"; \
+	for line in $${flags}; do \
+		case "$${line}" in \
+			*" true") ;; \
+			*" false") unmanaged="$${unmanaged} $${line% false}" ;; \
+			*) printf 'ERROR: Git returned an invalid management boolean: %s\n' "$${line}" >&2; exit 2 ;; \
 		esac; \
-		path=$$(git -C "$${root}" config -f .gitmodules --get "$${key}"); \
+	done; \
+	managed=""; \
+	for line in $${paths}; do \
+		key=$${line%% *}; \
+		path=""; \
+		[ "$${key}" = "$${line}" ] || path=$${line#* }; \
+		case " $${unmanaged} " in *" $${key%.path}.flext-managed "*) continue ;; esac; \
 		case "$${path}" in \
 			""|/*|..|../*|*/../*|*/..|*[[:space:]]*) \
 				printf 'ERROR: governed gitlink path is not a safe relative Make path: %s\n' "$${path}" >&2; \
@@ -844,155 +841,27 @@ _builtin_setup_submodules:
 		esac; \
 		managed="$${managed} $${path}"; \
 	done; \
+	IFS=' '; \
 	if [ -z "$${managed}" ]; then exit 0; fi; \
 	if [ "$${GIT_INDEX_FILE+x}" = x ]; then \
 		printf 'ERROR: submodule setup cannot authenticate a relocated Git index\n' >&2; \
 		exit 2; \
 	fi; \
+	state=$$(git -C "$${root}" submodule status -- $${managed}); \
 	absent=""; \
-	for path in $${managed}; do \
-		child="$${root}/$${path}"; \
-		if [ ! -e "$${child}/.git" ]; then \
-			absent="$${absent} $${path}"; \
-			continue; \
-		fi; \
-		owner=$$(git -C "$${child}" rev-parse --show-superproject-working-tree); \
-		checkout_root=$$(git -C "$${child}" rev-parse --show-toplevel); \
-		if [ "$${owner}" != "$${root}" ] || [ "$${checkout_root}" != "$${child}" ]; then \
-			printf 'ERROR: %s: checkout identity does not match the governed child\n' "$${path}" >&2; \
-			exit 2; \
-		fi; \
-		git_dir=$$(git -C "$${child}" rev-parse --absolute-git-dir); \
-		index="$${git_dir}/index"; \
-		if [ -e "$${index}" ] || [ -L "$${index}" ]; then continue; fi; \
-		content=$$(git -C "$${child}" ls-files --others --directory); \
-		reflog=$$(git -C "$${child}" reflog show --format=%gs HEAD); \
-		initial=$$(git -C "$${child}" reflog show --format=%gs -1 HEAD); \
-		if [ -n "$${content}" ] || [ "$${reflog}" != "$${initial}" ]; then \
-			printf 'ERROR: %s: missing index with unproven initial-clone state; preserve and review\n' "$${path}" >&2; \
-			exit 2; \
-		fi; \
-		case "$${initial}" in \
-			'clone: from '*) ;; \
-			*) printf 'ERROR: %s: missing index without initial clone receipt\n' "$${path}" >&2; exit 2 ;; \
-		esac; \
-		local_refs=$$(git -C "$${child}" for-each-ref --format='%(refname)' refs/heads refs/stash); \
-		if active_ref=$$(git -C "$${child}" symbolic-ref -q HEAD); then \
-			:; \
-		else \
-			ref_status=$$?; \
-			[ "$${ref_status}" -eq 1 ] || exit "$${ref_status}"; \
-		fi; \
-		if [ "$${local_refs}" != "$${active_ref}" ]; then \
-			printf 'ERROR: %s: missing index with local branch or stash work; preserve and review\n' "$${path}" >&2; \
-			exit 2; \
-		fi; \
-		entry=$$(git -C "$${root}" ls-files --stage -- "$${path}"); \
-		set -- $${entry}; \
-		if [ "$$#" -ne 4 ] || [ "$$1" != 160000 ] || [ "$$3" != 0 ] || [ "$$4" != "$${path}" ]; then \
-			printf 'ERROR: governed path is not a gitlink: %s\n' "$${path}" >&2; \
-			exit 2; \
-		fi; \
-		head=$$(git -C "$${child}" rev-parse HEAD); \
-		if [ "$${head}" = "$$2" ]; then \
-			printf 'setup: materializing unfinished initial clone at recorded pin: %s\n' "$${path}"; \
-			GIT_TERMINAL_PROMPT=0 timeout --signal=TERM --kill-after=5s "120s" \
-				git -C "$${child}" -c submodule.recurse=false checkout --detach --no-overwrite-ignore "$${head}"; \
-			continue; \
-		fi; \
-		printf 'setup: resuming unfinished initial clone: %s\n' "$${path}"; \
-		absent="$${absent} $${path}"; \
+	IFS="$${nl}"; \
+	for line in $${state}; do \
+		case "$${line}" in -*) absent="$${absent} $${line#* }" ;; esac; \
 	done; \
-	if [ -n "$${absent}" ]; then \
-		credential_helper='!f() { if [ "$$1" = get ]; then printf "username=x-access-token\npassword=%s\n" "$${GITHUB_TOKEN}"; fi; }; f'; \
-		absent_count=$$(printf '%s\n' $${absent} | wc -l); \
-		clone_waves=$$(( (absent_count + 8 - 1) / 8 )); \
-		GIT_TERMINAL_PROMPT=0 timeout --signal=TERM --kill-after=5s "$$(( clone_waves * 120 ))s" \
-			git -C "$${root}" -c credential.helper= \
-			-c "credential.https://$${GH_HOST:-github.com}.helper=$${credential_helper}" \
-			submodule update --init --checkout --depth 1 --jobs "8" -- $${absent}; \
-	fi; \
-	validate_submodule() { \
-		superproject="$$1"; \
-		child_path="$$2"; \
-		child_root="$${superproject}/$${child_path}"; \
-		keys=""; \
-		if keys=$$(git -C "$${superproject}" config -f .gitmodules --name-only --get-regexp '^submodule\..*\.path$$'); then \
-			keys_status=0; \
-		else \
-			keys_status=$$?; \
-		fi; \
-		if [ "$${keys_status}" -ne 0 ] && [ "$${keys_status}" -ne 1 ]; then \
-			printf 'ERROR: cannot enumerate submodule paths\n' >&2; \
-			exit "$${keys_status}"; \
-		fi; \
-		section=""; \
-		for key in $${keys}; do \
-			declared=$$(git -C "$${superproject}" config -f .gitmodules --get "$${key}"); \
-			if [ "$${declared}" = "$${child_path}" ]; then \
-				if [ -n "$${section}" ]; then \
-					printf 'ERROR: governed gitlink path is duplicated: %s\n' "$${child_path}" >&2; \
-					exit 2; \
-				fi; \
-				section=$${key%.path}; \
-			fi; \
-		done; \
-		if [ -z "$${section}" ]; then \
-			printf 'ERROR: governed gitlink is absent from .gitmodules: %s\n' "$${child_path}" >&2; \
-			exit 2; \
-		fi; \
-		branch=$$(git -C "$${superproject}" config -f .gitmodules --get --default "" "$${section}.branch"); \
-		if [ -z "$${branch}" ]; then \
-			printf 'ERROR: governed gitlink has no declared branch: %s\n' "$${child_path}" >&2; \
-			exit 2; \
-		fi; \
-		super_branch=$$(git -C "$${superproject}" branch --show-current); \
-		if [ "$${branch}" = "." ]; then \
-			branch="$${super_branch}"; \
-			if [ -z "$${branch}" ]; then \
-				printf 'ERROR: %s: branch = . requires a named superproject branch\n' "$${child_path}" >&2; \
-				exit 1; \
-			fi; \
-		fi; \
-		validated_branch=$$(git check-ref-format --branch "$${branch}"); \
-		if [ "$${validated_branch}" != "$${branch}" ]; then \
-			printf 'ERROR: branch validator changed %s to %s\n' "$${branch}" "$${validated_branch}" >&2; \
-			exit 2; \
-		fi; \
-		gitlink_entry=$$(git -C "$${superproject}" ls-files --stage -- "$${child_path}"); \
-		if [ -z "$${gitlink_entry}" ]; then \
-			printf 'ERROR: governed gitlink is absent from the index: %s\n' "$${child_path}" >&2; \
-			exit 2; \
-		fi; \
-		set -- $${gitlink_entry}; \
-		if [ "$$1" != 160000 ]; then \
-			printf 'ERROR: governed path is not a gitlink: %s\n' "$${child_path}" >&2; \
-			exit 2; \
-		fi; \
-		gitlink="$$2"; \
-		if [ ! -e "$${child_root}/.git" ]; then \
-			printf 'ERROR: governed gitlink is not materialized: %s\n' "$${child_path}" >&2; \
-			exit 2; \
-		fi; \
-		current=$$(git -C "$${child_root}" branch --show-current); \
-		head=$$(git -C "$${child_root}" rev-parse HEAD); \
-		if git -C "$${child_root}" merge-base --is-ancestor "$${gitlink}" HEAD; then \
-			ancestor=Y; \
-		else \
-			status=$$?; if [ "$${status}" -eq 1 ]; then ancestor=N; else exit "$${status}"; fi; \
-		fi; \
-		if [ "$${ancestor}" = N ]; then \
-			if [ -z "$${current}" ]; then \
-				printf 'ERROR: %s: detached HEAD %s does not contain recorded gitlink %s; merge the superproject gitlink into this head\n' "$${child_path}" "$${head}" "$${gitlink}" >&2; \
-			else \
-				printf 'ERROR: %s: checked-out branch %s at %s does not contain recorded gitlink %s; merge the superproject gitlink into this branch\n' "$${child_path}" "$${current}" "$${head}" "$${gitlink}" >&2; \
-			fi; \
-			exit 1; \
-		fi; \
-	}; \
-	for child_path in $${managed}; do \
-		validate_submodule "$${root}" "$${child_path}"; \
-	done
+	IFS=' '; \
+	if [ -z "$${absent}" ]; then exit 0; fi; \
+	set -- $${absent}; \
+	clone_waves=$$(( ($$# + 8 - 1) / 8 )); \
+	credential_helper='!f() { if [ "$$1" = get ]; then printf "username=x-access-token\npassword=%s\n" "$${GITHUB_TOKEN}"; fi; }; f'; \
+	GIT_TERMINAL_PROMPT=0 timeout --signal=TERM --kill-after=5s "$$(( clone_waves * 120 ))s" \
+		git -C "$${root}" -c credential.helper= \
+		-c "credential.https://$${GH_HOST:-github.com}.helper=$${credential_helper}" \
+		submodule update --init --checkout --depth 1 --jobs "8" -- "$$@"
 _builtin_setup_submodules: _builtin_require_workspace
 
 # A provisioned local setup needs no GitHub credential. Mise and Git receive
@@ -1042,7 +911,7 @@ _builtin_require_environment: _builtin_require_interpreter
 # generating projections, or auditing the running environment.
 .PHONY: _upg_lifecycle
 _upg_lifecycle:
-	@set -eu; \
+	+@set -eu; \
 	bootstrap_stage=network-auth; \
 	if git config --global --get-regexp '^url\.https?://[^ /]+:[^ /]+@.*\.insteadof$$' >/dev/null; then \
 		printf 'ERROR: Global Git URL rewrite configuration embeds credentials and shadows the fleet SSH route; correct that configuration at its owner\n' >&2; \
@@ -1082,21 +951,7 @@ _builtin_build_artifacts:
 # An absent CI token runs every active default gate.
 _builtin_check_all: _builtin_require_environment
 	@set -eu; \
-		gates="runtime-integrity,lint,format,security,markdown,markdown-format,markdown-code,duplication,pyrefly,mypy,pyright,conflict-markers,loc-cap,runtime-census,fresh-import,deps,index-declarations,smells,codemod,layout,direnv"; \
-		if [ "$(strip $(CI))" = "Y" ]; then \
-			gates="runtime-integrity,lint,format,security,markdown,markdown-format,markdown-code,duplication,pyrefly,conflict-markers,loc-cap,runtime-census,fresh-import,deps,index-declarations,layout"; \
-			printf 'INFO: CI=Y runs check gates: runtime-integrity lint format security markdown markdown-format markdown-code duplication pyrefly conflict-markers loc-cap runtime-census fresh-import deps index-declarations layout\n'; \
-		elif [ "$(strip $(CI))" = "N" ]; then \
-			gates="runtime-integrity,lint,format,security,markdown,markdown-format,markdown-code,duplication,pyrefly,mypy,pyright,conflict-markers,loc-cap,runtime-census,fresh-import,deps,index-declarations,smells,codemod,layout,direnv"; \
-			printf 'INFO: CI=N runs check gates: runtime-integrity lint format security markdown markdown-format markdown-code duplication pyrefly mypy pyright conflict-markers loc-cap runtime-census fresh-import deps index-declarations smells codemod layout direnv\n'; \
-		else \
-			printf 'INFO: default context runs check gates: runtime-integrity lint format security markdown markdown-format markdown-code duplication pyrefly mypy pyright conflict-markers loc-cap runtime-census fresh-import deps index-declarations smells codemod layout direnv\n'; \
-		fi; \
-		if [ -z "$$gates" ]; then \
-			printf 'ERROR: no active check gates remain in the selected context\n' >&2; \
-			exit 2; \
-		fi; \
-		$(PROJECT_FLEXT_INFRA) workspace capture-gate --repository-root "$(PROJECT_ROOT)" --gates "$$gates"; \
+		$(PROJECT_FLEXT_INFRA) workspace capture-gate --repository-root "$(PROJECT_ROOT)"; \
 		$(PROJECT_FLEXT_INFRA) codegen conform --root "$(PROJECT_ROOT)" --scope self --mode check
 
 _builtin_tests_all: _builtin_require_environment
@@ -1123,10 +978,10 @@ TESTMON_DATAFILE="$$database" $(PROJECT_INFRA_RUN) -m flext_infra._pytest_entry 
 # lint repair belongs to `make fix`. Every repair requires read-only native
 # verification; remaining findings and tool failures both fail the verb.
 _builtin_fmt_all: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "format,markdown-format,markdown-code" --apply
+	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gate-set fmt --apply
 
 _builtin_fix_all: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gates "lint,markdown,deps" --apply
+	@$(PROJECT_FLEXT_INFRA) check run --repository-root "$(PROJECT_ROOT)" --gate-set fix --apply
 	@$(PROJECT_FLEXT_INFRA) docs fix --repository-root "$(PROJECT_ROOT)" --output-dir ".reports/docs" --projects . --apply
 
 _builtin_clean_generated: _builtin_require_interpreter

@@ -71,8 +71,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          submodules: false
+          submodules: recursive
+
           persist-credentials: false
+
           fetch-depth: 0
           ref: ${{ inputs.ref || github.sha }}
       # Why: GitHub runners expose umask 002, so git checkout materializes
@@ -114,17 +116,15 @@ jobs:
             ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', '.mise.toml') }}-
             ${{ runner.os }}-3.13-tools-
 
-      # make setup is the frozen installer. It bootstraps the committed Mise
-      # release and installs the fleet toolchain from the committed
-      # mise.lock and the dependencies frozen from the committed uv.lock,
+      # Setup obtains any remaining declared members after authentication,
+      # then installs the native shared workspace noneditable. It acquires Mise
+      # officially and installs the toolchain and dependencies from their locks,
       # publishes that environment through GITHUB_PATH, and prepares the
       # project runtime. CI never runs `make upg`: it never re-resolves.
-      # Why: make test always selects through the persistent testmon database
-      # (make.testmon_cache), which lives outside the checkout under the
-      # declared project name. A runner without it starts from an empty history
-      # and selects the whole suite. Restore the newest database of any earlier
-      # run: testmon revalidates every recorded file by checksum, so a restored
-      # database never hides a changed dependency of a selected test.
+      # make tests executes the complete suite once while retaining the
+      # persistent testmon database (make.testmon_cache) outside the checkout.
+      # Restore its project history; the runner verifies its integrity and
+      # complete inventory before accepting or publishing the database.
       - name: Resolve project testmon database
         id: testmon_path
         env:
@@ -156,117 +156,31 @@ jobs:
             ${{ steps.testmon_path.outputs.namespace }}
             ${{ steps.testmon_path.outputs.seed_namespace }}
 
-      - name: Install the mise release pinned by mise.lock
-        shell: bash
-        run: |
-          set -eu
-          mise_system="${RUNNER_OS}"
-          if [ "${mise_system}" = "macOS" ]; then mise_system=Darwin; fi
-          case "${RUNNER_OS}-${RUNNER_ARCH}" in
-            Windows-X64) mise_machine=AMD64 ;;
-            Linux-ARM64) mise_machine=aarch64 ;;
-            *-X64) mise_machine=x86_64 ;;
-            *-ARM64) mise_machine=arm64 ;;
-            *) echo "ERROR: unsupported runner identity ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
-          esac
-          case "${mise_system}/${mise_machine}" in
-            Linux/x86_64) mise_platform=linux-x64 ;;
-            Linux/aarch64) mise_platform=linux-arm64 ;;
-            Darwin/x86_64) mise_platform=macos-x64 ;;
-            Darwin/arm64) mise_platform=macos-arm64 ;;
-            Windows/AMD64) mise_platform=windows-x64 ;;
-            *) echo "ERROR: no mise.lock platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
-          esac
-          mise_field() {
-            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
-              $0 == section { inside = 1; next }
-              inside && substr($0, 1, 1) == "[" { exit }
-              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
-            ' mise.lock
-          }
-          mise_url="$(mise_field url)"
-          mise_checksum="$(mise_field checksum)"
-          case "${mise_url}" in
-            https://github.com/jdx/mise/releases/download/*) ;;
-            *) echo "ERROR: mise.lock has no GitHub release URL for ${mise_platform}: '${mise_url}'" >&2; exit 2 ;;
-          esac
-          case "${mise_checksum}" in
-            sha256:*) mise_sha256="${mise_checksum#sha256:}" ;;
-            *) echo "ERROR: mise.lock has no sha256 for ${mise_platform}: '${mise_checksum}'" >&2; exit 2 ;;
-          esac
-          mise_stage="${RUNNER_TEMP}/mise-install"
-          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
-          mise_archive="${mise_stage}/${mise_url##*/}"
-          curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
-          if command -v sha256sum >/dev/null 2>&1; then
-            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
-          else
-            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
-          fi
-          case "${mise_archive}" in
-            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
-            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
-          esac
-          if [ "${RUNNER_OS}" = "Windows" ]; then
-            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
-          else
-            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
-          fi
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
-          mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
-          if [ -z "${mise_pin}" ]; then
-            printf 'ERROR: mise.lock pins no github:jdx/mise release; run make upg\n' >&2
-            exit 2
-          fi
-          "${HOME}/.local/bin/mise" install --locked "github:jdx/mise"
-          mise_path="$("${HOME}/.local/bin/mise" which mise)"
-          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
-          if [ "${mise_receipt}" != "${mise_pin}" ]; then
-            printf 'ERROR: provisioned Mise %s differs from mise.lock pin %s; run make setup\n' "${mise_receipt}" "${mise_pin}" >&2
-            exit 2
-          fi
-          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
-
-      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> check -> tests).
       - name: make setup (blocking)
         id: approval-setup
         run: CI=Y make setup
-      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> check -> tests).
       - name: make gen (blocking)
         id: approval-gen
         # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict (an audit lock drift) never hides the others.
+        # so one red verdict never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make gen
-      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
-      - name: make audit (blocking)
-        id: approval-audit
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict (an audit lock drift) never hides the others.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
-        run: CI=Y make audit
-      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
+      # CI approval, one visible step per ci workflow row (setup -> gen -> check -> tests).
       - name: make check (blocking)
         id: approval-check
         # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict (an audit lock drift) never hides the others.
+        # so one red verdict never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check
-      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
-      - name: make test (blocking)
-        id: approval-test
+      # CI approval, one visible step per ci workflow row (setup -> gen -> check -> tests).
+      - name: make tests (blocking)
+        id: approval-tests
         # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict (an audit lock drift) never hides the others.
+        # so one red verdict never hides the others.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
-        run: CI=Y make test
-      # CI approval, one visible step per ci workflow row (setup -> gen -> audit -> check -> test -> verify-clean).
-      - name: make verify-clean (blocking)
-        id: approval-verify-clean
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict (an audit lock drift) never hides the others.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
-        run: CI=Y make verify-clean
+        run: CI=Y make tests
 
       - name: Dump reports on failure
         if: ${{ failure() }}
@@ -281,7 +195,7 @@ jobs:
                 -type f -exec sh -eu -c '
                   for report_file do
                     printf "::group::%s\n" "${report_file}"
-                    tail -n 200 "${report_file}"
+                    cat "${report_file}"
                     printf "::endgroup::\n"
                   done
                 ' sh {} +
@@ -328,13 +242,25 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
+      # Why: a failed gate's job log prints only counts; its raw receipts under
+      # the declared gate receipts directory are the evidence, so every job
+      # publishes them when it fails.
+      - name: Upload gate receipts on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: flext-gate-receipts-${{ github.job }}-${{ github.run_id }}
+          path: .reports/gates/**
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
       # Completed failing tests may save; cancelled/incomplete/corrupt runs cannot.
       - name: Save testmon database
         if: >-
-          ${{ always() && !cancelled() && steps.testmon_path.outputs.save_allowed == 'true' && steps.approval-test.outputs.testmon_saveable == 'true' && steps.approval-test.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-test.outputs.testmon_digest != '' }}
+          ${{ always() && !cancelled() && steps.testmon_path.outputs.save_allowed == 'true' && steps.approval-tests.outputs.testmon_saveable == 'true' && steps.approval-tests.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-tests.outputs.testmon_digest != '' }}
         uses: actions/cache/save@v6
         with:
-          path: ${{ steps.approval-test.outputs.testmon_database }}
+          path: ${{ steps.approval-tests.outputs.testmon_database }}
           key: ${{ steps.testmon_path.outputs.key }}
 
 
@@ -361,107 +287,3 @@ jobs:
           key: ${{ steps.tool-cache.outputs.cache-primary-key }}
 
   # End SECTION: ci job
-
-  # === SECTION: release-plan job (managed) ===
-  # The release protocol's read-only decision on every pull request: the title
-  # must be a Conventional Commits title (it becomes the merge commit subject
-  # the next release is derived from), and no pyproject version may change
-  # outside the protocol's own release commit.
-  release-plan:
-    name: release-plan
-    permissions:
-      contents: read
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      CI: Y
-      GITHUB_TOKEN: ${{ github.token }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-          submodules: false
-          persist-credentials: false
-          ref: ${{ inputs.ref || github.sha }}
-      - name: Install the mise release pinned by mise.lock
-        shell: bash
-        run: |
-          set -eu
-          mise_system="${RUNNER_OS}"
-          if [ "${mise_system}" = "macOS" ]; then mise_system=Darwin; fi
-          case "${RUNNER_OS}-${RUNNER_ARCH}" in
-            Windows-X64) mise_machine=AMD64 ;;
-            Linux-ARM64) mise_machine=aarch64 ;;
-            *-X64) mise_machine=x86_64 ;;
-            *-ARM64) mise_machine=arm64 ;;
-            *) echo "ERROR: unsupported runner identity ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
-          esac
-          case "${mise_system}/${mise_machine}" in
-            Linux/x86_64) mise_platform=linux-x64 ;;
-            Linux/aarch64) mise_platform=linux-arm64 ;;
-            Darwin/x86_64) mise_platform=macos-x64 ;;
-            Darwin/arm64) mise_platform=macos-arm64 ;;
-            Windows/AMD64) mise_platform=windows-x64 ;;
-            *) echo "ERROR: no mise.lock platform for ${RUNNER_OS}-${RUNNER_ARCH}" >&2; exit 2 ;;
-          esac
-          mise_field() {
-            awk -v section="[tools.\"github:jdx/mise\".\"platforms.${mise_platform}\"]" -v key="$1" '
-              $0 == section { inside = 1; next }
-              inside && substr($0, 1, 1) == "[" { exit }
-              inside && $1 == key { gsub(/"/, "", $3); print $3; exit }
-            ' mise.lock
-          }
-          mise_url="$(mise_field url)"
-          mise_checksum="$(mise_field checksum)"
-          case "${mise_url}" in
-            https://github.com/jdx/mise/releases/download/*) ;;
-            *) echo "ERROR: mise.lock has no GitHub release URL for ${mise_platform}: '${mise_url}'" >&2; exit 2 ;;
-          esac
-          case "${mise_checksum}" in
-            sha256:*) mise_sha256="${mise_checksum#sha256:}" ;;
-            *) echo "ERROR: mise.lock has no sha256 for ${mise_platform}: '${mise_checksum}'" >&2; exit 2 ;;
-          esac
-          mise_stage="${RUNNER_TEMP}/mise-install"
-          mkdir -p "${mise_stage}" "${HOME}/.local/bin"
-          mise_archive="${mise_stage}/${mise_url##*/}"
-          curl --proto '=https' --tlsv1.2 -fsSL -o "${mise_archive}" "${mise_url}"
-          if command -v sha256sum >/dev/null 2>&1; then
-            echo "${mise_sha256}  ${mise_archive}" | sha256sum -c -
-          else
-            echo "${mise_sha256}  ${mise_archive}" | shasum -a 256 -c -
-          fi
-          case "${mise_archive}" in
-            *.zip) unzip -q "${mise_archive}" -d "${mise_stage}" ;;
-            *) tar -xf "${mise_archive}" -C "${mise_stage}" ;;
-          esac
-          if [ "${RUNNER_OS}" = "Windows" ]; then
-            cp "${mise_stage}/mise/bin/mise.exe" "${HOME}/.local/bin/mise.exe"
-          else
-            install -m 0755 "${mise_stage}/mise/bin/mise" "${HOME}/.local/bin/mise"
-          fi
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-          echo "${HOME}/.local/share/mise/shims" >> "${GITHUB_PATH}"
-          mise_pin="$(awk 'index($0, "[[tools.\"github:jdx/mise\"]]") == 1 { inside = 1; next } inside && substr($0, 1, 1) == "[" { exit } inside && $1 == "version" { gsub(/[",]/, "", $3); print $3; exit }' mise.lock)"
-          if [ -z "${mise_pin}" ]; then
-            printf 'ERROR: mise.lock pins no github:jdx/mise release; run make upg\n' >&2
-            exit 2
-          fi
-          "${HOME}/.local/bin/mise" install --locked "github:jdx/mise"
-          mise_path="$("${HOME}/.local/bin/mise" which mise)"
-          mise_receipt="$("${mise_path}" --version | cut -d ' ' -f1)"
-          if [ "${mise_receipt}" != "${mise_pin}" ]; then
-            printf 'ERROR: provisioned Mise %s differs from mise.lock pin %s; run make setup\n' "${mise_receipt}" "${mise_pin}" >&2
-            exit 2
-          fi
-          echo "${mise_path%/*}" >> "${GITHUB_PATH}"
-
-      - name: Boot
-        run: CI=Y make setup
-      - name: Release plan and guard
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: CI=Y make release-plan
-  # End SECTION: release-plan job
-

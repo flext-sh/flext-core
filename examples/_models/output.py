@@ -49,5 +49,4 @@ class ExamplesFlextModelsOutput:
         )
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsOutput"]

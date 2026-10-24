@@ -32,5 +32,4 @@ class ExamplesFlextModelsEx03:
         email: Annotated[str, m.Field(description="User email address")]
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx03"]

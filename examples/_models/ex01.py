@@ -54,5 +54,4 @@ class ExamplesFlextModelsEx01:
         )
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx01"]

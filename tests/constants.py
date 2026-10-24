@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Constants for flext-core tests.
 
 MRO-composed constants facade — all constants defined in _constants/ mixins.
@@ -26,13 +27,13 @@ class TestsFlextConstants(FlextTestsConstants, FlextConstants):
     """Layer 0 constants facade for flext-core tests."""
 
     class Tests(
-        TestsFlextConstantsOther,
-        TestsFlextConstantsResult,
-        TestsFlextConstantsFixtures,
-        TestsFlextConstantsServices,
-        TestsFlextConstantsErrors,
         TestsFlextConstantsDomain,
         TestsFlextConstantsEnums,
+        TestsFlextConstantsErrors,
+        TestsFlextConstantsFixtures,
+        TestsFlextConstantsOther,
+        TestsFlextConstantsResult,
+        TestsFlextConstantsServices,
         FlextTestsConstants.Tests,
     ):
         """Flat constants for test composition and parametrization.

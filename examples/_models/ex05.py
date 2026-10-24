@@ -61,5 +61,4 @@ class ExamplesFlextModelsEx05:
         """Marker model that is not a valid processor."""
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx05"]

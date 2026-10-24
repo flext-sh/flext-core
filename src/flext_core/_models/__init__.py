@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._models import (
@@ -22,13 +22,28 @@ if TYPE_CHECKING:
         _exception_params as _exception_params,
         _project_metadata as _project_metadata,
     )
+    from flext_core._models._base import (
+        FlextModelsBasePart01,
+        FlextModelsBasePart02,
+        FlextModelsBasePart03,
+    )
+    from flext_core._models._container import (
+        FlextModelsContainerPart01,
+        FlextModelsContainerPart02,
+        FlextModelsContainerPart03,
+        FlextModelsContainerPart04,
+    )
     from flext_core._models._context import (
         FlextModelsContextData,
         FlextModelsContextExport,
         FlextModelsContextMetadata,
         FlextModelsContextScope,
+        FlextModelsContextScopePart01,
+        FlextModelsContextScopePart02,
+        FlextModelsContextScopePart03,
         FlextModelsContextTokens,
     )
+    from flext_core._models._cqrs import FlextModelsCqrsPart01
     from flext_core._models._enforcement import (
         FlextModelsEnforcementBase,
         FlextModelsEnforcementCatalog,
@@ -37,6 +52,11 @@ if TYPE_CHECKING:
         FlextModelsEnforcementParams,
         FlextModelsEnforcementResolution,
         FlextModelsEnforcementSources,
+    )
+    from flext_core._models._exception_params import (
+        FlextModelsExceptionParamsPart01,
+        FlextModelsExceptionParamsPart02,
+        FlextModelsExceptionParamsPart03,
     )
     from flext_core._models._project_metadata import (
         FlextModelsProjectMetadataAggregates,
@@ -71,19 +91,30 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "FlextModelsBase",
+    "FlextModelsBasePart01",
+    "FlextModelsBasePart02",
+    "FlextModelsBasePart03",
     "FlextModelsBuilder",
     "FlextModelsCollections",
     "FlextModelsConfig",
     "FlextModelsContainer",
+    "FlextModelsContainerPart01",
+    "FlextModelsContainerPart02",
+    "FlextModelsContainerPart03",
+    "FlextModelsContainerPart04",
     "FlextModelsContainers",
     "FlextModelsContext",
     "FlextModelsContextData",
     "FlextModelsContextExport",
     "FlextModelsContextMetadata",
     "FlextModelsContextScope",
+    "FlextModelsContextScopePart01",
+    "FlextModelsContextScopePart02",
+    "FlextModelsContextScopePart03",
     "FlextModelsContextState",
     "FlextModelsContextTokens",
     "FlextModelsCqrs",
+    "FlextModelsCqrsPart01",
     "FlextModelsDomainEvent",
     "FlextModelsEnforcement",
     "FlextModelsEnforcementBase",
@@ -96,6 +127,9 @@ __all__: tuple[str, ...] = (
     "FlextModelsEntity",
     "FlextModelsErrors",
     "FlextModelsExceptionParams",
+    "FlextModelsExceptionParamsPart01",
+    "FlextModelsExceptionParamsPart02",
+    "FlextModelsExceptionParamsPart03",
     "FlextModelsHandler",
     "FlextModelsNamespace",
     "FlextModelsOptions",
@@ -118,27 +152,41 @@ __all__: tuple[str, ...] = (
     "_project_metadata",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextModelsContextState": ".flext_context",
-        "FlextModelsServiceState": ".flext_mixins",
         "FlextModelsBase": ".base",
+        "FlextModelsBasePart01": "._base.flextmodelsbase_part_01",
+        "FlextModelsBasePart02": "._base.flextmodelsbase_part_02",
+        "FlextModelsBasePart03": "._base.flextmodelsbase_part_03",
         "FlextModelsBuilder": ".builder",
         "FlextModelsCollections": ".collection_models",
         "FlextModelsConfig": ".config",
         "FlextModelsContainer": ".container",
+        "FlextModelsContainerPart01": "._container.flextmodelscontainer_part_01",
+        "FlextModelsContainerPart02": "._container.flextmodelscontainer_part_02",
+        "FlextModelsContainerPart03": "._container.flextmodelscontainer_part_03",
+        "FlextModelsContainerPart04": "._container.flextmodelscontainer_part_04",
         "FlextModelsContainers": ".containers",
         "FlextModelsContext": ".context",
         "FlextModelsContextData": "._context._data",
         "FlextModelsContextExport": "._context._export",
         "FlextModelsContextMetadata": "._context._metadata",
-        "FlextModelsContextScope": (
+        "FlextModelsContextScope": "._context._scope",
+        "FlextModelsContextScopePart01": (
+            "._context.__scope.flextmodelscontextscope_part_01"
+        ),
+        "FlextModelsContextScopePart02": (
+            "._context.__scope.flextmodelscontextscope_part_02"
+        ),
+        "FlextModelsContextScopePart03": (
             "._context.__scope.flextmodelscontextscope_part_03"
         ),
+        "FlextModelsContextState": ".flext_context",
         "FlextModelsContextTokens": "._context._tokens",
         "FlextModelsCqrs": ".cqrs",
+        "FlextModelsCqrsPart01": "._cqrs.flextmodelscqrs_part_01",
         "FlextModelsDomainEvent": ".domain_event",
         "FlextModelsEnforcement": ".enforcement",
         "FlextModelsEnforcementBase": "._enforcement._base",
@@ -151,17 +199,27 @@ __getattr__ = install_lazy_exports(
         "FlextModelsEntity": ".entity",
         "FlextModelsErrors": ".errors",
         "FlextModelsExceptionParams": ".exception_params",
+        "FlextModelsExceptionParamsPart01": (
+            "._exception_params.flextmodelsexceptionparams_part_01"
+        ),
+        "FlextModelsExceptionParamsPart02": (
+            "._exception_params.flextmodelsexceptionparams_part_02"
+        ),
+        "FlextModelsExceptionParamsPart03": (
+            "._exception_params.flextmodelsexceptionparams_part_03"
+        ),
         "FlextModelsHandler": ".handler",
         "FlextModelsNamespace": ".namespace",
         "FlextModelsOptions": ".options",
         "FlextModelsProjectMetadata": ".project_metadata",
-        "FlextModelsProjectMetadataAggregates": ("._project_metadata.aggregates"),
-        "FlextModelsProjectMetadataContract": ("._project_metadata.contract"),
-        "FlextModelsProjectMetadataDocument": ("._project_metadata.document"),
+        "FlextModelsProjectMetadataAggregates": "._project_metadata.aggregates",
+        "FlextModelsProjectMetadataContract": "._project_metadata.contract",
+        "FlextModelsProjectMetadataDocument": "._project_metadata.document",
         "FlextModelsPydantic": ".pydantic",
-        "FlextModelsPyprojectIngressContract": ("._project_metadata.pyproject_ingress"),
+        "FlextModelsPyprojectIngressContract": "._project_metadata.pyproject_ingress",
         "FlextModelsRegistry": ".registry",
         "FlextModelsService": ".service",
+        "FlextModelsServiceState": ".flext_mixins",
         "FlextModelsSettings": ".settings",
         "_base": "._base",
         "_container": "._container",
@@ -172,4 +230,4 @@ __getattr__ = install_lazy_exports(
         "_project_metadata": "._project_metadata",
     }),
     public_exports=__all__,
-)[0]
+)

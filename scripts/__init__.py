@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core import d, e, h, r, s, x
@@ -40,7 +40,7 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -62,4 +62,4 @@ __getattr__ = install_lazy_exports(
         "x": "flext_core",
     }),
     public_exports=__all__,
-)[0]
+)

@@ -48,5 +48,4 @@ class ExamplesFlextModelsErrors:
             EXPLODE = "explode"
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsErrors"]

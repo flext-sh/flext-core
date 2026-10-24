@@ -55,6 +55,7 @@
     "**/protos": true,
     "**/site": true,
     "**/target": true,
+    "**/typings": true,
     "**/venv": true
   },
   "files.watcherExclude": {
@@ -101,6 +102,7 @@
     "**/protos/**": true,
     "**/site/**": true,
     "**/target/**": true,
+    "**/typings/**": true,
     "**/venv/**": true
   },
   "git.autoRepositoryDetection": "subFolders",
@@ -233,6 +235,7 @@
     "**/protos": true,
     "**/site": true,
     "**/target": true,
+    "**/typings": true,
     "**/venv": true
   },
   "search.useGlobalIgnoreFiles": false,

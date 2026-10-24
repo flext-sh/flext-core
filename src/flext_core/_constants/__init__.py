@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._constants import (
@@ -104,7 +104,7 @@ __all__: tuple[str, ...] = (
     "_errors",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -136,14 +136,12 @@ __getattr__ = install_lazy_exports(
         ),
         "FlextConstantsEnvironment": ".environment",
         "FlextConstantsErrors": ".errors",
-        "FlextConstantsErrorsDomainParser": ("._errors.flextconstantserrors_part_04"),
+        "FlextConstantsErrorsDomainParser": "._errors.flextconstantserrors_part_04",
         "FlextConstantsErrorsMessages": "._errors.flextconstantserrors_part_01",
         "FlextConstantsErrorsRuntimeExceptions": (
             "._errors.flextconstantserrors_part_02"
         ),
-        "FlextConstantsErrorsRuntimeSettings": (
-            "._errors.flextconstantserrors_part_05"
-        ),
+        "FlextConstantsErrorsRuntimeSettings": "._errors.flextconstantserrors_part_05",
         "FlextConstantsErrorsValidationExceptions": (
             "._errors.flextconstantserrors_part_03"
         ),
@@ -163,9 +161,9 @@ __getattr__ = install_lazy_exports(
         "FlextMroViolation": ".enforcement",
         "FlextPredicateRule": "._enforcement_data.flextpredicaterule",
         "FlextSmellThresholds": "._enforcement_data.flextsmellthresholds",
-        "_enforcement_data": "._enforcement_data",
         "_enforcement": "._enforcement",
+        "_enforcement_data": "._enforcement_data",
         "_errors": "._errors",
     }),
     public_exports=__all__,
-)[0]
+)

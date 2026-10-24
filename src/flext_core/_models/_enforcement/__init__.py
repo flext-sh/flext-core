@@ -10,7 +10,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._models._enforcement._base import (
@@ -38,7 +38,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsEnforcementSources",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -51,4 +51,4 @@ __getattr__ = install_lazy_exports(
         "FlextModelsEnforcementSources": "._sources",
     }),
     public_exports=__all__,
-)[0]
+)

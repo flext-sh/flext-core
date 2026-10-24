@@ -59,5 +59,4 @@ class ExamplesFlextModelsEx12:
         amount: Annotated[int, m.Field(description="Command B payload")]
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx12"]

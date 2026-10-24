@@ -53,5 +53,4 @@ class ExamplesFlextModelsEx10:
             return r[str].ok(message.text)
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx10"]

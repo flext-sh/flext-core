@@ -67,5 +67,4 @@ class ExamplesFlextModelsEx02:
             return r[bool].ok(value=True)
 
 
-
 __all__: list[str] = ["ExamplesFlextModelsEx02"]

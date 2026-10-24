@@ -10,7 +10,6 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.__version__ import __version__
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
@@ -23,6 +22,7 @@ if TYPE_CHECKING:
         __license__,
         __title__,
         __url__,
+        __version__,
         __version_info__,
     )
     from flext_core._beartype_bootstrap import FlextCoreBeartypeBootstrap
@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_member import FlextLazyMember
     from flext_core.flextlazy_part_01 import FlextLazyPart01
+    from flext_core.flextlazy_part_02 import FlextLazyPart02
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
         FlextLazy,
@@ -93,6 +94,7 @@ __all__: tuple[str, ...] = (
     "FlextLazyAttribute",
     "FlextLazyMember",
     "FlextLazyPart01",
+    "FlextLazyPart02",
     "FlextMixins",
     "FlextModels",
     "FlextMroViolation",
@@ -148,7 +150,7 @@ __all__: tuple[str, ...] = (
     "x",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -170,6 +172,7 @@ __getattr__ = install_lazy_exports(
         "FlextLazyAttribute": ".flextlazy_attribute",
         "FlextLazyMember": ".flextlazy_member",
         "FlextLazyPart01": ".flextlazy_part_01",
+        "FlextLazyPart02": ".flextlazy_part_02",
         "FlextMixins": ".mixins",
         "FlextModels": ".models",
         "FlextMroViolation": ".exceptions",
@@ -222,4 +225,7 @@ __getattr__ = install_lazy_exports(
         "x": ".mixins",
     }),
     public_exports=__all__,
-)[0]
+)
+
+if not TYPE_CHECKING:
+    from flext_core.__version__ import __version__

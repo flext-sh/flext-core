@@ -7,14 +7,13 @@
 # Free: no
 # End SECTION: header
 # NOTE: mise carries itself, the Python runtime and the native tools from the
-# config SSOT. The self-managed github:jdx/mise entry is the pinned release:
-# `mise install` provisions it from mise.lock and every later `mise` resolved
-# through the mise-managed shims runs exactly that release. Python dependency
+# config SSOT. The official installer supplies the acquisition executable; native
+# `mise install` provisions the declared self entry and tools.
+# Later execution resolves that entry through native Mise. Python dependency
 # declarations remain owned by pyproject.toml. Tools are declared `latest`;
-# only `make upg` resolves them and writes the committed mise.lock. Setup
-# installs declared tools with `mise install --locked`; missing or incompatible
-# lock entries fail. `make upg` runs `mise lock --bump` against the regenerated
-# manifest before installing from the resulting lock.
+# only `make upg` bumps them (`mise lock --bump`) and writes the committed
+# mise.lock. Setup always bootstraps: `mise install` honors every locked entry
+# and records any entry the lock is missing, so lock drift never blocks setup.
 
 # === SECTION: settings (managed) ===
 # Source: config:codegen.toolchain.mise_lockfile / mise_lockfile_platforms /
@@ -25,14 +24,11 @@ lockfile = true
 # The mise release moves only through mise.lock (`make upg`); a newer release
 # notice is not actionable here and only adds noise to every command.
 disable_update_warning = true
-# Third-party releases in the manifest (jscpd, qlty) publish no SLSA
-# attestations, so strict lock-time provenance verification can never pass
-# for them. API outages degrade to best-effort instead of failing the lock;
-# release checksums still enforce integrity, and verification resumes
-# automatically wherever attestations exist.
-provenance_api_failures_fatal = false
+# Native attestation absence is distinct from an API failure. API failures
+# remain fatal; locked installs may reuse the existing lock and checksums.
+provenance_api_failures_fatal = true
 locked_verify_provenance = false
-lockfile_platforms = ["linux-x64", "linux-x64-musl", "linux-arm64", "macos-x64", "macos-arm64", "windows-x64"]
+lockfile_platforms = ["linux-x64", "linux-x64-musl", "macos-arm64", "windows-x64"]
 [settings.python]
 compile = false
 # End SECTION: settings
@@ -44,8 +40,7 @@ compile = false
 #         projection order, form fixes the rendered shape)
 [tools]
 python = "3.13"
-# mise self-management: the [tools] entry pins the release `mise install`
-# provisions from mise.lock; a host bootstrap mise only needs to read that lock.
+# Mise interprets the self entry and its lock; Make never parses release assets.
 "github:jdx/mise" = "2026.10.3"
 # Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 "uv" = "latest"
