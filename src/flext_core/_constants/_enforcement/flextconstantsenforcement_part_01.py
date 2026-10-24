@@ -1,5 +1,8 @@
 """Enforcement enum constants for FlextConstantsEnforcement.
 
+Enforcement modes own their runtime vocabulary independently of boolean parser
+tokens. Their declarations do not depend on the facade being assembled.
+
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """

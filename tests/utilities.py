@@ -206,12 +206,12 @@ class TestsFlextUtilities(FlextTestsUtilities):
                 handler_mode=c.HandlerType.QUERY,
             ),
             HandlerTypeScenario(
-                name="event",
+                name=c.HandlerType.EVENT,
                 handler_type=c.HandlerType.EVENT,
                 handler_mode=c.HandlerType.EVENT,
             ),
             HandlerTypeScenario(
-                name="saga",
+                name=c.HandlerType.SAGA,
                 handler_type=c.HandlerType.SAGA,
                 handler_mode=c.HandlerType.SAGA,
             ),
@@ -378,7 +378,7 @@ class TestsFlextUtilities(FlextTestsUtilities):
     class TestsFlextBeartypeEngine:
         """Shared beartype engine test support."""
 
-        FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
+        FORBIDDEN: frozenset[str] = frozenset({"dict", c.Action.LIST, "set"})
 
         @staticmethod
         def _run_python(script: str, cwd: Path) -> p.Cli.CommandOutput:

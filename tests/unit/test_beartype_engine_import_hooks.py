@@ -106,7 +106,7 @@ class TestsFlextCoreBeartypeEngineImportHooks:
         violation = tm.not_none(violation)
         tm.that(violation["statement"], eq=_FORBIDDEN_IMPORT)
         tm.that(violation["file"], eq="sample.py")
-        tm.that(violation["line"], eq="1")
+        tm.that(violation["line"], eq=c.ParserBooleanToken.ONE)
 
     def test_ignores_string_literal_that_merely_mentions_a_forbidden_import(
         self,

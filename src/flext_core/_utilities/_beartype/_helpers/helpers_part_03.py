@@ -8,7 +8,13 @@ from __future__ import annotations
 
 import inspect
 import types as _types_mod
-from collections.abc import Callable, MutableMapping, MutableSequence, MutableSet
+from collections.abc import (
+    Callable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+)
 from types import UnionType
 from typing import TYPE_CHECKING, ForwardRef, TypeAliasType, Union, get_args, get_origin
 
@@ -93,15 +99,23 @@ class FlextUtilitiesBeartypeHelpersPart03(
         *,
         owner: _types_mod.ModuleType | type | None = None,
     ) -> bool:
+        """Check mutable ABCs and matching generic origins.
+
+        Returns:
+            Whether the factory satisfies the declared mutable contract.
+
+        """
         h = FlextUtilitiesBeartypeHelpersPart03
         mk = h.mutable_default_factory_kind(factory)
-        if mk is list:
-            exp = MutableSequence
-        elif mk is dict:
-            exp = MutableMapping
-        elif mk is set:
-            exp = MutableSet
-        else:
+        if mk is None:
+            return False
+        mutable_origins: Mapping[type, type] = {
+            list: MutableSequence,
+            dict: MutableMapping,
+            set: MutableSet,
+        }
+        exp = mutable_origins.get(mk)
+        if exp is None:
             return False
         if isinstance(hint, (str, ForwardRef)):
             hint = FlextUtilitiesBeartypeTypeAliases.declared_origin(hint, owner=owner)

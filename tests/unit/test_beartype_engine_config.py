@@ -20,7 +20,7 @@ from flext_core.utilities import FlextUtilitiesBeartypeConf
 from tests import c, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
-_FORBIDDEN: frozenset[str] = frozenset({"dict", "list", "set"})
+_FORBIDDEN: frozenset[str] = frozenset({"dict", c.Action.LIST, "set"})
 
 
 class TestsFlextCoreBeartypeEngineConfig:
@@ -95,7 +95,7 @@ class TestsFlextCoreBeartypeEngineConfig:
         ("hint", "expected"),
         [
             (dict[str, int], (True, "dict")),
-            (list[int], (True, "list")),
+            (list[int], (True, c.Action.LIST)),
             (t.VariadicTuple[int], (False, "")),
             (str, (False, "")),
             (None, (False, "")),

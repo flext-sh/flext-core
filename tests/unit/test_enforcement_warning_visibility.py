@@ -134,7 +134,9 @@ class TestsFlextCoreEnforcementWarningVisibility:
                 "no:cacheprovider",
             ],
             cwd=tmp_path,
-            options=m.Cli.ProcessOptions(env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1"}),
+            options=m.Cli.ProcessOptions(
+                env={"PYTEST_DISABLE_PLUGIN_AUTOLOAD": c.ParserBooleanToken.ONE}
+            ),
         )
 
         # Assert: the warning survives to the caller's output.

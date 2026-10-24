@@ -15,7 +15,7 @@ from types import MappingProxyType
 
 import pytest
 
-from tests import t, tm, u
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreUtilitiesDomain:
@@ -119,7 +119,7 @@ class TestsFlextCoreUtilitiesDomain:
         [
             ("single", ["single"]),
             (["a", "b"], ["a", "b"]),
-            ([1, 2], ["1", "2"]),
+            ([1, 2], [c.ParserBooleanToken.ONE, "2"]),
             (None, []),
         ],
     )

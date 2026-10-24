@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import p, r, t, tm
+from tests import c, p, r, t, tm
 
 
 class TestsFlextCoreResultCallablesFold:
@@ -22,7 +22,7 @@ class TestsFlextCoreResultCallablesFold:
     @staticmethod
     def test_recursive_json_result_satisfies_protocol() -> None:
         """Recursive JSON results support the same public protocol as scalars."""
-        payload: t.JsonValue = {"nested": ["value", None, {"count": 1}]}
+        payload: t.JsonValue = {"nested": ["value", None, {c.Aggregation.COUNT: 1}]}
         result: p.Result[t.JsonValue] = r[t.JsonValue].ok(payload)
 
         tm.that(result.unwrap(), eq=payload)

@@ -88,7 +88,9 @@ class TestsFlextLoggingStages:
             "with contextlib.redirect_stderr(stream):\n"
             "    structlog.get_logger().info('closed stream')\n"
         )
-        executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
+        executed: p.Cli.CommandOutput = tm.ok(
+            u.Cli.run_raw((sys.executable, "-c", consumer))
+        )
         tm.fail(u.Cli.process_succeeded(executed.outcome))
         tm.fail(executed.outcome.timed_out)
         tm.that(executed.outcome.forwarded_signal, eq=None)
@@ -113,13 +115,13 @@ class TestsFlextLoggingStages:
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=False, console_renderer=False, log_level=logging.INFO))\n"
         )
-        executed = tm.ok(
+        executed: p.Cli.CommandOutput = tm.ok(
             u.Cli.run_raw((sys.executable, "-c", consumer, *events)),
         )
         tm.ok(u.Cli.process_succeeded(executed.outcome))
         tm.fail(executed.outcome.timed_out)
         emitted = tuple(
-            u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))["event"]
+            u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))[c.HandlerType.EVENT]
             for line in executed.stderr.splitlines()
         )
         tm.that(emitted, eq=events)
@@ -152,7 +154,9 @@ class TestsFlextLoggingStages:
             "    tm.reject('second event did not fail')\n"
             "tm.reject('closed native stream did not fail')\n"
         )
-        executed = tm.ok(u.Cli.run_raw((sys.executable, "-c", consumer)))
+        executed: p.Cli.CommandOutput = tm.ok(
+            u.Cli.run_raw((sys.executable, "-c", consumer))
+        )
         tm.fail(u.Cli.process_succeeded(executed.outcome))
         tm.fail(executed.outcome.timed_out)
         tm.that(executed.outcome.forwarded_signal, eq=None)
@@ -406,7 +410,7 @@ class TestsFlextLoggingStages:
             event_dict: p.LoggingEvent,
         ) -> p.LoggingEvent:
             _ = logger, method_name
-            observed.append(str(event_dict["event"]))
+            observed.append(str(event_dict[c.HandlerType.EVENT]))
             return event_dict
 
         replacement = m.StructlogOptions(
@@ -501,7 +505,9 @@ class TestsFlextLoggingNativeEmission:
         with structlog.contextvars.bound_contextvars(correlation_id="real-operation"):
             tm.ok(
                 u.log(
-                    "delivered %s", "once", payload={"password": password, "count": 2}
+                    "delivered %s",
+                    "once",
+                    payload={"password": password, c.Aggregation.COUNT: 2},
                 )
             )
         tm.that(len(observed), eq=1)
@@ -514,7 +520,7 @@ class TestsFlextLoggingNativeEmission:
         )
         sanitized = u.Cli.json_as_mapping(record.context["payload"])
         tm.that(rendered["payload"], eq=sanitized)
-        tm.that(sanitized["count"], eq=2)
+        tm.that(sanitized[c.Aggregation.COUNT], eq=2)
         tm.fail(sanitized["password"] == password)
         tm.that(str(record.context), lacks=password)
         tm.that(console.getvalue(), has="delivered once", lacks=password)
@@ -555,7 +561,7 @@ class TestsFlextLoggingNativeEmission:
         )
         for stream in (first, second):
             event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
-            tm.that(event["event"], eq=record.message)
+            tm.that(event[c.HandlerType.EVENT], eq=record.message)
             tm.that(
                 event[c.ContextKey.LOGGER_NAME],
                 eq=record.context[c.ContextKey.LOGGER_NAME],
@@ -642,7 +648,7 @@ class TestsFlextLoggingNativeEmission:
         tm.that(old.getvalue(), lacks="after replacement")
         rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(current.getvalue())))
         tm.that(rendered[c.ContextScope.OPERATION], eq="bound")
-        tm.that(rendered["event"], eq="after replacement")
+        tm.that(rendered[c.HandlerType.EVENT], eq="after replacement")
 
     @staticmethod
     def test_error_trace_retains_native_chains_without_locals_or_secrets() -> None:
@@ -898,7 +904,7 @@ class TestsFlextLoggingNativeEmission:
         tm.that(stream.getvalue(), eq="")
         tm.ok(logger.info("named %(actor)s", {"actor": "sam"}))
         event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
-        tm.that(event["event"], eq="named sam")
+        tm.that(event[c.HandlerType.EVENT], eq="named sam")
         tm.fail("positional_args" in event)
 
         stream.seek(0)
@@ -907,17 +913,17 @@ class TestsFlextLoggingNativeEmission:
         error_data: t.JsonMapping = {"source": "native"}
         tm.ok(logger.info("named %(actor)s", arguments, error_data=error_data))
         event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
-        tm.that(event["event"], eq="named b'sam'")
+        tm.that(event[c.HandlerType.EVENT], eq="named b'sam'")
         tm.that(event["error_data"], eq=error_data)
 
         stream.seek(0)
         stream.truncate()
         rows: t.MutableSequenceOf[tuple[str, t.JsonValue]] = [
-            ("stream", {"replication_key": None}),
+            (c.ProcessingMode.STREAM, {"replication_key": None}),
         ]
         tm.ok(logger.info("rows %s", rows))
         event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
-        tm.that(event["event"], eq=f"rows {rows}")
+        tm.that(event[c.HandlerType.EVENT], eq=f"rows {rows}")
         with pytest.raises(TypeError):
             logger.info("invalid numeric %d", rows)
         with pytest.raises(m.ValidationError):

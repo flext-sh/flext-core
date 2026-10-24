@@ -125,7 +125,7 @@ class TestsFlextLoggings:
     @staticmethod
     def test_unbind_missing_key_fails_loud(logger: p.Logger) -> None:
         """Test unbind missing key fails loud."""
-        bound = logger.bind(a="1")
+        bound = logger.bind(a=c.ParserBooleanToken.ONE)
         with pytest.raises(KeyError):
             bound.unbind("missing")
 

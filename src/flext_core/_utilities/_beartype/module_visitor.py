@@ -120,7 +120,7 @@ class FlextUtilitiesBeartypeModuleVisitor:
         if top_level_class_count > params.max_top_level_classes:
             return {
                 "file": filename,
-                "count": str(top_level_class_count),
+                c.Aggregation.COUNT: str(top_level_class_count),
                 "cap": str(params.max_top_level_classes),
             }
         return _NO_VIOLATION

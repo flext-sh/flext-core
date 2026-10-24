@@ -123,7 +123,7 @@ class TestsFlextCoreNormalizationBoundaries:
         adapter = u.type_adapter(TypeForm(int), config=m.ConfigDict(strict=True))
         tm.that(adapter.validate_python(1), eq=1)
         with pytest.raises(m.ValidationError, match="int_type"):
-            adapter.validate_python("1")
+            adapter.validate_python(c.ParserBooleanToken.ONE)
 
     @staticmethod
     def test_container_preserves_models_and_unwraps_root_payloads() -> None:
@@ -167,7 +167,7 @@ class TestsFlextCoreNormalizationBoundaries:
         """Schema validation admits readonly metadata and retains model identity."""
         attributes: t.JsonMapping = MappingProxyType({"source": "native"})
         payload = {"attributes": attributes}
-        metadata = tm.ok(u.validate_value(m.Metadata, payload))
+        metadata: m.Metadata = tm.ok(u.validate_value(m.Metadata, payload))
         tm.that(metadata.attributes, eq=attributes)
         model: p.Model = metadata
         tm.ok(tm.ok(u.validate_value(m.Metadata, model)) is metadata)
@@ -176,7 +176,9 @@ class TestsFlextCoreNormalizationBoundaries:
             MappingProxyType({"attributes": attributes}),
         ]
         adapter = u.type_adapter(TypeForm(t.MutableSequenceOf[m.Metadata]))
-        validated = tm.ok(u.validate_value(adapter, inputs))
+        validated: t.MutableSequenceOf[m.Metadata] = tm.ok(
+            u.validate_value(adapter, inputs)
+        )
         tm.ok(validated[0] is metadata)
         tm.that(validated[1].attributes, eq=attributes)
         encoded = b"native"

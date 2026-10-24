@@ -17,7 +17,7 @@ import inspect
 import pytest
 
 from flext_core import FlextContainer
-from tests import m, p, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCoreContainer:
@@ -105,7 +105,7 @@ class TestsFlextCoreContainer:
         clean_container: p.Container,
     ) -> None:
         """Clear removes every registered name, leaving an empty container."""
-        clean_container.bind("a", "1")
+        clean_container.bind("a", c.ParserBooleanToken.ONE)
         clean_container.factory("b", u.Tests.create_factory("2"))
         clean_container.clear()
         tm.that(

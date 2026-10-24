@@ -83,7 +83,7 @@ try:
         _ = u.failure("batch_failed", exception=cause)
     output = json_stream.getvalue().splitlines()
     assert len(receipts) == len(output)
-    assert json.loads(output[0])["event"] == receipts[0].message
+    assert json.loads(output[0])[c.HandlerType.EVENT] == receipts[0].message
     assert receipts[0].message in console_stream.getvalue()
     assert receipts[-1].exception is cause
 finally:

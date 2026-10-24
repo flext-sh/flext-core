@@ -184,7 +184,7 @@ class TestsFlextCoreModelsCqrs:
         """Test event has event type and generated id."""
         event = m.Event(event_type="created", aggregate_id="agg-1")
 
-        tm.that(event.message_type, eq="event")
+        tm.that(event.message_type, eq=c.HandlerType.EVENT)
         tm.that(event.event_type, eq="created")
         tm.that(event.event_id.startswith("evt_"), truth=True)
 
@@ -239,7 +239,7 @@ class TestsFlextCoreModelsCqrs:
             ({"message_type": c.HandlerMode.QUERY, "filters": {}}, m.Query),
             (
                 {
-                    "message_type": "event",
+                    "message_type": c.HandlerType.EVENT,
                     "event_type": "created",
                     "aggregate_id": "agg-1",
                 },

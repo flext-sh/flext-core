@@ -33,7 +33,7 @@ from beartype import BeartypeConf, BeartypeStrategy
 
 import flext_core
 import tests.utilities
-from tests import tm
+from tests import c, tm
 
 _FLEXT_CORE_ROOT: Path = Path(__file__).resolve().parents[2]
 
@@ -63,7 +63,7 @@ class TestsFlextCoreBeartypeEngineRuntime(
     @pytest.mark.parametrize(
         ("arg_literal", "expected_exc"),
         [
-            ("1", "AttributeError"),
+            (c.ParserBooleanToken.ONE, "AttributeError"),
             ("3.5", "AttributeError"),
             ("['a']", "AttributeError"),
             ("None", "AttributeError"),

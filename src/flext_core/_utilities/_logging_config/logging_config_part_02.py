@@ -133,7 +133,7 @@ class FlextUtilitiesLoggingConfigPart02(
         if isinstance(event.get("exception"), list):
             event["stack_trace"] = event.pop("exception")
         record = m.LoggingRecord.model_validate({
-            "message": str(event["event"]),
+            "message": str(event[c.HandlerType.EVENT]),
             "level": str(event["level"]),
             "context": dict(event),
         })
@@ -148,7 +148,7 @@ class FlextUtilitiesLoggingConfigPart02(
             )
         )
         record = m.LoggingRecord.model_validate({
-            "message": sanitized["event"],
+            "message": sanitized[c.HandlerType.EVENT],
             "level": sanitized["level"],
             "context": sanitized,
             "exception": original_exception,

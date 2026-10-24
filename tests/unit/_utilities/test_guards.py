@@ -21,7 +21,7 @@ from typing import override
 import pytest
 
 from flext_core import p, t
-from tests import m, r, tm, u
+from tests import c, m, r, tm, u
 
 
 class TestsFlextCoreGuards:
@@ -223,7 +223,7 @@ class TestsFlextCoreGuards:
             (1.5, "float", True),
             (True, "bool", True),
             ({"k": "v"}, "mapping", True),
-            ([1, 2], "list", True),
+            ([1, 2], c.Action.LIST, True),
             ((1, 2), "tuple", True),
             (None, "none", True),
             ("x", "none", False),
@@ -461,7 +461,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(service.counter is counter, truth=True)
         tm.that(service.execute().unwrap(), eq=1)
         tm.that(service.execute().unwrap(), eq=2)
-        tm.that("counter" in service.model_dump(), truth=False)
+        tm.that(c.MetricType.COUNTER in service.model_dump(), truth=False)
         first = m.Tests.HandlerObservations()
         second = m.Tests.HandlerObservations()
         tm.that(type(first.handled) is list, truth=True)
@@ -613,5 +613,5 @@ class TestsFlextCoreScalarAndCollectionGuards:
     def test_type_name_returns_runtime_qualname() -> None:
         tm.that(u.type_name("x") == "str", truth=True)
         tm.that(u.type_name(1) == "int", truth=True)
-        tm.that(u.type_name([1]) == "list", truth=True)
+        tm.that(u.type_name([1]) == c.Action.LIST, truth=True)
         tm.that(u.type_name(None) == "NoneType", truth=True)

@@ -253,7 +253,7 @@ class TestsFlextCoreTypedCollectionAliases:
         tm.ok(isinstance(scalar, c.SCALAR_TYPES))
 
     @staticmethod
-    @pytest.mark.parametrize("nonscalar", [["list"], {"dict": 1}, ("tuple",)])
+    @pytest.mark.parametrize("nonscalar", [[c.Action.LIST], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
         nonscalar: list[str] | t.MappingKV[str, int] | tuple[str],
     ) -> None:

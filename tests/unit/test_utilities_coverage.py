@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import t, tm, u
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreUtilitiesCoverage:
@@ -139,7 +139,7 @@ class TestsFlextCoreUtilitiesCoverage:
     @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [("solo", ["solo"]), ([1, 2], ["1", "2"]), (None, [])],
+        [("solo", ["solo"]), ([1, 2], [c.ParserBooleanToken.ONE, "2"]), (None, [])],
     )
     def test_to_str_list_produces_list_of_strings(
         value: t.StrictValue | None,

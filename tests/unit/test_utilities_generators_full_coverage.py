@@ -139,7 +139,7 @@ class TestsFlextCoreUtilitiesGenerators:
                 options=m.GenerateOptions(parts=("customer",), length=6),
             ),
             batch_id=u.generate(
-                kind="batch",
+                kind=c.ProcessingMode.BATCH,
                 options=m.GenerateOptions(parts=("users",), length=7),
             ),
             transaction_id=u.generate(
@@ -147,11 +147,11 @@ class TestsFlextCoreUtilitiesGenerators:
                 options=m.GenerateOptions(parts=("sync", 42), length=9),
             ),
             saga_id=u.generate(
-                kind="saga",
+                kind=c.HandlerType.SAGA,
                 options=m.GenerateOptions(parts=("ldap", "full"), length=5),
             ),
             timestamped_batch_id=u.generate(
-                kind="batch",
+                kind=c.ProcessingMode.BATCH,
                 options=m.GenerateOptions(include_timestamp=True, length=4),
             ),
             explicit_uuid=u.generate(kind="uuid"),

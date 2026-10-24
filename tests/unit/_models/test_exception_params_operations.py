@@ -46,7 +46,7 @@ class TestsFlextCoreExceptionParamsOperations:
     @staticmethod
     @pytest.mark.parametrize(
         ("expected", "actual"),
-        [("str", "int"), ("list", "dict"), ("BaseModel", "NoneType")],
+        [("str", "int"), (c.Action.LIST, "dict"), ("BaseModel", "NoneType")],
         ids=["str-int", "list-dict", "model-none"],
     )
     def test_type_error_params_exposes_expected_and_actual(

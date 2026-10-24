@@ -94,7 +94,10 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
                 c.HandlerMode.QUERY,
                 "Handler with mode 'command' cannot execute query pipelines",
             ),
-            ("event", "Handler with mode 'command' cannot execute event pipelines"),
+            (
+                c.HandlerType.EVENT,
+                "Handler with mode 'command' cannot execute event pipelines",
+            ),
         ],
     )
     def test_dispatch_incompatible_operation_fails(

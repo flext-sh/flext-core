@@ -113,7 +113,9 @@ class TestsFlextCoreExceptionsTypedMetrics:
             (lambda: e.FlextTimeoutError("m", timeout_seconds=30.0), "TIMEOUT"),
             (lambda: e.AuthenticationError("m", auth_method="password"), "AUTH"),
             (
-                lambda: e.NotFoundError("m", resource_type="User", resource_id="1"),
+                lambda: e.NotFoundError(
+                    "m", resource_type="User", resource_id=c.ParserBooleanToken.ONE
+                ),
                 "NOT_FOUND",
             ),
         ],

@@ -121,7 +121,7 @@ class TestsFlextHandlerDiscovery:
         tm.that(found is operation)
         tm.that(received, empty=True)
         dispatcher = u.build_dispatcher()
-        report = tm.ok(
+        report: p.HandlerRegistrationReport = tm.ok(
             dispatcher.register_handlers((
                 m.HandlerRegistration(
                     handler=found, message_type=c.DEFAULT_COMMAND_TYPE

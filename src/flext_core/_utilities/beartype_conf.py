@@ -27,7 +27,7 @@ class FlextUtilitiesBeartypeConf:
 
         - "warn" -> violation_type=UserWarning (default)
         - "strict" -> violation_type=TypeError (raises on violation)
-        - "off" -> returns conf with O0 strategy (no checking)
+        - c.ParserBooleanToken.OFF -> returns conf with O0 strategy (no checking)
 
         Returns:
             The resulting ``BeartypeConf``.

@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING, Annotated, Literal, TypeAliasType
 import pytest
 
 import tests.utilities
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
 if TYPE_CHECKING:
@@ -89,7 +89,7 @@ class TestsFlextBeartypeEngineAnnotations(
         ("hint", "expected"),
         [
             (dict[str, int], (True, "dict")),
-            (list[str], (True, "list")),
+            (list[str], (True, c.Action.LIST)),
             (set[int], (True, "set")),
             (t.IntMapping, (False, "")),
             (t.StrSequence, (False, "")),

@@ -85,7 +85,7 @@ class TestsFlextCoreContext:
     def test_clear_removes_every_stored_key() -> None:
         """Remove every stored key when clearing the scope."""
         ctx = FlextContext()
-        ctx.set("a", "1")
+        ctx.set("a", c.ParserBooleanToken.ONE)
         ctx.set("b", "2")
         ctx.clear()
         tm.fail(ctx.get("a"))
@@ -520,13 +520,13 @@ class TestsFlextCoreContextIsolation:
         state = m.ContextRuntimeState.model_validate({
             "metadata": state.metadata,
             "scope_vars": state.scope_vars,
-            "hooks": {"event": (on_event,)},
+            "hooks": {c.HandlerType.EVENT: (on_event,)},
         })
         updated, variable = u.resolve_context_scope_var(state, "custom")
         tm.fail("custom" in state.scope_vars)
         tm.ok(updated.scope_vars["custom"] is variable)
         tm.ok(updated.metadata is state.metadata)
-        tm.that(updated.hooks["event"][0]("payload"), eq="payload")
+        tm.that(updated.hooks[c.HandlerType.EVENT][0]("payload"), eq="payload")
         repeated, existing = u.resolve_context_scope_var(updated, "custom")
         tm.ok(repeated is updated)
         tm.ok(existing is variable)

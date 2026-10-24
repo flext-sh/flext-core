@@ -15,7 +15,7 @@ from typing import Annotated
 
 import pytest
 
-from tests import m, t, tm
+from tests import c, m, t, tm
 
 
 class TestsFlextCoreBase:
@@ -41,7 +41,7 @@ class TestsFlextCoreBase:
 
         dumped = model.model_dump()
 
-        tm.that(dumped, eq={"name": "alpha", "count": 7})
+        tm.that(dumped, eq={"name": "alpha", c.Aggregation.COUNT: 7})
 
     def test_base_model_applies_declared_default(self) -> None:
         model = self.Sample(name="beta")
@@ -56,20 +56,20 @@ class TestsFlextCoreBase:
         tm.that(restored, eq=original)
 
     def test_base_model_validate_from_mapping(self) -> None:
-        model = self.Sample.model_validate({"name": "delta", "count": 2})
+        model = self.Sample.model_validate({"name": "delta", c.Aggregation.COUNT: 2})
 
         tm.that(model.name, eq="delta")
         tm.that(model.count, eq=2)
 
     def test_base_model_exposes_declared_fields(self) -> None:
-        tm.that(set(self.Sample.model_fields), eq={"name", "count"})
+        tm.that(set(self.Sample.model_fields), eq={"name", c.Aggregation.COUNT})
 
     @pytest.mark.parametrize(
         "payload",
         [
-            {"count": 1},
-            {"name": "x", "count": "not-an-int"},
-            {"name": None, "count": 1},
+            {c.Aggregation.COUNT: 1},
+            {"name": "x", c.Aggregation.COUNT: "not-an-int"},
+            {"name": None, c.Aggregation.COUNT: 1},
         ],
     )
     def test_base_model_rejects_invalid_payloads(
@@ -116,7 +116,7 @@ class TestsFlextCoreBase:
 
         tm.rejects_assignment(value, "amount", 3, expected=m.ValidationError)
 
-    @pytest.mark.parametrize("amount", ["1", 1.5])
+    @pytest.mark.parametrize("amount", [c.ParserBooleanToken.ONE, 1.5])
     def test_value_object_strictly_validates_field_types(
         self,
         amount: str | float,

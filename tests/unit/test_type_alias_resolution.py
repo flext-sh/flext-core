@@ -66,10 +66,10 @@ class TestsFlextTypeAliasResolution:
             TypeForm(p.LoggingEvent), config=m.ArbitraryTypesModel.model_config
         ).validate_python({
             "payload": payload,
-            "event": "bootstrap",
+            c.HandlerType.EVENT: "bootstrap",
         })
         tm.that(event["payload"], where=lambda value: value is payload)
-        tm.that(event["event"], eq="bootstrap")
+        tm.that(event[c.HandlerType.EVENT], eq="bootstrap")
         overrides = u.type_adapter(
             TypeForm(p.SettingsOverridesMapping),
             config=m.ArbitraryTypesModel.model_config,
