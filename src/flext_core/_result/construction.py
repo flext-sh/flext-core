@@ -9,16 +9,12 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Never, Self
 
-from pydantic import BaseModel
-
-from flext_core import c, p
+from flext_core import c, p, t
 from flext_core._result import FlextResultBase, FlextResultBehavior
 from flext_core._utilities import FlextUtilitiesMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core import t
 
 
 class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
@@ -305,7 +301,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return cls.fail(error_msg)
 
     @classmethod
-    def from_validation[ModelT: BaseModel](
+    def from_validation[ModelT: t.BaseModelType](
         cls: type[Self],
         data: p.ModelInput,
         model: t.ModelClass[ModelT],

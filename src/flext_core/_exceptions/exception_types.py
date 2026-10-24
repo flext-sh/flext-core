@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from pydantic import ValidationError as _PydanticValidationError
-
 from flext_core import c, m, t
 from flext_core._exceptions import FlextExceptionsBase
 
@@ -20,7 +18,7 @@ if TYPE_CHECKING:
 class FlextExceptionsTypes(FlextExceptionsBase):
     """All typed FLEXT exception subclasses."""
 
-    PydanticValidationError: type[_PydanticValidationError] = _PydanticValidationError
+    PydanticValidationError: type[m.ValidationError] = m.ValidationError
 
     class ValidationError(FlextExceptionsBase.BaseError):
         """Exception raised for input validation failures."""

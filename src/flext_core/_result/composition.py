@@ -10,9 +10,8 @@ from abc import ABC
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Self
 
-from pydantic import ValidationError
-
 from flext_core import c
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._result import FlextResultTransforms
 
 if TYPE_CHECKING:
@@ -140,7 +139,7 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
 
     @staticmethod
     def _model_error_message(error: BaseException) -> str:
-        if isinstance(error, ValidationError):
+        if isinstance(error, FlextModelsPydantic.ValidationError):
             return str(error.errors())
         errors_fn = getattr(error, "errors", None)
         if callable(errors_fn):

@@ -150,5 +150,10 @@ class FlextTypingBase(FlextTypesPydantic):
     )
     type TypeFormSpecifier = TypeHintSpecifier | TypeForm[object]
 
+    TypeForm = TypeForm
+    """PEP 747 ``TypeForm`` marker: ``t.TypeForm(X)`` passes a type expression as a
+    value (``u.type_adapter(t.TypeForm(...))``) without importing typing_extensions
+    outside the facades (ADR-028)."""
+
 
 __all__: list[str] = ["FlextTypingBase"]
