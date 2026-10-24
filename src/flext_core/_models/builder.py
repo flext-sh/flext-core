@@ -134,4 +134,4 @@ class FlextModelsBuilder:
             return state
 
 
-__all__: t.MutableSequenceOf[str] = []
+__all__: t.MutableSequenceOf[str] = ["FlextModelsBuilder"]

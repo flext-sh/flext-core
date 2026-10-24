@@ -57,8 +57,8 @@ if TYPE_CHECKING:
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.errors import FlextModelsErrors
     from flext_core._models.exception_params import FlextModelsExceptionParams
-    from flext_core._models.flext_context import FlextContextState
-    from flext_core._models.flext_mixins import FlextMixins
+    from flext_core._models.flext_context import FlextModelsContextState
+    from flext_core._models.flext_mixins import FlextModelsServiceState
     from flext_core._models.handler import FlextModelsHandler
     from flext_core._models.namespace import FlextModelsNamespace
     from flext_core._models.options import FlextModelsOptions
@@ -70,8 +70,6 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "FlextContextState",
-    "FlextMixins",
     "FlextModelsBase",
     "FlextModelsBuilder",
     "FlextModelsCollections",
@@ -83,6 +81,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsContextExport",
     "FlextModelsContextMetadata",
     "FlextModelsContextScope",
+    "FlextModelsContextState",
     "FlextModelsContextTokens",
     "FlextModelsCqrs",
     "FlextModelsDomainEvent",
@@ -108,6 +107,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsPyprojectIngressContract",
     "FlextModelsRegistry",
     "FlextModelsService",
+    "FlextModelsServiceState",
     "FlextModelsSettings",
     "_base",
     "_container",
@@ -122,8 +122,8 @@ __getattr__ = install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextContextState": ".flext_context",
-        "FlextMixins": ".flext_mixins",
+        "FlextModelsContextState": ".flext_context",
+        "FlextModelsServiceState": ".flext_mixins",
         "FlextModelsBase": ".base",
         "FlextModelsBuilder": ".builder",
         "FlextModelsCollections": ".collection_models",

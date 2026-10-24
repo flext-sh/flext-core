@@ -14,42 +14,45 @@ from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
 
-class FlextMixins(FlextModelsBase.ArbitraryTypesModel):
-    """Own service runtime inputs and state without operational behavior."""
+class FlextModelsServiceState:
+    """State declarations of the operational service mixins facade."""
 
-    settings_type: t.Port[p.SettingsType] | None = FlextModelsPydantic.Field(
-        default=None,
-        validate_default=True,
-        exclude=True,
-        description="FlextSettings class used to initialize the service runtime.",
-    )
-    runtime_settings: t.Port[p.Settings] | None = FlextModelsPydantic.Field(
-        default=None,
-        exclude=True,
-        description="Pre-built settings instance used directly for the runtime.",
-    )
-    settings_overrides: t.SkipJsonSchema[t.JsonMapping | None] = (
-        FlextModelsPydantic.Field(
+    class ServiceState(FlextModelsBase.ArbitraryTypesModel):
+        """Own service runtime inputs and state without operational behavior."""
+
+        settings_type: t.Port[p.SettingsType] | None = FlextModelsPydantic.Field(
             default=None,
             validate_default=True,
             exclude=True,
-            description="Settings overrides applied at instantiation.",
+            description="FlextSettings class used to initialize the service runtime.",
         )
-    )
-    initial_context: t.Port[p.Context] | None = FlextModelsPydantic.Field(
-        default=None,
-        exclude=True,
-        description="Initial context for the service scope.",
-    )
-    _runtime: p.ServiceRuntime | None = FlextModelsPydantic.PrivateAttr(None)
-    _operation_stats: MutableMapping[str, p.MutableRootDict[t.JsonPayload]] = (
-        FlextModelsPydantic.PrivateAttr(
-            default_factory=dict[str, p.MutableRootDict[t.JsonPayload]],
+        runtime_settings: t.Port[p.Settings] | None = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="Pre-built settings instance used directly for the runtime.",
         )
-    )
-    _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
-    _cache_lock: ClassVar[p.Lock] = threading.Lock()
-    _auto_context_scope: ClassVar[bool] = True
+        settings_overrides: t.SkipJsonSchema[t.JsonMapping | None] = (
+            FlextModelsPydantic.Field(
+                default=None,
+                validate_default=True,
+                exclude=True,
+                description="Settings overrides applied at instantiation.",
+            )
+        )
+        initial_context: t.Port[p.Context] | None = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="Initial context for the service scope.",
+        )
+        _runtime: p.ServiceRuntime | None = FlextModelsPydantic.PrivateAttr(None)
+        _operation_stats: MutableMapping[str, p.MutableRootDict[t.JsonPayload]] = (
+            FlextModelsPydantic.PrivateAttr(
+                default_factory=dict[str, p.MutableRootDict[t.JsonPayload]],
+            )
+        )
+        _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
+        _cache_lock: ClassVar[p.Lock] = threading.Lock()
+        _auto_context_scope: ClassVar[bool] = True
 
 
-__all__: t.StrSequence = ("FlextMixins",)
+__all__: t.StrSequence = ("FlextModelsServiceState",)
