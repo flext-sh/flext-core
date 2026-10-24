@@ -154,6 +154,16 @@ class FlextTypesPydantic:
     type ErrorTypeInfo = pydantic_core.ErrorTypeInfo
     type InitErrorDetails = pydantic_core.InitErrorDetails
 
+    # Annotation validators and serializers (runtime markers placed in
+    # ``Annotated`` metadata); t owns every annotation marker type.
+    AfterValidator = pydantic.AfterValidator
+    BeforeValidator = pydantic.BeforeValidator
+    PlainValidator = pydantic.PlainValidator
+    WrapValidator = pydantic.WrapValidator
+    PlainSerializer = pydantic.PlainSerializer
+    WrapSerializer = pydantic.WrapSerializer
+    GetPydanticSchema = pydantic.GetPydanticSchema
+
     # Annotation and alias helper types (runtime markers / classes)
     AliasGenerator = pydantic.AliasGenerator
     AliasChoices = pydantic.AliasChoices
