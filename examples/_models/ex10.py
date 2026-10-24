@@ -51,3 +51,7 @@ class ExamplesFlextModelsEx10:
         @staticmethod
         def handle(message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
             return r[str].ok(message.text)
+
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx10"]

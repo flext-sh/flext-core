@@ -34,3 +34,7 @@ class ExamplesFlextModelsEx14:
         id: str = m.Field(description="Unique identifier for the user.")
         name: str = m.Field(description="Full name of the user.")
         email: str = m.Field(description="Email address of the user.")
+
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx14"]

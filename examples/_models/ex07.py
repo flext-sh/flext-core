@@ -34,3 +34,7 @@ class ExamplesFlextModelsEx07:
         """Demo plugin model."""
 
         name: str = m.Field(description="Plugin name")
+
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx07"]

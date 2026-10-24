@@ -65,3 +65,7 @@ class ExamplesFlextModelsEx02:
             if not to or not subject or (not body):
                 return r[bool].fail("invalid email payload")
             return r[bool].ok(value=True)
+
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx02"]

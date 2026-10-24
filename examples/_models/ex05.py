@@ -59,3 +59,7 @@ class ExamplesFlextModelsEx05:
 
     class BadProcessor(m.Value):
         """Marker model that is not a valid processor."""
+
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx05"]

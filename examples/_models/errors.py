@@ -46,3 +46,7 @@ class ExamplesFlextModelsErrors:
             """Canonical string tokens used to trigger demo/test behaviour."""
 
             EXPLODE = "explode"
+
+
+
+__all__: list[str] = ["ExamplesFlextModelsErrors"]
