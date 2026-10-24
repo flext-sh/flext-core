@@ -8,6 +8,7 @@
 - [Composition root](#composition-root)
 - [Settings and the runtime hook](#settings-and-the-runtime-hook)
 - [Operations are the API](#operations-are-the-api)
+  - [Transports (target contract, not yet implemented)](#transports-target-contract-not-yet-implemented)
 - [Registry composition](#registry-composition)
 - [Failures](#failures)
 - [Forbidden forms](#forbidden-forms)
@@ -296,6 +297,25 @@ if not pinged.success or pinged.value != greeter.ping_response:
   middleware policies, or a return that is not `p.Result[...]`. Two sibling
   classes declaring one operation name, and a service without operations, fail the same
   way.
+
+### Transports (target contract, not yet implemented)
+
+ADR-019 Decision 5 (amended 2026-10-24) makes operations the only surface a transport
+serves. Epic `flext-itpd1.11.8` delivers it; until its slices land, the current
+behavior above is what runs.
+
+- Core (`flext-itpd1.11.8.1`): input-less operations may carry metadata
+  (`@h.handler(command=None, default=True)`), `@h.query` marks read-only operations,
+  and `m.ServiceOperation` gains `public_name`, `kind`, `default` and `output`. The
+  blanket exclusion of every `FlextService` name, which currently hides legitimate
+  operations such as `validate`, is replaced by an explicit rule.
+- CLI: `main = cli.entry(<facade>)` in `api.py`; commands and options derive from the
+  operations, never from a hand-kept route list.
+- HTTP: `web.application(<facade>)` maps queries to GET and commands to POST.
+- Singer/dbt: the `flext-meltano` bases drive `singer_sdk` programmatically.
+- Consumers never import Typer, Click, FastAPI, Starlette, uvicorn or `singer_sdk`.
+  Superseded signatures stay as `warnings.deprecated` pass-throughs until their census
+  reaches zero.
 
 ## Registry composition
 
