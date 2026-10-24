@@ -142,6 +142,15 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
             frozen=True,
         )
 
+    class ExternalContractModel(ContractModel):
+        """Strict immutable parser of a subset of an external tool's payload.
+
+        Declared fields validate strictly; keys the external producer adds
+        beyond the consumed subset are ignored, never stored.
+        """
+
+        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+
     class FrozenValueModel(ContractModel, Hashable):
         """Value model with equality/hash by value."""
 
