@@ -11,6 +11,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 from flext_core import c, t
+from flext_core._utilities import FlextUtilitiesFamilySurface
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
 if TYPE_CHECKING:
@@ -163,8 +164,8 @@ class FlextUtilitiesBeartypeImportBlacklistVisitor:
         """
         family_base = (
             value in target.__bases__
-            and FlextUtilitiesBeartypeHelpers.family_facade(target)
-            and FlextUtilitiesBeartypeHelpers.family_facade(value)
+            and FlextUtilitiesFamilySurface.family_facade(target)
+            and FlextUtilitiesFamilySurface.family_facade(value)
         )
         return (
             family_base

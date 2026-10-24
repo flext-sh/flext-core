@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, TypeAlias
 from flext_core import c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
+from flext_core._utilities import FlextUtilitiesFamilySurface
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
 if TYPE_CHECKING:
@@ -105,7 +106,7 @@ def _v_no_core_tests_namespace(
                 "file": wrapper_file_name,
                 "line": "<runtime>",
             }
-            for alias_name in FlextUtilitiesBeartypeHelpers.runtime_alias_names(
+            for alias_name in FlextUtilitiesFamilySurface.runtime_alias_names(
                 wrapper_module.__name__.split(".", 1)[0],
             )
             if (alias_value := getattr(wrapper_module, alias_name, None)) is not None
@@ -174,7 +175,7 @@ def _v_wrapper_runtime_origin(
     if wrapper_module is None or wrapper_file_name is None:
         return _NO_VIOLATION
     package_name = wrapper_module.__name__.split(".", 1)[0]
-    wrapper_submodules = FlextUtilitiesBeartypeHelpers.facade_module_names(package_name)
+    wrapper_submodules = FlextUtilitiesFamilySurface.facade_module_names(package_name)
     return next(
         (
             {
@@ -182,7 +183,7 @@ def _v_wrapper_runtime_origin(
                 "line": "<runtime>",
                 "statement": f"from {origin} import {alias_name}",
             }
-            for alias_name in FlextUtilitiesBeartypeHelpers.runtime_alias_names(
+            for alias_name in FlextUtilitiesFamilySurface.runtime_alias_names(
                 package_name,
             )
             if (alias_value := getattr(wrapper_module, alias_name, None)) is not None
