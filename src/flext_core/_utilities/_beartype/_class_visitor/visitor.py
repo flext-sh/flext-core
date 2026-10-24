@@ -9,10 +9,8 @@ from __future__ import annotations
 from flext_core import FlextConfig, c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities._beartype._class_visitor import class_visitor_part_02
-from flext_core._utilities._beartype._class_visitor.class_visitor_part_01 import (
-    NO_VIOLATION,
-)
+from flext_core._utilities._beartype._class_visitor import visitor_checks
+from flext_core._utilities._beartype._class_visitor.visitor_base import NO_VIOLATION
 
 
 def _arg_context(
@@ -96,7 +94,7 @@ def _loose_symbol_payload(
 
 
 class FlextUtilitiesBeartypeClassVisitorPart03(
-    class_visitor_part_02.FlextUtilitiesBeartypeClassVisitorPart02
+    visitor_checks.FlextUtilitiesBeartypeClassVisitorPart02
 ):
     @staticmethod
     def v_loose_symbol(

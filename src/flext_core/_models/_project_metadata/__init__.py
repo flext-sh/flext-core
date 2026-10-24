@@ -13,16 +13,16 @@ from typing import TYPE_CHECKING
 from flext_core import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_01 import (
-        FlextModelsProjectMetadataContract,
-    )
-    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_03 import (
+    from flext_core._models._project_metadata.aggregates import (
         FlextModelsProjectMetadataAggregates,
     )
-    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_04 import (
+    from flext_core._models._project_metadata.contract import (
+        FlextModelsProjectMetadataContract,
+    )
+    from flext_core._models._project_metadata.document import (
         FlextModelsProjectMetadataDocument,
     )
-    from flext_core._models._project_metadata.flextmodelsprojectmetadata_part_05 import (
+    from flext_core._models._project_metadata.pyproject_ingress import (
         FlextModelsPyprojectIngressContract,
     )
 
@@ -38,10 +38,10 @@ __getattr__ = install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextModelsProjectMetadataAggregates": ".flextmodelsprojectmetadata_part_03",
-        "FlextModelsProjectMetadataContract": ".flextmodelsprojectmetadata_part_01",
-        "FlextModelsProjectMetadataDocument": ".flextmodelsprojectmetadata_part_04",
-        "FlextModelsPyprojectIngressContract": ".flextmodelsprojectmetadata_part_05",
+        "FlextModelsProjectMetadataAggregates": ".aggregates",
+        "FlextModelsProjectMetadataContract": ".contract",
+        "FlextModelsProjectMetadataDocument": ".document",
+        "FlextModelsPyprojectIngressContract": ".pyproject_ingress",
     }),
     public_exports=__all__,
 )[0]

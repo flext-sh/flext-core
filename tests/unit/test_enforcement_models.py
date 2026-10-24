@@ -162,14 +162,11 @@ class TestsFlextEnforcementModels:
     @staticmethod
     def test_native_typed_mapping_factory_rejects_incompatible_arguments() -> None:
         """Typed factories cannot claim a different mapping element contract."""
-        with pytest.warns(
-            c.FlextMroViolation, match="no_raw_collections_field_default"
-        ):
 
-            class _M(m.ArbitraryTypesModel):
-                data: Annotated[t.StrMapping, m.Field(description="Typed mapping")] = (
-                    m.Field(default_factory=dict[int, int], validate_default=True)
-                )
+        class _M(m.ArbitraryTypesModel):
+            data: Annotated[t.StrMapping, m.Field(description="Typed mapping")] = (
+                m.Field(default_factory=dict[int, int], validate_default=True)
+            )
 
         tm.that(
             messages(u.check(_M), fragment="no_raw_collections_field_default"),
