@@ -54,9 +54,8 @@ class FlextUtilitiesConfig:
                 The resulting ``t.JsonValue``.
 
             """
-            return FlextUtilitiesTypingAdapterJson.json_value_adapter().validate_python(
-                yaml.safe_load(stream),
-            )
+            adapter = FlextUtilitiesTypingAdapterJson.json_value_adapter()
+            return adapter.validate_python(yaml.safe_load(stream))
 
         @staticmethod
         def safe_dump(
@@ -89,10 +88,9 @@ class FlextUtilitiesConfig:
                 The resulting ``t.JsonValue``.
 
             """
+            adapter = FlextUtilitiesTypingAdapterJson.json_value_adapter()
             with path.open(encoding="utf-8") as fh:
-                return FlextUtilitiesTypingAdapterJson.json_value_adapter().validate_python(
-                    yaml.safe_load(fh),
-                )
+                return adapter.validate_python(yaml.safe_load(fh))
 
         @staticmethod
         def unique_key_load(stream: str) -> FlextTypingBase.JsonValue:
