@@ -34,7 +34,6 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
             frozen=True,
             validate_assignment=True,
             populate_by_name=True,
-            arbitrary_types_allowed=True,
         )
         created_at: Annotated[
             datetime,
@@ -136,7 +135,6 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_return=True,
-            arbitrary_types_allowed=True,
             ser_json_timedelta=c.SERIALIZATION_ISO8601,
             ser_json_bytes=c.SERIALIZATION_BASE64,
             val_json_bytes=c.SERIALIZATION_BASE64,
@@ -165,7 +163,6 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_assignment=True,
-            arbitrary_types_allowed=True,
         )
 
     class NormalizedMutableConfiguredMixin(MutableConfiguredMixin):
