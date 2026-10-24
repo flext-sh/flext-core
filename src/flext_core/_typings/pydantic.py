@@ -167,13 +167,13 @@ class FlextTypesPydantic:
     FailFast = pydantic.FailFast
 
     # Dependency port: a field typed by a ``@runtime_checkable`` Protocol from
-    # ``p``. ``InstanceOf`` validates Python input with ``isinstance`` on
-    # construction and on assignment without enabling ``arbitrary_types_allowed``
-    # for the whole model (pydantic/functional_validators.py:760-817@v2.14.1), and
-    # the port never enters the JSON Schema. Declare the field with
-    # ``m.Field(exclude=True, description=...)``: field-level metadata cannot
-    # live inside a type alias.
-    type Port[P] = pydantic_json_schema.SkipJsonSchema[pydantic.InstanceOf[P]]
+    # ``p``, or by a ``p`` alias over such protocols (``p.RegisterableService`` is
+    # a union alias, so ``InstanceOf[P]`` cannot wrap ``P`` as a whole: it needs
+    # a class). Pydantic validates the value with ``isinstance`` on construction
+    # and on assignment, and the port never enters the JSON Schema. Declare the
+    # field with ``m.Field(exclude=True, description=...)``: field-level metadata
+    # cannot live inside a type alias.
+    type Port[P] = pydantic_json_schema.SkipJsonSchema[P]
 
 
 __all__: list[str] = ["FlextTypesPydantic", "JsonValue"]
