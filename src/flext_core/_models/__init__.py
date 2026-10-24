@@ -183,15 +183,9 @@ install_lazy_exports(
         "FlextModelsEntity": ".entity",
         "FlextModelsErrors": ".errors",
         "FlextModelsExceptionParams": ".exception_params",
-        "FlextModelsExceptionParamsPart01": (
-            "._exception_params.flextmodelsexceptionparams_part_01"
-        ),
-        "FlextModelsExceptionParamsPart02": (
-            "._exception_params.flextmodelsexceptionparams_part_02"
-        ),
-        "FlextModelsExceptionParamsPart03": (
-            "._exception_params.flextmodelsexceptionparams_part_03"
-        ),
+        "FlextModelsExceptionParamsPart01": "._exception_params.base",
+        "FlextModelsExceptionParamsPart02": "._exception_params.service_errors",
+        "FlextModelsExceptionParamsPart03": "._exception_params.operation_errors",
         "FlextModelsHandler": ".handler",
         "FlextModelsNamespace": ".namespace",
         "FlextModelsOptions": ".options",

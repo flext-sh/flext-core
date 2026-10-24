@@ -14,18 +14,11 @@ from typing import Annotated
 
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._exception_params import (
-    flextmodelsexceptionparams_part_01,
-    flextmodelsexceptionparams_part_02,
-)
+from flext_core._models._exception_params import base, service_errors
 
 
-class FlextModelsExceptionParamsPart03(
-    flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart02
-):
-    class OperationErrorParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
-    ):
+class FlextModelsExceptionParamsPart03(service_errors.FlextModelsExceptionParamsPart02):
+    class OperationErrorParams(base.FlextModelsExceptionParamsPart01.ParamsModel):
         """Validated params for OperationError."""
 
         operation: Annotated[
@@ -42,7 +35,7 @@ class FlextModelsExceptionParamsPart03(
         ] = None
 
     class ServiceLookupParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
+        base.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
     ):
         """Validated params for service lookup and narrowing failures."""
 
@@ -56,9 +49,7 @@ class FlextModelsExceptionParamsPart03(
             ),
         ] = None
 
-    class RegistryPluginParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
-    ):
+    class RegistryPluginParams(base.FlextModelsExceptionParamsPart01.ParamsModel):
         """Validated params for registry plugin registration lifecycle."""
 
         category: Annotated[
@@ -89,9 +80,7 @@ class FlextModelsExceptionParamsPart03(
             ),
         ] = None
 
-    class AttributeAccessErrorParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
-    ):
+    class AttributeAccessErrorParams(base.FlextModelsExceptionParamsPart01.ParamsModel):
         """Validated params for AttributeAccessError."""
 
         attribute_name: Annotated[
