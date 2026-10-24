@@ -118,7 +118,6 @@ class FlextModelsHandler:
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
-                arbitrary_types_allowed=True,
                 validate_assignment=True,
                 json_schema_extra={
                     "title": "HandlerExecutionContext",
@@ -209,7 +208,6 @@ class FlextModelsHandler:
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
                 frozen=True,
-                arbitrary_types_allowed=True,
             )
         )
         command: Annotated[

@@ -61,7 +61,7 @@ class FlextModelsService:
                 "Settings source cloned once into the elected container scope."
             ),
         )
-        settings_type: t.SkipJsonSchema[p.SettingsType | None] = (
+        settings_type: t.Port[p.SettingsType] | None = (
             FlextModelsPydantic.Field(
                 default=None,
                 exclude=True,

@@ -27,7 +27,6 @@ class FlextModelsExceptionParamsPart01:
                 extra="forbid",
                 strict=True,
                 validate_assignment=True,
-                arbitrary_types_allowed=True,
                 use_enum_values=True,
             )
         )
@@ -36,7 +35,7 @@ class FlextModelsExceptionParamsPart01:
         """Shared factory options for exception failures."""
 
         error: Annotated[
-            Exception | str | None,
+            t.Port[Exception] | str | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Optional underlying error cause for this failure.",
@@ -61,14 +60,14 @@ class FlextModelsExceptionParamsPart01:
             ),
         ] = c.ErrorCode.UNKNOWN_ERROR
         context: Annotated[
-            t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+            t.MappingKV[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Structured context mapping or dumpable payload.",
             ),
         ] = None
         metadata: Annotated[
-            p.HasModelDump | t.JsonValue | None,
+            t.Port[p.HasModelDump] | t.JsonValue | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Metadata payload or dumpable model for the exception.",
@@ -96,7 +95,7 @@ class FlextModelsExceptionParamsPart01:
             ),
         ] = True
         merged_kwargs: Annotated[
-            t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+            t.MappingKV[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Pre-merged keyword payload forwarded by factories.",

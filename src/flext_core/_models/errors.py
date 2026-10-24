@@ -29,7 +29,6 @@ class FlextModelsErrors:
                 extra="forbid",
                 strict=True,
                 validate_assignment=True,
-                arbitrary_types_allowed=True,
             )
         )
 
@@ -55,7 +54,7 @@ class FlextModelsErrors:
             ),
         ] = None
         exception: Annotated[
-            BaseException | None,
+            t.Port[BaseException] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Underlying exception captured by the failure.",
@@ -70,7 +69,6 @@ class FlextModelsErrors:
                 extra="forbid",
                 strict=True,
                 validate_assignment=True,
-                arbitrary_types_allowed=True,
             )
         )
 

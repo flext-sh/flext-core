@@ -114,7 +114,6 @@ class FlextSettings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
         validate_assignment=True,
-        arbitrary_types_allowed=True,
     )
 
     @staticmethod
