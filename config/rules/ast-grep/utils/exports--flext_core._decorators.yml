@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._decorators
+language: Python
+rule:
+  regex: ^(?:FlextDecorators|FlextDecoratorsBase|FlextDecoratorsCombined|FlextDecoratorsLogging|FlextDecoratorsLoggingPayloads|FlextDecoratorsRailway)$

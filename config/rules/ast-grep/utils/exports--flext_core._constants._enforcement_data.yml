@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._constants._enforcement_data
+language: Python
+rule:
+  regex: ^(?:FlextConstantsEnforcementData|FlextPredicateRule|FlextSmellThresholds)$

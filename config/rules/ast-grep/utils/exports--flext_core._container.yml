@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._container
+language: Python
+rule:
+  regex: ^(?:FlextContainerTestingOps)$

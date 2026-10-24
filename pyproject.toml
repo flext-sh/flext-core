@@ -474,6 +474,7 @@ filterwarnings = [
   "module::flext_core._constants.enforcement.FlextMroViolation",
   "once::pytest.PytestAssertRewriteWarning",
 ]
+flext_fixture_trees_root = "tests/fixtures"
 flext_make_ci_value = "Y"
 flext_make_ci_variable = "CI"
 flext_slow_timeout_seconds = "30"
@@ -496,7 +497,6 @@ markers = [
   "requires_engine: native check engine required by this test",
 ]
 minversion = "8.0"
-pytester_example_dir = "tests/fixtures"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
@@ -618,125 +618,6 @@ msg = "Use cli.render_table from flext_cli."
 [tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
 msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
 
-[tool.ruff.lint.flake8-type-checking]
-runtime-evaluated-base-classes = [
-  "examples._models.ExamplesFlextSharedHandle",
-  "examples._models.ExamplesFlextSharedPerson",
-  "examples._models.ex04._CommandEnvelope",
-  "examples._models.ex04._EventEnvelope",
-  "examples._models.ex04._QueryEnvelope",
-  "examples._models.ex10.Message",
-  "examples.m.Examples.Handle",
-  "examples.m.Examples.Person",
-  "examples.m.Examples.RegistryLookupOptions",
-  "examples.s",
-  "flext_core.FlextSettings",
-  "flext_core._handlers.flexthandlers_part_01.FlextHandlersPart01",
-  "flext_core._handlers.flexthandlers_part_02.FlextHandlersPart02",
-  "flext_core._handlers.flexthandlers_part_03.FlextHandlersPart03",
-  "flext_core._handlers.flexthandlers_part_04.FlextHandlersPart04",
-  "flext_core._handlers.flexthandlers_part_05.FlextHandlersPart05",
-  "flext_core._handlers.flexthandlers_part_06.FlextHandlersPart06",
-  "flext_core._handlers.flexthandlers_part_07.FlextHandlersPart07",
-  "flext_core._models.FlextModelsBase.ArbitraryTypesModel",
-  "flext_core._models.FlextModelsBase.ContractModel",
-  "flext_core._models.FlextModelsBase.FlexibleInternalModel",
-  "flext_core._models.FlextModelsBase.FrozenModel",
-  "flext_core._models.FlextModelsBase.FrozenValueModel",
-  "flext_core._models.FlextModelsBase.ImmutableValueModel",
-  "flext_core._models.FlextModelsBase.ManagedModel",
-  "flext_core._models.FlextModelsBase.RetryConfigurationMixin",
-  "flext_core._models.FlextModelsBase.StrictModel",
-  "flext_core._models.FlextModelsBase.TimestampedModel",
-  "flext_core._models.FlextModelsEntity.Value",
-  "flext_core._models.FlextModelsPydantic.BaseModel",
-  "flext_core._models.FlextModelsPydantic.RootModel",
-  "flext_core._models._base.FlextModelsBasePart01.StrictModel",
-  "flext_core._models._base.flextmodelsbase_part_01.ArbitraryTypesModel",
-  "flext_core._models._base.flextmodelsbase_part_01.DynamicModel",
-  "flext_core._models._base.flextmodelsbase_part_01.EnforcedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.EnumManagedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.FlexibleModel",
-  "flext_core._models._base.flextmodelsbase_part_01.FrozenModel",
-  "flext_core._models._base.flextmodelsbase_part_01.ManagedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.NormalizedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.StrictManagedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.StrictModel",
-  "flext_core._models._base.flextmodelsbase_part_02.ContractModel",
-  "flext_core._models._base.flextmodelsbase_part_02.FlextModelsBasePart02.ArbitraryTypesModel",
-  "flext_core._models._container.flextmodelscontainer_part_01.FlextModelsContainerPart01.RegistrationEnvelope",
-  "flext_core._models._container.flextmodelscontainer_part_01.RegistrationEnvelope",
-  "flext_core._models._enforcement.FlextModelsEnforcementBase.Report",
-  "flext_core._models._enforcement.FlextModelsEnforcementModelBase",
-  "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ResourceIdentityParams",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.ParamsModel",
-  "flext_core._models._project_metadata.contract.FlextModelsProjectMetadataContract",
-  "flext_core._models._project_metadata.pyproject_ingress.FlextModelsPyprojectIngressContract",
-  "flext_core._models.containers._MappingRootBase",
-  "flext_core._models.entity.Entity",
-  "flext_core._models.entity.Value",
-  "flext_core._models.pydantic.FlextModelsPydantic.BaseModel",
-  "flext_core._result.FlextResultBase",
-  "flext_core._result.FlextResultBehavior",
-  "flext_core._result.FlextResultComposed",
-  "flext_core._result.FlextResultComposition",
-  "flext_core._result.FlextResultConstruction",
-  "flext_core._result.FlextResultTransforms",
-  "flext_core._result.FlextResultUnwrap",
-  "flext_core.h",
-  "flext_core.m.ArbitraryTypesModel",
-  "flext_core.m.BaseModel",
-  "flext_core.m.Command",
-  "flext_core.m.ContextState",
-  "flext_core.m.ContractModel",
-  "flext_core.m.DomainEvent",
-  "flext_core.m.Entity",
-  "flext_core.m.Event",
-  "flext_core.m.ManagedModel",
-  "flext_core.m.Query",
-  "flext_core.m.RegistryOptions",
-  "flext_core.m.RegistryServiceState",
-  "flext_core.m.ServiceState",
-  "flext_core.m.Value",
-  "flext_core.s",
-  "flext_core.services.dispatcher.FlextServiceDispatcher",
-  "flext_core.services.registry.FlextServiceRegistry",
-  "flext_core.x",
-  "flext_tests.FlextTestsModels.Tests",
-  "flext_tests.FlextTestsServiceBase",
-  "flext_tests.h",
-  "flext_tests.models.m.BaseModel",
-  "flext_tests.s",
-  "pydantic.BaseModel",
-  "pydantic.RootModel",
-  "pydantic_settings.BaseSettings",
-  "tests._utilities.TestsFlextUtilitiesRailwayServicesMixin.GetUserService",
-  "tests._utilities.dispatch.HandlerService",
-  "tests._utilities.services.ValidatingService",
-  "tests.h",
-  "tests.m.ArbitraryTypesModel",
-  "tests.m.BaseModel",
-  "tests.m.BaseSettings",
-  "tests.m.ContractModel",
-  "tests.m.Entity",
-  "tests.m.ExternalContractModel",
-  "tests.m.FlexibleModel",
-  "tests.m.FrozenValueModel",
-  "tests.m.Tests.HandlerObservations",
-  "tests.m.Tests.PublicPayload",
-  "tests.m.Value",
-  "tests.s",
-  "tests.unit._models.test_pydantic_facade._Item",
-  "tests.unit.test_service_bootstrap.ConcreteTestService",
-  "tests.unit.test_service_operations.OperationService",
-  "tests.unit.test_service_operations.ReadSide",
-  "tests.unit.test_service_operations.WriteSide",
-  "tests.x",
-]
-
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
@@ -768,6 +649,14 @@ section_whitelines = 1
 whitelines = 1
 
 [tool.uv]
+constraint-dependencies = [
+  "pillow>=13.0.0",
+  "certifi>=2026.10.19",
+  "setuptools>=84.1.0",
+  "virtualenv>=21.14.13",
+  "filelock>=4.2.1",
+  "uv>=0.13.4",
+]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = [

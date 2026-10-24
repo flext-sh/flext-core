@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._utilities._enforcement
+language: Python
+rule:
+  regex: ^(?:FlextUtilitiesEnforcementPart02|FlextUtilitiesEnforcementPart03|FlextUtilitiesEnforcementPart04|FlextUtilitiesEnforcementPart05|PREDICATE_BINDINGS)$

@@ -1,0 +1,9 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: generated-module
+language: Python
+rule:
+  has:
+    kind: comment
+    nthChild: 1
+    regex: ^\#\ AUTO\-GENERATED\ FILE\ —\ Regenerate\ with:\ make\ gen$
+  kind: module

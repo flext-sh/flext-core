@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._result
+language: Python
+rule:
+  regex: ^(?:FlextResultBase|FlextResultBehavior|FlextResultComposed|FlextResultComposition|FlextResultConstruction|FlextResultTransforms|FlextResultUnwrap)$

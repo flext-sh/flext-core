@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._models._cqrs
+language: Python
+rule:
+  regex: ^(?:FlextModelsCqrsPart01)$

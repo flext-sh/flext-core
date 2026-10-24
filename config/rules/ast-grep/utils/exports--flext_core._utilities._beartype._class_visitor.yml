@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._utilities._beartype._class_visitor
+language: Python
+rule:
+  regex: ^(?:FlextUtilitiesBeartypeClassVisitorPart01|FlextUtilitiesBeartypeClassVisitorPart02|FlextUtilitiesBeartypeClassVisitorPart03|alias_first_violation)$

@@ -49,8 +49,6 @@ class ExamplesFlextModels(FlextModels):
         ExamplesFlextModelsEx11,
         ExamplesFlextModelsEx12,
         ExamplesFlextModelsEx14,
-        ExamplesFlextModelsErrors,
-        ExamplesFlextModelsOutput,
         ExamplesFlextSharedHandle,
         ExamplesFlextSharedPerson,
         ExamplesFlextModelsErrors.Examples,

@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--examples
+language: Python
+rule:
+  regex: ^(?:ExamplesFlextContext|ExamplesFlextMixins|ExamplesFlextModels|ExamplesFlextShared|c|d|e|h|m|p|r|s|t|u|x)$

@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--tests._constants
+language: Python
+rule:
+  regex: ^(?:TestsFlextConstantsDomain|TestsFlextConstantsEnums|TestsFlextConstantsErrors|TestsFlextConstantsFixtures|TestsFlextConstantsOther|TestsFlextConstantsResult|TestsFlextConstantsServices)$

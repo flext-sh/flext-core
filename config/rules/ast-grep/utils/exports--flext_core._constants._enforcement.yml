@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._constants._enforcement
+language: Python
+rule:
+  regex: ^(?:FlextConstantsEnforcementEnums|FlextConstantsEnforcementFixActions|FlextConstantsEnforcementNamespace|FlextConstantsEnforcementRules|FlextConstantsEnforcementRuntime|FlextConstantsEnforcementSmellData|FlextConstantsEnforcementTargets)$

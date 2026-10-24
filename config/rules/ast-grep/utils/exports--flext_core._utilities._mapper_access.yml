@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._utilities._mapper_access
+language: Python
+rule:
+  regex: ^(?:FlextUtilitiesMapperAccessPart01|FlextUtilitiesMapperAccessPart02)$

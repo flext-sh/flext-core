@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._models._context.__scope
+language: Python
+rule:
+  regex: ^(?:FlextModelsContextScopePart01|FlextModelsContextScopePart02|FlextModelsContextScopePart03)$

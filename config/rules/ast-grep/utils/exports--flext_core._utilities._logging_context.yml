@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._utilities._logging_context
+language: Python
+rule:
+  regex: ^(?:FlextUtilitiesLoggingContextPart01|FlextUtilitiesLoggingContextPart02)$

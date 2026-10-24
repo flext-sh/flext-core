@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--examples._shared
+language: Python
+rule:
+  regex: ^(?:ExamplesFlextShared|ExamplesFlextSharedBase)$

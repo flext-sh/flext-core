@@ -1,0 +1,5 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+id: exports--flext_core._utilities._beartype._helpers
+language: Python
+rule:
+  regex: ^(?:FlextUtilitiesBeartypeHelpersPart01|FlextUtilitiesBeartypeHelpersPart02|FlextUtilitiesBeartypeHelpersPart03)$
