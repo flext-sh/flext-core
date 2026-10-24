@@ -51,7 +51,6 @@ from pydantic import (
     JsonValue,
     SecretBytes,
     SecretStr,
-    TypeAdapter,
     computed_field,
     model_validator,
 )
@@ -114,7 +113,6 @@ class FlextSettings(BaseSettings):
         case_sensitive=False,
         extra="ignore",
         validate_assignment=True,
-        arbitrary_types_allowed=True,
     )
 
     @staticmethod
@@ -761,9 +759,6 @@ class FlextSettings(BaseSettings):
         if number is None or number < logging.DEBUG:
             msg = f"Invalid log level: {self.log_level}"
             raise ValueError(msg)
-        TypeAdapter(
-            type(self).model_fields["logging_profile"].rebuild_annotation()
-        ).validate_python(self.logging_profile, strict=True)
         return self
 
 

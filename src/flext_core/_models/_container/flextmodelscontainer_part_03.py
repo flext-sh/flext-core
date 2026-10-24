@@ -39,12 +39,11 @@ class FlextModelsContainerPart03(
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
                 strict=True,
-                arbitrary_types_allowed=True,
             )
         )
 
         settings: Annotated[
-            FlextProtocolsSettings.Settings | None,
+            FlextTypesPydantic.Port[FlextProtocolsSettings.Settings] | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Config",
@@ -52,7 +51,7 @@ class FlextModelsContainerPart03(
             ),
         ] = None
         context: Annotated[
-            FlextProtocolsContext.Context | None,
+            FlextTypesPydantic.Port[FlextProtocolsContext.Context] | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Context",
@@ -97,18 +96,22 @@ class FlextModelsContainerPart03(
             ),
         ] = None
         user_overrides: (
-            FlextProtocolsBase.Model | FlextTypesServices.UserOverridesMapping | None
+            FlextTypesPydantic.Port[FlextProtocolsBase.Model]
+            | FlextTypesServices.UserOverridesMapping
+            | None
         ) = FlextModelsPydantic.Field(
             default=None,
             title="User Overrides",
             description="User-level configuration overrides applied after defaults.",
             validate_default=True,
         )
-        container_config: FlextProtocolsBase.Model | None = FlextModelsPydantic.Field(
-            default=None,
-            title="Container Config",
-            description="Container configuration model controlling DI behavior.",
-            validate_default=True,
+        container_config: FlextTypesPydantic.Port[FlextProtocolsBase.Model] | None = (
+            FlextModelsPydantic.Field(
+                default=None,
+                title="Container Config",
+                description="Container configuration model controlling DI behavior.",
+                validate_default=True,
+            )
         )
 
 

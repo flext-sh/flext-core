@@ -70,7 +70,12 @@ class FlextModelsBasePart01:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     class ArbitraryTypesModel(ManagedModel):
-        """Base model with arbitrary types support."""
+        """Base model with arbitrary types support.
+
+        Being retired: declare runtime objects as ``t.Port[X]`` fields on a
+        regular preset instead. Consumers migrate repository by repository;
+        flext-core itself no longer depends on the flag.
+        """
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             arbitrary_types_allowed=True,

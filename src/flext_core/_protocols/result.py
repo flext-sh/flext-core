@@ -23,12 +23,14 @@ _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
-    type ModelInput = t.ModelInput[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    type ModelInput = t.ModelInput[
+        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    ]
     type ConfigModelInput = t.ConfigModelInput[
-        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
+        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
     ]
     type MetadataInput = t.MetadataInput[
-        FlextProtocolsResult.HasModelDump[t.MetadataMapping]
+        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
     ]
 
     @runtime_checkable

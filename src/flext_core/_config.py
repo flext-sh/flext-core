@@ -64,7 +64,7 @@ class FlextConfig(BaseSettings):
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
-        extra="allow",
+        extra="forbid",
         env_prefix="FLEXT_CONFIG_",
     )
 

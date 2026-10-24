@@ -49,7 +49,9 @@ class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
         )
         scope_vars: t.MappingKV[
             str,
-            ContextVar[FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None],
+            t.Port[
+                ContextVar[FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None]
+            ],
         ] = FlextModelsPydantic.Field(
             default_factory=lambda: MappingProxyType[
                 str,
