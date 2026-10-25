@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core
-language: Python
-rule:
-  regex: ^(?:FlextBase|FlextBoundLogger|FlextCli|FlextConfig|FlextConstants|FlextConstantsEnforcement|FlextContainer|FlextContext|FlextCore|FlextCoreBeartypeBootstrap|FlextDecorators|FlextDispatcher|FlextExceptions|FlextHandlers|FlextLazy|FlextLazyAttribute|FlextLazyMember|FlextLazyPart01|FlextLazyPart02|FlextMixins|FlextModels|FlextMroViolation|FlextProtocols|FlextRegistry|FlextResult|FlextRuntime|FlextService|FlextSettings|FlextStrictYamlConfigSource|FlextTypes|FlextUtilities|FlextUtilitiesBeartypeConf|FlextUtilitiesBeartypeEngine|FlextUtilitiesEnforcement|FlextUtilitiesFamilySurface|FlextUtilitiesLogging|FlextUtilitiesMapper|FlextUtilitiesRuntimeViolationRegistry|FlextVersion|PydanticBaseSettingsSource|__author__|__author_email__|__description__|__license__|__title__|__url__|__version__|__version_info__|build_lazy_import_map|c|cleanup_submodule_namespace|config|core|d|e|h|install_lazy_exports|lazy|lazy_getattr|lazy_member|m|merge_lazy_imports|normalize_lazy_imports|p|r|resolve_lazy_members|s|settings|t|u|x)$

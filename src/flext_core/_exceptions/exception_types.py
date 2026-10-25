@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 class FlextExceptionsTypes(FlextExceptionsBase):
     """All typed FLEXT exception subclasses."""
 
-    PydanticValidationError: type[m.ValidationError] = m.ValidationError
+    PydanticValidationError: type[t.ValidationError] = m.ValidationError
 
     class ValidationError(FlextExceptionsBase.BaseError):
         """Exception raised for input validation failures."""

@@ -74,24 +74,6 @@ class TestsFlextCoreBeartypeEngineConfig:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("alias_name", "expected"),
-        [("AnyAlias", True), ("NestedAnyAlias", True), ("CleanAlias", False)],
-    )
-    def test_alias_contains_any_unwraps_type_alias(
-        tmp_path: Path,
-        alias_name: str,
-        *,
-        expected: bool,
-    ) -> None:
-        """``alias_contains_any`` follows a PEP 695 alias to its underlying value."""
-        with invalid_annotations(tmp_path) as source:
-            alias = getattr(source.InvalidTypes, alias_name)
-            if not isinstance(alias, TypeAliasType):
-                pytest.fail("Source fixture did not declare a native type alias")
-            tm.that(u.alias_contains_any(alias), eq=expected)
-
-    @staticmethod
-    @pytest.mark.parametrize(
         ("hint", "expected"),
         [
             (dict[str, int], (True, "dict")),

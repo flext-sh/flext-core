@@ -12,29 +12,25 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, override
+from typing import ClassVar
 
 from pydantic import ConfigDict
 
 from flext_core import c
 from flext_core._models import FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesEnforcement
 
 
 class FlextModelsBasePart01:
     """Container for base model classes - Tier 0, 100% standalone."""
 
     class EnforcedModel(FlextModelsPydantic.BaseModel):
-        """Base model that enforces architectural rules on subclasses."""
+        """Root preset of the FLEXT model family: forbidden extras, deferred build."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_CONFIG_FORBID)
-
-        @classmethod
-        @override
-        def __pydantic_on_complete__(cls) -> None:
-            """Enforce resolved field contracts at the native schema boundary."""
-            super().__pydantic_on_complete__()
-            FlextUtilitiesEnforcement.run(cls)
+        # Schemas build lazily on first use (lazy-import law); the fresh-import
+        # gate builds every model so a broken annotation still fails check.
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra=c.EXTRA_CONFIG_FORBID, defer_build=True
+        )
 
     class ManagedModel(EnforcedModel):
         """Shared preset for assignment validation with forbidden extra fields."""

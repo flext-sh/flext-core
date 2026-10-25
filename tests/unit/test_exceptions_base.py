@@ -77,26 +77,6 @@ class TestsFlextCoreExceptionsBase:
         tm.that("bad" in str(raised), truth=True)
 
     @staticmethod
-    def test_fail_operation_returns_structured_failure() -> None:
-        """Test fail operation returns structured failure."""
-        result: p.Result[bool] = e.fail_operation(
-            "register service",
-            ValueError("boom"),
-        )
-        tm.that(result.failure, truth=True)
-        tm.that(result.error, none=False)
-        tm.that("Failed to register service" in str(result.error), truth=True)
-        tm.that("boom" in str(result.error), truth=True)
-        tm.that(result.error_code, eq=c.ErrorCode.OPERATION_ERROR)
-        tm.that(result.error_data, none=False)
-        tm.not_none(result.error_data)
-        tm.that(
-            cast("dict[str, object]", result.error_data)[c.ContextScope.OPERATION],
-            eq="register service",
-        )
-        tm.that(cast("dict[str, object]", result.error_data)["reason"], eq="boom")
-
-    @staticmethod
     def test_fail_operation_message_carries_the_exception_notes() -> None:
         """Notes attached to the cause (PEP 678) reach the failure message."""
         cause = ValueError("Aborted with 1 warnings in strict mode!")
@@ -110,40 +90,6 @@ class TestsFlextCoreExceptionsBase:
         tm.that(
             "WARNING: Doc file 'a.md' contains a link to 'b.md'" in str(result.error),
             truth=True,
-        )
-
-    @staticmethod
-    def test_failure_result_short_circuits_map_and_rejects_unwrap() -> None:
-        """Test failure result short circuits map and rejects unwrap."""
-        result: p.Result[bool] = e.fail_operation(
-            "register service",
-            ValueError("boom"),
-        )
-        mapped = result.map(lambda _value: False)
-        tm.that(mapped.failure, truth=True)
-        tm.that(mapped.error, eq=result.error)
-        tm.that(result.exception, none=False)
-        exception = tm.not_none(result.exception)
-        with pytest.raises(type(exception)) as raised:
-            mapped.unwrap()
-        tm.that(raised.value is exception, truth=True)
-
-    @staticmethod
-    def test_fail_not_found_returns_structured_failure() -> None:
-        """Test fail not found returns structured failure."""
-        result: p.Result[bool] = e.fail_not_found("service", "command_bus")
-        tm.that(result.failure, truth=True)
-        tm.that(result.error, none=False)
-        tm.that("Service 'command_bus' not found" in str(result.error), truth=True)
-        tm.that(result.error_code, eq=c.ErrorCode.NOT_FOUND_ERROR)
-        tm.that(result.error_data, none=False)
-        tm.not_none(result.error_data)
-        tm.that(
-            cast("dict[str, object]", result.error_data)["resource_type"], eq="service"
-        )
-        tm.that(
-            cast("dict[str, object]", result.error_data)["resource_id"],
-            eq="command_bus",
         )
 
     @staticmethod

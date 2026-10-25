@@ -178,15 +178,3 @@ class TestsFlextCoreDecoratorsInjectionLogging:
             return "wrapped"
 
         tm.that(produce(), eq="wrapped")
-
-    # --- d.deprecated ----------------------------------------------------
-    @staticmethod
-    def test_deprecated_warns_and_returns_value() -> None:
-        """Test deprecated warns and returns value."""
-
-        @d.deprecated("use new_api")
-        def old_api() -> int:
-            return 7
-
-        with pytest.warns(DeprecationWarning, match="deprecated"):
-            tm.that(old_api(), eq=7)

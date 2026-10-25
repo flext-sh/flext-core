@@ -81,6 +81,13 @@ FAILURES: t.SequenceOf[
         {c.ContextScope.OPERATION: "resolve service", "reason": "timeout"},
     ),
     (
+        "operation_exception",
+        lambda: e.fail_operation("register service", ValueError("boom")),
+        "register service",
+        c.ErrorCode.OPERATION_ERROR,
+        {c.ContextScope.OPERATION: "register service", "reason": "boom"},
+    ),
+    (
         "not_found",
         lambda: e.fail_not_found("service", "my-service"),
         "my-service",

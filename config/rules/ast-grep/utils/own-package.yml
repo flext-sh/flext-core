@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: own-package
-language: Python
-rule:
-  regex: ^(?:examples|flext_core|scripts|tests)(?:[.\s]|$)

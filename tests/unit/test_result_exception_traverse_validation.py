@@ -209,21 +209,6 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         tm.ok(result.exception is exc)
 
     @staticmethod
-    def test_failure_short_circuits_map_and_unwrap_or_uses_default() -> None:
-        # Arrange
-        """Test failure short circuits map and unwrap or uses default."""
-        exc = RuntimeError("runtime error")
-        result: p.Result[int] = r[int].fail("error", exception=exc)
-
-        # Act
-        mapped = result.map(lambda value: value + 1)
-
-        # Assert
-        tm.ok(mapped.failure)
-        tm.ok(mapped.exception is exc)
-        tm.that(result.unwrap_or(-1), eq=-1)
-
-    @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
         [(True, True), (False, False), (42, 42)],

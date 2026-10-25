@@ -101,20 +101,37 @@ class TestsFlextCoreRegistry:
         )
 
     @staticmethod
-    def test_register_handlers_batch_reports_every_success(
+    @pytest.mark.parametrize("kind", ["handlers", "bindings"])
+    def test_register_batch_reports_every_success(
+        kind: str,
         registry: p.Registry,
     ) -> None:
-        """Test register handlers batch reports every success."""
+        """Handler and binding batches report every success and route each one."""
 
-        @h.handler(command=m.Command)
         def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("first")
 
-        @h.handler(command=m.Tests.RegistryQuery)
         def second(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("second")
 
-        batch = registry.register_handlers((first, second))
+        if kind == "handlers":
+            batch = registry.register_handlers((
+                h.handler(command=m.Command)(first),
+                h.handler(command=m.Tests.RegistryQuery)(second),
+            ))
+            routes = (
+                (m.Command(), "first"),
+                (m.Tests.RegistryQuery(), "second"),
+            )
+        else:
+            batch = registry.register_bindings({
+                "bound-first": first,
+                "bound-second": second,
+            })
+            routes = (
+                (m.Command(command_type="bound-first"), "first"),
+                (m.Command(command_type="bound-second"), "second"),
+            )
 
         tm.that(batch.success, truth=True)
         summary = batch.value
@@ -122,41 +139,8 @@ class TestsFlextCoreRegistry:
         tm.that(summary.failure is False, truth=True)
         tm.that(len(summary.registered), eq=2)
         tm.that(list(summary.errors), eq=[])
-        tm.that(registry.dispatcher.dispatch(m.Command()).value, eq="first")
-        tm.that(
-            registry.dispatcher.dispatch(m.Tests.RegistryQuery()).value, eq="second"
-        )
-
-    @staticmethod
-    def test_register_bindings_batch_reports_every_success(
-        registry: p.Registry,
-    ) -> None:
-        """Test register bindings batch reports every success."""
-
-        def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
-            return r[t.JsonPayload].ok("first")
-
-        def second(_message: p.Routable) -> p.Result[t.JsonPayload]:
-            return r[t.JsonPayload].ok("second")
-
-        batch = registry.register_bindings({
-            "bound-first": first,
-            "bound-second": second,
-        })
-
-        tm.that(batch.success, truth=True)
-        summary = batch.value
-        tm.that(summary.success is True, truth=True)
-        tm.that(len(summary.registered), eq=2)
-        tm.that(list(summary.errors), eq=[])
-        tm.that(
-            registry.dispatcher.dispatch(m.Command(command_type="bound-first")).value,
-            eq="first",
-        )
-        tm.that(
-            registry.dispatcher.dispatch(m.Command(command_type="bound-second")).value,
-            eq="second",
-        )
+        for message, expected in routes:
+            tm.that(registry.dispatcher.dispatch(message).value, eq=expected)
 
     @staticmethod
     def test_register_service_is_idempotent(registry: p.Registry) -> None:
@@ -265,7 +249,7 @@ class TestsFlextCoreRegistry:
     def test_conflicting_batch_does_not_publish_earlier_binding(
         registry: p.Registry,
     ) -> None:
-        """A conflict in the last candidate cannot leave earlier routes registered."""
+        """A conflicting batch fails; publish semantics live in the dispatcher suite."""
 
         def original(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("original")
@@ -283,16 +267,6 @@ class TestsFlextCoreRegistry:
                 "conflicting-batch": replacement,
             }).failure,
             truth=True,
-        )
-        tm.that(
-            registry.dispatcher.dispatch(m.Command(command_type="new-route")).failure,
-            truth=True,
-        )
-        tm.that(
-            registry.dispatcher.dispatch(
-                m.Command(command_type="conflicting-batch")
-            ).value,
-            eq="original",
         )
 
     @staticmethod

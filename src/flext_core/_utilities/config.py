@@ -66,14 +66,18 @@ class FlextUtilitiesConfig:
             allow_unicode: bool = True,
             default_flow_style: bool = False,
         ) -> str:
-            """Serialize a JSON value → YAML string.
+            """Serialize a JSON value → YAML string through the libyaml emitter.
+
+            The read path already parses through libyaml; the emit path uses
+            the same native safe dumper instead of the pure-Python one.
 
             Returns:
                 The resulting ``str``.
 
             """
-            return yaml.safe_dump(
+            return yaml.dump(
                 data,
+                Dumper=yaml.CSafeDumper,
                 sort_keys=sort_keys,
                 indent=indent,
                 allow_unicode=allow_unicode,
@@ -94,25 +98,36 @@ class FlextUtilitiesConfig:
 
         @staticmethod
         def unique_key_load(stream: str) -> FlextTypingBase.JsonValue:
-            """Parse YAML rejecting duplicate mapping keys at every depth.
-
-            Why: duplicate config keys silently overwrite their predecessor at
-            plain ``safe_load`` time, so a config consumer that must treat a
-            duplicated key as an error (one owner per key) needs the parse-time
-            guard. The loader is the same one the settings sources use, so the
-            contract has exactly one implementation and this facade is its only
-            public door. It is a ``yaml.SafeLoader`` subclass — the safe
-            constructor set, no object-deserialization primitives — so the
-            arbitrary-constructor unsafe loader path stays out of this module.
+            """Public door to the settings sources' strict unique-key YAML loader.
 
             Returns:
-                The resulting ``t.JsonValue``.
-
-            Raises ``yaml.YAMLError`` on malformed input or a duplicate
-            mapping key (propagated from the canonical loader).
+                The parsed JSON value.
 
             """
             return FlextStrictYamlConfigSource.unique_key_load(stream)
+
+        @staticmethod
+        def unique_key_load_all(
+            text: str,
+        ) -> p.Result[tuple[FlextTypingBase.JsonValue, ...]]:
+            """Read every YAML document through the strict loader → ``r[...]``.
+
+            The one-way read path: YAML 1.2 scalars, unique keys, libyaml
+            parsing. Formatting-preserving writes keep their round-trip engine.
+
+            Returns:
+                Every document in stream order, or the first parse failure.
+
+            """
+            result = r[tuple[FlextTypingBase.JsonValue, ...]]
+            try:
+                return result.ok(FlextStrictYamlConfigSource.unique_key_load_all(text))
+            except yaml.YAMLError as exc:
+                return result.fail(f"YAML parse error: {exc}", exception=exc)
+            except ValidationError as exc:
+                return result.fail(
+                    f"YAML value is not JSON-compatible: {exc}", exception=exc
+                )
 
         @staticmethod
         def yaml_safe_load(path: Path) -> p.Result[FlextTypingBase.JsonMapping]:
@@ -250,23 +265,15 @@ class FlextUtilitiesConfig:
         base: FlextTypingBase.JsonMapping,
         override: FlextTypingBase.JsonMapping,
     ) -> FlextTypingBase.JsonDict:
-        """Deep-merge ``override`` onto ``base``, returning a new mapping.
+        """Deep-merge ``override`` onto ``base``; ``override`` values replace lists.
 
         Returns:
-            The resulting ``t.JsonDict``.
+            The merged mapping.
 
         """
-        merged: FlextTypingBase.JsonDict = dict(base)
-        for key, value in override.items():
-            current = merged.get(key)
-            if isinstance(current, Mapping) and isinstance(value, Mapping):
-                nested: FlextTypingBase.JsonValue = dict(
-                    FlextUtilitiesConfig.config_merge(current, value),
-                )
-                merged[key] = nested
-            else:
-                merged[key] = value
-        return merged
+        return FlextStrictYamlConfigSource.merge_values(
+            base, override, concatenate_lists=False
+        )
 
     @staticmethod
     def config_env_override(

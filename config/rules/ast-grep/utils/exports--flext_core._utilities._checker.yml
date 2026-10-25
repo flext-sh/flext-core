@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._utilities._checker
-language: Python
-rule:
-  regex: ^(?:FlextUtilitiesCheckerPart01|FlextUtilitiesCheckerPart02|FlextUtilitiesCheckerPart03)$

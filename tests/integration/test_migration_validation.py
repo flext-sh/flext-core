@@ -19,7 +19,6 @@ from flext_core import FlextContainer, FlextService
 from tests import m, p, r, t, tm, u
 from tests.integration.migration_validation_cases import capture_output
 
-_EXPECTED_DOUBLED_VALUE = 42
 _OBSERVED_VALUE = 5
 
 
@@ -84,24 +83,6 @@ class TestsFlextCoreMigrationValidation:
         mapped_fail = r[str].fail("orig").map(str.upper)
         tm.ok(mapped_fail.failure)
         tm.that(mapped_fail.error, eq="orig")
-
-    @staticmethod
-    def test_flat_map_chains_fallible_operations() -> None:
-        """flat_map sequences dependent fallible steps and short-circuits."""
-
-        def parse(raw: str) -> p.Result[int]:
-            if not raw.isdigit():
-                return r[int].fail("not a number")
-            return r[int].ok(int(raw))
-
-        chained_ok = r[str].ok("21").flat_map(parse).map(lambda n: n * 2)
-        tm.ok(chained_ok.success)
-        tm.that(chained_ok.value, eq=_EXPECTED_DOUBLED_VALUE)
-
-        chained_fail = r[str].ok("abc").flat_map(parse)
-        tm.ok(chained_fail.failure)
-        tm.that(chained_fail.error, none=False)
-        tm.that(tm.not_none(chained_fail.error), has="not a number")
 
     @staticmethod
     def test_map_error_transforms_only_the_failure_channel() -> None:

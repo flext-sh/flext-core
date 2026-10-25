@@ -356,6 +356,7 @@ CLAUDE.local.md
 !.sonarcloud.properties
 !.github/workflows/docs.yml
 !.github/workflows/release.yml
+!.github/workflows/release-plan.yml
 !tests/fixtures/
 !tests/fixtures/ci/
 !tests/fixtures/ci/docker/

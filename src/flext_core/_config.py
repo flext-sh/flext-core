@@ -27,12 +27,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import csv
 import inspect
 import os
-from importlib.metadata import Distribution, distribution, distributions
 from importlib.resources import files
-from io import StringIO
 from pathlib import Path
 from threading import RLock
 from typing import ClassVar, Self, override
@@ -61,10 +58,6 @@ class FlextConfig(BaseSettings):
     CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
     CONFIG_DIR_NAME: ClassVar[str] = "config"
     """Packaged resource directory holding the declaring package's YAML files."""
-    DISTRIBUTION_TREES: ClassVar[tuple[str, ...]] = ("config", "templates", "rules")
-    """Root data trees every FLEXT distribution ships as wheel extra metadata."""
-    EXTRA_METADATA_DIR: ClassVar[str] = "extra_metadata"
-    """Dist-info directory where the build backend records the root data trees."""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
@@ -92,92 +85,11 @@ class FlextConfig(BaseSettings):
         return package.replace("_", "-")
 
     @classmethod
-    def _tree_prefix(cls, tree: str) -> tuple[str, str]:
-        """Validate ``tree`` and return the dist-info path parts that hold it.
-
-        Returns:
-            The extra-metadata directory and tree name, in path order.
-
-        Raises:
-            ValueError: If ``tree`` is not a declared distribution tree.
-
-        """
-        if tree not in cls.DISTRIBUTION_TREES:
-            msg = f"undeclared distribution tree: {tree!r}"
-            raise ValueError(msg)
-        return (cls.EXTRA_METADATA_DIR, tree)
-
-    @staticmethod
-    def _shipped_tree(installed: Distribution, prefix: tuple[str, str]) -> Path | None:
-        """Return the dist-info relative root of one shipped tree, if recorded.
-
-        Returns:
-            ``<name>.dist-info/<extra metadata>/<tree>`` when the distribution
-            records at least one file under it, else ``None``.
-
-        """
-        for path in installed.files or ():
-            parts = path.parts
-            if (
-                len(parts) > len(prefix) + 1
-                and parts[0].endswith(".dist-info")
-                and parts[1 : len(prefix) + 1] == prefix
-            ):
-                return Path(parts[0], *prefix)
-        return None
-
-    @classmethod
-    def distribution_tree(cls, distribution_name: str, tree: str) -> Path:
-        """Resolve one root data tree an installed distribution ships.
-
-        The build backend records ``config/``, ``templates/`` and ``rules/`` as
-        dist-info extra metadata in wheel and editable installs alike, so one
-        route serves both and never reads a source checkout.
-
-        Returns:
-            The installed directory of the tree.
-
-        Raises:
-            FileNotFoundError: If the distribution ships no such tree.
-
-        """
-        installed = distribution(distribution_name)
-        root = cls._shipped_tree(installed, cls._tree_prefix(tree))
-        if root is None:
-            msg = f"distribution {distribution_name} ships no {tree} tree"
-            raise FileNotFoundError(msg)
-        return Path(str(installed.locate_file(root)))
-
-    @classmethod
-    def tree_distributions(cls, tree: str) -> tuple[str, ...]:
-        """Name every installed distribution that ships one root data tree.
-
-        Returns:
-            The sorted names of the distributions carrying the tree.
-
-        Raises:
-            RuntimeError: If two installations claim the same distribution name.
-
-        """
-        prefix = cls._tree_prefix(tree)
-        owners: dict[str, str] = {}
-        for installed in distributions():
-            if cls._shipped_tree(installed, prefix) is None:
-                continue
-            name = installed.name
-            location = str(installed.locate_file(""))
-            if owners.setdefault(name, location) != location:
-                msg = f"distribution {name} is installed twice"
-                raise RuntimeError(msg)
-        return tuple(sorted(owners))
-
-    @classmethod
     def _config_dir(cls) -> Path:
         """Resolve the packaged ``config/`` root, independent of the caller's CWD.
 
-        Distribution metadata owns resources recorded separately from Python
-        modules, including force-included data in editable installations.
-        Other resources remain owned by the declaring import package itself.
+        The declaring import package owns its YAML as package data, read through
+        ``importlib.resources`` without enumerating installed distributions.
         Repository overlays are separate explicit consumer inputs, never a
         replacement for a missing packaged default. ``<PACKAGE>_CONFIG_DIR``
         remains the explicit operator relocation.
@@ -185,39 +97,13 @@ class FlextConfig(BaseSettings):
         Returns:
             The resulting ``Path``.
 
-        Raises:
-            RuntimeError: If multiple installed distributions claim the package.
-
         """
-        namespace = cls._package_namespace()
         override = os.environ.get(
-            f"{FlextSettings.app_env_prefix(namespace)}CONFIG_DIR"
+            f"{FlextSettings.app_env_prefix(cls._package_namespace())}CONFIG_DIR"
         )
         if override:
             return Path(override)
         package = cls.__module__.partition(".")[0]
-        resource = Path(package) / cls.CONFIG_DIR_NAME
-        # Repeated sys.path entries may enumerate the same installed owner twice.
-        owners = {
-            (
-                installed.name,
-                installed.version,
-                str(installed.locate_file(resource)),
-            ): installed
-            for installed in distributions()
-            if (record := installed.read_text("RECORD")) is not None
-            and any(
-                row
-                and row[0].startswith(f"{package}/")
-                and Path(row[0]).is_relative_to(resource)
-                for row in csv.reader(StringIO(record))
-            )
-        }
-        if len(owners) > 1:
-            msg = f"multiple installed distributions own config package: {package}"
-            raise RuntimeError(msg)
-        if owners:
-            return Path(str(next(iter(owners.values())).locate_file(resource)))
         return Path(str(files(package) / cls.CONFIG_DIR_NAME))
 
     @classmethod

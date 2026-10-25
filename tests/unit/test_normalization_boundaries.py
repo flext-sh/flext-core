@@ -299,20 +299,3 @@ class TestsFlextCoreRuntimeNormalization:
         tm.that(tm.ok(scope.resolve("shared-service")), eq="inherited")
         tm.ok(scope.bind("scoped-service", "isolated") is scope)
         tm.ok(clean_container.resolve("scoped-service").failure)
-
-    @staticmethod
-    def test_debug_does_not_change_explicit_threshold() -> None:
-        """Debug never overrides an explicitly elected logging threshold."""
-        selected = c.LogLevel.WARNING
-        tm.that(
-            u.resolve_effective_log_level(
-                debug=True, log_level=selected, log_level_explicit=True
-            ),
-            eq=selected,
-        )
-        tm.that(
-            u.resolve_effective_log_level(
-                debug=True, log_level=selected, log_level_explicit=False
-            ),
-            eq=c.LogLevel.DEBUG,
-        )

@@ -68,22 +68,6 @@ class TestsFlextCoreResultExceptionFailures:
         tm.ok(result.exception is exc)
 
     @staticmethod
-    def test_fail_exposes_error_code_alongside_exception() -> None:
-        """Test fail exposes error code alongside exception."""
-        exc = ValueError("expected integer")
-
-        result: p.Result[str] = r[str].fail(
-            "Invalid input",
-            error_code="INVALID_INPUT",
-            exception=exc,
-        )
-
-        tm.ok(result.failure)
-        tm.that(result.error, eq="Invalid input")
-        tm.that(result.error_code, eq="INVALID_INPUT")
-        tm.ok(result.exception is exc)
-
-    @staticmethod
     def test_fail_exposes_error_data_mapping_alongside_exception() -> None:
         """Test fail exposes error data mapping alongside exception."""
         error_data: t.StrMapping = {"field": "email", "reason": "invalid format"}

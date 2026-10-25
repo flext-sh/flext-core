@@ -40,6 +40,7 @@ if TYPE_CHECKING:
     from flext_core.exceptions import FlextExceptions, FlextMroViolation, e
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_member import FlextLazyMember
+    from flext_core.flextlazy_native_export import FlextTypingNativeExport
     from flext_core.flextlazy_part_01 import FlextLazyPart01
     from flext_core.flextlazy_part_02 import FlextLazyPart02
     from flext_core.handlers import FlextHandlers, h
@@ -105,6 +106,7 @@ __all__: tuple[str, ...] = (
     "FlextSettings",
     "FlextStrictYamlConfigSource",
     "FlextTypes",
+    "FlextTypingNativeExport",
     "FlextUtilities",
     "FlextUtilitiesBeartypeConf",
     "FlextUtilitiesBeartypeEngine",
@@ -182,6 +184,7 @@ install_lazy_exports(
         "FlextSettings": "._settings",
         "FlextStrictYamlConfigSource": ".config_sources",
         "FlextTypes": ".typings",
+        "FlextTypingNativeExport": ".flextlazy_native_export",
         "FlextUtilities": ".utilities",
         "FlextUtilitiesBeartypeConf": ".utilities",
         "FlextUtilitiesBeartypeEngine": ".utilities",

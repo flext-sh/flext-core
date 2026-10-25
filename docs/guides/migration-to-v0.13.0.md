@@ -50,7 +50,9 @@ Required actions:
 - replace `handlers.py` with `handler.py`
 - move `FlextLogger` from `loggings.py` to `logger.py`
 - remove public `x` responsibilities
-- narrow `FlextRuntime` to normalization and validation only
+- retire `FlextRuntime` and `_runtime` entirely; use native serialization through
+  `u`, metadata and timestamp field validators through `m`, and allocation and
+  logging behavior at their existing composition owners
 - narrow `FlextContext` to execution context only
 - narrow `d` to the forward decorator set
 - reshape `FlextContainer` around `add_service/add_factory/add_resource`

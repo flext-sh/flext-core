@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--examples._models
-language: Python
-rule:
-  regex: ^(?:ExamplesFlextModelsErrors|ExamplesFlextModelsEx00|ExamplesFlextModelsEx01|ExamplesFlextModelsEx02|ExamplesFlextModelsEx03|ExamplesFlextModelsEx04|ExamplesFlextModelsEx05|ExamplesFlextModelsEx07|ExamplesFlextModelsEx08|ExamplesFlextModelsEx10|ExamplesFlextModelsEx11|ExamplesFlextModelsEx12|ExamplesFlextModelsEx14|ExamplesFlextModelsOutput|ExamplesFlextSharedHandle|ExamplesFlextSharedPerson)$

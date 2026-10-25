@@ -20,7 +20,6 @@ from flext_core._typings import (
     FlextTypesServices,
     FlextTypingBase,
     FlextTypingConfig,
-    FlextTypingNativeExport,
 )
 
 
@@ -31,7 +30,6 @@ class FlextTypes(
     FlextTypesCore,
     FlextTypesAnnotateds,
     FlextTypesLazy,
-    FlextTypingNativeExport,
     FlextTypesServices,
 ):
     """Type system foundation for FLEXT ecosystem.

@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._models._base
-language: Python
-rule:
-  regex: ^(?:FlextModelsBasePart01|FlextModelsBasePart02|FlextModelsBasePart03)$

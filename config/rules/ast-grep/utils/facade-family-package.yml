@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: facade-family-package
-language: Python
-rule:
-  regex: ^(?:examples|flext_core|scripts|tests)\.(?:_constants|_models|_protocols|_typings|_utilities)(?:[.\s]|$)

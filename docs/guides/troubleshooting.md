@@ -50,11 +50,11 @@ make gen
 make fix
 make fmt
 make check
-make test
+make tests
 make gen
 ```
 
-Test diagnosis still runs through `make test`, with the retained Testmon cache. Direct
+Test diagnosis still runs through `make tests`, with the retained Testmon cache. Direct
 or cache-clearing test runs do not count as evidence.
 
 ## Documentation failures
@@ -65,6 +65,15 @@ the header; never patch those projections.
 
 For a docs audit failure, remove the invalid command or test-double example at the
 canonical root source. Do not add an allowlist or weaken the audit.
+
+The generator template defines default lexical rules, and `config/workspace.yaml`
+declares repository-specific audit data. Both render into each repository's
+`docs/docs_config.json`. Placeholder patterns recognize unfinished markers such as
+TODO followed by a colon while ordinary prose remains valid. A dated document that
+records a real machine path may be listed by its exact Markdown path under
+`docs_audit.historical_evidence_files`; a directory prefix does not exempt later
+documents. Add only files whose observed path is necessary to preserve the
+historical record, then run `make gen` and `make docs` to verify the projection.
 
 ## Test failures
 

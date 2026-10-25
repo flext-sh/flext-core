@@ -15,42 +15,11 @@ class TestsFlextContainerResolution:
     """Exercise public service resolution and discovery behavior."""
 
     @staticmethod
-    @pytest.mark.parametrize(
-        "scenario",
-        m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
-        ids=lambda s: s.name,
-    )
-    def test_get_service(
-        scenario: m.Tests.ServiceScenario,
-        clean_container: p.Container,
-    ) -> None:
-        """Test service retrieval using fixtures."""
-        clean_container.bind(scenario.name, scenario.service)
-        result: p.Result[p.RegisterableService] = clean_container.resolve(scenario.name)
-        u.Tests.assert_success(result, expected_value=scenario.service)
-
-    @staticmethod
-    def test_get_nonexistent_service(clean_container: p.Container) -> None:
-        """Test getting non-existent service using fixtures."""
-        result: p.Result[p.RegisterableService] = clean_container.resolve("nonexistent")
-        u.Tests.assert_failure(result, expected_error="not found")
-
-    @staticmethod
-    def test_get_factory_service(clean_container: p.Container) -> None:
-        """Test retrieving service created by factory using fixtures."""
-        factory_result = m.ConfigMap(root={"created": "by_factory"})
-        factory = u.Tests.create_factory(factory_result)
-        clean_container.factory("factory_service", factory)
-        result: p.Result[p.RegisterableService] = clean_container.resolve(
-            "factory_service",
-        )
-        u.Tests.assert_success(result, expected_value=factory_result)
-
-    @staticmethod
     def test_get_factory_called_each_time(clean_container: p.Container) -> None:
-        """Test that factory is called each time get() is invoked using fixtures."""
+        """A factory is lazy at registration and runs on each resolve."""
         factory, get_count = u.Tests.create_counting_factory("service_value")
         clean_container.factory("factory_service", factory)
+        tm.that(get_count(), eq=0, msg="Factory must not run before first resolve")
         result1: p.Result[p.RegisterableService] = clean_container.resolve(
             "factory_service",
         )

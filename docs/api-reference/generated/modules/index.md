@@ -20,6 +20,7 @@ These pages are generated from public modules and their docstrings.
 - [flext_core.exceptions](exceptions.md)
 - [flext_core.flextlazy_attribute](flextlazy_attribute.md)
 - [flext_core.flextlazy_member](flextlazy_member.md)
+- [flext_core.flextlazy_native_export](flextlazy_native_export.md)
 - [flext_core.flextlazy_part_01](flextlazy_part_01.md)
 - [flext_core.flextlazy_part_02](flextlazy_part_02.md)
 - [flext_core.handlers](handlers.md)

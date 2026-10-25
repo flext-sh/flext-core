@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: runtime-package
-language: Python
-rule:
-  regex: ^(?:_yaml|annotated_types|beartype|dotenv|packaging|pydantic|pydantic_core|pydantic_settings|structlog|typing_extensions|typing_inspection|yaml)(?:[.\s]|$)

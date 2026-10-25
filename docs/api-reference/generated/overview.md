@@ -19,14 +19,14 @@
 - Project class: `domain`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
 - Main facades: `FlextBase`, `FlextBoundLogger`, `FlextCli`, `FlextConfig`,
-  `FlextConstants`, `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext` (+31
+  `FlextConstants`, `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext` (+32
   more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `FlextBase`, `FlextBoundLogger`, `FlextCli`, `FlextConfig`,
   `FlextConstants`, `FlextConstantsEnforcement`, `FlextContainer`, `FlextContext`,
-  `FlextCore`, `FlextCoreBeartypeBootstrap` (+41 more)
+  `FlextCore`, `FlextCoreBeartypeBootstrap` (+42 more)
 - Exported module shortcuts: `lazy`
-- Generated module pages: `26`
+- Generated module pages: `27`
 
 ## Next Pages
 

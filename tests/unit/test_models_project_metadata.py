@@ -46,18 +46,18 @@ class TestsFlextModelsProjectMetadata:
         tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
     @staticmethod
-    def test_derive_class_stem_returns_empty_for_empty_project_name() -> None:
-        """Test derive class stem returns empty for empty project name."""
-        tm.that(u.derive_class_stem(""), eq="")
-
-    @staticmethod
     @pytest.mark.parametrize(
         ("slug", "expected"),
         [
+            ("", ""),
             ("data-pipeline-native", "DataPipelineNative"),
             ("flext_ldif", "FlextLdif"),
             ("single", "Single"),
             ("mixed-case_slug", "MixedCaseSlug"),
+            ("acme-widget", "AcmeWidget"),
+            ("acme-api-client", "AcmeApiClient"),
+            ("a-b-c", "ABC"),
+            ("--leading--", "Leading"),
         ],
     )
     def test_derive_class_stem_normalizes_kebab_and_snake(
@@ -66,6 +66,19 @@ class TestsFlextModelsProjectMetadata:
     ) -> None:
         """Test derive class stem normalizes kebab and snake."""
         tm.that(u.derive_class_stem(slug), eq=expected)
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("project_name", "declared_stem"),
+        c.SPECIAL_NAME_OVERRIDES,
+    )
+    def test_derive_class_stem_honours_declared_overrides_case_insensitively(
+        project_name: str,
+        declared_stem: str,
+    ) -> None:
+        """Declared special-name overrides win regardless of input case."""
+        tm.that(u.derive_class_stem(project_name), eq=declared_stem)
+        tm.that(u.derive_class_stem(project_name.upper()), eq=declared_stem)
 
     # ------------------------------------------------------------------
     # ProjectMetadata — derived names, immutability, validation

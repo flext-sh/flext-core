@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._utilities._parser_targets
-language: Python
-rule:
-  regex: ^(?:FlextUtilitiesParserTargetsPart01|FlextUtilitiesParserTargetsPart02)$

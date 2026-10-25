@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._handlers
-language: Python
-rule:
-  regex: ^(?:FlextHandlersPart01|FlextHandlersPart02|FlextHandlersPart03|FlextHandlersPart04|FlextHandlersPart05|FlextHandlersPart06|FlextHandlersPart07)$

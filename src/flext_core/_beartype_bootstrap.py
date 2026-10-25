@@ -9,9 +9,6 @@ from __future__ import annotations
 from importlib import import_module
 from typing import ClassVar
 
-from beartype.claw import beartype_this_package
-
-from flext_core import c
 from flext_core._typings import FlextTypingBase
 
 
@@ -22,38 +19,31 @@ class FlextCoreBeartypeBootstrap:
     _activating: ClassVar[bool] = False
 
     @classmethod
-    def _enforcement_constants(cls) -> c:
-        """Load enforcement constants lazily to avoid package-init cycles.
-
-        The constants module is imported directly (never through the package
-        facade) so this module can be imported during ``flext_core.__init__``
-        before the ``c`` alias is bound.
-
-        Returns:
-            The lazily imported enforcement constants class.
-
-        """
-        module = import_module("flext_core._constants.enforcement")
-        constants_cls: c = module.FlextConstantsEnforcement
-        return constants_cls
-
-    @classmethod
     def activate_package_beartype(cls) -> None:
-        """Install beartype.claw for flext_core exactly once."""
+        """Resolve the flext_core beartype.claw decision exactly once per process.
+
+        The mode is the operational ``FlextSettings.beartype_mode``, read once
+        from the layer-zero settings singleton; the claw is imported and
+        installed only when that mode enables it, so a disabled mode costs
+        nothing on later lazy loads.
+        """
         if cls._activated or cls._activating:
             return
         cls._activating = True
         try:
-            enforcement_constants = cls._enforcement_constants()
-            if (
-                enforcement_constants.BEARTYPE_MODE
-                is enforcement_constants.EnforcementMode.OFF
-            ):
-                return
-            conf_module = import_module("flext_core._utilities.beartype_conf")
-            beartype_this_package(
-                conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf(),
-            )
+            # Layer-zero modules only: the settings and conf modules are
+            # imported directly (never through a facade) because this runs
+            # while flext_core's own lazy exports are still being resolved.
+            settings = import_module("flext_core._settings").FlextSettings
+            mode = settings.fetch_global().beartype_mode
+            if mode != "off":
+                claw = import_module("beartype.claw")
+                conf_module = import_module("flext_core._utilities.beartype_conf")
+                claw.beartype_this_package(
+                    conf=conf_module.FlextUtilitiesBeartypeConf.build_beartype_conf(
+                        mode
+                    ),
+                )
             cls._activated = True
         finally:
             cls._activating = False

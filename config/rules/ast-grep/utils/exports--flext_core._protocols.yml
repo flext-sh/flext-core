@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._protocols
-language: Python
-rule:
-  regex: ^(?:FlextProtocolsBase|FlextProtocolsConfig|FlextProtocolsContainer|FlextProtocolsContainerPart01|FlextProtocolsContainerPart02|FlextProtocolsContainerPart03|FlextProtocolsContext|FlextProtocolsContextPart01|FlextProtocolsContextPart02|FlextProtocolsContextPart03|FlextProtocolsHandler|FlextProtocolsLogging|FlextProtocolsLoggingPart01|FlextProtocolsLoggingPart02|FlextProtocolsLoggingPart03|FlextProtocolsProjectMetadata|FlextProtocolsPydantic|FlextProtocolsRegistry|FlextProtocolsResult|FlextProtocolsService|FlextProtocolsSettings)$

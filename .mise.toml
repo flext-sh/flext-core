@@ -11,7 +11,8 @@
 # `mise install` provisions the declared self entry and tools.
 # Later execution resolves that entry through native Mise. Python dependency
 # declarations remain owned by pyproject.toml. Tools are declared `latest`;
-# only `make upg` bumps them (`mise lock --bump`) and writes the committed
+# only `make upg` bumps them: native `mise lock --bump --dry-run --json` names
+# the tools whose version changed, and only those are locked into the committed
 # mise.lock. Setup always bootstraps: `mise install` honors every locked entry
 # and records any entry the lock is missing, so lock drift never blocks setup.
 
@@ -53,4 +54,5 @@ python = "3.13"
 "github:qltysh/qlty" = { version = "latest" }
 "github:kucherenko/jscpd" = { version = "latest" }
 "github:microsoft/waza" = { version = "latest", version_prefix = "v" }
+"aqua:j178/prek" = "latest"
 # End SECTION: tools

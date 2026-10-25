@@ -3,7 +3,9 @@
 repos:
   - repo: local
     hooks:
-    # Each hook invokes its declared public operation once.
+    # Each hook invokes its declared public operation once. The commit row
+    # passes make.ci.pre_commit_value, so check runs only the fast
+    # commit-stage gates; pre-push rows run their complete declared verbs.
 
 
 
@@ -11,7 +13,7 @@ repos:
         name: make check
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; CI=Y make check'
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; CI=C make check'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]

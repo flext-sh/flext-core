@@ -72,7 +72,7 @@ class TestsFlextCoreModels:
         with pytest.raises(m.ValidationError):
             self._SampleValue.model_validate({"x": "not-an-int", "y": "a"})
 
-    # ----- Entity: identity-based semantics ----------------------------------
+    # ----- Entity: value equality, explicit identity ---------------------------
 
     def test_entities_receive_distinct_generated_identities(self) -> None:
         """Test entities receive distinct generated identities."""
@@ -81,20 +81,20 @@ class TestsFlextCoreModels:
 
         tm.that(first.unique_id, ne=second.unique_id)
 
-    def test_entity_equality_is_identity_based(self) -> None:
-        """Test entity equality is identity based."""
+    def test_entity_equality_is_value_based(self) -> None:
+        """Test entity equality compares field values, identity included."""
         first = self._SampleEntity(name="same")
-        same_reference = first
         second = self._SampleEntity(name="same")
 
-        tm.that(same_reference, eq=first)
+        tm.that(first, eq=first.model_copy())
         tm.that(first, ne=second)
 
-    def test_entity_hash_is_stable_for_identity(self) -> None:
-        """Test entity hash is stable for identity."""
+    def test_mutable_entity_is_not_hashable(self) -> None:
+        """Test a mutable entity is not hashable."""
         entity = self._SampleEntity(name="a")
 
-        tm.that(hash(entity), eq=hash(entity))
+        with pytest.raises(TypeError):
+            hash(entity)
 
     def test_entity_not_equal_to_non_entity_object(self) -> None:
         """Test entity not equal to non entity object."""

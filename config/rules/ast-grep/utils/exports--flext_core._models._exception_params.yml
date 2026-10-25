@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._models._exception_params
-language: Python
-rule:
-  regex: ^(?:FlextModelsExceptionParamsPart01|FlextModelsExceptionParamsPart02|FlextModelsExceptionParamsPart03)$

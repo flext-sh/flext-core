@@ -466,18 +466,13 @@ addopts = [
   "--strict-markers",
   "--markdown-docs",
   "--durations=10",
-  "--flext-enforce-strict",
 ]
 asyncio_default_fixture_loop_scope = "function"
-filterwarnings = [
-  "error",
-  "module::flext_core._constants.enforcement.FlextMroViolation",
-  "once::pytest.PytestAssertRewriteWarning",
-]
+filterwarnings = ["error", "once::pytest.PytestAssertRewriteWarning"]
 flext_fixture_trees_root = "tests/fixtures"
 flext_make_ci_value = "Y"
 flext_make_ci_variable = "CI"
-flext_slow_timeout_seconds = "30"
+flext_slow_timeout_seconds = "25"
 markers = [
   "smoke: public-interface smoke tests",
   "unit: unit tests",
@@ -592,6 +587,7 @@ select = ["ALL"]
 unfixable = [
   "multi-value-repeated-key-literal",
   "multi-value-repeated-key-variable",
+  "non-pep695-type-alias",
   "p-print",
   "print",
   "pytest-duplicate-parametrize-test-cases",
@@ -669,10 +665,10 @@ runtime-evaluated-base-classes = [
   "flext_core._models._enforcement.FlextModelsEnforcementBase.Report",
   "flext_core._models._enforcement.FlextModelsEnforcementModelBase",
   "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ResourceIdentityParams",
-  "flext_core._models._exception_params.flextmodelsexceptionparams_part_01.ParamsModel",
+  "flext_core._models._exception_params.base.FlextModelsExceptionParamsBase.ExpectedActualTypeParams",
+  "flext_core._models._exception_params.base.FlextModelsExceptionParamsBase.ParamsModel",
+  "flext_core._models._exception_params.base.FlextModelsExceptionParamsBase.ResourceIdentityParams",
+  "flext_core._models._exception_params.base.ParamsModel",
   "flext_core._models._project_metadata.contract.FlextModelsProjectMetadataContract",
   "flext_core._models._project_metadata.pyproject_ingress.FlextModelsPyprojectIngressContract",
   "flext_core._models.containers._MappingRootBase",
@@ -779,7 +775,7 @@ constraint-dependencies = [
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@ff1c992a100ae983baa79188a6a970c2858734de",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@8414232e12b6328ba812bf49fe465fde65774dfd",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",

@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._exceptions._base
-language: Python
-rule:
-  regex: ^(?:FlextBaseErrorMetadataMixin|FlextBaseErrorStateMixin|FlextExceptionsBasePart03)$

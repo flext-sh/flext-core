@@ -30,6 +30,36 @@ class TestsFlextCoreContainerTruthful:
         _ = FlextContainer.shared(auto_register_factories=True)
 
     @staticmethod
+    def _caller_in(module: types.ModuleType) -> types.FunctionType:
+        """Rebuild the auto-registration caller so it runs inside ``module``.
+
+        Returns:
+            The resulting ``types.FunctionType``.
+
+        """
+        module.__dict__["FlextContainer"] = FlextContainer
+        return types.FunctionType(
+            TestsFlextCoreContainerTruthful._shared_with_auto_registration.__code__,
+            module.__dict__,
+        )
+
+    @staticmethod
+    def _register(
+        container: p.Container,
+        kind: str,
+        name: str,
+        value: str,
+    ) -> None:
+        """Register ``value`` under ``name`` through the public ``kind`` write."""
+        factory = u.Tests.create_factory(value)
+        if kind == "bind":
+            _ = container.bind(name, value)
+        elif kind == "factory":
+            _ = container.factory(name, factory)
+        else:
+            _ = container.resource(name, factory)
+
+    @staticmethod
     @pytest.mark.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
     def test_public_writes_reject_reserved_names(
         name: str,
@@ -48,19 +78,24 @@ class TestsFlextCoreContainerTruthful:
         tm.fail(clean_container.has(name))
 
     @staticmethod
+    @pytest.mark.parametrize("second", ["bind", "factory", "resource"])
+    @pytest.mark.parametrize("first", ["bind", "factory", "resource"])
     def test_duplicate_is_rejected_across_registration_kinds(
+        first: str,
+        second: str,
         clean_container: p.Container,
     ) -> None:
-        """A name bound as a service cannot be reused by a factory or resource."""
-        factory = u.Tests.create_factory("other")
-        _ = clean_container.bind("shared_name", "service")
+        """A registered name cannot be reused by any kind; the first stays."""
+        TestsFlextCoreContainerTruthful._register(
+            clean_container, first, "shared_name", "first"
+        )
 
         with pytest.raises(e.ValidationError, match="shared_name"):
-            _ = clean_container.factory("shared_name", factory)
-        with pytest.raises(e.ValidationError, match="shared_name"):
-            _ = clean_container.resource("shared_name", factory)
+            TestsFlextCoreContainerTruthful._register(
+                clean_container, second, "shared_name", "second"
+            )
 
-        tm.ok(clean_container.resolve("shared_name"), eq="service")
+        tm.ok(clean_container.resolve("shared_name"), eq="first")
 
     @staticmethod
     def test_resource_empty_name_raises(clean_container: p.Container) -> None:
@@ -209,10 +244,7 @@ class TestsFlextCoreContainerTruthful:
         clean_container: p.Container,
     ) -> None:
         """A caller module absent from ``sys.modules`` is never skipped."""
-        caller = types.FunctionType(
-            self._shared_with_auto_registration.__code__,
-            {"__name__": "tests_unimported_caller", "FlextContainer": FlextContainer},
-        )
+        caller = self._caller_in(types.ModuleType("tests_unimported_caller"))
 
         with pytest.raises(e.ValidationError, match="caller module"):
             caller()
@@ -230,11 +262,8 @@ class TestsFlextCoreContainerTruthful:
         def build() -> t.JsonValue:
             return "made-value"
 
-        module.__dict__.update(build=build, FlextContainer=FlextContainer)
-        caller = types.FunctionType(
-            self._shared_with_auto_registration.__code__,
-            module.__dict__,
-        )
+        module.__dict__["build"] = build
+        caller = self._caller_in(module)
         sys.modules[module.__name__] = module
         try:
             caller()

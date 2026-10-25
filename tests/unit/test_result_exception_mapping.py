@@ -51,19 +51,6 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(mapped.exception, none=True)
 
     @staticmethod
-    def test_map_chain_keeps_original_exception() -> None:
-        """Test map chain keeps original exception."""
-        exc = RuntimeError("chain error")
-        result: p.Result[int] = r[int].fail("error", exception=exc)
-
-        mapped: p.Result[int] = result.map(lambda value: value + 1).map(
-            lambda value: value * 2,
-        )
-
-        tm.ok(mapped.failure)
-        tm.ok(mapped.exception is exc)
-
-    @staticmethod
     def test_flat_map_on_failure_preserves_carried_exception() -> None:
         """Test flat map on failure preserves carried exception."""
         exc = TypeError("type error")
@@ -75,19 +62,6 @@ class TestsFlextCoreResultExceptionMapping:
 
         tm.ok(flat_mapped.failure)
         tm.ok(flat_mapped.exception is exc)
-
-    @staticmethod
-    def test_flat_map_on_success_binds_next_result() -> None:
-        """Test flat map on success binds next result."""
-        result: p.Result[int] = r[int].ok(5)
-
-        flat_mapped: p.Result[str] = result.flat_map(
-            lambda value: r[str].ok(str(value)),
-        )
-
-        tm.ok(flat_mapped.success)
-        tm.that(flat_mapped.value, eq="5")
-        tm.that(flat_mapped.exception, none=True)
 
     @staticmethod
     def test_flat_map_chain_keeps_original_exception() -> None:

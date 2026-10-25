@@ -35,6 +35,7 @@ if TYPE_CHECKING:
         FlextConstantsErrorsValidationExceptions,
     )
     from flext_core._constants.base import FlextConstantsBase
+    from flext_core._constants.beartype import FlextConstantsBeartype
     from flext_core._constants.config import FlextConstantsConfig
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.enforcement import (
@@ -60,6 +61,7 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "FlextConstantsBase",
+    "FlextConstantsBeartype",
     "FlextConstantsConfig",
     "FlextConstantsCqrs",
     "FlextConstantsEnforcement",
@@ -101,6 +103,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextConstantsBase": ".base",
+        "FlextConstantsBeartype": ".beartype",
         "FlextConstantsConfig": ".config",
         "FlextConstantsCqrs": ".cqrs",
         "FlextConstantsEnforcement": ".enforcement",

@@ -24,13 +24,20 @@ root.
 
 Read, in order:
 
-1. the workspace root `AGENTS.md`;
-2. the branch-matched `flext-law` skill;
+1. the universal authority named by the
+   [exact context router](https://github.com/flext-sh/flext/blob/0.12.0-dev/.agents/skills/flext-context-routing/SKILL.md);
+2. the [workspace root law](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md) and exact local
+   [FLEXT law](https://github.com/flext-sh/flext/blob/0.12.0-dev/.agents/skills/flext-law/SKILL.md);
 3. the nearest package `AGENTS.md`;
 4. the active Bead and its current evidence.
 
 Confirm the package's canonical config, settings, public API, and owned `c`, `t`, `p`,
 `m`, and `u` surfaces before adding or moving a symbol.
+
+Record the engineering conformance review
+before implementation: existing owner/helper reuse, domain and public namespace,
+MRO order, declaration/behavior separation, explicit DI, inward dependencies,
+complete consumer cutover, and runtime/fixed-point evidence.
 
 ## Prepare and discover
 
@@ -49,17 +56,20 @@ make gen
 make fix
 make fmt
 make check
-make test
+make tests
 make gen
 ```
 
-Tests run only through the retained Testmon cache. Warnings, skips, empty collection,
-missing tools, and suppressed failures are red.
+Tests run only through the retained Testmon cache. Apply the root
+[connectivity prerequisite contract](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md#production-readiness-and-connectivity-tests):
+availability skips are unmet prerequisites, not successful runtime validation.
+Warnings, empty collection, missing tools, and suppressed failures remain explicit.
 
 ## Change safely
 
 - Use semantic refactoring automation for hierarchy discovery and rewiring.
-- Put generic reusable behavior in canonical `c`, `t`, `p`, `m`, or `u` ownership.
+- Place declarations at their canonical `c`, `t`, `p`, or `m` owner; reusable behavior
+  belongs in `u`, bases, or services under the linked FLEXT responsibility map.
 - Exercise only public facades with `tm`, the unified `conftest.py`, and typed shared
   fixtures.
 - Do not use mocks, fakes, stubs, patching, monkeypatch mutation, private construction,

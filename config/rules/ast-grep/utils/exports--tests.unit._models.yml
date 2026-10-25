@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--tests.unit._models
-language: Python
-rule:
-  regex: \b\B

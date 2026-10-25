@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._models._project_metadata
-language: Python
-rule:
-  regex: ^(?:FlextModelsProjectMetadataAggregates|FlextModelsProjectMetadataContract|FlextModelsProjectMetadataDocument|FlextModelsPyprojectIngressContract)$

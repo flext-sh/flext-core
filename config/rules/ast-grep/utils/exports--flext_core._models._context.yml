@@ -1,5 +1,0 @@
-# AUTO-GENERATED FILE — Regenerate with: make gen
-id: exports--flext_core._models._context
-language: Python
-rule:
-  regex: ^(?:FlextModelsContextData|FlextModelsContextExport|FlextModelsContextMetadata|FlextModelsContextScope|FlextModelsContextScopePart01|FlextModelsContextScopePart02|FlextModelsContextScopePart03|FlextModelsContextTokens)$

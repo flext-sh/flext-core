@@ -18,15 +18,15 @@ import pytest
 from tests import c, d, e, r, tm
 
 
-@d.timeout(timeout_seconds=0.005)
-def slow_operation() -> str:
-    """Return after exceeding the configured timeout to exercise the boundary."""
-    time.sleep(0.05)
-    return "should_not_reach"
-
-
 class TestsFlextCoreDecoratorsRailwayRetry:
     """Public-contract behavior of the railway/retry/timeout decorators."""
+
+    @staticmethod
+    @d.timeout(timeout_seconds=0.005)
+    def slow_operation() -> str:
+        """Return after exceeding the configured timeout to exercise the boundary."""
+        time.sleep(0.05)
+        return "should_not_reach"
 
     # ------------------------------------------------------------------ railway
     @staticmethod
@@ -47,14 +47,25 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         tm.that(result.unwrap(), eq="success")
 
     @staticmethod
-    def test_railway_converts_raised_exception_into_failure_result() -> None:
+    @pytest.mark.parametrize(
+        ("raised", "message"),
+        [
+            (ValueError("bad value"), "bad value"),
+            (KeyError("missing"), "missing"),
+            (TypeError("wrong type"), "wrong type"),
+            (RuntimeError("boom"), "boom"),
+        ],
+    )
+    def test_railway_converts_raised_exception_into_failure_result(
+        raised: Exception,
+        message: str,
+    ) -> None:
         # Arrange
         """Test railway converts raised exception into failure result."""
 
-        @d.railway()
+        @d.railway(error_code="CUSTOM_CODE")
         def failing_operation() -> str:
-            error_msg = "Operation failed"
-            raise ValueError(error_msg)
+            raise raised
 
         # Act
         result = failing_operation()
@@ -62,10 +73,11 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         # Assert
         tm.that(isinstance(result, r), truth=True)
         tm.that(result.failure is True, truth=True)
+        tm.that(result.error_code, eq="CUSTOM_CODE")
         tm.that(result.error, none=False)
-        tm.that("Operation failed" in str(result.error), truth=True)
+        tm.that(message in str(result.error), truth=True)
         tm.that("failing_operation" in str(result.error), truth=True)
-        tm.that("ValueError" in str(result.error), truth=True)
+        tm.that(type(raised).__name__ in str(result.error), truth=True)
 
     @staticmethod
     @pytest.mark.parametrize(
@@ -201,12 +213,40 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         tm.that(value, eq="completed")
 
     @staticmethod
+    def test_timeout_reraises_original_exception_when_fast() -> None:
+        # Arrange
+        """Test timeout re-raises the original exception raised within budget."""
+
+        @d.timeout(timeout_seconds=2.0)
+        def fails_fast() -> None:
+            msg = "fast-fail"
+            raise ValueError(msg)
+
+        # Act / Assert
+        with pytest.raises(ValueError, match="fast-fail"):
+            fails_fast()
+
+    @staticmethod
+    def test_timeout_reraises_existing_timeout_error() -> None:
+        # Arrange
+        """Test timeout re-raises an already raised FlextTimeoutError."""
+
+        @d.timeout(timeout_seconds=1.0)
+        def raises_timeout() -> None:
+            msg = "already-timeout"
+            raise e.FlextTimeoutError(msg)
+
+        # Act / Assert
+        with pytest.raises(e.FlextTimeoutError, match="already-timeout"):
+            raises_timeout()
+
+    @staticmethod
     def test_timeout_raises_timeout_error_when_duration_exceeded() -> None:
         # Arrange
         """Test timeout raises timeout error when duration exceeded."""
         # Act / Assert
         with pytest.raises(e.FlextTimeoutError) as info:
-            slow_operation()
+            TestsFlextCoreDecoratorsRailwayRetry.slow_operation()
         tm.that(info.value.operation, eq="slow_operation")
 
     @staticmethod
@@ -215,5 +255,5 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         """Test timeout uses default error code when none provided."""
         # Act / Assert
         with pytest.raises(e.FlextTimeoutError) as info:
-            slow_operation()
+            TestsFlextCoreDecoratorsRailwayRetry.slow_operation()
         tm.that(info.value.error_code, eq=c.ErrorCode.TIMEOUT_ERROR.value)

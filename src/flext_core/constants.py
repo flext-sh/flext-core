@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from flext_core._constants import (
     FlextConstantsBase,
+    FlextConstantsBeartype,
     FlextConstantsConfig,
     FlextConstantsCqrs,
     FlextConstantsEnforcement,
@@ -32,6 +33,7 @@ from flext_core._constants import (
 
 class FlextConstants(
     FlextConstantsBase,
+    FlextConstantsBeartype,
     FlextConstantsConfig,
     FlextConstantsCqrs,
     FlextConstantsEnforcement,
