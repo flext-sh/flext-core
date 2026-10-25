@@ -30,7 +30,7 @@ from __future__ import annotations
 import csv
 import inspect
 import os
-from importlib.metadata import distributions
+from importlib.metadata import Distribution, distribution, distributions
 from importlib.resources import files
 from io import StringIO
 from pathlib import Path
@@ -61,6 +61,10 @@ class FlextConfig(BaseSettings):
     CONFIG_FILENAMES: ClassVar[tuple[str, ...]] = ()
     CONFIG_DIR_NAME: ClassVar[str] = "config"
     """Packaged resource directory holding the declaring package's YAML files."""
+    DISTRIBUTION_TREES: ClassVar[tuple[str, ...]] = ("config", "templates", "rules")
+    """Root data trees every FLEXT distribution ships as wheel extra metadata."""
+    EXTRA_METADATA_DIR: ClassVar[str] = "extra_metadata"
+    """Dist-info directory where the build backend records the root data trees."""
 
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         frozen=True,
@@ -86,6 +90,86 @@ class FlextConfig(BaseSettings):
         """
         package = cls.__module__.split(".", 1)[0]
         return package.replace("_", "-")
+
+    @classmethod
+    def _tree_prefix(cls, tree: str) -> tuple[str, str]:
+        """Validate ``tree`` and return the dist-info path parts that hold it.
+
+        Returns:
+            The extra-metadata directory and tree name, in path order.
+
+        Raises:
+            ValueError: If ``tree`` is not a declared distribution tree.
+
+        """
+        if tree not in cls.DISTRIBUTION_TREES:
+            msg = f"undeclared distribution tree: {tree!r}"
+            raise ValueError(msg)
+        return (cls.EXTRA_METADATA_DIR, tree)
+
+    @staticmethod
+    def _shipped_tree(installed: Distribution, prefix: tuple[str, str]) -> Path | None:
+        """Return the dist-info relative root of one shipped tree, if recorded.
+
+        Returns:
+            ``<name>.dist-info/<extra metadata>/<tree>`` when the distribution
+            records at least one file under it, else ``None``.
+
+        """
+        for path in installed.files or ():
+            parts = path.parts
+            if (
+                len(parts) > len(prefix) + 1
+                and parts[0].endswith(".dist-info")
+                and parts[1 : len(prefix) + 1] == prefix
+            ):
+                return Path(parts[0], *prefix)
+        return None
+
+    @classmethod
+    def distribution_tree(cls, distribution_name: str, tree: str) -> Path:
+        """Resolve one root data tree an installed distribution ships.
+
+        The build backend records ``config/``, ``templates/`` and ``rules/`` as
+        dist-info extra metadata in wheel and editable installs alike, so one
+        route serves both and never reads a source checkout.
+
+        Returns:
+            The installed directory of the tree.
+
+        Raises:
+            FileNotFoundError: If the distribution ships no such tree.
+
+        """
+        installed = distribution(distribution_name)
+        root = cls._shipped_tree(installed, cls._tree_prefix(tree))
+        if root is None:
+            msg = f"distribution {distribution_name} ships no {tree} tree"
+            raise FileNotFoundError(msg)
+        return Path(str(installed.locate_file(root)))
+
+    @classmethod
+    def tree_distributions(cls, tree: str) -> tuple[str, ...]:
+        """Name every installed distribution that ships one root data tree.
+
+        Returns:
+            The sorted names of the distributions carrying the tree.
+
+        Raises:
+            RuntimeError: If two installations claim the same distribution name.
+
+        """
+        prefix = cls._tree_prefix(tree)
+        owners: dict[str, str] = {}
+        for installed in distributions():
+            if cls._shipped_tree(installed, prefix) is None:
+                continue
+            name = installed.name
+            location = str(installed.locate_file(""))
+            if owners.setdefault(name, location) != location:
+                msg = f"distribution {name} is installed twice"
+                raise RuntimeError(msg)
+        return tuple(sorted(owners))
 
     @classmethod
     def _config_dir(cls) -> Path:
