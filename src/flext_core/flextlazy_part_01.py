@@ -14,7 +14,7 @@ from importlib.util import resolve_name
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from pydantic import RootModel, ValidationError
+from pydantic import RootModel
 
 if TYPE_CHECKING:
     from types import FrameType
@@ -101,15 +101,10 @@ class FlextLazyPart01:
 
         # The entry shape is validated with pydantic's typed containers. This
         # bootstrap precedes the models facade it installs, so it binds only
-        # ``RootModel``/``ValidationError`` here (never a model base that would
-        # cross the facade boundary) and lets the native validator parse once.
-        try:
-            validated = (
-                RootModel[dict[str, str | tuple[str, str]]].model_validate(raw).root
-            )
-        except ValidationError as exc:
-            msg = f"module {module_path!r} has no valid _LAZY_IMPORTS mapping"
-            raise TypeError(msg) from exc
+        # ``RootModel`` here (never a model base that would cross the facade
+        # boundary) and lets the native validator parse once; its
+        # ValidationError escapes unchanged.
+        validated = RootModel[dict[str, str | tuple[str, str]]].model_validate(raw).root
 
         out: t.MutableMappingKV[str, str | tuple[str, str]] = {}
         for name, entry in validated.items():
