@@ -122,6 +122,26 @@ class FlextConstantsErrorsRuntimeSettings:
         "{service} (module {module}) declares no operation. Fix: declare a "
         "public method below FlextService that returns p.Result."
     )
+    ERR_SERVICE_NOT_A_SERVICE: Final[str] = (
+        "{service} (module {module}) is not a service: no class of its MRO "
+        "declares the service members {members}. Fix: derive it from FlextService."
+    )
+    ERR_SERVICE_OPERATION_INPUTLESS_COMMAND: Final[str] = (
+        "takes no request and cannot declare a command model. Fix: remove the "
+        "command from its handler metadata or accept a request Protocol."
+    )
+    ERR_SERVICE_OPERATION_METADATA: Final[str] = (
+        "takes a request but declares no handler metadata. Fix: declare "
+        "h.handler(command=m.Request)."
+    )
+    ERR_SERVICE_OPERATION_COMMAND_MODEL: Final[str] = (
+        "declares a handler command that is not a Pydantic request model. Fix: "
+        "declare h.handler(command=m.Request) with an m.* request model."
+    )
+    ERR_SERVICE_OPERATION_PROTOCOL: Final[str] = (
+        "takes a request model that does not satisfy its Protocol members "
+        "{missing}. Fix: declare those members on the request model."
+    )
 
     # --- Lazy loading ---
     ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE: Final[str] = (

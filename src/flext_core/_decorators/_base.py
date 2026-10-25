@@ -127,6 +127,10 @@ class FlextDecoratorsBase:
     ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
         """Inject dependencies from the configured FLEXT container.
 
+        A keyword the caller omits is resolved from the container; an
+        unresolvable dependency raises the container's failure instead of
+        silently leaving the parameter default in place.
+
         Returns:
             The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
                 TResult]]``.
@@ -141,9 +145,7 @@ class FlextDecoratorsBase:
                 container = cls._container_type.shared()
                 for name, service_key in dependencies.items():
                     if name not in kwargs:
-                        result = container.resolve(service_key)
-                        if result.success:
-                            kwargs[name] = result.value
+                        kwargs[name] = container.resolve(service_key).unwrap()
                 return func(*args, **kwargs)
 
             return wrapper

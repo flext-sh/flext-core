@@ -55,17 +55,20 @@ class TestsFlextCoreDecorators:
         tm.that(injected_fn(), eq="dep-value")
 
     @staticmethod
-    def test_inject_falls_back_when_binding_missing(
+    def test_inject_fails_loud_when_binding_missing(
         clean_container: p.Container,
     ) -> None:
-        """Test inject falls back when binding missing."""
+        """A missing binding raises the container failure, never the default."""
         _ = clean_container
 
         @d.inject(dep="missing.key")
-        def fn(*, dep: str = "default-value") -> str:
+        def fn(*, dep: str = "unused-default") -> str:
             return dep
 
-        tm.that(fn(), eq="default-value")
+        with pytest.raises(RuntimeError) as raised:
+            fn()
+
+        tm.that(str(raised.value), has="'missing.key'")
 
     @staticmethod
     def test_timeout_raises_when_call_exceeds_limit() -> None:
