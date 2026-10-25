@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Hashable, MutableSequence
-from typing import Annotated, override
+from typing import Annotated, Self, override
 
 from pydantic import Field
 
@@ -87,15 +87,17 @@ class FlextModelsEntity:
             """
             return FlextUtilitiesDomain.hash_entity_by_id(self)
 
-        @override
-        def model_post_init(
-            self,
-            __context: t.ScalarMapping | None,
-            /,
-        ) -> None:
-            """Post-initialization hook to set updated_at timestamp when absent."""
+        @FlextModelsPydantic.model_validator(mode="after")
+        def stamp_updated_at(self) -> Self:
+            """Stamp ``updated_at`` with the current UTC time when it is absent.
+
+            Returns:
+                The validated entity.
+
+            """
             if self.updated_at is None:
                 self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
+            return self
 
     class Value(FlextModelsBase.FrozenValueModel):
         """Base class for value objects - immutable and compared by value."""
