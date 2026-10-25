@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from types import NoneType, UnionType
+from types import GenericAlias, NoneType, UnionType
 from typing import Annotated, TypeAliasType, TypeVar, Union, get_args, get_origin
 
 import pydantic
@@ -178,10 +178,16 @@ class FlextTypesPydantic:
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
 
+    # A port target as pydantic hands it over: a class, a PEP 695 alias, a
+    # type parameter, a generic or union form, or None.
+    type PortTarget = (
+        type | TypeVar | TypeAliasType | GenericAlias | UnionType | NoneType | None
+    )
+
     @staticmethod
     def port_instance_schema(
-        target: type,
-        bound: Mapping[TypeVar, type] | None = None,
+        target: PortTarget,
+        bound: Mapping[TypeVar, PortTarget] | None = None,
     ) -> core_schema.CoreSchema:
         """Resolve a port target to the ``isinstance`` schema pydantic runs.
 
@@ -230,12 +236,13 @@ class FlextTypesPydantic:
     # construction and on assignment; the port never enters the JSON Schema.
     # Declare the field with ``m.Field(exclude=True, description=...)``:
     # field-level metadata cannot live inside a type alias.
-    type Port[P] = Annotated[
-        P,
-        pydantic.GetPydanticSchema(
-            lambda source, _handler: FlextTypesPydantic.port_instance_schema(source)
-        ),
-        pydantic_json_schema.SkipJsonSchema(),
+    type Port[P] = pydantic_json_schema.SkipJsonSchema[
+        Annotated[
+            P,
+            pydantic.GetPydanticSchema(
+                lambda source, _handler: FlextTypesPydantic.port_instance_schema(source)
+            ),
+        ]
     ]
 
 
