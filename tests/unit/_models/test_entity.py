@@ -62,11 +62,17 @@ class TestsFlextCoreEntity:
 
         tm.that(first.domain_events is not second.domain_events, truth=True)
 
-    def test_entities_with_same_identity_are_equal(self) -> None:
+    def test_entities_sharing_identity_but_not_values_are_unequal(self) -> None:
         original = self._Sample(name="a")
         same_identity = self._Sample(name="different", unique_id=original.unique_id)
 
-        tm.that(original, eq=same_identity)
+        tm.that(original.unique_id, eq=same_identity.unique_id)
+        tm.that(original, ne=same_identity)
+
+    def test_entity_equals_its_own_value_copy(self) -> None:
+        original = self._Sample(name="a")
+
+        tm.that(original, eq=original.model_copy())
 
     def test_entities_with_different_identity_are_not_equal(self) -> None:
         first = self._Sample(name="a")
@@ -80,18 +86,11 @@ class TestsFlextCoreEntity:
         tm.that(entity, ne=42)
         tm.that(entity, ne="a")
 
-    def test_entity_hash_is_consistent_with_identity_equality(self) -> None:
-        original = self._Sample(name="a")
-        same_identity = self._Sample(name="other", unique_id=original.unique_id)
+    def test_mutable_entity_is_not_hashable(self) -> None:
+        entity = self._Sample(name="a")
 
-        tm.that(hash(original), eq=hash(same_identity))
-
-    def test_entities_with_same_identity_share_hash(self) -> None:
-        original = self._Sample(name="a")
-        same_identity = self._Sample(name="other", unique_id=original.unique_id)
-
-        tm.that(original, eq=same_identity)
-        tm.that(len({hash(original), hash(same_identity)}), eq=1)
+        with pytest.raises(TypeError):
+            hash(entity)
 
     def test_entity_model_dump_exposes_public_fields(self) -> None:
         entity = self._Sample(name="alpha")
@@ -109,12 +108,14 @@ class TestsFlextCoreEntity:
         tm.that(m.AggregateRoot, where=m.Entity.__subclasscheck__)
 
     @staticmethod
-    def test_aggregate_root_uses_identity_equality() -> None:
+    def test_aggregate_root_uses_value_equality() -> None:
         root = m.AggregateRoot()
         twin = m.AggregateRoot(unique_id=root.unique_id)
 
-        tm.that(root, eq=twin)
-        tm.that(hash(root), eq=hash(twin))
+        tm.that(root.unique_id, eq=twin.unique_id)
+        tm.that(root, eq=root.model_copy())
+        with pytest.raises(TypeError):
+            hash(root)
 
     def test_values_with_equal_fields_are_equal(self) -> None:
         tm.that(self._Coord(x=1, y=2), eq=self._Coord(x=1, y=2))
