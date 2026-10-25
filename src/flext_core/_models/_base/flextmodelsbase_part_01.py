@@ -27,7 +27,11 @@ class FlextModelsBasePart01:
     class EnforcedModel(FlextModelsPydantic.BaseModel):
         """Base model that enforces architectural rules on subclasses."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra=c.EXTRA_CONFIG_FORBID)
+        # Schemas build lazily on first use (lazy-import law); the fresh-import
+        # gate builds every model so a broken annotation still fails check.
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra=c.EXTRA_CONFIG_FORBID, defer_build=True
+        )
 
         @classmethod
         @override

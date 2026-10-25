@@ -37,7 +37,7 @@ from pydantic import (
 )
 from pydantic.fields import FieldInfo
 
-from flext_core._typings import FlextTypingNativeExport
+from flext_core._typings.native_export import FlextTypingNativeExport
 
 
 class FlextModelsPydantic:

@@ -34,8 +34,8 @@ from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
 from flext_core import _models, c, p, t
-from flext_core._models import FlextModelsPydantic
-from flext_core._typings import FlextTypingNativeExport
+from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._typings.native_export import FlextTypingNativeExport
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,

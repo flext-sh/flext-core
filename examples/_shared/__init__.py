@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from examples._shared.shared_part_01 import ExamplesFlextSharedBase
-    from examples._shared.shared_part_02 import ExamplesFlextShared
+    from examples._shared.base import ExamplesFlextSharedBase
+    from examples._shared.verification import ExamplesFlextShared
 
 
 __all__: tuple[str, ...] = ("ExamplesFlextShared", "ExamplesFlextSharedBase")
@@ -23,8 +23,8 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "ExamplesFlextShared": ".shared_part_02",
-        "ExamplesFlextSharedBase": ".shared_part_01",
+        "ExamplesFlextShared": ".verification",
+        "ExamplesFlextSharedBase": ".base",
     }),
     public_exports=__all__,
 )

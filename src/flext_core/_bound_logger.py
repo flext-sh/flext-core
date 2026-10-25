@@ -80,7 +80,8 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
     @property
     def _context(self) -> p.LoggingContext:
         """Context mapping for BindableLogger protocol compliance."""
-        return self.structlog().get_context(self._native)
+        context: p.LoggingContext = self.structlog().get_context(self._native)
+        return context
 
     @property
     def logger(self) -> p.NativeLoggingWrapper:

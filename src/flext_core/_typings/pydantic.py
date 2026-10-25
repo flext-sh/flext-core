@@ -180,9 +180,7 @@ class FlextTypesPydantic:
 
     # A port target as pydantic hands it over: a class, a PEP 695 alias, a
     # type parameter, a generic or union form, or None.
-    type PortTarget = (
-        type | TypeVar | TypeAliasType | GenericAlias | UnionType | NoneType | None
-    )
+    type PortTarget = type | TypeVar | TypeAliasType | GenericAlias | UnionType | None
 
     @staticmethod
     def port_instance_schema(
