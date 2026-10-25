@@ -89,9 +89,15 @@ checks are not fleet proof; failures and unexecuted gates remain explicit.
 
 ## Canonical workflow
 
-The approved `flext-0029c` native-bootstrap target uses one root uv workspace and
-lock in local execution and root CI; CI checks out declared submodules and installs
-noneditable. Suppliers use native pyproject sources, not environment selection,
+The approved `flext-0029c` native-bootstrap target uses one root uv workspace in
+local execution and root CI; CI checks out declared submodules and installs
+noneditable. Locks follow
+ADR-030 (tracker
+memory `operator-ruling-2026-10-25-member-locks-uv-mise-upg-guard`, superseding the
+earlier root-only lock decision): member `uv.lock` and `mise.lock` are kept and
+formed by each member, the workspace lock is their composition, only `make upg`
+writes locks behind its guard, and exact SHAs pin the hierarchy. The guard's
+implementation is pending. Suppliers use native pyproject sources, not environment selection,
 persisted state or synthetic resolvers. Official Mise acquisition and native locked
 tool provisioning precede `uv sync --frozen` into the owned physical `.venv`.
 No custom Python or AWK/shell lock/installer parser, copied admission resource or

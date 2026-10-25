@@ -43,5 +43,4 @@ class TestsFlextConstants(FlextTestsConstants, FlextConstants):
 
 
 c = TestsFlextConstants
-
 __all__: list[str] = ["TestsFlextConstants", "c"]

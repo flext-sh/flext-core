@@ -9,9 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypeVar
-
 from flext_core._typings import (
     FlextTypesAnnotateds,
     FlextTypesCore,
@@ -41,17 +38,5 @@ class FlextTypes(
 
 
 t = FlextTypes
-
-
-type JsonMapping = Mapping[str, FlextTypesPydantic.JsonValue]
-
-type JsonDict = dict[str, FlextTypesPydantic.JsonValue]
-
-T = TypeVar("T")
-
-
-type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
-
-type ModuleGlobals = FlextTypesLazy.ModuleGlobals
 
 __all__: list[str] = ["FlextTypes", "t"]

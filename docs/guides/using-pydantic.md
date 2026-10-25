@@ -21,7 +21,20 @@ The canonical, source-cited law is the `pydantic-development` skill
 (`~/agents/skills/technology/pydantic-development/`, distributed to every agent home)
 and the `rules/python/pydantic.md` rule. This guide maps that law onto the FLEXT
 facades; it does not restate it. The Pydantic version in force is the one locked in
-the root `uv.lock`.
+the committed `uv.lock` of the project that installs it; member locks and the
+workspace lock that composes them agree by construction
+(ADR-030).
+
+Two 2026-10-25 operator rulings bind every FLEXT model (root `AGENTS.md`
+"Pydantic law"; ADR-028 Decisions 14 and 19):
+
+- models import `u` only from the upstream FLEXT project or, in very restricted
+  cases, from a private `_utilities` class of their own namespace; they export no
+  methods, and the Pydantic surface they need lives in `_models/pydantic.py`
+  (tracker memory `operator-ruling-2026-10-25-models-u-imports-pydantic-home`);
+- entity equality is Pydantic value equality with explicit identity by id
+  (tracker memory `operator-ruling-2026-10-25-entity-equality-pydantic-way`; see
+  Domain models).
 
 ## Where each Pydantic concern lives
 

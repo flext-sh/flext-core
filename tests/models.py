@@ -50,5 +50,4 @@ class TestsFlextModels(FlextTestsModels):
 
 
 m = TestsFlextModels
-
 __all__: list[str] = ["TestsFlextModels", "m"]

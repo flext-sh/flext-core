@@ -124,10 +124,17 @@ The engine reads these `metadata` keys, declared in
 
 ### One rule per law
 
-Operator order of 2026-10-25: sed, Rope and ast-grep rules stay aligned with
-the governing rules. They are generalized and automatic, use as much of each
-tool's standard functionality as possible, and keep the number of executed
-rules as small as possible.
+Operator order of 2026-10-25, verbatim (tracker memory
+`operator-order-2026-10-25-rules-generalized-min-count`; ADR-028 Decision 18):
+"o sed, rope e ast-grep rules tem que estar sempre alinhados com as regras
+corretas de forma generalizada e automaticas usando sempre máximo de
+funcionalidades padrões das ferrametnas que as embasam e reduzir ao máximo ao
+número de rules que são executadas". sed, Rope and ast-grep rules stay aligned
+with the governing rules. They are generalized and automatic, use as much of each
+tool's standard functionality as possible, and keep the number of executed rules
+as small as possible. Renames and moves that Rope's refactorings express run
+through them, not through a custom planner (ADR-028 Decision 17), and a rename of
+library-named exports to capability names follows ADR-028 Decision 15.
 
 - **One document per law.** Facts that vary per package, letter or namespace
   are rendered into the values of a single document, never into one document

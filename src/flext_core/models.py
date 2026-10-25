@@ -85,6 +85,4 @@ class FlextModels(
 
 
 m = FlextModels
-
-
 __all__: list[str] = ["FlextModels", "m"]

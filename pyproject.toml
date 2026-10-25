@@ -616,8 +616,6 @@ msg = "Use cli.create_app_with_common_params / cli.register_command from flext_c
 
 [tool.ruff.lint.flake8-type-checking]
 runtime-evaluated-base-classes = [
-  "examples._models.ExamplesFlextSharedHandle",
-  "examples._models.ExamplesFlextSharedPerson",
   "examples._models.ex04._CommandEnvelope",
   "examples._models.ex04._EventEnvelope",
   "examples._models.ex04._QueryEnvelope",
@@ -701,7 +699,6 @@ runtime-evaluated-base-classes = [
   "flext_core.services.dispatcher.FlextServiceDispatcher",
   "flext_core.services.registry.FlextServiceRegistry",
   "flext_core.x",
-  "flext_tests.FlextTestsModels.Tests",
   "flext_tests.FlextTestsServiceBase",
   "flext_tests.h",
   "flext_tests.models.m.BaseModel",

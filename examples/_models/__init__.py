@@ -26,9 +26,9 @@ if TYPE_CHECKING:
     from examples._models.ex11 import ExamplesFlextModelsEx11
     from examples._models.ex12 import ExamplesFlextModelsEx12
     from examples._models.ex14 import ExamplesFlextModelsEx14
-    from examples._models.handle import ExamplesFlextSharedHandle
+    from examples._models.handle import ExamplesFlextModelsHandle
     from examples._models.output import ExamplesFlextModelsOutput
-    from examples._models.person import ExamplesFlextSharedPerson
+    from examples._models.person import ExamplesFlextModelsPerson
 
 
 __all__: tuple[str, ...] = (
@@ -45,9 +45,9 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextModelsEx11",
     "ExamplesFlextModelsEx12",
     "ExamplesFlextModelsEx14",
+    "ExamplesFlextModelsHandle",
     "ExamplesFlextModelsOutput",
-    "ExamplesFlextSharedHandle",
-    "ExamplesFlextSharedPerson",
+    "ExamplesFlextModelsPerson",
 )
 
 install_lazy_exports(
@@ -67,9 +67,9 @@ install_lazy_exports(
         "ExamplesFlextModelsEx11": ".ex11",
         "ExamplesFlextModelsEx12": ".ex12",
         "ExamplesFlextModelsEx14": ".ex14",
+        "ExamplesFlextModelsHandle": ".handle",
         "ExamplesFlextModelsOutput": ".output",
-        "ExamplesFlextSharedHandle": ".handle",
-        "ExamplesFlextSharedPerson": ".person",
+        "ExamplesFlextModelsPerson": ".person",
     }),
     public_exports=__all__,
 )

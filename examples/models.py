@@ -7,8 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from examples._models import (
     ExamplesFlextModelsErrors,
     ExamplesFlextModelsEx00,
@@ -23,14 +21,11 @@ from examples._models import (
     ExamplesFlextModelsEx11,
     ExamplesFlextModelsEx12,
     ExamplesFlextModelsEx14,
+    ExamplesFlextModelsHandle,
     ExamplesFlextModelsOutput,
-    ExamplesFlextSharedHandle,
-    ExamplesFlextSharedPerson,
+    ExamplesFlextModelsPerson,
 )
 from flext_core import FlextModels
-
-if TYPE_CHECKING:
-    from examples import t
 
 
 class ExamplesFlextModels(FlextModels):
@@ -49,8 +44,8 @@ class ExamplesFlextModels(FlextModels):
         ExamplesFlextModelsEx11,
         ExamplesFlextModelsEx12,
         ExamplesFlextModelsEx14,
-        ExamplesFlextSharedHandle,
-        ExamplesFlextSharedPerson,
+        ExamplesFlextModelsHandle,
+        ExamplesFlextModelsPerson,
         ExamplesFlextModelsErrors.Examples,
         ExamplesFlextModelsOutput.Examples,
     ):
@@ -59,13 +54,6 @@ class ExamplesFlextModels(FlextModels):
         Access via: from examples import m; m.Examples.<ClassName>
         """
 
-        class Person(ExamplesFlextSharedPerson):
-            """Shared person model used by public examples."""
-
-        class Handle(ExamplesFlextSharedHandle):
-            """Shared resource-handle model used by public examples."""
-
 
 m = ExamplesFlextModels
-
-__all__: t.MutableSequenceOf[str] = ["ExamplesFlextModels", "m"]
+__all__: list[str] = ["ExamplesFlextModels", "m"]

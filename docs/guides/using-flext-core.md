@@ -177,7 +177,10 @@ when they have the same type and field values, so two entities that share a
 `unique_id` but differ in another field are unequal. Compare identity explicitly
 with `a.unique_id == b.unique_id`, and key entity collections by `unique_id`. A
 mutable entity is not hashable; only frozen models such as `m.Value` hash, by
-their field values.
+their field values. Entities define no custom `__eq__`/`__hash__`, and consumers
+that relied on identity equality are rewired fleet-wide by rule. This is the
+Pydantic way the operator ruled on 2026-10-25 (tracker memory
+`operator-ruling-2026-10-25-entity-equality-pydantic-way`; ADR-028 Decision 14).
 
 ## Need -> capability -> benefit
 
