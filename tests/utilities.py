@@ -14,7 +14,7 @@ from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from flext_tests import u
+from flext_tests import u, u as flext_tests_u
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
@@ -38,7 +38,7 @@ from tests._utilities import (
 )
 
 
-class TestsFlextUtilities(u):
+class TestsFlextUtilities(flext_tests_u):
     """Utilities for flext-core tests."""
 
     class TestsFlextResultExceptionCarrying:
@@ -415,7 +415,7 @@ class TestsFlextUtilities(u):
         TestsFlextUtilitiesValidationPatternScenarios,
         TestsFlextUtilitiesValidationStringScenarios,
         TestsFlextUtilitiesValidationUriScenarios,
-        u.Tests,
+        flext_tests_u.Tests,
     ):
         """flext-core test utilities namespace."""
 

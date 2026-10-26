@@ -72,11 +72,14 @@ class FlextUtilitiesDiscovery:
     @functools.cache
     def service_operations(
         service_type: type[p.Service[p.Base]],
+        *,
+        owner: type | None = None,
     ) -> tuple[p.ServiceOperation, ...]:
         """Return the typed operations of a service class, sorted by name.
 
         An operation is a plain public function declared in a class of the MRO
-        below ``FlextService``; every name ``FlextService`` exposes, Pydantic
+        below ``FlextService``; an explicit owner selects an inherited operation
+        family from that same MRO. Every name ``FlextService`` exposes, Pydantic
         validators and serializers, properties, classmethods and staticmethods
         are not operations. A malformed operation, a sibling-class name
         collision, or a service without operations raises ``TypeError`` naming
@@ -91,6 +94,17 @@ class FlextUtilitiesDiscovery:
         """
         service_facade = FlextUtilitiesDiscovery._service_root(service_type)
         below = service_type.__mro__[: service_type.__mro__.index(service_facade)]
+        if owner is not None and owner not in below:
+            message = (
+                f"Operation owner {owner.__qualname__} is not inherited by "
+                f"{service_type.__qualname__}"
+            )
+            raise TypeError(message)
+        selected = (
+            below
+            if owner is None
+            else tuple(base for base in owner.__mro__ if base in below)
+        )
         infos = inspect.getattr_static(service_type, "__pydantic_decorators__")
         decorated = {
             *infos.field_validators,
@@ -102,8 +116,8 @@ class FlextUtilitiesDiscovery:
         names = (
             {
                 name
-                for owner in below
-                for name in vars(owner)
+                for operation_owner in selected
+                for name in vars(operation_owner)
                 if not name.startswith("_")
             }
             - set(dir(service_facade))
