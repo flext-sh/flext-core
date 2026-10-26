@@ -5,6 +5,9 @@ timeout behaviors modular. All helpers return ``p.Result``-compatible
 implementations so dispatcher handlers can compose reliability policies
 without raising exceptions or leaking thread-local state.
 
+The default handled exception family belongs to ``c.EXC_BROAD_RUNTIME_OS``;
+utilities consume that original declaration without a duplicate namespace holder.
+
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
@@ -27,15 +30,6 @@ type _HandledExceptions = tuple[type[Exception], ...]
 class FlextUtilitiesReliability:
     """Reliability patterns for resilient, dispatcher-safe operations."""
 
-    _RETRYABLE_EXCEPTIONS: _HandledExceptions = (
-        AttributeError,
-        TypeError,
-        ValueError,
-        RuntimeError,
-        KeyError,
-        OSError,
-    )
-
     @staticmethod
     def _resolve_handled(
         catch: type[Exception] | _HandledExceptions | None,
@@ -47,7 +41,7 @@ class FlextUtilitiesReliability:
 
         """
         if catch is None:
-            return FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS
+            return c.EXC_BROAD_RUNTIME_OS
         if isinstance(catch, type):
             return (catch,)
         return catch
@@ -144,7 +138,7 @@ class FlextUtilitiesReliability:
         for attempt in range(max_att):
             try:
                 result = operation()
-            except FlextUtilitiesReliability._RETRYABLE_EXCEPTIONS as exc:
+            except c.EXC_BROAD_RUNTIME_OS as exc:
                 result = FlextResult[TResult].fail_op("execute retry operation", exc)
             if result.success:
                 return result
