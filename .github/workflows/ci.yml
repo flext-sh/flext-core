@@ -169,11 +169,11 @@ jobs:
             ${{ steps.testmon_path.outputs.namespace }}
             ${{ steps.testmon_path.outputs.seed_namespace }}
 
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check).
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
       - name: make setup (blocking)
         id: approval-setup
         run: CI=Y make setup
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check).
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
       - name: make check CHECK_PHASE=primary (blocking)
         id: approval-check-primary
         # Every approval verb reports once setup provisioned the environment,
@@ -181,22 +181,30 @@ jobs:
         # (workflow requires) admits the step only after that verb is green.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check CHECK_PHASE=primary
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check).
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
       - name: make tests (blocking)
-        id: approval-tests
+        id: approval-tests-primary
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict never hides the others; a declared requirement
         # (workflow requires) admits the step only after that verb is green.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-check-primary.outcome == 'success' }}
         run: CI=Y make tests
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check).
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
       - name: make check (blocking)
         id: approval-check
         # Every approval verb reports once setup provisioned the environment,
         # so one red verdict never hides the others; a declared requirement
         # (workflow requires) admits the step only after that verb is green.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-tests.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-tests-primary.outcome == 'success' }}
         run: CI=Y make check
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
+      - name: make tests (blocking)
+        id: approval-tests
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict never hides the others; a declared requirement
+        # (workflow requires) admits the step only after that verb is green.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-check.outcome == 'success' && steps.approval-check-primary.outcome == 'success' }}
+        run: CI=Y make tests
 
       - name: Dump reports on failure
         if: ${{ failure() }}

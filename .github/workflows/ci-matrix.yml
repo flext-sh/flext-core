@@ -81,7 +81,7 @@ jobs:
           -e GITHUB_TOKEN
           -w /workspace/flext-core
           ci-matrix-${{ matrix.distro }}
-          bash -ec 'make help && make setup && make check CHECK_PHASE=primary && make tests && make gen && make mod && make gen && make fix && make fmt && make gen && make gen && make check && make check CHECK_PHASE=primary && make tests && make build'
+          bash -ec 'make help && make setup && make check CHECK_PHASE=primary && make tests && make gen && make gen && make fmt && make fix && make mod && make gen && make gen && make check CHECK_PHASE=primary && make check && make tests && make build'
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
@@ -118,14 +118,14 @@ jobs:
           CI=Y make check CHECK_PHASE=primary
           CI=Y make tests
           CI=Y make gen
+          CI=Y make gen
+          CI=Y make fmt
+          CI=Y make fix
           CI=Y make mod
           CI=Y make gen
-          CI=Y make fix
-          CI=Y make fmt
           CI=Y make gen
-          CI=Y make gen
-          CI=Y make check
           CI=Y make check CHECK_PHASE=primary
+          CI=Y make check
           CI=Y make tests
           CI=Y make build
   # End SECTION: macos
@@ -165,14 +165,14 @@ jobs:
           CI=Y make check CHECK_PHASE=primary
           CI=Y make tests
           CI=Y make gen
+          CI=Y make gen
+          CI=Y make fmt
+          CI=Y make fix
           CI=Y make mod
           CI=Y make gen
-          CI=Y make fix
-          CI=Y make fmt
           CI=Y make gen
-          CI=Y make gen
-          CI=Y make check
           CI=Y make check CHECK_PHASE=primary
+          CI=Y make check
           CI=Y make tests
           CI=Y make build
 # End SECTION: windows

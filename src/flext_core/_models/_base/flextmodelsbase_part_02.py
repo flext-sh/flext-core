@@ -131,9 +131,10 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
             return FlextUtilitiesPydantic.validate_metadata_attributes(value)
 
     class ContractModel(FlextModelsBasePart01.StrictModel):
-        """Immutable base model with strict validation."""
+        """Immutable strict contract preserving Enum identity until serialization."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
+            use_enum_values=False,
             validate_return=True,
             ser_json_timedelta=c.SERIALIZATION_ISO8601,
             ser_json_bytes=c.SERIALIZATION_BASE64,
