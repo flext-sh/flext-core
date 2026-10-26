@@ -24,13 +24,20 @@ class FlextModelsBasePart01:
     """Container for base model classes - Tier 0, 100% standalone."""
 
     class EnforcedModel(FlextModelsPydantic.BaseModel):
-        """Root preset of the FLEXT model family: forbidden extras, deferred build."""
+        """Base model that enforces architectural rules on subclasses."""
 
         # Schemas build lazily on first use (lazy-import law); the fresh-import
         # gate builds every model so a broken annotation still fails check.
         model_config: ClassVar[ConfigDict] = ConfigDict(
             extra=c.EXTRA_CONFIG_FORBID, defer_build=True
         )
+
+        @classmethod
+        @override
+        def __pydantic_on_complete__(cls) -> None:
+            """Enforce resolved field contracts at the native schema boundary."""
+            super().__pydantic_on_complete__()
+            FlextUtilitiesEnforcement.run(cls)
 
     class ManagedModel(EnforcedModel):
         """Shared preset for assignment validation with forbidden extra fields."""
