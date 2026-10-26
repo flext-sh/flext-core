@@ -25,7 +25,7 @@ from examples._models import (
     ExamplesFlextModelsOutput,
     ExamplesFlextModelsPerson,
 )
-from flext_core import m, m as flext_core_m
+from flext_core import m as flext_core_m
 
 
 class ExamplesFlextModels(flext_core_m):

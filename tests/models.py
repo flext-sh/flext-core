@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import m, m as flext_tests_m
+from flext_tests import m as flext_tests_m
 
 from tests._models import TestsFlextModelsMixins, TestsFlextModelsNamespace
 
