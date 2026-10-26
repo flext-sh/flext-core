@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar, Self, override
 
@@ -382,11 +383,17 @@ class TestsFlextCoreServiceOperations:
     @pytest.mark.parametrize(
         ("service_type", "defect"),
         [
-            (MissingMetadataService, "requires typed h.handler"),
+            (MissingMetadataService, re.escape(c.ERR_SERVICE_OPERATION_METADATA)),
             (ConcreteRequestService, "Protocol"),
             (MismatchedMetadataService, "command_name"),
-            (NonModelMetadataService, "Pydantic request model"),
-            (InputlessMetadataService, "input-less operation"),
+            (
+                NonModelMetadataService,
+                re.escape(c.ERR_SERVICE_OPERATION_COMMAND_MODEL),
+            ),
+            (
+                InputlessMetadataService,
+                re.escape(c.ERR_SERVICE_OPERATION_INPUTLESS_COMMAND),
+            ),
         ],
     )
     def test_request_metadata_has_one_explicit_contract(
@@ -490,6 +497,26 @@ class TestsFlextCoreServiceOperations:
                 c.ERR_SERVICE_OPERATION_COLLISION.format(owners=owners),
             ),
             eq=True,
+        )
+
+    class PlainWorker:
+        """A class with a public method but no service ancestry."""
+
+        def run(self) -> None:
+            """Do nothing; this class is not a service."""
+
+    def test_non_service_class_raises_typed_error(self) -> None:
+        """A class outside the service hierarchy fails with a typed TypeError."""
+        with pytest.raises(TypeError) as raised:
+            u.service_operations(self.PlainWorker)
+
+        tm.that(
+            str(raised.value),
+            eq=c.ERR_SERVICE_NOT_A_SERVICE.format(
+                service=self.PlainWorker.__qualname__,
+                module=__name__,
+                members="execute",
+            ),
         )
 
     def test_service_without_operations_raises(self) -> None:

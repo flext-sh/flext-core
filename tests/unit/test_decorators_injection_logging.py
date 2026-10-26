@@ -60,14 +60,17 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         tm.that(greet(greeter="EXPLICIT"), eq="EXPLICIT")
 
     @staticmethod
-    def test_inject_missing_key_preserves_default_argument() -> None:
-        """Test inject missing key preserves default argument."""
+    def test_inject_missing_key_fails_loud() -> None:
+        """An unresolvable dependency raises instead of keeping the default."""
 
         @d.inject(dependency="unregistered_key_xyz")
-        def use(*, dependency: str = "fallback") -> str:
+        def use(*, dependency: str = "unused-default") -> str:
             return dependency
 
-        tm.that(use(), eq="fallback")
+        with pytest.raises(RuntimeError) as raised:
+            use()
+
+        tm.that(str(raised.value), has="'unregistered_key_xyz'")
 
     @staticmethod
     def test_inject_delivers_pydantic_model_instance(
