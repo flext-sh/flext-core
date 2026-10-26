@@ -89,65 +89,65 @@ inesperados e debugging mais caro.
 1. **Trocar runtime protocol dispatch por função pré-compilada no registro** ✅
    concluído - Arquivo: `src/flext_core/dispatcher.py`.
 
-   - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` /
-     `handle` / `execute` / callable) via `match handler` e armazena o callable final em
-     `self._handlers`. O `_execute_handler()` chama o callable previamente resolvido sem
-     cadeia de `isinstance(...Protocol)` por mensagem.
-   - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de
-     `isinstance(...Protocol)` por mensagem.
-   - Critério de aceite: benchmark de dispatch com ganho de throughput e redução de p95.
+    - Estado: o registro de handler já resolve uma vez o executor (`dispatch_message` /
+      `handle` / `execute` / callable) via `match handler` e armazena o callable final em
+      `self._handlers`. O `_execute_handler()` chama o callable previamente resolvido sem
+      cadeia de `isinstance(...Protocol)` por mensagem.
+    - Resultado esperado: `_execute_handler()` deixa de fazer cadeia de
+      `isinstance(...Protocol)` por mensagem.
+    - Critério de aceite: benchmark de dispatch com ganho de throughput e redução de p95.
 
 2. **Cachear `TypeAdapter` em `ClassVar`/módulo nos validadores quentes**
 
-   - Arquivos iniciais:
-     - `src/flext_core/_models/cqrs.py` (`validate_pagination`)
-     - `src/flext_core/_models/settings.py` (`validate_batch`)
-   - Ação: mover adapters para constantes de classe/módulo
-     (`ClassVar[TypeAdapter[...]]`).
-   - Critério de aceite: zero criação dinâmica de adapter nesses métodos.
+    - Arquivos iniciais:
+      - `src/flext_core/_models/cqrs.py` (`validate_pagination`)
+      - `src/flext_core/_models/settings.py` (`validate_batch`)
+    - Ação: mover adapters para constantes de classe/módulo
+      (`ClassVar[TypeAdapter[...]]`).
+    - Critério de aceite: zero criação dinâmica de adapter nesses métodos.
 
 3. **Eliminar `Field(default=[])` em modelos Pydantic**
-   - Arquivos alvo:
-     - `src/flext_core/_models/entity.py`
-     - `src/flext_core/_models/service.py`
-     - `src/flext_core/_models/generic.py`
-     - `src/flext_core/_models/containers.py`
-     - `src/flext_core/_models/settings.py`
-   - Ação: substituir por `Field(default_factory=list)`.
-   - Critério de aceite: `rg "default=\[\]" src/flext_core/_models` sem ocorrências em
-     modelos.
+    - Arquivos alvo:
+      - `src/flext_core/_models/entity.py`
+      - `src/flext_core/_models/service.py`
+      - `src/flext_core/_models/generic.py`
+      - `src/flext_core/_models/containers.py`
+      - `src/flext_core/_models/settings.py`
+    - Ação: substituir por `Field(default_factory=list)`.
+    - Critério de aceite: `rg "default=\[\]" src/flext_core/_models` sem ocorrências em
+      modelos.
 
 ## P1 — estrutural (médio risco, alto retorno)
 
 1. **Adicionar cache de conformidade de protocolo em `_ProtocolIntrospection`**
 
-   - Arquivo: `src/flext_core/protocols.py`.
-   - Ação:
-     - cache para membros exigidos por protocolo;
-     - cache para resultado de conformidade `(target_cls, protocol) -> bool`.
-   - Observação: invalidar cache quando subclasses dinâmicas forem registradas.
-   - Critério de aceite: redução mensurável de tempo em testes de bootstrap/import.
+    - Arquivo: `src/flext_core/protocols.py`.
+    - Ação:
+      - cache para membros exigidos por protocolo;
+      - cache para resultado de conformidade `(target_cls, protocol) -> bool`.
+    - Observação: invalidar cache quando subclasses dinâmicas forem registradas.
+    - Critério de aceite: redução mensurável de tempo em testes de bootstrap/import.
 
 2. **Tornar validação profunda por metaclass configurável por ambiente**
-   - Arquivo: `src/flext_core/protocols.py` (metaclass `ProtocolModelMeta`).
-   - Ação: modo estrito em CI/dev; modo leve em produção.
-   - Critério de aceite: cold-start melhor em produção sem perda de segurança em CI.
+    - Arquivo: `src/flext_core/protocols.py` (metaclass `ProtocolModelMeta`).
+    - Ação: modo estrito em CI/dev; modo leve em produção.
+    - Critério de aceite: cold-start melhor em produção sem perda de segurança em CI.
 
 ## P2 — governança e hardening contínuo
 
 1. **Definir guideline oficial de Pydantic v2 para o projeto**
 
-   - Documento interno com regras obrigatórias:
-     - `default_factory` para coleções mutáveis;
-     - `TypeAdapter` cacheado fora de loops/validators quentes;
-     - validação estrita apenas na fronteira de entrada.
+    - Documento interno com regras obrigatórias:
+      - `default_factory` para coleções mutáveis;
+      - `TypeAdapter` cacheado fora de loops/validators quentes;
+      - validação estrita apenas na fronteira de entrada.
 
 2. **Criar microbenchmarks e budget no CI**
-   - Cenários mínimos:
-     - dispatch com/sem resolução pré-compilada;
-     - validação com adapter inline vs cacheado;
-     - import/cold-start de módulos com protocolos/metaclass.
-   - Budget sugerido inicial: regressão máxima de 5% em throughput e 10% em p95.
+    - Cenários mínimos:
+      - dispatch com/sem resolução pré-compilada;
+      - validação com adapter inline vs cacheado;
+      - import/cold-start de módulos com protocolos/metaclass.
+    - Budget sugerido inicial: regressão máxima de 5% em throughput e 10% em p95.
 
 ---
 

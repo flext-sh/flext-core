@@ -18,12 +18,7 @@ if TYPE_CHECKING:
         FlextBaseErrorStateMixin,
         FlextExceptionsBasePart03,
     )
-    from flext_core._exceptions._factories import (
-        FlextExceptionsFactoriesPart01,
-        FlextExceptionsFactoriesPart02,
-        FlextExceptionsFactoriesPart03,
-        FlextExceptionsFactoriesPart04,
-    )
+    from flext_core._exceptions._factories import FlextExceptionsFactoriesFail
     from flext_core._exceptions.base import FlextExceptionsBase
     from flext_core._exceptions.exception_types import FlextExceptionsTypes
     from flext_core._exceptions.factories import FlextExceptionsFactories
@@ -38,10 +33,7 @@ __all__: tuple[str, ...] = (
     "FlextExceptionsBase",
     "FlextExceptionsBasePart03",
     "FlextExceptionsFactories",
-    "FlextExceptionsFactoriesPart01",
-    "FlextExceptionsFactoriesPart02",
-    "FlextExceptionsFactoriesPart03",
-    "FlextExceptionsFactoriesPart04",
+    "FlextExceptionsFactoriesFail",
     "FlextExceptionsHelpers",
     "FlextExceptionsMetrics",
     "FlextExceptionsTemplate",
@@ -57,18 +49,7 @@ install_lazy_exports(
         "FlextExceptionsBase": ".base",
         "FlextExceptionsBasePart03": "._base.flextexceptionsbase_part_03",
         "FlextExceptionsFactories": ".factories",
-        "FlextExceptionsFactoriesPart01": (
-            "._factories.flextexceptionsfactories_part_01"
-        ),
-        "FlextExceptionsFactoriesPart02": (
-            "._factories.flextexceptionsfactories_part_02"
-        ),
-        "FlextExceptionsFactoriesPart03": (
-            "._factories.flextexceptionsfactories_part_03"
-        ),
-        "FlextExceptionsFactoriesPart04": (
-            "._factories.flextexceptionsfactories_part_04"
-        ),
+        "FlextExceptionsFactoriesFail": "._factories.fail",
         "FlextExceptionsHelpers": ".helpers",
         "FlextExceptionsMetrics": ".metrics",
         "FlextExceptionsTemplate": ".template",

@@ -252,53 +252,75 @@ class TestsFlextCoreServiceBootstrap:
         )
 
     @staticmethod
-    def test_subscripted_port_type_is_rejected_at_class_creation() -> None:
-        """A port typed by a subscripted generic cannot be validated."""
-        try:
+    def test_subscripted_port_validates_values_and_preserves_results() -> None:
+        """A generic port retains its supplied result and rejects unrelated values."""
 
-            class SubscriptedPortService(
-                TestsFlextCoreServiceBootstrap.ConcreteTestService,
-            ):
-                result: t.Port[p.Result[int]] = m.Field(
-                    exclude=True,
-                    description="Subscripted generic port.",
-                )
+        class SubscriptedPortService(s[int]):
+            """Service forwarding its injected result without conversion."""
 
-        except TypeError as raised:
-            tm.that(
-                str(raised),
-                eq=c.ERR_SERVICE_PORT_TYPE.format(
-                    service="SubscriptedPortService",
-                    field="result",
-                    port_type=p.Result[int],
-                ),
+            result: t.Port[p.Result[int]] = m.Field(
+                exclude=True,
+                description="Subscripted generic port.",
             )
-        else:
-            pytest.fail(
-                f"{SubscriptedPortService.__name__} was unexpectedly constructed",
-            )
+
+            @override
+            def execute(self) -> p.Result[int]:
+                """Return the injected result."""
+                return self.result
+
+        result = r[int].ok(1)
+        service = SubscriptedPortService(result=result)
+
+        tm.ok(service.execute() is result)
+        tm.that(service.execute().unwrap(), eq=1)
+        tm.that(SubscriptedPortService.model_json_schema().get("properties", {}), eq={})
+
+        with pytest.raises(m.ValidationError):
+            SubscriptedPortService.model_validate({
+                "result": c.Tests.DEFAULT_ERROR_MESSAGE,
+            })
+        tm.rejects_assignment(
+            service, "result", c.Tests.DEFAULT_ERROR_MESSAGE, expected=m.ValidationError
+        )
+
+        tm.ok(service.execute() is result)
 
     @staticmethod
-    def test_concrete_port_type_is_rejected_at_class_creation() -> None:
-        """A port typed by a concrete class is not a port."""
-        try:
+    def test_concrete_port_validates_values_and_executes_adapter() -> None:
+        """A concrete port preserves its adapter and validates supplied values."""
 
-            class ConcretePortService(
-                TestsFlextCoreServiceBootstrap.ConcreteTestService,
-            ):
-                counter: t.Port[u.Tests.MemoryCounter] = m.Field(
-                    exclude=True,
-                    description="Concrete class port.",
-                )
+        class ConcretePortService(s[int]):
+            """Service executing its concrete adapter's counter capability."""
 
-        except TypeError as raised:
-            tm.that(
-                str(raised),
-                eq=c.ERR_SERVICE_PORT_TYPE.format(
-                    service="ConcretePortService",
-                    field=c.MetricType.COUNTER,
-                    port_type=u.Tests.MemoryCounter,
-                ),
+            counter: t.Port[u.Tests.MemoryCounter] = m.Field(
+                exclude=True,
+                description="Concrete class port.",
             )
-        else:
-            pytest.fail(f"{ConcretePortService.__name__} was unexpectedly constructed")
+
+            @override
+            def execute(self) -> p.Result[int]:
+                """Advance the injected counter.
+
+                Returns:
+                    The next value produced by the injected adapter.
+
+                """
+                return r[int].ok(self.counter.next_value())
+
+        counter = u.Tests.MemoryCounter()
+        service = ConcretePortService(counter=counter)
+
+        tm.ok(service.counter is counter)
+        tm.that(service.execute().unwrap(), eq=1)
+        tm.that(service.execute().unwrap(), eq=2)
+        tm.that(ConcretePortService.model_json_schema().get("properties", {}), eq={})
+
+        with pytest.raises(m.ValidationError):
+            ConcretePortService.model_validate({
+                c.MetricType.COUNTER: c.Tests.DEFAULT_ERROR_MESSAGE,
+            })
+        with pytest.raises(m.ValidationError):
+            setattr(service, c.MetricType.COUNTER, c.Tests.DEFAULT_ERROR_MESSAGE)
+
+        tm.ok(service.counter is counter)
+        tm.that(service.execute().unwrap(), eq=3)

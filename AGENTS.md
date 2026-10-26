@@ -37,6 +37,14 @@ pure cooperative MRO and exposes `core = FlextCore.fetch_global()`.
 - Config/settings canonical pattern: ADR-005 (§1–§2) + `_settings.py`/`_config.py`
   module docstrings.
 
+### Failure factory responsibility
+
+The public exception factory exposes one failure-construction capability. Its numbered
+inheritance fragments are one implementation owner, not distinct facades: consolidate
+their methods without changing the public `e.fail_*` behavior or inventing module
+suffixes. This declaration implements [ADR-014 §1](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/014-family-part-shape-rope-codemod-rules.md#1-semantic-facade-ownership)
+and [ADR-028 Decision 17](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17).
+
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->
 
 <!-- AIHUB-GOVERNANCE-INSTRUCTIONS-BEGIN -->

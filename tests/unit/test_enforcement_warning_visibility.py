@@ -84,13 +84,15 @@ class TestsFlextCoreEnforcementWarningVisibility:
             record[0].category, where=lambda category: category is c.FlextSmellViolation
         )
 
-    def test_real_filterwarnings_keep_mro_violations_visible(
+    @pytest.mark.parametrize("category", ["FlextMroViolation", "FlextSmellViolation"])
+    def test_real_filterwarnings_fail_on_enforcement_warnings(
         self,
         tmp_path: Path,
+        category: str,
     ) -> None:
         # Arrange: reconstruct the shipped pytest filterwarnings config so the
         # test fails if a future edit silences enforcement warnings again.
-        """Test real filterwarnings keep mro violations visible."""
+        """Uncaught enforcement warnings fail under the shipped error policy."""
         payload = u.config_load(self._PROJECT_ROOT / c.PYPROJECT_FILENAME).unwrap()
         tool = cast("t.JsonMapping", payload.get("tool", {}))
         pytest_tool = cast("t.JsonMapping", tool.get("pytest", {}))
@@ -104,16 +106,16 @@ class TestsFlextCoreEnforcementWarningVisibility:
         )
         (tmp_path / "test_probe.py").write_text(
             textwrap.dedent(
-                """
+                f"""
                 import warnings
 
-                from flext_core.exceptions import FlextMroViolation
+                from flext_core import c
 
 
                 def test_probe() -> None:
                     warnings.warn(
                         "ENFORCE-probe: runtime violation visibility",
-                        FlextMroViolation,
+                        c.{category},
                         stacklevel=2,
                     )
                 """,
@@ -142,10 +144,15 @@ class TestsFlextCoreEnforcementWarningVisibility:
         # Assert: the warning survives to the caller's output.
         tm.that(result.success, truth=True, msg=result.error)
         output = result.value.stdout + result.value.stderr
-        tm.that(result.value.outcome.raw_return_code, eq=0, msg=output)
+        tm.that(
+            result.value.outcome.raw_return_code,
+            eq=pytest.ExitCode.TESTS_FAILED,
+            msg=output,
+        )
         tm.that(
             output,
-            has="FlextMroViolation",
+            has=category,
             msg="runtime enforcement warning suppressed by shipped filterwarnings:\n"
             + output,
         )
+        tm.that(output, has="ENFORCE-probe: runtime violation visibility", msg=output)

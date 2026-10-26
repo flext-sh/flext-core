@@ -90,19 +90,43 @@ provider rather than reinterpreting a previously published YAML manifest.
 Authored catalogs, fixtures and snapshots keep their existing source format.
 This avoids runtime-value normalization and one file write per elected scan
 rule without changing native rule identities, scopes, bindings or diagnostics.
+Parsed authored catalogs are reused only in process memory, keyed by provider,
+resource paths and exact current contents. Planning always authenticates the
+current files before selecting that entry. Infra does not serialize its parsed
+catalog into a separate persistent cache; native tool caches keep their own
+contracts.
+
+Native parameterized utilities preserve their formal argument names and qualify
+only provider-global callees, including mapping-form `matches` calls. The
+`captured-rule` utility evaluates one complete predicate with its bindings and
+exports its named captures through ast-grep's native argument mechanism. Relational
+context stays inside that native predicate instead of repeating whole enclosing
+classes in every diagnostic. Primary match ranges, binding equality, messages and
+severity remain owned by the original rule; the complete native output is retained.
 
 The producers and renderers registered in `Infra.codegen.ast_grep` render each
 governed project's generated utilities and rules (`codemod_native_generated`).
 `u.Infra.codemod_rule_plan` materializes them as one native provider,
 `generated`, under `.reports/codemod/native/generated/<content digest>/`
 (`sgconfig.yml`, `ruleDirs/`, `utilDirs/`). It then elects that provider after the
-catalogs, like any other provider. Generated rule ids are package-qualified
-(`<shape>--<package>`). The scan, the `check` codemod gate and the cascade therefore
-consume rendered rules through the same plan as authored ones, and
-`ast-grep scan -c` on that directory reproduces them by hand. Generated rules carry
-no fixtures: renderer tests own their proof. The retired per-rule repository
-projections under `config/rules/ast-grep/{utils,rules/generated}` are declared
-at the generation owner; authored files are never retired by that declaration.
+catalogs, like any other provider. Generated rules retain their renderer IDs.
+Each repository has its own plan and native stage; the workspace coordinator visits
+repositories in dependency order in one process. Each stage scans only its
+repository's owned sources; declared members enter their own stages.
+Generated providers also carry
+utilities and file scopes when they contribute no elected rules, so catalog rules can
+still consume those declarations. Each project's scan, `check`
+codemod gate and cascade consume its own generated provider through the same plan as its
+authored rules. `ast-grep scan -c` on that project provider reproduces the rule set.
+Generated rules carry no fixtures: renderer tests own their proof. The retired
+per-rule
+repository projections under `config/rules/ast-grep/{utils,rules/generated}` are
+declared at the generation owner; authored files are never retired by that declaration.
+
+| Workspace declaration | Infra implementation |
+| --- | --- |
+| [ADR-028 Decision 17](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17) requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/codemod_native_utilities.py) |
+| [ADR-028 Decision 18](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-18) owns one generalized source rule per law. | Repository plans preserve renderer IDs; the source catalog remains the single rule owner. |
 
 Every finding is the native match; no Python admission runs after the scan. A
 project fact a catalog rule needs is a stable generated utility (`own-package`,

@@ -4,7 +4,6 @@
     "code_block_line_length": 88,
     "heading_line_length": 200,
     "line_length": 88,
-    "reflow": false,
     "tables": false
   },
   "MD022": false,
@@ -31,8 +30,6 @@
     "style": "consistent"
   },
   "MD051": false,
-  "MD057": false,
   "MD060": false,
-  "MD076": false,
   "default": true
 }

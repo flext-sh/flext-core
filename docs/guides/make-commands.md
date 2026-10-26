@@ -419,13 +419,21 @@ or checking; `upg` owns changes to the resolved release.
 The markdown standard lives once in `flext-infra/src/flext_infra/config/tooling.yaml`
 (`Infra.tooling.tools.markdown`) and is projected to every repository by `make gen`:
 
-- `rumdl` is the linter (markdownlint-compatible `MD*` rules through the generated
-  `.markdownlint.json` / `.markdownlintignore`); syntax findings inside embedded code
-  belong to the flext-tests markdown validator, not to a second linter.
-- `rumdl fmt` is the formatter and reads the same `.markdownlint.json`:
+- Common `MD*` rules generate the markdownlint-compatible `.markdownlint.json`.
+  Native rumdl options and its additional rules are declared separately in the same
+  policy, never copied into the markdownlint projection. `.markdownlintignore`
+  and the native exclusions derive from the same governed scope.
+- `rumdl` is the command-line linter and reads generated `.rumdl.toml`, including
+  the MkDocs dialect used by the documentation renderer. `make fix` applies its
+  supported repairs; unresolved findings remain failures, not accepted exceptions.
+- `rumdl fmt` is the formatter and reads the same `.rumdl.toml`:
   `rumdl fmt --check` in `make check`, `rumdl fmt` in `make fmt`. rumdl is locked in
   `uv.lock`; the Mise npm backend remains retired (ADR-025). The amended Bun
   project contract for distributed JavaScript tools does not change this formatter.
+- `make check` validates without rewriting. Run generation before repair and
+  formatting, then repeat repair and formatting to prove a fixed point. Remaining
+  authored prose, link and heading defects are corrected at their source; generated
+  Markdown is corrected at its renderer, never by editing the projection.
 - `markdown-code` holds parseable embedded Python and doctest examples to the
   ruff-format contract; unparseable documentation fragments are prose and stay with the
   validator. Generated and provider-projected trees (`.agents`, `.claude`, `.gemini`,

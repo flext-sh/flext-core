@@ -58,11 +58,11 @@ usada como padrão único de intenção.
 1. **YAGNI:** não criar/manter classe pública sem necessidade funcional atual.
 1. **DRY:** um conceito público -> um nome canônico.
 1. **SOLID (aplicação prática):**
-   - S: modelo com uma intenção só;
-   - O: extensão por novo modelo de domínio, não por wrapper vazio;
-   - L: subclasse não pode afrouxar contrato do pai;
-   - I: contratos separados por contexto (CQRS, handler, container, settings);
-   - D: camadas altas dependem de abstrações da foundation.
+    - S: modelo com uma intenção só;
+    - O: extensão por novo modelo de domínio, não por wrapper vazio;
+    - L: subclasse não pode afrouxar contrato do pai;
+    - I: contratos separados por contexto (CQRS, handler, container, settings);
+    - D: camadas altas dependem de abstrações da foundation.
 1. **MRO curto:** máximo de 3 níveis públicos (Foundation -> Domain -> Facade opcional).
 1. **Deletion-first:** primeiro tentar remover; só depois adicionar.
 

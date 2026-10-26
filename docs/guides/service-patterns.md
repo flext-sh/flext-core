@@ -147,11 +147,13 @@ else:
     raise RuntimeError(message)
 ```
 
-- `t.Port[P]` is `Annotated[P, SkipJsonSchema()]`. Pydantic validates the value with
+- `t.Port[P]` supplies an instance-validation schema and excludes the port from JSON
+  Schema. Pydantic validates the value with
   `isinstance` on construction and on assignment, and the port never enters the JSON
   Schema. `exclude=True` stays on the field: field metadata cannot live in the alias.
-- The port type is a plain Protocol class. A subscripted generic or a concrete class is
-  rejected with `TypeError` when the service class is created; Pydantic rejects a
+- Dependencies use runtime-checkable Protocols from `p`. The annotation also resolves
+  aliases, generic origins and concrete classes, preserving supplied instances without
+  conversion; it does not recursively validate generic arguments. Pydantic rejects a
   Protocol that is not runtime-checkable.
 - A port has no `None` default and no `default_factory` that builds infrastructure. The
   runtime seeds of `x` are the only typed absence (see below).

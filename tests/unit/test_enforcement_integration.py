@@ -1,15 +1,8 @@
-"""Integration tests — importing a module fires the enforcement hook.
+"""Imports stay silent; explicit public queries report source-shape violations.
 
-Programmatic ``u.check(cls)`` reports are exercised by the ``test_enforcement*``
-modules. These tests assert the production integration path one layer up: the
-Pydantic ``__pydantic_init_subclass__`` + ``FlextModelsNamespace.__init_subclass__``
-hooks emit ``FlextMroViolation`` warnings automatically when a module with
-rule-violating top-level classes is imported, and stay silent for clean code.
-
-The observable contract asserted here is the *public warning output*: the
-``FlextMroViolation`` category (a public ``flext_core`` export) and the human
-readable violation text a developer sees. No private module, collaborator, or
-internal data structure is inspected.
+ADR-028 assigns automatic static enforcement to flext-infra. Importing classes
+does not run the retired static hooks. The supported ``u.check(cls)`` query
+returns reports without emitting warnings.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -24,7 +17,7 @@ from pathlib import Path
 
 import pytest
 
-from tests import e, t, tm
+from tests import t, tm, u
 
 _CLEAN_MODULE = "tests.fixtures.clean_module"
 _BAD_MODULE = "tests_flext_enforcement_integration_fixtures_bad"
@@ -97,19 +90,16 @@ class TestsFlextBadClassVarConstant(FlextModelsNamespace):
 """
 
 
-def _capture_import_warnings(
+def _import_messages(
     dotted: str,
     *,
     search_path: Path | None = None,
+    query: bool = False,
 ) -> t.StrSequence:
-    """Freshly import ``dotted`` and return every emitted violation message.
-
-    The whole import runs inside the ``catch_warnings`` block so no warning
-    leaks to the surrounding pytest session, and the module is evicted +
-    ``sys.path`` restored afterwards so the shared interpreter is left clean.
+    """Import without warnings and optionally query classes before unloading them.
 
     Returns:
-        The resulting ``t.StrSequence``.
+        Explicit violation messages for classes declared by the imported module.
 
     """
     inserted = search_path is not None
@@ -119,14 +109,15 @@ def _capture_import_warnings(
         sys.modules.pop(dotted, None)
         importlib.invalidate_caches()
         with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always", e.MroViolation)
-            importlib.import_module(dotted)
-        return tuple(
-            str(entry.message)
-            for entry in caught
-            if issubclass(entry.category, e.MroViolation)
-            and "violates FLEXT" in str(entry.message)
-        )
+            module = importlib.import_module(dotted)
+            messages = tuple(
+                f"{item.qualname}: {item.message}"
+                for target in vars(module).values()
+                if query and isinstance(target, type) and target.__module__ == dotted
+                for item in u.check(target).violations
+            )
+        tm.that(tuple(str(entry.message) for entry in caught), eq=())
+        return messages
     finally:
         sys.modules.pop(dotted, None)
         if inserted:
@@ -134,15 +125,13 @@ def _capture_import_warnings(
 
 
 class TestsFlextEnforcementIntegration:
-    """Import-time enforcement hook behaviour on clean and violating modules."""
+    """Import silence and explicit detection for clean and violating modules."""
 
     @staticmethod
     def test_clean_module_import_emits_no_violation_warning() -> None:
-        # Arrange / Act: importing a fully rule-compliant module.
         """Test clean module import emits no violation warning."""
-        messages = _capture_import_warnings(_CLEAN_MODULE)
+        messages = _import_messages(_CLEAN_MODULE)
 
-        # Assert: the hook produces no FLEXT violation warnings.
         tm.that(
             messages,
             eq=(),
@@ -166,25 +155,26 @@ class TestsFlextEnforcementIntegration:
             _BAD_MODULE_SOURCE,
             encoding="utf-8",
         )
-        messages = _capture_import_warnings(_BAD_MODULE, search_path=module_root)
+        messages = _import_messages(_BAD_MODULE, search_path=module_root, query=True)
         tm.that(
             messages,
             truth=True,
-            msg="Importing the violating module emitted no warnings",
+            msg="Explicit detection of the violating module returned no findings",
         )
         return messages
 
     @staticmethod
-    def test_every_emitted_warning_is_the_public_category(
-        violation_messages: t.StrSequence,
+    def test_violating_module_import_does_not_run_static_hooks(
+        tmp_path: Path,
     ) -> None:
-        # The public FlextMroViolation export is a genuine Warning subclass and
-        # is the exact category a caller can filter on.
-        """Test every emitted warning is the public category."""
-        tm.that(e.MroViolation, where=Warning.__subclasscheck__)
+        """Known source violations do not trigger static enforcement on import."""
+        (tmp_path / f"{_BAD_MODULE}.py").write_text(
+            _BAD_MODULE_SOURCE,
+            encoding="utf-8",
+        )
         tm.that(
-            all("violates FLEXT" in message for message in violation_messages),
-            truth=True,
+            _import_messages(_BAD_MODULE, search_path=tmp_path),
+            eq=(),
         )
 
     @staticmethod
@@ -206,17 +196,16 @@ class TestsFlextEnforcementIntegration:
             ("Constant 'GROUPS' declared", "classvar_constant_outside_constants"),
         ],
     )
-    def test_rule_violation_is_reported_in_warning_text(
+    def test_rule_violation_is_reported_by_explicit_query(
         violation_messages: t.StrSequence,
         fragment: str,
         rule: str,
     ) -> None:
-        # Assert: the observable warning output names the specific violation.
-        """Test rule violation is reported in warning text."""
+        """The explicit public query reports each supported violation."""
         tm.that(
             any(fragment in message for message in violation_messages),
             truth=True,
-            msg=f"rule={rule!r}: no warning contained {fragment!r}",
+            msg=f"rule={rule!r}: no finding contained {fragment!r}",
         )
 
     @staticmethod
@@ -235,16 +224,15 @@ class TestsFlextEnforcementIntegration:
             "TestsFlextBadClassVarConstant",
         ],
     )
-    def test_each_violating_class_is_named_in_a_warning(
+    def test_each_violating_class_is_named_in_a_report(
         violation_messages: t.StrSequence,
         class_name: str,
     ) -> None:
-        # Assert: every rule-breaking top-level class triggers the hook.
-        """Test each violating class is named in a warning."""
+        """Explicit reports identify the rule-breaking class."""
         tm.that(
             any(class_name in message for message in violation_messages),
             truth=True,
-            msg=f"No violation warning named {class_name!r}",
+            msg=f"No violation finding named {class_name!r}",
         )
 
     @staticmethod
@@ -267,8 +255,7 @@ class TestsFlextEnforcementIntegration:
             encoding="utf-8",
         )
 
-        # Act: import and capture the enforcement warnings.
-        messages = _capture_import_warnings(module_name, search_path=module_root)
+        messages = _import_messages(module_name, search_path=module_root, query=True)
 
         # Assert: BOTH constants are reported without any intermediate cure.
         tm.that(

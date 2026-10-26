@@ -200,17 +200,17 @@ Concrete base classes (`ContainerMappingBase`, etc.) move to `_models/containers
 ## Execution order (strict)
 
 1. **A1 — Freeze t.\***:
-   - Delete commented `# DEPRECATED` blocks in `_typings/services.py` and
-     `_typings/core.py`.
-   - Remove `ProtocolModelCarrier`, `DomainModelCarrier`, `ResourceCallable`,
-     `HandlerLike`, `TypeOriginSpecifier`, `ServiceMap` dup variants,
-     `ScopedContainerRegistry`, `ScopedScalarRegistry` — following grep check that each
-     has no active caller or can be inlined.
-   - Move the concrete `*Base` classes out of `_typings/base.py` →
-     `_models/containers.py` (the runtime tuples already live in
-     `_constants/guards.py`).
-   - Rewrite `typeadapters.py` to use `t.FlatContainerMapping` instead of
-     `t.RecursiveContainerMapping`.
+    - Delete commented `# DEPRECATED` blocks in `_typings/services.py` and
+      `_typings/core.py`.
+    - Remove `ProtocolModelCarrier`, `DomainModelCarrier`, `ResourceCallable`,
+      `HandlerLike`, `TypeOriginSpecifier`, `ServiceMap` dup variants,
+      `ScopedContainerRegistry`, `ScopedScalarRegistry` — following grep check that each
+      has no active caller or can be inlined.
+    - Move the concrete `*Base` classes out of `_typings/base.py` →
+      `_models/containers.py` (the runtime tuples already live in
+      `_constants/guards.py`).
+    - Rewrite `typeadapters.py` to use `t.FlatContainerMapping` instead of
+      `t.RecursiveContainerMapping`.
 2. **A2 — Freeze p.\***: audit every protocol signature; replace any
    `Mapping[str, Any-nested]` with `t.FlatContainerMapping` or concrete `m.*`.
 3. **B — m.\* absorbs validation**: starting with context + domain_event + registry +
