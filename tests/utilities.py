@@ -14,7 +14,7 @@ from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from flext_tests import FlextTestsUtilities
+from flext_tests import u
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
@@ -38,7 +38,7 @@ from tests._utilities import (
 )
 
 
-class TestsFlextUtilities(FlextTestsUtilities):
+class TestsFlextUtilities(u):
     """Utilities for flext-core tests."""
 
     class TestsFlextResultExceptionCarrying:
@@ -398,11 +398,11 @@ class TestsFlextUtilities(FlextTestsUtilities):
             )
 
     class Tests(
-        TestsFlextBeartypeEngine,
         TestsFlextUtilitiesContractsMixin,
-        TestsFlextDecoratorsLegacy,
         TestsFlextUtilitiesDispatchMixin,
-        TestsFlextFlextHandlers,
+        TestsFlextUtilitiesResultCombinators,
+        TestsFlextUtilitiesValidationFactoriesMixin,
+        TestsFlextUtilitiesServicesMixin,
         TestsFlextUtilitiesParserReliabilityMixin,
         TestsFlextUtilitiesParserScenariosMixin,
         TestsFlextUtilitiesReliabilityScenariosMixin,
@@ -410,16 +410,12 @@ class TestsFlextUtilities(FlextTestsUtilities):
         TestsFlextUtilitiesRailwayPipelinesMixin,
         TestsFlextUtilitiesRailwayServicesMixin,
         TestsFlextUtilitiesRailwayCasesMixin,
-        TestsFlextUtilitiesResultCombinators,
-        TestsFlextResultExceptionCarrying,
-        TestsFlextUtilitiesValidationFactoriesMixin,
-        TestsFlextUtilitiesServicesMixin,
         TestsFlextUtilitiesValidationNetworkScenarios,
         TestsFlextUtilitiesValidationNumericScenarios,
         TestsFlextUtilitiesValidationPatternScenarios,
         TestsFlextUtilitiesValidationStringScenarios,
         TestsFlextUtilitiesValidationUriScenarios,
-        FlextTestsUtilities.Tests,
+        u.Tests,
     ):
         """flext-core test utilities namespace."""
 

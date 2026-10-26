@@ -25,9 +25,9 @@ root.
 Read, in order:
 
 1. the universal authority named by the
-   [exact context router](https://github.com/flext-sh/flext/blob/0.12.0-dev/.agents/skills/flext-context-routing/SKILL.md);
-2. the [workspace root law](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md) and exact local
-   [FLEXT law](https://github.com/flext-sh/flext/blob/0.12.0-dev/.agents/skills/flext-law/SKILL.md);
+   exact context router;
+2. the workspace root law and exact local
+   FLEXT law;
 3. the nearest package `AGENTS.md`;
 4. the active Bead and its current evidence.
 
@@ -61,7 +61,7 @@ make gen
 ```
 
 Tests run only through the retained Testmon cache. Apply the root
-[connectivity prerequisite contract](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md#production-readiness-and-connectivity-tests):
+connectivity prerequisite contract:
 availability skips are unmet prerequisites, not successful runtime validation.
 Warnings, empty collection, missing tools, and suppressed failures remain explicit.
 

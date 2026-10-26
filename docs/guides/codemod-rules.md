@@ -125,8 +125,8 @@ declared at the generation owner; authored files are never retired by that decla
 
 | Workspace declaration | Infra implementation |
 | --- | --- |
-| [ADR-028 Decision 17](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17) requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/codemod_native_utilities.py) |
-| [ADR-028 Decision 18](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-18) owns one generalized source rule per law. | Repository plans preserve renderer IDs; the source catalog remains the single rule owner. |
+| ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/codemod_native_utilities.py) |
+| ADR-028 Decision 18 owns one generalized source rule per law. | Repository plans preserve renderer IDs; the source catalog remains the single rule owner. |
 
 Every finding is the native match; no Python admission runs after the scan. A
 project fact a catalog rule needs is a stable generated utility (`own-package`,
@@ -171,7 +171,7 @@ The engine reads these `metadata` keys, declared in
 
 | Workspace declaration | Accepted decision |
 | --- | --- |
-| This section, One rule per law; the generated Infra copy links back here. | [FLEXT ADR-028 Decision 18](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-18) |
+| This section, One rule per law; the generated Infra copy links back here. | FLEXT ADR-028 Decision 18 |
 
 Operator order of 2026-10-25, verbatim (tracker memory
 `operator-order-2026-10-25-rules-generalized-min-count`; ADR-028 Decision 18):

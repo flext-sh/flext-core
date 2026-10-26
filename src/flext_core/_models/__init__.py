@@ -13,46 +13,66 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._base import (
-        FlextModelsBasePart01,
-        FlextModelsBasePart02,
-        FlextModelsBasePart03,
-    )
-    from flext_core._models._container import (
+    from flext_core._models._base.flextmodelsbase_part_01 import FlextModelsBasePart01
+    from flext_core._models._base.flextmodelsbase_part_02 import FlextModelsBasePart02
+    from flext_core._models._base.flextmodelsbase_part_03 import FlextModelsBasePart03
+    from flext_core._models._container.flextmodelscontainer_part_01 import (
         FlextModelsContainerPart01,
+    )
+    from flext_core._models._container.flextmodelscontainer_part_02 import (
         FlextModelsContainerPart02,
+    )
+    from flext_core._models._container.flextmodelscontainer_part_03 import (
         FlextModelsContainerPart03,
+    )
+    from flext_core._models._container.flextmodelscontainer_part_04 import (
         FlextModelsContainerPart04,
     )
-    from flext_core._models._context import (
-        FlextModelsContextData,
-        FlextModelsContextExport,
-        FlextModelsContextMetadata,
-        FlextModelsContextScope,
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_01 import (
         FlextModelsContextScopePart01,
+    )
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_02 import (
         FlextModelsContextScopePart02,
+    )
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_03 import (
         FlextModelsContextScopePart03,
-        FlextModelsContextTokens,
     )
-    from flext_core._models._cqrs import FlextModelsCqrsPart01
-    from flext_core._models._enforcement import (
+    from flext_core._models._context._data import FlextModelsContextData
+    from flext_core._models._context._export import FlextModelsContextExport
+    from flext_core._models._context._metadata import FlextModelsContextMetadata
+    from flext_core._models._context._scope import FlextModelsContextScope
+    from flext_core._models._context._tokens import FlextModelsContextTokens
+    from flext_core._models._cqrs.flextmodelscqrs_part_01 import FlextModelsCqrsPart01
+    from flext_core._models._enforcement._base import (
         FlextModelsEnforcementBase,
-        FlextModelsEnforcementCatalog,
-        FlextModelsEnforcementInspection,
         FlextModelsEnforcementModelBase,
-        FlextModelsEnforcementParams,
-        FlextModelsEnforcementResolution,
-        FlextModelsEnforcementSources,
     )
-    from flext_core._models._exception_params import (
-        FlextModelsExceptionParamsBase,
+    from flext_core._models._enforcement._catalog import FlextModelsEnforcementCatalog
+    from flext_core._models._enforcement._inspection import (
+        FlextModelsEnforcementInspection,
+    )
+    from flext_core._models._enforcement._params import FlextModelsEnforcementParams
+    from flext_core._models._enforcement._resolution import (
+        FlextModelsEnforcementResolution,
+    )
+    from flext_core._models._enforcement._sources import FlextModelsEnforcementSources
+    from flext_core._models._exception_params.base import FlextModelsExceptionParamsBase
+    from flext_core._models._exception_params.operation_errors import (
         FlextModelsExceptionParamsOperationErrors,
+    )
+    from flext_core._models._exception_params.service_errors import (
         FlextModelsExceptionParamsServiceErrors,
     )
-    from flext_core._models._project_metadata import (
+    from flext_core._models._project_metadata.aggregates import (
         FlextModelsProjectMetadataAggregates,
+    )
+    from flext_core._models._project_metadata.contract import (
         FlextModelsProjectMetadataContract,
+    )
+    from flext_core._models._project_metadata.document import (
         FlextModelsProjectMetadataDocument,
+    )
+    from flext_core._models._project_metadata.pyproject_ingress import (
         FlextModelsPyprojectIngressContract,
     )
     from flext_core._models.base import FlextModelsBase

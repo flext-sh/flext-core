@@ -13,19 +13,31 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._protocols._container import (
+    from flext_core._protocols._container.flextprotocolscontainer_part_01 import (
         FlextProtocolsContainerPart01,
+    )
+    from flext_core._protocols._container.flextprotocolscontainer_part_02 import (
         FlextProtocolsContainerPart02,
+    )
+    from flext_core._protocols._container.flextprotocolscontainer_part_03 import (
         FlextProtocolsContainerPart03,
     )
-    from flext_core._protocols._context import (
+    from flext_core._protocols._context.flextprotocolscontext_part_01 import (
         FlextProtocolsContextPart01,
+    )
+    from flext_core._protocols._context.flextprotocolscontext_part_02 import (
         FlextProtocolsContextPart02,
+    )
+    from flext_core._protocols._context.flextprotocolscontext_part_03 import (
         FlextProtocolsContextPart03,
     )
-    from flext_core._protocols._logging import (
+    from flext_core._protocols._logging.flextprotocolslogging_part_01 import (
         FlextProtocolsLoggingPart01,
+    )
+    from flext_core._protocols._logging.flextprotocolslogging_part_02 import (
         FlextProtocolsLoggingPart02,
+    )
+    from flext_core._protocols._logging.flextprotocolslogging_part_03 import (
         FlextProtocolsLoggingPart03,
     )
     from flext_core._protocols.base import FlextProtocolsBase

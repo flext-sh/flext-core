@@ -9,9 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import FlextTestsConstants
+from flext_tests import c
 
-from flext_core import FlextConstants
+from flext_core import c as flext_core_c
 from tests._constants import (
     TestsFlextConstantsDomain,
     TestsFlextConstantsEnums,
@@ -23,7 +23,7 @@ from tests._constants import (
 )
 
 
-class TestsFlextConstants(FlextTestsConstants, FlextConstants):
+class TestsFlextConstants(c, flext_core_c):
     """Layer 0 constants facade for flext-core tests."""
 
     class Tests(
@@ -34,7 +34,7 @@ class TestsFlextConstants(FlextTestsConstants, FlextConstants):
         TestsFlextConstantsOther,
         TestsFlextConstantsResult,
         TestsFlextConstantsServices,
-        FlextTestsConstants.Tests,
+        c.Tests,
     ):
         """Flat constants for test composition and parametrization.
 

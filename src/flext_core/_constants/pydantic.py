@@ -15,8 +15,17 @@ from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Final
 
-from pydantic import (
-    VERSION,
+from pydantic.errors import (
+    PydanticErrorCodes,
+    PydanticForbiddenQualifier,
+    PydanticImportError,
+    PydanticInvalidForJsonSchema,
+    PydanticSchemaGenerationError,
+    PydanticUndefinedAnnotation,
+    PydanticUserError,
+)
+from pydantic.version import VERSION
+from pydantic.warnings import (
     PydanticDeprecatedSince20,
     PydanticDeprecatedSince26,
     PydanticDeprecatedSince29,
@@ -24,15 +33,7 @@ from pydantic import (
     PydanticDeprecatedSince211,
     PydanticDeprecatedSince212,
     PydanticDeprecationWarning,
-    PydanticErrorCodes,
     PydanticExperimentalWarning,
-    PydanticForbiddenQualifier,
-    PydanticImportError,
-    PydanticInvalidForJsonSchema,
-    PydanticSchemaGenerationError,
-    PydanticUndefinedAnnotation,
-    PydanticUserError,
-    ValidationError,
 )
 from pydantic_core import (
     MISSING,
@@ -45,6 +46,7 @@ from pydantic_core import (
     PydanticUndefinedType,
     PydanticUseDefault,
     SchemaError,
+    ValidationError,
     ValidationError as CoreValidationError,
 )
 

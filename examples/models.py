@@ -25,10 +25,10 @@ from examples._models import (
     ExamplesFlextModelsOutput,
     ExamplesFlextModelsPerson,
 )
-from flext_core import FlextModels
+from flext_core import m
 
 
-class ExamplesFlextModels(FlextModels):
+class ExamplesFlextModels(m):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(

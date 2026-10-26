@@ -13,9 +13,13 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._context.__scope import (
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_01 import (
         FlextModelsContextScopePart01,
+    )
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_02 import (
         FlextModelsContextScopePart02,
+    )
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_03 import (
         FlextModelsContextScopePart03,
     )
     from flext_core._models._context._data import FlextModelsContextData

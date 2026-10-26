@@ -21,11 +21,11 @@ repos:
 
 
 
-      - id: flext-pre-push-check
-        name: make check
+      - id: flext-pre-push-check-primary
+        name: make check CHECK_PHASE=primary
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; unset CI; make check'
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; unset CI; make check CHECK_PHASE=primary'
         pass_filenames: false
         always_run: true
         stages: [pre-push]
@@ -36,6 +36,16 @@ repos:
         language: system
         entry: >-
           bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; CI=N make tests'
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
+
+
+      - id: flext-pre-push-check
+        name: make check
+        language: system
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; unset CI; make check'
         pass_filenames: false
         always_run: true
         stages: [pre-push]

@@ -13,45 +13,101 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._beartype import (
+    from flext_core._utilities._beartype._alias_visitor import (
         FlextUtilitiesBeartypeAliasVisitor,
-        FlextUtilitiesBeartypeAttrVisitor,
-        FlextUtilitiesBeartypeClassVisitor,
-        FlextUtilitiesBeartypeClassVisitorPart01,
-        FlextUtilitiesBeartypeClassVisitorPart02,
-        FlextUtilitiesBeartypeClassVisitorPart03,
-        FlextUtilitiesBeartypeDeprecatedVisitor,
-        FlextUtilitiesBeartypeFieldUnionScan,
-        FlextUtilitiesBeartypeFieldVisitor,
-        FlextUtilitiesBeartypeHelpers,
-        FlextUtilitiesBeartypeHelpersPart01,
-        FlextUtilitiesBeartypeHelpersPart02,
-        FlextUtilitiesBeartypeHelpersPart03,
-        FlextUtilitiesBeartypeImportBlacklistVisitor,
-        FlextUtilitiesBeartypeImportVisitor,
-        FlextUtilitiesBeartypeLibraryVisitor,
-        FlextUtilitiesBeartypeMethodVisitor,
-        FlextUtilitiesBeartypeModuleSource,
-        FlextUtilitiesBeartypeModuleSourceDeferred,
-        FlextUtilitiesBeartypeModuleSourceProvenance,
-        FlextUtilitiesBeartypeModuleSourceScan,
-        FlextUtilitiesBeartypeModuleVisitor,
-        FlextUtilitiesBeartypeTypeAliases,
+    )
+    from flext_core._utilities._beartype._class_visitor.alias_rules import (
         alias_first_violation,
     )
-    from flext_core._utilities._checker import (
+    from flext_core._utilities._beartype._class_visitor.visitor import (
+        FlextUtilitiesBeartypeClassVisitorPart03,
+    )
+    from flext_core._utilities._beartype._class_visitor.visitor_base import (
+        FlextUtilitiesBeartypeClassVisitorPart01,
+    )
+    from flext_core._utilities._beartype._class_visitor.visitor_checks import (
+        FlextUtilitiesBeartypeClassVisitorPart02,
+    )
+    from flext_core._utilities._beartype._field_union_scan import (
+        FlextUtilitiesBeartypeFieldUnionScan,
+    )
+    from flext_core._utilities._beartype._helpers.helpers_part_01 import (
+        FlextUtilitiesBeartypeHelpersPart01,
+    )
+    from flext_core._utilities._beartype._helpers.helpers_part_02 import (
+        FlextUtilitiesBeartypeHelpersPart02,
+    )
+    from flext_core._utilities._beartype._helpers.helpers_part_03 import (
+        FlextUtilitiesBeartypeHelpersPart03,
+    )
+    from flext_core._utilities._beartype._import_blacklist_visitor import (
+        FlextUtilitiesBeartypeImportBlacklistVisitor,
+    )
+    from flext_core._utilities._beartype._library_visitor import (
+        FlextUtilitiesBeartypeLibraryVisitor,
+    )
+    from flext_core._utilities._beartype._module_source_deferred import (
+        FlextUtilitiesBeartypeModuleSourceDeferred,
+    )
+    from flext_core._utilities._beartype._module_source_provenance import (
+        FlextUtilitiesBeartypeModuleSourceProvenance,
+    )
+    from flext_core._utilities._beartype._module_source_scan import (
+        FlextUtilitiesBeartypeModuleSourceScan,
+    )
+    from flext_core._utilities._beartype.attr_visitor import (
+        FlextUtilitiesBeartypeAttrVisitor,
+    )
+    from flext_core._utilities._beartype.class_visitor import (
+        FlextUtilitiesBeartypeClassVisitor,
+    )
+    from flext_core._utilities._beartype.deprecated_visitor import (
+        FlextUtilitiesBeartypeDeprecatedVisitor,
+    )
+    from flext_core._utilities._beartype.field_visitor import (
+        FlextUtilitiesBeartypeFieldVisitor,
+    )
+    from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+    from flext_core._utilities._beartype.import_visitor import (
+        FlextUtilitiesBeartypeImportVisitor,
+    )
+    from flext_core._utilities._beartype.method_visitor import (
+        FlextUtilitiesBeartypeMethodVisitor,
+    )
+    from flext_core._utilities._beartype.module_source import (
+        FlextUtilitiesBeartypeModuleSource,
+    )
+    from flext_core._utilities._beartype.module_visitor import (
+        FlextUtilitiesBeartypeModuleVisitor,
+    )
+    from flext_core._utilities._beartype.type_aliases import (
+        FlextUtilitiesBeartypeTypeAliases,
+    )
+    from flext_core._utilities._checker.checker_part_01 import (
         FlextUtilitiesCheckerPart01,
+    )
+    from flext_core._utilities._checker.checker_part_02 import (
         FlextUtilitiesCheckerPart02,
+    )
+    from flext_core._utilities._checker.checker_part_03 import (
         FlextUtilitiesCheckerPart03,
     )
-    from flext_core._utilities._enforcement import (
+    from flext_core._utilities._enforcement.enforcement_part_02 import (
         FlextUtilitiesEnforcementPart02,
+    )
+    from flext_core._utilities._enforcement.enforcement_part_03 import (
         FlextUtilitiesEnforcementPart03,
+    )
+    from flext_core._utilities._enforcement.enforcement_part_04 import (
         FlextUtilitiesEnforcementPart04,
+    )
+    from flext_core._utilities._enforcement.enforcement_part_05 import (
         FlextUtilitiesEnforcementPart05,
     )
-    from flext_core._utilities._enforcement_collect import (
+    from flext_core._utilities._enforcement_collect.enforcement_collect_part_01 import (
         FlextUtilitiesEnforcementCollectPart01,
+    )
+    from flext_core._utilities._enforcement_collect.enforcement_collect_part_02 import (
         FlextUtilitiesEnforcementCollectPart02,
     )
     from flext_core._utilities._guards_type_protocol_specs import (
@@ -60,26 +116,40 @@ if TYPE_CHECKING:
     from flext_core._utilities._guards_type_protocol_string import (
         FlextUtilitiesGuardsTypeProtocolStringMixin,
     )
-    from flext_core._utilities._logging_config import (
+    from flext_core._utilities._logging_config.logging_config_part_01 import (
         FlextUtilitiesLoggingConfigPart01,
+    )
+    from flext_core._utilities._logging_config.logging_config_part_02 import (
         FlextUtilitiesLoggingConfigPart02,
+    )
+    from flext_core._utilities._logging_config.logging_config_part_03 import (
         FlextUtilitiesLoggingConfigPart03,
+    )
+    from flext_core._utilities._logging_config.logging_stream import (
         FlextUtilitiesLoggingStream,
     )
-    from flext_core._utilities._logging_context import (
+    from flext_core._utilities._logging_context.logging_context_part_01 import (
         FlextUtilitiesLoggingContextPart01,
+    )
+    from flext_core._utilities._logging_context.logging_context_part_02 import (
         FlextUtilitiesLoggingContextPart02,
     )
-    from flext_core._utilities._mapper_access import (
+    from flext_core._utilities._mapper_access.mapper_access_part_01 import (
         FlextUtilitiesMapperAccessPart01,
+    )
+    from flext_core._utilities._mapper_access.mapper_access_part_02 import (
         FlextUtilitiesMapperAccessPart02,
     )
-    from flext_core._utilities._mapper_extract import (
+    from flext_core._utilities._mapper_extract.mapper_extract_part_01 import (
         FlextUtilitiesMapperExtractPart01,
+    )
+    from flext_core._utilities._mapper_extract.mapper_extract_part_02 import (
         FlextUtilitiesMapperExtractPart02,
     )
-    from flext_core._utilities._parser_targets import (
+    from flext_core._utilities._parser_targets.parser_targets_part_01 import (
         FlextUtilitiesParserTargetsPart01,
+    )
+    from flext_core._utilities._parser_targets.parser_targets_part_02 import (
         FlextUtilitiesParserTargetsPart02,
     )
     from flext_core._utilities.args import FlextUtilitiesArgs

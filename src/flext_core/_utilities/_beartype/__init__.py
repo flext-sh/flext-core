@@ -16,18 +16,28 @@ if TYPE_CHECKING:
     from flext_core._utilities._beartype._alias_visitor import (
         FlextUtilitiesBeartypeAliasVisitor,
     )
-    from flext_core._utilities._beartype._class_visitor import (
-        FlextUtilitiesBeartypeClassVisitorPart01,
-        FlextUtilitiesBeartypeClassVisitorPart02,
-        FlextUtilitiesBeartypeClassVisitorPart03,
+    from flext_core._utilities._beartype._class_visitor.alias_rules import (
         alias_first_violation,
+    )
+    from flext_core._utilities._beartype._class_visitor.visitor import (
+        FlextUtilitiesBeartypeClassVisitorPart03,
+    )
+    from flext_core._utilities._beartype._class_visitor.visitor_base import (
+        FlextUtilitiesBeartypeClassVisitorPart01,
+    )
+    from flext_core._utilities._beartype._class_visitor.visitor_checks import (
+        FlextUtilitiesBeartypeClassVisitorPart02,
     )
     from flext_core._utilities._beartype._field_union_scan import (
         FlextUtilitiesBeartypeFieldUnionScan,
     )
-    from flext_core._utilities._beartype._helpers import (
+    from flext_core._utilities._beartype._helpers.helpers_part_01 import (
         FlextUtilitiesBeartypeHelpersPart01,
+    )
+    from flext_core._utilities._beartype._helpers.helpers_part_02 import (
         FlextUtilitiesBeartypeHelpersPart02,
+    )
+    from flext_core._utilities._beartype._helpers.helpers_part_03 import (
         FlextUtilitiesBeartypeHelpersPart03,
     )
     from flext_core._utilities._beartype._import_blacklist_visitor import (

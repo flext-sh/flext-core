@@ -13,12 +13,16 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._exceptions._base import (
+    from flext_core._exceptions._base.flextexceptionsbase_part_01 import (
         FlextBaseErrorMetadataMixin,
+    )
+    from flext_core._exceptions._base.flextexceptionsbase_part_02 import (
         FlextBaseErrorStateMixin,
+    )
+    from flext_core._exceptions._base.flextexceptionsbase_part_03 import (
         FlextExceptionsBasePart03,
     )
-    from flext_core._exceptions._factories import FlextExceptionsFactoriesFail
+    from flext_core._exceptions._factories.fail import FlextExceptionsFactoriesFail
     from flext_core._exceptions.base import FlextExceptionsBase
     from flext_core._exceptions.exception_types import FlextExceptionsTypes
     from flext_core._exceptions.factories import FlextExceptionsFactories
