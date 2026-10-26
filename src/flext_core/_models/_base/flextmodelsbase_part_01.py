@@ -12,12 +12,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import ClassVar, override
 
 from pydantic import ConfigDict
 
 from flext_core import c
 from flext_core._models import FlextModelsPydantic
+from flext_core._utilities import FlextUtilitiesEnforcement
 
 
 class FlextModelsBasePart01:
