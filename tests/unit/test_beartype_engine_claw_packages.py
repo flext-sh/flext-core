@@ -17,16 +17,16 @@ import textwrap
 from pathlib import Path
 
 import tests.utilities
-from flext_core.utilities import FlextUtilitiesBeartypeConf
-from tests import t, tm
+from flext_core import settings
+from tests import t, tm, u
 
 _CLAW_INIT = (
     textwrap.dedent(
         """
     from beartype.claw import beartype_this_package
-    from flext_core.utilities import FlextUtilitiesBeartypeConf
+    from flext_core import settings, u
 
-    beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
+    beartype_this_package(conf=u.build_beartype_conf(settings.beartype_mode))
     """,
     ).strip()
     + "\n"
@@ -78,8 +78,8 @@ class TestsFlextCoreBeartypeEngineClawPackages(
     def test_build_beartype_conf_is_idempotent() -> None:
         """Repeated factory calls yield equal, hash-stable conf values (public API)."""
         # Arrange / Act
-        conf_a = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        conf_b = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf_a = u.build_beartype_conf(settings.beartype_mode)
+        conf_b = u.build_beartype_conf(settings.beartype_mode)
 
         # Assert: deterministic public value, safe to reuse across call sites.
         tm.that(conf_a, eq=conf_b)

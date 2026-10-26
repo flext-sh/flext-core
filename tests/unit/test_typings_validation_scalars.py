@@ -16,7 +16,7 @@ import math
 import pytest
 from typing_extensions import TypeForm
 
-from tests import c, m, t, tm, u
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreTypingsValidationScalars:
@@ -28,14 +28,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [1, 2, 5000, 9999, 10000])
     def test_batch_size_accepts_in_range(value: int) -> None:
         """BatchSize round-trips integers within its inclusive 1..10000 range."""
-        adapter: m.TypeAdapter[int] = u.type_adapter(TypeForm(t.BatchSize))
+        adapter: t.TypeAdapter[int] = u.type_adapter(TypeForm(t.BatchSize))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [0, -1, 10001, 20000])
     def test_batch_size_rejects_out_of_range(value: int) -> None:
         """BatchSize rejects integers below 1 or above 10000."""
-        adapter: m.TypeAdapter[int] = u.type_adapter(TypeForm(t.BatchSize))
+        adapter: t.TypeAdapter[int] = u.type_adapter(TypeForm(t.BatchSize))
         with pytest.raises(c.ValidationError) as exc:
             adapter.validate_python(value)
         tm.that(exc.value.error_count(), gte=1)
@@ -44,14 +44,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [1, 2, 9999, 1_000_000])
     def test_max_length_accepts_positive(value: int) -> None:
         """MaxLength round-trips any integer >= 1."""
-        adapter: m.TypeAdapter[int] = u.type_adapter(TypeForm(t.MaxLength))
+        adapter: t.TypeAdapter[int] = u.type_adapter(TypeForm(t.MaxLength))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [0, -1, -100])
     def test_max_length_rejects_non_positive(value: int) -> None:
         """MaxLength rejects integers below 1."""
-        adapter: m.TypeAdapter[int] = u.type_adapter(TypeForm(t.MaxLength))
+        adapter: t.TypeAdapter[int] = u.type_adapter(TypeForm(t.MaxLength))
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
@@ -61,14 +61,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [0.1, 1.0, math.pi, 1e6])
     def test_positive_float_accepts_positive(value: float) -> None:
         """PositiveFloat round-trips strictly positive floats."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveFloat))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveFloat))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [0.0, -0.1, -100.0])
     def test_positive_float_rejects_non_positive(value: float) -> None:
         """PositiveFloat rejects zero and negative floats."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveFloat))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveFloat))
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
@@ -76,14 +76,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [0.0, 0.5, math.pi, 1e9])
     def test_non_negative_float_accepts_zero_and_positive(value: float) -> None:
         """NonNegativeFloat round-trips zero and positive floats."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.NonNegativeFloat))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.NonNegativeFloat))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [-0.1, -1.0, -1e6])
     def test_non_negative_float_rejects_negative(value: float) -> None:
         """NonNegativeFloat rejects any negative float."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.NonNegativeFloat))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.NonNegativeFloat))
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
@@ -91,14 +91,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [0.001, 1.0, 150.0, 300.0])
     def test_positive_timeout_accepts_in_range(value: float) -> None:
         """PositiveTimeout round-trips values in the exclusive-lower 0..300 range."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveTimeout))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveTimeout))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [0.0, -1.0, 300.1, 1000.0])
     def test_positive_timeout_rejects_out_of_range(value: float) -> None:
         """PositiveTimeout rejects zero, negatives, and values above 300."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveTimeout))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.PositiveTimeout))
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
@@ -106,14 +106,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [1.0, 1.5, 2.5, 100.0])
     def test_backoff_multiplier_accepts_at_or_above_one(value: float) -> None:
         """BackoffMultiplier round-trips floats >= 1.0 (lower bound inclusive)."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.BackoffMultiplier))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.BackoffMultiplier))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [0.9, 0.0, -1.0])
     def test_backoff_multiplier_rejects_below_one(value: float) -> None:
         """BackoffMultiplier rejects floats below 1.0."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.BackoffMultiplier))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.BackoffMultiplier))
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
@@ -121,14 +121,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [0.0, 50.0, 99.9, 100.0])
     def test_percentage_accepts_in_range(value: float) -> None:
         """Percentage round-trips values in the inclusive 0..100 range."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.Percentage))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.Percentage))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [-0.1, 100.1, 1000.0])
     def test_percentage_rejects_out_of_range(value: float) -> None:
         """Percentage rejects values below 0 or above 100."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.Percentage))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.Percentage))
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
@@ -136,14 +136,14 @@ class TestsFlextCoreTypingsValidationScalars:
     @pytest.mark.parametrize("value", [0.0, 0.25, 0.5, 1.0])
     def test_decimal_fraction_accepts_in_range(value: float) -> None:
         """DecimalFraction round-trips values in the inclusive 0..1 range."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.DecimalFraction))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.DecimalFraction))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
     @pytest.mark.parametrize("value", [-0.1, 1.1, 2.0])
     def test_decimal_fraction_rejects_out_of_range(value: float) -> None:
         """DecimalFraction rejects values below 0 or above 1."""
-        adapter: m.TypeAdapter[float] = u.type_adapter(TypeForm(t.DecimalFraction))
+        adapter: t.TypeAdapter[float] = u.type_adapter(TypeForm(t.DecimalFraction))
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
 
@@ -164,7 +164,7 @@ class TestsFlextCoreTypingsValidationScalars:
         value: str,
     ) -> None:
         """Non-empty string aliases round-trip any string of length >= 1."""
-        adapter: m.TypeAdapter[str] = u.type_adapter(alias)
+        adapter: t.TypeAdapter[str] = u.type_adapter(alias)
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
@@ -175,6 +175,6 @@ class TestsFlextCoreTypingsValidationScalars:
     )
     def test_non_empty_string_aliases_reject_empty(alias: type[str]) -> None:
         """Non-empty string aliases reject the empty string."""
-        adapter: m.TypeAdapter[str] = u.type_adapter(alias)
+        adapter: t.TypeAdapter[str] = u.type_adapter(alias)
         with pytest.raises(c.ValidationError):
             adapter.validate_python("")

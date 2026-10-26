@@ -16,7 +16,7 @@ from typing import TypeAliasType
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core.utilities import FlextUtilitiesBeartypeConf
+from flext_core import settings
 from tests import c, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
@@ -29,18 +29,24 @@ class TestsFlextCoreBeartypeEngineConfig:
     @staticmethod
     def test_build_conf_returns_beartype_conf_instance() -> None:
         """The factory yields a real ``BeartypeConf`` callers can pass to beartype."""
-        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf = u.build_beartype_conf(settings.beartype_mode)
         tm.that(conf, is_=BeartypeConf)
 
     @staticmethod
-    def test_default_mode_is_off() -> None:
-        """flext_core ships with enforcement disabled by default."""
-        tm.that(c.BEARTYPE_MODE is c.EnforcementMode.OFF, truth=True)
+    def test_configured_mode_selects_strategy() -> None:
+        """The factory follows the current operational setting."""
+        conf = u.build_beartype_conf(settings.beartype_mode)
+        expected = (
+            BeartypeStrategy.O0
+            if settings.beartype_mode == "off"
+            else BeartypeStrategy.O1
+        )
+        tm.that(conf.strategy is expected, truth=True)
 
     @staticmethod
     def test_disabled_mode_yields_no_op_strategy() -> None:
         """With mode OFF the conf uses the O0 (no-check) strategy."""
-        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf = u.build_beartype_conf("off")
         tm.that(conf.strategy is BeartypeStrategy.O0, truth=True)
 
     @staticmethod

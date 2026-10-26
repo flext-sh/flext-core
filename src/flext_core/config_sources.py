@@ -7,6 +7,9 @@ The strict loader is an implementation detail of this foundational source,
 so configuration ingress does not depend on generated private-package exports.
 Its native JSON annotations keep this layer-zero bridge independent of its own
 facades, whose construction consumes the configuration it loads.
+Scalar registration uses the minimal configuration protocol only as a static
+annotation; runtime still calls the original loader, without importing a facade
+or modifying the library's global dumper registry.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,7 +21,7 @@ import re
 from collections.abc import Callable, Mapping, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import IO, ClassVar, cast, override
+from typing import IO, TYPE_CHECKING, ClassVar, cast, override
 
 from pydantic import JsonValue, TypeAdapter
 from pydantic.config import JsonDict
@@ -28,6 +31,9 @@ from pydantic_settings.sources.utils import InitState
 from yaml import CSafeLoader, MappingNode, ScalarNode
 from yaml.constructor import ConstructorError, SafeConstructor
 from yaml.resolver import BaseResolver
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
@@ -49,21 +55,6 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         which fails the load with a marked ``UniqueKeyError`` when a key
         repeats or a key is not a string, keeping config files unambiguous.
         """
-
-        # YAML 1.2 core schema: the YAML 1.1 bool and int resolvers are dropped
-        # here and re-registered below, so ``off``/``on``/``yes``/``no`` stay
-        # strings and a leading zero stays decimal, as in every other YAML 1.2
-        # reader of the same files (ast-grep, ruamel round-trip).
-        yaml_implicit_resolvers: ClassVar[
-            dict[str, list[tuple[str, re.Pattern[str]]]]
-        ] = {
-            first: [
-                entry
-                for entry in resolvers
-                if entry[0] not in {"tag:yaml.org,2002:bool", "tag:yaml.org,2002:int"}
-            ]
-            for first, resolvers in CSafeLoader.yaml_implicit_resolvers.items()
-        }
 
         @staticmethod
         def construct_unique_mapping(
@@ -127,29 +118,54 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                 "JsonDict", SafeConstructor.construct_mapping(loader, node, deep=deep)
             )
 
+        @staticmethod
+        def construct_integer(loader: CSafeLoader, node: ScalarNode) -> int:
+            """Construct an integer using the existing YAML 1.2 radix rules.
+
+            Returns:
+                The integer represented by the scalar node.
+
+            """
+            text = loader.construct_scalar(node)
+            return (
+                int(text, 0)
+                if text.startswith("0o")
+                else int(text, 16)
+                if text.startswith("0x")
+                else int(text, 10)
+            )
+
+    # Keep a loader-local YAML 1.2 resolver table before registering replacements.
+    UniqueKeyLoader.yaml_implicit_resolvers = CSafeLoader.yaml_implicit_resolvers.copy()
+    for first, resolvers in CSafeLoader.yaml_implicit_resolvers.items():
+        UniqueKeyLoader.yaml_implicit_resolvers[first] = [
+            entry
+            for entry in resolvers
+            if entry[0] not in {"tag:yaml.org,2002:bool", "tag:yaml.org,2002:int"}
+        ]
     UniqueKeyLoader.add_constructor(
         BaseResolver.DEFAULT_MAPPING_TAG,
         UniqueKeyLoader.construct_unique_mapping,
     )
-    UniqueKeyLoader.add_implicit_resolver(
-        "tag:yaml.org,2002:bool",
-        re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"),
-        list("tTfF"),
-    )
-    UniqueKeyLoader.add_implicit_resolver(
-        "tag:yaml.org,2002:int",
-        re.compile(r"^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+)$"),
-        list("-+0123456789"),
-    )
+
+    @staticmethod
+    def _register_scalar_rules(resolver: type[p.ConfigScalarResolver]) -> None:
+        """Register YAML 1.2 scalars on the selected loader only."""
+        resolver.add_implicit_resolver(
+            "tag:yaml.org,2002:bool",
+            re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"),
+            list("tTfF"),
+        )
+        resolver.add_implicit_resolver(
+            "tag:yaml.org,2002:int",
+            re.compile(r"^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+)$"),
+            list("-+0123456789"),
+        )
+
+    _register_scalar_rules(UniqueKeyLoader)
     UniqueKeyLoader.add_constructor(
         "tag:yaml.org,2002:int",
-        lambda loader, node: (
-            int(text, 0)
-            if (text := str(loader.construct_scalar(node))).startswith("0o")
-            else int(text, 16)
-            if text.startswith("0x")
-            else int(text, 10)
-        ),
+        UniqueKeyLoader.construct_integer,
     )
 
     @override
@@ -232,7 +248,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         loader = FlextStrictYamlConfigSource.UniqueKeyLoader(stream)
         try:
             documents: list[JsonValue] = []
-            while loader.check_data():
+            while loader.check_node():
                 documents.append(
                     FlextStrictYamlConfigSource.JSON_VALUE_ADAPTER.validate_python(
                         loader.get_data(),

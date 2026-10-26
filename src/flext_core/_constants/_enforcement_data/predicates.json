@@ -351,7 +351,7 @@
       "category": "namespace",
       "collect": "target",
       "problem": "bare {lib} import in consumer {package} bypasses owning project {owner} (R2)",
-      "fix": "Use u.Field(), m.BaseModel, m.ConfigDict, m.TypeAdapter (type), u.type_adapter() (construction), u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
+      "fix": "Use u.Field(), m.BaseModel, m.ConfigDict, u.type_adapter (type), u.type_adapter() (construction), u.model_validator, u.field_validator, u.computed_field, u.PrivateAttr from parent facade.",
       "predicate": "library_import",
       "params": {
         "kind": "library_import",

@@ -16,7 +16,6 @@ from pathlib import Path
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, m, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
@@ -213,7 +212,7 @@ class TestsFlextCoreEnforcementReports:
             target = source.BadModel
             if not isinstance(target, type) or not issubclass(target, m.BaseModel):
                 pytest.fail("Invalid source fixture did not declare a native model")
-            report = FlextUtilitiesEnforcement.check_model_construction(target)
+            report = u.check_model_construction(target)
 
         tm.that(report.violations, truth=True)
         tm.that(
@@ -234,7 +233,7 @@ class TestsFlextCoreEnforcementReports:
         )
 
         with pytest.warns(c.FlextMroViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         tm.that(len(caught), eq=2)
         tm.that(
@@ -266,7 +265,7 @@ class TestsFlextCoreEnforcementReports:
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
             with pytest.raises(TypeError) as excinfo:
-                FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.STRICT)
+                u.emit(report, mode=c.EnforcementMode.STRICT)
 
         tm.that(str(excinfo.value), eq=expected)
         tm.that(len(recorded), eq=1)
@@ -282,7 +281,7 @@ class TestsFlextCoreEnforcementReports:
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.OFF)
+            u.emit(report, mode=c.EnforcementMode.OFF)
 
         tm.that(recorded, eq=[])
 
@@ -297,7 +296,7 @@ class TestsFlextCoreEnforcementReports:
         """Test emit empty report is silent in every mode."""
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(m.Report(), mode=mode)
+            u.emit(m.Report(), mode=mode)
 
         tm.that(recorded, eq=[])
 
@@ -328,7 +327,7 @@ class TestsFlextCoreEnforcementReports:
         )
 
         with pytest.warns(c.FlextMroViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         tm.that(str(caught[0].message).endswith(expected_fix), truth=True)
 
@@ -342,7 +341,7 @@ class TestsFlextCoreEnforcementReports:
         )
 
         with pytest.warns(c.FlextSmellViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         tm.that(
             caught[0].category, where=lambda category: category is c.FlextSmellViolation
@@ -359,7 +358,7 @@ class TestsFlextCoreEnforcementReports:
         tm.that(report.violations, truth=True)
 
         with pytest.warns(c.FlextMroViolation) as caught:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         texts = [str(entry.message) for entry in caught]
         tm.that(

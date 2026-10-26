@@ -432,7 +432,7 @@ class TestsFlextCorePydanticDeclarations:
     def test_type_adapter_constructor_validates_python_values() -> None:
         """The public facade constructor is pydantic's TypeAdapter."""
         sample_value = 7
-        adapter: m.TypeAdapter[int] = u.type_adapter(int)
+        adapter: t.TypeAdapter[int] = u.type_adapter(int)
         validated = adapter.validate_python(sample_value)
 
         tm.that(validated, eq=sample_value)
@@ -441,7 +441,7 @@ class TestsFlextCorePydanticDeclarations:
 
     @staticmethod
     def test_fail_fast_reports_only_the_first_list_error() -> None:
-        adapter: m.TypeAdapter[list[int]] = u.type_adapter(
+        adapter: t.TypeAdapter[list[int]] = u.type_adapter(
             Annotated[list[int], m.FailFast()],
         )
 
@@ -466,7 +466,7 @@ class TestsFlextCorePydanticDeclarations:
 
     @staticmethod
     def test_validate_as_builds_custom_type_from_native_model() -> None:
-        adapter: m.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = (
+        adapter: t.TypeAdapter[TestsFlextCorePydanticDeclarations._Vector] = (
             u.type_adapter(
                 Annotated[
                     TestsFlextCorePydanticDeclarations._Vector,

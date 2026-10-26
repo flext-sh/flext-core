@@ -27,8 +27,13 @@ pure cooperative MRO and exposes `core = FlextCore.fetch_global()`.
   `config` / `settings` singletons.
 - `lazy.py` (`FlextLazy`) builds the PEP-562 export map used by every generated
   `__init__`.
-- Never hand-edit `__init__.py` or `# AUTO-GENERATED` facet roots; do not collapse
-  `_parts` without updating facade imports (breaks lazy map / cycles).
+- Never hand-edit `__init__.py` or `# AUTO-GENERATED` facet roots; their exports are
+  changed at the source owner and published through `make gen`.
+- Family part names are not semantic responsibilities. Reorganize them through
+  `make mod`, updating the MRO and all public lazy exports in the same candidate, per
+  [FLEXT ADR-028 Decisions 17–18](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17)
+  and the family-shape contract in
+  [ADR-014 §3](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/014-family-part-shape-rope-codemod-rules.md#3b-one-semantic-engine-two-safe-modes).
 - Config/settings canonical pattern: ADR-005 (§1–§2) + `_settings.py`/`_config.py`
   module docstrings.
 

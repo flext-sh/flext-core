@@ -196,8 +196,13 @@ Pydantic way the operator ruled on 2026-10-25 (tracker memory
 
 ## What flext-core must not absorb
 
+| Public capability declaration | Accepted decision |
+| --- | --- |
+| This section directs consumers to generic workspace-analysis and structural-refactoring capabilities, not their implementation libraries. | [FLEXT ADR-028 Decision 15](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-15) |
+
 - CLI frameworks and command rendering belong to `flext-cli`.
-- Code generation, AST/Rope analysis, locks and Git belong to `flext-infra`.
+- Code generation, workspace analysis and structural refactoring, locks, and Git belong
+  to `flext-infra` capability facades.
 - Pytest fixtures and matchers belong to `flext-tests`.
 - Domain adapters and LDAP/LDIF/Meltano semantics belong to their packages.
 - Application authorization and use cases belong to the application.

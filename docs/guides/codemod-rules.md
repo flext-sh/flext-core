@@ -39,17 +39,27 @@ every loaded provider. A text rule may also name the projects it targets in
 
 ## Make verbs
 
-Declared in `flext-infra/src/flext_infra/config/codegen.yaml` (`make.verbs`):
+Common verbs are declared in
+`flext-infra/src/flext_infra/config/codegen.yaml` (`make.verbs`). Infra declares
+its owned snapshot operation in `flext-infra/config/codegen.yaml`
+(`repository.extra_verbs`), with the native handler in `flext-infra/custom.mk`.
 
 | Surface | Effect |
 |---|---|
 | `make mod` | Apply ast-grep, semantic and text rules to a proven fixed point; committed snapshots are verified, never rewritten. |
 | `flext-infra refactor mod-text` | Replay only the authenticated declarative text rules. |
 | `flext-infra refactor ast` | Scan report of the ast-grep and sed cascades over the governed corpus; `--apply` reaches the mechanical fixed point. |
-| `flext-infra refactor mod-snapshots --apply` | Regenerate the snapshots of the rules this repository owns, for a reviewed commit. |
+| `make mod-snapshots` (Infra root) | Regenerate every owned rule-test snapshot through the existing native refresh owner, for a reviewed commit. |
 
-`make mod` is the only common Make verb; the rest are `flext-infra refactor`
-subcommands (`flext-infra refactor --help`).
+`make mod-snapshots` is an Infra extension, not an implicit part of `make mod`.
+Its handler invokes the existing `flext-infra refactor mod-snapshots` operation
+with the repository root and apply flag. The source declaration requires native
+generation before the verb is available. No consumer owns another snapshot
+engine or edits the generated Makefile.
+Fixture refresh elects authored catalogs through the existing provider
+composition directly. Generated rules have no fixtures, so refresh does not
+build a source engine or render project-dependent rules to discover their
+authored owners.
 
 The catalog applies through ast-grep's own `scan --update-all`; the pipeline order,
 native tool use and validation in the real tree are ADR-028 Decisions 11-13. A draft
@@ -70,6 +80,17 @@ The stages repeat over one staged preview until no byte changes. Each stage's
 staged `sgconfig.yml` lives under `.reports/codemod/native/<stage>`, so
 `ast-grep scan -c` reproduces the stage by hand.
 
+Machine-only native configurations use JSON-form YAML documents, serialized by
+the existing typed JSON owner. Elected scan rules share one multi-document YAML
+file; global utilities retain one document per file as ast-grep requires.
+The generated scope manifest is `scopes.json` and is read by the JSON owner:
+selector keys may exceed YAML's implicit-key length limit. Its declared filename
+participates in the provider digest, so the format change elects a new immutable
+provider rather than reinterpreting a previously published YAML manifest.
+Authored catalogs, fixtures and snapshots keep their existing source format.
+This avoids runtime-value normalization and one file write per elected scan
+rule without changing native rule identities, scopes, bindings or diagnostics.
+
 The producers and renderers registered in `Infra.codegen.ast_grep` render each
 governed project's generated utilities and rules (`codemod_native_generated`).
 `u.Infra.codemod_rule_plan` materializes them as one native provider,
@@ -79,16 +100,16 @@ catalogs, like any other provider. Generated rule ids are package-qualified
 (`<shape>--<package>`). The scan, the `check` codemod gate and the cascade therefore
 consume rendered rules through the same plan as authored ones, and
 `ast-grep scan -c` on that directory reproduces them by hand. Generated rules carry
-no fixtures: renderer tests own their proof. Current state (2026-10-24): `make gen`
-still writes an unread per-rule projection under
-`config/rules/ast-grep/{utils,rules/generated}`, which bead `flext-13s6n` deletes.
+no fixtures: renderer tests own their proof. The retired per-rule repository
+projections under `config/rules/ast-grep/{utils,rules/generated}` are declared
+at the generation owner; authored files are never retired by that declaration.
 
 Every finding is the native match; no Python admission runs after the scan. A
 project fact a catalog rule needs is a stable generated utility (`own-package`,
 `stdlib-module`, `runtime-package`, `facade-package`, `local-alias`,
 `runtime-alias`, `package-export`, `compose-module`, ...) that the rule references
 through `matches:`, or a file scope the generated provider publishes in its
-`scopes.yml`. Catalog fixtures resolve those identities through
+`scopes.json`. Catalog fixtures resolve those identities through
 `config/rules/ast-grep/fixture-utils/`, which only the fixture stage reads. A native
 rule that still reports an actionable finding after the cascade fails `make mod`.
 
@@ -123,6 +144,10 @@ The engine reads these `metadata` keys, declared in
 | `owned_path_suffix` | Reject owned `.pyi` paths from discovery even without a syntax tree; detection-only, with no exemption. |
 
 ### One rule per law
+
+| Workspace declaration | Accepted decision |
+| --- | --- |
+| This section, One rule per law; the generated Infra copy links back here. | [FLEXT ADR-028 Decision 18](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-18) |
 
 Operator order of 2026-10-25, verbatim (tracker memory
 `operator-order-2026-10-25-rules-generalized-min-count`; ADR-028 Decision 18):
@@ -300,15 +325,18 @@ rule whenever the target has syntax.
   snapshot under `tests/__snapshots__/<id>-snapshot.yml` for each invalid case.
 - `make mod` verifies them and fails on a changed fix output, a missing snapshot, or a
   snapshot of a removed rule or case.
-- `flext-infra refactor mod-snapshots --apply` is the only regeneration; its default
-  dry run fails while any snapshot differs. Review its diff in the same commit as the
-  rule.
+- Infra's `make mod-snapshots` owns regeneration. Review its diff in the same
+  commit as the rule; snapshot refresh never proves behavioral acceptance.
+- Invalid fixtures retain the rejected input, not its corrected output. For
+  adapter construction, `m.TypeAdapter(...)` and `t.TypeAdapter(...)` exercise the
+  rewrite, while `u.type_adapter(...)` is a valid fixed point. Regenerate snapshots
+  from those authored inputs; never repair stale labels by editing generated output.
 
 ## Workflow
 
 1. Search both catalogs and `utils/` for the law; widen an existing rule first.
 2. Write or widen the rule and its test. Prototype only on scratch copies.
-3. Run `flext-infra refactor mod-snapshots --apply` and review the snapshot diff.
+3. Run Infra's `make mod-snapshots` and review the snapshot diff.
 4. Run `flext-infra refactor ast` to see every occurrence across the fleet.
 5. Apply with `make mod`, then run `make tests`.
 6. Commit the rule, test, snapshot and rewrites together.

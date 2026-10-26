@@ -23,6 +23,16 @@ if TYPE_CHECKING:
 class FlextProtocolsConfig:
     """Protocols for declarative config loading and env override."""
 
+    class ConfigScalarResolver(Protocol):
+        """Register the scalar rules consumed by configuration ingress."""
+
+        @classmethod
+        def add_implicit_resolver(
+            cls, tag: str, regexp: t.RegexPattern, first: t.StrSequence
+        ) -> None:
+            """Register a scalar pattern for its possible initial characters."""
+            ...
+
     @runtime_checkable
     class ConfigLoader(Protocol):
         """Structural contract for loading a config source into a mapping."""

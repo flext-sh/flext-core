@@ -53,7 +53,7 @@ class TestsFlextCoreBeartypeEngineRuntime(
         receives when it calls ``u.build_beartype_conf()``.
         """
         # Act
-        conf = flext_core.u.build_beartype_conf()
+        conf = flext_core.u.build_beartype_conf("off")
 
         # Assert
         tm.that(conf, is_=BeartypeConf)
@@ -92,7 +92,7 @@ class TestsFlextCoreBeartypeEngineRuntime(
                 with warnings.catch_warnings(record=True) as caught:
                     warnings.simplefilter("always")
                     try:
-                        flext_core.FlextUtilitiesProjectMetadata.derive_class_stem(
+                        flext_core.u.derive_class_stem(
                             {arg_literal}
                         )
                     except (AttributeError, ValueError) as exc:

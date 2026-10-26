@@ -38,5 +38,4 @@ class FlextTypes(
 
 
 t = FlextTypes
-
 __all__: list[str] = ["FlextTypes", "t"]

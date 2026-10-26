@@ -222,7 +222,6 @@ mutation, including assertion failure:
 
 ```python
 from flext_core import FlextSettings
-
 from flext_tests import tm
 
 

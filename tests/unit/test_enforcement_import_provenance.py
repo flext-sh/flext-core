@@ -52,7 +52,7 @@ class TestsFlextEnforcementImportProvenance:
             ("from pydantic import JsonValue", "ENFORCE-045", True),
             ("dependency = __import__('pydantic')", "ENFORCE-045", True),
             (
-                "from flext_core import m\nAdapter = m.TypeAdapter",
+                "from flext_core import m\nAdapter = u.type_adapter",
                 "ENFORCE-045",
                 False,
             ),

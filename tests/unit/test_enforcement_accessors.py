@@ -17,7 +17,6 @@ import string
 import pytest
 from typing_extensions import TypeForm
 
-from flext_core.utilities import FlextUtilitiesBeartypeEngine
 from tests import m, tm, u
 from tests.unit._enforcement_support import make_class, synthetic_method
 
@@ -270,9 +269,7 @@ class TestsFlextCoreEnforcementAccessors:
                 pass
 
         # Act / Assert
-        tm.that(
-            FlextUtilitiesBeartypeEngine.has_nested_namespace(_DirectHolder), truth=True
-        )
+        tm.that(u.has_nested_namespace(_DirectHolder), truth=True)
 
     @staticmethod
     def test_inherited_nested_class_is_a_namespace() -> None:
@@ -287,7 +284,7 @@ class TestsFlextCoreEnforcementAccessors:
             pass
 
         # Act / Assert — inheritance still exposes the nested namespace.
-        tm.that(FlextUtilitiesBeartypeEngine.has_nested_namespace(_Empty), truth=True)
+        tm.that(u.has_nested_namespace(_Empty), truth=True)
 
     @staticmethod
     def test_plain_class_is_not_a_namespace() -> None:
@@ -298,4 +295,4 @@ class TestsFlextCoreEnforcementAccessors:
             x: int = 1
 
         # Act / Assert
-        tm.that(FlextUtilitiesBeartypeEngine.has_nested_namespace(_Bare), truth=False)
+        tm.that(u.has_nested_namespace(_Bare), truth=False)
