@@ -14,13 +14,10 @@ from enum import StrEnum, unique
 from pathlib import Path
 from typing import Annotated, ClassVar, override
 
-from flext_tests import FlextTestsUtilities
+from flext_tests import u as flext_tests_u
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
-    TestsFlextUtilitiesCaseFactoriesMixin,
-    TestsFlextUtilitiesCaseGeneratorsMixin,
-    TestsFlextUtilitiesCaseServiceFactoriesMixin,
     TestsFlextUtilitiesContractsMixin,
     TestsFlextUtilitiesDispatchMixin,
     TestsFlextUtilitiesParserReliabilityMixin,
@@ -31,9 +28,7 @@ from tests._utilities import (
     TestsFlextUtilitiesRailwayServicesMixin,
     TestsFlextUtilitiesReliabilityScenariosMixin,
     TestsFlextUtilitiesResultCombinators,
-    TestsFlextUtilitiesServiceFactoriesMixin,
     TestsFlextUtilitiesServicesMixin,
-    TestsFlextUtilitiesUserFactoriesMixin,
     TestsFlextUtilitiesValidationFactoriesMixin,
     TestsFlextUtilitiesValidationNetworkScenarios,
     TestsFlextUtilitiesValidationNumericScenarios,
@@ -43,7 +38,7 @@ from tests._utilities import (
 )
 
 
-class TestsFlextUtilities(FlextTestsUtilities):
+class TestsFlextUtilities(flext_tests_u):
     """Utilities for flext-core tests."""
 
     class TestsFlextResultExceptionCarrying:
@@ -403,18 +398,11 @@ class TestsFlextUtilities(FlextTestsUtilities):
             )
 
     class Tests(
-        TestsFlextBeartypeEngine,
-        TestsFlextUtilitiesCaseFactoriesMixin,
-        TestsFlextUtilitiesCaseGeneratorsMixin,
-        TestsFlextUtilitiesCaseServiceFactoriesMixin,
-        TestsFlextUtilitiesServiceFactoriesMixin,
+        TestsFlextUtilitiesContractsMixin,
+        TestsFlextUtilitiesDispatchMixin,
+        TestsFlextUtilitiesResultCombinators,
         TestsFlextUtilitiesValidationFactoriesMixin,
         TestsFlextUtilitiesServicesMixin,
-        TestsFlextUtilitiesUserFactoriesMixin,
-        TestsFlextUtilitiesContractsMixin,
-        TestsFlextDecoratorsLegacy,
-        TestsFlextUtilitiesDispatchMixin,
-        TestsFlextFlextHandlers,
         TestsFlextUtilitiesParserReliabilityMixin,
         TestsFlextUtilitiesParserScenariosMixin,
         TestsFlextUtilitiesReliabilityScenariosMixin,
@@ -422,18 +410,15 @@ class TestsFlextUtilities(FlextTestsUtilities):
         TestsFlextUtilitiesRailwayPipelinesMixin,
         TestsFlextUtilitiesRailwayServicesMixin,
         TestsFlextUtilitiesRailwayCasesMixin,
-        TestsFlextUtilitiesResultCombinators,
-        TestsFlextResultExceptionCarrying,
         TestsFlextUtilitiesValidationNetworkScenarios,
         TestsFlextUtilitiesValidationNumericScenarios,
         TestsFlextUtilitiesValidationPatternScenarios,
         TestsFlextUtilitiesValidationStringScenarios,
         TestsFlextUtilitiesValidationUriScenarios,
-        FlextTestsUtilities.Tests,
+        flext_tests_u.Tests,
     ):
         """flext-core test utilities namespace."""
 
 
 u = TestsFlextUtilities
-
 __all__: list[str] = ["TestsFlextUtilities", "u"]

@@ -16,12 +16,19 @@ import enum
 import re
 
 import pytest
+from pydantic import TypeAdapter
 
 from tests import c, tm
 
 
 class TestsFlextConstantsNew:
     """Observable public-contract behavior over the c facade."""
+
+    @staticmethod
+    def test_validation_error_catches_pydantic_v2_failures() -> None:
+        """The constants facade catches the real Pydantic validation contract."""
+        with pytest.raises(c.ValidationError):
+            TypeAdapter(int).validate_python("invalid")
 
     @staticmethod
     @pytest.mark.parametrize(

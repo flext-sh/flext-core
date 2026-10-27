@@ -30,3 +30,6 @@ class ExamplesFlextModelsEx03:
 
     class EmailUser(m.Entity):
         email: Annotated[str, m.Field(description="User email address")]
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx03"]

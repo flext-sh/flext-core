@@ -9,10 +9,9 @@ from __future__ import annotations
 from contextlib import contextmanager
 
 from flext_core import FlextContext, c, m, p, t, u
-from flext_core._models import flext_mixins
 
 
-class FlextMixins(flext_mixins.FlextMixins):
+class FlextMixins(m.ServiceState):
     """Consume model-owned state and the canonical runtime through MRO."""
 
     @property

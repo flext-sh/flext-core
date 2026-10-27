@@ -30,7 +30,7 @@ class FlextConstantsEnforcementFixActions:
         "ConfigDict": "m.ConfigDict",
         "Field": "m.Field",
         "PrivateAttr": "m.PrivateAttr",
-        "TypeAdapter": "m.TypeAdapter",
+        "TypeAdapter": "u.type_adapter",
         "computed_field": "u.computed_field",
         "field_serializer": "u.field_serializer",
         "field_validator": "m.field_validator",

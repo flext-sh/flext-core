@@ -8,14 +8,15 @@ from __future__ import annotations
 
 import io
 from contextlib import redirect_stderr
-from typing import TYPE_CHECKING, NoReturn
+from functools import partial
+from typing import TYPE_CHECKING, ClassVar, NoReturn
 
 import pytest
 
-from tests import c, m, p, tm, u
+from tests import c, p, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Generator
+    from collections.abc import Callable
 
 from tests import t
 
@@ -35,26 +36,11 @@ class TestsFlextLoggings:
     Covers create, bind, log, track, and strict returns.
     """
 
-    pytestmark = pytest.mark.usefixtures("restore_logging")
-
-    @staticmethod
-    @pytest.fixture
-    def restore_logging() -> Generator[None]:
-        """Exercise all standard severities, then restore the captured policy."""
-        original_settings, original_options = u.logging_settings(), u.logging_options()
-        try:
-            selected = u.resolve_logging_settings(
-                log_level=c.LogLevel.DEBUG, trace=True
-            )
-            u.configure_structlog(
-                settings=m.StructlogOptions(async_logging=False),
-                runtime_settings=selected,
-            )
-            yield
-        finally:
-            u.configure_structlog(
-                settings=original_options, runtime_settings=original_settings
-            )
+    # Exercise all standard severities, including trace, then restore the policy.
+    pytestmark: ClassVar[list[pytest.MarkDecorator]] = [
+        pytest.mark.usefixtures("restore_logging"),
+        pytest.mark.parametrize("logging_trace", [True]),
+    ]
 
     @classmethod
     def _assert_log_output[TResult: p.Result[bool] | None](
@@ -260,6 +246,61 @@ class TestsFlextLoggings:
             )
             tm.ok(result)
             tm.ok(result.value)
+
+    def test_fetch_logger_returns_usable_service_logger(self) -> None:
+        """Test fetch logger returns usable service logger."""
+        service_logger = u.fetch_logger("user-service")
+
+        tm.that(service_logger, none=False)
+        result = self._assert_log_output(
+            lambda: service_logger.info("service ready"),
+            contains="service ready",
+        )
+        tm.ok(result)
+        tm.ok(result.value)
+
+    def test_exception_logging_accepts_explicit_exception_and_context(
+        self,
+        logger: p.Logger,
+    ) -> None:
+        """Test exception logging accepts explicit exception and context."""
+        error_message = "disk failure"
+
+        def _fail() -> NoReturn:
+            raise OSError(error_message)
+
+        try:
+            _fail()
+        except OSError as exc:
+            result = self._assert_log_output(
+                partial(
+                    logger.exception,
+                    "io operation failed",
+                    exception=exc,
+                    operation="file_read",
+                ),
+                contains="io operation failed",
+                expected_tokens=("file_read",),
+            )
+
+        tm.ok(result)
+        tm.ok(result.value)
+
+    def test_logging_with_large_context_emits_context_tokens(
+        self,
+        logger: p.Logger,
+    ) -> None:
+        """Test logging with large context emits context tokens."""
+        large_context = {f"key_{index}": f"value_{index}" for index in range(10)}
+
+        result = self._assert_log_output(
+            lambda: logger.info("Message with large context", **large_context),
+            contains="Message with large context",
+            expected_tokens=("key_9", "value_9"),
+        )
+
+        tm.ok(result)
+        tm.ok(result.value)
 
     @staticmethod
     def test_log_source_points_to_call_site_not_logging_internals(

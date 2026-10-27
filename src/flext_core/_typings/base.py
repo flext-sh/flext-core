@@ -20,7 +20,7 @@ from pathlib import Path
 from types import GenericAlias, UnionType
 from typing import ForwardRef, TypeAliasType
 
-from typing_extensions import TypeForm
+import typing_extensions
 
 from flext_core._typings import FlextTypesPydantic
 
@@ -148,7 +148,13 @@ class FlextTypingBase(FlextTypesPydantic):
     type TypeHintSpecifier = (
         type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )
-    type TypeFormSpecifier = TypeHintSpecifier | TypeForm[object]
+    type TypeFormSpecifier = TypeHintSpecifier | typing_extensions.TypeForm[object]
+
+    type TypeForm[T] = typing_extensions.TypeForm[T]
+    """PEP 747 ``TypeForm`` for annotations: a ``t.TypeForm[T]`` parameter takes a
+    bare type expression (``u.type_adapter(Mapping[str, int])``) without importing
+    typing_extensions outside the facades (ADR-028). A generic type alias, never
+    called: a class attribute bound to the special form is not a type form."""
 
 
 __all__: list[str] = ["FlextTypingBase"]

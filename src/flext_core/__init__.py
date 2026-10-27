@@ -10,11 +10,9 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core.__version__ import __version__
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core import services as services
     from flext_core.__version__ import (
         FlextVersion,
         __author__,
@@ -23,6 +21,7 @@ if TYPE_CHECKING:
         __license__,
         __title__,
         __url__,
+        __version__,
         __version_info__,
     )
     from flext_core._beartype_bootstrap import FlextCoreBeartypeBootstrap
@@ -33,7 +32,7 @@ if TYPE_CHECKING:
     from flext_core.base import FlextBase
     from flext_core.cli import FlextCli
     from flext_core.config_sources import FlextStrictYamlConfigSource
-    from flext_core.constants import FlextConstants, FlextConstantsEnforcement, c
+    from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecorators, d
@@ -41,7 +40,9 @@ if TYPE_CHECKING:
     from flext_core.exceptions import FlextExceptions, FlextMroViolation, e
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_member import FlextLazyMember
+    from flext_core.flextlazy_native_export import FlextTypingNativeExport
     from flext_core.flextlazy_part_01 import FlextLazyPart01
+    from flext_core.flextlazy_part_02 import FlextLazyPart02
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
         FlextLazy,
@@ -62,16 +63,7 @@ if TYPE_CHECKING:
     from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.typings import FlextTypes, t
-    from flext_core.utilities import (
-        FlextUtilities,
-        FlextUtilitiesBeartypeConf,
-        FlextUtilitiesBeartypeEngine,
-        FlextUtilitiesEnforcement,
-        FlextUtilitiesFamilySurface,
-        FlextUtilitiesMapper,
-        FlextUtilitiesRuntimeViolationRegistry,
-        u,
-    )
+    from flext_core.utilities import FlextUtilities, u
 
 
 __all__: tuple[str, ...] = (
@@ -80,7 +72,6 @@ __all__: tuple[str, ...] = (
     "FlextCli",
     "FlextConfig",
     "FlextConstants",
-    "FlextConstantsEnforcement",
     "FlextContainer",
     "FlextContext",
     "FlextCore",
@@ -93,6 +84,7 @@ __all__: tuple[str, ...] = (
     "FlextLazyAttribute",
     "FlextLazyMember",
     "FlextLazyPart01",
+    "FlextLazyPart02",
     "FlextMixins",
     "FlextModels",
     "FlextMroViolation",
@@ -104,14 +96,9 @@ __all__: tuple[str, ...] = (
     "FlextSettings",
     "FlextStrictYamlConfigSource",
     "FlextTypes",
+    "FlextTypingNativeExport",
     "FlextUtilities",
-    "FlextUtilitiesBeartypeConf",
-    "FlextUtilitiesBeartypeEngine",
-    "FlextUtilitiesEnforcement",
-    "FlextUtilitiesFamilySurface",
     "FlextUtilitiesLogging",
-    "FlextUtilitiesMapper",
-    "FlextUtilitiesRuntimeViolationRegistry",
     "FlextVersion",
     "PydanticBaseSettingsSource",
     "__author__",
@@ -141,14 +128,13 @@ __all__: tuple[str, ...] = (
     "r",
     "resolve_lazy_members",
     "s",
-    "services",
     "settings",
     "t",
     "u",
     "x",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -157,7 +143,6 @@ __getattr__ = install_lazy_exports(
         "FlextCli": ".cli",
         "FlextConfig": "._config",
         "FlextConstants": ".constants",
-        "FlextConstantsEnforcement": ".constants",
         "FlextContainer": ".container",
         "FlextContext": ".context",
         "FlextCore": ".api",
@@ -170,6 +155,7 @@ __getattr__ = install_lazy_exports(
         "FlextLazyAttribute": ".flextlazy_attribute",
         "FlextLazyMember": ".flextlazy_member",
         "FlextLazyPart01": ".flextlazy_part_01",
+        "FlextLazyPart02": ".flextlazy_part_02",
         "FlextMixins": ".mixins",
         "FlextModels": ".models",
         "FlextMroViolation": ".exceptions",
@@ -181,14 +167,9 @@ __getattr__ = install_lazy_exports(
         "FlextSettings": "._settings",
         "FlextStrictYamlConfigSource": ".config_sources",
         "FlextTypes": ".typings",
+        "FlextTypingNativeExport": ".flextlazy_native_export",
         "FlextUtilities": ".utilities",
-        "FlextUtilitiesBeartypeConf": ".utilities",
-        "FlextUtilitiesBeartypeEngine": ".utilities",
-        "FlextUtilitiesEnforcement": ".utilities",
-        "FlextUtilitiesFamilySurface": ".utilities",
         "FlextUtilitiesLogging": ".loggings",
-        "FlextUtilitiesMapper": ".utilities",
-        "FlextUtilitiesRuntimeViolationRegistry": ".utilities",
         "FlextVersion": ".__version__",
         "PydanticBaseSettingsSource": "._settings",
         "__author__": ".__version__",
@@ -215,11 +196,13 @@ __getattr__ = install_lazy_exports(
         "r": ".result",
         "resolve_lazy_members": ".lazy",
         "s": ".service",
-        "services": ".services",
         "settings": "._settings",
         "t": ".typings",
         "u": ".utilities",
         "x": ".mixins",
     }),
     public_exports=__all__,
-)[0]
+)
+
+if not TYPE_CHECKING:
+    from flext_core.__version__ import __version__

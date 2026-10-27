@@ -6,113 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import functools
-import importlib
-import sys
 from types import ModuleType
 from typing import Any, TypeAliasType, cast, get_args, get_origin, is_protocol
 
 from flext_core._models import FlextModelsEnforcement
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesFamilySurface
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeTypeAliases
 
 
 class FlextUtilitiesBeartypeHelpersPart01:
     """Annotation + bytecode inspection helpers."""
-
-    @staticmethod
-    def _lazy_suffix(module_path: str) -> str:
-        name = module_path.rsplit(".", 1)[-1]
-        if name == "typings":
-            return "Types"
-        return "".join(part[:1].upper() + part[1:] for part in name.split("_") if part)
-
-    @staticmethod
-    @functools.cache
-    def lazy_alias_suffixes(package_name: str) -> tuple[tuple[str, str, str], ...]:
-        """Read package lazy exports; import failures retain their original cause.
-
-        Returns:
-            The resulting ``tuple[tuple[str, str, str], ...]``.
-
-        """
-        package = sys.modules.get(package_name)
-        if package is None:
-            package = importlib.import_module(package_name)
-        published = vars(package).get("_LAZY_IMPORTS")
-        if published is None:
-            return ()
-        lazy_module = importlib.import_module("flext_core.lazy")
-        lazy_imports = lazy_module.normalize_lazy_imports(package.__name__, published)
-        return tuple(
-            (
-                alias,
-                module_path,
-                FlextUtilitiesBeartypeHelpersPart01._lazy_suffix(module_path),
-            )
-            for alias, entry in lazy_imports.items()
-            if len(alias) == 1 and alias.islower()
-            for module_path in (entry if isinstance(entry, str) else entry[0],)
-        )
-
-    @staticmethod
-    def runtime_alias_names(package_name: str) -> frozenset[str]:
-        """Return runtime alias names derived from generated lazy exports.
-
-        Returns:
-            Runtime alias names derived from generated lazy exports.
-
-        """
-        return frozenset(
-            alias
-            for alias, _, _ in FlextUtilitiesBeartypeHelpersPart01.lazy_alias_suffixes(
-                package_name,
-            )
-        )
-
-    @staticmethod
-    def facade_module_names(package_name: str) -> frozenset[str]:
-        """Return local facade module names derived from generated lazy exports.
-
-        Returns:
-            Local facade module names derived from generated lazy exports.
-
-        """
-        h = FlextUtilitiesBeartypeHelpersPart01
-        return frozenset(
-            module_path.rsplit(".", 1)[-1]
-            for _, module_path, suffix in h.lazy_alias_suffixes(
-                package_name,
-            )
-            if module_path.split(".", 1)[0] == package_name
-            and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
-        )
-
-    @staticmethod
-    def family_facade(target: type) -> bool:
-        """Return True when a family package publishes ``target`` as a letter facade.
-
-        Both facts come from their owners: the generated ``_LAZY_IMPORTS``
-        binds each one-letter alias to its class, and the family surface
-        names the packages that publish that contract.
-
-        Returns:
-            True when a family package publishes ``target`` as a letter facade.
-
-        """
-        package_name = target.__module__.split(".", 1)[0]
-        if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
-            return False
-        h = FlextUtilitiesBeartypeHelpersPart01
-        return any(
-            vars(sys.modules[module_path]).get(alias) is target
-            for alias, module_path, _ in h.lazy_alias_suffixes(
-                package_name,
-            )
-            if module_path in sys.modules
-        )
 
     @staticmethod
     def resolve_type_alias_value(

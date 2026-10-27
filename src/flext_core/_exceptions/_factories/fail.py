@@ -1,0 +1,486 @@
+"""Failure-result factories for the public exception facade.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+from flext_core import FlextResult, c, m, p
+from flext_core._exceptions import FlextExceptionsTemplate
+
+if TYPE_CHECKING:
+    from flext_core import r
+
+
+class FlextExceptionsFactoriesFail:
+    """Construct structured failures through the canonical result type.
+
+    Eliminates the 4-line boilerplate across all modules.
+    """
+
+    @staticmethod
+    def _result_type[TValue](
+        result_type: type[r[TValue]] | None = None,
+    ) -> type[r[TValue]]:
+        """Return the caller-supplied result type or the canonical default.
+
+        Returns:
+            The resulting ``type[r[TValue]]``.
+
+        """
+        if result_type is not None:
+            return result_type
+        result_cls: type[r[TValue]] = FlextResult
+        return result_cls
+
+    @staticmethod
+    def _failure_message(
+        operation: str,
+        *,
+        params: m.BaseModel | None = None,
+        error: Exception | str | None = None,
+    ) -> str:
+        """Render the canonical failure message with or without an error cause.
+
+        Returns:
+            The resulting ``str``.
+
+        """
+        if error is None:
+            template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
+            message: str = FlextExceptionsTemplate.render_template(
+                template_without_error,
+                operation=operation,
+                params=params,
+            )
+            return message
+        # An exception's notes (PEP 678) are part of its cause: a strict MkDocs
+        # build, for one, attaches the warnings that aborted it as notes, and
+        # rendering str(error) alone would drop exactly that evidence.
+        notes = getattr(error, "__notes__", ()) if isinstance(error, Exception) else ()
+        message_with_error: str = FlextExceptionsTemplate.render_template(
+            c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+            operation=operation,
+            error="\n".join((str(error), *notes)),
+            params=params,
+        )
+        return message_with_error
+
+    @staticmethod
+    def _resolve_options(
+        options: m.ExceptionFactoryOptions | None = None,
+    ) -> tuple[m.ExceptionFactoryOptions, Exception | str | None]:
+        resolved_options = (
+            options if options is not None else m.ExceptionFactoryOptions()
+        )
+        return resolved_options, resolved_options.error
+
+    @staticmethod
+    def _fail_result[TResult](
+        message: str,
+        params: m.BaseModel | None,
+        *,
+        options: m.ExceptionFactoryOptions | None = None,
+        default_error_code: str,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        options, error = FlextExceptionsFactoriesFail._resolve_options(options)
+        return FlextExceptionsFactoriesFail._result_type(result_type).fail(
+            message,
+            error_code=options.error_code or default_error_code,
+            error_data=FlextExceptionsTemplate.result_error_data(
+                params,
+                cause=str(error) if error is not None else None,
+            ),
+            exception=error if isinstance(error, BaseException) else None,
+        )
+
+    @staticmethod
+    def fail_operation[TResult](
+        operation: str,
+        exc: Exception | str | None = None,
+        *,
+        error_code: str | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical operation-error message.
+
+        Usage::
+
+            return e.fail_operation("resolve factory service", exc)
+
+        Returns:
+            R[T].fail with a canonical operation-error message.
+
+        """
+        params = m.OperationErrorParams(
+            operation=operation,
+            reason=str(exc) if exc is not None else None,
+        )
+        msg = FlextExceptionsFactoriesFail._failure_message(
+            operation,
+            params=params,
+            error=exc,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            options=m.ExceptionFactoryOptions(error=exc) if exc is not None else None,
+            default_error_code=error_code or c.ErrorCode.OPERATION_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_not_found[TResult](
+        resource_type: str,
+        resource_id: str,
+        *,
+        error_code: str | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical not-found message.
+
+        Usage::
+
+            return e.fail_not_found("service", name)
+
+        Returns:
+            R[T].fail with a canonical not-found message.
+
+        """
+        params = m.NotFoundErrorParams(
+            resource_type=resource_type,
+            resource_id=resource_id,
+        )
+        msg = FlextExceptionsTemplate.render_template(
+            c.ERR_SERVICE_NOT_FOUND,
+            name=resource_id,
+            resource_type=resource_type.capitalize(),
+            params=params,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            default_error_code=error_code or c.ErrorCode.NOT_FOUND_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_type_mismatch[TResult](
+        details: m.ServiceLookupParams | str,
+        actual: str | None = None,
+        *,
+        error_code: str | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical type-mismatch message.
+
+        Usage::
+
+            return e.fail_type_mismatch("Service", "str")
+            return e.fail_type_mismatch(
+                m.ServiceLookupParams(
+                    service_name="connection",
+                    expected_type="DirectoryConnection",
+                    actual_type=type(raw).__name__,
+                )
+            )
+
+        Returns:
+            R[T].fail with a canonical type-mismatch message.
+
+        """
+        params = (
+            details
+            if isinstance(details, m.ServiceLookupParams)
+            else m.ServiceLookupParams(expected_type=details, actual_type=actual)
+        )
+        expected_type = (
+            params.expected_type
+            if params.expected_type is not None
+            else c.DEFAULT_EMPTY_STRING
+        )
+        msg = FlextExceptionsTemplate.render_template(
+            c.ERR_SERVICE_TYPE_MISMATCH,
+            type_name=expected_type,
+            params=params,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            default_error_code=error_code or c.ErrorCode.TYPE_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_validation[TResult](
+        details: m.ValidationErrorParams | str | None = None,
+        *,
+        error_code: str | None = None,
+        error: Exception | str | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical validation-failed message.
+
+        Usage::
+
+            return e.fail_validation("config_key", error=exc)
+            return e.fail_validation(
+                m.ValidationErrorParams(field="config_key", value=raw_value), error=exc
+            )
+
+        Returns:
+            R[T].fail with a canonical validation-failed message.
+
+        """
+        params = (
+            details
+            if isinstance(details, m.ValidationErrorParams)
+            else m.ValidationErrorParams(field=details)
+        )
+        field_name = params.field if params.field is not None else "input"
+        base_msg = (
+            FlextExceptionsTemplate.render_template(
+                c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                operation=f"validate {field_name}",
+                error=str(error),
+                params=params,
+            )
+            if error is not None
+            else FlextExceptionsTemplate.render_template(
+                c.ERR_TEMPLATE_VALIDATION_FAILED_FOR_FIELD,
+                field=field_name,
+                params=params,
+            )
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            base_msg,
+            params,
+            options=m.ExceptionFactoryOptions(error=error)
+            if error is not None
+            else None,
+            default_error_code=error_code or c.ErrorCode.VALIDATION_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_config_error[TResult](
+        config_key: str,
+        config_source: str | None = None,
+        *,
+        options: m.ExceptionFactoryOptions | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical configuration-error message.
+
+        Usage::
+
+            return e.fail_config_error("database.url", "env")
+
+        Returns:
+            R[T].fail with a canonical configuration-error message.
+
+        """
+        options, error = FlextExceptionsFactoriesFail._resolve_options(options)
+        params = m.ConfigurationErrorParams(
+            config_key=config_key,
+            config_source=config_source,
+        )
+        msg = FlextExceptionsFactoriesFail._failure_message(
+            f"read config key {config_key!r}",
+            params=params,
+            error=error,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            options=options,
+            default_error_code=c.ErrorCode.CONFIGURATION_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_connection[TResult](
+        host: str,
+        *,
+        params: m.ConnectionErrorParams | None = None,
+        options: m.ExceptionFactoryOptions | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical connection-error message.
+
+        Usage::
+
+            return e.fail_connection(
+                "directory.example.com",
+                params=m.ConnectionErrorParams(host="directory.example.com", port=636),
+                options=m.ExceptionFactoryOptions(error=exc),
+            )
+
+        Returns:
+            R[T].fail with a canonical connection-error message.
+
+        """
+        options, error = FlextExceptionsFactoriesFail._resolve_options(options)
+        params = params or m.ConnectionErrorParams(host=host)
+        msg = FlextExceptionsFactoriesFail._failure_message(
+            f"connect to {host}",
+            params=params,
+            error=error,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            options=options,
+            default_error_code=c.ErrorCode.CONNECTION_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_timeout[TResult](
+        timeout_seconds: float,
+        operation: str | None = None,
+        *,
+        error_code: str | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical timeout message.
+
+        Usage::
+
+            return e.fail_timeout(30.0, "fetch_users")
+
+        Returns:
+            R[T].fail with a canonical timeout message.
+
+        """
+        params = m.TimeoutErrorParams(
+            timeout_seconds=timeout_seconds,
+            operation=operation,
+        )
+        op_label = operation or c.ContextScope.OPERATION
+        msg = FlextExceptionsFactoriesFail._failure_message(
+            f"{op_label} (timeout={timeout_seconds}s)",
+            params=params,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            default_error_code=error_code or c.ErrorCode.TIMEOUT_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_auth[TResult](
+        auth_method: str | None = None,
+        user_id: str | None = None,
+        *,
+        options: m.ExceptionFactoryOptions | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical authentication-error message.
+
+        Usage::
+
+            return e.fail_auth("directory", user_id)
+
+        Returns:
+            R[T].fail with a canonical authentication-error message.
+
+        """
+        options, error = FlextExceptionsFactoriesFail._resolve_options(options)
+        params = m.AuthenticationErrorParams(auth_method=auth_method, user_id=user_id)
+        msg = FlextExceptionsFactoriesFail._failure_message(
+            f"authenticate user {user_id or 'unknown'}",
+            params=params,
+            error=error,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            options=options,
+            default_error_code=c.ErrorCode.AUTHENTICATION_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_authz[TResult](
+        user_id: str,
+        resource: str,
+        permission: str | None = None,
+        *,
+        options: m.ExceptionFactoryOptions | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical authorization-error message.
+
+        Usage::
+
+            return e.fail_authz(user_id, "admin.panel", "write")
+
+        Returns:
+            R[T].fail with a canonical authorization-error message.
+
+        """
+        options, error = FlextExceptionsFactoriesFail._resolve_options(options)
+        params = m.AuthorizationErrorParams(
+            user_id=user_id,
+            resource=resource,
+            permission=permission,
+        )
+        msg = FlextExceptionsFactoriesFail._failure_message(
+            f"authorize {user_id!r} on {resource!r}",
+            params=params,
+            error=error,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            options=options,
+            default_error_code=c.ErrorCode.AUTHORIZATION_ERROR,
+            result_type=result_type,
+        )
+
+    @staticmethod
+    def fail_conflict[TResult](
+        resource_type: str,
+        resource_id: str,
+        reason: str | None = None,
+        *,
+        options: m.ExceptionFactoryOptions | None = None,
+        result_type: type[r[TResult]] | None = None,
+    ) -> p.Result[TResult]:
+        """Return r[T].fail with a canonical conflict message.
+
+        Usage::
+
+            return e.fail_conflict(c.ContextScope.USER, user_id, "already active")
+
+        Returns:
+            R[T].fail with a canonical conflict message.
+
+        """
+        options, error = FlextExceptionsFactoriesFail._resolve_options(options)
+        params = m.ConflictErrorParams(
+            resource_type=resource_type,
+            resource_id=resource_id,
+            conflict_reason=reason,
+        )
+        msg = FlextExceptionsFactoriesFail._failure_message(
+            f"create {resource_type} {resource_id!r}",
+            params=params,
+            error=error,
+        )
+        return FlextExceptionsFactoriesFail._fail_result(
+            msg,
+            params,
+            options=options,
+            default_error_code=c.ErrorCode.ALREADY_EXISTS,
+            result_type=result_type,
+        )
+
+
+__all__: list[str] = ["FlextExceptionsFactoriesFail"]

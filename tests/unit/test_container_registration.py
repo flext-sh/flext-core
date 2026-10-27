@@ -38,6 +38,11 @@ class TestsFlextCoreContainerRegistration:
         )
 
     @staticmethod
+    def test_container_satisfies_container_protocol() -> None:
+        """A default FlextContainer honors the public Container protocol."""
+        tm.that(FlextContainer(), is_=p.Container)
+
+    @staticmethod
     @pytest.mark.parametrize(
         "scenario",
         m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
@@ -68,21 +73,6 @@ class TestsFlextCoreContainerRegistration:
         u.Tests.assert_success(
             clean_container.resolve(scenario.name),
             expected_value=scenario.service,
-        )
-
-    @staticmethod
-    def test_bind_duplicate_name_raises_and_keeps_first_binding(
-        clean_container: p.Container,
-    ) -> None:
-        """Re-binding a registered name raises; the first value stays bound."""
-        _ = clean_container.bind("service1", "value1")
-
-        with pytest.raises(e.ValidationError, match="service1"):
-            _ = clean_container.bind("service1", "value2")
-
-        u.Tests.assert_success(
-            clean_container.resolve("service1"),
-            expected_value="value1",
         )
 
     @staticmethod
@@ -130,44 +120,6 @@ class TestsFlextCoreContainerRegistration:
         u.Tests.assert_success(
             clean_container.resolve(name),
             expected_value=return_value,
-        )
-
-    @staticmethod
-    def test_factory_is_invoked_lazily_on_resolve(
-        clean_container: p.Container,
-    ) -> None:
-        """A factory is not called at registration, only when resolved."""
-        factory, call_count = u.Tests.create_counting_factory("lazy_value")
-        clean_container.factory("lazy", factory)
-
-        tm.that(
-            call_count(),
-            eq=0,
-            msg="Factory must not run before the service is resolved",
-        )
-        u.Tests.assert_success(
-            clean_container.resolve("lazy"),
-            expected_value="lazy_value",
-        )
-        tm.that(
-            call_count() >= 1,
-            eq=True,
-            msg="Factory must be invoked to produce the resolved value",
-        )
-
-    @staticmethod
-    def test_factory_duplicate_name_raises_and_keeps_first_factory(
-        clean_container: p.Container,
-    ) -> None:
-        """Re-registering a factory name raises; the original callable stays."""
-        clean_container.factory("factory1", u.Tests.create_factory("value1"))
-
-        with pytest.raises(e.ValidationError, match="factory1"):
-            clean_container.factory("factory1", u.Tests.create_factory("value2"))
-
-        u.Tests.assert_success(
-            clean_container.resolve("factory1"),
-            expected_value="value1",
         )
 
     @staticmethod

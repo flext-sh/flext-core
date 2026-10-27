@@ -15,7 +15,7 @@ from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 from flext_core._utilities._beartype._class_visitor.visitor_base import NO_VIOLATION
 
 if TYPE_CHECKING:
-    from flext_core.typings import ModuleGlobalValue
+    from flext_core import t
 
 
 def redundant_inner_violation(
@@ -64,7 +64,7 @@ def self_ref_violation(
     module = maybe_module
     src_file = str(getattr(module, "__file__", "") or "")
     normalized_values: list[FunctionType] = []
-    members = cast("dict[str, ModuleGlobalValue]", vars(target))
+    members = cast("dict[str, t.ModuleGlobalValue]", vars(target))
     # Snapshot the values: reading a member can execute a lazy facade whose
     # module import binds more class attributes, mutating this very mapping
     # mid-iteration (RuntimeError: dictionary changed size during iteration).

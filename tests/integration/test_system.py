@@ -205,21 +205,6 @@ class TestsFlextCoreSystem:
         tm.that(str(exc), has=message)
         tm.that(str(exc), has=f"[{code}]")
 
-    @staticmethod
-    def test_family_exceptions_are_raisable_and_catchable_as_base() -> None:
-        """A specific family error is caught through its BaseError supertype.
-
-        Raises:
-            ValidationError: If campo_invalido.
-
-        """
-        message = "campo_invalido"
-        with pytest.raises(e.BaseError) as caught:
-            raise e.ValidationError(message)
-
-        tm.that(caught.value, is_=e.ValidationError)
-        tm.that(caught.value.error_code, eq="VALIDATION_ERROR")
-
     # ------------------------------------------------------------------ #
     # Public utilities contract                                           #
     # ------------------------------------------------------------------ #

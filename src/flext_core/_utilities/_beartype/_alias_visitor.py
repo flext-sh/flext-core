@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import c, p, t
+from flext_core._utilities import FlextUtilitiesFamilySurface
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 
 if TYPE_CHECKING:
@@ -70,14 +71,14 @@ class FlextUtilitiesBeartypeAliasVisitor:
         package = module_name.split(".")[0]
         variant = params.expected_form
         violation = _NO_VIOLATION
-        h = FlextUtilitiesBeartypeHelpers
+        surface = FlextUtilitiesFamilySurface
         match variant:
             case "rebound_at_module_end" if filename in c.ENFORCEMENT_CANONICAL_FILES:
                 target_name = target.__name__
                 alias_char: str | None = next(
                     (
                         alias_name
-                        for alias_name, _, suffix in h.lazy_alias_suffixes(
+                        for alias_name, _, suffix in surface.lazy_alias_suffixes(
                             package,
                         )
                         if suffix in target_name
@@ -96,7 +97,7 @@ class FlextUtilitiesBeartypeAliasVisitor:
                 violation = next(
                     (
                         {"package": package, "alias": alias_char}
-                        for alias_char in h.runtime_alias_names(
+                        for alias_char in surface.runtime_alias_names(
                             package,
                         )
                         if FlextUtilitiesBeartypeAliasVisitor._self_root_alias_import(

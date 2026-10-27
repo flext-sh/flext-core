@@ -20,7 +20,6 @@ from __future__ import annotations
 import importlib
 import sys
 from collections.abc import Iterator
-from importlib.metadata import distribution
 from pathlib import Path
 from types import ModuleType
 
@@ -331,14 +330,14 @@ class TestPackagedConfigWithUserPreferences:
         "owner_names",
         [("resource-owner",), ("resource-owner", "competing-owner")],
     )
-    def test_distribution_owns_recorded_defaults_independently_of_import_layout(
+    def test_import_package_owns_defaults_independently_of_distribution_records(
         tmp_path: Path,
         layout: str,
         owner_names: tuple[str, ...],
         *,
         installed: bool,
     ) -> None:
-        """Recorded wheel resources own defaults even with editable Python code."""
+        """Distribution records cannot replace the imported package's resources."""
         with u.Tests.env_vars_context(
             env_vars={"XDG_CONFIG_HOME": str(tmp_path / "xdg")},
         ):
@@ -353,7 +352,7 @@ class TestPackagedConfigWithUserPreferences:
                 "        'defaults.yaml',)\n",
                 encoding="utf-8",
             )
-            site = tmp_path / "site-packages"
+            site = tmp_path / "distribution" / "site-packages"
             for name in owner_names:
                 metadata = site / f"{name.replace('-', '_')}-1.0.dist-info"
                 metadata.mkdir(parents=True)
@@ -370,37 +369,12 @@ class TestPackagedConfigWithUserPreferences:
             if installed:
                 config_dir.mkdir(parents=True, exist_ok=True)
                 default.write_text("greeting: installed\n", encoding="utf-8")
-            elif default.exists():
-                default.unlink()
             sys.path.insert(0, str(site))
             module = importlib.import_module(f"{package}.declared")
-            tm.that(
-                Path(
-                    str(
-                        distribution("resource-owner").locate_file(
-                            f"{package}/config/defaults.yaml",
-                        )
-                    )
-                ),
-                eq=default,
-            )
-            tm.that(module.DeclaredConfig.CONFIG_FILENAMES, eq=("defaults.yaml",))
+            config = module.DeclaredConfig.fetch_global()
 
-            if len(owner_names) > 1:
-                with pytest.raises(
-                    RuntimeError, match="multiple installed distributions"
-                ):
-                    module.DeclaredConfig.fetch_global()
-            elif installed:
-                tm.that(module.DeclaredConfig.fetch_global().greeting, eq="installed")
-            else:
-                error = (
-                    "declared config files"
-                    if layout == "site-packages"
-                    else "declared config directory"
-                )
-                with pytest.raises(FileNotFoundError, match=error):
-                    module.DeclaredConfig.fetch_global()
+            tm.that(config.greeting, eq="source")
+            tm.ok(module.DeclaredConfig.fetch_global() is config)
 
     @staticmethod
     def test_explicit_config_dir_env_override_replaces_the_root(

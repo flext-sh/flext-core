@@ -25,8 +25,8 @@
 ## Recommended Remediations
 
 1. Replace `FlextDispatcher` with `FlextDispatcher` (or remove entirely) in:
-   - verification commands (`python -c "from flext_core import FlextDispatcher ..."`)
-   - example import blocks in secondary guides and standards files.
+    - verification commands (`python -c "from flext_core import FlextDispatcher ..."`)
+    - example import blocks in secondary guides and standards files.
 1. Drop `FlextProcessors` from standards/checklists where it was previously listed as an
    application-layer component.
 1. Re-run a quick `rg "FlextDispatcher" docs/` check after edits to ensure no residual

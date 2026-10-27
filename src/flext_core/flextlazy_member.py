@@ -10,7 +10,7 @@ import importlib
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
-    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
+    from flext_core import t
 
 
 class FlextLazyMember:
@@ -51,9 +51,9 @@ class FlextLazyMember:
 
     def __get__(
         self,
-        instance: ModuleGlobalValue | None,
+        instance: t.ModuleGlobalValue | None,
         owner: type | None = None,
-    ) -> ModuleGlobalValue:
+    ) -> t.ModuleGlobalValue:
         """Resolve, cache on the host, and bind like the original member.
 
         Args:
@@ -68,10 +68,10 @@ class FlextLazyMember:
         binder = getattr(type(raw), "__get__", None)
         if binder is None:
             return raw
-        bound: ModuleGlobalValue = binder(raw, instance, owner or self._host)
+        bound: t.ModuleGlobalValue = binder(raw, instance, owner or self._host)
         return bound
 
-    def resolve(self) -> ModuleGlobalValue:
+    def resolve(self) -> t.ModuleGlobalValue:
         """Return the member's raw value and replace this descriptor with it.
 
         Returns:
@@ -96,10 +96,10 @@ class FlextLazyMember:
             msg = f"lazy member {self._member!r} cannot load {target!r}"
             raise ImportError(msg, name=self._module) from exc
         for klass in source.__mro__:
-            namespace = cast("ModuleGlobals", vars(klass))
+            namespace = cast("t.ModuleGlobals", vars(klass))
             if self._member in namespace:
-                raw: ModuleGlobalValue = cast(
-                    "ModuleGlobalValue",
+                raw: t.ModuleGlobalValue = cast(
+                    "t.ModuleGlobalValue",
                     namespace[self._member],
                 )
                 setattr(host, self._member, raw)

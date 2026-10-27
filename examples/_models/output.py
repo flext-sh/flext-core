@@ -47,3 +47,6 @@ class ExamplesFlextModelsOutput:
                 OutputKind.GENERATED: OutputTemplate.GENERATED,
             })
         )
+
+
+__all__: list[str] = ["ExamplesFlextModelsOutput"]

@@ -1,7 +1,7 @@
 """Behavioral tests for numeric/string constrained validation typings.
 
 Every assertion targets the observable public contract of the constrained
-type aliases exposed through ``t.*``: a ``m.TypeAdapter`` either returns the
+type aliases exposed through ``t.*``: a ``u.type_adapter`` either returns the
 validated value unchanged (accept path) or raises ``c.ValidationError``
 (reject path). No implementation internals are inspected.
 
@@ -14,7 +14,7 @@ from __future__ import annotations
 import pytest
 from typing_extensions import TypeForm
 
-from tests import c, m, t, tm, u
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreTypingsValidationNumbers:
@@ -33,7 +33,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         )
         def test_strips_surrounding_whitespace(value: str, expected: str) -> None:
             """A non-blank value is returned with surrounding whitespace removed."""
-            adapter: m.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
+            adapter: t.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
 
             result = adapter.validate_python(value)
 
@@ -43,7 +43,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
         def test_rejects_blank_or_whitespace_only(value: str) -> None:
             """An empty or whitespace-only value raises the public ValidationError."""
-            adapter: m.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
+            adapter: t.TypeAdapter[str] = u.type_adapter(TypeForm(t.StrippedStr))
 
             with pytest.raises(c.ValidationError):
                 adapter.validate_python(value)
@@ -79,7 +79,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         value: str | int,
     ) -> None:
         """A value inside the constraint validates to itself unchanged."""
-        adapter: m.TypeAdapter[str | int] = u.type_adapter(alias)
+        adapter: t.TypeAdapter[str | int] = u.type_adapter(alias)
 
         result = adapter.validate_python(value)
 
@@ -110,7 +110,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         value: str | int,
     ) -> None:
         """A value outside the constraint raises the public ValidationError."""
-        adapter: m.TypeAdapter[str | int] = u.type_adapter(alias)
+        adapter: t.TypeAdapter[str | int] = u.type_adapter(alias)
 
         with pytest.raises(c.ValidationError):
             adapter.validate_python(value)
@@ -124,7 +124,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         alias: type[int],
     ) -> None:
         """Re-validating an already-valid value yields the same result."""
-        adapter: m.TypeAdapter[int] = u.type_adapter(alias)
+        adapter: t.TypeAdapter[int] = u.type_adapter(alias)
 
         once = adapter.validate_python(100)
         twice = adapter.validate_python(once)

@@ -29,13 +29,8 @@ class FlextConstantsErrorsValidationExceptions:
     )
     """Pydantic validation + value-validation catch for input-coercion boundaries."""
 
-    EXC_PYDANTIC_TYPE_VALUE: ClassVar[tuple[type[Exception], ...]] = (
-        _PYDANTIC + _RuntimeExceptions.EXC_TYPE_VALIDATION
-    )
-    """Pydantic + typing + value-validation catch for model-construction flows."""
-
     EXC_VALIDATION_TYPE_VALUE: ClassVar[tuple[type[Exception], ...]] = (
-        EXC_PYDANTIC_TYPE_VALUE
+        _PYDANTIC + _RuntimeExceptions.EXC_TYPE_VALIDATION
     )
     """Pydantic validation + typing + value catch for full validation boundaries."""
 

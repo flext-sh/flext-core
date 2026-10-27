@@ -14,8 +14,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._models import (
-    FlextContextState,
-    FlextMixins,
     FlextModelsBase,
     FlextModelsBuilder,
     FlextModelsCollections,
@@ -23,6 +21,7 @@ from flext_core._models import (
     FlextModelsContainer,
     FlextModelsContainers,
     FlextModelsContext,
+    FlextModelsContextState,
     FlextModelsCqrs,
     FlextModelsDomainEvent,
     FlextModelsEnforcement,
@@ -36,6 +35,7 @@ from flext_core._models import (
     FlextModelsPydantic,
     FlextModelsRegistry,
     FlextModelsService,
+    FlextModelsServiceState,
     FlextModelsSettings,
 )
 
@@ -54,8 +54,8 @@ class FlextModels(
     FlextModelsEntity,
     FlextModelsErrors,
     FlextModelsExceptionParams,
-    FlextContextState,
-    FlextMixins,
+    FlextModelsContextState,
+    FlextModelsServiceState,
     FlextModelsHandler,
     FlextModelsNamespace,
     FlextModelsOptions,
@@ -85,6 +85,4 @@ class FlextModels(
 
 
 m = FlextModels
-
-
 __all__: list[str] = ["FlextModels", "m"]

@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Flext Core. Models. Context. Scope Parts package.
+"""Flext Core. Models. Context. Scope package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,21 +13,15 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._context.__scope import (
-        flextmodelscontextscope_part_01 as _owner_0,
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_01 import (
+        FlextModelsContextScopePart01,
     )
-
-    FlextModelsContextScopePart01 = _owner_0.FlextModelsContextScopePart01
-    from flext_core._models._context.__scope import (
-        flextmodelscontextscope_part_02 as _owner_1,
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_02 import (
+        FlextModelsContextScopePart02,
     )
-
-    FlextModelsContextScopePart02 = _owner_1.FlextModelsContextScopePart02
-    from flext_core._models._context.__scope import (
-        flextmodelscontextscope_part_03 as _owner_2,
+    from flext_core._models._context.__scope.flextmodelscontextscope_part_03 import (
+        FlextModelsContextScopePart03,
     )
-
-    FlextModelsContextScopePart03 = _owner_2.FlextModelsContextScopePart03
 
 
 __all__: tuple[str, ...] = (

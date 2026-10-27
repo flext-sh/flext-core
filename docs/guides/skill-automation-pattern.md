@@ -59,13 +59,12 @@ make gen
 make fix
 make fmt
 make check
-make test
+make tests
 make gen
-make waza
 ```
 
 The final generation run proves the fixed point. `make mod` owns structural
-transformations; no direct script or tool invocation is valid. `make test` always
+transformations; no direct script or tool invocation is valid. `make tests` always
 retains Testmon.
 
 Do not add project, file, pattern, action, phase, fix, or changed-only selectors. A

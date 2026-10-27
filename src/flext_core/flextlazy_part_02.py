@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from collections.abc import Mapping, MutableMapping, Sequence
 
     from flext_core import t
-    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
 class FlextLazyPart02(FlextLazyPart01):
@@ -58,13 +57,13 @@ class FlextLazyPart02(FlextLazyPart01):
         self,
         name: str,
         lazy_imports: Mapping[str, str | tuple[str, str]],
-        module_globals: ModuleGlobals,
+        module_globals: t.ModuleGlobals,
         module_name: str,
-    ) -> ModuleGlobalValue:
+    ) -> t.ModuleGlobalValue:
         """Resolve one lazy symbol and cache it.
 
         Returns:
-            The resulting ``ModuleGlobalValue``.
+            The resulting ``t.ModuleGlobalValue``.
 
         Raises:
             AttributeError: If module.
@@ -95,7 +94,7 @@ class FlextLazyPart02(FlextLazyPart01):
             return mod
 
         try:
-            value: ModuleGlobalValue = getattr(mod, attr)
+            value: t.ModuleGlobalValue = getattr(mod, attr)
         except AttributeError as exc:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
                 if not self._module_is_initializing(mod):
@@ -166,7 +165,7 @@ class FlextLazyPart02(FlextLazyPart01):
     def install(
         self,
         module_name: str,
-        module_globals: ModuleGlobals,
+        module_globals: t.ModuleGlobals,
         lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
         publish_all: bool = True,
@@ -206,7 +205,7 @@ class FlextLazyPart02(FlextLazyPart01):
 
         module_globals["_LAZY_IMPORTS"] = normalized
 
-        def _module_getattr(name: str) -> ModuleGlobalValue:
+        def _module_getattr(name: str) -> t.ModuleGlobalValue:
             return self.get(name, normalized, module_globals, module_name)
 
         def _module_dir() -> list[str]:

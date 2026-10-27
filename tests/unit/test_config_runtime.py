@@ -84,10 +84,16 @@ class TestsFlextCoreConfigSettingsCanonical:
         tm.that(SiblingConfig.fetch_global() is sibling, truth=True)
 
     @staticmethod
-    def test_imported_config_repoints_between_yaml_roots_and_restores(
+    def test_typed_config_repoints_between_yaml_roots_and_restores(
         tmp_path: Path,
     ) -> None:
-        """The exported frozen root keeps identity across real source relocations."""
+        """A declared frozen root keeps identity and defaults across relocations."""
+
+        class LifecycleConfig(FlextConfig):
+            lifecycle_marker: str = "default"
+            first_only: bool = False
+            second_only: bool = False
+
         first_dir = tmp_path / "first"
         second_dir = tmp_path / "second"
         first_dir.mkdir()
@@ -98,32 +104,35 @@ class TestsFlextCoreConfigSettingsCanonical:
         (second_dir / "rules.yaml").write_text(
             "lifecycle_marker: second\nsecond_only: true\n", encoding="utf-8"
         )
-        original = config.model_dump()
+        published = LifecycleConfig.fetch_global()
+        original = published.model_dump()
         try:
-            for directory, marker, absent in (
-                (first_dir, "first", "second_only"),
-                (second_dir, "second", "first_only"),
+            for directory, marker, first_only, second_only in (
+                (first_dir, "first", True, False),
+                (second_dir, "second", False, True),
             ):
                 with u.Tests.env_vars_context(
                     env_vars={
-                        "FLEXT_CORE_CONFIG_DIR": str(directory),
+                        "TESTS_CONFIG_DIR": str(directory),
                         "XDG_CONFIG_HOME": str(tmp_path / "preferences"),
                     },
                 ):
-                    FlextConfig.reset_for_testing()
-                    tm.ok(config is FlextConfig.fetch_global())
-                    tm.that(config.model_dump()["lifecycle_marker"], eq=marker)
-                    tm.that(config.model_dump(), lacks=absent)
+                    LifecycleConfig.reset_for_testing()
+                    tm.ok(published is LifecycleConfig.fetch_global())
+                    tm.that(published.lifecycle_marker, eq=marker)
+                    tm.that(published.first_only, eq=first_only)
+                    tm.that(published.second_only, eq=second_only)
                     tm.rejects_assignment(
-                        config,
+                        published,
                         "lifecycle_marker",
                         "mutated",
                         expected=m.ValidationError,
                     )
         finally:
-            FlextConfig.reset_for_testing()
+            LifecycleConfig.reset_for_testing()
+        tm.ok(published is LifecycleConfig.fetch_global())
+        tm.that(published.model_dump(), eq=original)
         tm.ok(config is FlextConfig.fetch_global())
-        tm.that(config.model_dump(), eq=original)
 
     @staticmethod
     @pytest.mark.parametrize("contents", ["limit: invalid\n", "limit: -1\n"])

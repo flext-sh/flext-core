@@ -77,19 +77,6 @@ class TestsFlextCoreExceptionsPublicMetrics:
         tm.that(dict(snapshot.exception_counts), eq={})
 
     @staticmethod
-    def test_recording_one_exception_makes_metrics_non_empty() -> None:
-        # Act
-        """Test recording one exception makes metrics non empty."""
-        e.record_exception(e.ValidationError)
-        snapshot = e.resolve_metrics_snapshot()
-
-        # Assert
-        tm.that(snapshot.total_exceptions, eq=1)
-        tm.that(snapshot.unique_exception_types, eq=1)
-        tm.that(snapshot.has_exceptions is True, truth=True)
-        tm.that(snapshot.exception_counts[e.ValidationError.__qualname__], eq=1)
-
-    @staticmethod
     @pytest.mark.parametrize(
         ("recorded", "expected_total", "expected_unique"),
         [

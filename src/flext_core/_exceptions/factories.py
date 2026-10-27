@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._exceptions._factories.flextexceptionsfactories_part_04 import (
-    FlextExceptionsFactoriesPart04,
-)
+from flext_core._exceptions._factories import FlextExceptionsFactoriesFail
 
 
-class FlextExceptionsFactories(FlextExceptionsFactoriesPart04):
+class FlextExceptionsFactories(FlextExceptionsFactoriesFail):
     """Public failure factory namespace."""
 
 

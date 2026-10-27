@@ -9,6 +9,7 @@ from __future__ import annotations
 import functools
 import importlib
 import importlib.metadata
+import sys
 from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
@@ -231,9 +232,7 @@ class FlextUtilitiesFamilySurface:
 
         """
         return [
-            alias
-            for alias in bucket["aliases"]
-            if alias in c.ENFORCEMENT_CANONICAL_ALIASES
+            alias for alias in bucket["aliases"] if alias in c.FAMILY_CANONICAL_ALIASES
         ]
 
     @staticmethod
@@ -290,6 +289,96 @@ class FlextUtilitiesFamilySurface:
                         module,
                     )
         return cast("FlextTypingBase.StrMapping", MappingProxyType(renames))
+
+    @staticmethod
+    def _lazy_suffix(module_path: str) -> str:
+        name = module_path.rsplit(".", 1)[-1]
+        if name == "typings":
+            return "Types"
+        return "".join(part[:1].upper() + part[1:] for part in name.split("_") if part)
+
+    @staticmethod
+    @functools.cache
+    def lazy_alias_suffixes(package_name: str) -> tuple[tuple[str, str, str], ...]:
+        """Read package lazy exports; import failures retain their original cause.
+
+        Returns:
+            ``(alias, module_path, family_suffix)`` for every one-letter alias.
+
+        """
+        package = sys.modules.get(package_name)
+        if package is None:
+            package = importlib.import_module(package_name)
+        published = vars(package).get("_LAZY_IMPORTS")
+        if published is None:
+            return ()
+        lazy_imports = normalize_lazy_imports(package.__name__, published)
+        return tuple(
+            (
+                alias,
+                module_path,
+                FlextUtilitiesFamilySurface._lazy_suffix(module_path),
+            )
+            for alias, entry in lazy_imports.items()
+            if len(alias) == 1 and alias.islower()
+            for module_path in (entry if isinstance(entry, str) else entry[0],)
+        )
+
+    @staticmethod
+    def runtime_alias_names(package_name: str) -> frozenset[str]:
+        """Return runtime alias names derived from generated lazy exports.
+
+        Returns:
+            Runtime alias names derived from generated lazy exports.
+
+        """
+        return frozenset(
+            alias
+            for alias, _, _ in FlextUtilitiesFamilySurface.lazy_alias_suffixes(
+                package_name,
+            )
+        )
+
+    @staticmethod
+    def facade_module_names(package_name: str) -> frozenset[str]:
+        """Return local facade module names derived from generated lazy exports.
+
+        Returns:
+            Local facade module names derived from generated lazy exports.
+
+        """
+        return frozenset(
+            module_path.rsplit(".", 1)[-1]
+            for (
+                _,
+                module_path,
+                suffix,
+            ) in FlextUtilitiesFamilySurface.lazy_alias_suffixes(package_name)
+            if module_path.split(".", 1)[0] == package_name
+            and suffix in {"Constants", "Models", "Protocols", "Types", "Utilities"}
+        )
+
+    @staticmethod
+    def family_facade(target: type) -> bool:
+        """Return True when a family package publishes ``target`` as a letter facade.
+
+        Both facts come from their owners: the generated ``_LAZY_IMPORTS``
+        binds each one-letter alias to its class, and the family surface
+        names the packages that publish that contract.
+
+        Returns:
+            True when a family package publishes ``target`` as a letter facade.
+
+        """
+        package_name = target.__module__.split(".", 1)[0]
+        if package_name not in FlextUtilitiesFamilySurface.project_alias_owners():
+            return False
+        published = FlextUtilitiesFamilySurface.lazy_alias_suffixes(package_name)
+        return any(
+            vars(sys.modules[module_path]).get(alias) is target
+            for alias, module_path, _ in published
+            if module_path in sys.modules
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesFamilySurface"]

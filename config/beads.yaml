@@ -1,4 +1,7 @@
 version: 1
-workspace: flext
-database: flext
-issue_prefix: flext
+workspace: "flext"
+database: "flext"
+issue_prefix: "flext"
+ownership_command_prefix: ["direnv", "exec", ".", "bd"]
+ownership_command_cwd: .
+custom_issue_types: []

@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING, cast
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
+    from flext_core import t
     from flext_core.lazy import FlextLazy
-    from flext_core.typings import ModuleGlobals, ModuleGlobalValue
 
 
 class FlextLazyAttribute[T]:
@@ -29,7 +29,7 @@ class FlextLazyAttribute[T]:
         lazy: FlextLazy,
         name: str,
         lazy_imports: Mapping[str, str | tuple[str, str]],
-        module_globals: ModuleGlobals,
+        module_globals: t.ModuleGlobals,
         module_name: str,
     ) -> None:
         """Bind the symbol and module context used for deferred resolution."""
@@ -41,7 +41,7 @@ class FlextLazyAttribute[T]:
 
     def __get__(
         self,
-        instance: ModuleGlobalValue | None,
+        instance: t.ModuleGlobalValue | None,
         owner: type | None = None,
     ) -> T:
         """Resolve and cache the target symbol through the owning lazy container.

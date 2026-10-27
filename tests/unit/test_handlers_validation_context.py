@@ -43,7 +43,7 @@ class TestsFlextCoreHandlersValidationContext(
         settings = u.Tests.create_handler_config(
             f"validate_generic_{handler_type}",
             f"Validate Generic {handler_type.title()}",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=handler_type,
                 handler_mode=handler_mode,
             ),
@@ -246,7 +246,7 @@ class TestsFlextCoreHandlersValidationContext(
         settings = u.Tests.create_handler_config(
             f"props_{handler_type}",
             f"Props {handler_type.title()}",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=handler_type,
                 handler_mode=handler_type,
             ),
@@ -287,7 +287,7 @@ class TestsFlextCoreHandlersValidationContext(
         settings = u.Tests.create_handler_config(
             "dispatch_query",
             "Dispatch Query",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=c.HandlerType.QUERY,
                 handler_mode=c.HandlerType.QUERY,
             ),

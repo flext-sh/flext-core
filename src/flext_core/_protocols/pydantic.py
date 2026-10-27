@@ -57,7 +57,7 @@ class FlextProtocolsPydantic:
             ...
 
         @property
-        def model_config(self) -> pydantic.ConfigDict:
+        def model_config(self) -> t.ConfigDict:
             """Read the model owner's native configuration."""
             ...
 
@@ -79,7 +79,7 @@ class FlextProtocolsPydantic:
         def __call__(
             self,
             *,
-            config: pydantic.ConfigDict | None = None,
+            config: t.ConfigDict | None = None,
             validate_return: bool = False,
         ) -> FlextProtocolsPydantic.FunctionDecorator: ...
 

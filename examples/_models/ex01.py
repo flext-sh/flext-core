@@ -52,3 +52,6 @@ class ExamplesFlextModelsEx01:
         age: str = m.Field(
             description="Invalid age (string instead of int) for testing",
         )
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx01"]

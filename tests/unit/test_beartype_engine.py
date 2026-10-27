@@ -18,8 +18,7 @@ from typing import cast
 import pytest
 
 import tests.utilities
-from flext_core.utilities import FlextUtilitiesBeartypeEngine
-from tests import p, tm
+from tests import p, tm, u
 
 
 class TestsFlextCoreBeartypeEngine(
@@ -36,9 +35,7 @@ class TestsFlextCoreBeartypeEngine(
                 """Nested marker class."""
 
         tm.that(
-            FlextUtilitiesBeartypeEngine.defined_inside(
-                Outer.Inner, Outer.__qualname__
-            ),
+            u.defined_inside(Outer.Inner, Outer.__qualname__),
             is_=bool,
             eq=True,
         )
@@ -54,7 +51,7 @@ class TestsFlextCoreBeartypeEngine(
             """Unrelated marker class."""
 
         tm.that(
-            FlextUtilitiesBeartypeEngine.defined_inside(Other, Outer.__qualname__),
+            u.defined_inside(Other, Outer.__qualname__),
             is_=bool,
             eq=False,
         )
@@ -67,7 +64,7 @@ class TestsFlextCoreBeartypeEngine(
             """Function-scoped marker class."""
 
         tm.that(
-            FlextUtilitiesBeartypeEngine.defined_in_function_scope(Local) is True,
+            u.defined_in_function_scope(Local) is True,
             truth=True,
         )
 
@@ -75,7 +72,7 @@ class TestsFlextCoreBeartypeEngine(
     def test_defined_in_function_scope_false_for_module_class() -> None:
         """A module-level class is not reported as function-scoped."""
         tm.that(
-            FlextUtilitiesBeartypeEngine.defined_in_function_scope(
+            u.defined_in_function_scope(
                 tests.utilities.TestsFlextUtilities.TestsFlextBeartypeEngine,
             ),
             is_=bool,
@@ -94,7 +91,7 @@ class TestsFlextCoreBeartypeEngine(
     ) -> None:
         """Only names without a leading underscore are accepted as public."""
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_public(name) is expected,
+            u.attr_accept_public(name) is expected,
             truth=True,
         )
 
@@ -116,10 +113,7 @@ class TestsFlextCoreBeartypeEngine(
     ) -> None:
         """Public names pass unless they are dunder-exempt utility methods."""
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_utility(
-                FlextUtilitiesBeartypeEngine,
-                name,
-            ),
+            u.attr_accept_utility(u, name),
             is_=bool,
             eq=expected,
         )
@@ -129,7 +123,7 @@ class TestsFlextCoreBeartypeEngine(
         """A public, non-callable, non-skipped attribute is accepted."""
         value: p.AttributeProbe = 42
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("MAX_RETRIES", value),
+            u.attr_accept_constants("MAX_RETRIES", value),
             is_=bool,
             eq=True,
         )
@@ -142,7 +136,7 @@ class TestsFlextCoreBeartypeEngine(
         """Private names and skip-listed attributes are rejected regardless of value."""
         value: p.AttributeProbe = 1
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_constants(name, value) is False,
+            u.attr_accept_constants(name, value) is False,
             truth=True,
         )
 
@@ -155,7 +149,7 @@ class TestsFlextCoreBeartypeEngine(
 
         value: p.AttributeProbe = Nested
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("Nested", value),
+            u.attr_accept_constants("Nested", value),
             is_=bool,
             eq=False,
         )
@@ -175,7 +169,7 @@ class TestsFlextCoreBeartypeEngine(
         property_value: p.AttributeProbe = property(_fn)
 
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_constants(
+            u.attr_accept_constants(
                 "as_static",
                 static_value,
             ),
@@ -183,12 +177,12 @@ class TestsFlextCoreBeartypeEngine(
             eq=False,
         )
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("as_class", class_value),
+            u.attr_accept_constants("as_class", class_value),
             is_=bool,
             eq=False,
         )
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_constants(
+            u.attr_accept_constants(
                 "as_property",
                 property_value,
             ),
@@ -205,7 +199,7 @@ class TestsFlextCoreBeartypeEngine(
 
         value: p.AttributeProbe = _handler
         tm.that(
-            FlextUtilitiesBeartypeEngine.attr_accept_constants("handler", value),
+            u.attr_accept_constants("handler", value),
             is_=bool,
             eq=False,
         )

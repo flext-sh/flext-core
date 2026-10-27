@@ -21,7 +21,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         return u.Tests.create_handler_config(
             handler_id,
             handler_id.replace("_", " ").title(),
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=c.HandlerType.COMMAND,
                 handler_mode=c.HandlerType.COMMAND,
             ),

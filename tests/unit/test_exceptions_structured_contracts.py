@@ -124,10 +124,14 @@ class TestsFlextCoreExceptionsStructuredContracts:
         tm.that(error.error_code, eq=c.ErrorCode.OPERATION_ERROR)
         tm.that(error.error_domain, eq=c.ErrorDomain.INTERNAL.value)
         tm.that(error.correlation_id, eq="corr-123")
-        tm.that(error.metadata.attributes["scope"], eq="users")
-        tm.that(error.metadata.attributes[c.ContextScope.OPERATION], eq="insert_user")
-        tm.that(error.metadata.attributes["reason"], eq="constraint")
-        tm.that(error.metadata.attributes["attempt"], eq=2)
+        expected_attributes: t.MappingKV[str, str | int] = {
+            "scope": "users",
+            c.ContextScope.OPERATION: "insert_user",
+            "reason": "constraint",
+            "attempt": 2,
+        }
+        for key, value in expected_attributes.items():
+            tm.that(error.metadata.attributes[key], eq=value)
 
     @staticmethod
     @pytest.mark.parametrize(

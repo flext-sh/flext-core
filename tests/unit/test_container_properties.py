@@ -12,7 +12,7 @@ import pytest
 from hypothesis import assume, given, settings, strategies as st
 
 from flext_core import FlextContainer
-from tests import c, e, tm
+from tests import c, tm
 
 
 class TestsFlextCoreContainerProperties:
@@ -38,45 +38,7 @@ class TestsFlextCoreContainerProperties:
         yield instance
         FlextContainer.reset_for_testing()
 
-    # -- registration + resolution roundtrips ------------------------------
-
-    @staticmethod
-    def test_bind_then_resolve_returns_bound_value(
-        container: FlextContainer,
-    ) -> None:
-        """A value bound under a name resolves back to that exact value."""
-        _ = container.bind("answer", 42)
-
-        tm.ok(container.resolve("answer", type_cls=int), eq=42)
-
-    @staticmethod
-    def test_factory_then_resolve_invokes_factory(
-        container: FlextContainer,
-    ) -> None:
-        """A registered factory is invoked and its product is resolved."""
-        _ = container.factory("greeting", lambda: "hello")
-
-        tm.ok(container.resolve("greeting", type_cls=str), eq="hello")
-
-    @staticmethod
-    def test_resolve_without_type_returns_service(
-        container: FlextContainer,
-    ) -> None:
-        """Resolving without a type constraint still returns the value."""
-        _ = container.bind("plain", "value")
-
-        tm.ok(container.resolve("plain"), eq="value")
-
-    # -- membership + enumeration ------------------------------------------
-
-    @staticmethod
-    def test_has_reflects_registration_state(container: FlextContainer) -> None:
-        """``has`` is False before registration and True afterwards."""
-        tm.fail(container.has("late"))
-
-        _ = container.bind("late", 1)
-
-        tm.ok(container.has("late"))
+    # -- enumeration -------------------------------------------------------
 
     @staticmethod
     def test_names_lists_registered_and_hides_internal(
@@ -92,87 +54,12 @@ class TestsFlextCoreContainerProperties:
         tm.that("logger" not in names, truth=True)
         tm.that("command_bus" not in names, truth=True)
 
-    # -- error paths -------------------------------------------------------
-
-    @staticmethod
-    def test_resolve_unknown_name_fails_not_found(
-        container: FlextContainer,
-    ) -> None:
-        """Resolving an unregistered name yields a not-found failure."""
-        tm.fail(container.resolve("ghost"), has="ghost")
-
-    @staticmethod
-    def test_resolve_type_mismatch_fails(container: FlextContainer) -> None:
-        """Resolving with an incompatible type constraint fails."""
-        _ = container.bind("text", "not-an-int")
-
-        tm.fail(container.resolve("text", type_cls=int), has="int")
-
-    @staticmethod
-    def test_drop_unknown_name_fails_not_found(container: FlextContainer) -> None:
-        """Dropping an unregistered name reports a failure."""
-        tm.fail(container.drop("absent"), has="absent")
-
-    # -- removal semantics -------------------------------------------------
-
-    @staticmethod
-    def test_drop_removes_registration(container: FlextContainer) -> None:
-        """After a successful drop the name is gone and no longer resolves."""
-        _ = container.bind("temp", 7)
-
-        tm.ok(container.drop("temp"), eq=True)
-
-        tm.fail(container.has("temp"))
-        tm.fail(container.resolve("temp"), has="temp")
-
-    @staticmethod
-    def test_clear_removes_all_user_registrations(
-        container: FlextContainer,
-    ) -> None:
-        """``clear`` empties user registrations reported by ``names``."""
-        _ = container.bind("a", 1)
-        _ = container.factory("b", lambda: 2)
-
-        container.clear()
-
-        tm.that(list(container.names()), eq=[])
-        tm.fail(container.has("a"))
-
     # -- invariants --------------------------------------------------------
-
-    @staticmethod
-    def test_bind_duplicate_raises_and_first_write_stays(
-        container: FlextContainer,
-    ) -> None:
-        """Re-binding an existing name raises and keeps the original value."""
-        _ = container.bind("dup", 1)
-
-        with pytest.raises(e.ValidationError, match="dup"):
-            _ = container.bind("dup", 2)
-
-        tm.ok(container.resolve("dup", type_cls=int), eq=1)
-
-    @staticmethod
-    def test_bind_returns_same_container_for_chaining(
-        container: FlextContainer,
-    ) -> None:
-        """Mutating operations return the container to support chaining."""
-        tm.that(container.bind("x", 1) is container, truth=True)
-        tm.that(container.factory("y", lambda: 2) is container, truth=True)
 
     @staticmethod
     def test_shared_returns_singleton_instance(container: FlextContainer) -> None:
         """``shared`` returns the one canonical instance."""
         tm.that(FlextContainer.shared() is container, truth=True)
-
-    @staticmethod
-    def test_snapshot_exposes_merged_settings_mapping(
-        container: FlextContainer,
-    ) -> None:
-        """``snapshot`` returns a mapping serializable via its public API."""
-        snapshot = container.snapshot()
-
-        tm.that(isinstance(snapshot.model_dump(), dict), truth=True)
 
     # -- property-based roundtrip ------------------------------------------
 

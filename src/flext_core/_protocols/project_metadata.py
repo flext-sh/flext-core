@@ -114,9 +114,6 @@ class FlextProtocolsProjectMetadata:
         def site_title(self) -> str | None: ...
 
         @property
-        def exclude_docs(self) -> t.VariadicTuple[str]: ...
-
-        @property
         def readme_sections(
             self,
         ) -> tuple[

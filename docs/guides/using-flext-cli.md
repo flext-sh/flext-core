@@ -47,15 +47,13 @@ Import the aliases used by each example from the public `flext_cli` package root
 
 ## Settings
 
-Import the existing settings class; do not redefine it:
+Import the existing settings class; without overrides, `fetch_global()` returns
+its shared per-class singleton:
 
 ```python
 from flext_cli import FlextCliSettings
 
 settings = FlextCliSettings.fetch_global()
-if settings is not FlextCliSettings.fetch_global():
-    message = "Expected cached settings singleton"
-    raise RuntimeError(message)
 ```
 
 If you need a project-specific subclass, extend `FlextSettings` (or `FlextCliSettings`)
@@ -66,7 +64,7 @@ from flext_core import FlextSettings, m
 
 
 class FlextApiSettings(FlextSettings):
-    """Settings for the API demo with its own env prefix."""
+    """API settings read from ``FLEXT_API_*`` environment variables."""
 
     model_config = m.SettingsConfigDict(env_prefix="FLEXT_API_", extra="ignore")
 ```
@@ -82,17 +80,17 @@ settings = FlextCliSettings.fetch_global()
 
 
 class GreetInput(m.BaseModel):
-    """Input model for the greeting command."""
+    """Greeting command input."""
 
     name: str
     shout: bool = False
 
 
 def greet_handler(model: GreetInput) -> t.JsonValue:
-    """Build the greeting payload for one input.
+    """Build the greeting payload for one input model.
 
     Returns:
-        The resulting ``t.JsonValue``.
+        A JSON payload carrying the greeting message.
 
     """
     message = f"Hello, {model.name}!"
@@ -124,32 +122,24 @@ directly. This independent example constructs and invokes a real model-backed co
 handlers return their value but do not automatically print it.
 
 ```python
-from flext_cli import FlextCliCli, m
+from tests import c, m, tm
+
+from flext_cli import FlextCliCli
 
 
 class GreetInput(m.BaseModel):
-    """Input model for the greeting command."""
+    """Greeting command input."""
 
     name: str
 
 
 def greet_handler(model: GreetInput) -> str:
-    """Build the greeting line for one input.
-
-    Returns:
-        The resulting ``str``.
-
-    """
+    """Return the greeting for one input model."""
     return f"Hello, {model.name}!"
 
 
 def test_greet_command() -> None:
-    """Invoke the greeting command end to end.
-
-    Raises:
-        RuntimeError: When the invocation or greeting misbehaves.
-
-    """
+    """The registered greeting command exits successfully."""
     cli = FlextCliCli()
     app = cli.create_app_with_common_params(
         name="greeting",
@@ -163,16 +153,9 @@ def test_greet_command() -> None:
         command=command,
     )
     invocation = cli.invoke_app(app, args=["greet", "--name", "Ada"])
-    expected_greeting = "Hello, Ada!"
-    if not invocation.success:
-        message = "Expected CLI invocation success"
-        raise RuntimeError(message)
-    if invocation.value.exit_code != 0:
-        message = "Expected zero CLI exit code"
-        raise RuntimeError(message)
-    if greet_handler(GreetInput(name="Ada")) != expected_greeting:
-        message = "Unexpected handler greeting"
-        raise RuntimeError(message)
+    tm.ok(invocation.success)
+    tm.that(invocation.value.exit_code, eq=c.Cli.EXIT_CODE_SUCCESS)
+    assert greet_handler(GreetInput(name="Ada")) == "Hello, Ada!"
 ```
 
 ## Good practices
@@ -193,25 +176,17 @@ from flext_cli import m
 
 
 class GreetInput(m.BaseModel):
-    """Input model for the greeting command."""
+    """Greeting command input."""
 
     name: str
 
 
 def greet_handler(model: GreetInput) -> str:
-    """Build the greeting line for one input.
-
-    Returns:
-        The resulting ``str``.
-
-    """
+    """Return the greeting for one input model."""
     return f"Hello, {model.name}!"
 
 
-expected_greeting = "Hello, Ada!"
-if greet_handler(GreetInput(name="Ada")) != expected_greeting:
-    message = "Unexpected handler greeting"
-    raise RuntimeError(message)
+greeting = greet_handler(GreetInput(name="Ada"))  # "Hello, Ada!"
 ```
 
 ## Related

@@ -46,12 +46,12 @@ make gen
 make fix
 make fmt
 make check
-make test
+make tests
 make gen
 ```
 
 The final generation pass proves the fixed point. Test execution remains inside
-`make test`, which owns selection and the retained Testmon cache.
+`make tests`, which owns selection and the retained Testmon cache.
 
 ## Command boundaries
 

@@ -11,8 +11,10 @@ import sys
 from flext_core import c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities import FlextUtilitiesProjectMetadata
-from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities import (
+    FlextUtilitiesFamilySurface,
+    FlextUtilitiesProjectMetadata,
+)
 from flext_core._utilities._beartype._class_visitor.visitor_base import (
     BINARY_ARITY,
     NO_VIOLATION,
@@ -59,7 +61,7 @@ def _alias_context(target: type) -> _AliasContext | None:
     # a real class already loaded its package; a class whose package is not
     # loaded is synthetic and declares no facade.
     alias_rows: _AliasRows = (
-        FlextUtilitiesBeartypeHelpers.lazy_alias_suffixes(package_name)
+        FlextUtilitiesFamilySurface.lazy_alias_suffixes(package_name)
         if package_name in sys.modules
         else ()
     )

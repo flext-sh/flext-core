@@ -170,6 +170,7 @@ class TestsFlextBeartypeEngineAnnotations(
                 if not isinstance(alias, TypeAliasType):
                     pytest.fail("Source fixture did not declare a native type alias")
                 tm.that(u.alias_contains_any(alias.__value__), eq=expected)
+                tm.that(u.alias_contains_any(alias), eq=expected)
 
     @staticmethod
     def test_alias_inspection_uses_explicit_owner_for_static_only_names() -> None:

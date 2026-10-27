@@ -14,18 +14,13 @@ from typing import Annotated
 
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._exception_params import (
-    flextmodelsexceptionparams_part_01,
-    flextmodelsexceptionparams_part_02,
-)
+from flext_core._models._exception_params import base, service_errors
 
 
-class FlextModelsExceptionParamsPart03(
-    flextmodelsexceptionparams_part_02.FlextModelsExceptionParamsPart02
+class FlextModelsExceptionParamsOperationErrors(
+    service_errors.FlextModelsExceptionParamsServiceErrors
 ):
-    class OperationErrorParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
-    ):
+    class OperationErrorParams(base.FlextModelsExceptionParamsBase.ParamsModel):
         """Validated params for OperationError."""
 
         operation: Annotated[
@@ -42,7 +37,7 @@ class FlextModelsExceptionParamsPart03(
         ] = None
 
     class ServiceLookupParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ExpectedActualTypeParams,
+        base.FlextModelsExceptionParamsBase.ExpectedActualTypeParams,
     ):
         """Validated params for service lookup and narrowing failures."""
 
@@ -56,9 +51,7 @@ class FlextModelsExceptionParamsPart03(
             ),
         ] = None
 
-    class RegistryPluginParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
-    ):
+    class RegistryPluginParams(base.FlextModelsExceptionParamsBase.ParamsModel):
         """Validated params for registry plugin registration lifecycle."""
 
         category: Annotated[
@@ -89,9 +82,7 @@ class FlextModelsExceptionParamsPart03(
             ),
         ] = None
 
-    class AttributeAccessErrorParams(
-        flextmodelsexceptionparams_part_01.FlextModelsExceptionParamsPart01.ParamsModel
-    ):
+    class AttributeAccessErrorParams(base.FlextModelsExceptionParamsBase.ParamsModel):
         """Validated params for AttributeAccessError."""
 
         attribute_name: Annotated[
@@ -116,4 +107,4 @@ class FlextModelsExceptionParamsPart03(
         ] = None
 
 
-__all__: list[str] = ["FlextModelsExceptionParamsPart03"]
+__all__: list[str] = ["FlextModelsExceptionParamsOperationErrors"]

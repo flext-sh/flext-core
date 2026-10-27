@@ -73,12 +73,9 @@ class FlextUtilitiesConversion:
             return default if default is not None else ""
         if isinstance(value, str):
             return value
+        adapter = FlextUtilitiesTypingAdapterScalars.float_adapter()
         try:
-            float_value = (
-                FlextUtilitiesTypingAdapterScalars.float_adapter().validate_python(
-                    value
-                )
-            )
+            float_value = adapter.validate_python(value)
         except m.ValidationError:
             return str(value)
         else:
@@ -103,12 +100,9 @@ class FlextUtilitiesConversion:
         value_class = value.__class__
         if value_class is str:
             return [str(value)]
+        list_adapter = FlextUtilitiesTypingAdapterJson.strict_json_list_adapter()
         try:
-            list_value = (
-                FlextUtilitiesTypingAdapterJson.strict_json_list_adapter().validate_python(
-                    value
-                )
-            )
+            list_value = list_adapter.validate_python(value)
             return [str(item) for item in list_value]
         except m.ValidationError:
             return [str(value)]

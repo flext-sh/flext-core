@@ -210,33 +210,33 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 
 1. **Import Errors**
 
-   ```bash
-   # Ensure Python 3.13+
-   python --version
+    ```bash
+    # Ensure Python 3.13+
+    python --version
 
-   # Reinstall dependencies
-   make setup
-   ```
+    # Reinstall dependencies
+    make setup
+    ```
 
 1. **Type Errors**
 
-   ```bash
-   # Run type checker
-   make check
+    ```bash
+    # Run type checker
+    make check
 
-   # Check specific files
-   make check
-   ```
+    # Check specific files
+    make check
+    ```
 
 1. **Test Failures**
 
-   ```bash
-   # Run with verbose output
-   pytest tests/ -v --tb=short
+    ```bash
+    # Run with verbose output
+    pytest tests/ -v --tb=short
 
-   # Debug specific test
-   pytest tests/unit/test_result.py::Testr::test_ok -v -s
-   ```
+    # Debug specific test
+    pytest tests/unit/test_result.py::Testr::test_ok -v -s
+    ```
 
 ### Documentation Updates
 

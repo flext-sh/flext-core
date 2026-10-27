@@ -321,7 +321,7 @@ carry canonical `error_code` and `error_data`.
 
 from __future__ import annotations
 
-from flext_core import e, p, r
+from flext_core import c, e, p, r
 
 
 def fetch_profile_name(user_id: str) -> p.Result[str]:
@@ -390,7 +390,7 @@ auto-generated correlation ids.
 
 from __future__ import annotations
 
-from flext_core import e
+from flext_core import c, e
 
 error = e.ValidationError(
     "Invalid profile payload",
@@ -710,7 +710,7 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from flext_core import d, m, p
+from flext_core import c, d, m, p
 
 
 class AttemptState(p.Base, Protocol):

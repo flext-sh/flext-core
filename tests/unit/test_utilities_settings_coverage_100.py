@@ -32,24 +32,27 @@ class TestsFlextCoreUtilitiesSettings:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("debug", "requested", "expected"),
+        ("debug", "requested", "log_level_explicit", "expected"),
         [
-            (True, c.LogLevel.WARNING, c.LogLevel.WARNING),
-            (True, c.LogLevel.ERROR, c.LogLevel.ERROR),
-            (False, c.LogLevel.ERROR, c.LogLevel.ERROR),
-            (False, c.LogLevel.WARNING, c.LogLevel.WARNING),
+            (True, c.LogLevel.WARNING, True, c.LogLevel.WARNING),
+            (True, c.LogLevel.ERROR, True, c.LogLevel.ERROR),
+            (False, c.LogLevel.ERROR, True, c.LogLevel.ERROR),
+            (False, c.LogLevel.WARNING, True, c.LogLevel.WARNING),
+            (True, c.LogLevel.WARNING, False, c.LogLevel.DEBUG),
         ],
     )
     def test_effective_log_level_preserves_explicit_severity(
         *,
         debug: bool,
         requested: c.LogLevel,
+        log_level_explicit: bool,
         expected: c.LogLevel,
     ) -> None:
-        """Explicit severity wins debug; trace never changes the threshold."""
+        """Explicit severity wins debug; only a non-explicit one yields to debug."""
         resolved = u.resolve_effective_log_level(
             debug=debug,
             log_level=requested,
+            log_level_explicit=log_level_explicit,
         )
 
         tm.that(resolved, eq=expected)

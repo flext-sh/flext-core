@@ -128,7 +128,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         config = u.Tests.create_handler_config(
             "cfg_id",
             "ConfiguredName",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=c.HandlerType.EVENT,
                 handler_mode=c.HandlerType.EVENT,
             ),
@@ -211,7 +211,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         return u.Tests.create_handler_config(
             "test_dispatch",
             "Test Dispatch",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=c.HandlerType.COMMAND,
                 handler_mode=c.HandlerType.COMMAND,
             ),
@@ -255,7 +255,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "test_mode_property",
             "Test Mode Property",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=c.HandlerType.COMMAND,
                 handler_mode=c.HandlerType.COMMAND,
             ),

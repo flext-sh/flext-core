@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Type aliases and generics for the FLEXT ecosystem - Thin MRO Facade.
 
 Zero internal imports - depends only on stdlib, pydantic, pydantic-settings.
@@ -8,10 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import TypeVar
-
 from flext_core._typings import (
+    FlextTypesAnnotateds,
     FlextTypesCore,
     FlextTypesLazy,
     FlextTypesPydantic,
@@ -23,8 +22,10 @@ from flext_core._typings import (
 
 class FlextTypes(
     FlextTypingBase,
+    FlextTypesPydantic,
     FlextTypingConfig,
     FlextTypesCore,
+    FlextTypesAnnotateds,
     FlextTypesLazy,
     FlextTypesServices,
 ):
@@ -37,17 +38,4 @@ class FlextTypes(
 
 
 t = FlextTypes
-
-
-type JsonMapping = Mapping[str, FlextTypesPydantic.JsonValue]
-
-type JsonDict = dict[str, FlextTypesPydantic.JsonValue]
-
-T = TypeVar("T")
-
-
-type ModuleGlobalValue = FlextTypesLazy.ModuleGlobalValue
-
-type ModuleGlobals = FlextTypesLazy.ModuleGlobals
-
 __all__: list[str] = ["FlextTypes", "t"]

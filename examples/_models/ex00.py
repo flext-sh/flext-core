@@ -11,8 +11,6 @@ from typing import Annotated
 from examples._models.errors import ExamplesFlextModelsErrors
 from flext_core import c, m, p, r, t
 
-_err = ExamplesFlextModelsErrors
-
 
 class ExamplesFlextModelsEx00:
     """Example 00 model namespace."""
@@ -58,8 +56,15 @@ class ExamplesFlextModelsEx00:
 
             """
             if not isinstance(value, str):
-                raise TypeError(_err.Examples.ErrorMessages.EXPECTED_TEXT_INPUT)
+                raise TypeError(
+                    ExamplesFlextModelsErrors.Examples.ErrorMessages.EXPECTED_TEXT_INPUT
+                )
             normalized = value.strip()
             if not normalized:
-                raise ValueError(_err.Examples.ErrorMessages.TEXT_INPUT_CANNOT_BE_EMPTY)
+                raise ValueError(
+                    ExamplesFlextModelsErrors.Examples.ErrorMessages.TEXT_INPUT_CANNOT_BE_EMPTY
+                )
             return normalized
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx00"]

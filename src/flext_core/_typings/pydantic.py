@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from types import NoneType, UnionType
+from types import GenericAlias, NoneType, UnionType
 from typing import Annotated, TypeAliasType, TypeVar, Union, get_args, get_origin
 
 import pydantic
@@ -178,81 +178,69 @@ class FlextTypesPydantic:
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
 
-    class PortInstanceOf:
-        """Schema marker validating a port value with ``isinstance``.
+    # A port target as pydantic hands it over: a class, a PEP 695 alias, a
+    # type parameter, a generic or union form, or None.
+    type PortTarget = type | TypeVar | TypeAliasType | GenericAlias | UnionType | None
+
+    @staticmethod
+    def port_instance_schema(
+        target: PortTarget,
+        bound: Mapping[TypeVar, PortTarget] | None = None,
+    ) -> core_schema.CoreSchema:
+        """Resolve a port target to the ``isinstance`` schema pydantic runs.
 
         Pydantic's ``InstanceOf`` needs one class and does not see through
         PEP 695 aliases (``t.LoggingWriteCompletion``, ``p.*`` aliases). This
-        marker resolves aliases, generic origins and unions to the classes
-        ``isinstance`` accepts, so no model needs ``arbitrary_types_allowed``.
+        resolves aliases (substituting ``bound`` type parameters of an
+        enclosing generic alias), generic origins, ``Annotated`` and unions to
+        the classes ``isinstance`` accepts, so no model needs
+        ``arbitrary_types_allowed``.
+
+        Returns:
+            The ``is_instance``/``none``/``union`` core schema for ``target``.
+
         """
-
-        @classmethod
-        def __get_pydantic_core_schema__(
-            cls,
-            source: type,
-            handler: pydantic.GetCoreSchemaHandler,
-        ) -> core_schema.CoreSchema:
-            """Return the ``isinstance`` schema for ``source``."""
-            del handler
-            return cls.instance_schema(source)
-
-        @classmethod
-        def instance_schema(
-            cls,
-            target: type,
-            bound: Mapping[TypeVar, type] | None = None,
-        ) -> core_schema.CoreSchema:
-            """Resolve ``target`` to ``is_instance``/``none``/union schemas.
-
-            ``bound`` maps the type parameters of an enclosing generic alias
-            to the arguments it was subscripted with.
-            """
-            scope = bound or {}
-            if isinstance(target, TypeVar):
-                return (
-                    cls.instance_schema(scope[target])
-                    if target in scope
-                    else core_schema.any_schema()
-                )
-            if isinstance(target, TypeAliasType):
-                return cls.instance_schema(target.__value__, scope)
-            origin = get_origin(target)
-            args = get_args(target)
-            if isinstance(origin, TypeAliasType):
-                return cls.instance_schema(
-                    origin.__value__,
-                    {
-                        **scope,
-                        **dict(
-                            zip(
-                                origin.__type_params__,
-                                (scope.get(arg, arg) for arg in args),
-                                strict=False,
-                            )
-                        ),
-                    },
-                )
-            if origin in {Union, UnionType}:
-                return core_schema.union_schema([
-                    cls.instance_schema(member, scope) for member in args
-                ])
-            if origin is Annotated:
-                return cls.instance_schema(args[0], scope)
-            if target is None or target is NoneType:
-                return core_schema.none_schema()
-            return core_schema.is_instance_schema(origin or target)
+        scope = bound or {}
+        origin = get_origin(target)
+        args = get_args(target)
+        resolve = FlextTypesPydantic.port_instance_schema
+        schema: core_schema.CoreSchema
+        if isinstance(target, TypeVar):
+            schema = (
+                resolve(scope[target]) if target in scope else core_schema.any_schema()
+            )
+        elif isinstance(target, TypeAliasType):
+            schema = resolve(target.__value__, scope)
+        elif isinstance(origin, TypeAliasType):
+            parameters = {
+                parameter: scope.get(arg, arg)
+                for parameter, arg in zip(origin.__type_params__, args, strict=False)
+                if isinstance(parameter, TypeVar)
+            }
+            schema = resolve(origin.__value__, {**scope, **parameters})
+        elif origin in {Union, UnionType}:
+            schema = core_schema.union_schema([resolve(arg, scope) for arg in args])
+        elif origin is Annotated:
+            schema = resolve(args[0], scope)
+        elif target is None or target is NoneType:
+            schema = core_schema.none_schema()
+        else:
+            schema = core_schema.is_instance_schema(origin or target)
+        return schema
 
     # Dependency port: a field typed by a class, normally a
     # ``@runtime_checkable`` Protocol from ``p``, or an alias over such classes.
-    # ``PortInstanceOf`` validates the value with ``isinstance`` on
+    # ``port_instance_schema`` validates the value with ``isinstance`` on
     # construction and on assignment; the port never enters the JSON Schema.
     # Declare the field with ``m.Field(exclude=True, description=...)``:
     # field-level metadata cannot live inside a type alias.
-    type Port[P] = Annotated[
-        P,
-        PortInstanceOf(),
-        pydantic_json_schema.SkipJsonSchema(),
+    type Port[P] = pydantic_json_schema.SkipJsonSchema[
+        Annotated[
+            P,
+            pydantic.GetPydanticSchema(
+                lambda source, _handler: FlextTypesPydantic.port_instance_schema(source)
+            ),
+        ]
     ]
 
 

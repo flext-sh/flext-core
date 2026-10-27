@@ -195,10 +195,6 @@ class FlextModelsProjectMetadataFields:
             str | None,
             Field(default=None, description="Documentation site title override"),
         ] = None
-        exclude_docs: Annotated[
-            t.StrTuple,
-            Field(default=(), description="Documentation exclusion patterns"),
-        ] = ()
         readme_sections: Annotated[
             tuple[FlextModelsProjectMetadataFields.ProjectToolFlextReadmeSection, ...],
             Field(default=(), description="Ordered project README sections"),

@@ -10,36 +10,56 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._constants import (
-        _enforcement as _enforcement,
-        _enforcement_data as _enforcement_data,
-        _errors as _errors,
-    )
-    from flext_core._constants._enforcement import (
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_01 import (
         FlextConstantsEnforcementEnums,
-        FlextConstantsEnforcementFixActions,
-        FlextConstantsEnforcementNamespace,
-        FlextConstantsEnforcementRules,
+    )
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_02 import (
         FlextConstantsEnforcementRuntime,
-        FlextConstantsEnforcementSmellData,
+    )
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_03 import (
+        FlextConstantsEnforcementNamespace,
+    )
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_04 import (
+        FlextConstantsEnforcementRules,
+    )
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_06 import (
         FlextConstantsEnforcementTargets,
     )
-    from flext_core._constants._enforcement_data import (
-        FlextConstantsEnforcementData,
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_07 import (
+        FlextConstantsEnforcementSmellData,
+    )
+    from flext_core._constants._enforcement.flextconstantsenforcement_part_08 import (
+        FlextConstantsEnforcementFixActions,
+    )
+    from flext_core._constants._enforcement_data.flextpredicaterule import (
         FlextPredicateRule,
+    )
+    from flext_core._constants._enforcement_data.flextsmellthresholds import (
         FlextSmellThresholds,
     )
-    from flext_core._constants._errors import (
-        FlextConstantsErrorsDomainParser,
+    from flext_core._constants._enforcement_data.package_data import (
+        FlextConstantsEnforcementData,
+    )
+    from flext_core._constants._errors.flextconstantserrors_part_01 import (
         FlextConstantsErrorsMessages,
+    )
+    from flext_core._constants._errors.flextconstantserrors_part_02 import (
         FlextConstantsErrorsRuntimeExceptions,
-        FlextConstantsErrorsRuntimeSettings,
+    )
+    from flext_core._constants._errors.flextconstantserrors_part_03 import (
         FlextConstantsErrorsValidationExceptions,
     )
+    from flext_core._constants._errors.flextconstantserrors_part_04 import (
+        FlextConstantsErrorsDomainParser,
+    )
+    from flext_core._constants._errors.flextconstantserrors_part_05 import (
+        FlextConstantsErrorsRuntimeSettings,
+    )
     from flext_core._constants.base import FlextConstantsBase
+    from flext_core._constants.beartype import FlextConstantsBeartype
     from flext_core._constants.config import FlextConstantsConfig
     from flext_core._constants.cqrs import FlextConstantsCqrs
     from flext_core._constants.enforcement import (
@@ -65,6 +85,7 @@ if TYPE_CHECKING:
 
 __all__: tuple[str, ...] = (
     "FlextConstantsBase",
+    "FlextConstantsBeartype",
     "FlextConstantsConfig",
     "FlextConstantsCqrs",
     "FlextConstantsEnforcement",
@@ -99,16 +120,14 @@ __all__: tuple[str, ...] = (
     "FlextMroViolation",
     "FlextPredicateRule",
     "FlextSmellThresholds",
-    "_enforcement",
-    "_enforcement_data",
-    "_errors",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
         "FlextConstantsBase": ".base",
+        "FlextConstantsBeartype": ".beartype",
         "FlextConstantsConfig": ".config",
         "FlextConstantsCqrs": ".cqrs",
         "FlextConstantsEnforcement": ".enforcement",
@@ -136,14 +155,12 @@ __getattr__ = install_lazy_exports(
         ),
         "FlextConstantsEnvironment": ".environment",
         "FlextConstantsErrors": ".errors",
-        "FlextConstantsErrorsDomainParser": ("._errors.flextconstantserrors_part_04"),
+        "FlextConstantsErrorsDomainParser": "._errors.flextconstantserrors_part_04",
         "FlextConstantsErrorsMessages": "._errors.flextconstantserrors_part_01",
         "FlextConstantsErrorsRuntimeExceptions": (
             "._errors.flextconstantserrors_part_02"
         ),
-        "FlextConstantsErrorsRuntimeSettings": (
-            "._errors.flextconstantserrors_part_05"
-        ),
+        "FlextConstantsErrorsRuntimeSettings": "._errors.flextconstantserrors_part_05",
         "FlextConstantsErrorsValidationExceptions": (
             "._errors.flextconstantserrors_part_03"
         ),
@@ -163,9 +180,6 @@ __getattr__ = install_lazy_exports(
         "FlextMroViolation": ".enforcement",
         "FlextPredicateRule": "._enforcement_data.flextpredicaterule",
         "FlextSmellThresholds": "._enforcement_data.flextsmellthresholds",
-        "_enforcement_data": "._enforcement_data",
-        "_enforcement": "._enforcement",
-        "_errors": "._errors",
     }),
     public_exports=__all__,
-)[0]
+)

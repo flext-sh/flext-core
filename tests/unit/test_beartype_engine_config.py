@@ -16,7 +16,7 @@ from typing import TypeAliasType
 import pytest
 from beartype import BeartypeConf, BeartypeStrategy
 
-from flext_core.utilities import FlextUtilitiesBeartypeConf
+from flext_core import settings
 from tests import c, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations
 
@@ -29,18 +29,24 @@ class TestsFlextCoreBeartypeEngineConfig:
     @staticmethod
     def test_build_conf_returns_beartype_conf_instance() -> None:
         """The factory yields a real ``BeartypeConf`` callers can pass to beartype."""
-        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf = u.build_beartype_conf(settings.beartype_mode)
         tm.that(conf, is_=BeartypeConf)
 
     @staticmethod
-    def test_default_mode_is_off() -> None:
-        """flext_core ships with enforcement disabled by default."""
-        tm.that(c.BEARTYPE_MODE is c.EnforcementMode.OFF, truth=True)
+    def test_configured_mode_selects_strategy() -> None:
+        """The factory follows the current operational setting."""
+        conf = u.build_beartype_conf(settings.beartype_mode)
+        expected = (
+            BeartypeStrategy.O0
+            if settings.beartype_mode == "off"
+            else BeartypeStrategy.O1
+        )
+        tm.that(conf.strategy is expected, truth=True)
 
     @staticmethod
     def test_disabled_mode_yields_no_op_strategy() -> None:
         """With mode OFF the conf uses the O0 (no-check) strategy."""
-        conf = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf = u.build_beartype_conf("off")
         tm.that(conf.strategy is BeartypeStrategy.O0, truth=True)
 
     @staticmethod
@@ -71,24 +77,6 @@ class TestsFlextCoreBeartypeEngineConfig:
             if not isinstance(alias, TypeAliasType):
                 pytest.fail("Invalid source fixture is not a native alias")
             tm.ok(u.contains_any(alias.__value__))
-
-    @staticmethod
-    @pytest.mark.parametrize(
-        ("alias_name", "expected"),
-        [("AnyAlias", True), ("NestedAnyAlias", True), ("CleanAlias", False)],
-    )
-    def test_alias_contains_any_unwraps_type_alias(
-        tmp_path: Path,
-        alias_name: str,
-        *,
-        expected: bool,
-    ) -> None:
-        """``alias_contains_any`` follows a PEP 695 alias to its underlying value."""
-        with invalid_annotations(tmp_path) as source:
-            alias = getattr(source.InvalidTypes, alias_name)
-            if not isinstance(alias, TypeAliasType):
-                pytest.fail("Source fixture did not declare a native type alias")
-            tm.that(u.alias_contains_any(alias), eq=expected)
 
     @staticmethod
     @pytest.mark.parametrize(

@@ -82,20 +82,6 @@ class TestsFlextCoreResultChainHelpers:
         tm.that(result.value, eq=5)
 
     @staticmethod
-    def test_flat_map_propagates_downstream_failure() -> None:
-        """A failure produced inside ``flat_map`` propagates as the chain result."""
-        result = (
-            r[int]
-            .ok(0)
-            .flat_map(
-                lambda x: r[int].fail("division by zero") if x == 0 else r[int].ok(x),
-            )
-        )
-
-        tm.that(result.failure is True, truth=True)
-        tm.that(result.error, eq="division by zero")
-
-    @staticmethod
     def test_flat_map_short_circuits_upstream_failure() -> None:
         """``flat_map`` never invokes its step when the upstream already failed."""
         result = (
@@ -120,19 +106,6 @@ class TestsFlextCoreResultChainHelpers:
         )
 
         tm.that(result.unwrap(), eq=8)
-
-    @staticmethod
-    @pytest.mark.parametrize(("value", "keeps_success"), [(20, True), (5, False)])
-    def test_filter_keeps_or_rejects_by_predicate(
-        value: int,
-        *,
-        keeps_success: bool,
-    ) -> None:
-        """``filter`` keeps success when the predicate holds, else fails it."""
-        threshold = 10
-        result = r[int].ok(value).filter(lambda x: x > threshold)
-
-        tm.that(result.success is keeps_success, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize(

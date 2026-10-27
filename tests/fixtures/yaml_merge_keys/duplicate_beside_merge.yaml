@@ -1,0 +1,6 @@
+base: &base
+  host: relay
+served:
+  <<: *base
+  host: relay
+  host: mirror

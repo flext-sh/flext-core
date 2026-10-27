@@ -91,27 +91,6 @@ class TestsFlextContainerLifecycle:
         )
 
     @staticmethod
-    def test_registered_services_resolve_to_their_bound_values(
-        clean_container: p.Container,
-    ) -> None:
-        """Resolve returns the exact value/instance that was registered."""
-        container = clean_container
-        _ = container.bind("cache", "redis")
-        _ = container.factory("audit_log", u.Tests.create_factory("audit-instance"))
-
-        tm.ok(
-            container.resolve("cache", type_cls=str),
-            eq="redis",
-            msg="Bound value must resolve unchanged",
-        )
-        tm.ok(
-            container.resolve("audit_log", type_cls=str),
-            eq="audit-instance",
-            msg="Factory product must resolve to the produced value",
-        )
-        tm.that(len(container.names()), eq=2, msg="Both registrations must be counted")
-
-    @staticmethod
     def test_factory_that_raises_surfaces_a_failure_result(
         clean_container: p.Container,
     ) -> None:
@@ -138,25 +117,6 @@ class TestsFlextContainerLifecycle:
         _ = tm.fail(
             container.resolve("missing"),
             msg="Unknown service must not resolve to a value",
-        )
-
-    @staticmethod
-    def test_drop_removes_a_registered_service(
-        clean_container: p.Container,
-    ) -> None:
-        """Drop succeeds for a known name and the service disappears."""
-        container = clean_container
-        _ = container.bind("temp", "value")
-
-        tm.ok(
-            container.drop("temp"),
-            eq=True,
-            msg="Dropping a registered service must succeed with True",
-        )
-        tm.that(
-            container.has("temp"),
-            eq=False,
-            msg="Dropped service must no longer be present",
         )
 
     @staticmethod

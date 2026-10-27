@@ -1,0 +1,6 @@
+base: &base
+  host: relay
+  port: 8080
+served:
+  <<: *base
+  port: 9090

@@ -72,11 +72,14 @@ class FlextUtilitiesDiscovery:
     @functools.cache
     def service_operations(
         service_type: type[p.Service[p.Base]],
+        *,
+        owner: type | None = None,
     ) -> tuple[p.ServiceOperation, ...]:
         """Return the typed operations of a service class, sorted by name.
 
         An operation is a plain public function declared in a class of the MRO
-        below ``FlextService``; every name ``FlextService`` exposes, Pydantic
+        below ``FlextService``; an explicit owner selects an inherited operation
+        family from that same MRO. Every name ``FlextService`` exposes, Pydantic
         validators and serializers, properties, classmethods and staticmethods
         are not operations. A malformed operation, a sibling-class name
         collision, or a service without operations raises ``TypeError`` naming
@@ -86,15 +89,22 @@ class FlextUtilitiesDiscovery:
             The typed operations of a service class, sorted by name.
 
         Raises:
-            TypeError: If ``not operations``.
+            TypeError: If the class is not a service or declares no operation.
 
         """
-        service_facade = next(
-            klass
-            for klass in service_type.__mro__
-            if klass.__module__ == "flext_core.service"
-        )
+        service_facade = FlextUtilitiesDiscovery._service_root(service_type)
         below = service_type.__mro__[: service_type.__mro__.index(service_facade)]
+        if owner is not None and owner not in below:
+            message = (
+                f"Operation owner {owner.__qualname__} is not inherited by "
+                f"{service_type.__qualname__}"
+            )
+            raise TypeError(message)
+        selected = (
+            below
+            if owner is None
+            else tuple(base for base in owner.__mro__ if base in below)
+        )
         infos = inspect.getattr_static(service_type, "__pydantic_decorators__")
         decorated = {
             *infos.field_validators,
@@ -106,8 +116,8 @@ class FlextUtilitiesDiscovery:
         names = (
             {
                 name
-                for owner in below
-                for name in vars(owner)
+                for operation_owner in selected
+                for name in vars(operation_owner)
                 if not name.startswith("_")
             }
             - set(dir(service_facade))
@@ -128,6 +138,36 @@ class FlextUtilitiesDiscovery:
             )
             raise TypeError(msg)
         return operations
+
+    @staticmethod
+    def _service_root(service_type: type) -> type:
+        """Return the MRO class that first declares the service's own members.
+
+        The members are the ones ``p.Service`` declares beyond its bases
+        (``execute``), so the root is derived from the protocol, never from a
+        module name. Operations are declared only below it.
+
+        Returns:
+            The base-most MRO class declaring every own ``p.Service`` member.
+
+        Raises:
+            TypeError: If no MRO class declares them.
+
+        """
+        members = get_protocol_members(p.Service) & vars(p.Service).keys()
+        roots = [
+            klass
+            for klass in service_type.__mro__
+            if not is_protocol(klass) and members <= vars(klass).keys()
+        ]
+        if not roots:
+            msg = c.ERR_SERVICE_NOT_A_SERVICE.format(
+                service=service_type.__qualname__,
+                module=service_type.__module__,
+                members=", ".join(sorted(members)),
+            )
+            raise TypeError(msg)
+        return roots[-1]
 
     @staticmethod
     def _operation(
@@ -242,11 +282,7 @@ class FlextUtilitiesDiscovery:
         params = tuple(signature.parameters.values())[1:]
         if not params:
             if metadata is not None:
-                raise error(
-                    where,
-                    signature,
-                    "An input-less operation cannot declare a command model.",
-                )
+                raise error(where, signature, c.ERR_SERVICE_OPERATION_INPUTLESS_COMMAND)
             return None
         param = params[0]
         if param.name not in annotations:
@@ -256,29 +292,18 @@ class FlextUtilitiesDiscovery:
         if not is_protocol(contract):
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
         if metadata is None:
-            raise error(
-                where,
-                annotation,
-                "Request operation requires typed "
-                "h.handler(command=m.Request) metadata.",
-            )
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_METADATA)
         request = metadata.command
         if not issubclass(request, BaseModel):
-            raise error(
-                where,
-                annotation,
-                "Handler command metadata must declare a Pydantic request model.",
-            )
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_COMMAND_MODEL)
         missing = get_protocol_members(contract) - (
             request.model_fields.keys() | set(dir(request))
         )
         if missing:
-            raise error(
-                where,
-                annotation,
-                "Request model does not satisfy Protocol members: "
-                f"{', '.join(sorted(missing))}.",
+            defect = c.ERR_SERVICE_OPERATION_PROTOCOL.format(
+                missing=", ".join(sorted(missing))
             )
+            raise error(where, annotation, defect)
         return request
 
     @staticmethod

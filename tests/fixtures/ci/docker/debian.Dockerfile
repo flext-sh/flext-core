@@ -5,7 +5,7 @@
 # Free: no
 # End SECTION: header
 # Clean-machine proof: project bootstrap + canonical make verbs on Debian.
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim AS prerequisites
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -19,6 +19,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages
+
+FROM prerequisites AS proof
 
 # === SECTION: native mise bootstrap (managed) ===
 # Source: template (clean-machine native mise provisioning)

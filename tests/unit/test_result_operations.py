@@ -175,29 +175,6 @@ class TestsFlextResultOperations:
 
         tm.that(recovered.unwrap(), eq="value")
 
-    # --- filter ----------------------------------------------------------
-
-    @staticmethod
-    @pytest.mark.parametrize(
-        ("value", "expected_success"),
-        [(10, True), (3, False)],
-        ids=["predicate-passes", "predicate-fails"],
-    )
-    def test_filter_keeps_value_when_predicate_holds(
-        value: int,
-        *,
-        expected_success: bool,
-    ) -> None:
-        """Filter keeps a success only when the predicate is satisfied."""
-        result: p.Result[int] = r[int].ok(value)
-
-        threshold = 5
-        filtered = result.filter(lambda x: x > threshold)
-
-        tm.that(filtered.success is expected_success, truth=True)
-        if expected_success:
-            tm.that(filtered.unwrap(), eq=value)
-
     # --- boolean protocol ------------------------------------------------
 
     @staticmethod

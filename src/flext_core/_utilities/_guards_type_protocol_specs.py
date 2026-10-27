@@ -1,4 +1,8 @@
-"""Guards type protocol specs module.
+"""Protocol guard tables memoized by Python's native cache.
+
+Each declaring class owns its immutable protocol tables. Memoization belongs to
+the table-producing methods, without annotated mutable holders in the utility
+namespace or cached service instances.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -6,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from functools import cache
 from types import MappingProxyType
 from typing import TYPE_CHECKING, TypeIs
 
@@ -26,52 +31,44 @@ if TYPE_CHECKING:
 
 
 class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
-    _protocol_specs_cache: (
-        t.MappingKV[str, Callable[[FlextProtocolsContainer.ProtocolGuardInput], bool]]
-        | None
-    ) = None
-    _protocol_type_map_cache: MappingProxyType[type, str] | None = None
-
     @classmethod
+    @cache
     def _get_protocol_specs(
         cls,
     ) -> t.MappingKV[str, Callable[[FlextProtocolsContainer.ProtocolGuardInput], bool]]:
-        if cls._protocol_specs_cache is None:
-            cls._protocol_specs_cache = MappingProxyType({
-                c.Directory.CONFIG.value: lambda v: isinstance(
-                    v,
-                    FlextProtocolsSettings.Settings,
-                ),
-                c.FIELD_CONTEXT: lambda v: isinstance(v, FlextProtocolsContext.Context),
-                "container": lambda v: isinstance(v, FlextProtocolsContainer.Container),
-                "command_bus": lambda v: (
-                    hasattr(v, "dispatch")
-                    and hasattr(v, "publish")
-                    and hasattr(v, "register_handler")
-                ),
-                "handler": lambda v: isinstance(v, FlextProtocolsHandler.Handler),
-                "logger": lambda v: isinstance(v, FlextProtocolsLogging.Logger),
-                "result": cls.result_like,
-                "service": lambda v: isinstance(v, FlextProtocolsService.Service),
-                "middleware": lambda v: isinstance(v, FlextProtocolsHandler.Middleware),
-            })
-        return cls._protocol_specs_cache
+        return MappingProxyType({
+            c.Directory.CONFIG.value: lambda v: isinstance(
+                v,
+                FlextProtocolsSettings.Settings,
+            ),
+            c.FIELD_CONTEXT: lambda v: isinstance(v, FlextProtocolsContext.Context),
+            "container": lambda v: isinstance(v, FlextProtocolsContainer.Container),
+            "command_bus": lambda v: (
+                hasattr(v, "dispatch")
+                and hasattr(v, "publish")
+                and hasattr(v, "register_handler")
+            ),
+            "handler": lambda v: isinstance(v, FlextProtocolsHandler.Handler),
+            "logger": lambda v: isinstance(v, FlextProtocolsLogging.Logger),
+            "result": cls.result_like,
+            "service": lambda v: isinstance(v, FlextProtocolsService.Service),
+            "middleware": lambda v: isinstance(v, FlextProtocolsHandler.Middleware),
+        })
 
     @classmethod
+    @cache
     def _get_protocol_type_map(cls) -> t.MappingKV[type, str]:
-        if cls._protocol_type_map_cache is None:
-            cls._protocol_type_map_cache = MappingProxyType({
-                FlextProtocolsSettings.Settings: c.Directory.CONFIG.value,
-                FlextProtocolsContext.Context: c.FIELD_CONTEXT,
-                FlextProtocolsContainer.Container: "container",
-                FlextProtocolsHandler.Dispatcher: "command_bus",
-                FlextProtocolsHandler.Handler: "handler",
-                FlextProtocolsLogging.Logger: "logger",
-                FlextProtocolsResult.Result: "result",
-                FlextProtocolsService.Service: "service",
-                FlextProtocolsHandler.Middleware: "middleware",
-            })
-        return cls._protocol_type_map_cache
+        return MappingProxyType({
+            FlextProtocolsSettings.Settings: c.Directory.CONFIG.value,
+            FlextProtocolsContext.Context: c.FIELD_CONTEXT,
+            FlextProtocolsContainer.Container: "container",
+            FlextProtocolsHandler.Dispatcher: "command_bus",
+            FlextProtocolsHandler.Handler: "handler",
+            FlextProtocolsLogging.Logger: "logger",
+            FlextProtocolsResult.Result: "result",
+            FlextProtocolsService.Service: "service",
+            FlextProtocolsHandler.Middleware: "middleware",
+        })
 
     @staticmethod
     def context(

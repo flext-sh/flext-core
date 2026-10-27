@@ -14,7 +14,7 @@ from typing import Annotated
 
 import pytest
 
-from flext_core import FlextUtilitiesEnforcement
+from flext_core import FlextUtilities
 from tests import c, m, t, tm, u
 from tests.unit._enforcement_support import invalid_annotations, messages
 
@@ -475,7 +475,7 @@ class TestsFlextEnforcementModels:
         def test_canonical_flext_core_class_satisfies_prefix_contract() -> None:
             """A correctly named core class raises no class-prefix violation."""
             tm.that(
-                messages(u.check(FlextUtilitiesEnforcement), fragment="class_prefix"),
+                messages(u.check(FlextUtilities), fragment="class_prefix"),
                 truth=False,
             )
 

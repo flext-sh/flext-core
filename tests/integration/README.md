@@ -27,7 +27,6 @@ Support scripts (optional, run manually when reviewing exports or wiring):
 
 ```bash
 python tests/integration/test_wildcard_exports.py --list
-python tests/integration/test_integration.py --detail
 ```
 
 Keep this document updated when new integration scenarios are introduced during the

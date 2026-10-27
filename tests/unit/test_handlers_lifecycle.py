@@ -28,7 +28,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_query",
             "Query Handler",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=c.HandlerType.QUERY,
                 handler_mode=c.HandlerType.QUERY,
             ),
@@ -50,7 +50,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             f"h_{scenario.name}",
             f"{scenario.name.title()} Handler",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 handler_type=scenario.handler_type,
                 handler_mode=scenario.handler_mode,
             ),
@@ -143,7 +143,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_meta",
             "Metadata Handler",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 metadata=m.Metadata(attributes={"priority": 1}),
             ),
         )
@@ -156,7 +156,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_timeout",
             "Timeout Handler",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 command_timeout=60,
             ),
         )
@@ -169,7 +169,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         settings = u.Tests.create_handler_config(
             "h_retry",
             "Retry Handler",
-            u.Tests.FlextTestsHandlerConfigParams(
+            m.Tests.HandlerConfigParams(
                 max_command_retries=3,
             ),
         )

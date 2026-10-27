@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Constants for flext-core tests.
 
 MRO-composed constants facade — all constants defined in _constants/ mixins.
@@ -8,9 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_tests import FlextTestsConstants
+from flext_tests import c as flext_tests_c
 
-from flext_core import FlextConstants
+from flext_core import c as flext_core_c
 from tests._constants import (
     TestsFlextConstantsDomain,
     TestsFlextConstantsEnums,
@@ -22,18 +23,18 @@ from tests._constants import (
 )
 
 
-class TestsFlextConstants(FlextTestsConstants, FlextConstants):
+class TestsFlextConstants(flext_tests_c, flext_core_c):
     """Layer 0 constants facade for flext-core tests."""
 
     class Tests(
-        TestsFlextConstantsOther,
-        TestsFlextConstantsResult,
-        TestsFlextConstantsFixtures,
-        TestsFlextConstantsServices,
-        TestsFlextConstantsErrors,
         TestsFlextConstantsDomain,
         TestsFlextConstantsEnums,
-        FlextTestsConstants.Tests,
+        TestsFlextConstantsErrors,
+        TestsFlextConstantsFixtures,
+        TestsFlextConstantsOther,
+        TestsFlextConstantsResult,
+        TestsFlextConstantsServices,
+        flext_tests_c.Tests,
     ):
         """Flat constants for test composition and parametrization.
 
@@ -42,5 +43,4 @@ class TestsFlextConstants(FlextTestsConstants, FlextConstants):
 
 
 c = TestsFlextConstants
-
 __all__: list[str] = ["TestsFlextConstants", "c"]

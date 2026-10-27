@@ -61,12 +61,10 @@ class FlextModelsService:
                 "Settings source cloned once into the elected container scope."
             ),
         )
-        settings_type: t.Port[p.SettingsType] | None = (
-            FlextModelsPydantic.Field(
-                default=None,
-                exclude=True,
-                description="FlextSettings class used to load runtime settings.",
-            )
+        settings_type: t.Port[p.SettingsType] | None = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="FlextSettings class used to load runtime settings.",
         )
         settings_overrides: t.JsonMapping | None = FlextModelsPydantic.Field(
             default=None,

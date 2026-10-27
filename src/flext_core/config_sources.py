@@ -7,6 +7,9 @@ The strict loader is an implementation detail of this foundational source,
 so configuration ingress does not depend on generated private-package exports.
 Its native JSON annotations keep this layer-zero bridge independent of its own
 facades, whose construction consumes the configuration it loads.
+Scalar registration uses the minimal configuration protocol only as a static
+annotation; runtime still calls the original loader, without importing a facade
+or modifying the library's global dumper registry.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,19 +17,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence, Sequence as _Sequence
+import re
+from collections.abc import Callable, Mapping, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import IO, ClassVar, cast, override
+from typing import IO, TYPE_CHECKING, ClassVar, cast, override
 
 from pydantic import JsonValue, TypeAdapter
 from pydantic.config import JsonDict
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import ConfigFileSourceType, PathType
 from pydantic_settings.sources.utils import InitState
-from yaml import MappingNode, SafeLoader, ScalarNode
+from yaml import CSafeLoader, MappingNode, ScalarNode
 from yaml.constructor import ConstructorError, SafeConstructor
 from yaml.resolver import BaseResolver
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
@@ -41,8 +48,8 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     JSON_VALUE_ADAPTER: ClassVar[TypeAdapter[JsonValue]] = TypeAdapter(JsonValue)
     """Adapter validating every loaded YAML document; built once per process."""
 
-    class UniqueKeyLoader(SafeLoader):
-        """Safe YAML loader rejecting duplicate and non-string mapping keys.
+    class UniqueKeyLoader(CSafeLoader):
+        """libyaml safe loader rejecting duplicate and non-string mapping keys.
 
         Mapping nodes are constructed through ``construct_unique_mapping``,
         which fails the load with a marked ``UniqueKeyError`` when a key
@@ -51,7 +58,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
         @staticmethod
         def construct_unique_mapping(
-            loader: SafeLoader,
+            loader: CSafeLoader,
             node: MappingNode,
             *,
             deep: bool = False,
@@ -111,9 +118,54 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
                 "JsonDict", SafeConstructor.construct_mapping(loader, node, deep=deep)
             )
 
+        @staticmethod
+        def construct_integer(loader: CSafeLoader, node: ScalarNode) -> int:
+            """Construct an integer using the existing YAML 1.2 radix rules.
+
+            Returns:
+                The integer represented by the scalar node.
+
+            """
+            text = loader.construct_scalar(node)
+            return (
+                int(text, 0)
+                if text.startswith("0o")
+                else int(text, 16)
+                if text.startswith("0x")
+                else int(text, 10)
+            )
+
+    # Keep a loader-local YAML 1.2 resolver table before registering replacements.
+    UniqueKeyLoader.yaml_implicit_resolvers = CSafeLoader.yaml_implicit_resolvers.copy()
+    for first, resolvers in CSafeLoader.yaml_implicit_resolvers.items():
+        UniqueKeyLoader.yaml_implicit_resolvers[first] = [
+            entry
+            for entry in resolvers
+            if entry[0] not in {"tag:yaml.org,2002:bool", "tag:yaml.org,2002:int"}
+        ]
     UniqueKeyLoader.add_constructor(
         BaseResolver.DEFAULT_MAPPING_TAG,
         UniqueKeyLoader.construct_unique_mapping,
+    )
+
+    @staticmethod
+    def _register_scalar_rules(resolver: type[p.ConfigScalarResolver]) -> None:
+        """Register YAML 1.2 scalars on the selected loader only."""
+        resolver.add_implicit_resolver(
+            "tag:yaml.org,2002:bool",
+            re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"),
+            list("tTfF"),
+        )
+        resolver.add_implicit_resolver(
+            "tag:yaml.org,2002:int",
+            re.compile(r"^(?:[-+]?[0-9]+|0o[0-7]+|0x[0-9a-fA-F]+)$"),
+            list("-+0123456789"),
+        )
+
+    _register_scalar_rules(UniqueKeyLoader)
+    UniqueKeyLoader.add_constructor(
+        "tag:yaml.org,2002:int",
+        UniqueKeyLoader.construct_integer,
     )
 
     @override
@@ -182,6 +234,31 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
         finally:
             loader.dispose()
 
+    @staticmethod
+    def unique_key_load_all(stream: str | IO[str]) -> tuple[JsonValue, ...]:
+        """Parse every YAML document with the same strict unique-key loader.
+
+        Args:
+            stream: The YAML text or text stream to parse.
+
+        Returns:
+            Each document's JSON-compatible value, in stream order.
+
+        """
+        loader = FlextStrictYamlConfigSource.UniqueKeyLoader(stream)
+        try:
+            documents: list[JsonValue] = []
+            while loader.check_node():
+                documents.append(
+                    FlextStrictYamlConfigSource.JSON_VALUE_ADAPTER.validate_python(
+                        loader.get_data(),
+                        strict=True,
+                    )
+                )
+            return tuple(documents)
+        finally:
+            loader.dispose()
+
     @override
     def _read_file(self, file_path: Path | Traversable) -> JsonDict:
         """Parse one YAML config file exactly once with strict mapping keys.
@@ -241,28 +318,40 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
 
     @staticmethod
     def merge_values(
-        base: JsonDict,
-        updating: JsonDict,
+        base: Mapping[str, JsonValue],
+        updating: Mapping[str, JsonValue],
+        *,
+        concatenate_lists: bool = True,
     ) -> JsonDict:
-        """Deep-merge two config dicts, concatenating list values.
+        """Deep-merge two config mappings into a new mapping.
+
+        Nested mappings merge recursively; any other value in ``updating``
+        replaces the one in ``base``, except that two lists concatenate when
+        ``concatenate_lists`` holds (domain-split files contributing to one list).
 
         Args:
             base: The accumulated mapping so far.
-            updating: The newly read mapping merged over ``base``.
+            updating: The mapping merged over ``base``.
+            concatenate_lists: Whether two list values concatenate.
 
         Returns:
-            The resulting ``FlextTypingBase.JsonDict``.
+            The merged mapping.
 
         """
-        result = dict(base)
+        result: JsonDict = dict(base)
         for key, value in updating.items():
             existing = result.get(key)
-            if isinstance(existing, dict) and isinstance(value, dict):
+            if isinstance(existing, Mapping) and isinstance(value, Mapping):
                 result[key] = FlextStrictYamlConfigSource.merge_values(
                     existing,
                     value,
+                    concatenate_lists=concatenate_lists,
                 )
-            elif isinstance(existing, list) and isinstance(value, list):
+            elif (
+                concatenate_lists
+                and isinstance(existing, list)
+                and isinstance(value, list)
+            ):
                 result[key] = [*existing, *value]
             else:
                 result[key] = value

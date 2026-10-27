@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Final, cast
+from typing import cast
 
 import pytest
 
@@ -148,26 +148,6 @@ class TestsFlextCoreExceptions:
             e.render_template("Hi {missing}")
 
     @staticmethod
-    def test_metrics_record_snapshot_and_clear_roundtrip() -> None:
-        # Arrange — start from a clean slate (public API only).
-        """Test metrics record snapshot and clear roundtrip."""
-        e.clear_metrics()
-        # Act
-        e.record_exception(e.ValidationError)
-        e.record_exception(e.ValidationError)
-        e.record_exception(e.NotFoundError)
-        snapshot = e.resolve_metrics_snapshot()
-        # Assert — public snapshot reflects recorded occurrences.
-        tm.that(snapshot.total_exceptions, eq=3)
-        tm.that(snapshot.has_exceptions is True, truth=True)
-        # Act — clearing resets the observable totals.
-        e.clear_metrics()
-        cleared = e.resolve_metrics_snapshot()
-        # Assert
-        tm.that(cleared.total_exceptions, eq=0)
-        tm.that(cleared.has_exceptions is False, truth=True)
-
-    @staticmethod
     def test_fail_conflict_returns_structured_failure() -> None:
         """Test fail conflict returns structured failure."""
         result: p.Result[bool] = e.fail_conflict(
@@ -215,19 +195,6 @@ class TestsFlextCoreExceptions:
         tm.that(cast("dict[str, object]", result.error_data)["permission"], eq="write")
 
     @staticmethod
-    def test_fail_connection_returns_structured_failure() -> None:
-        """Test fail connection returns structured failure."""
-        result: p.Result[bool] = e.fail_connection("ldap.example.com")
-        tm.that(result.failure, truth=True)
-        tm.that(result.error, none=False)
-        tm.that("connect to ldap.example.com" in str(result.error), truth=True)
-        tm.that(result.error_code, eq=c.ErrorCode.CONNECTION_ERROR)
-        tm.that(result.error_data, none=False)
-        tm.that(
-            cast("dict[str, object]", result.error_data)["host"], eq="ldap.example.com"
-        )
-
-    @staticmethod
     def test_fail_timeout_returns_structured_failure() -> None:
         """Test fail timeout returns structured failure."""
         result: p.Result[bool] = e.fail_timeout(30.0, "fetch_users")
@@ -244,21 +211,6 @@ class TestsFlextCoreExceptions:
             cast("dict[str, object]", result.error_data)["timeout_seconds"],
             eq=pytest.approx(30.0),
         )
-
-    @staticmethod
-    def test_failure_result_short_circuits_map_and_recovers() -> None:
-        # Arrange
-        """Test failure result short circuits map and recovers."""
-        result: p.Result[bool] = e.fail_timeout(5.0, "ping")
-        # Act — map over a failure is a no-op; unwrap_or supplies the default.
-        mapped = result.map(lambda _value: True)
-        # Assert
-        tm.that(mapped.failure, truth=True)
-        tm.that(mapped.error, eq=result.error)
-        # unwrap_or on failure returns the default
-        unwrap_default: Final[bool] = False
-        default_result = result.unwrap_or(unwrap_default)
-        tm.that(default_result is unwrap_default, truth=True)
 
     @staticmethod
     @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])

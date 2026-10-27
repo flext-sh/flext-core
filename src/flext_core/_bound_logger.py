@@ -14,8 +14,6 @@ from __future__ import annotations
 import logging
 from typing import Self
 
-import structlog
-
 from flext_core import c, p, r, t
 from flext_core._utilities import FlextUtilitiesLoggingContext
 
@@ -65,7 +63,7 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
             if isinstance(correlation_id, str) and correlation_id:
                 resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
         resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
-        self._native: p.NativeLoggingWrapper = structlog.wrap_logger(
+        self._native: p.NativeLoggingWrapper = self.structlog().wrap_logger(
             None,
             processors=None,
             wrapper_class=None,
@@ -82,7 +80,8 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
     @property
     def _context(self) -> p.LoggingContext:
         """Context mapping for BindableLogger protocol compliance."""
-        return structlog.get_context(self._native)
+        context: p.LoggingContext = self.structlog().get_context(self._native)
+        return context
 
     @property
     def logger(self) -> p.NativeLoggingWrapper:
@@ -93,7 +92,9 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
     def bind(self, **context: t.JsonPayload) -> Self:
         """Return a new logger with additional native bound context."""
         bound_logger = self.logger.bind(**context)
-        return self.__class__(self.name, context=structlog.get_context(bound_logger))
+        return self.__class__(
+            self.name, context=self.structlog().get_context(bound_logger)
+        )
 
     def new(self, **context: t.JsonPayload) -> Self:
         """Replace bound context without mutating this logger.
@@ -144,7 +145,9 @@ class FlextBoundLogger(FlextUtilitiesLoggingContext):
         bound_logger = (
             self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
         )
-        return self.__class__(self.name, context=structlog.get_context(bound_logger))
+        return self.__class__(
+            self.name, context=self.structlog().get_context(bound_logger)
+        )
 
     def try_unbind(self, *keys: str) -> Self:
         """Unbind keys while ignoring missing values.

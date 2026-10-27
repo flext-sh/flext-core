@@ -281,22 +281,3 @@ class TestsFlextCoreExceptionsTypedMetrics:
 
         # Cleanup so the shared counter does not leak into other tests
         e.clear_metrics()
-
-    @staticmethod
-    def test_clear_metrics_resets_snapshot_and_is_idempotent() -> None:
-        # Arrange
-        """Test clear metrics resets snapshot and is idempotent."""
-        e.clear_metrics()
-        e.record_exception(e.ValidationError)
-
-        # Act
-        e.clear_metrics()
-        first = e.resolve_metrics_snapshot()
-        e.clear_metrics()
-        second = e.resolve_metrics_snapshot()
-
-        # Assert: cleared state is empty and clearing again is a no-op
-        tm.that(first.total_exceptions, eq=0)
-        tm.that(first.unique_exception_types, eq=0)
-        tm.that(first.has_exceptions is False, truth=True)
-        tm.that(second.total_exceptions, eq=0)

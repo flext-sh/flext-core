@@ -45,40 +45,6 @@ class FlextUtilitiesDomain:
         return type(obj_a) is type(obj_b)
 
     @staticmethod
-    def compare_entities_by_id(
-        entity_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
-        entity_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
-        id_attr: str = c.FIELD_ID,
-    ) -> bool:
-        """Compare two entities by unique ID (identity, not value).
-
-        Returns True if both entities have same type and ID.
-
-        Returns:
-            The resulting ``bool``.
-
-        """
-        invalid_entity = FlextUtilitiesGuards.scalar(entity_a) or isinstance(
-            entity_a,
-            (Sequence, Mapping),
-        )
-        invalid_other = FlextUtilitiesGuards.scalar(entity_b) or isinstance(
-            entity_b,
-            (Sequence, Mapping),
-        )
-        if (
-            invalid_entity
-            or invalid_other
-            or not FlextUtilitiesDomain.same_type(entity_b, entity_a)
-        ):
-            result = False
-        else:
-            id_a = getattr(entity_a, id_attr, None)
-            id_b = getattr(entity_b, id_attr, None)
-            result = id_a is not None and id_a == id_b
-        return result
-
-    @staticmethod
     def _iterable_members_equal(
         obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
         obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
@@ -168,24 +134,6 @@ class FlextUtilitiesDomain:
                             obj_b,
                         )
         return result
-
-    @staticmethod
-    def hash_entity_by_id(
-        entity: t.JsonPayload | FlextProtocolsResult.HasModelDump,
-        id_attr: str = c.FIELD_ID,
-    ) -> int:
-        """Hash entity by ID + type. Falls back to identity hash if ID missing.
-
-        Returns:
-            The resulting ``int``.
-
-        """
-        if FlextUtilitiesGuards.scalar(entity):
-            return hash(entity)
-        entity_id = getattr(entity, id_attr, None)
-        if entity_id is None:
-            return hash(id(entity))
-        return hash((FlextUtilitiesGuards.type_name(entity), entity_id))
 
     @staticmethod
     def hash_value_object_by_value(

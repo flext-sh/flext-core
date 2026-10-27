@@ -24,7 +24,6 @@ from typing import TYPE_CHECKING, ClassVar
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, tm, u
 from tests.unit._enforcement_support import make_class
 
@@ -244,7 +243,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(bad, "constants")
+            u.run_layer(bad, "constants")
 
         texts = [str(r.message) for r in recorded]
         tm.that(len(recorded), eq=2)
@@ -258,7 +257,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(target, "constants")
+            u.run_layer(target, "constants")
 
         tm.that(recorded, eq=[])
 
@@ -275,7 +274,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(target, "constants")
+            u.run_layer(target, "constants")
 
         tm.that(recorded, eq=[])
 
@@ -290,7 +289,7 @@ class_stem_override = "XmlAPI"
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.run_layer(FlextLocalConstants, "constants")
+            u.run_layer(FlextLocalConstants, "constants")
 
         tm.that(recorded, eq=[])
 

@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: probe-requirement-dist
+Version: 1.0
+Requires-Dist: flext-cli>=0.12
+Requires-Dist: Flext-Api[extra]~=1.0
+Requires-Dist: pydantic>=2.11; python_version >= '3.13'
+Requires-Dist: some_pkg==2.0
+Requires-Dist: ??? malformed

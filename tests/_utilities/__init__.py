@@ -10,15 +10,10 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
-from flext_core import install_lazy_exports
+from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests._utilities.beartype_engine import TestsFlextBeartypeEngine
-    from tests._utilities.case_factories import TestsFlextUtilitiesCaseFactoriesMixin, u
-    from tests._utilities.case_generators import TestsFlextUtilitiesCaseGeneratorsMixin
-    from tests._utilities.case_service_factories import (
-        TestsFlextUtilitiesCaseServiceFactoriesMixin,
-    )
     from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
     from tests._utilities.decorators import TestsFlextDecoratorsLegacy
     from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
@@ -44,11 +39,7 @@ if TYPE_CHECKING:
     from tests._utilities.result_exception_carrying import (
         TestsFlextResultExceptionCarrying,
     )
-    from tests._utilities.service_factories import (
-        TestsFlextUtilitiesServiceFactoriesMixin,
-    )
     from tests._utilities.services import TestsFlextUtilitiesServicesMixin
-    from tests._utilities.user_factories import TestsFlextUtilitiesUserFactoriesMixin
     from tests._utilities.validation_factories import (
         TestsFlextUtilitiesValidationFactoriesMixin,
     )
@@ -74,9 +65,6 @@ __all__: tuple[str, ...] = (
     "TestsFlextDecoratorsLegacy",
     "TestsFlextFlextHandlers",
     "TestsFlextResultExceptionCarrying",
-    "TestsFlextUtilitiesCaseFactoriesMixin",
-    "TestsFlextUtilitiesCaseGeneratorsMixin",
-    "TestsFlextUtilitiesCaseServiceFactoriesMixin",
     "TestsFlextUtilitiesContractsMixin",
     "TestsFlextUtilitiesDispatchMixin",
     "TestsFlextUtilitiesParserReliabilityMixin",
@@ -87,19 +75,16 @@ __all__: tuple[str, ...] = (
     "TestsFlextUtilitiesRailwayServicesMixin",
     "TestsFlextUtilitiesReliabilityScenariosMixin",
     "TestsFlextUtilitiesResultCombinators",
-    "TestsFlextUtilitiesServiceFactoriesMixin",
     "TestsFlextUtilitiesServicesMixin",
-    "TestsFlextUtilitiesUserFactoriesMixin",
     "TestsFlextUtilitiesValidationFactoriesMixin",
     "TestsFlextUtilitiesValidationNetworkScenarios",
     "TestsFlextUtilitiesValidationNumericScenarios",
     "TestsFlextUtilitiesValidationPatternScenarios",
     "TestsFlextUtilitiesValidationStringScenarios",
     "TestsFlextUtilitiesValidationUriScenarios",
-    "u",
 )
 
-__getattr__ = install_lazy_exports(
+install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
@@ -107,9 +92,6 @@ __getattr__ = install_lazy_exports(
         "TestsFlextDecoratorsLegacy": ".decorators",
         "TestsFlextFlextHandlers": ".handlers",
         "TestsFlextResultExceptionCarrying": ".result_exception_carrying",
-        "TestsFlextUtilitiesCaseFactoriesMixin": ".case_factories",
-        "TestsFlextUtilitiesCaseGeneratorsMixin": ".case_generators",
-        "TestsFlextUtilitiesCaseServiceFactoriesMixin": ".case_service_factories",
         "TestsFlextUtilitiesContractsMixin": ".contracts",
         "TestsFlextUtilitiesDispatchMixin": ".dispatch",
         "TestsFlextUtilitiesParserReliabilityMixin": ".parser_reliability",
@@ -120,16 +102,13 @@ __getattr__ = install_lazy_exports(
         "TestsFlextUtilitiesRailwayServicesMixin": ".railway_services",
         "TestsFlextUtilitiesReliabilityScenariosMixin": ".reliability_scenarios",
         "TestsFlextUtilitiesResultCombinators": ".result_combinators",
-        "TestsFlextUtilitiesServiceFactoriesMixin": ".service_factories",
         "TestsFlextUtilitiesServicesMixin": ".services",
-        "TestsFlextUtilitiesUserFactoriesMixin": ".user_factories",
         "TestsFlextUtilitiesValidationFactoriesMixin": ".validation_factories",
         "TestsFlextUtilitiesValidationNetworkScenarios": ".validation_network",
         "TestsFlextUtilitiesValidationNumericScenarios": ".validation_numeric",
         "TestsFlextUtilitiesValidationPatternScenarios": ".validation_pattern",
         "TestsFlextUtilitiesValidationStringScenarios": ".validation_string",
         "TestsFlextUtilitiesValidationUriScenarios": ".validation_uri",
-        "u": ".case_factories",
     }),
     public_exports=__all__,
-)[0]
+)

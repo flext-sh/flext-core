@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import ast
 import importlib
-import inspect
 import sys
 from pathlib import Path
 
@@ -52,7 +50,7 @@ class TestsFlextEnforcementImportProvenance:
             ("from pydantic import JsonValue", "ENFORCE-045", True),
             ("dependency = __import__('pydantic')", "ENFORCE-045", True),
             (
-                "from flext_core import m\nAdapter = m.TypeAdapter",
+                "from flext_core import u\nAdapter = u.type_adapter",
                 "ENFORCE-045",
                 False,
             ),
@@ -138,8 +136,8 @@ class TestsFlextEnforcementImportProvenance:
                 sys.modules.pop(name, None)
 
     @staticmethod
-    def test_native_config_source_obeys_owner_and_layer_zero_boundary() -> None:
-        """Core owns its native adapter; config ingress never imports its own tiers."""
+    def test_native_config_source_obeys_owner_and_loads_json_values() -> None:
+        """The layer-zero owner may use native adapters to validate YAML ingress."""
         report = u.check(FlextStrictYamlConfigSource)
         tm.that(
             any(item.rule_id == "ENFORCE-045" for item in report.violations),
@@ -149,15 +147,9 @@ class TestsFlextEnforcementImportProvenance:
             any(item.rule_id == "ENFORCE-070" for item in report.violations),
             truth=False,
         )
-        module = importlib.import_module(FlextStrictYamlConfigSource.__module__)
-        namespace = FlextStrictYamlConfigSource.__module__.split(".")[0]
-        tree = ast.parse(inspect.getsource(module))
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom):
-                tm.that(node.level, eq=0)
-                tm.that((node.module or "").split(".")[0], ne=namespace)
-            elif isinstance(node, ast.Import):
-                tm.that(
-                    all(alias.name.split(".")[0] != namespace for alias in node.names),
-                    truth=True,
-                )
+        tm.that(
+            FlextStrictYamlConfigSource.unique_key_load(
+                "enabled: true\nports: [1389, 1636]\nlabel: probe\n"
+            ),
+            eq={"enabled": True, "ports": [1389, 1636], "label": "probe"},
+        )

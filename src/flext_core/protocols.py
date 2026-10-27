@@ -46,5 +46,4 @@ class FlextProtocols(
 
 
 p = FlextProtocols
-
 __all__: list[str] = ["FlextProtocols", "p"]

@@ -7,12 +7,12 @@ typing to satisfy `p.Service` and provides a clean service lifecycle.
 Service contract (ADR-019):
 
 - A dependency is a port: a field typed ``t.Port[p.X]``, where ``p.X`` is a
-  plain ``@runtime_checkable`` Protocol, declared with
+  ``@runtime_checkable`` Protocol, declared with
   ``m.Field(exclude=True, description=...)``. Pydantic validates the value with
   ``isinstance`` on construction and on assignment, and the port never enters
-  the JSON Schema. A port whose type is not a plain Protocol class (a
-  subscripted generic, a concrete class) is rejected when the subclass is
-  created; Pydantic itself rejects a Protocol that is not runtime-checkable.
+  the JSON Schema. The annotation also resolves aliases, generic origins and
+  concrete classes; generic arguments are not recursively validated. Pydantic
+  rejects a Protocol that is not runtime-checkable.
 - The project's ``api.py`` is the single composition root: it constructs each
   service with its adapters. A service never reads a global to find a
   collaborator; settings reach it through the runtime its base declares.

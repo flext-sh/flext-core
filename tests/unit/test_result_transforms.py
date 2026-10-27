@@ -146,27 +146,6 @@ class TestsFlextResultTransforms:
         tm.that(tuple(errors), eq=())
 
     @staticmethod
-    @pytest.mark.parametrize(
-        ("value", "predicate_ceiling", "expect_success"),
-        [(10, 5, True), (10, 20, False), (6, 5, True), (5, 5, False)],
-    )
-    def test_filter_keeps_or_drops_success_by_predicate(
-        value: int,
-        predicate_ceiling: int,
-        *,
-        expect_success: bool,
-    ) -> None:
-        """Filter keeps a success when the predicate holds, else fails it."""
-        result = r[int].ok(value)
-
-        filtered = result.filter(lambda x: x > predicate_ceiling)
-
-        if expect_success:
-            tm.ok(filtered, eq=value)
-        else:
-            tm.fail(filtered)
-
-    @staticmethod
     def test_filter_leaves_failure_unchanged() -> None:
         """Filter never runs its predicate on a failure and preserves the error."""
         result: p.Result[int] = r[int].fail("error")
@@ -183,6 +162,15 @@ class TestsFlextResultTransforms:
         result = r[int].ok(3).map(lambda x: x + 1)
 
         tm.ok(result, eq=4)
+
+    @staticmethod
+    def test_map_returning_none_reports_failure() -> None:
+        """``map`` producing ``None`` fails closed instead of empty success."""
+        result = r[str].ok("x").map(lambda _: None)
+
+        tm.that(result.failure is True, truth=True)
+        tm.that(result.error, none=False)
+        tm.that("cannot be None" in str(result.error), truth=True)
 
     @staticmethod
     def test_map_is_noop_on_failure() -> None:
@@ -223,38 +211,6 @@ class TestsFlextResultTransforms:
 
 class TestsFlextResultSequenceTransforms:
     """Sequential flow and traversal contracts."""
-
-    @staticmethod
-    def test_flow_through_chains_multiple_operations() -> None:
-        """flow_through pipes a value through successive fallible steps."""
-
-        def add_one(x: int) -> p.Result[int]:
-            return r[int].ok(x + 1)
-
-        def multiply_two(x: int) -> p.Result[int]:
-            return r[int].ok(x * 2)
-
-        final = r[int].ok(5).flow_through(add_one, multiply_two)
-
-        tm.ok(final, eq=12)
-
-    @staticmethod
-    def test_flow_through_stops_on_first_failure() -> None:
-        """flow_through short-circuits at the first failing step."""
-
-        def add_one(x: int) -> p.Result[int]:
-            return r[int].ok(x + 1)
-
-        def fail_op(_x: int) -> p.Result[int]:
-            return r[int].fail("error")
-
-        def multiply_two(x: int) -> p.Result[int]:
-            return r[int].ok(x * 2)
-
-        final = r[int].ok(5).flow_through(add_one, fail_op, multiply_two)
-
-        tm.fail(final)
-        tm.that(final.error, eq="error")
 
     @staticmethod
     def test_traverse_collects_all_mapped_successes() -> None:

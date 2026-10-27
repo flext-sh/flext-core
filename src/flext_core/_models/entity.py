@@ -12,8 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Hashable, MutableSequence
-from typing import Annotated, override
+from collections.abc import MutableSequence
+from typing import Annotated, Self
 
 from pydantic import Field
 
@@ -23,7 +23,7 @@ from flext_core._models import (
     FlextModelsDomainEvent,
     FlextModelsPydantic,
 )
-from flext_core._utilities import FlextUtilitiesDomain, FlextUtilitiesGenerators
+from flext_core._utilities import FlextUtilitiesGenerators
 
 
 class FlextModelsEntity:
@@ -40,7 +40,6 @@ class FlextModelsEntity:
         FlextModelsBase.TimestampedModel,
         FlextModelsBase.IdentifiableMixin,
         FlextModelsBase.VersionableMixin,
-        Hashable,
     ):
         """Entity implementation - base class for domain entities with identity.
 
@@ -49,6 +48,9 @@ class FlextModelsEntity:
         - created_at/updated_at: Timestamps (from TimestampedModel)
         - version: Optimistic locking (from VersionableMixin)
         - domain_events: Event sourcing support
+
+        Equality is Pydantic's value equality and a mutable entity is not
+        hashable; identity is compared explicitly through ``unique_id``.
 
         ``domain_events`` is an intentionally mutable in-process buffer; the
         field contract is a ``MutableSequence`` because the event-sourcing API
@@ -66,36 +68,17 @@ class FlextModelsEntity:
             description="List of uncommitted domain events for event sourcing",
         )
 
-        @override
-        def __eq__(self, other: object) -> bool:
-            """Identity-based equality for entities.
+        @FlextModelsPydantic.model_validator(mode="after")
+        def stamp_updated_at(self) -> Self:
+            """Stamp ``updated_at`` with the current UTC time when it is absent.
 
             Returns:
-                The resulting ``bool``.
+                The validated entity.
 
             """
-            if not isinstance(other, FlextModelsBase.EnforcedModel):
-                return NotImplemented
-            return FlextUtilitiesDomain.compare_entities_by_id(self, other)
-
-        def __hash__(self) -> int:
-            """Identity-based hash for entities.
-
-            Returns:
-                The resulting ``int``.
-
-            """
-            return FlextUtilitiesDomain.hash_entity_by_id(self)
-
-        @override
-        def model_post_init(
-            self,
-            __context: t.ScalarMapping | None,
-            /,
-        ) -> None:
-            """Post-initialization hook to set updated_at timestamp when absent."""
             if self.updated_at is None:
                 self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
+            return self
 
     class Value(FlextModelsBase.FrozenValueModel):
         """Base class for value objects - immutable and compared by value."""

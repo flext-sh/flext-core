@@ -17,16 +17,16 @@ import textwrap
 from pathlib import Path
 
 import tests.utilities
-from flext_core.utilities import FlextUtilitiesBeartypeConf
-from tests import t, tm
+from flext_core import settings
+from tests import t, tm, u
 
 _CLAW_INIT = (
     textwrap.dedent(
         """
     from beartype.claw import beartype_this_package
-    from flext_core.utilities import FlextUtilitiesBeartypeConf
+    from flext_core import settings, u
 
-    beartype_this_package(conf=FlextUtilitiesBeartypeConf.build_beartype_conf())
+    beartype_this_package(conf=u.build_beartype_conf(settings.beartype_mode))
     """,
     ).strip()
     + "\n"
@@ -78,8 +78,8 @@ class TestsFlextCoreBeartypeEngineClawPackages(
     def test_build_beartype_conf_is_idempotent() -> None:
         """Repeated factory calls yield equal, hash-stable conf values (public API)."""
         # Arrange / Act
-        conf_a = FlextUtilitiesBeartypeConf.build_beartype_conf()
-        conf_b = FlextUtilitiesBeartypeConf.build_beartype_conf()
+        conf_a = u.build_beartype_conf(settings.beartype_mode)
+        conf_b = u.build_beartype_conf(settings.beartype_mode)
 
         # Assert: deterministic public value, safe to reuse across call sites.
         tm.that(conf_a, eq=conf_b)
@@ -257,29 +257,27 @@ class TestsFlextCoreBeartypeEngineClawPackages(
         tm.that(result.stdout, has="violation take_count")
         tm.that(result.stdout, has="violation take_json")
 
-    def test_claw_config_imports_flext_core_without_error(self) -> None:
-        """The factory conf lets beartype_package instrument flext_core itself."""
+    def test_claw_registration_preserves_public_result_behavior(self) -> None:
+        """Configured claw registration leaves the public result facade usable."""
         # Arrange / Act
         result = self._run_python(
             textwrap.dedent(
                 """
                 from beartype.claw import beartype_package
-                from flext_core.utilities import (
-                    FlextUtilitiesBeartypeConf,
-                )
+                from flext_core import settings, u
 
                 beartype_package(
                     "flext_core",
-                    conf=FlextUtilitiesBeartypeConf.build_beartype_conf(),
+                    conf=u.build_beartype_conf(settings.beartype_mode),
                 )
-                import flext_core
-                print("flext_core_facade", hasattr(flext_core, "u"))
+                from flext_core import r
+                print("flext_core_result", r[int].ok(7).unwrap())
                 """,
             ),
             cwd=self._REPO_ROOT,
         )
 
-        # Assert: instrumentation succeeds and the public facade stays intact.
+        # Assert: registration completes and the public facade returns its payload.
         combined_output = result.stdout + result.stderr
         tm.that(result.outcome.raw_return_code, eq=0, msg=combined_output)
-        tm.that(combined_output, has="flext_core_facade True")
+        tm.that(result.stdout.strip(), eq="flext_core_result 7")

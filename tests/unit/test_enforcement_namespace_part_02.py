@@ -26,7 +26,6 @@ from typing import ClassVar
 
 import pytest
 
-from flext_core.utilities import FlextUtilitiesEnforcement
 from tests import c, m, p, t, tm, u
 from tests.unit._enforcement_support import make_class
 
@@ -74,7 +73,7 @@ def _run_layer_records(target: type, layer: str) -> _WarningRecords:
     """
     with warnings.catch_warnings(record=True) as recorded:
         warnings.simplefilter("always")
-        FlextUtilitiesEnforcement.run_layer(target, layer)
+        u.run_layer(target, layer)
     return list(recorded)
 
 
@@ -274,7 +273,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             with pytest.raises(TypeError, match="ENFORCE-079"):
-                FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.STRICT)
+                u.emit(report, mode=c.EnforcementMode.STRICT)
 
     @staticmethod
     def test_emit_stays_silent_in_off_mode() -> None:
@@ -284,7 +283,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.OFF)
+            u.emit(report, mode=c.EnforcementMode.OFF)
 
         tm.that(recorded, eq=[])
 
@@ -299,7 +298,7 @@ class TestsFlextCoreEnforcementNamespacePart02:
         tm.that(report.empty, truth=False)
 
         with pytest.warns(c.FlextMroViolation, match="ENFORCE-079") as recorded:
-            FlextUtilitiesEnforcement.emit(report, mode=c.EnforcementMode.WARN)
+            u.emit(report, mode=c.EnforcementMode.WARN)
 
         tm.that(
             any(
@@ -317,6 +316,6 @@ class TestsFlextCoreEnforcementNamespacePart02:
 
         with warnings.catch_warnings(record=True) as recorded:
             warnings.simplefilter("always")
-            FlextUtilitiesEnforcement.emit(empty_report, mode=c.EnforcementMode.STRICT)
+            u.emit(empty_report, mode=c.EnforcementMode.STRICT)
 
         tm.that(recorded, eq=[])

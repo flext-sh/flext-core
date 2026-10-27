@@ -199,3 +199,6 @@ class ExamplesFlextModelsEx04:
                 description="Marker identifying the event as having no subscribers",
             ),
         ]
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx04"]

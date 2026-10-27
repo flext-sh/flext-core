@@ -1,16 +1,17 @@
 # AGENTS.md — flext-core
 
-> **Parent workspace law** lives in [`../AGENTS.md`](../AGENTS.md) — read it first.
-> Universal engineering core: `~/.agents/UNIVERSAL_CORE.md`. Composition: global
-> skills + parent/root `AGENTS.md` + this scope delta. Do not re-embed universal law.
->
-> **Standalone / independent mode:** when `../AGENTS.md` does not resolve, pin the
-> parent raw `AGENTS.md` URL to the same branch/release as this package (never
-> `main`): <https://raw.githubusercontent.com/flext-sh/flext/0.12.0-dev/AGENTS.md>
+Read the branch-matched [FLEXT root](../AGENTS.md) and its local flext-law through
+that root's authority entry point. In standalone mode resolve the same branch or
+release; a coincidental parent instruction file does not establish FLEXT authority.
+This file adds only this package's domain delta. Command routing, architecture
+and universal execution stay with their parent owners.
+
+Embedded AI Hub or Beads generated blocks are retired delivery material, not
+active local rules. Their withdrawal remains the publisher's responsibility.
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-BEGIN -->
 
-**Package:** `flext_core` · ~30.9k src LOC · deps: **none** (foundation of the
+**Package:** `flext_core` · deps: **none** (foundation of the
 dependency graph)
 
 ## Overview
@@ -20,54 +21,29 @@ alphabet every other `flext-*` package composes via MRO. Must never import anoth
 `flext-*` package. Its public `api.py` composes registry and dispatcher services through
 pure cooperative MRO and exposes `core = FlextCore.fetch_global()`.
 
-## Structure
-
-```text
-src/flext_core/
-├── api.py services/                                           # FlextCore facade and service owners
-├── constants.py models.py protocols.py typings.py utilities.py  # facet roots (c/t/p/m/u)
-├── result.py exceptions.py mixins.py handlers.py decorators.py  # r / e / x / h / d
-├── service.py container.py context.py dispatcher.py registry.py # DI + CQRS (s)
-├── runtime.py loggings.py lazy.py _config.py _settings.py
-├── _constants/ _models/ _protocols/ _typings/ _utilities/ …_parts/
-└── __init__.py  # AUTO-GENERATED lazy export map
-```
-
-## Code Map
-
-| Symbol                 | Kind  | Location       | Role                     |
-| ---------------------- | ----- | -------------- | ------------------------ |
-| `FlextTypes` (`t`)     | class | `typings.py`   | composite type aliases   |
-| `FlextConstants` (`c`) | class | `constants.py` | constants facade         |
-| `FlextProtocols` (`p`) | class | `protocols.py` | structural protocols     |
-| `FlextModels` (`m`)    | class | `models.py`    | Pydantic-2 models        |
-| `FlextResult` (`r`)    | class | `result.py`    | railway result (ADR-001) |
-| `FlextContainer`       | class | `container.py` | DI container             |
-| `FlextService` (`s`)   | class | `service.py`   | Pydantic service runtime |
-| `FlextCore` (`core`)   | class | `api.py`       | MRO execution facade     |
-
 ## Conventions (specific to this package)
 
 - `_config.py` / `_settings.py` are layer-0 pure (stdlib + pydantic only); they own
   `config` / `settings` singletons.
 - `lazy.py` (`FlextLazy`) builds the PEP-562 export map used by every generated
   `__init__`.
-- Never hand-edit `__init__.py` or `# AUTO-GENERATED` facet roots; do not collapse
-  `_parts` without updating facade imports (breaks lazy map / cycles).
+- Never hand-edit `__init__.py` or `# AUTO-GENERATED` facet roots; their exports are
+  changed at the source owner and published through `make gen`.
+- Family part names are not semantic responsibilities. Reorganize them through
+  `make mod`, updating the MRO and all public lazy exports in the same candidate, per
+  [FLEXT ADR-028 Decisions 17–18](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17)
+  and the family-shape contract in
+  [ADR-014 §3](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/014-family-part-shape-rope-codemod-rules.md#3b-one-semantic-engine-two-safe-modes).
 - Config/settings canonical pattern: ADR-005 (§1–§2) + `_settings.py`/`_config.py`
   module docstrings.
-- Codemod governance (ast-grep + make mod): ADR-014.
 
-## Commands
+### Failure factory responsibility
 
-Run member verbs from the workspace root. Root `make check` checks the root project,
-not every member; select the member's Makefile without changing the working directory:
-
-```bash
-make -f flext-core/Makefile check
-make -f flext-core/Makefile test
-make -f flext-core/Makefile examples
-```
+The public exception factory exposes one failure-construction capability. Its numbered
+inheritance fragments are one implementation owner, not distinct facades: consolidate
+their methods without changing the public `e.fail_*` behavior or inventing module
+suffixes. This declaration implements [ADR-014 §1](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/014-family-part-shape-rope-codemod-rules.md#1-semantic-facade-ownership)
+and [ADR-028 Decision 17](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17).
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->
 

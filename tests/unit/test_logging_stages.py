@@ -29,27 +29,10 @@ from pydantic import ValidationError
 from tests import c, m, p, t, tm, u
 
 if TYPE_CHECKING:
-    from collections.abc import Generator
     from typing import Never
 
 
-pytestmark = pytest.mark.usefixtures("restore_logging_options")
-
-
-@pytest.fixture
-def restore_logging_options() -> Generator[None]:
-    """Restore actual captured configuration after each registration."""
-    original_settings, original_options = u.logging_settings(), u.logging_options()
-    try:
-        selected = u.resolve_logging_settings(log_level=c.LogLevel.DEBUG, trace=False)
-        u.configure_structlog(
-            settings=m.StructlogOptions(async_logging=False), runtime_settings=selected
-        )
-        yield
-    finally:
-        u.configure_structlog(
-            settings=original_options, runtime_settings=original_settings
-        )
+pytestmark = pytest.mark.usefixtures("restore_logging")
 
 
 class TestsFlextLoggingStages:

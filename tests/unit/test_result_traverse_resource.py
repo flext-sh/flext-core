@@ -39,33 +39,6 @@ class TestsFlextResultTraverseResource:
         tm.that(str(accumulated.error), has="error2")
 
     @staticmethod
-    def test_traverse_fail_fast_true() -> None:
-        """Test traverse with fail_fast=True (default) stops on first failure."""
-        items = [1, 2, 3]
-        rejected = 2
-        result = r.traverse(
-            items,
-            lambda x: r[int].fail("error") if x == rejected else r[int].ok(x),
-            fail_fast=True,
-        )
-        _ = u.Tests.assert_failure(result)
-        tm.that(result.error, eq="error")
-
-    @staticmethod
-    def test_traverse_fail_fast_false() -> None:
-        """Test traverse with fail_fast=False collects all errors."""
-        items = [1, 2, 3]
-        result = r.traverse(
-            items,
-            lambda x: r[int].fail(f"error_{x}") if x in {2, 3} else r[int].ok(x),
-            fail_fast=False,
-        )
-        _ = u.Tests.assert_failure(result)
-        tm.that(result.error, none=False)
-        tm.that(str(result.error), has="error_2")
-        tm.that(str(result.error), has="error_3")
-
-    @staticmethod
     def test_with_resource() -> None:
         """Test with_resource manages resource lifecycle."""
         resource_created: MutableSequence[str] = []

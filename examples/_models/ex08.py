@@ -19,3 +19,6 @@ class ExamplesFlextModelsEx08:
 
     class OrderEntity(m.Entity):
         status: Annotated[str, m.Field(description="Order lifecycle status")] = "active"
+
+
+__all__: list[str] = ["ExamplesFlextModelsEx08"]

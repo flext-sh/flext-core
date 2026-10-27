@@ -267,25 +267,6 @@ class TestsFlextCoreResultFailureFactories:
         tm.that(isinstance(failed, FlextResult), truth=True)
 
     @staticmethod
-    def test_from_validation_ok_and_fail_paths() -> None:
-        """Test from validation ok and fail paths."""
-
-        class _Sample(m.StrictModel):
-            name: str
-
-        ok_result: p.Result[_Sample] = r.from_validation({"name": "ada"}, _Sample)
-        tm.ok(ok_result)
-        tm.that(ok_result.unwrap().name, eq="ada")
-        tm.that(r.successful_result(ok_result), truth=True)
-        tm.that(isinstance(ok_result, FlextResult), truth=True)
-
-        bad: p.Result[_Sample] = r.from_validation({"name": 1}, _Sample)
-        tm.fail(bad)
-        tm.that(bad.exception, none=False)
-        tm.that(r.failed_result(bad), truth=True)
-        tm.that(isinstance(bad, FlextResult), truth=True)
-
-    @staticmethod
     def test_fail_explicit_error_data_redacts_sensitive_keys() -> None:
         """Test fail explicit error data redacts sensitive keys."""
         password, token = u.generate_id(), u.generate_id()

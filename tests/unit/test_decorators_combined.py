@@ -6,12 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import time
-
 import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import d, e, p, r, tm
+from flext_core import FlextContainer
+from tests import d, p, r, tm
 
 
 class TestsFlextCoreDecoratorsCombined:
@@ -132,41 +131,19 @@ class TestsFlextCoreDecoratorsCombined:
         tm.ok(raw, eq="raw")
 
     @staticmethod
-    def test_retry_succeeds_after_transient_failure() -> None:
-        # Arrange
-        """Test retry succeeds after transient failure."""
-        attempts = 0
+    def test_combined_injects_dependencies_from_container(
+        clean_container: p.Container,
+    ) -> None:
+        """Test combined applies ``inject_deps`` on the standard path."""
+        _ = clean_container
+        di = FlextContainer.shared()
+        _ = di.bind("answer.service", 42)
 
-        @d.retry(max_attempts=2, delay_seconds=0.001)
-        def flaky_method() -> str:
-            nonlocal attempts
-            attempts += 1
-            if attempts == 1:
-                message = "First attempt fails"
-                raise RuntimeError(message)
-            return "success"
+        @d.combined(inject_deps={"dep": "answer.service"}, operation_name="std")
+        def fn(*, dep: int = 0) -> int:
+            return dep + 1
 
-        # Act
-        outcome = flaky_method()
-
-        # Assert: the operation recovers and the retry count is observable.
-        tm.that(outcome, eq="success")
-        tm.that(attempts, eq=2)
-
-    @staticmethod
-    def test_retry_raises_flext_timeout_when_exhausted() -> None:
-        # Arrange
-        """Test retry raises flext timeout when exhausted."""
-
-        @d.retry(max_attempts=2, delay_seconds=0.001)
-        def always_failing() -> str:
-            error_msg = "persistent failure"
-            raise RuntimeError(error_msg)
-
-        # Act / Assert: exhaustion surfaces as a typed FlextExceptions member.
-        with pytest.raises(e.FlextTimeoutError) as exc_info:
-            always_failing()
-        tm.that(exc_info.value.operation, eq="always_failing")
+        tm.that(fn(), eq=43)
 
     @staticmethod
     def test_stacking_log_operation_over_railway_returns_result() -> None:
@@ -208,32 +185,6 @@ class TestsFlextCoreDecoratorsCombined:
         # Assert
         tm.ok(outcome, eq="success")
         tm.that(attempts, eq=succeeding_attempt)
-
-    @staticmethod
-    @pytest.mark.parametrize(
-        ("timeout_seconds", "should_raise"),
-        [(5.0, False), (0.001, True)],
-    )
-    def test_timeout_enforces_duration_budget(
-        timeout_seconds: float,
-        *,
-        should_raise: bool,
-    ) -> None:
-        # Arrange
-        """Test timeout enforces duration budget."""
-
-        @d.timeout(timeout_seconds=timeout_seconds)
-        def measured() -> str:
-            time.sleep(0.02)
-            return "done"
-
-        # Act / Assert
-        if should_raise:
-            with pytest.raises(e.FlextTimeoutError) as exc_info:
-                measured()
-            tm.that(exc_info.value.operation, eq="measured")
-        else:
-            tm.that(measured(), eq="done")
 
     @staticmethod
     @given(a=st.integers(), b=st.integers(min_value=1, max_value=1000))

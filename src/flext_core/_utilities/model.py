@@ -52,7 +52,8 @@ class FlextUtilitiesModel:
             FlextModelsConfig.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
-        dumped: t.JsonMapping = FlextUtilitiesTypingAdapterJson.json_mapping_adapter().validate_python(
+        adapter = FlextUtilitiesTypingAdapterJson.json_mapping_adapter()
+        dumped: t.JsonMapping = adapter.validate_python(
             model.model_dump(mode="json", **opts_dict),
         )
         return dumped
