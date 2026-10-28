@@ -10,15 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from typing import TYPE_CHECKING, Never, override
 
 from flext_core._result import FlextResultComposed

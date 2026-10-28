@@ -10,15 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from importlib.metadata import PackageMetadata, metadata
 
 from flext_core._utilities import FlextUtilitiesProjectMetadata

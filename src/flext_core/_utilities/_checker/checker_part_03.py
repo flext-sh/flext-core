@@ -10,15 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from collections.abc import Mapping, MutableSequence, Sequence
 from types import FunctionType, MethodType
 from typing import get_args, get_origin

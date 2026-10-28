@@ -6,15 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from typing import TYPE_CHECKING
 
 from flext_core._handlers.flexthandlers_part_07 import FlextHandlersPart07

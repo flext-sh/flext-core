@@ -11,15 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from collections.abc import Mapping
 from pathlib import Path
 from traceback import format_exception, walk_tb

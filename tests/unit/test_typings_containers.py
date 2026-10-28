@@ -14,17 +14,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 import math
-from collections.abc import MutableMapping
+from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 
 import flext_tests

@@ -6,15 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from examples import c, m, p, r, u
 from examples.ex_12_registry_flow import ExamplesFlextRegistryFlow
 from examples.ex_12_registry_support import RegistryLookup
