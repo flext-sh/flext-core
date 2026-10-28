@@ -74,7 +74,7 @@ class FlextApiSettings(FlextSettings):
 ```python
 from __future__ import annotations
 
-from flext_cli import FlextCliCli, FlextCliSettings, m, t
+from flext_cli import FlextCli, FlextCliSettings, m, t
 
 settings = FlextCliSettings.fetch_global()
 
@@ -99,20 +99,20 @@ def greet_handler(model: GreetInput) -> t.JsonValue:
     return {"message": message}
 
 
-command = FlextCliCli.model_command(
+command = FlextCli.model_command(
     model_cls=GreetInput,
     handler=greet_handler,
     settings=settings,
 )
-cli = FlextCliCli()
+cli = FlextCli()
 app = cli.create_app_with_common_params(name="greeting", help_text="Greeting commands")
 cli.register_command(app, name="greet", help_text="Build a greeting", command=command)
 ```
 
 **Common mistakes to avoid:**
 
-- `FlextCliCli.build_model_command(...)` does not exist; use
-  `FlextCliCli.model_command(...)`.
+- `FlextCli.build_model_command(...)` does not exist; use
+  `FlextCli.model_command(...)`.
 - `m.CliInput` / `m.CliOutput` do not exist; use plain `m.BaseModel` subclasses.
 
 ## Testing a command

@@ -86,7 +86,12 @@ class FlextService[TDomainResult = p.Base](x):
                 get_args(declared) if isinstance(declared, UnionType) else (declared,)
             )
             for member in members:
-                if member is not NoneType and not is_protocol(member):
+                origin = get_origin(member) or member
+                if origin is NoneType:
+                    continue
+                if is_protocol(origin) and not getattr(
+                    origin, "_is_runtime_protocol", False
+                ):
                     msg = c.ERR_SERVICE_PORT_TYPE.format(
                         service=cls.__name__,
                         field=name,

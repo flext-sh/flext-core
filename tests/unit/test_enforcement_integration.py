@@ -112,7 +112,7 @@ def _import_messages(
             module = importlib.import_module(dotted)
             messages = tuple(
                 f"{item.qualname}: {item.message}"
-                for target in vars(module).values()
+                for target in list(vars(module).values())
                 if query and isinstance(target, type) and target.__module__ == dotted
                 for item in u.check(target).violations
             )

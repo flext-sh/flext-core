@@ -47,8 +47,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         tm.that(caught.value.errors()[0]["type"], eq="int_type")
 
     @pytest.fixture
-    @staticmethod
-    def _isolated_metrics() -> Iterator[None]:
+    def _isolated_metrics(self) -> Iterator[None]:
         """Guarantee each test observes a clean, isolated metrics state."""
         e.clear_metrics()
         yield

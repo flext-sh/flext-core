@@ -355,10 +355,8 @@ from flext_core import r
 failure = r[int].fail("lookup failed", exception=KeyError("user-7"))
 try:
     failure.unwrap()
-except RuntimeError as exc:
-    if not isinstance(exc.__cause__, KeyError):
-        message = "Expected preserved KeyError cause"
-        raise TypeError(message) from exc
+except KeyError as exc:
+    pass
 else:
     message = "Expected unwrap to raise on failure"
     raise RuntimeError(message)

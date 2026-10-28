@@ -22,8 +22,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
     """Tests for ``FlextCoreDecoratorsInjectionLogging``."""
 
     @pytest.fixture
-    @staticmethod
-    def container() -> FlextContainer:
+    def container(self) -> FlextContainer:
         """Provide ``container``.
 
         Returns:

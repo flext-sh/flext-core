@@ -279,6 +279,17 @@ class FlextUtilitiesDiscovery:
             func,
             name=f"{where[2]}.{where[0].__qualname__}.{where[1]}",
         )
+        if metadata is None and hasattr(where[0], "__mro__"):
+            for base in where[0].__mro__[1:]:
+                base_func = inspect.getattr_static(base, where[1], None)
+                if isinstance(base_func, FunctionType):
+                    base_meta = FlextUtilitiesModelRuntime.handler_metadata(
+                        base_func,
+                        name=f"{where[2]}.{base.__qualname__}.{where[1]}",
+                    )
+                    if base_meta is not None:
+                        metadata = base_meta
+                        break
         params = tuple(signature.parameters.values())[1:]
         if not params:
             if metadata is not None:

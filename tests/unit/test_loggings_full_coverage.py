@@ -65,8 +65,7 @@ class TestsFlextLoggings:
         return result
 
     @pytest.fixture
-    @staticmethod
-    def logger() -> p.Logger:
+    def logger(self) -> p.Logger:
         """Provide ``logger``.
 
         Returns:

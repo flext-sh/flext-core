@@ -445,8 +445,7 @@ class TestsFlextCoreLazyExportCaching:
     """In-progress import rebinding and completed export caching."""
 
     @pytest.fixture
-    @staticmethod
-    def rebinding_package(tmp_path: Path) -> Iterator[str]:
+    def rebinding_package(self, tmp_path: Path) -> Iterator[str]:
         """Write a real lazy package whose child rebinds ``u`` mid-body.
 
         ``pkg/__init__.py`` lazily exports ``u`` from ``pkg.child``; the child

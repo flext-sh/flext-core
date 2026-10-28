@@ -46,8 +46,7 @@ class TestsFlextCoreRegistry:
         tm.that(registry.registry_runtime is runtime, truth=True)
 
     @pytest.fixture
-    @staticmethod
-    def registry() -> p.Registry:
+    def registry(self) -> p.Registry:
         """Build a registry backed by an accepting dispatcher.
 
         Returns:

@@ -23,8 +23,7 @@ class TestsFlextCoreUtilitiesRuntimeViolationRegistry:
     """Public tests for the runtime violation registry buffer."""
 
     @pytest.fixture
-    @staticmethod
-    def _isolated_buffer() -> None:
+    def _isolated_buffer(self) -> None:
         """Guarantee each test starts and ends with an empty buffer."""
         u.clear_violation_reports()
 

@@ -25,8 +25,7 @@ class TestsFlextCoreContainerProperties:
     """
 
     @pytest.fixture
-    @staticmethod
-    def container() -> Iterator[FlextContainer]:
+    def container(self) -> Iterator[FlextContainer]:
         """Yield the shared container and reset the singleton afterwards.
 
         Yields:

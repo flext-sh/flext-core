@@ -27,8 +27,7 @@ class TestsFlextCoreLoggingThreshold:
     pytestmark = pytest.mark.usefixtures("restore_default_level")
 
     @pytest.fixture
-    @staticmethod
-    def restore_default_level() -> Generator[None]:
+    def restore_default_level(self) -> Generator[None]:
         """Restore the captured application policy, never today's defaults."""
         original_settings, original_options = u.logging_settings(), u.logging_options()
         try:
