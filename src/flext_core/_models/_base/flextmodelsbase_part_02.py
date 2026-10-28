@@ -126,6 +126,9 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
             Returns:
                 The validated JSON metadata attributes.
 
+            Raises:
+                ValueError: If ``key.startswith('_')``.
+
             """
             payload = (
                 value.model_dump(mode="json")

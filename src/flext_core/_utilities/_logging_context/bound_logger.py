@@ -71,16 +71,14 @@ class FlextUtilitiesLoggingBoundLogger(
             if isinstance(correlation_id, str) and correlation_id:
                 resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
         resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
-        self._native: p.NativeLoggingWrapper = (
-            self._owner.structlog().wrap_logger(
-                None,
-                processors=None,
-                wrapper_class=None,
-                context_class=None,
-                logger_factory_args=(name,),
-                cache_logger_on_first_use=False,
-                **resolved_context,
-            )
+        self._native: p.NativeLoggingWrapper = self._owner.structlog().wrap_logger(
+            None,
+            processors=None,
+            wrapper_class=None,
+            context_class=None,
+            logger_factory_args=(name,),
+            cache_logger_on_first_use=False,
+            **resolved_context,
         )
 
     def __call__(self) -> Self:
@@ -90,9 +88,7 @@ class FlextUtilitiesLoggingBoundLogger(
     @property
     def _context(self) -> p.LoggingContext:
         """Context mapping for BindableLogger protocol compliance."""
-        context: p.LoggingContext = (
-            self._owner.structlog().get_context(self._native)
-        )
+        context: p.LoggingContext = self._owner.structlog().get_context(self._native)
         return context
 
     @property
@@ -106,9 +102,7 @@ class FlextUtilitiesLoggingBoundLogger(
         bound_logger = self.logger.bind(**context)
         return self.__class__(
             self.name,
-            context=self._owner.structlog().get_context(
-                bound_logger
-            ),
+            context=self._owner.structlog().get_context(bound_logger),
         )
 
     def new(self, **context: t.JsonPayload) -> Self:
@@ -146,8 +140,7 @@ class FlextUtilitiesLoggingBoundLogger(
 
         """
         result: p.LoggingEvent = {
-            k: self._owner._to_container_value(v)
-            for k, v in context.items()
+            k: self._owner._to_container_value(v) for k, v in context.items()
         }
         if exception is not None:
             result["exception_type"] = exception.__class__.__name__
@@ -163,9 +156,7 @@ class FlextUtilitiesLoggingBoundLogger(
         )
         return self.__class__(
             self.name,
-            context=self._owner.structlog().get_context(
-                bound_logger
-            ),
+            context=self._owner.structlog().get_context(bound_logger),
         )
 
     def try_unbind(self, *keys: str) -> Self:

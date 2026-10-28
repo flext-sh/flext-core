@@ -306,9 +306,7 @@ class TestsFlextCoreResultFailureFactories:
     @staticmethod
     def test_covariant_unsubscripted_failure_constructors() -> None:
         """Covariant p.Result[Never] allows r.fail, r.fail_op, and r.from_failure."""
-        failed_direct: p.Result[str] = r.fail(
-            "unsubscripted-fail", error_code="E_COV"
-        )
+        failed_direct: p.Result[str] = r.fail("unsubscripted-fail", error_code="E_COV")
         failed_op: p.Result[int] = r.fail_op("load", "missing")
         failed_propagated: p.Result[tuple[str, int]] = r.from_failure(failed_direct)
         tm.fail(failed_direct, has="unsubscripted-fail")

@@ -44,7 +44,8 @@ class TestsConfigSettingsFamilyAvailability:
     def _load(module_name: str) -> ModuleType:
         return import_module(module_name)
 
-    def test_singletons_are_stable_across_import_forms(self) -> None:
+    @staticmethod
+    def test_singletons_are_stable_across_import_forms() -> None:
         """Root-letter access and owner-module access yield the same SSOT."""
         owner_settings = import_module("flext_core._settings").settings
         owner_config = import_module("flext_core._config").config
@@ -62,7 +63,8 @@ class TestsConfigSettingsFamilyAvailability:
         assert isinstance(settings.model_dump(), dict)
         assert isinstance(config.model_dump(), dict)
 
-    def test_settings_timezone_resolves_for_models_family(self) -> None:
+    @staticmethod
+    def test_settings_timezone_resolves_for_models_family() -> None:
         """The models family resolves the configured IANA timezone itself.
 
         The models timestamp capability needs the configured timezone from
@@ -71,7 +73,8 @@ class TestsConfigSettingsFamilyAvailability:
         """
         assert isinstance(ZoneInfo(settings.timezone), ZoneInfo)
 
-    def test_config_exposes_typed_namespace_mapping(self) -> None:
+    @staticmethod
+    def test_config_exposes_typed_namespace_mapping() -> None:
         """The config singleton exposes its business-rule namespaces."""
         namespaces = config.model_dump()
         assert len(namespaces) > 0

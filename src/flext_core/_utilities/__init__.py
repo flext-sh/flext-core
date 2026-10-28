@@ -13,7 +13,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._logging_context.bound_logger import FlextUtilitiesLoggingBoundLogger
+    from flext_core._utilities._logging_context.bound_logger import (
+        FlextUtilitiesLoggingBoundLogger,
+    )
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -62,7 +64,6 @@ if TYPE_CHECKING:
     )
 
 __all__: tuple[str, ...] = (
-    "FlextUtilitiesLoggingBoundLogger",
     "FlextUtilitiesArgs",
     "FlextUtilitiesBase",
     "FlextUtilitiesChecker",
@@ -86,6 +87,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesGuardsTypeProtocol",
     "FlextUtilitiesHandler",
     "FlextUtilitiesLogging",
+    "FlextUtilitiesLoggingBoundLogger",
     "FlextUtilitiesLoggingConfig",
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesMapper",

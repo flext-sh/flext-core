@@ -64,8 +64,9 @@ class TestsFlextLoggings:
             tm.that(output, eq="")
         return result
 
+    @staticmethod
     @pytest.fixture
-    def logger(self) -> p.Logger:
+    def logger() -> p.Logger:
         """Provide ``logger``.
 
         Returns:

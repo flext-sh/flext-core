@@ -23,8 +23,10 @@ pure cooperative MRO and exposes `core = FlextCore.fetch_global()`.
 
 ## Conventions (specific to this package)
 
-- `_config.py` / `_settings.py` are layer-0 pure (stdlib + pydantic only); they own
-  `config` / `settings` singletons.
+- Config/settings owners are layer-zero pure and own their respective singletons;
+  module naming and the narrow acyclic helper allowance follow ADR-005 and ADR-028.
+  Historical `_config.py` / `_settings.py` spellings are migration inputs, not an
+  exception to the current filename contract.
 - `lazy.py` (`FlextLazy`) builds the PEP-562 export map used by every generated
   `__init__`.
 - Never hand-edit `__init__.py` or `# AUTO-GENERATED` facet roots; their exports are
@@ -34,8 +36,18 @@ pure cooperative MRO and exposes `core = FlextCore.fetch_global()`.
   [FLEXT ADR-028 Decisions 17–18](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17)
   and the family-shape contract in
   [ADR-014 §3](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/014-family-part-shape-rope-codemod-rules.md#3b-one-semantic-engine-two-safe-modes).
-- Config/settings canonical pattern: ADR-005 (§1–§2) + `_settings.py`/`_config.py`
-  module docstrings.
+- Config/settings canonical pattern: ADR-005 (§1–§2) and the declaring module's
+  docstring.
+
+### Lazy bootstrap responsibility
+
+The source consolidation target is
+[ADR-014 Core lazy bootstrap](https://github.com/flext-sh/flext/blob/0.12.0-dev/docs/architecture/adr/014-family-part-shape-rope-codemod-rules.md#core-lazy-bootstrap).
+Keep `FlextLazy` as the public bootstrap owner and preserve the consumed map,
+installation and descriptor contracts. Generated initializers must be able to load
+that owner before any package whose initializer it installs. Migrate consumed
+public signatures under ADR-028 Decision 7; an absent source file is not evidence
+that its consumer census is zero. `flext-ir794` owns this cut under `flext-brr3y`.
 
 ### Failure factory responsibility
 

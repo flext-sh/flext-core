@@ -65,7 +65,9 @@ class FlextModelsBasePart03(flextmodelsbase_part_02.FlextModelsBasePart02):
         # rejected by ``inspect_field_serializer``, and the self-less
         # ``(value)`` shape fails the fleet method-naming rule. The
         # classmethod keeps the value mapping pure (no instance state).
-        @FlextModelsPydantic.field_serializer("created_at", "updated_at", when_used="json")
+        @FlextModelsPydantic.field_serializer(
+            "created_at", "updated_at", when_used="json"
+        )
         @classmethod
         def serialize_timestamps(cls, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
