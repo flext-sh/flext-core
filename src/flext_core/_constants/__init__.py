@@ -46,7 +46,12 @@ if TYPE_CHECKING:
     from flext_core._constants.status import FlextConstantsStatus
     from flext_core._constants.timeout import FlextConstantsTimeout
     from flext_core._constants.validation import FlextConstantsValidation
-    from flext_core._constants.violations import FlextMroViolation, FlextSmellViolation
+    from flext_core._constants.violations import (
+        FlextMroViolation,
+        FlextMroViolationError,
+        FlextSmellViolation,
+        FlextSmellViolationError,
+    )
 
 __all__: tuple[str, ...] = (
     "FlextConstantsBase",
@@ -73,7 +78,9 @@ __all__: tuple[str, ...] = (
     "FlextConstantsTimeout",
     "FlextConstantsValidation",
     "FlextMroViolation",
+    "FlextMroViolationError",
     "FlextSmellViolation",
+    "FlextSmellViolationError",
 )
 
 install_lazy_exports(
@@ -87,9 +94,13 @@ install_lazy_exports(
         "FlextConstantsErrors": ".errors",
         "FlextConstantsErrorsDomainParser": "._errors.flextconstantserrors_part_04",
         "FlextConstantsErrorsMessages": "._errors.flextconstantserrors_part_01",
-        "FlextConstantsErrorsRuntimeExceptions": "._errors.flextconstantserrors_part_02",
+        "FlextConstantsErrorsRuntimeExceptions": (
+            "._errors.flextconstantserrors_part_02"
+        ),
         "FlextConstantsErrorsRuntimeSettings": "._errors.flextconstantserrors_part_05",
-        "FlextConstantsErrorsValidationExceptions": "._errors.flextconstantserrors_part_03",
+        "FlextConstantsErrorsValidationExceptions": (
+            "._errors.flextconstantserrors_part_03"
+        ),
         "FlextConstantsFile": ".file",
         "FlextConstantsGuards": ".guards",
         "FlextConstantsInfrastructure": ".infrastructure",
@@ -104,7 +115,9 @@ install_lazy_exports(
         "FlextConstantsTimeout": ".timeout",
         "FlextConstantsValidation": ".validation",
         "FlextMroViolation": ".violations",
+        "FlextMroViolationError": ".violations",
         "FlextSmellViolation": ".violations",
+        "FlextSmellViolationError": ".violations",
     }),
     public_exports=__all__,
 )

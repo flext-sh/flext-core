@@ -22,7 +22,7 @@ from typing import cast
 import pytest
 
 import flext_core
-from flext_core import FlextMroViolation, FlextSettings
+from flext_core import FlextMroViolationError, FlextSettings
 from tests import e, p, r, t, tm
 
 # Public facade names a caller can import from ``flext_core``.
@@ -292,7 +292,8 @@ class TestsFlextCoreFacadeLifecycle:
     def test_exceptions_mro_violation_is_real_reference() -> None:
         """``FlextExceptions.MroViolation`` is the canonical violation class."""
         tm.that(
-            flext_core.FlextExceptions.MroViolation is FlextMroViolation, truth=True
+            flext_core.FlextExceptions.MroViolation is FlextMroViolationError,
+            truth=True,
         )
 
     @staticmethod

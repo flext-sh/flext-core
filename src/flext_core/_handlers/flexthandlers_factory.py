@@ -14,14 +14,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast, override
 
 from flext_core import FlextContext, c, m, p, r, t
-from flext_core._handlers import FlextHandlersCqrsBase, FlextHandlersPart05
+from flext_core._handlers import FlextHandlersCqrsBase, FlextHandlersPipeline
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextHandlersPart06[MessageT_contra, ResultT](
-    FlextHandlersPart05[MessageT_contra, ResultT],
+class FlextHandlersFactory[MessageT_contra, ResultT](
+    FlextHandlersPipeline[MessageT_contra, ResultT],
 ):
     def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
         """Initialize the handler, forwarding configuration to its owner.
@@ -67,7 +67,7 @@ class FlextHandlersPart06[MessageT_contra, ResultT](
 
         """
 
-        class CallableHandler(FlextHandlersPart06[t.Scalar, t.Scalar]):
+        class CallableHandler(FlextHandlersFactory[t.Scalar, t.Scalar]):
             """Dynamic handler created from callable."""
 
             _handler_fn: Callable[[t.Scalar], t.Scalar]
@@ -128,4 +128,4 @@ class FlextHandlersPart06[MessageT_contra, ResultT](
             return self.handle(message)
 
 
-__all__: list[str] = ["FlextHandlersPart06"]
+__all__: list[str] = ["FlextHandlersFactory"]

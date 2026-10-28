@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._project_metadata import contract, FlextModelsProjectMetadataContract
+from flext_core._models._project_metadata import FlextModelsProjectMetadataContract
 
 
 class FlextModelsPyprojectIngressContract(FlextModelsProjectMetadataContract):

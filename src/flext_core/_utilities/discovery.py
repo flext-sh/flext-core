@@ -258,6 +258,34 @@ class FlextUtilitiesDiscovery:
         return doc
 
     @staticmethod
+    def _inherited_handler_metadata(
+        func: FunctionType,
+        where: tuple[type, str, str],
+    ) -> object | None:
+        """Resolve the handler metadata, falling back to superclass overrides.
+
+        Returns:
+            The resolved metadata, or none when no declaration carries one.
+
+        """
+        metadata = FlextUtilitiesModelRuntime.handler_metadata(
+            func,
+            name=f"{where[2]}.{where[0].__qualname__}.{where[1]}",
+        )
+        if metadata is not None or not hasattr(where[0], "__mro__"):
+            return metadata
+        for base in where[0].__mro__[1:]:
+            base_func = inspect.getattr_static(base, where[1], None)
+            if isinstance(base_func, FunctionType):
+                base_meta = FlextUtilitiesModelRuntime.handler_metadata(
+                    base_func,
+                    name=f"{where[2]}.{base.__qualname__}.{where[1]}",
+                )
+                if base_meta is not None:
+                    return base_meta
+        return None
+
+    @staticmethod
     def _resolve_operation_request(
         func: FunctionType,
         where: tuple[type, str, str],
@@ -277,21 +305,7 @@ class FlextUtilitiesDiscovery:
         origin = FlextUtilitiesDiscovery._resolve(func, where, returned, subscript=True)
         if origin is not p.Result:
             raise error(where, returned, c.ERR_SERVICE_OPERATION_RESULT)
-        metadata = FlextUtilitiesModelRuntime.handler_metadata(
-            func,
-            name=f"{where[2]}.{where[0].__qualname__}.{where[1]}",
-        )
-        if metadata is None and hasattr(where[0], "__mro__"):
-            for base in where[0].__mro__[1:]:
-                base_func = inspect.getattr_static(base, where[1], None)
-                if isinstance(base_func, FunctionType):
-                    base_meta = FlextUtilitiesModelRuntime.handler_metadata(
-                        base_func,
-                        name=f"{where[2]}.{base.__qualname__}.{where[1]}",
-                    )
-                    if base_meta is not None:
-                        metadata = base_meta
-                        break
+        metadata = FlextUtilitiesDiscovery._inherited_handler_metadata(func, where)
         params = tuple(signature.parameters.values())[1:]
         if not params:
             if metadata is not None:

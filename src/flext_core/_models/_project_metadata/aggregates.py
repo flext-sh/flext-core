@@ -11,7 +11,11 @@ from typing import Annotated
 from pydantic import Field
 
 from flext_core import t
-from flext_core._models._project_metadata import contract, fields, pyproject_ingress, FlextModelsProjectMetadataContract, FlextModelsProjectMetadataFields, FlextModelsPyprojectIngressContract
+from flext_core._models._project_metadata import (
+    FlextModelsProjectMetadataContract,
+    FlextModelsProjectMetadataFields,
+    FlextModelsPyprojectIngressContract,
+)
 
 
 class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):
@@ -72,9 +76,7 @@ class FlextModelsProjectMetadataAggregates(FlextModelsProjectMetadataFields):
                 default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextDocs,
                 description="Documentation policy",
             ),
-        ] = Field(
-            default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextDocs
-        )
+        ] = Field(default_factory=FlextModelsProjectMetadataFields.ProjectToolFlextDocs)
         workspace: Annotated[
             FlextModelsProjectMetadataFields.ProjectToolFlextWorkspace,
             Field(

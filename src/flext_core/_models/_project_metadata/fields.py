@@ -12,7 +12,11 @@ from typing import Annotated, Self
 from pydantic import AliasChoices, Field, field_validator, model_validator
 
 from flext_core import c, t
-from flext_core._models._project_metadata import contract, pyproject_ingress, FlextModelsProjectMetadataContract, FlextModelsPyprojectIngressContract
+from flext_core._models._project_metadata import (
+    FlextModelsProjectMetadataContract,
+    FlextModelsPyprojectIngressContract,
+)
+
 
 class FlextModelsProjectMetadataFields:
     """Leaf field contracts shared by the aggregate model layers."""

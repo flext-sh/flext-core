@@ -94,7 +94,7 @@ class TestsFlextExamplesExecution:
         tm.that(stdout, has=f"PASS: {example_name}")
         tm.that(stdout, lacks="FAIL")
         tm.that(stderr, lacks="Traceback")
-        tm.that(stderr, lacks="FlextMroViolation")
+        tm.that(stderr, lacks="FlextMroViolationError")
         tm.that(re.search(r"\b\w*Warning:", stderr), none=True, msg=stderr)
 
         check_match = tm.not_none(

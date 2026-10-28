@@ -11,12 +11,14 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models._project_metadata import aggregates, contract, pyproject_ingress, FlextModelsProjectMetadataAggregates, FlextModelsProjectMetadataContract, FlextModelsPyprojectIngressContract
+from flext_core._models._project_metadata import (
+    FlextModelsProjectMetadataAggregates,
+    FlextModelsProjectMetadataContract,
+    FlextModelsPyprojectIngressContract,
+)
 
 
-class FlextModelsProjectMetadataDocument(
-    FlextModelsProjectMetadataAggregates
-):
+class FlextModelsProjectMetadataDocument(FlextModelsProjectMetadataAggregates):
     """Validated TOML document sub-tables and canonical domain aggregate."""
 
     class PyprojectTool(FlextModelsPyprojectIngressContract):
@@ -28,9 +30,7 @@ class FlextModelsProjectMetadataDocument(
                 default_factory=FlextModelsProjectMetadataAggregates.ProjectToolFlext,
                 description="Validated FLEXT project policy",
             ),
-        ] = Field(
-            default_factory=FlextModelsProjectMetadataAggregates.ProjectToolFlext
-        )
+        ] = Field(default_factory=FlextModelsProjectMetadataAggregates.ProjectToolFlext)
 
     class ProjectMetadata(FlextModelsProjectMetadataContract):
         """Canonical project metadata retaining exact validated source objects."""

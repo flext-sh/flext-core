@@ -12,14 +12,14 @@ from typing import TYPE_CHECKING
 from typing_extensions import TypeForm
 
 from flext_core import p, u
-from flext_core._handlers import FlextHandlersPart06
+from flext_core._handlers import FlextHandlersFactory
 
 if TYPE_CHECKING:
     from types import ModuleType
 
 
-class FlextHandlersPart07[MessageT_contra, ResultT](
-    FlextHandlersPart06[MessageT_contra, ResultT],
+class FlextHandlersDiscovery[MessageT_contra, ResultT](
+    FlextHandlersFactory[MessageT_contra, ResultT],
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 
@@ -59,7 +59,7 @@ class FlextHandlersPart07[MessageT_contra, ResultT](
                 True if class has at least one handler, False otherwise
 
             """
-            return bool(FlextHandlersPart07.Discovery.scan_class(target_class))
+            return bool(FlextHandlersDiscovery.Discovery.scan_class(target_class))
 
         @staticmethod
         def scan_class(
@@ -138,4 +138,4 @@ class FlextHandlersPart07[MessageT_contra, ResultT](
             return sorted(handlers, key=lambda entry: (-entry[2].priority, entry[0]))
 
 
-__all__: list[str] = ["FlextHandlersPart07"]
+__all__: list[str] = ["FlextHandlersDiscovery"]

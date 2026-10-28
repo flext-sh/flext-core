@@ -15,14 +15,14 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p
-from flext_core._handlers import FlextHandlersPart02
+from flext_core._handlers import FlextHandlersSettings
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextHandlersPart03[MessageT_contra, ResultT](
-    FlextHandlersPart02[MessageT_contra, ResultT],
+class FlextHandlersDispatch[MessageT_contra, ResultT](
+    FlextHandlersSettings[MessageT_contra, ResultT],
 ):
     @staticmethod
     def handler[
@@ -125,4 +125,4 @@ class FlextHandlersPart03[MessageT_contra, ResultT](
         return issubclass(message_type, self._expected_message_type)
 
 
-__all__: list[str] = ["FlextHandlersPart03"]
+__all__: list[str] = ["FlextHandlersDispatch"]

@@ -14,22 +14,22 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._handlers.flexthandlers_cqrs_base import FlextHandlersCqrsBase
-    from flext_core._handlers.flexthandlers_part_02 import FlextHandlersPart02
-    from flext_core._handlers.flexthandlers_part_03 import FlextHandlersPart03
-    from flext_core._handlers.flexthandlers_part_04 import FlextHandlersPart04
-    from flext_core._handlers.flexthandlers_part_05 import FlextHandlersPart05
-    from flext_core._handlers.flexthandlers_part_06 import FlextHandlersPart06
-    from flext_core._handlers.flexthandlers_part_07 import FlextHandlersPart07
+    from flext_core._handlers.flexthandlers_discovery import FlextHandlersDiscovery
+    from flext_core._handlers.flexthandlers_dispatch import FlextHandlersDispatch
+    from flext_core._handlers.flexthandlers_execution import FlextHandlersExecution
+    from flext_core._handlers.flexthandlers_pipeline import FlextHandlersPipeline
+    from flext_core._handlers.flexthandlers_factory import FlextHandlersFactory
+    from flext_core._handlers.flexthandlers_settings import FlextHandlersSettings
 
 
 __all__: tuple[str, ...] = (
     "FlextHandlersCqrsBase",
-    "FlextHandlersPart02",
-    "FlextHandlersPart03",
-    "FlextHandlersPart04",
-    "FlextHandlersPart05",
-    "FlextHandlersPart06",
-    "FlextHandlersPart07",
+    "FlextHandlersDiscovery",
+    "FlextHandlersDispatch",
+    "FlextHandlersExecution",
+    "FlextHandlersPipeline",
+    "FlextHandlersFactory",
+    "FlextHandlersSettings",
 )
 
 install_lazy_exports(
@@ -37,12 +37,12 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextHandlersCqrsBase": ".flexthandlers_cqrs_base",
-        "FlextHandlersPart02": ".flexthandlers_part_02",
-        "FlextHandlersPart03": ".flexthandlers_part_03",
-        "FlextHandlersPart04": ".flexthandlers_part_04",
-        "FlextHandlersPart05": ".flexthandlers_part_05",
-        "FlextHandlersPart06": ".flexthandlers_part_06",
-        "FlextHandlersPart07": ".flexthandlers_part_07",
+        "FlextHandlersSettings": ".flexthandlers_settings",
+        "FlextHandlersDispatch": ".flexthandlers_dispatch",
+        "FlextHandlersExecution": ".flexthandlers_execution",
+        "FlextHandlersPipeline": ".flexthandlers_pipeline",
+        "FlextHandlersFactory": ".flexthandlers_factory",
+        "FlextHandlersDiscovery": ".flexthandlers_discovery",
     }),
     public_exports=__all__,
 )

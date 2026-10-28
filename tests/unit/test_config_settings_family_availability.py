@@ -19,6 +19,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from flext_core import config, settings
+from tests import tm
 
 if TYPE_CHECKING:
     from types import ModuleType
@@ -49,8 +50,8 @@ class TestsConfigSettingsFamilyAvailability:
         """Root-letter access and owner-module access yield the same SSOT."""
         owner_settings = import_module("flext_core._settings").settings
         owner_config = import_module("flext_core._config").config
-        assert settings is owner_settings
-        assert config is owner_config
+        tm.that(settings, where=lambda current: current is owner_settings)
+        tm.that(config, where=lambda current: current is owner_config)
 
     @pytest.mark.parametrize("module_name", _FAMILY_SURFACES)
     def test_family_module_loads_alongside_config_settings(
@@ -59,9 +60,9 @@ class TestsConfigSettingsFamilyAvailability:
     ) -> None:
         """Each family surface imports and the SSOT stays functional."""
         module = self._load(module_name)
-        assert module is not None
-        assert isinstance(settings.model_dump(), dict)
-        assert isinstance(config.model_dump(), dict)
+        tm.ok(module is not None)
+        tm.ok(isinstance(settings.model_dump(), dict))
+        tm.ok(isinstance(config.model_dump(), dict))
 
     @staticmethod
     def test_settings_timezone_resolves_for_models_family() -> None:
@@ -71,11 +72,11 @@ class TestsConfigSettingsFamilyAvailability:
         the layer-0 settings; it must never import the utility layer for it.
 
         """
-        assert isinstance(ZoneInfo(settings.timezone), ZoneInfo)
+        tm.ok(isinstance(ZoneInfo(settings.timezone), ZoneInfo))
 
     @staticmethod
     def test_config_exposes_typed_namespace_mapping() -> None:
         """The config singleton exposes its business-rule namespaces."""
         namespaces = config.model_dump()
-        assert len(namespaces) > 0
-        assert all(isinstance(key, str) for key in namespaces)
+        tm.that(len(namespaces), gt=0)
+        tm.ok(all(isinstance(key, str) for key in namespaces))

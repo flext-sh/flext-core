@@ -14,7 +14,10 @@ from typing import Annotated
 
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._exception_params import base, service_errors, FlextModelsExceptionParamsBase, FlextModelsExceptionParamsServiceErrors
+from flext_core._models._exception_params import (
+    FlextModelsExceptionParamsBase,
+    FlextModelsExceptionParamsServiceErrors,
+)
 
 
 class FlextModelsExceptionParamsOperationErrors(
