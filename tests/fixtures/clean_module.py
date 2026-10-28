@@ -8,6 +8,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import re
 from collections.abc import (
     Iterable,
@@ -40,13 +49,13 @@ class TestsFlextCleanModels:
 
                 name: Annotated[str, m.Field(description="Entity display name.")] = ""
                 tags: Annotated[
-                    t.StrSequence,
+                    Sequence[str],
                     m.Field(description="Tag collection."),
-                ] = m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
+                ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
                 metadata: Annotated[
-                    t.StrMapping,
+                    Mapping[str, str],
                     m.Field(description="Attribute map."),
-                ] = m.Field(default_factory=u.empty(TypeForm(t.StrMapping)))
+                ] = m.Field(default_factory=u.empty(TypeForm(Mapping[str, str])))
                 aliased_value: Annotated[
                     t.Core.Tests.CentralizedUnion,
                     m.Field(description="Value declared through a t.* alias."),

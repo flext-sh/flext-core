@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal, overload
 
-from flext_core import m, p, t
+from flext_core import m, p
 from flext_core._decorators import FlextDecoratorsRailway
 
 if TYPE_CHECKING:
@@ -23,7 +24,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
     def combined[**PCallback, TResult](
         cls,
         *,
-        inject_deps: t.StrMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         railway_enabled: Literal[False] = False,
@@ -35,7 +36,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
     def combined(
         cls,
         *,
-        inject_deps: t.StrMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         railway_enabled: Literal[True],
@@ -46,7 +47,7 @@ class FlextDecoratorsCombined(FlextDecoratorsRailway):
     def combined[**PCallback, TResult](
         cls,
         *,
-        inject_deps: t.StrMapping | None = None,
+        inject_deps: Mapping[str, str] | None = None,
         operation_name: str | None = None,
         track_perf: bool = True,
         railway_enabled: bool = False,

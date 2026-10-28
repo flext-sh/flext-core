@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Literal
 
 from flext_core._typings.base import FlextTypingBase
@@ -20,8 +21,8 @@ class FlextTypingConfig:
 
     type DocumentationLanguage = Literal["en", "pt-BR"]
     type ConfigValue = FlextTypingBase.JsonValue
-    type ConfigMapping = FlextTypingBase.MappingKV[str, FlextTypingBase.JsonValue]
-    type ConfigOverrideMapping = FlextTypingBase.MappingKV[str, str]
+    type ConfigMapping = Mapping[str, FlextTypingBase.JsonValue]
+    type ConfigOverrideMapping = Mapping[str, str]
 
 
 __all__: list[str] = ["FlextTypingConfig"]

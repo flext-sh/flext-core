@@ -112,7 +112,7 @@ class FlextUtilitiesMapperAccessPart01:
         current: t.JsonPayload
         | t.JsonMapping
         | m.ConfigMap
-        | t.SequenceOf[t.JsonValue | t.JsonPayload]
+        | Sequence[t.JsonValue | t.JsonPayload]
         | None,
         key_part: str,
     ) -> p.Result[t.JsonPayload]:
@@ -127,7 +127,7 @@ class FlextUtilitiesMapperAccessPart01:
             FlextExceptions.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
         result: p.Result[t.JsonPayload]
-        mapping_obj: t.MappingKV[str, t.JsonValue | t.JsonPayload] | None = None
+        mapping_obj: Mapping[str, t.JsonValue | t.JsonPayload] | None = None
         if isinstance(current, m.ConfigMap):
             mapping_obj = current.root
         elif isinstance(current, Mapping):

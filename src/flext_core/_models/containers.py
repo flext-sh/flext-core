@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING, Annotated
 
 from flext_core import t
@@ -53,7 +54,7 @@ class FlextModelsContainers:
             return self.root(value)
 
     class _MappingRootBase(
-        FlextModelsPydantic.RootModel[t.MutableMappingKV[str, t.JsonPayload]],
+        FlextModelsPydantic.RootModel[MutableMapping[str, t.JsonPayload]],
     ):
         """MRO base providing the explicit mapping API for dict-rooted RootModels.
 
@@ -112,7 +113,7 @@ class FlextModelsContainers:
 
         def update(
             self,
-            other: t.MappingKV[str, t.JsonPayload],
+            other: Mapping[str, t.JsonPayload],
         ) -> None:
             """Merge ``other`` into the mapping, overwriting existing keys.
 
@@ -175,7 +176,7 @@ class FlextModelsContainers:
         """Runtime dictionary container with explicit mapping API."""
 
         root: Annotated[
-            t.MutableMappingKV[str, t.JsonPayload],
+            MutableMapping[str, t.JsonPayload],
             FlextModelsPydantic.Field(
                 description="Validated runtime key-value mapping.",
             ),
@@ -185,7 +186,7 @@ class FlextModelsContainers:
         """Runtime configuration mapping with explicit mapping API."""
 
         root: Annotated[
-            t.MutableMappingKV[str, t.JsonPayload],
+            MutableMapping[str, t.JsonPayload],
             FlextModelsPydantic.Field(
                 description="Validated runtime configuration mapping.",
             ),

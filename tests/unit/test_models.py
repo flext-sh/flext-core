@@ -11,6 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
 from tests import m, t, tm
@@ -135,7 +137,7 @@ class TestsFlextCoreModels:
     @staticmethod
     def test_config_map_supports_read_only_mapping_access() -> None:
         """Test config map supports read only mapping access."""
-        data: t.ScalarMapping = {"a": 1, "b": 2}
+        data: Mapping[str, t.Scalar] = {"a": 1, "b": 2}
         config = m.ConfigMap(root=dict(data))
 
         tm.that(config["a"], eq=1)

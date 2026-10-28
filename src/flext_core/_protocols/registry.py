@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import c
@@ -48,13 +49,13 @@ class FlextProtocolsRegistry:
         @property
         def registered(
             self,
-        ) -> t.SequenceOf[FlextProtocolsRegistry.RegistrationDetails]: ...
+        ) -> Sequence[FlextProtocolsRegistry.RegistrationDetails]: ...
 
         @property
-        def skipped(self) -> t.StrSequence: ...
+        def skipped(self) -> Sequence[str]: ...
 
         @property
-        def errors(self) -> t.StrSequence: ...
+        def errors(self) -> Sequence[str]: ...
 
         @property
         def success(self) -> bool: ...
@@ -100,14 +101,14 @@ class FlextProtocolsRegistry:
 
         def register_handlers(
             self,
-            handlers: t.SequenceOf[FlextProtocolsHandler.DispatchableHandler],
+            handlers: Sequence[FlextProtocolsHandler.DispatchableHandler],
         ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
             """Register multiple handlers in batch."""
             ...
 
         def register_bindings(
             self,
-            bindings: t.MappingKV[
+            bindings: Mapping[
                 t.RegistryBindingKey, FlextProtocolsHandler.DispatchableHandler
             ],
         ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
@@ -157,7 +158,7 @@ class FlextProtocolsRegistry:
             category: str,
             *,
             scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
-        ) -> FlextProtocolsResult.Result[t.StrSequence]:
+        ) -> FlextProtocolsResult.Result[Sequence[str]]:
             """List all plugins in a category."""
             ...
 

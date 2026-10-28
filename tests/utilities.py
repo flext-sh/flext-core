@@ -212,7 +212,7 @@ class TestsFlextUtilities(flext_tests_u):
             ),
         ]
 
-        VALIDATION_TYPES: ClassVar[Sequence[t.Pair[str, t.JsonPayload]]] = [
+        VALIDATION_TYPES: ClassVar[Sequence[tuple[str, t.JsonPayload]]] = [
             ("str", "test_message"),
             ("int", 42),
             ("float", math.pi),

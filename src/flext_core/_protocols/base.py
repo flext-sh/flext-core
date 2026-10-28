@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, MutableSequence
 from typing import TYPE_CHECKING, Literal, Protocol, Self, overload, runtime_checkable
 
 from typing_extensions import TypeForm
@@ -14,7 +14,6 @@ from typing_extensions import TypeForm
 from flext_core import t
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, MutableSequence
     from types import TracebackType
 
     from pydantic.config import JsonDict

@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -28,7 +29,7 @@ class FlextProtocolsConfig:
 
         @classmethod
         def add_implicit_resolver(
-            cls, tag: str, regexp: t.RegexPattern, first: t.StrSequence
+            cls, tag: str, regexp: t.RegexPattern, first: Sequence[str]
         ) -> None:
             """Register a scalar pattern for its possible initial characters."""
             ...

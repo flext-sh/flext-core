@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar
 from uuid import UUID
 
 import pytest
 
 from flext_core import FlextSettings
-from tests import m, t, tm, u
+from tests import m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -266,13 +267,13 @@ class TestsFlextCoreSettingsStateValidation:
             port: int = m.Field(default=389, ge=1, le=65535)
 
         class Branch(m.BaseModel):
-            entries: t.MutableMappingKV[PortKey | tuple[PortKey, str], str]
+            entries: MutableMapping[PortKey | tuple[PortKey, str], str]
 
         class Owner(FlextSettings):
             branch: Branch
 
         valid_key = PortKey()
-        initial_entries: t.MutableMappingKV[PortKey | tuple[PortKey, str], str] = {
+        initial_entries: MutableMapping[PortKey | tuple[PortKey, str], str] = {
             valid_key: "direct",
             (valid_key, "tuple"): "tuple",
         }
@@ -309,7 +310,7 @@ class TestsFlextCoreSettingsStateValidation:
             port: int = m.Field(default=389, ge=1, le=65535)
 
         class Branch(m.BaseModel):
-            entries: t.MutableMappingKV[PortKey | tuple[PortKey, UUID] | UUID, str]
+            entries: MutableMapping[PortKey | tuple[PortKey, UUID] | UUID, str]
 
         class Owner(FlextSettings):
             branch: Branch
@@ -317,9 +318,7 @@ class TestsFlextCoreSettingsStateValidation:
         selected_port = 1389
         raw_key = PortKey().model_copy(update={"port": str(selected_port)})
         opaque_key = UUID(int=1)
-        original_entries: t.MutableMappingKV[
-            PortKey | tuple[PortKey, UUID] | UUID, str
-        ] = {
+        original_entries: MutableMapping[PortKey | tuple[PortKey, UUID] | UUID, str] = {
             raw_key: "model",
             (raw_key, opaque_key): "tuple",
             opaque_key: "opaque",

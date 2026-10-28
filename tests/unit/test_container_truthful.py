@@ -183,7 +183,7 @@ class TestsFlextCoreContainerTruthful:
         """The registry model port admits list output, not only named fields."""
         instant = datetime.now(UTC)
         path = Path("sequence-payload")
-        payload: t.ListOf[t.JsonPayload] = ["entry", path, instant]
+        payload: list[t.JsonPayload] = ["entry", path, instant]
         registered = m.ObjectList(root=payload)
         _ = clean_container.bind("sequence-payload", registered)
         value: p.Model[list[t.JsonValue]] = tm.ok(

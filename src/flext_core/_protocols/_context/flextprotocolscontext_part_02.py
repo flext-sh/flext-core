@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsResult
@@ -160,7 +161,7 @@ class FlextProtocolsContextPart02(FlextProtocolsContextPart01):
             ...
 
         @staticmethod
-        def export_full_context() -> t.MappingKV[str, t.Scalar]:
+        def export_full_context() -> Mapping[str, t.Scalar]:
             """Export the active process context state."""
             ...
 

@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from tests import m, t
+from tests import m
 
 
 class TestsFlextUtilitiesReliabilityScenariosMixin:
@@ -53,7 +53,7 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
             description="All retries exhausted",
         ),
     ]
-    CIRCUIT_BREAKER_SCENARIOS: ClassVar[t.SequenceOf[m.Tests.ReliabilityScenario]] = [
+    CIRCUIT_BREAKER_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [
         m.Tests.ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",

@@ -6,10 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
-from examples import c, p, r, t, u
+from examples import c, p, r, u
 from examples.ex_08_container_lifecycle import ExamplesFlextContainerLifecycle
 from flext_core import FlextContainer
 
@@ -43,7 +44,7 @@ class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
     def _register_fluent_entries(
         self,
         container: p.Container,
-        fluent: t.StrMapping,
+        fluent: Mapping[str, str],
     ) -> None:
         """Register fluent service/factory/resource entries.
 
@@ -80,7 +81,7 @@ class ExamplesFlextContainer(ExamplesFlextContainerLifecycle):
     def _verify_fluent_settings(
         self,
         container: p.Container,
-        fluent: t.StrMapping,
+        fluent: Mapping[str, str],
     ) -> None:
         """Verify applied settings and registered values resolve.
 

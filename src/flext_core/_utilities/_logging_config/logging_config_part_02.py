@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import MutableSequence, Sequence
 from functools import partial
 
 import structlog
@@ -169,14 +170,14 @@ class FlextUtilitiesLoggingConfigPart02(FlextUtilitiesLoggingConfigPart01):
         console_renderer: bool,
         options: p.StructlogOptions,
         trace: bool,
-    ) -> t.SequenceOf[Processor]:
+    ) -> Sequence[Processor]:
         """Compose one shared event pipeline and a native terminal renderer.
 
         Returns:
             The ordered native processors.
 
         """
-        processors: t.MutableSequenceOf[Processor] = [
+        processors: MutableSequence[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
             cls.drop_below_threshold,

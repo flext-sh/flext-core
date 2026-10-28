@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, m, t
@@ -123,7 +124,7 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         expected_type: type | None = None
         actual_type: type | None = None
 
-        TYPE_MAP: ClassVar[t.MappingKV[str, type]] = {
+        TYPE_MAP: ClassVar[Mapping[str, type]] = {
             "str": str,
             "int": int,
             "float": float,
@@ -212,4 +213,4 @@ class FlextExceptionsTypes(FlextExceptionsBase):
         )
 
 
-__all__: t.SequenceOf[str] = ["FlextExceptionsTypes"]
+__all__: Sequence[str] = ["FlextExceptionsTypes"]

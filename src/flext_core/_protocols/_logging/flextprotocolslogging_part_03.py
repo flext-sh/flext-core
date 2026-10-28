@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Protocol, runtime_checkable
 
 from flext_core import t
@@ -31,7 +32,7 @@ class FlextProtocolsLoggingPart03(FlextProtocolsLoggingPart02):
     type AccessibleData = (
         t.JsonPayload
         | FlextProtocolsBase.Model
-        | t.MappingKV[str, t.JsonPayload | FlextProtocolsBase.Model | None]
+        | Mapping[str, t.JsonPayload | FlextProtocolsBase.Model | None]
         | FlextProtocolsResult.HasModelDump
         | FlextProtocolsLoggingPart03.ValidatorSpec
     )

@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import Mapping, MutableSequence
 from datetime import UTC, datetime
 from typing import Annotated, Self
 
@@ -100,7 +100,7 @@ class FlextModelsEntity:
             bool, FlextModelsPydantic.Field(description="Strip empty values")
         ] = False
         map_keys: Annotated[
-            t.StrMapping | None,
+            Mapping[str, str] | None,
             FlextModelsPydantic.Field(
                 description="Optional old-key to new-key mapping"
             ),

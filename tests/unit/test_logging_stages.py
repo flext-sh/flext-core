@@ -17,6 +17,7 @@ import select
 import sys
 import threading
 import traceback
+from collections.abc import Mapping, MutableSequence
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import redirect_stderr
 from pathlib import Path
@@ -892,7 +893,7 @@ class TestsFlextLoggingNativeEmission:
 
         stream.seek(0)
         stream.truncate()
-        arguments: t.ScalarMapping = {"actor": b"sam"}
+        arguments: Mapping[str, t.Scalar] = {"actor": b"sam"}
         error_data: t.JsonMapping = {"source": "native"}
         tm.ok(logger.info("named %(actor)s", arguments, error_data=error_data))
         event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
@@ -901,7 +902,7 @@ class TestsFlextLoggingNativeEmission:
 
         stream.seek(0)
         stream.truncate()
-        rows: t.MutableSequenceOf[tuple[str, t.JsonValue]] = [
+        rows: MutableSequence[tuple[str, t.JsonValue]] = [
             (c.ProcessingMode.STREAM, {"replication_key": None}),
         ]
         tm.ok(logger.info("rows %s", rows))

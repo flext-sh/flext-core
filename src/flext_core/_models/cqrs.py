@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
@@ -75,7 +76,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             Field(frozen=True, description="Message type discriminator"),
         ] = c.HandlerMode.QUERY
         filters: Annotated[
-            t.MappingKV[str, t.Scalar],
+            Mapping[str, t.Scalar],
             Field(
                 description=(
                     "Filter values that restrict"
@@ -122,7 +123,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | t.MappingKV[str, t.Scalar] | None,
+            v: BaseModel | Mapping[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance.
 
@@ -223,14 +224,14 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             default_factory=lambda: "evt_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH],
         )
         data: Annotated[
-            t.MappingKV[str, t.Scalar],
+            Mapping[str, t.Scalar],
             Field(description="Event payload data"),
         ] = Field(
             default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
         metadata: Annotated[
-            t.MappingKV[str, t.Scalar],
+            Mapping[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
         ] = Field(
             default_factory=lambda: MappingProxyType[str, t.Scalar]({}),

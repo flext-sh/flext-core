@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from contextlib import contextmanager
 
 from flext_core import FlextContext, c, m, p, t, u
@@ -118,4 +119,4 @@ class FlextMixins(m.ServiceState):
 
 x = FlextMixins
 
-__all__: t.StrSequence = ("FlextMixins", "x")
+__all__: Sequence[str] = ("FlextMixins", "x")

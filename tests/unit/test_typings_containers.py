@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from collections.abc import MutableMapping
 from datetime import UTC, datetime
 
 import flext_tests
@@ -159,7 +160,7 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_dict_model_dump_returns_underlying_mapping() -> None:
         """model_dump round-trips the validated mapping as a plain dict."""
-        payload: t.MutableMappingKV[str, t.JsonPayload] = {"a": 1, "b": "two"}
+        payload: MutableMapping[str, t.JsonPayload] = {"a": 1, "b": "two"}
         d = m.Dict(root=payload)
         tm.that(d.model_dump(), eq=payload)
 
@@ -191,7 +192,7 @@ class TestsFlextCoreTypedCollectionAliases:
     @staticmethod
     def test_configmap_model_dump_round_trips() -> None:
         """m.ConfigMap serializes back to the original settings mapping."""
-        payload: t.MutableMappingKV[str, t.JsonPayload] = {
+        payload: MutableMapping[str, t.JsonPayload] = {
             "timeout": 30,
             "debug": False,
         }
@@ -247,7 +248,7 @@ class TestsFlextCoreTypedCollectionAliases:
     @staticmethod
     @pytest.mark.parametrize("nonscalar", [[c.Action.LIST], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
-        nonscalar: list[str] | t.MappingKV[str, int] | tuple[str],
+        nonscalar: list[str] | Mapping[str, int] | tuple[str],
     ) -> None:
         """Container values are not members of the scalar runtime contract."""
         tm.fail(isinstance(nonscalar, c.SCALAR_TYPES))
@@ -256,7 +257,7 @@ class TestsFlextCoreTypedCollectionAliases:
 
     @staticmethod
     def test_pair_alias_enforces_two_element_arity() -> None:
-        """t.Pair validates a 2-tuple and rejects other arities."""
+        """Tuble validates a 2-tuple and rejects other arities."""
         adapter: t.TypeAdapter[tuple[int, str]] = u.type_adapter(
             TypeForm(tuple[int, str])
         )
@@ -266,7 +267,7 @@ class TestsFlextCoreTypedCollectionAliases:
 
     @staticmethod
     def test_triple_alias_enforces_three_element_arity() -> None:
-        """t.Triple validates a 3-tuple and rejects shorter tuples."""
+        """Tuble validates a 3-tuple and rejects shorter tuples."""
         adapter: t.TypeAdapter[tuple[int, str, bool]] = u.type_adapter(
             TypeForm(tuple[int, str, bool]),
         )

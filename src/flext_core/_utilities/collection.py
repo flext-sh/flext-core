@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from functools import partial
 
-from flext_core import FlextResult, c, p, t
+from flext_core import FlextResult, c, p
 from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
 from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
@@ -27,7 +27,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def count[TItem](
-        items: t.SequenceOf[TItem],
+        items: Sequence[TItem],
         predicate: Callable[[TItem], bool] | None = None,
     ) -> int:
         """Count items, optionally matching predicate.
@@ -42,7 +42,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def find[TItem](
-        items: t.SequenceOf[TItem] | tuple[TItem] | t.MappingKV[str, TItem],
+        items: Sequence[TItem] | tuple[TItem] | Mapping[str, TItem],
         predicate: Callable[[TItem], bool],
     ) -> p.Result[TItem]:
         """Find first item matching predicate; returns r[T].
@@ -65,7 +65,7 @@ class FlextUtilitiesCollection(
 
     @staticmethod
     def process[TItem, TMapped](
-        items: t.SequenceOf[TItem],
+        items: Sequence[TItem],
         processor: Callable[[TItem], TMapped],
         *,
         predicate: Callable[[TItem], bool] | None = None,

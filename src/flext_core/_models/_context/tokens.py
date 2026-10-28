@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from datetime import datetime
 from typing import Annotated
 
@@ -79,4 +80,4 @@ class FlextModelsContextTokens:
         ]
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContextTokens"]
+__all__: MutableSequence[str] = ["FlextModelsContextTokens"]

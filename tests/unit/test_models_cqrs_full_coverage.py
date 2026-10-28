@@ -15,7 +15,7 @@ from typing import cast
 
 import pytest
 
-from tests import c, m, t, tm, u
+from tests import c, m, tm, u
 
 
 class TestsFlextCoreModelsCqrs:
@@ -248,7 +248,7 @@ class TestsFlextCoreModelsCqrs:
         ],
     )
     def test_flext_message_union_discriminates_on_message_type(
-        payload: t.MappingKV[str, str | t.MappingKV[str, str]],
+        payload: Mapping[str, str | Mapping[str, str]],
         expected_cls: type,
     ) -> None:
         """Test flext message union discriminates on message type."""

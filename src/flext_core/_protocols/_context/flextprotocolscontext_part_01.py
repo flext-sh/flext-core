@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 if TYPE_CHECKING:
@@ -30,7 +31,7 @@ class FlextProtocolsContextPart01:
             """Check if a key exists in the context scope."""
             ...
 
-        def keys(self) -> t.StrSequence:
+        def keys(self) -> Sequence[str]:
             """Return all keys in the context scope."""
             ...
 
@@ -68,7 +69,7 @@ class FlextProtocolsContextPart01:
             """Clone context for isolated execution."""
             ...
 
-        def merge(self, other: Self | t.MappingKV[str, t.JsonPayload]) -> Self:
+        def merge(self, other: Self | Mapping[str, t.JsonPayload]) -> Self:
             """Merge another context or mapping into this one."""
             ...
 
@@ -80,7 +81,7 @@ class FlextProtocolsContextPart01:
             self,
             *,
             as_dict: bool = ...,
-        ) -> t.MappingKV[str, t.JsonPayload] | Self:
+        ) -> Mapping[str, t.JsonPayload] | Self:
             """Export context state as a dict or the context instance itself."""
             ...
 

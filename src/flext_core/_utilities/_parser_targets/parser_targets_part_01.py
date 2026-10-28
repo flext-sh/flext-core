@@ -24,7 +24,7 @@ class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
     @staticmethod
     def _resolve_opts[T](
         options: m.ParseOptions[T] | None,
-        kwargs: t.MappingKV[str, t.JsonPayload],
+        kwargs: Mapping[str, t.JsonPayload],
     ) -> tuple[m.ParseOptions[T], str]:
         """Resolve options + field-prefix string used by every ``_parse_try_*``.
 

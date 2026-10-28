@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
@@ -35,7 +35,7 @@ from flext_core import (
 from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, MutableMapping
+    from collections.abc import Callable
     from types import FrameType, ModuleType
 
 
@@ -343,11 +343,11 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         return name in self._registrations and name not in c.CONTAINER_RESERVED_NAMES
 
     @override
-    def names(self) -> t.StrSequence:
+    def names(self) -> Sequence[str]:
         """List the public services, factories, and resources.
 
         Returns:
-            The resulting ``t.StrSequence``.
+            The resulting ``Sequence[str]``.
 
         """
         return [name for name in self._registrations if self.has(name)]
@@ -669,4 +669,4 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         return self
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextContainer"]
+__all__: MutableSequence[str] = ["FlextContainer"]

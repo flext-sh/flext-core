@@ -22,7 +22,7 @@ class FlextUtilitiesMapperAccessPart02(FlextUtilitiesMapperAccessPart01):
     def _extract_handle_array_index(
         current: t.JsonPayload
         | t.JsonMapping
-        | t.SequenceOf[t.JsonValue | t.JsonPayload]
+        | Sequence[t.JsonValue | t.JsonPayload]
         | FlextModelsContainers.ObjectList,
         array_match: str,
     ) -> p.Result[t.JsonPayload | None]:
@@ -33,7 +33,7 @@ class FlextUtilitiesMapperAccessPart02(FlextUtilitiesMapperAccessPart01):
 
         """
         if isinstance(current, FlextModelsContainers.ObjectList):
-            sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
+            sequence: Sequence[t.JsonValue | t.JsonPayload] = current.root
         elif isinstance(current, Sequence) and not isinstance(
             current,
             c.STR_BYTES_TYPES,

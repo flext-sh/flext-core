@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
@@ -113,12 +114,12 @@ class TestsFlextProtocols(FlextTestsProtocols):
 
             def __call__(
                 self,
-                transform_opts: t.MappingKV[str, t.MapperInput],
+                transform_opts: Mapping[str, t.MapperInput],
             ) -> tuple[
                 bool,
                 bool,
                 bool,
-                t.StrMapping | None,
+                Mapping[str, str] | None,
                 set[str] | None,
                 set[str] | None,
             ]:
@@ -132,7 +133,7 @@ class TestsFlextProtocols(FlextTestsProtocols):
             def __call__(
                 self,
                 source: TestsFlextModelsMixins.TestsFlextModelsMixins.BadMapping,
-                **kwargs: t.StrMapping,
+                **kwargs: Mapping[str, str],
             ) -> p.Result[t.JsonMapping]:
                 """Transform one mapping source into a result mapping."""
                 ...
@@ -144,7 +145,7 @@ class TestsFlextProtocols(FlextTestsProtocols):
             def __call__(
                 self,
                 source: TestsFlextModelsMixins.TestsFlextModelsMixins.BadItems,
-                key_map: t.StrMapping,
+                key_map: Mapping[str, str],
                 *,
                 keep_unmapped: bool = True,
             ) -> p.Result[t.JsonMapping]:

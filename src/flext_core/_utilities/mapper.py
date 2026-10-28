@@ -67,7 +67,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
     @staticmethod
     def _remap_step(
         step: t.JsonDict,
-        map_keys: t.StrMapping | None,
+        map_keys: Mapping[str, str] | None,
         filter_keys: set[str] | None,
         exclude_keys: set[str] | None,
     ) -> t.JsonDict:
@@ -136,7 +136,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def agg[T](
-        items: t.SequenceOf[T] | tuple[T, ...],
+        items: Sequence[T] | tuple[T, ...],
         field: str | Callable[[T], t.Numeric],
         *,
         fn: Callable[[Sequence[t.Numeric]], t.Numeric] | None = None,
@@ -147,7 +147,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             The resulting ``t.Numeric``.
 
         """
-        items_list: t.SequenceOf[T] = list(items)
+        items_list: Sequence[T] = list(items)
         if callable(field):
             numeric_values: list[t.Numeric] = [field(item) for item in items_list]
         else:
@@ -158,7 +158,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                     raw = getattr(item, field, None)
                 elif isinstance(item, Mapping):
                     raw = cast(
-                        "t.MappingKV[str, p.AttributeProbe]",
+                        "Mapping[str, p.AttributeProbe]",
                         item,
                     ).get(field)
                 else:
@@ -200,8 +200,8 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def deep_eq(
-        a: t.MappingKV[str, t.JsonValue | t.JsonPayload],
-        b: t.MappingKV[str, t.JsonValue | t.JsonPayload],
+        a: Mapping[str, t.JsonValue | t.JsonPayload],
+        b: Mapping[str, t.JsonValue | t.JsonPayload],
     ) -> bool:
         """Recursive deep equality for nested dicts/lists/primitives.
 

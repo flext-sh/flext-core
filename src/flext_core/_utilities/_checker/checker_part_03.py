@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from types import FunctionType, MethodType
 from typing import get_args, get_origin
 
@@ -27,7 +27,7 @@ class FlextUtilitiesCheckerPart03(FlextUtilitiesCheckerPart02):
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> FlextTypingBase.SequenceOf[FlextTypingBase.TypeHintSpecifier]:
+    ) -> Sequence[FlextTypingBase.TypeHintSpecifier]:
         """Extract message types from generic base annotations.
 
         Returns:
@@ -56,7 +56,7 @@ class FlextUtilitiesCheckerPart03(FlextUtilitiesCheckerPart02):
         metadata_types: MutableSequence[FlextTypingBase.TypeHintSpecifier] = []
         for parent_cls in handler_class.__bases__:
             metadata: (
-                FlextTypingBase.MappingKV[
+                Mapping[
                     str,
                     FlextTypingBase.TypeHintSpecifier
                     | FlextTypingBase.VariadicTuple[FlextTypingBase.TypeHintSpecifier]

@@ -13,6 +13,7 @@ from __future__ import annotations
 import secrets
 import string
 import uuid
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, tzinfo
 from importlib import import_module
 from zoneinfo import ZoneInfo
@@ -30,18 +31,18 @@ class FlextUtilitiesGenerators:
     def _determine_prefix(
         kind: str | None,
         prefix: str | None,
-    ) -> t.Pair[bool, str | None]:
+    ) -> tuple[bool, str | None]:
         """Resolve ID prefix from kind or custom override.
 
         Returns:
-            The resulting ``t.Pair[bool, str | None]``.
+            The resulting ``tuple[bool, str | None]``.
 
         """
         if prefix is not None:
             return (True, prefix)
         if kind is None:
             return (False, None)
-        kind_prefix_map: t.StrMapping = {
+        kind_prefix_map: Mapping[str, str] = {
             "correlation": "corr",
             "entity": "ent",
             c.ProcessingMode.BATCH: c.ProcessingMode.BATCH,
@@ -89,14 +90,14 @@ class FlextUtilitiesGenerators:
         parts: tuple[t.JsonValue, ...] | None,
         *,
         include_timestamp: bool,
-    ) -> t.SequenceOf[t.JsonValue]:
+    ) -> Sequence[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix.
 
         Returns:
-            The resulting ``t.SequenceOf[t.JsonValue]``.
+            The resulting ``Sequence[t.JsonValue]``.
 
         """
-        all_parts: t.JsonValueList = []
+        all_parts: list[t.JsonValue] = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -106,7 +107,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_custom_separator_id(
         actual_prefix: str,
-        all_parts: t.SequenceOf[t.JsonValue],
+        all_parts: Sequence[t.JsonValue],
         separator: str,
         id_length: int,
     ) -> str:

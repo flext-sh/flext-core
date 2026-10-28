@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
 from types import MappingProxyType
 from typing import Annotated
 
@@ -30,7 +31,7 @@ class FlextModelsContextExport:
         # assigned to the class variable; a specifier inside ``Annotated``
         # metadata synthesizes a REQUIRED ``__init__`` parameter.
         data: Annotated[
-            t.MappingKV[str, t.JsonPayload],
+            Mapping[str, t.JsonPayload],
             BeforeValidator(
                 FlextModelsContextData.ContextData.validate_dict_serializable
             ),
@@ -61,4 +62,4 @@ class FlextModelsContextExport:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContextExport"]
+__all__: MutableSequence[str] = ["FlextModelsContextExport"]

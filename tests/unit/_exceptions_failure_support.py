@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
-from tests import c, e, m, p, t
+from tests import c, e, m, p
 
 type FailureFactory = Callable[[], p.Result[bool]]
 
-FAILURES: t.SequenceOf[
-    tuple[str, FailureFactory, str, str, t.MappingKV[str, str | int | None]]
+FAILURES: Sequence[
+    tuple[str, FailureFactory, str, str, Mapping[str, str | int | None]]
 ] = [
     (
         "config",

@@ -6,13 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, ClassVar, override
 
 from flext_tests import r
 from typing_extensions import TypeForm
 
 from flext_core import m, u
-from tests import p, s, t
+from tests import p, s
 
 
 class TestsFlextModelsServiceCaseCoreMixin:
@@ -78,13 +79,13 @@ class TestsFlextModelsServiceCaseCoreMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_ids: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="User identifiers used in pipeline"),
         ]
         operations: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Pipeline operations to execute"),
-        ] = m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
+        ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
         expected_pipeline_length: Annotated[
             int,
             m.Field(description="Expected number of pipeline stages"),

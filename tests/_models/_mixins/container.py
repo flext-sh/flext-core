@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import m
@@ -53,12 +53,12 @@ class TestsFlextModelsContainerMixin:
         """Centralized container test scenarios using c."""
 
         SERVICE_SCENARIOS: ClassVar[
-            t.SequenceOf[TestsFlextModelsContainerMixin.ServiceScenario]
+            Sequence[TestsFlextModelsContainerMixin.ServiceScenario]
         ] = []  # populated after class definition
         TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            t.SequenceOf[TestsFlextModelsContainerMixin.TypedRetrievalScenario]
+            Sequence[TestsFlextModelsContainerMixin.TypedRetrievalScenario]
         ] = []  # populated after class definition
-        CONFIG_SCENARIOS: ClassVar[Sequence[t.ScalarMapping]] = [
+        CONFIG_SCENARIOS: ClassVar[Sequence[Mapping[str, t.Scalar]]] = [
             {"enable_singleton": False, "max_services": 8},
             {"invalid_key": "value", "another_invalid": 42},
             {},

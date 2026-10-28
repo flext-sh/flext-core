@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import override
 
 import pytest
@@ -187,10 +188,10 @@ class TestsFlextCoreMigrationValidation:
                 return r[bool].ok(value=True)
 
             @staticmethod
-            def create_user(username: str, email: str) -> p.Result[t.StrMapping]:
+            def create_user(username: str, email: str) -> p.Result[Mapping[str, str]]:
                 if not username or not email:
-                    return r[t.StrMapping].fail("Username and email required")
-                return r[t.StrMapping].ok({"username": username, "email": email})
+                    return r[Mapping[str, str]].fail("Username and email required")
+                return r[Mapping[str, str]].ok({"username": username, "email": email})
 
         service = UserService()
 

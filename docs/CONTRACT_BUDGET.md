@@ -60,8 +60,8 @@ ONLY after all src green.
 
 - `Numeric`, `Primitives`, `Scalar`, `Container`
 - `FlatScalarMapping`, `FlatScalarSequence`
-- `StrMapping` / `MutableStrMapping`, `StrSequence`
-- `ScalarMapping` / `MutableScalarMapping`, `ScalarList`
+- `Mapping[str, str]` / `MutableStrMapping`, `Sequence[str]`
+- `Mapping[str, Scalar]` / `MutableMapping[str, Scalar]`, `Sequence[Scalar]`
 - `FlatContainerList`
 - `IntMapping` / `BoolMapping` / `FrozensetMapping` / `StrSequenceMapping` (+ mutable
   twins)
@@ -133,7 +133,7 @@ Keep only behavioral:
 - `ProjectMetadata`
 
 Nothing else. All dict/list recursive hints in protocol signatures must switch to
-`t.FlatContainerMapping` / `t.StrMapping` / `m.*` / concrete payload models.
+`t.FlatContainerMapping` / `Mapping[str, str]` / `m.*` / concrete payload models.
 
 ## Budget: m._(FlextModels_)
 

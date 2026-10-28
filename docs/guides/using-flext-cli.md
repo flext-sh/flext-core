@@ -74,6 +74,15 @@ class FlextApiSettings(FlextSettings):
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_cli import FlextCli, FlextCliSettings, m, t
 
 settings = FlextCliSettings.fetch_global()

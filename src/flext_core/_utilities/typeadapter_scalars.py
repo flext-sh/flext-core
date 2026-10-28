@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from enum import StrEnum
 from functools import cache
 
@@ -44,9 +44,9 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def scalar_mapping_adapter(
         cls,
-    ) -> t.TypeAdapter[t.ScalarMapping]:
-        """Return the cached adapter for ``ScalarMapping``."""
-        return cls.type_adapter(TypeForm(t.ScalarMapping))
+    ) -> t.TypeAdapter[Mapping[str, t.Scalar]]:
+        """Return the cached adapter for ``Mapping[str, Scalar]``."""
+        return cls.type_adapter(TypeForm(Mapping[str, t.Scalar]))
 
     @classmethod
     @cache
@@ -76,9 +76,9 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def str_mapping_adapter(
         cls,
-    ) -> t.TypeAdapter[t.StrMapping]:
-        """Return the cached adapter for ``StrMapping``."""
-        return cls.type_adapter(TypeForm(t.StrMapping))
+    ) -> t.TypeAdapter[Mapping[str, str]]:
+        """Return the cached adapter for ``Mapping[str, str]``."""
+        return cls.type_adapter(TypeForm(Mapping[str, str]))
 
     @classmethod
     @cache
@@ -92,9 +92,9 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def str_dict_adapter(
         cls,
-    ) -> t.TypeAdapter[t.StrDict]:
-        """Return the cached adapter for ``StrDict``."""
-        return cls.type_adapter(TypeForm(t.StrDict))
+    ) -> t.TypeAdapter[dict[str, str]]:
+        """Return the cached adapter for ``dict[str, str]``."""
+        return cls.type_adapter(TypeForm(dict[str, str]))
 
     @classmethod
     @cache
@@ -124,18 +124,18 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def str_sequence_adapter(
         cls,
-    ) -> t.TypeAdapter[t.StrSequence]:
-        """Return the cached adapter for ``StrSequence``."""
-        return cls.type_adapter(TypeForm(t.StrSequence))
+    ) -> t.TypeAdapter[Sequence[str]]:
+        """Return the cached adapter for ``Sequence[str]``."""
+        return cls.type_adapter(TypeForm(Sequence[str]))
 
     @classmethod
     @cache
     def strict_str_sequence_adapter(
         cls,
-    ) -> t.TypeAdapter[t.StrSequence]:
-        """Return the cached strict-mode adapter for ``StrSequence``."""
+    ) -> t.TypeAdapter[Sequence[str]]:
+        """Return the cached strict-mode adapter for ``Sequence[str]``."""
         return cls.type_adapter(
-            TypeForm(t.StrSequence),
+            TypeForm(Sequence[str]),
             config=ConfigDict(strict=True),
         )
 

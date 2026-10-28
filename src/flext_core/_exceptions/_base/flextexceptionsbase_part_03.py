@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, m, t
@@ -13,8 +14,6 @@ from flext_core._exceptions import FlextExceptionsHelpers
 from flext_core._exceptions._base import FlextBaseErrorState
 
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping
-
     from flext_core import p
 
 
@@ -54,7 +53,7 @@ class FlextExceptionsBasePart03:
                 # Extract exactly the remaining option keys from the kwargs so
                 # they feed the typed options instead of falling into the
                 # generic extra bucket; ``metadata`` is a named parameter.
-                option_kwargs: t.MutableMappingKV[
+                option_kwargs: MutableMapping[
                     str,
                     p.HasModelDump | t.JsonValue | None,
                 ] = {
@@ -127,10 +126,8 @@ class FlextExceptionsBasePart03:
 
         @staticmethod
         def _build_declared_extra(
-            merged_kwargs: t.MappingKV[str, t.JsonPayload | None]
-            | p.HasModelDump
-            | None,
-            extra_kwargs: t.MappingKV[str, t.JsonValue],
+            merged_kwargs: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+            extra_kwargs: Mapping[str, t.JsonValue],
         ) -> MutableMapping[str, t.JsonPayload | None]:
             """Normalize merged and extra kwargs into the declared-extra mapping.
 
@@ -171,7 +168,7 @@ class FlextExceptionsBasePart03:
 
         @staticmethod
         def _resolve_named_param_values(
-            context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
             remaining_extra: t.MutableJsonMapping,
             declared_param_keys: frozenset[str],
             resolved_named: MutableMapping[str, t.JsonPayload | None],
@@ -219,7 +216,7 @@ class FlextExceptionsBasePart03:
         def _resolve_declared_params(
             self,
             declaredparams_cls: t.ModelClass[m.BaseModel],
-            context: t.MappingKV[str, t.JsonPayload | None] | p.HasModelDump | None,
+            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
             remaining_extra: t.MutableJsonMapping,
             params: m.BaseModel | None,
         ) -> tuple[m.BaseModel, t.MutableJsonMapping]:

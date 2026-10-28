@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
-from tests import c, e, t
+from tests import c, e
 
 type ErrorFactory = Callable[[], e.BaseError]
 
-STRUCTURED_ERRORS: t.SequenceOf[
-    tuple[str, ErrorFactory, str, str, t.MappingKV[str, str | int | None]]
+STRUCTURED_ERRORS: Sequence[
+    tuple[str, ErrorFactory, str, str, Mapping[str, str | int | None]]
 ] = [
     (
         "validation",

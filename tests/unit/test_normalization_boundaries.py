@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from types import MappingProxyType, ModuleType
@@ -50,7 +50,7 @@ class TestsFlextCoreNormalizationBoundaries:
             u.to_jsonable_python(supported), strict=True
         )
         tm.that(u.normalize_to_json_mapping(supported), eq=expected)
-        unsupported: t.ScalarMapping = {"encoded": b"native"}
+        unsupported: Mapping[str, t.Scalar] = {"encoded": b"native"}
         with pytest.raises(m.ValidationError):
             m.ConfigMap.model_validate(unsupported)
 
@@ -112,7 +112,7 @@ class TestsFlextCoreNormalizationBoundaries:
     @staticmethod
     def test_native_adapter_is_constructible_through_the_model_provider() -> None:
         """The public SDK provider constructs an adapter, not a type-only alias."""
-        adapter = u.type_adapter(TypeForm(t.MutableMappingKV[str, int]))
+        adapter = u.type_adapter(TypeForm(MutableMapping[str, int]))
         tm.that(adapter.validate_json(b'{"value": 1}'), eq={"value": 1})
         with pytest.raises(m.ValidationError, match="int_parsing"):
             adapter.validate_json(b'{"value": "not an integer"}')
@@ -175,8 +175,8 @@ class TestsFlextCoreNormalizationBoundaries:
             model,
             MappingProxyType({"attributes": attributes}),
         ]
-        adapter = u.type_adapter(TypeForm(t.MutableSequenceOf[m.Metadata]))
-        validated: t.MutableSequenceOf[m.Metadata] = tm.ok(
+        adapter = u.type_adapter(TypeForm(MutableSequence[m.Metadata]))
+        validated: MutableSequence[m.Metadata] = tm.ok(
             u.validate_value(adapter, inputs)
         )
         tm.ok(validated[0] is metadata)

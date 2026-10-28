@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import p, t
@@ -69,31 +69,31 @@ class FlextModelsConfig:
             ),
         ] = None
         processing_stages: Annotated[
-            t.SequenceOf[t.Port[p.LoggingStage]],
+            Sequence[t.Port[p.LoggingStage]],
             FlextModelsPydantic.Field(
                 description="Ordered typed event stages executed before rendering.",
             ),
         ] = ()
         observers: Annotated[
-            t.SequenceOf[t.Port[p.LoggingObserver]],
+            Sequence[t.Port[p.LoggingObserver]],
             FlextModelsPydantic.Field(
                 description="Typed observers notified with each sanitized event.",
             ),
         ] = ()
         handlers: Annotated[
-            t.SequenceOf[t.Port[p.LoggingHandler]],
+            Sequence[t.Port[p.LoggingHandler]],
             FlextModelsPydantic.Field(
                 description="Native logging handlers attached to the runtime.",
             ),
         ] = ()
         redacted_keys: Annotated[
-            t.SequenceOf[str],
+            Sequence[str],
             FlextModelsPydantic.Field(
                 description="Context keys whose values never reach the rendered event.",
             ),
         ] = ()
         redacted_values: Annotated[
-            t.SequenceOf[str],
+            Sequence[str],
             FlextModelsPydantic.Field(
                 description="Exact values scrubbed from every rendered event.",
             ),

@@ -188,7 +188,7 @@ class TestsFlextCoreQuery:
         [{"page": 0, "size": -5}, {"size": c.MAX_PAGE_SIZE + 1}, {"page": -1}],
     )
     def test_query_rejects_invalid_pagination(
-        invalid_pagination: t.MappingKV[str, t.Scalar],
+        invalid_pagination: Mapping[str, t.Scalar],
     ) -> None:
         with pytest.raises(c.ValidationError):
             m.Query.model_validate({"pagination": invalid_pagination})
@@ -249,7 +249,7 @@ class TestsFlextCoreQuery:
         [{"size": c.MAX_PAGE_SIZE + 1}, {"page": 0}, {"page": -3}, {"size": 0}],
     )
     def test_pagination_rejects_out_of_range_values(
-        invalid_kwargs: t.MappingKV[str, ...],
+        invalid_kwargs: t.IntMapping,
     ) -> None:
         # Act / Assert
         with pytest.raises(c.ValidationError):

@@ -37,6 +37,15 @@ covers what the kernel provides today.
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from typing import Annotated
 
 from flext_core import m, p, r, s
@@ -81,6 +90,15 @@ declares it with `t.Port`:
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from typing import Protocol, runtime_checkable
 
@@ -168,6 +186,15 @@ shared by two services is a variable passed to both constructors:
 ```{.python .notest}
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 clock = SystemClock()
 stamps = StampService(clock=clock)
 audit = AuditService(clock=clock)
@@ -189,6 +216,15 @@ through `p.RuntimeBootstrapProvider`; `FlextService` itself declares no hook:
 
 ```{.python .notest}
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 
 class FlextBillingServiceBase(s[m.Billing.Invoice]):
@@ -227,6 +263,15 @@ owner alignment with the fleet typing rule, rather than a protocol or alias work
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import m, p, r, s, u
 
@@ -349,6 +394,15 @@ The first failure propagates with its cause: inside a result boundary as
 
 ```python
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import r
 

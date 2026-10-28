@@ -49,7 +49,7 @@ _FACADES: tuple[str, ...] = (
 )
 
 # alias -> facade name published by the package's public contract
-_ALIASES: t.StrPairTuple = (
+_ALIASES: tuple[tuple[str, str], ...] = (
     ("r", "FlextResult"),
     ("u", "FlextUtilities"),
     ("m", "FlextModels"),

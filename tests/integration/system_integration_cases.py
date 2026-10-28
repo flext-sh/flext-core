@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from tests import c, p, r, t, tm, u
 
 
@@ -16,23 +18,25 @@ class TestsFlextFlextSystemWorkflowCases:
     def _test_complex_integration() -> None:
         """Test complex integration scenarios."""
 
-        def processar_dados_usuario(dados: t.StrMapping) -> p.Result[t.StrMapping]:
+        def processar_dados_usuario(
+            dados: Mapping[str, str],
+        ) -> p.Result[Mapping[str, str]]:
             if not dados:
-                return r[t.StrMapping].fail(
+                return r[Mapping[str, str]].fail(
                     "Dados não fornecidos",
                     error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
             dados_processados: t.MutableStrMapping = {}
             for key, value in dados.items():
                 if not u.string_non_empty(value):
-                    return r[t.StrMapping].fail(
+                    return r[Mapping[str, str]].fail(
                         f"Campo '{key}' não pode estar vazio",
                         error_code=c.ErrorCode.VALIDATION_ERROR,
                     )
                 dados_processados[key] = f"processado_{value}"
             dados_processados["processado_em"] = u.generate_iso_timestamp()
             dados_processados["processado_por"] = "sistema_flext"
-            return r[t.StrMapping].ok(dados_processados)
+            return r[Mapping[str, str]].ok(dados_processados)
 
         dados_teste = {"nome": "João", "email": "joao@exemplo.com"}
         resultado_processamento = processar_dados_usuario(dados_teste)

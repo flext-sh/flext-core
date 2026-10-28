@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     from importlib.metadata import Distribution, DistributionFinder
     from pathlib import Path, PurePosixPath
 

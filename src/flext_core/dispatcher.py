@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from threading import Lock
 from types import MappingProxyType
 from typing import cast
@@ -21,7 +21,7 @@ class FlextDispatcher:
         """Initialize an isolated route store and its publication lock."""
         self.logger = u.fetch_logger(__name__)
         self._lock = Lock()
-        self._routes: t.MappingKV[str | None, tuple[p.DispatcherRouteEntry, ...]] = (
+        self._routes: Mapping[str | None, tuple[p.DispatcherRouteEntry, ...]] = (
             MappingProxyType({})
         )
 
@@ -57,7 +57,7 @@ class FlextDispatcher:
             "resolve message handler", f"No handler found for {route}"
         )
 
-    def publish(self, event: p.Routable | t.SequenceOf[p.Routable]) -> p.Result[bool]:
+    def publish(self, event: p.Routable | Sequence[p.Routable]) -> p.Result[bool]:
         """Publish in input/registration order, stopping at the first failure.
 
         All events in a sequence use the same snapshot. Earlier external effects
@@ -69,7 +69,7 @@ class FlextDispatcher:
         """
         routes = self._routes
         events = (
-            cast("t.SequenceOf[p.Routable]", event)
+            cast("Sequence[p.Routable]", event)
             if isinstance(event, Sequence)
             else (event,)
         )
@@ -85,7 +85,7 @@ class FlextDispatcher:
     def _publish_message(
         self,
         message: p.Routable,
-        routes: t.MappingKV[str | None, tuple[p.DispatcherRouteEntry, ...]],
+        routes: Mapping[str | None, tuple[p.DispatcherRouteEntry, ...]],
     ) -> p.Result[bool]:
         """Publish one message against the caller's immutable route snapshot.
 
@@ -145,7 +145,7 @@ class FlextDispatcher:
         )).map(lambda _report: True)
 
     def register_handlers(
-        self, bindings: t.SequenceOf[p.HandlerRegistration]
+        self, bindings: Sequence[p.HandlerRegistration]
     ) -> p.Result[p.HandlerRegistrationReport]:
         """Validate the entire batch, then atomically publish new bindings.
 

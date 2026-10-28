@@ -9,6 +9,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 from typing_extensions import TypeForm
 
 from flext_core import m, p, t
@@ -40,7 +42,7 @@ class FlextUtilitiesLoggingContextPart02(FlextUtilitiesLoggingContextPart01):
 
     @staticmethod
     def to_container_context(
-        context: t.MappingKV[str, p.LogValue | t.JsonValue],
+        context: Mapping[str, p.LogValue | t.JsonValue],
     ) -> t.JsonMapping:
         """Serialize owned fields once before entering the native processor chain.
 

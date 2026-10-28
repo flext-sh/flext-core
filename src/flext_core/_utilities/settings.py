@@ -13,8 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-
-from flext_core import t
+from collections.abc import Mapping, MutableSequence
 
 
 class FlextUtilitiesSettings:
@@ -28,14 +27,14 @@ class FlextUtilitiesSettings:
     """
 
     @staticmethod
-    def resolve_process_environment() -> t.StrMapping:
+    def resolve_process_environment() -> Mapping[str, str]:
         """Resolve the inherited process environment as a plain string mapping.
 
         Returns:
-            The resulting ``t.StrMapping``.
+            The resulting ``Mapping[str, str]``.
 
         """
         return dict(os.environ)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesSettings"]
+__all__: MutableSequence[str] = ["FlextUtilitiesSettings"]

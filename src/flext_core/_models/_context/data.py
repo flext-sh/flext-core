@@ -6,14 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from types import MappingProxyType
 from typing import Annotated
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
-_EMPTY_SCALAR_MAPPING: t.MappingKV[str, t.Scalar] = MappingProxyType({})
+_EMPTY_SCALAR_MAPPING: Mapping[str, t.Scalar] = MappingProxyType({})
 
 
 class FlextModelsContextData:
@@ -23,13 +23,13 @@ class FlextModelsContextData:
         """Lightweight container for initializing context state."""
 
         data: Annotated[
-            t.MappingKV[str, t.Scalar],
+            Mapping[str, t.Scalar],
             FlextModelsPydantic.Field(
                 description="Initial context data as key-value pairs"
             ),
         ] = FlextModelsPydantic.Field(default_factory=lambda: _EMPTY_SCALAR_MAPPING)
         metadata: Annotated[
-            FlextModelsBase.Metadata | t.MappingKV[str, t.Scalar] | None,
+            FlextModelsBase.Metadata | Mapping[str, t.Scalar] | None,
             FlextModelsPydantic.Field(
                 description="Context metadata (creation info, source, etc.)"
             ),
@@ -39,7 +39,7 @@ class FlextModelsContextData:
         @classmethod
         def validate_dict_serializable(
             cls, value: p.ModelInput | None
-        ) -> t.MappingKV[str, t.Scalar]:
+        ) -> Mapping[str, t.Scalar]:
             """Validate the immutable flat scalar representation at ingress.
 
             Returns:
@@ -83,4 +83,4 @@ class FlextModelsContextData:
             return value
 
 
-__all__: t.StrSequence = ("FlextModelsContextData",)
+__all__: Sequence[str] = ("FlextModelsContextData",)

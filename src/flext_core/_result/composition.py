@@ -7,16 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from collections.abc import Sequence
+from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING, Self
 
 from flext_core import c, m
 from flext_core._result import FlextResultTransforms
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, MutableSequence
+    from collections.abc import Callable
 
-    from flext_core import p, t
+    from flext_core import p
 
 
 class FlextResultComposition[T](FlextResultTransforms[T], ABC):
@@ -57,7 +57,7 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
     @classmethod
     def traverse[V, U](
         cls: type[Self],
-        items: t.SequenceOf[V],
+        items: Sequence[V],
         func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,

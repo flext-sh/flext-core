@@ -165,8 +165,8 @@ class TestsFlextCoreUtilities:
         [({"a": 1}, {"a": 1}, True), ({"a": 1}, {"a": 2}, False), ({}, {}, True)],
     )
     def test_deep_eq_compares_mapping_contents(
-        left: t.MappingKV[str, int],
-        right: t.MappingKV[str, int],
+        left: Mapping[str, int],
+        right: Mapping[str, int],
         *,
         expected: bool,
     ) -> None:

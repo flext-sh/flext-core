@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+from collections.abc import MutableMapping
 
 import structlog
 
@@ -67,7 +68,7 @@ class FlextUtilitiesLoggingConfigPart03(FlextUtilitiesLoggingConfigPart02):
         current = (
             runtime_settings if runtime_settings is not None else cls.logging_settings()
         )
-        overrides: t.MutableMappingKV[str, p.SettingsOverride | None] = {
+        overrides: MutableMapping[str, p.SettingsOverride | None] = {
             key: value
             for key, value in (
                 ("log_level", log_level),

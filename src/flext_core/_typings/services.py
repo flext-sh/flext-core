@@ -10,7 +10,9 @@ from collections.abc import (
     Callable,
     Generator,
     Iterator,
+    Mapping,
     MutableMapping,
+    Sequence,
     Set as AbstractSet,
 )
 from concurrent.futures import Future
@@ -42,7 +44,7 @@ class FlextTypesServices:
         | FlextTypesServices.ModelInput[
             TModel | FlextTypesServices.MetadataMapping | bytes | bytearray
         ]
-        | FlextTypingBase.SequenceOf[
+        | Sequence[
             FlextTypesServices.JsonPayload
             | FlextTypesServices.ModelInput[
                 TModel | FlextTypesServices.MetadataMapping | bytes | bytearray
@@ -53,8 +55,8 @@ class FlextTypesServices:
     type ServiceLeaf[T] = FlextTypingBase.Scalar | FlextTypesServices.JsonPayload | T
     type ServiceValue[T] = (
         FlextTypesServices.ServiceLeaf[T]
-        | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload]
-        | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]
+        | Mapping[str, FlextTypesServices.JsonPayload]
+        | Sequence[FlextTypesServices.JsonPayload]
     )
     type RegisterableService[T] = (
         FlextTypesServices.ServiceValue[T]
@@ -62,15 +64,9 @@ class FlextTypesServices:
     )
     type FactoryCallable[T] = Callable[[], FlextTypesServices.ServiceValue[T]]
     type ResourceCallable[T] = FlextTypesServices.FactoryCallable[T]
-    type ServiceMap[T] = FlextTypingBase.MappingKV[
-        str, FlextTypesServices.RegisterableService[T]
-    ]
-    type FactoryMap[T] = FlextTypingBase.MappingKV[
-        str, FlextTypesServices.FactoryCallable[T]
-    ]
-    type ResourceMap[T] = FlextTypingBase.MappingKV[
-        str, FlextTypesServices.ResourceCallable[T]
-    ]
+    type ServiceMap[T] = Mapping[str, FlextTypesServices.RegisterableService[T]]
+    type FactoryMap[T] = Mapping[str, FlextTypesServices.FactoryCallable[T]]
+    type ResourceMap[T] = Mapping[str, FlextTypesServices.ResourceCallable[T]]
 
     type OperationMetricsStream = Generator[FlextTypesServices.MutableMetadataMapping]
 
@@ -85,7 +81,7 @@ class FlextTypesServices:
         | FlextTypingBase.JsonMapping
         | FlextTypingBase.JsonList
     )
-    type SettingsOverridesMapping[T] = FlextTypingBase.MappingKV[
+    type SettingsOverridesMapping[T] = Mapping[
         str, FlextTypesServices.SettingsOverride[T] | None
     ]
 
@@ -102,7 +98,7 @@ class FlextTypesServices:
     type LogArgument[T] = (
         FlextTypesServices.JsonPayload
         | FlextTypingBase.JsonMapping
-        | FlextTypingBase.SequenceOf[FlextTypesServices.JsonPayload]
+        | Sequence[FlextTypesServices.JsonPayload]
         | T
     )
     type LogValue[T] = (
@@ -111,8 +107,8 @@ class FlextTypesServices:
         | FlextTypesServices.LoggingExceptionInfo
     )
     type LogPositionalValue[T] = (
-        FlextTypesServices.LogValue[T | FlextTypingBase.ScalarMapping]
-        | FlextTypingBase.SequenceOf[tuple[FlextTypesPydantic.JsonValue, ...]]
+        FlextTypesServices.LogValue[T | Mapping[str, Scalar]]
+        | Sequence[tuple[FlextTypesPydantic.JsonValue, ...]]
     )
     type LoggingNativeRecord = LogRecord
     type LoggingNativeFormatter = Formatter
@@ -124,43 +120,33 @@ class FlextTypesServices:
         | tuple[FlextTypesServices.LogPositionalValue[T], ...]
     )
     type LoggingEvent[T] = MutableMapping[str, FlextTypesServices.LoggingEventValue[T]]
-    type LoggingContext[T] = FlextTypingBase.DictKV[
-        str, FlextTypesServices.LoggingEventValue[T]
-    ]
+    type LoggingContext[T] = dict[str, FlextTypesServices.LoggingEventValue[T]]
     type LoggingWriteCompletion = Future[int]
 
     type TextStream = TextIO
     type BinaryStream = BinaryIO
     type TextStreamIterator = Iterator[str]
 
-    type MetadataMapping = FlextTypingBase.MappingKV[
-        str, FlextTypesServices.JsonPayload
-    ]
+    type MetadataMapping = Mapping[str, FlextTypesServices.JsonPayload]
     type MutableMetadataMapping = MutableMapping[str, FlextTypesServices.JsonPayload]
     type BootstrapInput = FlextTypesPydantic.BaseModelType | FlextTypingBase.JsonMapping
     type ServiceClass = type
-    type UserOverridesMapping = FlextTypingBase.MappingKV[
-        str, FlextTypesServices.JsonPayload
-    ]
+    type UserOverridesMapping = Mapping[str, FlextTypesServices.JsonPayload]
 
     type ModelInput[T] = (
         FlextTypesPydantic.JsonValue
         | T
-        | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue | T]
+        | Mapping[str, FlextTypesPydantic.JsonValue | T]
     )
-    type ConfigModelInput[T] = (
-        T | FlextTypingBase.MappingKV[str, FlextTypesPydantic.JsonValue]
-    )
+    type ConfigModelInput[T] = T | Mapping[str, FlextTypesPydantic.JsonValue]
     type MetadataInput[T] = (
-        T | FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload | None] | None
+        T | Mapping[str, FlextTypesServices.JsonPayload | None] | None
     )
 
     type ContextHookCallable = Callable[
         [FlextTypingBase.Scalar], FlextTypesServices.JsonPayload
     ]
-    type ContextHookMap = FlextTypingBase.MappingKV[
-        str, FlextTypingBase.SequenceOf[ContextHookCallable]
-    ]
+    type ContextHookMap = Mapping[str, Sequence[ContextHookCallable]]
 
     type HandlerCallable[T] = Callable[..., FlextTypesPydantic.BaseModelType | T]
     type DispatchableHandler[T, RoutableT, ResultT] = (
@@ -199,11 +185,9 @@ class FlextTypesServices:
     type SortableObjectType = str | int | float
     type ValueAdapter[T] = FlextTypesPydantic.TypeAdapter[T]
     type MessageTypeSpecifier = type | str | UnionType | GenericAlias | TypeAliasType
-    type IncEx = (
-        AbstractSet[str] | FlextTypingBase.MappingKV[str, AbstractSet[str] | bool]
-    )
+    type IncEx = AbstractSet[str] | Mapping[str, AbstractSet[str] | bool]
 
-    type ConfigurationMapping = FlextTypingBase.MappingKV[str, FlextTypingBase.Scalar]
+    type ConfigurationMapping = Mapping[str, FlextTypingBase.Scalar]
     type MutableConfigurationMapping = MutableMapping[str, FlextTypingBase.Scalar]
     type ScopedContainerRegistry = MutableMapping[
         str, FlextTypingBase.MutableJsonMapping
@@ -221,7 +205,7 @@ class FlextTypesServices:
         | Callable[..., FlextTypesPydantic.JsonValue]
     )
     type LazyGetattr = Callable[[str], FlextTypesServices.ModuleExport]
-    type LazyDir = Callable[[], FlextTypingBase.SequenceOf[str]]
+    type LazyDir = Callable[[], Sequence[str]]
 
     type ValidatorCallable = Callable[
         [FlextTypesServices.ScalarOrModel], FlextTypesServices.ScalarOrModel
@@ -236,7 +220,7 @@ class FlextTypesServices:
         | FlextTypingBase.JsonList
         | tuple[FlextTypesPydantic.JsonValue | FlextTypingBase.Scalar, ...]
     )
-    type PaginationMeta = FlextTypingBase.MappingKV[str, int | bool]
+    type PaginationMeta = Mapping[str, int | bool]
 
     type GuardInput[T] = (
         type[BaseException | Enum]

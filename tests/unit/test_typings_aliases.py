@@ -30,7 +30,7 @@ class TestsFlextCoreTypingsAliases:
     @staticmethod
     def test_list_alias_preserves_concrete_mutable_api() -> None:
         """The exact alias supports list-only APIs under the same typed gates."""
-        values: t.ListOf[str] = ["second", "first"]
+        values: list[str] = ["second", "first"]
         values.append("third")
         values[0] = "updated"
         values.sort()
@@ -43,7 +43,7 @@ class TestsFlextCoreTypingsAliases:
     @staticmethod
     def test_dict_alias_preserves_concrete_mutable_api() -> None:
         """The exact alias supports dict-only APIs under the same typed gates."""
-        values: t.DictKV[str, int] = {"first": 1}
+        values: dict[str, int] = {"first": 1}
         values["second"] = 2
         values.update({"third": 3})
         copied = values.copy()

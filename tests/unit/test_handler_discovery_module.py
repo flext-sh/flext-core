@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from re import escape
 from time import monotonic
 from types import ModuleType
@@ -109,7 +110,7 @@ class TestsFlextHandlerDiscovery:
     def test_callable_admission_does_not_certify_foreign_return_payload() -> None:
         """The actual dispatcher rejects a foreign callable's unsupported output."""
         module = ModuleType("foreign_handlers")
-        received: t.MutableSequenceOf[p.Routable] = []
+        received: MutableSequence[p.Routable] = []
 
         def operation(request: p.Routable) -> ModuleType:
             received.append(request)
@@ -313,7 +314,7 @@ class TestsFlextHandlerDiscovery:
     )
     def test_class_discovery_uses_real_service_mro_and_descriptors(
         service_type: type,
-        names: t.StrSequence,
+        names: Sequence[str],
     ) -> None:
         """Class scanning includes inherited and decorated descriptors only."""
         first = h.Discovery.scan_class(service_type)

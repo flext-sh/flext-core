@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import io
+from collections.abc import Sequence
 from contextlib import redirect_stderr
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, NoReturn
@@ -18,7 +19,6 @@ from tests import c, p, tm, u
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-from tests import t
 
 LOG_LEVELS: tuple[tuple[str, bool], ...] = (
     ("debug", True),
@@ -49,7 +49,7 @@ class TestsFlextLoggings:
         *,
         contains: str,
         expect_output: bool = True,
-        expected_tokens: t.StrSequence = (),
+        expected_tokens: Sequence[str] = (),
     ) -> TResult:
         stream = io.StringIO()
         with redirect_stderr(stream):

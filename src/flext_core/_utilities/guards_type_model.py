@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING, TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
@@ -51,7 +52,7 @@ class FlextUtilitiesGuardsTypeModel:
         """Narrow value to a container tuple.
 
         Returns:
-            The resulting ``TypeIs[t.VariadicTuple[t.JsonValue]]``.
+            The resulting ``TypeIs[tuple[t.JsonValue, ...]]``.
 
         """
         return isinstance(value, tuple)
@@ -80,4 +81,4 @@ class FlextUtilitiesGuardsTypeModel:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesGuardsTypeModel"]
+__all__: MutableSequence[str] = ["FlextUtilitiesGuardsTypeModel"]

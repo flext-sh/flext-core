@@ -6,11 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import t
+from collections.abc import MutableSequence
 
 
 class FlextModelsContextMetadata:
     """Namespace for context metadata models."""
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContextMetadata"]
+__all__: MutableSequence[str] = ["FlextModelsContextMetadata"]

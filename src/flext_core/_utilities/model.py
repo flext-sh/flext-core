@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib import import_module
 from typing import overload
 
@@ -29,7 +30,7 @@ class FlextUtilitiesModel:
         model: m.BaseModel,
         options: m.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
-    ) -> t.MappingKV[str, t.JsonPayload]:
+    ) -> Mapping[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.

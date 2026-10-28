@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableSequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from threading import RLock
 from typing import Annotated, ClassVar
 
@@ -38,9 +38,7 @@ class FlextModelsRegistry:
         _registered_keys: set[str] = FlextModelsPydantic.PrivateAttr(
             default_factory=set[str],
         )
-        _class_plugin_storage: ClassVar[
-            t.MutableMappingKV[str, p.RegisterableService]
-        ] = {}
+        _class_plugin_storage: ClassVar[MutableMapping[str, p.RegisterableService]] = {}
 
     class RegistrySummary(FlextModelsEntity.Value):
         """Aggregated outcome for batch handler registration tracking."""
@@ -57,7 +55,7 @@ class FlextModelsRegistry:
             validate_default=True,
         )
         skipped: Annotated[
-            t.StrSequence,
+            Sequence[str],
             FlextModelsPydantic.Field(
                 description=(
                     "Handler identifiers that were skipped (already registered)"
@@ -92,4 +90,4 @@ class FlextModelsRegistry:
             return not self.errors
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsRegistry"]
+__all__: MutableSequence[str] = ["FlextModelsRegistry"]

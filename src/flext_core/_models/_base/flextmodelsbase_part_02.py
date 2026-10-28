@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Hashable, Mapping
+from collections.abc import Hashable, Mapping, Sequence
 from datetime import UTC, datetime
 from typing import Annotated, ClassVar, dataclass_transform, override
 
@@ -23,7 +23,7 @@ from flext_core import c, p, t
 from flext_core._models import FlextModelsContainers
 from flext_core._models._base import FlextModelsBasePart01
 
-_METADATA_MAPPING_VALIDATOR = TypeAdapter(Mapping[str, t.JsonValue])
+_METADATA_MAPPING_VALIDATOR = TypeAdapter(t.JsonMapping)
 
 
 class FlextModelsBasePart02(FlextModelsBasePart01):
@@ -90,7 +90,7 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
             ),
         ] = None
         tags: Annotated[
-            t.StrSequence,
+            Sequence[str],
             Field(
                 description=(
                     "Normalized labels used to classify and filter this metadata."

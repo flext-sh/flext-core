@@ -57,8 +57,8 @@ class TestsFlextModelsCoreErrorsMixin:
         def __len__(self) -> int:
             return 1
 
-    type TestCaseMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
-    type InputPayloadMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
+    type TestCaseMap = Mapping[str, t.Tests.TestobjectSerializable]
+    type InputPayloadMap = Mapping[str, t.Tests.TestobjectSerializable]
 
     class SampleModel(m.BaseModel):
         """Sample model for testing."""

@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from contextvars import ContextVar
 from types import MappingProxyType
 from typing import ClassVar
@@ -22,7 +23,7 @@ from flext_core._utilities import FlextUtilitiesLoggingConfig
 class FlextUtilitiesLoggingContextPart01(FlextUtilitiesLoggingConfig):
     """Native context-local bindings; scopes track key ownership, never values."""
 
-    _scope_keys: ClassVar[ContextVar[t.MappingKV[str, frozenset[str]]]] = ContextVar(
+    _scope_keys: ClassVar[ContextVar[Mapping[str, frozenset[str]]]] = ContextVar(
         "flext_logging_scope_keys",
         default=MappingProxyType({}),
     )

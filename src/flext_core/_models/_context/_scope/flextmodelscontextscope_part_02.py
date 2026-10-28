@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from contextvars import ContextVar
 from types import MappingProxyType
 from typing import Annotated
@@ -25,7 +26,7 @@ class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
         )
         hooks: t.ContextHookMap = FlextModelsPydantic.Field(
             default_factory=lambda: MappingProxyType[
-                str, t.SequenceOf[t.ContextHookCallable]
+                str, Sequence[t.ContextHookCallable]
             ]({}),
             validate_default=True,
             description="Lifecycle hooks keyed by event name",
@@ -44,7 +45,7 @@ class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
         suspended: bool = FlextModelsPydantic.Field(
             default=False, description="Whether the context is temporarily suspended"
         )
-        scope_vars: t.MappingKV[
+        scope_vars: Mapping[
             str,
             t.Port[ContextVar[p.MutableRootDict[t.JsonPayload] | None]],
         ] = FlextModelsPydantic.Field(
@@ -57,4 +58,4 @@ class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
         )
 
 
-__all__: t.StrSequence = ("FlextModelsContextScopePart02",)
+__all__: Sequence[str] = ("FlextModelsContextScopePart02",)

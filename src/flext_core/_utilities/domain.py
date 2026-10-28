@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 
 from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore
@@ -148,7 +148,7 @@ class FlextUtilitiesDomain:
             obj_dict = None
         if obj_dict is None:
             return hash(repr(obj))
-        items: t.SequenceOf[t.Pair[str, t.JsonValue]] = [
+        items: Sequence[tuple[str, t.JsonValue]] = [
             (
                 k,
                 v
@@ -163,7 +163,7 @@ class FlextUtilitiesDomain:
     def add_domain_event(
         entity: p.HasDomainEvents,
         event_type: str,
-        data: m.ConfigMap | t.MappingKV[str, t.JsonPayload | None] | None = None,
+        data: m.ConfigMap | Mapping[str, t.JsonPayload | None] | None = None,
         aggregate_id: str | None = None,
     ) -> m.DomainEvent:
         """Create a domain event and append it to the entity's event buffer.
@@ -191,4 +191,4 @@ class FlextUtilitiesDomain:
         return entry
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesDomain"]
+__all__: MutableSequence[str] = ["FlextUtilitiesDomain"]

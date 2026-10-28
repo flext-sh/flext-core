@@ -15,7 +15,7 @@ import operator
 
 import pytest
 
-from tests import c, e, p, t, tm
+from tests import c, e, p, tm
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
 
@@ -33,7 +33,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        expected_payload: t.MappingKV[str, str | int | None],
+        expected_payload: Mapping[str, str | int | None],
     ) -> None:
         # Arrange / Act
         """Test structured errors expose public contract."""
@@ -61,7 +61,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        _expected_payload: t.MappingKV[str, str | int | None],
+        _expected_payload: Mapping[str, str | int | None],
     ) -> None:
         # Act / Assert: the error is a real exception that callers can catch,
         # and its structured contract survives raise/except unchanged.
@@ -124,7 +124,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         tm.that(error.error_code, eq=c.ErrorCode.OPERATION_ERROR)
         tm.that(error.error_domain, eq=c.ErrorDomain.INTERNAL.value)
         tm.that(error.correlation_id, eq="corr-123")
-        expected_attributes: t.MappingKV[str, str | int] = {
+        expected_attributes: Mapping[str, str | int] = {
             "scope": "users",
             c.ContextScope.OPERATION: "insert_user",
             "reason": "constraint",
@@ -143,7 +143,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,
-        expected_data: t.MappingKV[str, str | int | None],
+        expected_data: Mapping[str, str | int | None],
     ) -> None:
         # Arrange / Act
         """Test failure factories return public result contract."""
@@ -170,7 +170,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         factory: FailureFactory,
         _expected_fragment: str,
         expected_code: str,
-        _expected_data: t.MappingKV[str, str | int | None],
+        _expected_data: Mapping[str, str | int | None],
     ) -> None:
         # Arrange
         """Test failure results honor combinator contract."""

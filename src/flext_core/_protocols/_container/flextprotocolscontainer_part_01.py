@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping
 from typing import Protocol, runtime_checkable
 
 from flext_core import t
@@ -66,14 +67,14 @@ class FlextProtocolsContainerPart01:
         """
 
         @property
-        def root(self) -> t.MappingKV[str, RootValueT]: ...
+        def root(self) -> Mapping[str, RootValueT]: ...
 
     @runtime_checkable
     class MutableRootDict[RootValueT](Protocol):
         """Structural contract for mutable validated root mappings."""
 
         @property
-        def root(self) -> t.MutableMappingKV[str, RootValueT]: ...
+        def root(self) -> MutableMapping[str, RootValueT]: ...
 
 
 __all__: list[str] = ["FlextProtocolsContainerPart01"]

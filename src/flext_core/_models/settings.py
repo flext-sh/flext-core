@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import Annotated, ClassVar, Self
 
 from pydantic import AliasChoices, ConfigDict, model_validator
@@ -69,14 +70,14 @@ class FlextModelsSettings:
             ),
         ] = c.DEFAULT_BACKOFF_MULTIPLIER
         retry_on_exceptions: Annotated[
-            t.SequenceOf[type[BaseException]],
+            Sequence[type[BaseException]],
             FlextModelsPydantic.Field(description="Exception types to retry on"),
         ] = FlextModelsPydantic.Field(
             default=(),
             validate_default=True,
         )
         retry_on_status_codes: Annotated[
-            t.SequenceOf[int],
+            Sequence[int],
             FlextModelsPydantic.Field(
                 max_length=c.HTTP_STATUS_MIN,
                 description="HTTP status codes to retry on",
@@ -102,4 +103,4 @@ class FlextModelsSettings:
             return self
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsSettings"]
+__all__: MutableSequence[str] = ["FlextModelsSettings"]

@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from functools import cache
 
 from pydantic import ConfigDict
@@ -69,25 +69,25 @@ class FlextUtilitiesTypingAdapterJson(FlextUtilitiesBase):
     @cache
     def json_dict_sequence_adapter(
         cls,
-    ) -> t.TypeAdapter[t.SequenceOf[t.JsonDict]]:
+    ) -> t.TypeAdapter[Sequence[t.JsonDict]]:
         """Return the cached adapter for ``JsonDict`` sequences."""
-        return cls.type_adapter(TypeForm(t.SequenceOf[t.JsonDict]))
+        return cls.type_adapter(TypeForm(Sequence[t.JsonDict]))
 
     @classmethod
     @cache
     def json_mapping_sequence_adapter(
         cls,
-    ) -> t.TypeAdapter[t.SequenceOf[t.JsonMapping]]:
+    ) -> t.TypeAdapter[Sequence[t.JsonMapping]]:
         """Return the cached adapter for ``JsonMapping`` sequences."""
-        return cls.type_adapter(TypeForm(t.SequenceOf[t.JsonMapping]))
+        return cls.type_adapter(TypeForm(Sequence[t.JsonMapping]))
 
     @classmethod
     @cache
     def json_mapping_by_str_adapter(
         cls,
-    ) -> t.TypeAdapter[t.MappingKV[str, t.JsonMapping]]:
+    ) -> t.TypeAdapter[Mapping[str, t.JsonMapping]]:
         """Return the cached adapter for str-keyed ``JsonMapping`` mappings."""
-        return cls.type_adapter(TypeForm(t.MappingKV[str, t.JsonMapping]))
+        return cls.type_adapter(TypeForm(Mapping[str, t.JsonMapping]))
 
     @classmethod
     @cache

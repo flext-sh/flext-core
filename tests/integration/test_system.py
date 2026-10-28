@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
+from collections.abc import Mapping
 
 import pytest
 
@@ -270,21 +271,21 @@ class TestsFlextCoreSystem:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    def _process_user_data(data: t.StrMapping) -> p.Result[t.StrMapping]:
+    def _process_user_data(data: Mapping[str, str]) -> p.Result[Mapping[str, str]]:
         if not data:
-            return r[t.StrMapping].fail(
+            return r[Mapping[str, str]].fail(
                 "No data supplied",
                 error_code=c.ErrorCode.VALIDATION_ERROR,
             )
         processed: t.MutableStrMapping = {}
         for key, value in data.items():
             if not u.string_non_empty(value):
-                return r[t.StrMapping].fail(
+                return r[Mapping[str, str]].fail(
                     f"Field '{key}' must not be empty",
                     error_code=c.ErrorCode.VALIDATION_ERROR,
                 )
             processed[key] = f"processed_{value}"
-        return r[t.StrMapping].ok(processed)
+        return r[Mapping[str, str]].ok(processed)
 
     def test_workflow_transforms_every_field_on_success(self) -> None:
         """A valid record yields a success whose fields are all transformed."""

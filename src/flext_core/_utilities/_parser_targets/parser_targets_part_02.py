@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p, t
@@ -13,7 +14,7 @@ from flext_core._utilities import FlextUtilitiesModel
 from flext_core._utilities._parser_targets import FlextUtilitiesParserTargetsPart01
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
+    from collections.abc import Callable
 
 
 class FlextUtilitiesParserTargetsPart02(FlextUtilitiesParserTargetsPart01):

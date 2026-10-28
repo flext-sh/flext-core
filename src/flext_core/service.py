@@ -37,6 +37,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
+from collections.abc import MutableSequence
 from types import NoneType, UnionType
 from typing import ClassVar, Self, Unpack, get_args, get_origin, is_protocol, override
 
@@ -148,4 +149,4 @@ class FlextService[TDomainResult = p.Base](x):
 
 
 s = FlextService
-__all__: t.MutableSequenceOf[str] = ["FlextService", "s"]
+__all__: MutableSequence[str] = ["FlextService", "s"]

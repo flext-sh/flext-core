@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from contextvars import ContextVar
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
@@ -75,7 +76,7 @@ class FlextProtocolsContextPart03(FlextProtocolsContextPart02):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[str, t.JsonPayload] | None = None,
+            update: Mapping[str, t.JsonPayload] | None = None,
             deep: bool = False,
         ) -> Self: ...
 
@@ -101,7 +102,7 @@ class FlextProtocolsContextPart03(FlextProtocolsContextPart02):
         @property
         def scope_vars(
             self,
-        ) -> t.MappingKV[
+        ) -> Mapping[
             str,
             ContextVar[FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None],
         ]: ...
@@ -109,10 +110,10 @@ class FlextProtocolsContextPart03(FlextProtocolsContextPart02):
         def model_copy(
             self,
             *,
-            update: t.MappingKV[
+            update: Mapping[
                 str,
                 FlextProtocolsContextPart03.ContextStatistics
-                | t.MappingKV[
+                | Mapping[
                     str,
                     ContextVar[
                         FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None
@@ -150,7 +151,7 @@ class FlextProtocolsContextPart03(FlextProtocolsContextPart02):
         def settings_type(self) -> FlextProtocolsSettings.SettingsType | None: ...
 
         @property
-        def settings_overrides(self) -> t.MappingKV[str, t.JsonValue] | None: ...
+        def settings_overrides(self) -> Mapping[str, t.JsonValue] | None: ...
 
         @property
         def context(self) -> FlextProtocolsContextPart03.Context | None: ...

@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -86,7 +87,7 @@ class FlextModelsContainerPart01:
             ),
         ]
         tags: Annotated[
-            t.StrSequence,
+            Sequence[str],
             FlextModelsPydantic.Field(
                 description="Service tags for categorization", validate_default=True
             ),

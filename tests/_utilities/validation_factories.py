@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests import p, t
+from tests import p
 from tests._utilities import TestsFlextUtilitiesServicesMixin
 
 if TYPE_CHECKING:
@@ -31,7 +31,7 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
         return input
 
     @staticmethod
-    def validated_label(values: t.MappingKV[str, p.AttributeProbe]) -> str:
+    def validated_label(values: Mapping[str, p.AttributeProbe]) -> str:
         """Derive a field default from Pydantic's already validated input.
 
         Returns:

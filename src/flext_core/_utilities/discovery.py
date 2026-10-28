@@ -15,7 +15,9 @@ import ast
 import functools
 import inspect
 import operator
+import warnings
 from collections import ChainMap
+from collections.abc import Sequence
 from types import FunctionType
 from typing import TYPE_CHECKING, TypeAliasType, get_protocol_members, is_protocol
 
@@ -47,11 +49,11 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> t.SequenceOf[tuple[str, m.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name.
 
         Returns:
-            The resulting ``t.SequenceOf[tuple[str,
+            The resulting ``Sequence[tuple[str,
                 m.FactoryDecoratorConfig]]``.
 
         """
@@ -318,6 +320,12 @@ class FlextUtilitiesDiscovery:
         return request
 
     @staticmethod
+    @warnings.deprecated(
+        "compat: stdlib_ast_annotation_parse -> typing.get_type_hints; "
+        "fix: rewire via make mod; this site needs adjustment to the correct "
+        "FLEXT form: annotation analysis runs through the typing surface, "
+        "never a hand-held stdlib ast parse (engine-map D1).",
+    )
     def _annotation_node(
         annotation: t.TypeHintSpecifier,
         where: tuple[type, str, str],
@@ -343,6 +351,12 @@ class FlextUtilitiesDiscovery:
         return node.value
 
     @staticmethod
+    @warnings.deprecated(
+        "compat: stdlib_ast_annotation_walk -> typing.get_type_hints; "
+        "fix: rewire via make mod; this site needs adjustment to the correct "
+        "FLEXT form: annotations resolve through the typing surface, never "
+        "manual ast node walking (engine-map D1).",
+    )
     def _resolve(
         func: FunctionType,
         where: tuple[type, str, str],

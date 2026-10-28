@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
-from collections.abc import MutableMapping
+from collections.abc import MutableMapping, Sequence
 from typing import ClassVar
 
 from flext_core import p, t
@@ -55,4 +55,4 @@ class FlextModelsServiceState:
         _auto_context_scope: ClassVar[bool] = True
 
 
-__all__: t.StrSequence = ("FlextModelsServiceState",)
+__all__: Sequence[str] = ("FlextModelsServiceState",)

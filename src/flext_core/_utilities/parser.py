@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
 from enum import StrEnum
 
 from flext_core import FlextResult, c, m, p, t
@@ -46,7 +47,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         target: type[T],
         opts: m.ParseOptions[T],
         fp: str,
-        kwargs: t.MappingKV[str, t.JsonPayload],
+        kwargs: Mapping[str, t.JsonPayload],
     ) -> T:
         """Dispatch parsing with pre-resolved options for stable type inference.
 
@@ -125,4 +126,4 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         return resolved_value
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesParser"]
+__all__: MutableSequence[str] = ["FlextUtilitiesParser"]

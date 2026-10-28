@@ -6,12 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping, MutableSequence
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, override
 
 from typing_extensions import TypeForm
 
-from tests import m, p, r, s, t, u
+from tests import m, p, r, s, u
 
 
 class TestsFlextUserServiceEntity(m.BaseModel):
@@ -119,7 +119,7 @@ class TestsFlextNotificationService(s[str]):
         self._should_fail = should_fail
 
     @property
-    def sent_notifications(self) -> t.StrSequence:
+    def sent_notifications(self) -> Sequence[str]:
         """The sent notifications."""
         return list(self._sent_notifications)
 

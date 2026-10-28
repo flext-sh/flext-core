@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 import tomllib
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar
 
@@ -299,4 +299,4 @@ class FlextUtilitiesConfig:
         return value
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesConfig"]
+__all__: MutableSequence[str] = ["FlextUtilitiesConfig"]

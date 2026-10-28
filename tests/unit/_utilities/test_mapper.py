@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import operator
+from collections.abc import Sequence
 
 import pytest
 
@@ -74,7 +75,7 @@ class TestsFlextCoreMapper:
 
     @staticmethod
     def test_agg_applies_custom_reducer() -> None:
-        def max_numeric(values: t.SequenceOf[t.Numeric]) -> t.Numeric:
+        def max_numeric(values: Sequence[t.Numeric]) -> t.Numeric:
             iterator = iter(values)
             highest = next(iterator)
             for value in iterator:

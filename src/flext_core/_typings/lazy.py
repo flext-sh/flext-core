@@ -18,13 +18,13 @@ class FlextTypesLazy:
     type ModuleGlobalValue = (
         FlextTypingBase.JsonValue
         | FlextTypingBase.LazyImportMap
-        | FlextTypingBase.StrSequence
+        | FlextTypingBase.Sequence[str]
         | ModuleType
         | type
         | Callable[
             ...,
             FlextTypingBase.JsonValue
-            | FlextTypingBase.StrSequence
+            | FlextTypingBase.Sequence[str]
             | ModuleType
             | type
             | None,

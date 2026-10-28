@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
 from typing import Annotated
 
 from flext_core import t
@@ -44,7 +45,7 @@ class FlextModelsCollections:
             ),
         ] = False
         map_keys: Annotated[
-            t.StrMapping | None,
+            Mapping[str, str] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Optional rename map applied to keys.",
@@ -203,4 +204,4 @@ class FlextModelsCollections:
         ] = None
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsCollections"]
+__all__: MutableSequence[str] = ["FlextModelsCollections"]

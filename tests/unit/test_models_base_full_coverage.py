@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
@@ -76,7 +76,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
     @staticmethod
     @pytest.mark.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
     def test_metadata_attributes_non_mapping_rejected(
-        bad_value: t.Scalar | t.SequenceOf[str],
+        bad_value: t.Scalar | Sequence[str],
     ) -> None:
         """Test metadata attributes non mapping rejected."""
         tm.that(

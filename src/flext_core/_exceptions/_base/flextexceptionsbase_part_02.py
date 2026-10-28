@@ -8,14 +8,12 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import TYPE_CHECKING, ClassVar, override
+from collections.abc import Mapping
+from typing import ClassVar, override
 
 from flext_core import c, m, t
 from flext_core._exceptions import FlextExceptionsHelpers
 from flext_core._exceptions._base import FlextBaseErrorMetadata
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 
 class FlextBaseErrorState(FlextBaseErrorMetadata):
@@ -75,7 +73,7 @@ class FlextBaseErrorState(FlextBaseErrorMetadata):
         *,
         error_code: str,
         options: m.ExceptionInitOptions,
-        extra_kwargs: t.MappingKV[str, t.JsonPayload | None],
+        extra_kwargs: Mapping[str, t.JsonPayload | None],
     ) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
         self.args = (message,)

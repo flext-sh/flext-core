@@ -9,13 +9,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping, MutableSequence
 from enum import StrEnum
-from typing import TYPE_CHECKING, ClassVar
-
-from flext_core import t
-
-if TYPE_CHECKING:
-    from collections.abc import MutableMapping
+from typing import ClassVar
 
 
 class FlextUtilitiesEnum:
@@ -33,10 +29,10 @@ class FlextUtilitiesEnum:
         """
         if enum_cls in FlextUtilitiesEnum._values_cache:
             return FlextUtilitiesEnum._values_cache[enum_cls]
-        members_dict: t.MappingKV[str, E] = enum_cls.__members__
+        members_dict: Mapping[str, E] = enum_cls.__members__
         result = frozenset(m.value for m in members_dict.values())
         FlextUtilitiesEnum._values_cache[enum_cls] = result
         return result
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesEnum"]
+__all__: MutableSequence[str] = ["FlextUtilitiesEnum"]

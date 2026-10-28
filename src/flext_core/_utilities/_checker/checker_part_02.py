@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+from collections.abc import Mapping
 from types import FunctionType, MethodType
 from typing import get_origin, get_type_hints
 
@@ -23,7 +24,7 @@ class FlextUtilitiesCheckerPart02(FlextUtilitiesCheckerPart01):
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: t.MappingKV[str, t.TypeHintSpecifier | None],
+        type_hints: Mapping[str, t.TypeHintSpecifier | None],
         param_name: str,
     ) -> p.Result[t.TypeHintSpecifier]:
         """Extract message type from parameter hints or signature annotation.
@@ -73,14 +74,14 @@ class FlextUtilitiesCheckerPart02(FlextUtilitiesCheckerPart01):
         cls,
         handle_method: FunctionType | MethodType,
         handler_class: type,
-    ) -> t.MappingKV[str, t.TypeHintSpecifier | None]:
+    ) -> Mapping[str, t.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error.
 
         Returns:
             The resulting mapping of type-hint specifiers, ``None`` for absent.
 
         """
-        hints: t.MappingKV[str, t.TypeHintSpecifier | None] = {}
+        hints: Mapping[str, t.TypeHintSpecifier | None] = {}
         function = (
             handle_method.__func__
             if isinstance(handle_method, MethodType)

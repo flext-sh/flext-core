@@ -10,11 +10,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from functools import cache
 from types import MappingProxyType
 from typing import TYPE_CHECKING, TypeIs
 
-from flext_core import c, p, t
+from flext_core import c, p
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -25,7 +26,7 @@ class FlextUtilitiesGuardsTypeProtocolSpecs:
     @cache
     def _get_protocol_specs(
         cls,
-    ) -> t.MappingKV[str, Callable[[p.ProtocolGuardInput], bool]]:
+    ) -> Mapping[str, Callable[[p.ProtocolGuardInput], bool]]:
         return MappingProxyType({
             c.Directory.CONFIG.value: lambda v: isinstance(
                 v,
@@ -47,7 +48,7 @@ class FlextUtilitiesGuardsTypeProtocolSpecs:
 
     @classmethod
     @cache
-    def _get_protocol_type_map(cls) -> t.MappingKV[type, str]:
+    def _get_protocol_type_map(cls) -> Mapping[type, str]:
         return MappingProxyType({
             p.Settings: c.Directory.CONFIG.value,
             p.Context: c.FIELD_CONTEXT,

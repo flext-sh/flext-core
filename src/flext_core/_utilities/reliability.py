@@ -15,6 +15,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
 from flext_core import FlextResult, c, m, p, t
@@ -162,4 +163,4 @@ class FlextUtilitiesReliability:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesReliability"]
+__all__: MutableSequence[str] = ["FlextUtilitiesReliability"]

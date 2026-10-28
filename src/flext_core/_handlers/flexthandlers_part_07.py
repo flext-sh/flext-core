@@ -6,11 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
 from typing_extensions import TypeForm
 
-from flext_core import p, t, u
+from flext_core import p, u
 from flext_core._handlers import FlextHandlersPart06
 
 if TYPE_CHECKING:
@@ -63,7 +64,7 @@ class FlextHandlersPart07[MessageT_contra, ResultT](
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> t.SequenceOf[tuple[str, p.DecoratorConfig]]:
+        ) -> Sequence[tuple[str, p.DecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -81,7 +82,7 @@ class FlextHandlersPart07[MessageT_contra, ResultT](
                 ...     u.Cli.print(f"{method_name}: {settings.command.__name__}")
 
             """
-            handlers: t.MutableSequenceOf[tuple[str, p.DecoratorConfig]] = []
+            handlers: MutableSequence[tuple[str, p.DecoratorConfig]] = []
             callable_adapter = u.type_adapter(TypeForm(p.ResolvedHandlerCallable))
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
@@ -97,7 +98,7 @@ class FlextHandlersPart07[MessageT_contra, ResultT](
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> t.SequenceOf[tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]]:
+        ) -> Sequence[tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration

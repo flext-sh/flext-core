@@ -6,9 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import ClassVar
 
-from flext_core import t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsContainers,
@@ -42,4 +42,4 @@ class FlextModelsContextState:
         )
 
 
-__all__: t.StrSequence = ("FlextModelsContextState",)
+__all__: Sequence[str] = ("FlextModelsContextState",)

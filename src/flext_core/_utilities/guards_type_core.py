@@ -9,7 +9,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from typing import TypeGuard, TypeIs
 
 from flext_core import c, p, t
@@ -271,4 +271,4 @@ class FlextUtilitiesGuardsTypeCore:
         return False
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesGuardsTypeCore"]
+__all__: MutableSequence[str] = ["FlextUtilitiesGuardsTypeCore"]

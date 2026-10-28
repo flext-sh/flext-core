@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from flext_core import t
 from flext_core._protocols import (
@@ -27,7 +27,7 @@ class FlextProtocolsContainer(FlextProtocolsContainerPart03):
     type ProtocolGuardInput = (
         t.JsonPayload
         | t.JsonMapping
-        | t.StrSequence
+        | Sequence[str]
         | t.TypeHintSpecifier
         | Callable[..., t.JsonPayload]
         | FlextProtocolsContainer.Container

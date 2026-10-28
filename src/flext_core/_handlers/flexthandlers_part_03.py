@@ -11,9 +11,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from flext_core import c, m, p, t
+from flext_core import c, m, p
 from flext_core._handlers import FlextHandlersPart02
 
 if TYPE_CHECKING:
@@ -32,7 +33,7 @@ class FlextHandlersPart03[MessageT_contra, ResultT](
         *,
         priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
         timeout: float | None = None,
-        middleware: t.SequenceOf[type[p.Middleware]] | None = None,
+        middleware: Sequence[type[p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
         """Mark methods as handlers for commands.
 

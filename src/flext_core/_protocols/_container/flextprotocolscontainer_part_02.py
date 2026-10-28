@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsSettings
@@ -87,7 +88,7 @@ class FlextProtocolsContainerPart02(FlextProtocolsContainerPart01):
             """Check if a service is registered."""
             ...
 
-        def names(self) -> t.StrSequence:
+        def names(self) -> Sequence[str]:
             """List all registered services."""
             ...
 

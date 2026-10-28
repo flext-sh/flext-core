@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from flext_tests.models import m
@@ -35,9 +36,9 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
         "json"
     )
     env_vars: Annotated[
-        t.StrMapping,
+        Mapping[str, str],
         m.Field(description="Environment variable overrides"),
-    ] = m.Field(default_factory=u.empty(TypeForm(t.StrMapping)))
+    ] = m.Field(default_factory=u.empty(TypeForm(Mapping[str, str])))
     description: Annotated[
         str,
         m.Field(description="Human-readable test description"),
@@ -84,11 +85,11 @@ class TestsFlextSettingsConfigTestFactories:
     """Centralized factories for configuration tests."""
 
     @staticmethod
-    def basic_config_cases() -> t.SequenceOf[TestsFlextSettingsConfigTestCase]:
+    def basic_config_cases() -> Sequence[TestsFlextSettingsConfigTestCase]:
         """Generate basic configuration test cases.
 
         Returns:
-            The resulting ``t.SequenceOf[TestsFlextSettingsConfigTestCase]``.
+            The resulting ``Sequence[TestsFlextSettingsConfigTestCase]``.
 
         """
         return [
@@ -117,11 +118,11 @@ class TestsFlextSettingsConfigTestFactories:
         ]
 
     @staticmethod
-    def thread_safety_cases() -> t.SequenceOf[TestsFlextSettingsThreadSafetyTest]:
+    def thread_safety_cases() -> Sequence[TestsFlextSettingsThreadSafetyTest]:
         """Generate thread safety test cases.
 
         Returns:
-            The resulting ``t.SequenceOf[TestsFlextSettingsThreadSafetyTest]``.
+            The resulting ``Sequence[TestsFlextSettingsThreadSafetyTest]``.
 
         """
         return [

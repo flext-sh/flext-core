@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import pytest
@@ -75,9 +75,9 @@ class TestsFlextCoreUtilitiesCollection:
         ],
     )
     def test_map_applies_function_to_each_element(
-        items: t.SequenceOf[int] | t.MappingKV[str, int] | set[int] | frozenset[int],
+        items: Sequence[int] | Mapping[str, int] | set[int] | frozenset[int],
         mapper: Callable[[int], int],
-        expected: t.SequenceOf[int] | t.MappingKV[str, int] | set[int] | frozenset[int],
+        expected: Sequence[int] | Mapping[str, int] | set[int] | frozenset[int],
     ) -> None:
         """Test map applies function to each element."""
         tm.that(u.map(items, mapper), eq=expected)
@@ -95,7 +95,7 @@ class TestsFlextCoreUtilitiesCollection:
     )
     def test_find_returns_matching_element_or_failure(
         *,
-        items: t.SequenceOf[int] | t.MappingKV[str, int],
+        items: Sequence[int] | Mapping[str, int],
         predicate: Callable[[int], bool],
         expected: int | None,
         expect_found: bool,
@@ -146,10 +146,10 @@ class TestsFlextCoreUtilitiesCollection:
         ],
     )
     def test_filter_keeps_matching_and_optionally_maps(
-        items: t.SequenceOf[int] | t.MappingKV[str, int],
+        items: Sequence[int] | Mapping[str, int],
         predicate: Callable[[int], bool],
         mapper: Callable[[int], int] | None,
-        expected: t.SequenceOf[int] | t.MappingKV[str, int],
+        expected: Sequence[int] | Mapping[str, int],
     ) -> None:
         """Test filter keeps matching and optionally maps."""
         tm.that(u.filter(items, predicate, mapper=mapper), eq=expected)
@@ -162,7 +162,7 @@ class TestsFlextCoreUtilitiesCollection:
         [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], u.Tests.is_even, 2)],
     )
     def test_count_returns_total_or_matching(
-        items: t.SequenceOf[int],
+        items: Sequence[int],
         predicate: Callable[[int], bool] | None,
         expected: int,
     ) -> None:
@@ -181,10 +181,10 @@ class TestsFlextCoreUtilitiesCollection:
         ],
     )
     def test_process_applies_processor_with_optional_predicate(
-        items: t.SequenceOf[int],
+        items: Sequence[int],
         processor: Callable[[int], int],
         predicate: Callable[[int], bool] | None,
-        expected: t.SequenceOf[int],
+        expected: Sequence[int],
     ) -> None:
         """Test process applies processor with optional predicate."""
         result = u.process(items, processor, predicate=predicate)
@@ -227,8 +227,8 @@ class TestsFlextCoreUtilitiesCollection:
     @staticmethod
     def test_merge_mappings_deep_combines_nested_keys() -> None:
         """Test merge mappings deep combines nested keys."""
-        base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
-        other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
+        base: Mapping[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
+        other: Mapping[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other)
         tm.ok(result)
         tm.that(result.value["a"], eq=1)
@@ -238,8 +238,8 @@ class TestsFlextCoreUtilitiesCollection:
     @staticmethod
     def test_merge_mappings_override_replaces_values() -> None:
         """Test merge mappings override replaces values."""
-        base: t.MappingKV[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
-        other: t.MappingKV[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
+        base: Mapping[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
+        other: Mapping[str, t.JsonValue] = {"b": {"y": 2}, "c": 3}
         result = u.merge_mappings(base, other, strategy=c.MergeStrategy.OVERRIDE)
         tm.ok(result)
         tm.that(result.value["a"], eq=1)

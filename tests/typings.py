@@ -44,23 +44,23 @@ class TestsFlextTypes(FlextTestsTypes):
 
             type DispatchRequest = p.Tests.DispatchRequest
 
-            type ServiceConfigMapping = FlextTestsTypes.MappingKV[
+            type ServiceConfigMapping = FlextTestsTypes.Mapping[
                 str,
                 FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
             ]
             "Service configuration mapping specific to flext-core services."
-            type HandlerConfigMapping = FlextTestsTypes.MappingKV[
+            type HandlerConfigMapping = FlextTestsTypes.Mapping[
                 str,
                 FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
             ]
             "Handler configuration mapping specific to flext-core handlers."
 
-            type TestCaseMap = FlextTestsTypes.MappingKV[
+            type TestCaseMap = FlextTestsTypes.Mapping[
                 str,
                 FlextTestsTypes.Tests.TestobjectSerializable,
             ]
 
-            type InputPayloadMap = FlextTestsTypes.MappingKV[
+            type InputPayloadMap = FlextTestsTypes.Mapping[
                 str,
                 FlextTestsTypes.Tests.TestobjectSerializable,
             ]

@@ -19,6 +19,15 @@ This DDD guide focuses on practical boundaries and executable flows.
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import p, r
 
 
@@ -50,6 +59,15 @@ if not short_sku.failure:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import p, r, t
 
 
@@ -66,17 +84,17 @@ def validate_sku(sku: str) -> p.Result[str]:
     return r[str].ok(sku)
 
 
-def create_product(command: t.StrDict) -> p.Result[t.StrDict]:
+def create_product(command: dict[str, str]) -> p.Result[dict[str, str]]:
     """Validate the SKU before recording product creation.
 
     Returns:
-        The resulting ``p.Result[t.StrDict]``.
+        The resulting ``p.Result[dict[str, str]]``.
 
     """
     sku_result = validate_sku(command.get("sku", ""))
     if sku_result.failure:
-        return r[t.StrDict].fail("product_validation_failed")
-    return r[t.StrDict].ok({"sku": sku_result.value, "status": "created"})
+        return r[dict[str, str]].fail("product_validation_failed")
+    return r[dict[str, str]].ok({"sku": sku_result.value, "status": "created"})
 
 
 created = create_product({"sku": "SKU-123"})

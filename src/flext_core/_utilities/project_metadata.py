@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 import sys
 import tomllib
+from collections.abc import Sequence
 from email.utils import parseaddr
 from functools import cache
 from importlib.metadata import Distribution, DistributionFinder, PackageMetadata
@@ -147,7 +148,7 @@ class FlextUtilitiesProjectMetadata(
     def installed_distributions(
         *,
         name: str | None = None,
-        path: t.StrSequence | None = None,
+        path: Sequence[str] | None = None,
     ) -> tuple[Distribution, ...]:
         """Enumerate installed distributions over one snapshot of the finder chain.
 
@@ -230,7 +231,7 @@ class FlextUtilitiesProjectMetadata(
         return False
 
     @staticmethod
-    def package_author(package_metadata: PackageMetadata) -> t.StrPair:
+    def package_author(package_metadata: PackageMetadata) -> tuple[str, str]:
         """Return the first normalized author identity from package metadata.
 
         Returns:
@@ -275,7 +276,7 @@ class FlextUtilitiesProjectMetadata(
         return ""
 
     @staticmethod
-    def package_version_info(version: str) -> t.Triple[int, int, int]:
+    def package_version_info(version: str) -> tuple[int, int, int]:
         """Return the exact three-component PEP 440 release tuple.
 
         Returns:
@@ -303,7 +304,7 @@ class FlextUtilitiesProjectMetadata(
 
         _metadata: PackageMetadata
         __version__: str = ""
-        __version_info__: t.Triple[int, int, int]
+        __version_info__: tuple[int, int, int]
         __title__: str = ""
         __description__: str = ""
         __author__: str = ""

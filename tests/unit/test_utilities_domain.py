@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict, UserList
+from collections.abc import Sequence
 from types import MappingProxyType
 
 import pytest
@@ -32,7 +33,7 @@ class TestsFlextCoreUtilitiesDomain:
         ],
     )
     def test_to_str_preserves_native_collection_formatting(
-        value: t.JsonMapping | t.StrSequence,
+        value: t.JsonMapping | Sequence[str],
     ) -> None:
         """Abstract collections use native string formatting, not JSON admission."""
         tm.that(u.to_str(value), eq=str(value))

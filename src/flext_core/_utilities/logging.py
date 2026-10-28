@@ -12,6 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping, MutableMapping
 from types import TracebackType
 from typing import Self
 
@@ -62,7 +63,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = c.Status.SUCCESS if success else c.Status.FAILED
-            context: t.MutableMappingKV[str, p.LogValue] = {
+            context: MutableMapping[str, p.LogValue] = {
                 c.MetadataKey.DURATION_SECONDS: elapsed,
                 c.HandlerType.OPERATION: self._operation_name,
                 c.FIELD_STATUS: status,
@@ -183,7 +184,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         cls,
         name: str,
         *,
-        context: t.MappingKV[str, t.JsonPayload | None] | None = None,
+        context: Mapping[str, t.JsonPayload | None] | None = None,
     ) -> p.Logger:
         """Construct a lazy module logger without configuring a destination.
 

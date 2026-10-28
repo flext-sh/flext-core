@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Annotated, ClassVar
 
 from flext_core import c, p, t
@@ -60,7 +61,7 @@ class FlextModelsExceptionParamsBase:
             ),
         ] = c.ErrorCode.UNKNOWN_ERROR
         context: Annotated[
-            t.MappingKV[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
+            Mapping[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Structured context mapping or dumpable payload.",
@@ -95,7 +96,7 @@ class FlextModelsExceptionParamsBase:
             ),
         ] = True
         merged_kwargs: Annotated[
-            t.MappingKV[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
+            Mapping[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Pre-merged keyword payload forwarded by factories.",

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from typing_extensions import TypeForm
@@ -73,13 +74,13 @@ class TestsFlextModelsServiceCaseValidationMixin:
         converted: Annotated[t.JsonList, m.Field(description="Converted records")] = (
             m.Field(default_factory=u.empty(TypeForm(t.JsonList)))
         )
-        errors: Annotated[t.StrSequence, m.Field(description="Conversion errors")] = (
-            m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
+        errors: Annotated[Sequence[str], m.Field(description="Conversion errors")] = (
+            m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
         )
         warnings: Annotated[
-            t.StrSequence,
+            Sequence[str],
             m.Field(description="Conversion warnings"),
-        ] = m.Field(default_factory=u.empty(TypeForm(t.StrSequence)))
+        ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
         skipped: Annotated[t.JsonList, m.Field(description="Skipped records")] = (
             m.Field(default_factory=u.empty(TypeForm(t.JsonList)))
         )

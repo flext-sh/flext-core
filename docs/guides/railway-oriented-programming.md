@@ -58,6 +58,15 @@ All snippets below are standalone and executable.
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import p, r
 
 success: p.Result[str] = r[str].ok("hello")
@@ -81,6 +90,15 @@ if failure.error_code != expected_error_code:
 """Read success and failure state safely."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import r
 
@@ -109,6 +127,15 @@ Use `flat_map` when each step already returns `p.Result[...]`.
 """Compose result-producing steps with flat_map."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import p, r
 
@@ -154,6 +181,15 @@ if result.value != expected_email:
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import r
 
 length_result = r[str].ok("flext").map(len)
@@ -192,6 +228,15 @@ reduced to a plain value with a default.
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import r
 
 success_value = r[int].ok(7).map_or(0)
@@ -222,6 +267,15 @@ model parsing.
 """Convert a callable and model validation into results."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import m, r
 
@@ -258,6 +312,15 @@ cross-boundary failures prefer the canonical `e.fail_*` helpers shown below.
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import r
 
 ok_value = r[int].ok(7).unwrap_or(0)
@@ -287,6 +350,15 @@ Use `lash` to transform failures into alternate result flows.
 """Recover a failed result with another result-producing branch."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import p, r
 
@@ -320,6 +392,15 @@ carry canonical `error_code` and `error_data`.
 """Use e.fail_* helpers at result-returning boundaries."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import c, e, p, r
 
@@ -390,6 +471,15 @@ auto-generated correlation ids.
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import c, e
 
 error = e.ValidationError(
@@ -424,6 +514,15 @@ if scope != "profile-service":
 """Keep None semantics explicit."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import e, p, r
 
@@ -491,6 +590,15 @@ When you must switch from a foreign exception to a typed FLEXT exception, use
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import e
 
 
@@ -553,6 +661,15 @@ once, enrich it with operation metadata, and preserve the original cause for deb
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import p, r
 
 
@@ -588,6 +705,15 @@ if passed.value != expected_items:
 """Wrap resource setup, use, and cleanup in a result."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from typing import Protocol
 
@@ -658,6 +784,15 @@ if resource_result.value != expected_identifier:
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import d
 
 
@@ -707,6 +842,15 @@ delivery timing remain the logging owner's configuration, not retry expectations
 """Combine retry and railway decorators."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from typing import Protocol
 
@@ -787,6 +931,15 @@ wrapping.
 """Use the combined decorator with railway wrapping enabled."""
 
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from flext_core import d
 

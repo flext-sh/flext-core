@@ -8,6 +8,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence
+
 from flext_core import FlextResult, c, m, p, t
 
 
@@ -16,7 +18,7 @@ class FlextUtilitiesArgs:
 
     @staticmethod
     def parse_model[M: m.BaseModel](
-        kwargs: t.MappingKV[str, t.JsonPayload],
+        kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
@@ -45,7 +47,7 @@ class FlextUtilitiesArgs:
     @staticmethod
     def resolve_options[M: m.BaseModel](
         options: M | None,
-        kwargs: t.MappingKV[str, t.JsonPayload],
+        kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
@@ -68,4 +70,4 @@ class FlextUtilitiesArgs:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesArgs"]
+__all__: MutableSequence[str] = ["FlextUtilitiesArgs"]

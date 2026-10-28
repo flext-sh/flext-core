@@ -10,7 +10,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableSet, Set as AbstractSet
+from collections.abc import (
+    Callable,
+    MutableMapping,
+    MutableSequence,
+    MutableSet,
+    Sequence,
+    Set as AbstractSet,
+)
 from types import ModuleType
 from typing import Annotated
 
@@ -26,7 +33,7 @@ class TestsFlextUtilitiesPydanticEmpty:
     type _NonEmptyValues[ValueT] = Annotated[list[ValueT], m.Field(min_length=1)]
     type _NonEmptyAlias = _NonEmptyValues[int]
     type _AnnotatedList = Annotated[list[int], m.Field(min_length=1)]
-    type _AnnotatedMapping = Annotated[t.MappingKV[str, int], m.Field(min_length=1)]
+    type _AnnotatedMapping = Annotated[Mapping[str, int], m.Field(min_length=1)]
     type _AnnotatedSet = Annotated[AbstractSet[int], m.Field(min_length=1)]
 
     class _Item(m.ArbitraryTypesModel):
@@ -41,14 +48,14 @@ class TestsFlextUtilitiesPydanticEmpty:
             default_factory=u.empty(TypeForm(t.MutableJsonMapping)),
             description="Mutable JSON mapping contract.",
         )
-        str_sequence: t.StrSequence = m.Field(
-            default_factory=u.empty(TypeForm(t.StrSequence)),
+        str_sequence: Sequence[str] = m.Field(
+            default_factory=u.empty(TypeForm(Sequence[str])),
             description="Read-only string sequence contract.",
         )
-        items: t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item] = m.Field(
+        items: MutableSequence[TestsFlextUtilitiesPydanticEmpty._Item] = m.Field(
             default_factory=u.empty(
                 contract_factory=lambda: TypeForm(
-                    t.MutableSequenceOf[TestsFlextUtilitiesPydanticEmpty._Item]
+                    MutableSequence[TestsFlextUtilitiesPydanticEmpty._Item]
                 ),
             ),
             validate_default=True,
@@ -62,8 +69,8 @@ class TestsFlextUtilitiesPydanticEmpty:
             default_factory=u.empty(TypeForm(MutableSet[str])),
             description="Mutable set contract.",
         )
-        modules: t.MutableMappingKV[str, ModuleType] = m.Field(
-            default_factory=u.empty(TypeForm(t.MutableMappingKV[str, ModuleType])),
+        modules: MutableMapping[str, ModuleType] = m.Field(
+            default_factory=u.empty(TypeForm(MutableMapping[str, ModuleType])),
             description="Mapping of an arbitrary, JSON-unrepresentable element.",
         )
 
@@ -139,7 +146,7 @@ class TestsFlextUtilitiesPydanticEmpty:
     )
     def test_full_contract_rejects_invalid_empty_input(
         factory: Callable[
-            [], t.SequenceOf[int | str] | t.MappingKV[str, int] | AbstractSet[int]
+            [], Sequence[int | str] | Mapping[str, int] | AbstractSet[int]
         ],
     ) -> None:
         """Constraints and fixed arity survive outer collection classification."""
@@ -181,9 +188,9 @@ class TestsFlextUtilitiesPydanticEmpty:
     @staticmethod
     def test_contract_factory_resolves_after_declaration() -> None:
         """A supplied type can be bound after declaring the default factory."""
-        contract: TypeForm[t.MutableSequenceOf[int]]
+        contract: TypeForm[MutableSequence[int]]
         factory = u.empty(contract_factory=lambda: contract)
-        contract = TypeForm(t.MutableSequenceOf[int])
+        contract = TypeForm(MutableSequence[int])
 
         first = factory()
         first.append(1)

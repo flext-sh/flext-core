@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, Unpack, override
 
@@ -95,7 +96,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     def register_handlers(
         self,
-        handlers: t.SequenceOf[p.DispatchableHandler],
+        handlers: Sequence[p.DispatchableHandler],
     ) -> p.Result[p.RegistrySummary]:
         """Register every handler atomically without discarding failure metadata.
 
@@ -113,7 +114,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     def register_bindings(
         self,
-        bindings: t.MappingKV[t.RegistryBindingKey, p.DispatchableHandler],
+        bindings: Mapping[t.RegistryBindingKey, p.DispatchableHandler],
     ) -> p.Result[p.RegistrySummary]:
         """Bind each declared message route through the dispatcher itself.
 
@@ -134,7 +135,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
     def _register_batch(
         self,
-        bindings: t.SequenceOf[p.HandlerRegistration],
+        bindings: Sequence[p.HandlerRegistration],
     ) -> p.Result[p.RegistrySummary]:
         outcome = self.dispatcher.register_handlers(bindings)
         if outcome.failure:
@@ -243,7 +244,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         category: str,
         *,
         scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[t.StrSequence]:
+    ) -> p.Result[Sequence[str]]:
         """List registered names deterministically in one category.
 
         Args:
@@ -251,13 +252,13 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             scope: The registration scope, either INSTANCE or CLASS.
 
         Returns:
-            A ``p.Result[t.StrSequence]`` containing the list of registered plugin
+            A ``p.Result[Sequence[str]]`` containing the list of registered plugin
                 names.
 
         """
         key_prefix = u.registry_plugin_key(category)
         if key_prefix.failure:
-            return r[t.StrSequence].from_failure(key_prefix)
+            return r[Sequence[str]].from_failure(key_prefix)
         prefix = key_prefix.value
         with self._lock:
             keys = (
@@ -265,7 +266,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
                 if scope == c.RegistrationScope.INSTANCE
                 else self._class_plugin_storage.keys()
             )
-            return r[t.StrSequence].ok(
+            return r[Sequence[str]].ok(
                 tuple(
                     sorted(
                         key.removeprefix(prefix)

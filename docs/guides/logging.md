@@ -49,7 +49,7 @@ from flext_core import c, m, p, t, u
 
 prior_settings: p.LoggingSettings = u.logging_settings()
 prior_options: p.StructlogOptions = u.logging_options()
-receipts: t.MutableSequenceOf[p.LoggingRecord] = []
+receipts: MutableSequence[p.LoggingRecord] = []
 json_stream = StringIO()
 console_stream = StringIO()
 

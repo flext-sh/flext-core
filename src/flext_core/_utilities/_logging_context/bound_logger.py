@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Self
 
 from flext_core import c, p, r, t
@@ -38,7 +39,7 @@ class FlextUtilitiesLoggingBoundLogger(
         *,
         owner: type[FlextUtilitiesLogging],
         settings: p.Settings | None = None,
-        context: t.MappingKV[str, t.JsonPayload | None] | None = None,
+        context: Mapping[str, t.JsonPayload | None] | None = None,
     ) -> None:
         """Initialize the bound logger with name and optional context.
 
@@ -132,7 +133,7 @@ class FlextUtilitiesLoggingBoundLogger(
         *,
         exception: BaseException | None,
         exc_info: bool,
-        context: t.MappingKV[str, t.JsonPayload | Exception],
+        context: Mapping[str, t.JsonPayload | Exception],
     ) -> p.LoggingEvent:
         """Adapt causal data to native exc_info without formatting a stack.
 
@@ -219,7 +220,7 @@ class FlextUtilitiesLoggingBoundLogger(
         level: t.LogLevel | str,
         event: str,
         args: tuple[t.LogPositionalValue[p.Model], ...],
-        context: t.MappingKV[str, p.LogValue],
+        context: Mapping[str, p.LogValue],
         selected_info: t.LoggingExceptionInfo | None,
     ) -> None:
         """Prepare one event and emit it through the native pipeline."""
