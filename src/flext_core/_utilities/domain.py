@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 
 from flext_core import c, m, p, t
-from flext_core._utilities import FlextUtilitiesGuards
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 
 
 class FlextUtilitiesDomain:
@@ -105,7 +105,7 @@ class FlextUtilitiesDomain:
             result = obj_a == obj_b if isinstance(obj_b, c.SCALAR_TYPES) else False
         else:
             result = False
-            if not FlextUtilitiesGuards.scalar(obj_b):
+            if not FlextUtilitiesGuardsTypeCore.scalar(obj_b):
                 iterable_result = FlextUtilitiesDomain._iterable_members_equal(
                     obj_a,
                     obj_b,
@@ -135,7 +135,7 @@ class FlextUtilitiesDomain:
             The resulting ``int``.
 
         """
-        if FlextUtilitiesGuards.scalar(obj):
+        if FlextUtilitiesGuardsTypeCore.scalar(obj):
             return hash(obj)
         if isinstance(obj, m.EnforcedModel):
             data = obj.model_dump()
@@ -153,7 +153,7 @@ class FlextUtilitiesDomain:
                 k,
                 v
                 if isinstance(v, (str, int, float, bool, type(None)))
-                else FlextUtilitiesGuards.type_name(v),
+                else FlextUtilitiesGuardsTypeCore.type_name(v),
             )
             for k, v in sorted(obj_dict.items())
         ]

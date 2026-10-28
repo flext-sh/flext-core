@@ -189,7 +189,11 @@ class TestsFlextCoreContainerTruthful:
         value: p.Model[list[t.JsonValue]] = tm.ok(
             clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
         )
-        tm.that(value, where=lambda resolved: resolved is registered)
+
+        def resolves_registered(resolved: object) -> bool:
+            return resolved is registered
+
+        tm.that(value, where=resolves_registered)
         tm.that(
             value.model_dump(mode="json"),
             eq=u.normalize_to_json_value(payload),

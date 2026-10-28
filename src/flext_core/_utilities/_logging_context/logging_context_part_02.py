@@ -20,7 +20,7 @@ class FlextUtilitiesLoggingContextPart02(
     logging_context_part_01.FlextUtilitiesLoggingContextPart01
 ):
     @staticmethod
-    def _to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
+    def to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
         """Admit ordinary fields before canonical JSON normalization.
 
         Native exception triples belong to reserved ``exc_info`` and bypass
@@ -51,7 +51,7 @@ class FlextUtilitiesLoggingContextPart02(
 
         """
         return {
-            key: FlextUtilitiesLoggingContextPart02._to_container_value(value)
+            key: FlextUtilitiesLoggingContextPart02.to_container_value(value)
             for key, value in context.items()
         }
 

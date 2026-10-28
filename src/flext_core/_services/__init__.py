@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core.services.dispatcher import FlextServiceDispatcher
-    from flext_core.services.registry import FlextServiceRegistry
+    from flext_core._services.dispatcher import FlextServiceDispatcher
+    from flext_core._services.registry import FlextServiceRegistry
 
 
 __all__: tuple[str, ...] = ("FlextServiceDispatcher", "FlextServiceRegistry")

@@ -36,7 +36,7 @@ class FlextUtilitiesLoggingBoundLogger(
         self,
         name: str,
         *,
-        owner: FlextUtilitiesLogging,
+        owner: type[FlextUtilitiesLogging],
         settings: p.Settings | None = None,
         context: t.MappingKV[str, t.JsonPayload | None] | None = None,
     ) -> None:
@@ -102,6 +102,7 @@ class FlextUtilitiesLoggingBoundLogger(
         bound_logger = self.logger.bind(**context)
         return self.__class__(
             self.name,
+            owner=self._owner,
             context=self._owner.structlog().get_context(bound_logger),
         )
 
@@ -112,7 +113,7 @@ class FlextUtilitiesLoggingBoundLogger(
             A logger bound to the replacement context.
 
         """
-        return self.__class__(self.name, context=context)
+        return self.__class__(self.name, owner=self._owner, context=context)
 
     def exception(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit native exception context and preserve selected failures.
@@ -140,7 +141,7 @@ class FlextUtilitiesLoggingBoundLogger(
 
         """
         result: p.LoggingEvent = {
-            k: self._owner._to_container_value(v) for k, v in context.items()
+            k: self._owner.to_container_value(v) for k, v in context.items()
         }
         if exception is not None:
             result["exception_type"] = exception.__class__.__name__
@@ -156,6 +157,7 @@ class FlextUtilitiesLoggingBoundLogger(
         )
         return self.__class__(
             self.name,
+            owner=self._owner,
             context=self._owner.structlog().get_context(bound_logger),
         )
 

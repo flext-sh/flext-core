@@ -209,7 +209,11 @@ class TestsFlextCoreLazyExportsMerge:
 
             getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)
-            tm.that(getattr_fn("module"), where=lambda value: value is child_module)
+
+            def resolves_child(value: object) -> bool:
+                return value is child_module
+
+            tm.that(getattr_fn("module"), where=resolves_child)
             tm.that(lazy.cache_stats["module_cache"], gte=1)
         finally:
             sys.modules.pop(package_name, None)

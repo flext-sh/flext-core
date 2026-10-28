@@ -230,10 +230,11 @@ class TestsFlextCoreNormalizationBoundaries:
             return payload
 
         clean_container.factory("identity", produce)
-        tm.that(
-            tm.ok(clean_container.resolve("identity")),
-            where=lambda value: value is payload,
-        )
+
+        def resolves_payload(value: object) -> bool:
+            return value is payload
+
+        tm.that(tm.ok(clean_container.resolve("identity")), where=resolves_payload)
 
     @staticmethod
     @pytest.mark.parametrize(

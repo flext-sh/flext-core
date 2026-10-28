@@ -152,6 +152,7 @@ class TestsFlextCoreLazyExports:
         source = Path(__file__).resolve().parents[2] / "src" / "flext_core"
         candidate = tmp_path / "flext_core"
         shutil.copytree(source, candidate, ignore=shutil.ignore_patterns("__pycache__"))
+        bootstrap = candidate / "__init__.py"
         bootstrap.write_text(
             bootstrap.read_text(encoding="utf-8") + "\nfrom flext_core import c\n",
             encoding="utf-8",
@@ -244,7 +245,10 @@ class TestsFlextCoreLazyExports:
         module_globals = _install_alpha(registered_alpha_module, publish_all=False)
 
         # Assert — no __all__ published, but __dir__ still lists the public name
-        tm.that(module_globals, where=lambda namespace: "__all__" not in namespace)
+        def has_no_dunder_all(namespace: t.ModuleGlobals) -> bool:
+            return "__all__" not in namespace
+
+        tm.that(module_globals, where=has_no_dunder_all)
         dir_fn = cast("Callable[[], list[str]]", module_globals["__dir__"])
         tm.that(callable(dir_fn), truth=True)
         tm.that(dir_fn(), eq=["Alpha"])
@@ -287,7 +291,10 @@ class TestsFlextCoreLazyExports:
         tm.that(callable(dir_fn), truth=True)
         tm.that(dir_fn(), eq=["Alpha"])
 
-        tm.that(sys.modules[package_name].Alpha, where=lambda value: value is alpha_cls)
+        def resolves_alpha(value: object) -> bool:
+            return value is alpha_cls
+
+        tm.that(sys.modules[package_name].Alpha, where=resolves_alpha)
 
     @staticmethod
     def test_installed_getattr_resolves_absolute_target(
@@ -309,8 +316,11 @@ class TestsFlextCoreLazyExports:
         resolved = getattr_fn("Alpha")
 
         # Assert — lazy symbol resolves to the real class and is cached in globals
-        tm.that(resolved, where=lambda value: value is alpha_cls)
-        tm.that(module_globals["Alpha"], where=lambda value: value is alpha_cls)
+        def resolves_alpha(value: object) -> bool:
+            return value is alpha_cls
+
+        tm.that(resolved, where=resolves_alpha)
+        tm.that(module_globals["Alpha"], where=resolves_alpha)
 
     @staticmethod
     def test_installed_getattr_resolves_relative_target(
@@ -331,7 +341,10 @@ class TestsFlextCoreLazyExports:
         tm.that(callable(getattr_fn), truth=True)
 
         # Assert
-        tm.that(getattr_fn("Alpha"), where=lambda value: value is alpha_cls)
+        def resolves_alpha(value: object) -> bool:
+            return value is alpha_cls
+
+        tm.that(getattr_fn("Alpha"), where=resolves_alpha)
 
     @staticmethod
     def test_installed_getattr_resolves_bare_string_module_entry() -> None:
@@ -362,10 +375,11 @@ class TestsFlextCoreLazyExports:
             # Assert — resolves the attribute, and never required a
             # probed child submodule
             tm.that(getattr_fn("alias"), eq="resolved")
-            tm.that(
-                sys.modules,
-                where=lambda modules: "test_lazy_alias_pkg.alias" not in modules,
-            )
+
+            def alias_unloaded(modules: dict[str, ModuleType]) -> bool:
+                return "test_lazy_alias_pkg.alias" not in modules
+
+            tm.that(sys.modules, where=alias_unloaded)
         finally:
             sys.modules.pop(target_name, None)
             sys.modules.pop(package_name, None)
@@ -412,7 +426,11 @@ class TestsFlextCoreLazyExports:
         # Assert
         getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
         tm.that(callable(getattr_fn), truth=True)
-        tm.that(getattr_fn("Alpha"), where=lambda value: value is alpha_cls)
+
+        def resolves_alpha(value: object) -> bool:
+            return value is alpha_cls
+
+        tm.that(getattr_fn("Alpha"), where=resolves_alpha)
         tm.that(module_globals["__all__"], eq=("Alpha",))
         tm.ok(getattr_hook is repeated_getattr is getattr_fn)
         tm.ok(dir_hook is repeated_dir is module_globals["__dir__"])
@@ -436,8 +454,11 @@ class TestsFlextCoreLazyExports:
         )
 
         # Assert
-        tm.that(resolved, where=lambda value: value is alpha_cls)
-        tm.that(module_globals["Alpha"], where=lambda value: value is alpha_cls)
+        def resolves_alpha(value: object) -> bool:
+            return value is alpha_cls
+
+        tm.that(resolved, where=resolves_alpha)
+        tm.that(module_globals["Alpha"], where=resolves_alpha)
 
 
 class TestsFlextCoreLazyExportCaching:
@@ -500,13 +521,17 @@ class TestsFlextCoreLazyExportCaching:
 
         # Assert — the mid-body resolution saw the current binding, uncached;
         # the completed module's final binding is what gets cached.
-        tm.that(
-            child.RESOLVED_DURING_INIT, where=lambda value: value is child.FirstAlias
-        )
+        def resolves_first_alias(value: object) -> bool:
+            return value is child.FirstAlias
+
+        def resolves_final_alias(value: object) -> bool:
+            return value is child.FinalAlias
+
+        tm.that(child.RESOLVED_DURING_INIT, where=resolves_first_alias)
         tm.that(child.CACHED_DURING_INIT, is_=bool, eq=False)
-        tm.that(first_access, where=lambda value: value is child.FinalAlias)
-        tm.that(vars(package)["u"], where=lambda value: value is child.FinalAlias)
-        tm.that(package.u, where=lambda value: value is child.FinalAlias)
+        tm.that(first_access, where=resolves_final_alias)
+        tm.that(vars(package)["u"], where=resolves_final_alias)
+        tm.that(package.u, where=resolves_final_alias)
 
     @staticmethod
     def test_get_caches_symbol_of_fully_imported_module(
@@ -521,8 +546,11 @@ class TestsFlextCoreLazyExportCaching:
         resolved = package.u
 
         # Assert — resolution from a finished module is cached in module globals
-        tm.that(resolved, where=lambda value: value is child.FinalAlias)
-        tm.that(vars(package)["u"], where=lambda value: value is child.FinalAlias)
+        def resolves_final_alias(value: object) -> bool:
+            return value is child.FinalAlias
+
+        tm.that(resolved, where=resolves_final_alias)
+        tm.that(vars(package)["u"], where=resolves_final_alias)
 
     @staticmethod
     def test_get_raises_attribute_error_for_name_absent_from_map() -> None:

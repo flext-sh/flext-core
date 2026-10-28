@@ -6,17 +6,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, m, tm, u
+from tests import c, m, t, tm, u
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
-from tests import t
+def _is_same(expected: object) -> Callable[[object], bool]:
+    """Build a typed identity predicate for ``tm.that(where=...)``.
+
+    Returns:
+        The resulting ``Callable[[object], bool]``.
+
+    """
+
+    def matches(candidate: object) -> bool:
+        return candidate is expected
+
+    return matches
 
 
 class TestsFlextCoreUtilitiesCollection:
@@ -44,10 +53,10 @@ class TestsFlextCoreUtilitiesCollection:
             aggregate_id="acme",
             data=config_payload,
         )
-        tm.that(event.data, where=lambda value: value is config_payload)
+        tm.that(event.data, where=_is_same(config_payload))
         tm.that(
             event.data.root["repository_root"],
-            where=lambda value: value is repository_root,
+            where=_is_same(repository_root),
         )
         tm.that(event.data.root["ignored"], none=True)
 

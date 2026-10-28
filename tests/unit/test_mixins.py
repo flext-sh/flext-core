@@ -82,7 +82,11 @@ class TestsFlextMixins:
             ),
         )
         tm.that(captured["operation_count"], eq=1)
-        tm.that(captured["body_metadata"], where=lambda value: value is body_metadata)
+
+        def resolves_metadata(value: object) -> bool:
+            return value is body_metadata
+
+        tm.that(captured["body_metadata"], where=resolves_metadata)
 
     def test_track_increments_operation_count_across_invocations(self) -> None:
         """Test track increments operation count across invocations."""

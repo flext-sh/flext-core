@@ -13,7 +13,7 @@ from typing import overload
 
 from pydantic import TypeAdapter
 
-from flext_core import FlextExceptions, FlextResult, c, p, t
+from flext_core import FlextExceptions, FlextResult, c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
@@ -58,7 +58,7 @@ class FlextUtilitiesModel:
         return dumped
 
     @staticmethod
-    def _settings_base() -> p.SettingsType:
+    def settings_base() -> p.SettingsType:
         """Resolve FlextSettings lazily to avoid runtime import cycles.
 
         Returns:
@@ -70,7 +70,7 @@ class FlextUtilitiesModel:
         return settings_cls
 
     @staticmethod
-    def _container_type() -> p.ContainerType:
+    def container_type() -> p.ContainerType:
         """Resolve FlextContainer lazily to avoid runtime import cycles.
 
         Returns:
@@ -82,7 +82,7 @@ class FlextUtilitiesModel:
         return container_cls
 
     @staticmethod
-    def _context_type() -> p.ContextType:
+    def context_type() -> p.ContextType:
         """Resolve FlextContext lazily to avoid runtime import cycles.
 
         Returns:

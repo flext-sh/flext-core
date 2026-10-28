@@ -14,11 +14,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
-from flext_core._utilities import (
-    FlextUtilitiesGuards,
-    FlextUtilitiesGuardsTypeCore,
-    FlextUtilitiesPydantic,
-)
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore, FlextUtilitiesPydantic
 
 
 class FlextUtilitiesMapperAccessPart01:
@@ -108,7 +104,7 @@ class FlextUtilitiesMapperAccessPart01:
                 ),
             )
         return FlextResult[t.JsonPayload].ok(
-            raw if FlextUtilitiesGuards.container_value(raw) else str(raw),
+            raw if FlextUtilitiesGuardsTypeCore.container_value(raw) else str(raw),
         )
 
     @staticmethod

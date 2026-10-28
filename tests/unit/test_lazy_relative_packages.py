@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import importlib
+from types import ModuleType
 
 import pytest
 
@@ -37,10 +38,12 @@ class TestsFlextCoreLazyRelativePackages:
         target = normalized["module"]
         tm.that(target, is_=str)
         if isinstance(target, str):
-            tm.that(
-                importlib.import_module(target),
-                where=lambda module: module is importlib.import_module(absolute),
-            )
+            absolute_module = importlib.import_module(absolute)
+
+            def resolves_absolute(module: ModuleType) -> bool:
+                return module is absolute_module
+
+            tm.that(importlib.import_module(target), where=resolves_absolute)
 
     @staticmethod
     def test_symbol_target_resolves_parent_package() -> None:

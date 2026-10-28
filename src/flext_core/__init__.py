@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     )
     from flext_core._config import FlextConfig, config
     from flext_core._settings import FlextSettings, PydanticBaseSettingsSource, settings
+    from flext_core._utilities.logging import FlextUtilitiesLogging
     from flext_core.api import FlextCore, core
     from flext_core.bound_logger import FlextBoundLogger
     from flext_core.cli import FlextCli

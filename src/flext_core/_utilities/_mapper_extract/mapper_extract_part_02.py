@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
-from flext_core._utilities import FlextUtilitiesGuards
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore
 from flext_core._utilities._mapper_extract import mapper_extract_part_01
 
 
@@ -55,7 +55,9 @@ class FlextUtilitiesMapperExtractPart02(
                 required=required,
             )
         value = (
-            current if FlextUtilitiesGuards.container_value(current) else str(current)
+            current
+            if FlextUtilitiesGuardsTypeCore.container_value(current)
+            else str(current)
         )
         return FlextResult[t.JsonPayload].ok(value)
 

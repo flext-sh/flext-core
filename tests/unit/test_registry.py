@@ -6,10 +6,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import pytest
 
 from flext_core import FlextRegistry
 from tests import c, h, m, p, r, t, tm, u
+
+
+def _is_same(expected: object) -> Callable[[object], bool]:
+    """Build a typed identity predicate for ``tm.that(where=...)``.
+
+    Returns:
+        The resulting ``Callable[[object], bool]``.
+
+    """
+
+    def matches(candidate: object) -> bool:
+        return candidate is expected
+
+    return matches
 
 
 class TestsFlextCoreRegistry:
@@ -200,7 +216,7 @@ class TestsFlextCoreRegistry:
             )
             tm.that(
                 registry.fetch_plugin("identity", "payload", scope=scope).value,
-                where=lambda value: value is plugin,
+                where=_is_same(plugin),
             )
         finally:
             tm.that(
@@ -230,7 +246,7 @@ class TestsFlextCoreRegistry:
             )
             tm.that(
                 registry.fetch_plugin("bound", "method", scope=scope).value,
-                where=lambda value: value is original,
+                where=_is_same(original),
             )
         finally:
             tm.that(
