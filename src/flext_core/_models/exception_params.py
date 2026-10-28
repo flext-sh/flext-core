@@ -10,11 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._exception_params import operation_errors
+from flext_core._models._exception_params import operation_errors, FlextModelsExceptionParamsOperationErrors
 
 
 class FlextModelsExceptionParams(
-    operation_errors.FlextModelsExceptionParamsOperationErrors
+    FlextModelsExceptionParamsOperationErrors
 ):
     """Public facade for FlextModelsExceptionParams."""
 

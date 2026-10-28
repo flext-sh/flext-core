@@ -23,6 +23,7 @@ if TYPE_CHECKING:
         FlextModelsProjectMetadataDocument,
     )
     from flext_core._models._project_metadata.pyproject_ingress import (
+        FlextModelsProjectMetadataFields,
         FlextModelsPyprojectIngressContract,
     )
 
@@ -31,6 +32,7 @@ __all__: tuple[str, ...] = (
     "FlextModelsProjectMetadataAggregates",
     "FlextModelsProjectMetadataContract",
     "FlextModelsProjectMetadataDocument",
+    "FlextModelsProjectMetadataFields",
     "FlextModelsPyprojectIngressContract",
 )
 
@@ -41,6 +43,7 @@ install_lazy_exports(
         "FlextModelsProjectMetadataAggregates": ".aggregates",
         "FlextModelsProjectMetadataContract": ".contract",
         "FlextModelsProjectMetadataDocument": ".document",
+        "FlextModelsProjectMetadataFields": ".fields",
         "FlextModelsPyprojectIngressContract": ".pyproject_ingress",
     }),
     public_exports=__all__,

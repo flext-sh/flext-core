@@ -14,13 +14,13 @@ from typing import Annotated
 
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
-from flext_core._models._exception_params import base, service_errors
+from flext_core._models._exception_params import base, service_errors, FlextModelsExceptionParamsBase, FlextModelsExceptionParamsServiceErrors
 
 
 class FlextModelsExceptionParamsOperationErrors(
-    service_errors.FlextModelsExceptionParamsServiceErrors
+    FlextModelsExceptionParamsServiceErrors
 ):
-    class OperationErrorParams(base.FlextModelsExceptionParamsBase.ParamsModel):
+    class OperationErrorParams(FlextModelsExceptionParamsBase.ParamsModel):
         """Validated params for OperationError."""
 
         operation: Annotated[
@@ -37,7 +37,7 @@ class FlextModelsExceptionParamsOperationErrors(
         ] = None
 
     class ServiceLookupParams(
-        base.FlextModelsExceptionParamsBase.ExpectedActualTypeParams,
+        FlextModelsExceptionParamsBase.ExpectedActualTypeParams,
     ):
         """Validated params for service lookup and narrowing failures."""
 
@@ -51,7 +51,7 @@ class FlextModelsExceptionParamsOperationErrors(
             ),
         ] = None
 
-    class RegistryPluginParams(base.FlextModelsExceptionParamsBase.ParamsModel):
+    class RegistryPluginParams(FlextModelsExceptionParamsBase.ParamsModel):
         """Validated params for registry plugin registration lifecycle."""
 
         category: Annotated[
@@ -82,7 +82,7 @@ class FlextModelsExceptionParamsOperationErrors(
             ),
         ] = None
 
-    class AttributeAccessErrorParams(base.FlextModelsExceptionParamsBase.ParamsModel):
+    class AttributeAccessErrorParams(FlextModelsExceptionParamsBase.ParamsModel):
         """Validated params for AttributeAccessError."""
 
         attribute_name: Annotated[
