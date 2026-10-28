@@ -17,13 +17,9 @@ from datetime import UTC, datetime, tzinfo
 from importlib import import_module
 from zoneinfo import ZoneInfo
 
-from flext_core import c, t
-from flext_core._models import FlextModelsOptions
+from flext_core import c, m, t
 
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _generators_parts/part_01..02 (one
-# FlextUtilitiesGenerators class split across a numbered MRO chain) into this single
-# facade module.
 class FlextUtilitiesGenerators:
     """Generate deterministic IDs and timestamps for CQRS workflows.
 
@@ -130,7 +126,7 @@ class FlextUtilitiesGenerators:
     def generate(
         kind: str | None = None,
         *,
-        options: FlextModelsOptions.GenerateOptions | None = None,
+        options: m.GenerateOptions | None = None,
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method).
 
@@ -138,7 +134,7 @@ class FlextUtilitiesGenerators:
             The resulting ``str``.
 
         """
-        resolved_options = options or FlextModelsOptions.GenerateOptions()
+        resolved_options = options or m.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
             kind,
             resolved_options.prefix,

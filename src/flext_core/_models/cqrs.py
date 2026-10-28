@@ -9,16 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from flext_core import c, t
 from flext_core._models import FlextModelsBase
 from flext_core._models._cqrs import flextmodelscqrs_part_01
-from flext_core._utilities import FlextUtilitiesGenerators
-from flext_core.constants import c
-from flext_core.typings import t
 
 
 class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
@@ -54,9 +53,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                "cmd",
-            ),
+            default_factory=lambda: "cmd_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH],
         )
         issuer_id: Annotated[
             t.NonEmptyStr | None,
@@ -114,8 +111,8 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                c.HandlerMode.QUERY,
+            default_factory=lambda: (
+                f"{c.HandlerMode.QUERY}_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH]
             ),
         )
         query_type: Annotated[
@@ -225,9 +222,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                "evt",
-            ),
+            default_factory=lambda: "evt_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH],
         )
         data: Annotated[
             t.MappingKV[str, t.Scalar],

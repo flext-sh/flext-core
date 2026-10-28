@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
-from flext_core._models import FlextModelsExceptionParams
 from flext_core._utilities import FlextUtilitiesGuards
 from flext_core._utilities._mapper_extract import mapper_extract_part_01
 
@@ -90,7 +89,7 @@ class FlextUtilitiesMapperExtractPart02(
                     c.ERR_TEMPLATE_EXTRACT_FAILED,
                     operation="extract",
                     error=str(exc),
-                    params=FlextModelsExceptionParams.OperationErrorParams(
+                    params=m.OperationErrorParams(
                         operation="extract",
                         reason=str(exc),
                     ),

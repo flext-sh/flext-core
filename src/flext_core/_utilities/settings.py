@@ -14,11 +14,6 @@ from __future__ import annotations
 
 import os
 
-# AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): t MUST stay a RUNTIME import.
-# beartype.claw evaluates annotations at runtime; moving FlextTypes
-# under TYPE_CHECKING raises NameError at import (test_beartype_engine_claw_packages).
-# Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
-# model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
 from flext_core import t
 
 

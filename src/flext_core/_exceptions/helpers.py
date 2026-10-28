@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextRuntime, c, m, p
+from flext_core import c, m, p
+from flext_core._utilities import FlextUtilitiesPydantic
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -40,7 +41,10 @@ class FlextExceptionsHelpers:
             )
             for key, value in source_mapping.items():
                 if value is not None:
-                    entries.append((key, FlextRuntime.normalize_to_json_value(value)))
+                    entries.append((
+                        key,
+                        FlextUtilitiesPydantic.normalize_to_json_value(value),
+                    ))
         return tuple(entries)
 
     @staticmethod

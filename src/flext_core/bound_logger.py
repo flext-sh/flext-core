@@ -14,12 +14,19 @@ from __future__ import annotations
 import logging
 from typing import Self
 
-from flext_core import FlextUtilities, c, p, r, t
+from flext_core import c, p, r, t
+from flext_core._utilities._logging_config.logging_config_part_01 import (
+    FlextUtilitiesLoggingConfigPart01,
+)
+from flext_core._utilities._logging_config.logging_config_part_03 import (
+    FlextUtilitiesLoggingConfigPart03,
+)
+from flext_core._utilities._logging_context.logging_context_part_02 import (
+    FlextUtilitiesLoggingContextPart02,
+)
 
 
-class FlextBoundLogger(
-    FlextUtilities,
-):
+class FlextBoundLogger:
     """Context-aware bound logger instance handed out by the logging facade.
 
     Composed via MRO from ``FlextUtilitiesLoggingContext`` (context binding,
@@ -49,7 +56,7 @@ class FlextBoundLogger(
         resolved_context: t.MutableJsonMapping = {}
         if context is not None:
             resolved_context = dict(
-                self.to_container_context({
+                FlextUtilitiesLoggingContextPart02.to_container_context({
                     key: value for key, value in context.items() if value is not None
                 }),
             )
@@ -64,14 +71,16 @@ class FlextBoundLogger(
             if isinstance(correlation_id, str) and correlation_id:
                 resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
         resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
-        self._native: p.NativeLoggingWrapper = self.structlog().wrap_logger(
-            None,
-            processors=None,
-            wrapper_class=None,
-            context_class=None,
-            logger_factory_args=(name,),
-            cache_logger_on_first_use=False,
-            **resolved_context,
+        self._native: p.NativeLoggingWrapper = (
+            FlextUtilitiesLoggingConfigPart01.structlog().wrap_logger(
+                None,
+                processors=None,
+                wrapper_class=None,
+                context_class=None,
+                logger_factory_args=(name,),
+                cache_logger_on_first_use=False,
+                **resolved_context,
+            )
         )
 
     def __call__(self) -> Self:
@@ -81,20 +90,25 @@ class FlextBoundLogger(
     @property
     def _context(self) -> p.LoggingContext:
         """Context mapping for BindableLogger protocol compliance."""
-        context: p.LoggingContext = self.structlog().get_context(self._native)
+        context: p.LoggingContext = (
+            FlextUtilitiesLoggingConfigPart01.structlog().get_context(self._native)
+        )
         return context
 
     @property
     def logger(self) -> p.NativeLoggingWrapper:
         """Native lazy composition, including the latest factory and processors."""
-        self.ensure_structlog_configured()
+        FlextUtilitiesLoggingConfigPart03.ensure_structlog_configured()
         return self._native
 
     def bind(self, **context: t.JsonPayload) -> Self:
         """Return a new logger with additional native bound context."""
         bound_logger = self.logger.bind(**context)
         return self.__class__(
-            self.name, context=self.structlog().get_context(bound_logger)
+            self.name,
+            context=FlextUtilitiesLoggingConfigPart01.structlog().get_context(
+                bound_logger
+            ),
         )
 
     def new(self, **context: t.JsonPayload) -> Self:
@@ -132,7 +146,8 @@ class FlextBoundLogger(
 
         """
         result: p.LoggingEvent = {
-            k: self._to_container_value(v) for k, v in context.items()
+            k: FlextUtilitiesLoggingContextPart02._to_container_value(v)
+            for k, v in context.items()
         }
         if exception is not None:
             result["exception_type"] = exception.__class__.__name__
@@ -147,7 +162,10 @@ class FlextBoundLogger(
             self.logger.try_unbind(*keys) if safe else self.logger.unbind(*keys)
         )
         return self.__class__(
-            self.name, context=self.structlog().get_context(bound_logger)
+            self.name,
+            context=FlextUtilitiesLoggingConfigPart01.structlog().get_context(
+                bound_logger
+            ),
         )
 
     def try_unbind(self, *keys: str) -> Self:
@@ -214,7 +232,7 @@ class FlextBoundLogger(
         """Prepare one event and emit it through the native pipeline."""
         level_str = logging.getLevelName(self.level_number(level)).lower()
         native_context: p.LoggingEvent = dict(
-            self.to_container_context({
+            FlextUtilitiesLoggingContextPart02.to_container_context({
                 key: value
                 for key, value in context.items()
                 if key not in {"exc_info", "exception"}

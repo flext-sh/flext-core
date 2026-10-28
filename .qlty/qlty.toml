@@ -28,7 +28,7 @@ exclude_patterns = [
   "**/src/flext_core/_models/_base/__init__.py",
   "**/src/flext_core/_models/_container/__init__.py",
   "**/src/flext_core/_models/_context/__init__.py",
-  "**/src/flext_core/_models/_context/__scope/__init__.py",
+  "**/src/flext_core/_models/_context/_scope/__init__.py",
   "**/src/flext_core/_models/_cqrs/__init__.py",
   "**/src/flext_core/_models/_enforcement/__init__.py",
   "**/src/flext_core/_models/_exception_params/__init__.py",

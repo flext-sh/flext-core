@@ -24,11 +24,11 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
-    from flext_core._bound_logger import FlextBoundLogger
     from flext_core._config import FlextConfig, config
     from flext_core._settings import FlextSettings, PydanticBaseSettingsSource, settings
     from flext_core.api import FlextCore, core
     from flext_core.base import FlextBase
+    from flext_core.bound_logger import FlextBoundLogger
     from flext_core.cli import FlextCli
     from flext_core.config_sources import FlextStrictYamlConfigSource
     from flext_core.constants import FlextConstants, c
@@ -59,7 +59,6 @@ if TYPE_CHECKING:
     from flext_core.protocols import FlextProtocols, p
     from flext_core.registry import FlextRegistry
     from flext_core.result import FlextResult, r
-    from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.typings import FlextTypes, t
     from flext_core.utilities import FlextUtilities, u
@@ -88,7 +87,6 @@ __all__: tuple[str, ...] = (
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
-    "FlextRuntime",
     "FlextService",
     "FlextSettings",
     "FlextStrictYamlConfigSource",
@@ -136,7 +134,7 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextBase": ".base",
-        "FlextBoundLogger": "._bound_logger",
+        "FlextBoundLogger": ".bound_logger",
         "FlextCli": ".cli",
         "FlextConfig": "._config",
         "FlextConstants": ".constants",
@@ -158,7 +156,6 @@ install_lazy_exports(
         "FlextProtocols": ".protocols",
         "FlextRegistry": ".registry",
         "FlextResult": ".result",
-        "FlextRuntime": ".runtime",
         "FlextService": ".service",
         "FlextSettings": "._settings",
         "FlextStrictYamlConfigSource": ".config_sources",
@@ -199,6 +196,3 @@ install_lazy_exports(
     }),
     public_exports=__all__,
 )
-
-if not TYPE_CHECKING:
-    from flext_core.__version__ import __version__

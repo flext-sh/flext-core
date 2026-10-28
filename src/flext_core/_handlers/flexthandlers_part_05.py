@@ -11,9 +11,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, p, r
+from flext_core import c, p, r, u
 from flext_core._handlers import flexthandlers_part_04
-from flext_core._utilities import FlextUtilitiesHandler
 
 
 class FlextHandlersPart05[MessageT_contra, ResultT](
@@ -64,7 +63,7 @@ class FlextHandlersPart05[MessageT_contra, ResultT](
         validation = self.validate_message(message)
         if validation.failure:
             return r[ResultT].from_failure(validation)
-        self._runtime_state = FlextUtilitiesHandler.start_execution(self._runtime_state)
+        self._runtime_state = u.start_execution(self._runtime_state)
         _ = self.push_context(self._runtime_state.execution_context)
         try:
             result = self.handle(message)

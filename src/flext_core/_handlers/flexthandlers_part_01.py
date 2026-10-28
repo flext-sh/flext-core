@@ -13,8 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
-from flext_core import c, e, m, x
-from flext_core._utilities import FlextUtilitiesHandler
+from flext_core import c, e, m, u, x
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
@@ -73,11 +72,9 @@ class FlextHandlersPart01[MessageT_contra, ResultT](x):
             error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
             raise e.ValidationError(error_msg)
         handler_mode_literal = self._handler_type_to_literal(handler_type)
-        self._runtime_state: p.HandlerRuntimeState = (
-            FlextUtilitiesHandler.create_runtime_state(
-                handler_name=self._config_model.handler_name,
-                handler_mode=handler_mode_literal,
-            )
+        self._runtime_state: p.HandlerRuntimeState = u.create_runtime_state(
+            handler_name=self._config_model.handler_name,
+            handler_mode=handler_mode_literal,
         )
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:

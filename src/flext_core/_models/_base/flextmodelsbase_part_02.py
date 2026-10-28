@@ -13,20 +13,21 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import uuid
-from collections.abc import Hashable
-from datetime import datetime
+from collections.abc import Hashable, Mapping
+from datetime import UTC, datetime
 from typing import Annotated, ClassVar, dataclass_transform, override
 
-from pydantic import ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
 from flext_core import c, p, t
-from flext_core._models import FlextModelsPydantic
+from flext_core._models import FlextModelsContainers
 from flext_core._models._base import FlextModelsBasePart01
-from flext_core._utilities import FlextUtilitiesGenerators, FlextUtilitiesPydantic
+
+_METADATA_MAPPING_VALIDATOR = TypeAdapter(Mapping[str, t.JsonValue])
 
 
 class FlextModelsBasePart02(FlextModelsBasePart01):
-    class Metadata(FlextModelsPydantic.BaseModel):
+    class Metadata(BaseModel):
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
@@ -37,7 +38,7 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
         )
         created_at: Annotated[
             datetime,
-            FlextModelsPydantic.Field(
+            Field(
                 description=(
                     "Timestamp when the metadata record was first created (configured "
                     "timezone)."
@@ -45,10 +46,10 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
                 title="Created At",
                 examples=["2026-03-03T10:00:00+00:00"],
             ),
-        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime,
-            FlextModelsPydantic.Field(
+            Field(
                 description=(
                     "Timestamp of the most recent metadata update (configured "
                     "timezone)."
@@ -56,10 +57,10 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
                 title="Updated At",
                 examples=["2026-03-03T10:05:00+00:00"],
             ),
-        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
+        ] = Field(default_factory=lambda: datetime.now(UTC))
         version: Annotated[
             str,
-            FlextModelsPydantic.Field(
+            Field(
                 default=c.METADATA_SCHEMA_VERSION_DEFAULT,
                 description=(
                     "Semantic version string representing the metadata schema revision."
@@ -70,7 +71,7 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
         ] = c.METADATA_SCHEMA_VERSION_DEFAULT
         created_by: Annotated[
             str | None,
-            FlextModelsPydantic.Field(
+            Field(
                 default=None,
                 description=(
                     "Identifier of the actor that originally created this metadata."
@@ -81,7 +82,7 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
         ] = None
         modified_by: Annotated[
             str | None,
-            FlextModelsPydantic.Field(
+            Field(
                 default=None,
                 description="Identifier of the actor that last modified this metadata.",
                 title="Modified By",
@@ -90,36 +91,34 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
         ] = None
         tags: Annotated[
             t.StrSequence,
-            FlextModelsPydantic.Field(
+            Field(
                 description=(
                     "Normalized labels used to classify and filter this metadata."
                 ),
                 title="Tags",
                 examples=[["billing", "critical"]],
             ),
-        ] = FlextModelsPydantic.Field(
+        ] = Field(
             default=(),
             validate_default=True,
         )
         attributes: Annotated[
             t.JsonMapping,
-            FlextModelsPydantic.Field(
+            Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
                 examples=[{"source": "api", "priority": "high"}],
             ),
-        ] = FlextModelsPydantic.Field(
+        ] = Field(
             default_factory=dict,
             validate_default=True,
         )
         metadata_value: Annotated[
             t.Scalar | None,
-            FlextModelsPydantic.Field(
-                default=None, description="Scalar metadata value."
-            ),
+            Field(default=None, description="Scalar metadata value."),
         ] = None
 
-        @FlextModelsPydantic.field_validator("attributes", mode="before")
+        @field_validator("attributes", mode="before")
         @classmethod
         def validate_metadata_attributes(cls, value: p.MetadataInput) -> t.JsonMapping:
             """Validate attributes through the canonical metadata boundary.
@@ -128,7 +127,27 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
                 The validated JSON metadata attributes.
 
             """
-            return FlextUtilitiesPydantic.validate_metadata_attributes(value)
+            payload = (
+                value.model_dump(mode="json")
+                if isinstance(value, p.HasModelDump)
+                else value
+            )
+            normalized = (
+                FlextModelsContainers.ConfigMap.model_validate(payload).root
+                if isinstance(payload, Mapping)
+                else payload
+            )
+            if normalized is None:
+                return {}
+            for key in normalized:
+                if key.startswith("_"):
+                    message = c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(
+                        key=key
+                    )
+                    raise ValueError(message)
+            return _METADATA_MAPPING_VALIDATOR.validate_python(
+                {k: v for k, v in normalized.items() if v is not None}, strict=True
+            )
 
     class ContractModel(FlextModelsBasePart01.StrictModel):
         """Immutable strict contract preserving Enum identity until serialization."""
@@ -185,8 +204,8 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
 
         unique_id: Annotated[
             t.NonEmptyStr,
-            FlextModelsPydantic.Field(description="Unique identifier", frozen=False),
-        ] = FlextModelsPydantic.Field(default_factory=lambda: str(uuid.uuid4()))
+            Field(description="Unique identifier", frozen=False),
+        ] = Field(default_factory=lambda: str(uuid.uuid4()))
 
 
 __all__: list[str] = ["FlextModelsBasePart02"]

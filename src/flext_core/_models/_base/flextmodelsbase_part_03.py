@@ -18,7 +18,6 @@ from typing import Annotated, ClassVar, Self
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._models._base import flextmodelsbase_part_02
-from flext_core._utilities import FlextUtilitiesGenerators
 
 
 class FlextModelsBasePart03(flextmodelsbase_part_02.FlextModelsBasePart02):
@@ -33,7 +32,7 @@ class FlextModelsBasePart03(flextmodelsbase_part_02.FlextModelsBasePart02):
                 description="Creation timestamp (configured timezone)",
                 frozen=True,
             ),
-        ] = FlextModelsPydantic.Field(default_factory=FlextUtilitiesGenerators.now)
+        ] = FlextModelsPydantic.Field(default_factory=lambda: datetime.now(UTC))
         updated_at: Annotated[
             datetime | None,
             FlextModelsPydantic.Field(
@@ -66,9 +65,7 @@ class FlextModelsBasePart03(flextmodelsbase_part_02.FlextModelsBasePart02):
         # rejected by ``inspect_field_serializer``, and the self-less
         # ``(value)`` shape fails the fleet method-naming rule. The
         # classmethod keeps the value mapping pure (no instance state).
-        @FlextModelsPydantic.field_serializer(
-            "created_at", "updated_at", when_used="json"
-        )
+        @FlextModelsPydantic.field_serializer("created_at", "updated_at", when_used="json")
         @classmethod
         def serialize_timestamps(cls, value: datetime | None) -> str | None:
             """Serialize timestamps to ISO 8601 for JSON.
@@ -132,8 +129,8 @@ class FlextModelsBasePart03(flextmodelsbase_part_02.FlextModelsBasePart02):
     class RetryConfigurationMixin(FlextModelsPydantic.BaseModel):
         """Mixin for shared retry configuration properties."""
 
-        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
-            FlextModelsPydantic.ConfigDict(populate_by_name=True)
+        model_config: ClassVar[ConfigDict] = FlextModelsPydantic.ConfigDict(
+            populate_by_name=True
         )
         max_retries: Annotated[
             t.NonNegativeInt,

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import sys
 from collections.abc import Callable, Mapping, Sequence
 from importlib.util import resolve_name
 from types import ModuleType
@@ -32,7 +31,6 @@ class FlextLazyPart01:
     """
 
     __slots__ = (
-        "_activating_core_beartype",
         "_import_module",
         "child_lazy_cache",
         "child_merge_cache",
@@ -69,7 +67,6 @@ class FlextLazyPart01:
             str, tuple[tuple[int, int, int, bool], t.LazyExportHooks]
         ] = {}
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
-        self._activating_core_beartype = False
 
     @property
     def cache_stats(self) -> Mapping[str, int]:
@@ -117,22 +114,6 @@ class FlextLazyPart01:
 
         self.normalized_map_cache[cache_key] = (raw, out)
         return out
-
-    @staticmethod
-    def _must_activate_core_beartype(module_path: str) -> bool:
-        """Return whether importing a module should activate flext_core beartype.
-
-        Returns:
-            Whether importing a module should activate flext_core beartype.
-
-        """
-        root_module = sys.modules.get("flext_core")
-        root_ready = root_module is not None and "t" in vars(root_module)
-        return (
-            root_ready
-            and module_path.startswith("flext_core.")
-            and not module_path.startswith("flext_core._constants")
-        )
 
     def normalize_map(
         self,
@@ -186,24 +167,10 @@ class FlextLazyPart01:
         cached = self.module_cache.get(module_path)
         if cached is not None:
             return cached
-        if (
-            self._must_activate_core_beartype(module_path)
-            and not self._activating_core_beartype
-        ):
-            self._activating_core_beartype = True
-            try:
-                self._activate_core_beartype()
-            finally:
-                self._activating_core_beartype = False
         mod = self._import_module(module_path)
         if not self._module_is_initializing(mod):
             self.module_cache[module_path] = mod
         return mod
-
-    def _activate_core_beartype(self) -> None:
-        """Resolve the bootstrap only after the root installs its public bindings."""
-        bootstrap = self._import_module("flext_core._beartype_bootstrap")
-        bootstrap.FlextCoreBeartypeBootstrap.activate_package_beartype()
 
     def _child_map(
         self, module_path: str

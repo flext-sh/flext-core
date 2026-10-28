@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from typing import TYPE_CHECKING, overload
 
-from flext_core._utilities import FlextUtilitiesCollectionMerge
+from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
 if TYPE_CHECKING:
     from flext_core import t

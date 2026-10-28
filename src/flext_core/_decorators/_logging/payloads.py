@@ -8,9 +8,8 @@ from __future__ import annotations
 
 import time
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._decorators import FlextDecoratorsBase
-from flext_core._typings import FlextTypingBase
 
 
 class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
@@ -22,14 +21,14 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         func_name: str,
         func_module: str,
         correlation_id: str | None,
-    ) -> FlextTypingBase.MutableJsonMapping:
+    ) -> t.MutableJsonMapping:
         """Build structured operation-start log payload.
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
 
         """
-        payload: FlextTypingBase.MutableJsonMapping = {
+        payload: t.MutableJsonMapping = {
             "function": func_name,
             "func_module": func_module,
         }
@@ -44,14 +43,14 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         correlation_id: str | None,
         track_perf: bool,
         start_time: float,
-    ) -> FlextTypingBase.MutableJsonMapping:
+    ) -> t.MutableJsonMapping:
         """Build structured operation-success log payload.
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
 
         """
-        payload: FlextTypingBase.MutableJsonMapping = {
+        payload: t.MutableJsonMapping = {
             "function": func_name,
             "success": True,
         }

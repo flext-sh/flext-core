@@ -9,14 +9,14 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import cast
 
-from flext_core._protocols import FlextProtocolsContainer
+from flext_core import p
 
 
 class FlextUtilitiesGuardsTypeProtocolString:
     """String-keyed runtime predicates shared by the protocol guards."""
 
     @staticmethod
-    def _has_len(value: FlextProtocolsContainer.ProtocolGuardInput) -> bool:
+    def _has_len(value: p.ProtocolGuardInput) -> bool:
         """Return whether ``value`` exposes ``__len__``.
 
         Returns:
@@ -26,7 +26,7 @@ class FlextUtilitiesGuardsTypeProtocolString:
         return hasattr(value, "__len__")
 
     @staticmethod
-    def _is_none(value: FlextProtocolsContainer.ProtocolGuardInput) -> bool:
+    def _is_none(value: p.ProtocolGuardInput) -> bool:
         """Return whether ``value`` is ``None``.
 
         Returns:
@@ -37,7 +37,7 @@ class FlextUtilitiesGuardsTypeProtocolString:
 
     @staticmethod
     def _is_non_empty_mapping(
-        value: FlextProtocolsContainer.ProtocolGuardInput,
+        value: p.ProtocolGuardInput,
     ) -> bool:
         """Return whether ``value`` is a non-empty mapping.
 
@@ -51,7 +51,7 @@ class FlextUtilitiesGuardsTypeProtocolString:
 
     @staticmethod
     def _is_non_empty_sequence(
-        value: FlextProtocolsContainer.ProtocolGuardInput,
+        value: p.ProtocolGuardInput,
     ) -> bool:
         """Return whether ``value`` is a non-empty non-text sequence.
 
@@ -66,9 +66,7 @@ class FlextUtilitiesGuardsTypeProtocolString:
         )
 
     @staticmethod
-    def _string_predicates() -> Mapping[
-        str, Callable[[FlextProtocolsContainer.ProtocolGuardInput], bool]
-    ]:
+    def _string_predicates() -> Mapping[str, Callable[[p.ProtocolGuardInput], bool]]:
         """Return predicates keyed by Python type names and protocol selectors.
 
         Returns:
@@ -119,9 +117,7 @@ class FlextUtilitiesGuardsTypeProtocolString:
         }
 
     @staticmethod
-    def _run_string_type_check(
-        type_name: str, value: FlextProtocolsContainer.ProtocolGuardInput
-    ) -> bool:
+    def _run_string_type_check(type_name: str, value: p.ProtocolGuardInput) -> bool:
         """Evaluate the registry predicate registered under ``type_name``.
 
         Returns:

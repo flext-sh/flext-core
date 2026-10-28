@@ -11,7 +11,6 @@ from itertools import starmap
 from typing import TYPE_CHECKING, cast
 
 from flext_core import FlextResult, c, m, t
-from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeCore,
@@ -155,7 +154,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             numeric_values = []
             for item in items_list:
                 raw: p.AttributeProbe | None
-                if isinstance(item, FlextModelsPydantic.BaseModel):
+                if isinstance(item, m.BaseModel):
                     raw = getattr(item, field, None)
                 elif isinstance(item, Mapping):
                     raw = cast(

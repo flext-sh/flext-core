@@ -14,17 +14,7 @@ from functools import cache
 from types import MappingProxyType
 from typing import TYPE_CHECKING, TypeIs
 
-from flext_core import c, t
-from flext_core._protocols import (
-    FlextProtocolsBase,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsResult,
-    FlextProtocolsService,
-    FlextProtocolsSettings,
-)
+from flext_core import c, p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -35,55 +25,55 @@ class FlextUtilitiesGuardsTypeProtocolSpecs:
     @cache
     def _get_protocol_specs(
         cls,
-    ) -> t.MappingKV[str, Callable[[FlextProtocolsContainer.ProtocolGuardInput], bool]]:
+    ) -> t.MappingKV[str, Callable[[p.ProtocolGuardInput], bool]]:
         return MappingProxyType({
             c.Directory.CONFIG.value: lambda v: isinstance(
                 v,
-                FlextProtocolsSettings.Settings,
+                p.Settings,
             ),
-            c.FIELD_CONTEXT: lambda v: isinstance(v, FlextProtocolsContext.Context),
-            "container": lambda v: isinstance(v, FlextProtocolsContainer.Container),
+            c.FIELD_CONTEXT: lambda v: isinstance(v, p.Context),
+            "container": lambda v: isinstance(v, p.Container),
             "command_bus": lambda v: (
                 hasattr(v, "dispatch")
                 and hasattr(v, "publish")
                 and hasattr(v, "register_handler")
             ),
-            "handler": lambda v: isinstance(v, FlextProtocolsHandler.Handler),
-            "logger": lambda v: isinstance(v, FlextProtocolsLogging.Logger),
+            "handler": lambda v: isinstance(v, p.Handler),
+            "logger": lambda v: isinstance(v, p.Logger),
             "result": cls.result_like,
-            "service": lambda v: isinstance(v, FlextProtocolsService.Service),
-            "middleware": lambda v: isinstance(v, FlextProtocolsHandler.Middleware),
+            "service": lambda v: isinstance(v, p.Service),
+            "middleware": lambda v: isinstance(v, p.Middleware),
         })
 
     @classmethod
     @cache
     def _get_protocol_type_map(cls) -> t.MappingKV[type, str]:
         return MappingProxyType({
-            FlextProtocolsSettings.Settings: c.Directory.CONFIG.value,
-            FlextProtocolsContext.Context: c.FIELD_CONTEXT,
-            FlextProtocolsContainer.Container: "container",
-            FlextProtocolsHandler.Dispatcher: "command_bus",
-            FlextProtocolsHandler.Handler: "handler",
-            FlextProtocolsLogging.Logger: "logger",
-            FlextProtocolsResult.Result: "result",
-            FlextProtocolsService.Service: "service",
-            FlextProtocolsHandler.Middleware: "middleware",
+            p.Settings: c.Directory.CONFIG.value,
+            p.Context: c.FIELD_CONTEXT,
+            p.Container: "container",
+            p.Dispatcher: "command_bus",
+            p.Handler: "handler",
+            p.Logger: "logger",
+            p.Result: "result",
+            p.Service: "service",
+            p.Middleware: "middleware",
         })
 
     @staticmethod
     def context(
-        value: FlextProtocolsContainer.ProtocolGuardInput,
-    ) -> TypeIs[FlextProtocolsContext.Context]:
-        return isinstance(value, FlextProtocolsContext.Context)
+        value: p.ProtocolGuardInput,
+    ) -> TypeIs[p.Context]:
+        return isinstance(value, p.Context)
 
     @staticmethod
-    def result_like(value: FlextProtocolsContainer.ProtocolGuardInput) -> bool:
-        return isinstance(value, FlextProtocolsResult.Result)
+    def result_like(value: p.ProtocolGuardInput) -> bool:
+        return isinstance(value, p.Result)
 
     @staticmethod
     def result_view(
-        value: FlextProtocolsBase.AttributeProbe,
-    ) -> TypeIs[FlextProtocolsResult.ResultView[FlextProtocolsBase.AttributeProbe]]:
+        value: p.AttributeProbe,
+    ) -> TypeIs[p.ResultView[p.AttributeProbe]]:
         """Refine an opaque SDK value to the native read-only result shape.
 
         Uses static protocol inspection, without reading properties or checking
@@ -93,12 +83,10 @@ class FlextUtilitiesGuardsTypeProtocolSpecs:
             Whether the opaque value satisfies the native read-only protocol.
 
         """
-        return isinstance(value, FlextProtocolsResult.ResultView)
+        return isinstance(value, p.ResultView)
 
     @classmethod
-    def _check_protocol(
-        cls, value: FlextProtocolsContainer.ProtocolGuardInput, name: str
-    ) -> bool:
+    def _check_protocol(cls, value: p.ProtocolGuardInput, name: str) -> bool:
         if name == c.FIELD_CONTEXT:
             return cls.context(value)
         matched = False

@@ -8,15 +8,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c, t
+from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesModel
 from flext_core._utilities._parser_targets import parser_targets_part_01
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
-
-    from flext_core import p
-    from flext_core._models import FlextModelsConfig
 
 
 class FlextUtilitiesParserTargetsPart02(
@@ -26,7 +23,7 @@ class FlextUtilitiesParserTargetsPart02(
     def _parse_try_primitive[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextModelsConfig.ParseOptions[T] | None = None,
+        options: m.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
         """Fall back to primitive type parsing.

@@ -144,17 +144,6 @@ class FlextSettings(BaseSettings):
     logging_profile: Literal["console", "json"] = Field(
         default="console", description="Diagnostic output presentation"
     )
-    type BeartypeMode = Literal["off", "warn", "strict"]
-    beartype_mode: Annotated[
-        BeartypeMode,
-        Field(
-            description=(
-                "Runtime type checking of flext_core through beartype.claw: "
-                "off, warn (UserWarning) or strict (TypeError); read once at "
-                "the bootstrap's single activation"
-            )
-        ),
-    ] = "off"
     timezone: Annotated[
         str,
         Field(description="IANA timezone for datetime operations"),

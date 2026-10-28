@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from flext_core import c, p, r, t, u
 from flext_core._handlers import flexthandlers_part_03
-from flext_core._utilities import FlextUtilitiesHandler
 
 
 class FlextHandlersPart04[MessageT_contra, ResultT](
@@ -47,7 +46,7 @@ class FlextHandlersPart04[MessageT_contra, ResultT](
             The resulting ``p.Result[p.RootDict[t.JsonPayload]]``.
 
         """
-        result = FlextUtilitiesHandler.pop_context(self._runtime_state)
+        result = u.pop_context(self._runtime_state)
         if result.failure:
             return r[p.RootDict[t.JsonPayload]].fail_op(
                 "pop handler context",
@@ -63,7 +62,7 @@ class FlextHandlersPart04[MessageT_contra, ResultT](
             The resulting ``p.Result[bool]``.
 
         """
-        result = FlextUtilitiesHandler.push_context(self._runtime_state, ctx)
+        result = u.push_context(self._runtime_state, ctx)
         if result.failure:
             return r[bool].fail_op("push handler context", result.error)
         self._runtime_state = result.unwrap()
@@ -76,7 +75,7 @@ class FlextHandlersPart04[MessageT_contra, ResultT](
             The resulting ``p.Result[bool]``.
 
         """
-        return FlextUtilitiesHandler.record_metric(
+        return u.record_metric(
             self._runtime_state.execution_context,
             name,
             value,

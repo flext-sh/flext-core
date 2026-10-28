@@ -29,7 +29,7 @@ class FlextConstantsErrorsRuntimeSettings:
         "auto_register_factories requires a caller module imported in sys.modules"
     )
     ERR_RUNTIME_METADATA_MODEL_NOT_BOUND: Final[str] = (
-        "FlextRuntime.Metadata is not bound to a concrete model"
+        "u.Metadata is not bound to a concrete model"
     )
     ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE: Final[str] = (
         "attributes must be dict-like"

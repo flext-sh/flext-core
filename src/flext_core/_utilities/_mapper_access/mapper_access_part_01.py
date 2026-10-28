@@ -13,9 +13,12 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextExceptions, FlextResult, FlextRuntime, c, m, p, t
-from flext_core._models import FlextModelsContainers, FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesGuardsTypeCore
+from flext_core import FlextExceptions, FlextResult, c, m, p, t
+from flext_core._utilities import (
+    FlextUtilitiesGuards,
+    FlextUtilitiesGuardsTypeCore,
+    FlextUtilitiesPydantic,
+)
 
 
 class FlextUtilitiesMapperAccessPart01:
@@ -36,11 +39,11 @@ class FlextUtilitiesMapperAccessPart01:
         if value is None:
             # Preserve nulls so the extraction contract decides fail/default policy.
             return None
-        if isinstance(value, FlextModelsPydantic.BaseModel):
+        if isinstance(value, m.BaseModel):
             return value
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
-            return FlextRuntime.normalize_to_container(
+            return FlextUtilitiesPydantic.normalize_to_container(
                 m.ConfigMap.model_validate(model_dump_attr()),
             )
         return FlextUtilitiesMapperAccessPart01._normalize_payload_value(value)
@@ -112,7 +115,7 @@ class FlextUtilitiesMapperAccessPart01:
     def _extract_get_value(
         current: t.JsonPayload
         | t.JsonMapping
-        | FlextModelsContainers.ConfigMap
+        | m.ConfigMap
         | t.SequenceOf[t.JsonValue | t.JsonPayload]
         | None,
         key_part: str,
@@ -129,7 +132,7 @@ class FlextUtilitiesMapperAccessPart01:
         )
         result: p.Result[t.JsonPayload]
         mapping_obj: t.MappingKV[str, t.JsonValue | t.JsonPayload] | None = None
-        if isinstance(current, FlextModelsContainers.ConfigMap):
+        if isinstance(current, m.ConfigMap):
             mapping_obj = current.root
         elif isinstance(current, Mapping):
             mapping_obj = current

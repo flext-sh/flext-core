@@ -13,13 +13,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import c, m
+from flext_core import c, m, p, t
 from flext_core._handlers import flexthandlers_part_02
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core import p, t
 
 
 class FlextHandlersPart03[MessageT_contra, ResultT](

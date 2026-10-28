@@ -1,64 +1,64 @@
 rules:
-  - id: core-assert-predicate-check
-    phase: contract-normalization
-    pattern: 'assert ${predicate}'
-    goal: |-
-      if not (${predicate}):
-          raise AssertionError
-    arguments: {}
-    unshadowed_builtins: [AssertionError]
-  - id: core-assert-message-check
-    phase: contract-normalization
-    pattern: 'assert ${predicate}, ${message}'
-    goal: |-
-      if not (${predicate}):
-          raise AssertionError((${message}))
-    arguments: {}
-    unshadowed_builtins: [AssertionError]
-  - id: core-json-serialization-owner
-    phase: contract-normalization
-    pattern: '${receiver}.normalize_to_json_value'
-    goal: 'u.normalize_to_json_value'
-    arguments:
-      receiver: name=flext_core.runtime.FlextRuntime
-    imports: &core_utilities
-      u: from flext_core import u
-    bindings:
-      u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
-    ownership_transfer:
-      - flext_core._runtime._metadata
-      - FlextRuntimeMetadata.normalize_to_json_value
-  - id: core-metadata-json-call
-    phase: contract-normalization
-    pattern: '${normalizer}(${value})'
-    goal: 'u.normalize_to_json_value(${value})'
-    arguments:
-      normalizer: name=flext_core._runtime._metadata.FlextRuntimeMetadata.normalize_to_metadata
-    call_target: normalizer
-    explicit_arguments: true
-    imports: *core_utilities
-    bindings:
-      u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
-  - id: core-metadata-json-keyword
-    phase: contract-normalization
-    pattern: '${normalizer}(val=${value})'
-    goal: 'u.normalize_to_json_value(value=${value})'
-    arguments:
-      normalizer: name=flext_core._runtime._metadata.FlextRuntimeMetadata.normalize_to_metadata
-    call_target: normalizer
-    explicit_arguments: true
-    imports: *core_utilities
-    bindings:
-      u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
-  - id: core-container-payload-owner
-    phase: contract-normalization
-    pattern: '${receiver}.normalize_to_container'
-    goal: 'u.normalize_to_container'
-    arguments:
-      receiver: name=flext_core.runtime.FlextRuntime
-    imports: *core_utilities
-    bindings:
-      u.normalize_to_container: flext_core._utilities.model_runtime.FlextUtilitiesModelRuntime.normalize_to_container
-    ownership_transfer:
-      - flext_core._runtime._container
-      - FlextRuntimeContainer.normalize_to_container
+- id: core-assert-predicate-check
+  phase: contract-normalization
+  pattern: 'assert ${predicate}'
+  goal: |-
+    if not (${predicate}):
+        raise AssertionError
+  arguments: {}
+  unshadowed_builtins: [ AssertionError ]
+- id: core-assert-message-check
+  phase: contract-normalization
+  pattern: 'assert ${predicate}, ${message}'
+  goal: |-
+    if not (${predicate}):
+        raise AssertionError((${message}))
+  arguments: {}
+  unshadowed_builtins: [ AssertionError ]
+- id: core-json-serialization-owner
+  phase: contract-normalization
+  pattern: '${receiver}.normalize_to_json_value'
+  goal: 'u.normalize_to_json_value'
+  arguments:
+    receiver: name=flext_core.runtime.u
+  imports: &core_utilities
+    u: from flext_core import u
+  bindings:
+    u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
+  ownership_transfer:
+  - flext_core._runtime._metadata
+  - FlextRuntimeMetadata.normalize_to_json_value
+- id: core-metadata-json-call
+  phase: contract-normalization
+  pattern: '${normalizer}(${value})'
+  goal: 'u.normalize_to_json_value(${value})'
+  arguments:
+    normalizer: name=flext_core._runtime._metadata.FlextRuntimeMetadata.normalize_to_metadata
+  call_target: normalizer
+  explicit_arguments: true
+  imports: *core_utilities
+  bindings:
+    u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
+- id: core-metadata-json-keyword
+  phase: contract-normalization
+  pattern: '${normalizer}(val=${value})'
+  goal: 'u.normalize_to_json_value(value=${value})'
+  arguments:
+    normalizer: name=flext_core._runtime._metadata.FlextRuntimeMetadata.normalize_to_metadata
+  call_target: normalizer
+  explicit_arguments: true
+  imports: *core_utilities
+  bindings:
+    u.normalize_to_json_value: flext_core._utilities.pydantic.FlextUtilitiesPydantic.normalize_to_json_value
+- id: core-container-payload-owner
+  phase: contract-normalization
+  pattern: '${receiver}.normalize_to_container'
+  goal: 'u.normalize_to_container'
+  arguments:
+    receiver: name=flext_core.runtime.u
+  imports: *core_utilities
+  bindings:
+    u.normalize_to_container: flext_core._utilities.model_runtime.FlextUtilitiesModelRuntime.normalize_to_container
+  ownership_transfer:
+  - flext_core._runtime._container
+  - FlextRuntimeContainer.normalize_to_container

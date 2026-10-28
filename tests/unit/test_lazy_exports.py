@@ -152,7 +152,6 @@ class TestsFlextCoreLazyExports:
         source = Path(__file__).resolve().parents[2] / "src" / "flext_core"
         candidate = tmp_path / "flext_core"
         shutil.copytree(source, candidate, ignore=shutil.ignore_patterns("__pycache__"))
-        bootstrap = candidate / "_beartype_bootstrap.py"
         bootstrap.write_text(
             bootstrap.read_text(encoding="utf-8") + "\nfrom flext_core import c\n",
             encoding="utf-8",

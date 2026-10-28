@@ -9,9 +9,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextResult, FlextRuntime, c, m, p, t
-from flext_core._models import FlextModelsContainers, FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesMapperAccess
+from flext_core import FlextResult, c, m, p, t
+from flext_core._utilities import FlextUtilitiesMapperAccess, FlextUtilitiesPydantic
 
 
 class FlextUtilitiesMapperExtractPart01(FlextUtilitiesMapperAccess):
@@ -58,7 +57,7 @@ class FlextUtilitiesMapperExtractPart01(FlextUtilitiesMapperAccess):
     def _extract_resolve_path_part(
         current: t.JsonPayload
         | t.JsonMapping
-        | FlextModelsContainers.ConfigMap
+        | m.ConfigMap
         | t.SequenceOf[t.JsonPayload]
         | None,
         part: str,
@@ -97,7 +96,7 @@ class FlextUtilitiesMapperExtractPart01(FlextUtilitiesMapperAccess):
                 next_val
                 if isinstance(next_val, Sequence)
                 and not isinstance(next_val, c.STR_BYTES_TYPES)
-                else FlextRuntime.normalize_to_container(next_val)
+                else FlextUtilitiesPydantic.normalize_to_container(next_val)
             )
             index_result = (
                 FlextUtilitiesMapperExtractPart01._extract_handle_array_index(
@@ -128,7 +127,7 @@ class FlextUtilitiesMapperExtractPart01(FlextUtilitiesMapperAccess):
 
         """
         seed_current: t.JsonPayload | None = None
-        if isinstance(data, FlextModelsPydantic.BaseModel):
+        if isinstance(data, m.BaseModel):
             seed_current = data
         elif isinstance(data, Mapping):
             seed_current = m.ConfigMap(

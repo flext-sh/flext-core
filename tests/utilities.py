@@ -370,9 +370,6 @@ class TestsFlextUtilities(flext_tests_u):
             ),
         ]
 
-    class TestsFlextBeartypeEngine:
-        """Shared beartype engine test support."""
-
         FORBIDDEN: frozenset[str] = frozenset({"dict", c.Action.LIST, "set"})
 
         @staticmethod

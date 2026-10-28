@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from datetime import UTC, datetime
 from typing import Annotated, Self
 
 from pydantic import Field
@@ -23,7 +24,6 @@ from flext_core._models import (
     FlextModelsDomainEvent,
     FlextModelsPydantic,
 )
-from flext_core._utilities import FlextUtilitiesGenerators
 
 
 class FlextModelsEntity:
@@ -77,7 +77,7 @@ class FlextModelsEntity:
 
             """
             if self.updated_at is None:
-                self.updated_at = FlextUtilitiesGenerators.generate_datetime_utc()
+                self.updated_at = datetime.now(UTC)
             return self
 
     class Value(FlextModelsBase.FrozenValueModel):

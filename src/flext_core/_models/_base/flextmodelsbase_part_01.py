@@ -18,7 +18,6 @@ from pydantic import ConfigDict
 
 from flext_core import c
 from flext_core._models import FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesEnforcement
 
 
 class FlextModelsBasePart01:
@@ -38,7 +37,6 @@ class FlextModelsBasePart01:
         def __pydantic_on_complete__(cls) -> None:
             """Enforce resolved field contracts at the native schema boundary."""
             super().__pydantic_on_complete__()
-            FlextUtilitiesEnforcement.run(cls)
 
     class ManagedModel(EnforcedModel):
         """Shared preset for assignment validation with forbidden extra fields."""

@@ -11,19 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING
 
-from flext_core import c, t
-from flext_core._models import (
-    FlextModelsBase,
-    FlextModelsContainers,
-    FlextModelsDomainEvent,
-)
-from flext_core._protocols import FlextProtocolsResult
+from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesGuards
-
-if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsBase
 
 
 class FlextUtilitiesDomain:
@@ -31,8 +21,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def same_type(
-        obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
-        obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+        obj_a: t.JsonPayload | p.HasModelDump,
+        obj_b: t.JsonPayload | p.HasModelDump,
     ) -> bool:
         """Exact-type identity comparison (no MRO traversal).
 
@@ -46,8 +36,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def _iterable_members_equal(
-        obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
-        obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+        obj_a: t.JsonPayload | p.HasModelDump,
+        obj_b: t.JsonPayload | p.HasModelDump,
     ) -> bool | None:
         """Compare two iterable payloads member-wise.
 
@@ -74,8 +64,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def _plain_objects_equal(
-        obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
-        obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+        obj_a: t.JsonPayload | p.HasModelDump,
+        obj_b: t.JsonPayload | p.HasModelDump,
     ) -> bool:
         """Compare plain objects by ``__dict__``, falling back to ``repr``.
 
@@ -99,8 +89,8 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def compare_value_objects_by_value(
-        obj_a: t.JsonPayload | FlextProtocolsResult.HasModelDump,
-        obj_b: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+        obj_a: t.JsonPayload | p.HasModelDump,
+        obj_b: t.JsonPayload | p.HasModelDump,
     ) -> bool:
         """Compare two value objects by all attributes (value, not identity).
 
@@ -123,9 +113,9 @@ class FlextUtilitiesDomain:
                 if iterable_result is not None:
                     result = iterable_result
                 elif FlextUtilitiesDomain.same_type(obj_b, obj_a):
-                    if isinstance(obj_a, FlextModelsBase.EnforcedModel) and isinstance(
+                    if isinstance(obj_a, m.EnforcedModel) and isinstance(
                         obj_b,
-                        FlextModelsBase.EnforcedModel,
+                        m.EnforcedModel,
                     ):
                         result = obj_a.model_dump() == obj_b.model_dump()
                     else:
@@ -137,7 +127,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def hash_value_object_by_value(
-        obj: t.JsonPayload | FlextProtocolsResult.HasModelDump,
+        obj: t.JsonPayload | p.HasModelDump,
     ) -> int:
         """Hash value object by all attributes. Falls back to repr hash.
 
@@ -147,7 +137,7 @@ class FlextUtilitiesDomain:
         """
         if FlextUtilitiesGuards.scalar(obj):
             return hash(obj)
-        if isinstance(obj, FlextModelsBase.EnforcedModel):
+        if isinstance(obj, m.EnforcedModel):
             data = obj.model_dump()
             return hash(tuple(sorted((k, str(v)) for k, v in data.items())))
         if hasattr(obj, "__iter__"):
@@ -171,13 +161,11 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def add_domain_event(
-        entity: FlextProtocolsBase.HasDomainEvents,
+        entity: p.HasDomainEvents,
         event_type: str,
-        data: FlextModelsContainers.ConfigMap
-        | t.MappingKV[str, t.JsonPayload | None]
-        | None = None,
+        data: m.ConfigMap | t.MappingKV[str, t.JsonPayload | None] | None = None,
         aggregate_id: str | None = None,
-    ) -> FlextModelsDomainEvent.DomainEvent:
+    ) -> m.DomainEvent:
         """Create a domain event and append it to the entity's event buffer.
 
         Pass ``aggregate_id`` explicitly when the entity's stable identity
@@ -189,12 +177,12 @@ class FlextUtilitiesDomain:
 
         """
         if data is None:
-            normalized_data = FlextModelsContainers.ConfigMap(root={})
-        elif isinstance(data, FlextModelsContainers.ConfigMap):
+            normalized_data = m.ConfigMap(root={})
+        elif isinstance(data, m.ConfigMap):
             normalized_data = data
         else:
-            normalized_data = FlextModelsContainers.ConfigMap.model_validate(data)
-        entry = FlextModelsDomainEvent.DomainEvent(
+            normalized_data = m.ConfigMap.model_validate(data)
+        entry = m.DomainEvent(
             event_type=event_type,
             aggregate_id=aggregate_id if aggregate_id is not None else entity.unique_id,
             data=normalized_data,

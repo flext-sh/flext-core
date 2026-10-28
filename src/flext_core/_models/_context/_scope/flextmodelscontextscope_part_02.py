@@ -10,12 +10,9 @@ from contextvars import ContextVar
 from types import MappingProxyType
 from typing import Annotated
 
-from flext_core import t
+from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._context.__scope.flextmodelscontextscope_part_01 import (
-    FlextModelsContextScopePart01,
-)
-from flext_core._protocols import FlextProtocolsContainer
+from flext_core._models._context._scope import FlextModelsContextScopePart01
 
 
 class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
@@ -49,17 +46,11 @@ class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
         )
         scope_vars: t.MappingKV[
             str,
-            t.Port[
-                ContextVar[
-                    FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None
-                ]
-            ],
+            t.Port[ContextVar[p.MutableRootDict[t.JsonPayload] | None]],
         ] = FlextModelsPydantic.Field(
             default_factory=lambda: MappingProxyType[
                 str,
-                ContextVar[
-                    FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None
-                ],
+                ContextVar[p.MutableRootDict[t.JsonPayload] | None],
             ]({}),
             validate_default=True,
             description="ContextVar registry keyed by scope name",

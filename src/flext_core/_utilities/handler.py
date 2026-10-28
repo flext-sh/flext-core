@@ -16,7 +16,8 @@ from collections.abc import Mapping
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import FlextResult, FlextRuntime, c, m, p, t
+from flext_core import FlextResult, c, m, p, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextUtilitiesHandler:
@@ -65,7 +66,7 @@ class FlextUtilitiesHandler:
             The resulting ``p.Result[bool]``.
 
         """
-        normalized = FlextRuntime.normalize_to_container(value)
+        normalized = FlextUtilitiesPydantic.normalize_to_container(value)
         ctx.metrics_state_data.root[name] = (
             normalized
             if isinstance(normalized, (str, int, float, bool, datetime, Path))

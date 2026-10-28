@@ -17,8 +17,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, c, p, t
-from flext_core._models import FlextModelsConfig
+from flext_core import FlextResult, c, m, p, t
 from flext_core._utilities import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
@@ -101,7 +100,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def retry[TResult](
         operation: Callable[[], p.Result[TResult]],
-        options: FlextModelsConfig.RetryOptions | None = None,
+        options: m.RetryOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.
@@ -120,7 +119,7 @@ class FlextUtilitiesReliability:
         opts_res = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
-            FlextModelsConfig.RetryOptions,
+            m.RetryOptions,
         )
         if opts_res.failure:
             # Preserve the validated options failure metadata for every consumer.

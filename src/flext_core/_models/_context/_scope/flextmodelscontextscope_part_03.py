@@ -9,16 +9,11 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import p, t
-from flext_core._models import (
-    FlextModelsBase,
-    FlextModelsPydantic,
-    flextmodelscontextscope_part_02,
-)
+from flext_core._models import FlextModelsBase, FlextModelsPydantic
+from flext_core._models._context._scope import FlextModelsContextScopePart02
 
 
-class FlextModelsContextScopePart03(
-    flextmodelscontextscope_part_02.FlextModelsContextScopePart02
-):
+class FlextModelsContextScopePart03(FlextModelsContextScopePart02):
     class ContextContainerState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized container binding state for `FlextContext`."""
 

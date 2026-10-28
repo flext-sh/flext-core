@@ -10,10 +10,9 @@ import time
 from functools import wraps
 from typing import TYPE_CHECKING, TypeIs, overload
 
-from flext_core import c, m, r
+from flext_core import c, m, p, r
 from flext_core._decorators import FlextDecoratorsLogging
 from flext_core._exceptions import FlextExceptionsTypes
-from flext_core._protocols import FlextProtocolsLogging, FlextProtocolsResult
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -26,7 +25,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
     def railway(
         cls,
         error_code: str | None = None,
-    ) -> FlextProtocolsResult.RailwayDecorator:
+    ) -> p.RailwayDecorator:
         """Wrap a callable in the FLEXT railway result pattern.
 
         Returns:
@@ -36,30 +35,30 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
 
         @overload
         def decorator[**PCallback, TValue](
-            func: Callable[PCallback, FlextProtocolsResult.Result[TValue]],
+            func: Callable[PCallback, p.Result[TValue]],
             /,
-        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+        ) -> Callable[PCallback, p.Result[TValue]]: ...
 
         @overload
         def decorator[**PCallback, TValue](
-            func: Callable[PCallback, TValue | FlextProtocolsResult.Result[TValue]],
+            func: Callable[PCallback, TValue | p.Result[TValue]],
             /,
-        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]: ...
+        ) -> Callable[PCallback, p.Result[TValue]]: ...
 
         def decorator[**PCallback, TValue](
-            func: Callable[PCallback, TValue | FlextProtocolsResult.Result[TValue]],
+            func: Callable[PCallback, TValue | p.Result[TValue]],
             /,
-        ) -> Callable[PCallback, FlextProtocolsResult.Result[TValue]]:
+        ) -> Callable[PCallback, p.Result[TValue]]:
             def is_result(
-                value: TValue | FlextProtocolsResult.Result[TValue],
-            ) -> TypeIs[FlextProtocolsResult.Result[TValue]]:
-                return isinstance(value, FlextProtocolsResult.Result)
+                value: TValue | p.Result[TValue],
+            ) -> TypeIs[p.Result[TValue]]:
+                return isinstance(value, p.Result)
 
             @wraps(func)
             def wrapper(
                 *args: PCallback.args,
                 **kwargs: PCallback.kwargs,
-            ) -> FlextProtocolsResult.Result[TValue]:
+            ) -> p.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
                     if is_result(result):
@@ -166,7 +165,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         cls,
         call: Callable[[], TResult],
         func_name: str,
-        logger: FlextProtocolsLogging.Logger,
+        logger: p.Logger,
         *,
         retry_settings: m.RetryConfiguration,
     ) -> TResult | Exception:

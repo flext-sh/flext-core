@@ -11,10 +11,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import m, p
-from flext_core._utilities import FlextUtilitiesModel
 
 
-class FlextUtilitiesModelOptions(FlextUtilitiesModel):
+class FlextUtilitiesModelOptions:
     """Bootstrap-options resolver — RuntimeBootstrapOptions normalization."""
 
     @classmethod

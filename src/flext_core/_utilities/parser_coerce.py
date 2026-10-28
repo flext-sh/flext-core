@@ -12,13 +12,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
-from flext_core import FlextResult, c
-
-if TYPE_CHECKING:
-    from flext_core import p, t
-    from flext_core._models import FlextModelsConfig
+from flext_core import FlextResult, c, m, p, t
 
 
 class FlextUtilitiesParserCoerce:
@@ -106,7 +102,7 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def _parse_with_default[T](
-        options: FlextModelsConfig.ParseOptions[T],
+        options: m.ParseOptions[T],
         error_msg: str,
     ) -> p.Result[T]:
         """Return default or error for parse failures.

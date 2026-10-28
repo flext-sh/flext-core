@@ -10,8 +10,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import cast
 
-from flext_core import FlextResult, c, p, t
-from flext_core._models import FlextModelsConfig, FlextModelsPydantic
+from flext_core import FlextResult, c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesModel,
@@ -24,22 +23,22 @@ class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
 
     @staticmethod
     def _resolve_opts[T](
-        options: FlextModelsConfig.ParseOptions[T] | None,
+        options: m.ParseOptions[T] | None,
         kwargs: t.MappingKV[str, t.JsonPayload],
-    ) -> tuple[FlextModelsConfig.ParseOptions[T], str]:
+    ) -> tuple[m.ParseOptions[T], str]:
         """Resolve options + field-prefix string used by every ``_parse_try_*``.
 
         Returns:
-            The resulting ``tuple[FlextModelsConfig.ParseOptions[T], str]``.
+            The resulting ``tuple[m.ParseOptions[T], str]``.
 
         """
-        opts: FlextModelsConfig.ParseOptions[T]
+        opts: m.ParseOptions[T]
         if options is not None:
             opts = options
         else:
             opts = cast(
-                "FlextModelsConfig.ParseOptions[T]",
-                FlextModelsConfig.ParseOptions.model_validate(kwargs),
+                "m.ParseOptions[T]",
+                m.ParseOptions.model_validate(kwargs),
             )
         return opts, f"{opts.field_name}: " if opts.field_name else ""
 
@@ -47,7 +46,7 @@ class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
     def _parse_try_direct[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextModelsConfig.ParseOptions[T] | None = None,
+        options: m.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Try a direct type call.
@@ -94,7 +93,7 @@ class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
     def _parse_try_enum[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextModelsConfig.ParseOptions[T] | None = None,
+        options: m.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Try enum parsing, raising ValueError if not enum or invalid.
@@ -160,7 +159,7 @@ class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
     def _parse_try_model[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextModelsConfig.ParseOptions[T] | None = None,
+        options: m.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Try model parsing, raising ValueError if not model or invalid.
@@ -171,7 +170,7 @@ class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
         Raises:
             TypeError: If ``not FlextUtilitiesGuardsTypeModel.model_type(target)``; or
                 if ``not isinstance(value, Mapping) and (not isinstance(value,
-                FlextModelsPydantic.BaseModel))``.
+                m.BaseModel))``.
 
         """
         opts, fp = FlextUtilitiesParserTargetsPart01._resolve_opts(options, kwargs)
@@ -184,7 +183,7 @@ class FlextUtilitiesParserTargetsPart01(FlextUtilitiesParserCoerce):
             ).unwrap()
         if not isinstance(value, Mapping) and not isinstance(
             value,
-            FlextModelsPydantic.BaseModel,
+            m.BaseModel,
         ):
             raise TypeError(
                 c.ERR_PARSER_CANNOT_PARSE_SCALAR_TO_MODEL.format(

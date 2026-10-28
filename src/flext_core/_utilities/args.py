@@ -8,21 +8,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextResult, c, t
-from flext_core._models import FlextModelsPydantic
-from flext_core._protocols import FlextProtocolsResult
+from flext_core import FlextResult, c, m, p, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: FlextModelsPydantic.BaseModel](
+    def parse_model[M: m.BaseModel](
         kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
-    ) -> FlextProtocolsResult.Result[M]:
+    ) -> p.Result[M]:
         """Parse kwargs directly into a Pydantic model with detailed error collection.
 
         Args:
@@ -45,13 +43,13 @@ class FlextUtilitiesArgs:
             return FlextResult[M].fail_op("parse options model", exc)
 
     @staticmethod
-    def resolve_options[M: FlextModelsPydantic.BaseModel](
+    def resolve_options[M: m.BaseModel](
         options: M | None,
         kwargs: t.MappingKV[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
-    ) -> FlextProtocolsResult.Result[M]:
+    ) -> p.Result[M]:
         """Resolve options from a pre-instantiated model or kwargs concisely.
 
         Reduces boilerplate by returning an r[M] which callers can unwrap_or()

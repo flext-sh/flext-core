@@ -190,7 +190,7 @@ class FlextUtilitiesLoggingConfigPart02(
             TimeStamper(fmt="iso"),
             CallsiteParameterAdder(
                 additional_ignores=[
-                    "flext_core._bound_logger",
+                    "flext_core.bound_logger",
                     "flext_core._utilities.logging",
                 ]
             ),

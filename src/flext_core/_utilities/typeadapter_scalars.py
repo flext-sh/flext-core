@@ -13,12 +13,7 @@ from functools import cache
 from pydantic import ConfigDict
 from typing_extensions import TypeForm
 
-from flext_core._typings import (
-    FlextTypesAnnotateds,
-    FlextTypesCore,
-    FlextTypesPydantic,
-    FlextTypingBase,
-)
+from flext_core import t
 from flext_core._utilities import FlextUtilitiesBase
 
 
@@ -27,7 +22,7 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
 
     @classmethod
     @cache
-    def bool_adapter(cls) -> FlextTypesPydantic.TypeAdapter[bool]:
+    def bool_adapter(cls) -> t.TypeAdapter[bool]:
         """Return the cached adapter for ``bool``."""
         return cls.type_adapter(TypeForm(bool))
 
@@ -35,112 +30,112 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def int_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictInt]:
+    ) -> t.TypeAdapter[t.StrictInt]:
         """Return the cached adapter for strict ``int``."""
-        return cls.type_adapter(TypeForm(FlextTypesPydantic.StrictInt))
+        return cls.type_adapter(TypeForm(t.StrictInt))
 
     @classmethod
     @cache
-    def scalar_adapter(cls) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.Scalar]:
+    def scalar_adapter(cls) -> t.TypeAdapter[t.Scalar]:
         """Return the cached adapter for ``Scalar``."""
-        return cls.type_adapter(TypeForm(FlextTypingBase.Scalar))
+        return cls.type_adapter(TypeForm(t.Scalar))
 
     @classmethod
     @cache
     def scalar_mapping_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.ScalarMapping]:
+    ) -> t.TypeAdapter[t.ScalarMapping]:
         """Return the cached adapter for ``ScalarMapping``."""
-        return cls.type_adapter(TypeForm(FlextTypingBase.ScalarMapping))
+        return cls.type_adapter(TypeForm(t.ScalarMapping))
 
     @classmethod
     @cache
     def float_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictFloat]:
+    ) -> t.TypeAdapter[t.StrictFloat]:
         """Return the cached adapter for strict ``float``."""
-        return cls.type_adapter(TypeForm(FlextTypesPydantic.StrictFloat))
+        return cls.type_adapter(TypeForm(t.StrictFloat))
 
     @classmethod
     @cache
     def str_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictStr]:
+    ) -> t.TypeAdapter[t.StrictStr]:
         """Return the cached adapter for strict ``str``."""
-        return cls.type_adapter(TypeForm(FlextTypesPydantic.StrictStr))
+        return cls.type_adapter(TypeForm(t.StrictStr))
 
     @classmethod
     @cache
     def binary_content_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesPydantic.StrictBytes]:
+    ) -> t.TypeAdapter[t.StrictBytes]:
         """Return the cached adapter for strict ``bytes``."""
-        return cls.type_adapter(TypeForm(FlextTypesPydantic.StrictBytes))
+        return cls.type_adapter(TypeForm(t.StrictBytes))
 
     @classmethod
     @cache
     def str_mapping_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrMapping]:
+    ) -> t.TypeAdapter[t.StrMapping]:
         """Return the cached adapter for ``StrMapping``."""
-        return cls.type_adapter(TypeForm(FlextTypingBase.StrMapping))
+        return cls.type_adapter(TypeForm(t.StrMapping))
 
     @classmethod
     @cache
     def header_mapping_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.HeaderMapping]:
+    ) -> t.TypeAdapter[t.HeaderMapping]:
         """Return the cached adapter for ``HeaderMapping``."""
-        return cls.type_adapter(TypeForm(FlextTypingBase.HeaderMapping))
+        return cls.type_adapter(TypeForm(t.HeaderMapping))
 
     @classmethod
     @cache
     def str_dict_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrDict]:
+    ) -> t.TypeAdapter[t.StrDict]:
         """Return the cached adapter for ``StrDict``."""
-        return cls.type_adapter(TypeForm(FlextTypingBase.StrDict))
+        return cls.type_adapter(TypeForm(t.StrDict))
 
     @classmethod
     @cache
     def int_dict_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.IntDict]:
+    ) -> t.TypeAdapter[t.IntDict]:
         """Return the cached adapter for ``IntDict``."""
-        return cls.type_adapter(TypeForm(FlextTypingBase.IntDict))
+        return cls.type_adapter(TypeForm(t.IntDict))
 
     @classmethod
     @cache
     def hostname_str_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesAnnotateds.HostnameStr]:
+    ) -> t.TypeAdapter[t.HostnameStr]:
         """Return the cached adapter for ``HostnameStr``."""
-        return cls.type_adapter(TypeForm(FlextTypesAnnotateds.HostnameStr))
+        return cls.type_adapter(TypeForm(t.HostnameStr))
 
     @classmethod
     @cache
     def port_number_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesAnnotateds.PortNumber]:
+    ) -> t.TypeAdapter[t.PortNumber]:
         """Return the cached adapter for ``PortNumber``."""
-        return cls.type_adapter(TypeForm(FlextTypesAnnotateds.PortNumber))
+        return cls.type_adapter(TypeForm(t.PortNumber))
 
     @classmethod
     @cache
     def str_sequence_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
+    ) -> t.TypeAdapter[t.StrSequence]:
         """Return the cached adapter for ``StrSequence``."""
-        return cls.type_adapter(TypeForm(FlextTypingBase.StrSequence))
+        return cls.type_adapter(TypeForm(t.StrSequence))
 
     @classmethod
     @cache
     def strict_str_sequence_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrSequence]:
+    ) -> t.TypeAdapter[t.StrSequence]:
         """Return the cached strict-mode adapter for ``StrSequence``."""
         return cls.type_adapter(
-            TypeForm(FlextTypingBase.StrSequence),
+            TypeForm(t.StrSequence),
             config=ConfigDict(strict=True),
         )
 
@@ -148,10 +143,10 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def strict_str_tuple_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypingBase.StrTuple]:
+    ) -> t.TypeAdapter[t.StrTuple]:
         """Return the cached strict-mode adapter for ``StrTuple``."""
         return cls.type_adapter(
-            TypeForm(FlextTypingBase.StrTuple),
+            TypeForm(t.StrTuple),
             config=ConfigDict(strict=True),
         )
 
@@ -159,13 +154,13 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def str_or_bytes_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[FlextTypesCore.TextOrBinaryContent]:
+    ) -> t.TypeAdapter[t.TextOrBinaryContent]:
         """Return the cached adapter for text-or-binary content."""
-        return cls.type_adapter(TypeForm(FlextTypesCore.TextOrBinaryContent))
+        return cls.type_adapter(TypeForm(t.TextOrBinaryContent))
 
     @classmethod
     @cache
-    def enum_type_adapter(cls) -> FlextTypesPydantic.TypeAdapter[type[StrEnum]]:
+    def enum_type_adapter(cls) -> t.TypeAdapter[type[StrEnum]]:
         """Return the cached adapter for ``StrEnum`` types."""
         return cls.type_adapter(type[StrEnum])
 
@@ -173,9 +168,9 @@ class FlextUtilitiesTypingAdapterScalars(FlextUtilitiesBase):
     @cache
     def primitive_metadata_mapping_adapter(
         cls,
-    ) -> FlextTypesPydantic.TypeAdapter[Mapping[str, FlextTypingBase.Primitives]]:
+    ) -> t.TypeAdapter[Mapping[str, t.Primitives]]:
         """Return the cached adapter for primitive-valued mappings."""
-        return cls.type_adapter(Mapping[str, FlextTypingBase.Primitives])
+        return cls.type_adapter(Mapping[str, t.Primitives])
 
 
 __all__: list[str] = ["FlextUtilitiesTypingAdapterScalars"]

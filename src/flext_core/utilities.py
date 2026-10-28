@@ -14,10 +14,6 @@ from __future__ import annotations
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
-    FlextUtilitiesBeartype,
-    FlextUtilitiesBeartypeConf,
-    FlextUtilitiesBeartypeEngine,
-    FlextUtilitiesBeartypeImportBlacklistVisitor,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
     FlextUtilitiesCollectionIter,
@@ -29,9 +25,6 @@ from flext_core._utilities import (
     FlextUtilitiesDiscovery,
     FlextUtilitiesDispatcherExecute,
     FlextUtilitiesDomain,
-    FlextUtilitiesEnforcement,
-    FlextUtilitiesEnforcementCollect,
-    FlextUtilitiesEnforcementEmit,
     FlextUtilitiesEnum,
     FlextUtilitiesFamilySurface,
     FlextUtilitiesFiles,
@@ -57,7 +50,6 @@ from flext_core._utilities import (
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
-    FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesSettings,
     FlextUtilitiesText,
     FlextUtilitiesTypingAdapterJson,
@@ -67,8 +59,6 @@ from flext_core._utilities import (
 
 class FlextUtilities(
     FlextUtilitiesArgs,
-    FlextUtilitiesBeartypeConf,
-    FlextUtilitiesBeartypeEngine,
     FlextUtilitiesCollection,
     FlextUtilitiesCollectionIter,
     FlextUtilitiesCollectionMerge,
@@ -107,15 +97,9 @@ class FlextUtilities(
     FlextUtilitiesTypingAdapterScalars,
     FlextUtilitiesBase,
     FlextUtilitiesReliability,
-    FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesSettings,
     FlextUtilitiesText,
     FlextUtilitiesChecker,
-    FlextUtilitiesEnforcement,
-    FlextUtilitiesEnforcementCollect,
-    FlextUtilitiesEnforcementEmit,
-    FlextUtilitiesBeartype,
-    FlextUtilitiesBeartypeImportBlacklistVisitor,
 ):
     """Unified facade for all FLEXT utility functionality.
 
