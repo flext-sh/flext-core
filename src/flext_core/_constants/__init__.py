@@ -87,13 +87,9 @@ install_lazy_exports(
         "FlextConstantsErrors": ".errors",
         "FlextConstantsErrorsDomainParser": "._errors.flextconstantserrors_part_04",
         "FlextConstantsErrorsMessages": "._errors.flextconstantserrors_part_01",
-        "FlextConstantsErrorsRuntimeExceptions": (
-            "._errors.flextconstantserrors_part_02"
-        ),
+        "FlextConstantsErrorsRuntimeExceptions": "._errors.flextconstantserrors_part_02",
         "FlextConstantsErrorsRuntimeSettings": "._errors.flextconstantserrors_part_05",
-        "FlextConstantsErrorsValidationExceptions": (
-            "._errors.flextconstantserrors_part_03"
-        ),
+        "FlextConstantsErrorsValidationExceptions": "._errors.flextconstantserrors_part_03",
         "FlextConstantsFile": ".file",
         "FlextConstantsGuards": ".guards",
         "FlextConstantsInfrastructure": ".infrastructure",

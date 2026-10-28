@@ -22,8 +22,10 @@ if TYPE_CHECKING:
     from flext_core._models._project_metadata.document import (
         FlextModelsProjectMetadataDocument,
     )
-    from flext_core._models._project_metadata.pyproject_ingress import (
+    from flext_core._models._project_metadata.fields import (
         FlextModelsProjectMetadataFields,
+    )
+    from flext_core._models._project_metadata.pyproject_ingress import (
         FlextModelsPyprojectIngressContract,
     )
 
