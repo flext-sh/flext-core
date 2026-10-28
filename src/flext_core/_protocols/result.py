@@ -120,7 +120,7 @@ class FlextProtocolsResult:
         ) -> FlextProtocolsResult.Result[T | U]: ...
 
         def map_error(
-            self, func: Callable[[str], ...]
+            self, func: Callable[[str], str]
         ) -> FlextProtocolsResult.Result[T]: ...
 
         @overload
