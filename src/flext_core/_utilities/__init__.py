@@ -15,9 +15,6 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.base import FlextUtilitiesBase
-    from flext_core._utilities.beartype import FlextUtilitiesBeartype
-    from flext_core._utilities.beartype_conf import FlextUtilitiesBeartypeConf
-    from flext_core._utilities.beartype_engine import FlextUtilitiesBeartypeEngine
     from flext_core._utilities.checker import FlextUtilitiesChecker
     from flext_core._utilities.collection import FlextUtilitiesCollection
     from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
@@ -29,11 +26,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.discovery import FlextUtilitiesDiscovery
     from flext_core._utilities.dispatcher_execute import FlextUtilitiesDispatcherExecute
     from flext_core._utilities.domain import FlextUtilitiesDomain
-    from flext_core._utilities.enforcement import FlextUtilitiesEnforcement
-    from flext_core._utilities.enforcement_collect import (
-        FlextUtilitiesEnforcementCollect,
     )
-    from flext_core._utilities.enforcement_emit import FlextUtilitiesEnforcementEmit
     from flext_core._utilities.enums import FlextUtilitiesEnum
     from flext_core._utilities.family_surface import FlextUtilitiesFamilySurface
     from flext_core._utilities.files import FlextUtilitiesFiles
@@ -61,8 +54,6 @@ if TYPE_CHECKING:
     from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
     from flext_core._utilities.pydantic import FlextUtilitiesPydantic
     from flext_core._utilities.reliability import FlextUtilitiesReliability
-    from flext_core._utilities.runtime_violation_registry import (
-        FlextUtilitiesRuntimeViolationRegistry,
     )
     from flext_core._utilities.settings import FlextUtilitiesSettings
     from flext_core._utilities.text import FlextUtilitiesText
@@ -129,9 +120,6 @@ install_lazy_exports(
     MappingProxyType({
         "FlextUtilitiesArgs": ".args",
         "FlextUtilitiesBase": ".base",
-        "FlextUtilitiesBeartype": ".beartype",
-        "FlextUtilitiesBeartypeConf": ".beartype_conf",
-        "FlextUtilitiesBeartypeEngine": ".beartype_engine",
         "FlextUtilitiesChecker": ".checker",
         "FlextUtilitiesCollection": ".collection",
         "FlextUtilitiesCollectionIter": ".collection_iter",
@@ -143,9 +131,6 @@ install_lazy_exports(
         "FlextUtilitiesDiscovery": ".discovery",
         "FlextUtilitiesDispatcherExecute": ".dispatcher_execute",
         "FlextUtilitiesDomain": ".domain",
-        "FlextUtilitiesEnforcement": ".enforcement",
-        "FlextUtilitiesEnforcementCollect": ".enforcement_collect",
-        "FlextUtilitiesEnforcementEmit": ".enforcement_emit",
         "FlextUtilitiesEnum": ".enums",
         "FlextUtilitiesFamilySurface": ".family_surface",
         "FlextUtilitiesFiles": ".files",
@@ -171,7 +156,6 @@ install_lazy_exports(
         "FlextUtilitiesProjectMetadata": ".project_metadata",
         "FlextUtilitiesPydantic": ".pydantic",
         "FlextUtilitiesReliability": ".reliability",
-        "FlextUtilitiesRuntimeViolationRegistry": ".runtime_violation_registry",
         "FlextUtilitiesSettings": ".settings",
         "FlextUtilitiesText": ".text",
         "FlextUtilitiesTypingAdapterJson": ".typeadapter_json",

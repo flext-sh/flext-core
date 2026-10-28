@@ -22,7 +22,6 @@ if TYPE_CHECKING:
     from flext_core._models.context import FlextModelsContext
     from flext_core._models.cqrs import FlextModelsCqrs
     from flext_core._models.domain_event import FlextModelsDomainEvent
-    from flext_core._models.enforcement import FlextModelsEnforcement
     from flext_core._models.entity import FlextModelsEntity
     from flext_core._models.errors import FlextModelsErrors
     from flext_core._models.exception_params import FlextModelsExceptionParams
@@ -48,7 +47,6 @@ __all__: tuple[str, ...] = (
     "FlextModelsContextState",
     "FlextModelsCqrs",
     "FlextModelsDomainEvent",
-    "FlextModelsEnforcement",
     "FlextModelsEntity",
     "FlextModelsErrors",
     "FlextModelsExceptionParams",
@@ -77,7 +75,6 @@ install_lazy_exports(
         "FlextModelsContextState": ".flext_context",
         "FlextModelsCqrs": ".cqrs",
         "FlextModelsDomainEvent": ".domain_event",
-        "FlextModelsEnforcement": ".enforcement",
         "FlextModelsEntity": ".entity",
         "FlextModelsErrors": ".errors",
         "FlextModelsExceptionParams": ".exception_params",

@@ -24,7 +24,6 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
-    from flext_core._beartype_bootstrap import FlextCoreBeartypeBootstrap
     from flext_core._bound_logger import FlextBoundLogger
     from flext_core._config import FlextConfig, config
     from flext_core._settings import FlextSettings, PydanticBaseSettingsSource, settings
@@ -65,7 +64,6 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes, t
     from flext_core.utilities import FlextUtilities, u
 
-
 __all__: tuple[str, ...] = (
     "FlextBase",
     "FlextBoundLogger",
@@ -75,7 +73,6 @@ __all__: tuple[str, ...] = (
     "FlextContainer",
     "FlextContext",
     "FlextCore",
-    "FlextCoreBeartypeBootstrap",
     "FlextDecoratorsRuntime",
     "FlextDispatcher",
     "FlextExceptions",
@@ -146,7 +143,6 @@ install_lazy_exports(
         "FlextContainer": ".container",
         "FlextContext": ".context",
         "FlextCore": ".api",
-        "FlextCoreBeartypeBootstrap": "._beartype_bootstrap",
         "FlextDecoratorsRuntime": ".decorators",
         "FlextDispatcher": ".dispatcher",
         "FlextExceptions": ".exceptions",
