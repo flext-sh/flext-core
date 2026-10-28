@@ -88,7 +88,9 @@ class FlextModelsContainerPart03(FlextModelsContainerPart02):
             FlextModelsPydantic.Field(
                 default=None,
                 title="User Overrides",
-                description="User-level configuration overrides applied after defaults.",
+                description=(
+                    "User-level configuration overrides applied after defaults."
+                ),
                 validate_default=True,
             )
         )

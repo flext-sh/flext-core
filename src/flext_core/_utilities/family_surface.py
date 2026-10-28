@@ -126,8 +126,7 @@ class FlextUtilitiesFamilySurface:
         """Import every family root once and snapshot its published contract.
 
         Returns:
-            The resulting ``tuple[tuple[str, frozenset[str], Mapping[str, tuple[str, str]
-                | str]], ...]``.
+            The immutable family-root contracts and their published exports.
 
         Raises:
             RuntimeError: If family-surface derivation found no distribution publishing

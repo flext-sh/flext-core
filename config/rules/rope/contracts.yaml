@@ -1,11 +1,4 @@
 rules:
-- id: core-retire-generic-typing-wrappers
-  operation: retire-generic-typing-wrappers
-  phase: contract-normalization
-  pattern: '${provider}'
-  goal: '${provider}'
-  arguments:
-    provider: name=flext_core._typings.FlextTypingBase
 - id: core-assert-predicate-check
   phase: contract-normalization
   pattern: 'assert ${predicate}'
