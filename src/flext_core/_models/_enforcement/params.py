@@ -12,10 +12,7 @@ from typing import Annotated, Literal
 from pydantic import Discriminator, Field
 
 from flext_core import c, t
-from flext_core._models._enforcement import (
-    FlextModelsEnforcementBase,
-    FlextModelsEnforcementModelBase,
-)
+from flext_core._models import FlextModelsEnforcementBase
 
 type _EnforcementPredicateParams = (
     FlextModelsEnforcementParams.FieldShapeParams
@@ -39,7 +36,7 @@ type _EnforcementPredicateParams = (
 class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
     """Predicate-specific payload models used by beartype enforcement rules."""
 
-    class FieldShapeParams(FlextModelsEnforcementModelBase):
+    class FieldShapeParams(FlextModelsEnforcementBase):
         """Parameters for FIELD_SHAPE predicate."""
 
         kind: Literal["field_shape"] = "field_shape"
@@ -52,7 +49,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         require_description: bool = False
         max_union_arms: int = 2
 
-    class ModelConfigParams(FlextModelsEnforcementModelBase):
+    class ModelConfigParams(FlextModelsEnforcementBase):
         """Parameters for MODEL_CONFIG predicate."""
 
         kind: Literal["model_config"] = "model_config"
@@ -61,7 +58,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         allowed_extra_values: t.StrSequence = ()
         require_frozen_for_value_objects: bool = False
 
-    class LooseSymbolParams(FlextModelsEnforcementModelBase):
+    class LooseSymbolParams(FlextModelsEnforcementBase):
         """Parameters for LOOSE_SYMBOL predicate."""
 
         kind: Literal["loose_symbol"] = "loose_symbol"
@@ -70,7 +67,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         required_canonical_files: t.StrSequence = ()
         require_settings_base: bool = False
 
-    class ImportBlacklistParams(FlextModelsEnforcementModelBase):
+    class ImportBlacklistParams(FlextModelsEnforcementBase):
         """Parameters for IMPORT_BLACKLIST predicate."""
 
         kind: Literal["import_blacklist"] = "import_blacklist"
@@ -79,7 +76,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         private_package_only: bool = False
         detect_cycles: bool = False
 
-    class ClassPlacementParams(FlextModelsEnforcementModelBase):
+    class ClassPlacementParams(FlextModelsEnforcementBase):
         """Parameters for CLASS_PLACEMENT predicate."""
 
         kind: Literal["class_placement"] = "class_placement"
@@ -88,7 +85,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         check_nested: bool = False
         max_nested_class_depth: int = 0
 
-    class LocCapParams(FlextModelsEnforcementModelBase):
+    class LocCapParams(FlextModelsEnforcementBase):
         """Parameters for the LOC_CAP predicate (top-level-class census).
 
         The module-LOC ceiling moved out of this predicate entirely (operator
@@ -99,7 +96,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         kind: Literal["loc_cap"] = "loc_cap"
         max_top_level_classes: int = 0
 
-    class AliasRebindParams(FlextModelsEnforcementModelBase):
+    class AliasRebindParams(FlextModelsEnforcementBase):
         """Parameters for ALIAS_REBIND predicate."""
 
         kind: Literal["alias_rebind"] = "alias_rebind"
@@ -107,7 +104,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         alias_names: t.StrSequence = ()
         expected_form: str = ""
 
-    class CompatibilityAliasParams(FlextModelsEnforcementModelBase):
+    class CompatibilityAliasParams(FlextModelsEnforcementBase):
         """Parameters for COMPATIBILITY_ALIAS predicate."""
 
         kind: Literal["compatibility_alias"] = "compatibility_alias"
@@ -116,7 +113,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
             validate_default=True,
         )
 
-    class LibraryImportParams(FlextModelsEnforcementModelBase):
+    class LibraryImportParams(FlextModelsEnforcementBase):
         """Parameters for the LIBRARY_IMPORT predicate.
 
         Owners: ``c.ENFORCEMENT_LIBRARY_OWNERS``.
@@ -126,13 +123,13 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         modules: t.StrSequence = ()
         """Owned library roots selected by the rule; empty selects all owners."""
 
-    class DeprecatedSyntaxParams(FlextModelsEnforcementModelBase):
+    class DeprecatedSyntaxParams(FlextModelsEnforcementBase):
         """Parameters for DEPRECATED_SYNTAX predicate."""
 
         kind: Literal["deprecated_syntax"] = "deprecated_syntax"
         ast_shape: str = ""
 
-    class MethodShapeParams(FlextModelsEnforcementModelBase):
+    class MethodShapeParams(FlextModelsEnforcementBase):
         """Parameters for METHOD_SHAPE predicate."""
 
         kind: Literal["method_shape"] = "method_shape"
@@ -143,7 +140,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         """Forbidden name prefix → the replacement it suggests."""
         require_static_or_classmethod: bool = False
 
-    class AttrShapeParams(FlextModelsEnforcementModelBase):
+    class AttrShapeParams(FlextModelsEnforcementBase):
         """Parameters for ATTR_SHAPE predicate."""
 
         kind: Literal["attr_shape"] = "attr_shape"
@@ -152,7 +149,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         forbid_any_in_alias: bool = False
         require_typeadapter_naming: bool = False
 
-    class ClassVarConstantParams(FlextModelsEnforcementModelBase):
+    class ClassVarConstantParams(FlextModelsEnforcementBase):
         """Parameters for CLASSVAR_CONSTANT predicate."""
 
         kind: Literal["classvar_constant"] = "classvar_constant"
@@ -162,14 +159,14 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         Flagged when they lack ``ClassVar``.
         """
 
-    class ProtocolTreeParams(FlextModelsEnforcementModelBase):
+    class ProtocolTreeParams(FlextModelsEnforcementBase):
         """Parameters for PROTOCOL_TREE predicate."""
 
         kind: Literal["protocol_tree"] = "protocol_tree"
         require_inner_kind_protocol_or_namespace: bool = False
         require_runtime_checkable: bool = False
 
-    class MroShapeParams(FlextModelsEnforcementModelBase):
+    class MroShapeParams(FlextModelsEnforcementBase):
         """Parameters for MRO_SHAPE predicate."""
 
         kind: Literal["mro_shape"] = "mro_shape"
@@ -177,7 +174,7 @@ class FlextModelsEnforcementParams(FlextModelsEnforcementBase):
         forbid_redundant_inner: bool = False
         require_explicit_class_when_self_ref: bool = False
 
-    class EnforcementPredicateSpec(FlextModelsEnforcementModelBase):
+    class EnforcementPredicateSpec(FlextModelsEnforcementBase):
         """One runtime rule binding validated from the predicate package data."""
 
         predicate: c.EnforcementPredicateKind

@@ -14,8 +14,10 @@ from __future__ import annotations
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
+    FlextUtilitiesBeartype,
     FlextUtilitiesBeartypeConf,
     FlextUtilitiesBeartypeEngine,
+    FlextUtilitiesBeartypeImportBlacklistVisitor,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
     FlextUtilitiesCollectionIter,
@@ -38,8 +40,6 @@ from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
     FlextUtilitiesHandler,
     FlextUtilitiesLogging,
     FlextUtilitiesLoggingConfig,
@@ -62,11 +62,6 @@ from flext_core._utilities import (
     FlextUtilitiesText,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
-)
-from flext_core._utilities._beartype import (
-    FlextUtilitiesBeartypeImportBlacklistVisitor,
-    FlextUtilitiesBeartypeModuleSource,
-    FlextUtilitiesBeartypeTypeAliases,
 )
 
 
@@ -92,8 +87,6 @@ class FlextUtilities(
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
     FlextUtilitiesHandler,
     FlextUtilitiesLogging,
     FlextUtilitiesLoggingContext,
@@ -121,8 +114,7 @@ class FlextUtilities(
     FlextUtilitiesEnforcement,
     FlextUtilitiesEnforcementCollect,
     FlextUtilitiesEnforcementEmit,
-    FlextUtilitiesBeartypeModuleSource,
-    FlextUtilitiesBeartypeTypeAliases,
+    FlextUtilitiesBeartype,
     FlextUtilitiesBeartypeImportBlacklistVisitor,
 ):
     """Unified facade for all FLEXT utility functionality.

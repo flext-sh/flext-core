@@ -15,7 +15,7 @@ from pydantic.fields import FieldInfo
 from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities._beartype import (
+from flext_core._utilities import (
     FlextUtilitiesBeartypeFieldUnionScan,
     FlextUtilitiesBeartypeHelpers,
 )

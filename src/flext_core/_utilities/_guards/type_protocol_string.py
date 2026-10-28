@@ -12,7 +12,7 @@ from typing import cast
 from flext_core._protocols import FlextProtocolsContainer
 
 
-class FlextUtilitiesGuardsTypeProtocolStringMixin:
+class FlextUtilitiesGuardsTypeProtocolString:
     """String-keyed runtime predicates shared by the protocol guards."""
 
     @staticmethod
@@ -97,13 +97,13 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
                 )
                 and not isinstance(value, (str, bytes))
             ),
-            "sized": FlextUtilitiesGuardsTypeProtocolStringMixin._has_len,
+            "sized": FlextUtilitiesGuardsTypeProtocolString._has_len,
             "callable": callable,
             "bytes": lambda value: isinstance(value, bytes),
             "int": lambda value: isinstance(value, int),
             "float": lambda value: isinstance(value, float),
             "bool": lambda value: isinstance(value, bool),
-            "none": FlextUtilitiesGuardsTypeProtocolStringMixin._is_none,
+            "none": FlextUtilitiesGuardsTypeProtocolString._is_none,
             "string_non_empty": lambda value: (
                 isinstance(value, str)
                 and bool(
@@ -111,10 +111,10 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
                 )
             ),
             "dict_non_empty": (
-                FlextUtilitiesGuardsTypeProtocolStringMixin._is_non_empty_mapping
+                FlextUtilitiesGuardsTypeProtocolString._is_non_empty_mapping
             ),
             "list_non_empty": (
-                FlextUtilitiesGuardsTypeProtocolStringMixin._is_non_empty_sequence
+                FlextUtilitiesGuardsTypeProtocolString._is_non_empty_sequence
             ),
         }
 
@@ -128,11 +128,11 @@ class FlextUtilitiesGuardsTypeProtocolStringMixin:
             The resulting ``bool``.
 
         """
-        predicates = FlextUtilitiesGuardsTypeProtocolStringMixin._string_predicates()
+        predicates = FlextUtilitiesGuardsTypeProtocolString._string_predicates()
         predicate = predicates.get(type_name)
         if predicate is None:
             return False
         return predicate(value)
 
 
-__all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolStringMixin"]
+__all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolString"]

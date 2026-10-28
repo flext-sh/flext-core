@@ -14,7 +14,7 @@ from flext_core._models import (
     FlextModelsContainers,
     FlextModelsPydantic,
 )
-from flext_core._models._context._scope import FlextModelsContextScope
+from flext_core._models._context import FlextModelsContextScope
 
 
 class FlextModelsContextState:

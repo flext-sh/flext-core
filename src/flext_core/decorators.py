@@ -9,10 +9,10 @@ from __future__ import annotations
 from flext_core._decorators import _runtime
 
 
-class FlextDecorators(_runtime.FlextDecorators):
+class FlextDecoratorsRuntime(_runtime.FlextDecoratorsRuntime):
     """Public decorator facade composed through the runtime implementation MRO."""
 
 
-d = FlextDecorators
+d = FlextDecoratorsRuntime
 
-__all__: list[str] = ["FlextDecorators", "d"]
+__all__: list[str] = ["FlextDecoratorsRuntime", "d"]

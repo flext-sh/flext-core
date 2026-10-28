@@ -12,16 +12,13 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from flext_core import t
-from flext_core._models._enforcement import (
-    FlextModelsEnforcementBase,
-    FlextModelsEnforcementModelBase,
-)
+from flext_core._models import FlextModelsEnforcementBase
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
     """Source-discriminator models used by enforcement catalog rules."""
 
-    class EnforcementInfraRuleSource(FlextModelsEnforcementModelBase):
+    class EnforcementInfraRuleSource(FlextModelsEnforcementBase):
         """Rule applied by the flext-infra rule engine from its rule catalog.
 
         ``rule_ids`` name rules declared in flext-infra ``config/rules``; the
@@ -32,13 +29,13 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         kind: Literal["flext_infra_rule"] = "flext_infra_rule"
         rule_ids: Annotated[t.StrSequence, Field(min_length=1)]
 
-    class EnforcementRuntimeWarningSource(FlextModelsEnforcementModelBase):
+    class EnforcementRuntimeWarningSource(FlextModelsEnforcementBase):
         """Rule backed by a ``warnings`` category raised at runtime."""
 
         kind: Literal["runtime_warning"] = "runtime_warning"
         category: str
 
-    class EnforcementBeartypeSource(FlextModelsEnforcementModelBase):
+    class EnforcementBeartypeSource(FlextModelsEnforcementBase):
         """Rule dispatched through the runtime predicate bound to ``tag``.
 
         ``tag`` is the rule's identity in the runtime engine; its predicate
@@ -48,13 +45,13 @@ class FlextModelsEnforcementSources(FlextModelsEnforcementBase):
         kind: Literal["beartype"] = "beartype"
         tag: Annotated[str, Field(min_length=1)]
 
-    class EnforcementCodeSmellSource(FlextModelsEnforcementModelBase):
+    class EnforcementCodeSmellSource(FlextModelsEnforcementBase):
         """Rule backed by a code-smell predicate (qlty/ metrics)."""
 
         kind: Literal["code_smell"] = "code_smell"
         smell_tag: str
 
-    class EnforcementFixAction(FlextModelsEnforcementModelBase):
+    class EnforcementFixAction(FlextModelsEnforcementBase):
         """Actionable fix contract for an enforcement rule.
 
         Stored on ``EnforcementRuleSpec.fix_action`` and consumed by the

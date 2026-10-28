@@ -9,14 +9,13 @@ from __future__ import annotations
 from importlib import import_module
 from types import MethodType
 
-from flext_core import c, m, p, r, t
-from flext_core._models import FlextModelsNamespace
+from flext_core import FlextModels, c, m, p, r, t
 from flext_core._utilities import FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(
     FlextUtilitiesModelOptions,
-    FlextModelsNamespace,
+    FlextModels,
 ):
     """Runtime DSL: dispatcher, registry, and service-runtime construction.
 

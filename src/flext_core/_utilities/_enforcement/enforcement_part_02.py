@@ -15,9 +15,11 @@ from pydantic_settings import BaseSettings
 from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._utilities import FlextUtilitiesBeartypeEngine
+from flext_core._utilities import (
+    FlextUtilitiesBeartypeEngine,
+    FlextUtilitiesEnforcementCollect,
+)
 from flext_core._utilities._enforcement import PREDICATE_BINDINGS
-from flext_core._utilities.enforcement_collect import FlextUtilitiesEnforcementCollect
 
 
 class FlextUtilitiesEnforcementPart02(FlextUtilitiesEnforcementCollect):

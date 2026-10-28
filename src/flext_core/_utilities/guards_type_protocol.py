@@ -9,15 +9,11 @@ from __future__ import annotations
 from flext_core import c, t
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsContainer
-from flext_core._utilities import (
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
-)
+from flext_core._utilities import FlextUtilitiesGuards
 
 
 class FlextUtilitiesGuardsTypeProtocol(
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
+    FlextUtilitiesGuards,
 ):
     """Protocol-based type guards for flext type checking.
 

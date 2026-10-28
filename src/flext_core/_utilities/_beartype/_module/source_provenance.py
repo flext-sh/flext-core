@@ -9,7 +9,7 @@ from __future__ import annotations
 import ast
 
 from flext_core import t
-from flext_core._utilities._beartype import FlextUtilitiesBeartypeModuleSourceScan
+from flext_core._utilities import FlextUtilitiesBeartypeModuleSourceScan
 
 
 class FlextUtilitiesBeartypeModuleSourceProvenance(

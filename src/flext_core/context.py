@@ -8,11 +8,14 @@ from __future__ import annotations
 
 from typing import Self
 
-from flext_core import FlextExceptions, FlextResult, c, m, p, t
-from flext_core._utilities import FlextUtilitiesContext, FlextUtilitiesPydantic
+from flext_core import FlextExceptions, FlextResult, FlextUtilities, c, m, p, t
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
-class FlextContext(m.ContextState, FlextUtilitiesContext):
+class FlextContext(
+    m.ContextState,
+    FlextUtilities,
+):
     """Scoped store, metadata and shared structlog context-variable operations."""
 
     @classmethod

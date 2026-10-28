@@ -14,11 +14,12 @@ from __future__ import annotations
 import logging
 from typing import Self
 
-from flext_core import c, p, r, t
-from flext_core._utilities import FlextUtilitiesLoggingContext
+from flext_core import FlextUtilities, c, p, r, t
 
 
-class FlextBoundLogger(FlextUtilitiesLoggingContext):
+class FlextBoundLogger(
+    FlextUtilities,
+):
     """Context-aware bound logger instance handed out by the logging facade.
 
     Composed via MRO from ``FlextUtilitiesLoggingContext`` (context binding,

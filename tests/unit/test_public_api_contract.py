@@ -31,7 +31,7 @@ _FACADES: t.VariadicTuple[str] = (
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
-    "FlextDecorators",
+    "FlextDecoratorsRuntime",
     "FlextDispatcher",
     "FlextExceptions",
     "FlextHandlers",
@@ -58,7 +58,7 @@ _ALIASES: t.StrPairTuple = (
     ("t", "FlextTypes"),
     ("s", "FlextService"),
     ("e", "FlextExceptions"),
-    ("d", "FlextDecorators"),
+    ("d", "FlextDecoratorsRuntime"),
     ("h", "FlextHandlers"),
     ("x", "FlextMixins"),
 )

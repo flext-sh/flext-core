@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Self
 
 from flext_core import c
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._models import FlextModelsPydantic
 from flext_core._result import FlextResultTransforms
 
 if TYPE_CHECKING:

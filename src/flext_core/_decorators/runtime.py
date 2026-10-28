@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextDecorators(FlextDecoratorsCombined):
+class FlextDecoratorsRuntime(FlextDecoratorsCombined):
     """Decorators for runtime factory metadata and timeout enforcement."""
 
     @staticmethod
@@ -120,4 +120,4 @@ class FlextDecorators(FlextDecoratorsCombined):
         return decorator
 
 
-__all__: list[str] = ["FlextDecorators"]
+__all__: list[str] = ["FlextDecoratorsRuntime"]

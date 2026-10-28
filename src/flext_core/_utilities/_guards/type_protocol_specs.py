@@ -30,7 +30,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
+class FlextUtilitiesGuardsTypeProtocolSpecs:
     @classmethod
     @cache
     def _get_protocol_specs(
@@ -109,4 +109,4 @@ class FlextUtilitiesGuardsTypeProtocolSpecsMixin:
         return matched
 
 
-__all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolSpecsMixin"]
+__all__: list[str] = ["FlextUtilitiesGuardsTypeProtocolSpecs"]

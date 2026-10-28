@@ -12,7 +12,7 @@ from flext_core import t
 from flext_core._models import FlextModelsPydantic
 
 
-class FlextModelsEnforcementModelBase(FlextModelsPydantic.BaseModel):
+class FlextModelsEnforcementBase(FlextModelsPydantic.BaseModel):
     """Frozen, extra-forbid base for internal enforcement models."""
 
     model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
@@ -23,7 +23,7 @@ class FlextModelsEnforcementModelBase(FlextModelsPydantic.BaseModel):
 class FlextModelsEnforcementBase:
     """Foundational enforcement models shared by catalog and predicates."""
 
-    class Violation(FlextModelsEnforcementModelBase):
+    class Violation(FlextModelsEnforcementBase):
         """Single enforcement violation located at qualname."""
 
         qualname: str
@@ -35,7 +35,7 @@ class FlextModelsEnforcementBase:
         file_path: str = ""
         line_number: int = 0
 
-    class Report(FlextModelsEnforcementModelBase):
+    class Report(FlextModelsEnforcementBase):
         """Aggregated violation report returned by a check or runner."""
 
         violations: t.SequenceOf[FlextModelsEnforcementBase.Violation] = ()
@@ -89,4 +89,4 @@ class FlextModelsEnforcementBase:
             return any(fragment in message for message in self.messages)
 
 
-__all__: list[str] = ["FlextModelsEnforcementBase", "FlextModelsEnforcementModelBase"]
+__all__: list[str] = ["FlextModelsEnforcementBase"]

@@ -1,36 +1,28 @@
-"""Context management patterns — MRO-composed facade.
+"""Extracted facade class for context.
 
-This module composes all context model sub-namespaces via MRO into a single
-FlextModelsContext class. Access nested classes via FlextModels.* aliases.
-
-Copyright (c) 2025 FLEXT Team. All rights reserved.
+Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
 
-from flext_core import t
 from flext_core._models._context import (
     FlextModelsContextData,
     FlextModelsContextExport,
     FlextModelsContextMetadata,
+    FlextModelsContextScope,
     FlextModelsContextTokens,
 )
-from flext_core._models._context._scope import FlextModelsContextScope
 
 
 class FlextModelsContext(
-    FlextModelsContextTokens,
     FlextModelsContextData,
     FlextModelsContextExport,
-    FlextModelsContextScope,
     FlextModelsContextMetadata,
+    FlextModelsContextScope,
+    FlextModelsContextTokens,
 ):
-    """Context management pattern container — MRO facade.
-
-    Composes all context model namespaces. Nested classes accessible via
-    FlextModels.* aliases (e.g. m.ContextData and m.StructlogProxyToken).
-    """
+    """Facade for context."""
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsContext"]
+__all__: list[str] = ["FlextModelsContext"]

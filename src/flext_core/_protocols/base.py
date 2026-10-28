@@ -123,7 +123,7 @@ class FlextProtocolsBase:
         """Structural marker for values inspected only via ``hasattr``/``getattr``.
 
         Empty Protocol body — accepts any runtime value structurally. Used by
-        ``FlextDecorators`` and other infrastructure helpers as a typed
+        ``FlextDecoratorsRuntime`` and other infrastructure helpers as a typed
         parameter annotation when the actual contract is "any value that
         may carry inspectable attributes" without loose top-type annotations.
         """

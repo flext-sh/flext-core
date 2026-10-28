@@ -6,8 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._enforcement import (
-    FlextModelsEnforcementModelBase,
+from flext_core._models import (
+    FlextModelsEnforcementBase,
     FlextModelsEnforcementResolution,
 )
 
@@ -15,7 +15,7 @@ from flext_core._models._enforcement import (
 class FlextModelsEnforcementInspection(FlextModelsEnforcementResolution):
     """Bind rule context to an already-defined alias resolution contract."""
 
-    class DeferredInspection(FlextModelsEnforcementModelBase):
+    class DeferredInspection(FlextModelsEnforcementBase):
         """A rule whose required alias value belongs to static type checking."""
 
         tag: str

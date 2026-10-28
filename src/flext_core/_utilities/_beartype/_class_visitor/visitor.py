@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import FlextConfig, c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities._beartype._class_visitor import visitor_checks
+from flext_core._utilities import visitor_checks
 from flext_core._utilities._beartype._class_visitor.visitor_base import NO_VIOLATION
 
 
@@ -106,7 +106,7 @@ class FlextUtilitiesBeartypeClassVisitorPart03(
         Returns:
             The resulting ``FlextTypingBase.StrMapping | None``.
 
-        from flext_core._models.enforcement import FlextModelsEnforcement as me
+        from flext_core._models import FlextModelsEnforcement as me
         from flext_core._typings.base import FlextTypingBase as t
 
         """

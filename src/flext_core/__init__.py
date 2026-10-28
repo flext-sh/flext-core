@@ -35,7 +35,7 @@ if TYPE_CHECKING:
     from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
-    from flext_core.decorators import FlextDecorators, d
+    from flext_core.decorators import FlextDecoratorsRuntime, d
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, FlextMroViolation, e
     from flext_core.flextlazy_attribute import FlextLazyAttribute
@@ -76,7 +76,7 @@ __all__: tuple[str, ...] = (
     "FlextContext",
     "FlextCore",
     "FlextCoreBeartypeBootstrap",
-    "FlextDecorators",
+    "FlextDecoratorsRuntime",
     "FlextDispatcher",
     "FlextExceptions",
     "FlextHandlers",
@@ -147,7 +147,7 @@ install_lazy_exports(
         "FlextContext": ".context",
         "FlextCore": ".api",
         "FlextCoreBeartypeBootstrap": "._beartype_bootstrap",
-        "FlextDecorators": ".decorators",
+        "FlextDecoratorsRuntime": ".decorators",
         "FlextDispatcher": ".dispatcher",
         "FlextExceptions": ".exceptions",
         "FlextHandlers": ".handlers",

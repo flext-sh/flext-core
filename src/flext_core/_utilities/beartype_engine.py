@@ -20,30 +20,22 @@ from flext_core import c
 from flext_core._models import FlextModelsEnforcement, FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities._beartype import (
+from flext_core._utilities import (
+    FlextUtilitiesBeartype,
     FlextUtilitiesBeartypeAttrVisitor,
+    FlextUtilitiesBeartypeClassVisitor,
     FlextUtilitiesBeartypeDeprecatedVisitor,
     FlextUtilitiesBeartypeFieldVisitor,
+    FlextUtilitiesBeartypeHelpers,
     FlextUtilitiesBeartypeImportVisitor,
     FlextUtilitiesBeartypeMethodVisitor,
     FlextUtilitiesBeartypeModuleVisitor,
     FlextUtilitiesBeartypeTypeAliases,
 )
-from flext_core._utilities._beartype.class_visitor import (
-    FlextUtilitiesBeartypeClassVisitor,
-)
-from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
 
 
 class FlextUtilitiesBeartypeEngine(
-    FlextUtilitiesBeartypeHelpers,
-    FlextUtilitiesBeartypeFieldVisitor,
-    FlextUtilitiesBeartypeAttrVisitor,
-    FlextUtilitiesBeartypeMethodVisitor,
-    FlextUtilitiesBeartypeClassVisitor,
-    FlextUtilitiesBeartypeModuleVisitor,
-    FlextUtilitiesBeartypeImportVisitor,
-    FlextUtilitiesBeartypeDeprecatedVisitor,
+    FlextUtilitiesBeartype,
 ):
     """Annotation inspection + per-tag rule predicates via data-driven visitors."""
 

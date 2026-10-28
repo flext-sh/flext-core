@@ -13,8 +13,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from flext_core import t
-from flext_core._models import FlextModelsPydantic
-from flext_core._models._exception_params import base
+from flext_core._models import FlextModelsPydantic, base
 
 
 class FlextModelsExceptionParamsServiceErrors(base.FlextModelsExceptionParamsBase):

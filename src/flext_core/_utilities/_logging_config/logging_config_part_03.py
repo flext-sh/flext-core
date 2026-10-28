@@ -14,10 +14,7 @@ import logging
 import structlog
 
 from flext_core import FlextSettings, c, m, p, t
-from flext_core._utilities._logging_config import (
-    logging_config_part_01,
-    logging_config_part_02,
-)
+from flext_core._utilities import logging_config_part_01, logging_config_part_02
 
 
 class FlextUtilitiesLoggingConfigPart03(

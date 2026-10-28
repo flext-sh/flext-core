@@ -16,7 +16,7 @@ from typing import TypeAliasType
 
 from flext_core import t
 from flext_core._models import FlextModelsEnforcement
-from flext_core._utilities._beartype import FlextUtilitiesBeartypeModuleSourceProvenance
+from flext_core._utilities import FlextUtilitiesBeartypeModuleSourceProvenance
 
 
 class FlextUtilitiesBeartypeModuleSourceDeferred(

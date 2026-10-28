@@ -20,7 +20,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from packaging.version import Version
 
-from flext_core import c
+from flext_core import FlextModels, c
 from flext_core._models import FlextModelsProjectMetadata
 from flext_core._protocols import FlextProtocolsProjectMetadata
 from flext_core._typings import FlextTypingBase
@@ -29,7 +29,9 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
+class FlextUtilitiesProjectMetadata(
+    FlextModels,
+):
     """Project metadata ingress and canonical name derivation."""
 
     _DISTRIBUTION_SEPARATOR_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(

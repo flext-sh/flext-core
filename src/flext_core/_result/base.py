@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Self
 
 from flext_core import c, t
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._typings import FlextTypingBase
 from flext_core._utilities import (

@@ -9,19 +9,19 @@ from __future__ import annotations
 from typing import Literal
 
 from flext_core import p, t
-from flext_core._models._enforcement import FlextModelsEnforcementModelBase
+from flext_core._models._enforcement import FlextModelsEnforcementBase
 
 
 class FlextModelsEnforcementResolution:
     """Value and source-proven deferral contracts available before consumers."""
 
-    class ResolvedAlias(FlextModelsEnforcementModelBase):
+    class ResolvedAlias(FlextModelsEnforcementBase):
         """A lazy alias evaluated successfully, retaining its runtime value."""
 
         status: Literal["resolved"] = "resolved"
         value: t.Port[p.AttributeProbe]
 
-    class DeferredAlias(FlextModelsEnforcementModelBase):
+    class DeferredAlias(FlextModelsEnforcementBase):
         """Source-proven imports prevent runtime evaluation of a declared alias."""
 
         status: Literal["deferred"] = "deferred"

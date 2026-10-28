@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._context.__scope import flextmodelscontextscope_part_03
+from flext_core._models import flextmodelscontextscope_part_03
 
 
 class FlextModelsContextScope(
