@@ -274,10 +274,7 @@ class FlextUtilitiesConfig:
         )
 
     @staticmethod
-    def config_env_override(
-        value: t.JsonValue,
-        env: Mapping[str, str],
-    ) -> t.JsonValue:
+    def config_env_override(value: t.JsonValue, env: Mapping[str, ...]) -> t.JsonValue:
         """Expand ``${VAR}`` / ``${VAR:-default}`` placeholders in string leaves.
 
         Recurses through mappings and sequences; non-string leaves pass through

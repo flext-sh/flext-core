@@ -41,7 +41,7 @@ class TestsFlextCorePydanticDeclarations:
             required: str = m.Field(description="Required value")
             defaulted: int = m.Field(default=3, description="Default value")
             nullable: str | None = m.Field(default=None, description="Nullable value")
-            generated: t.VariadicTuple[str] = m.Field(
+            generated: tuple[str, ...] = m.Field(
                 default_factory=tuple, description="Factory value"
             )
 

@@ -47,7 +47,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def object_tuple(
         value: p.GuardInput | Callable[[t.JsonValue], bool] | None,
-    ) -> TypeIs[t.VariadicTuple[t.JsonValue]]:
+    ) -> TypeIs[tuple[t.JsonValue, ...]]:
         """Narrow value to a container tuple.
 
         Returns:

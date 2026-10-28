@@ -6,13 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from collections.abc import Sequence
+from typing import Annotated, ClassVar
 
 from flext_core import m
 from tests import t
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class TestsFlextModelsContainerMixin:

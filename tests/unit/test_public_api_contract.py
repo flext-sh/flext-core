@@ -26,7 +26,7 @@ from flext_core import FlextMroViolation, FlextSettings
 from tests import e, p, r, t, tm
 
 # Public facade names a caller can import from ``flext_core``.
-_FACADES: t.VariadicTuple[str] = (
+_FACADES: tuple[str, ...] = (
     "FlextCore",
     "FlextConstants",
     "FlextContainer",

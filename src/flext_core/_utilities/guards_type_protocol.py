@@ -31,7 +31,7 @@ class FlextUtilitiesGuardsTypeProtocol(
         value: p.ProtocolGuardInput,
         type_spec: str
         | type
-        | t.VariadicTuple[type]
+        | tuple[type, ...]
         | t.Scalar,  # Scalar arm handles invalid spec at runtime
     ) -> bool:
         """Check if value matches a type spec (string name, type, or tuple of types).

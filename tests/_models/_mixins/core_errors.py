@@ -7,13 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from typing import TYPE_CHECKING, Annotated, Literal, override
+from collections.abc import Iterator
+from typing import Annotated, Literal, override
 
 from flext_core import m
 from tests import t
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
 
 
 class TestsFlextModelsCoreErrorsMixin:

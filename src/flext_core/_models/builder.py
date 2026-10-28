@@ -67,7 +67,7 @@ class FlextModelsBuilder:
                 The resulting ``Self``.
 
             """
-            current_values: t.VariadicTuple[t.JsonValue] = tuple(
+            current_values: tuple[t.JsonValue, ...] = tuple(
                 getattr(self.state, field_name),
             )
             return self._set(**{field_name: (*current_values, value)})
@@ -101,7 +101,7 @@ class FlextModelsBuilder:
 
             """
             model_item = self._model(model_type, **data)
-            current_values: t.VariadicTuple[FlextModelsBase.ContractModel] = tuple(
+            current_values: tuple[FlextModelsBase.ContractModel, ...] = tuple(
                 getattr(self.state, field_name),
             )
             updated: t.SequenceOf[FlextModelsBase.ContractModel] = (

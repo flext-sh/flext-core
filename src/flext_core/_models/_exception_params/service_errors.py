@@ -140,7 +140,7 @@ class FlextModelsExceptionParamsServiceErrors(FlextModelsExceptionParamsBase):
                 default=None,
                 description="Time in seconds clients should wait before retrying.",
                 title="Retry After",
-                examples=[1, 1.5],
+                examples=[1, ...],
             ),
         ] = None
 

@@ -42,20 +42,20 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def filter[TItem](
-        items: t.VariadicTuple[TItem],
+        items: tuple[TItem, ...],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.VariadicTuple[TItem]: ...
+    ) -> tuple[TItem, ...]: ...
 
     @overload
     @staticmethod
     def filter[TItem, TMapped](
-        items: t.VariadicTuple[TItem],
+        items: tuple[TItem, ...],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]: ...
+    ) -> tuple[TMapped, ...]: ...
 
     @overload
     @staticmethod
@@ -141,9 +141,9 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.VariadicTuple[TItem],
+        items: tuple[TItem, ...],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]: ...
+    ) -> tuple[TMapped, ...]: ...
 
     @overload
     @staticmethod

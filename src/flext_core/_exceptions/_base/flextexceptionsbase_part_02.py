@@ -25,7 +25,7 @@ class FlextBaseErrorState(FlextBaseErrorMetadata):
     metadata: m.Metadata
     timestamp: float
     auto_log: bool
-    args: t.VariadicTuple[str]
+    args: tuple[str, ...]
 
     _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
         c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,

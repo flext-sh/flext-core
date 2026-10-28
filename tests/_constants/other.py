@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class TestsFlextConstantsOther:
-    PUBLIC_ALIAS_NAMES: ClassVar[t.VariadicTuple[str]] = (
+    PUBLIC_ALIAS_NAMES: ClassVar[tuple[str, ...]] = (
         "Primitives",
         "Scalar",
         "Numeric",
@@ -53,7 +53,7 @@ class TestsFlextConstantsOther:
         "SortableObjectType",
         "TypeHintSpecifier",
     )
-    FLAT_ALIAS_NAMES: ClassVar[t.VariadicTuple[str]] = (
+    FLAT_ALIAS_NAMES: ClassVar[tuple[str, ...]] = (
         "AttributeMapping",
         "MutableAttributeMapping",
         "ConfigValueMapping",
@@ -65,7 +65,7 @@ class TestsFlextConstantsOther:
         "OptionalBoolMapping",
         "MutableOptionalBoolMapping",
     )
-    LEGACY_GENERIC_NAMES: ClassVar[t.VariadicTuple[str]] = (
+    LEGACY_GENERIC_NAMES: ClassVar[tuple[str, ...]] = (
         "EnumT",
         "MessageT_contra",
         "P",

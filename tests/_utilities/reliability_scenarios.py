@@ -6,14 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Sequence
+from typing import ClassVar
 
-from tests import m
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-from tests import t
+from tests import m, t
 
 
 class TestsFlextUtilitiesReliabilityScenariosMixin:

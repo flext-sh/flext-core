@@ -313,7 +313,7 @@ class TestsFlextCoreGuards:
     )
     def test_matches_type_type_and_tuple_specs(
         value: p.ProtocolGuardInput,
-        spec: type | t.VariadicTuple[type],
+        spec: type | tuple[type, ...],
         *,
         expected: bool,
     ) -> None:

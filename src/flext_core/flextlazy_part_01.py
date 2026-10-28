@@ -57,7 +57,7 @@ class FlextLazyPart01:
         # once a transient map is freed, and would serve another map's
         # normalization.
         self.normalized_map_cache: t.MutableMappingKV[
-            tuple[str, int],
+            tuple[str, ...],
             tuple[
                 Mapping[str, str | tuple[str, str]] | None,
                 t.MutableMappingKV[str, str | tuple[str, str]],

@@ -86,7 +86,7 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _build_parts_list(
-        parts: t.VariadicTuple[t.JsonValue] | None,
+        parts: tuple[t.JsonValue, ...] | None,
         *,
         include_timestamp: bool,
     ) -> t.SequenceOf[t.JsonValue]:

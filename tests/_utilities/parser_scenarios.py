@@ -6,12 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, cast
+from collections.abc import Sequence
+from typing import ClassVar, cast
 
 from tests import c, m
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 def _case_insensitive_options() -> m.ParseOptions[bool]:

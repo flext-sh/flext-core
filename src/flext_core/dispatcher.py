@@ -199,8 +199,7 @@ class FlextDispatcher:
 
     @staticmethod
     def _normalize_binding(
-        binding: p.HandlerRegistration,
-        accepted: tuple[t.TypeHintSpecifier, ...],
+        binding: p.HandlerRegistration, accepted: tuple[t.TypeHintSpecifier, ...]
     ) -> p.Result[p.HandlerRegistration]:
         """Resolve declarations without publishing an incomplete route.
 

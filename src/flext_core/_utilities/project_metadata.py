@@ -148,7 +148,7 @@ class FlextUtilitiesProjectMetadata(
         *,
         name: str | None = None,
         path: t.StrSequence | None = None,
-    ) -> t.VariadicTuple[Distribution]:
+    ) -> tuple[Distribution, ...]:
         """Enumerate installed distributions over one snapshot of the finder chain.
 
         ``importlib.metadata.distributions()`` walks the live ``sys.meta_path``
@@ -177,7 +177,7 @@ class FlextUtilitiesProjectMetadata(
     def distribution_requirement_names(
         cls,
         distribution: Distribution,
-    ) -> t.VariadicTuple[str]:
+    ) -> tuple[str, ...]:
         """Return the normalized underscore names of declared requirements.
 
         Each ``Requires-Dist`` entry is parsed by the same requirement-name

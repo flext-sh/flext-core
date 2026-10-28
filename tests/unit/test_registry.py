@@ -343,7 +343,7 @@ class TestsFlextCoreRegistry:
         [((), True), (("boom",), False)],
     )
     def test_summary_success_reflects_error_state(
-        errors: t.VariadicTuple[str],
+        errors: tuple[str, ...],
         *,
         expected_success: bool,
     ) -> None:

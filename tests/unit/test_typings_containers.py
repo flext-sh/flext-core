@@ -257,8 +257,8 @@ class TestsFlextCoreTypedCollectionAliases:
     @staticmethod
     def test_pair_alias_enforces_two_element_arity() -> None:
         """t.Pair validates a 2-tuple and rejects other arities."""
-        adapter: t.TypeAdapter[t.Pair[int, str]] = u.type_adapter(
-            TypeForm(t.Pair[int, str])
+        adapter: t.TypeAdapter[tuple[int, str]] = u.type_adapter(
+            TypeForm(tuple[int, str])
         )
         tm.that(adapter.validate_python((1, "x")), eq=(1, "x"))
         with pytest.raises(flext_tests.m.ValidationError):
@@ -267,8 +267,8 @@ class TestsFlextCoreTypedCollectionAliases:
     @staticmethod
     def test_triple_alias_enforces_three_element_arity() -> None:
         """t.Triple validates a 3-tuple and rejects shorter tuples."""
-        adapter: t.TypeAdapter[t.Triple[int, str, bool]] = u.type_adapter(
-            TypeForm(t.Triple[int, str, bool]),
+        adapter: t.TypeAdapter[tuple[int, str, bool]] = u.type_adapter(
+            TypeForm(tuple[int, str, bool]),
         )
         tm.that(adapter.validate_python((1, "x", True)), eq=(1, "x", True))
         with pytest.raises(flext_tests.m.ValidationError):
@@ -285,8 +285,8 @@ class TestsFlextCoreTypedCollectionAliases:
     @staticmethod
     def test_variadic_tuple_alias_accepts_any_length() -> None:
         """t.VariadicTuple validates homogeneous tuples of arbitrary length."""
-        adapter: t.TypeAdapter[t.VariadicTuple[int]] = u.type_adapter(
-            TypeForm(t.VariadicTuple[int]),
+        adapter: t.TypeAdapter[tuple[int, ...]] = u.type_adapter(
+            TypeForm(tuple[int, ...]),
         )
         tm.that(adapter.validate_python(()), eq=())
         tm.that(adapter.validate_python((1, 2, 3)), eq=(1, 2, 3))

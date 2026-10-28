@@ -70,7 +70,7 @@ class FlextUtilitiesLoggingStream:
 
         @property
         @override
-        def newlines(self) -> str | t.VariadicTuple[str] | None:
+        def newlines(self) -> str | tuple[str, ...] | None:
             newlines = self._target_stream.newlines
             if newlines is None or isinstance(newlines, str):
                 return newlines
