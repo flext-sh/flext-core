@@ -68,14 +68,14 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return cls._create_success(value)
 
     @classmethod
-    def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[T]:
+    def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[Never]:
         """Build a failure copying the error metadata of another result.
 
         Args:
             source: The failed result whose error state is copied.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            The resulting ``p.Result[Never]``.
 
         Raises:
             ValueError: If ``source`` is a successful result.
@@ -223,7 +223,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         error_code: str | None = None,
         error_data: t.JsonMapping | p.ConfigModelInput | None = None,
         exception: BaseException | None = None,
-    ) -> p.Result[T]:
+    ) -> p.Result[Never]:
         """Build a failed result, resolving codes and redacting error data.
 
         A ``None`` error normalizes to the empty string; an omitted
@@ -238,7 +238,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
             exception: Optional exception bound to the failure.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            The resulting ``p.Result[Never]``.
 
         """
         cls.reject_banned_result_parameterization()
@@ -282,7 +282,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         cls: type[Self],
         operation: str,
         exc: Exception | str | None = None,
-    ) -> p.Result[T]:
+    ) -> p.Result[Never]:
         """Build a failure with a standardized ``<operation> failed`` message.
 
         Args:
@@ -290,7 +290,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
             exc: Optional exception or message appended to the error.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            The resulting ``p.Result[Never]``.
 
         """
         if isinstance(exc, Exception):

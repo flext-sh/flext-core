@@ -29,6 +29,24 @@ generated projections.
 Never duplicate an owned value in tests, examples, JSON side files, templates, or local
 registries. Tests read the same typed owner as production.
 
+Config namespace schemas belong to layer zero, as defined by ADR-005 section 2.
+Their Pydantic foundations must not import an aggregate model facade, directly or
+through an own-package `_models` leaf. Preserve the schema's fields, validation,
+frozen/extra policy and defaults when moving its owner. A public model identity
+with consumers retains its route through an authored family holder composing the
+single layer-zero declaration by MRO. Helpers are admitted only by native identity
+and a complete acyclic candidate graph without facade dependencies, never by their
+filename. Generated facades and lazy exports follow the source owners through their
+existing publisher; schemas are never copied or replaced with re-export shims.
+
+Layer-zero schema moves preserve model configuration and construction behavior,
+not just fields. A preset with a schema-completion callback cannot be replaced by
+plain Pydantic solely by copying its configuration flags: the callback's owner and
+layer-zero applicability require an explicit architectural decision first. Native
+JSON validation remains distinct from strict Python validation when YAML sequences
+must populate tuple fields. Config singleton allocation, identity equality and
+hashing remain with the config owner when schemas move to a pure helper.
+
 ## Public exports manifest
 
 `config/exports.yaml` is the declarative SSOT for the workspace root's public export

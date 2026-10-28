@@ -25,6 +25,15 @@ is declared by the flext-infra owner cited next to it; that owner wins over this
 
 ## Catalogs and layers
 
+Layer-zero own-helper admission is derived from the same native candidate proof
+used by import normalization (ADR-005 §2 and ADR-028 Decision 1). The declarative
+producer captures the complete workspace sources and asks that owner to authenticate
+each imported helper and its dependency closure, including type-checking imports.
+
+Only proven exact module identities enter the generated constraint; a regex does
+not establish ownership or acyclicity. Own root and family imports remain forbidden.
+Generation and native-scan agreement require runtime validation after source changes.
+
 | Layer | ast-grep rules | Text rules |
 |---|---|---|
 | Universal (every project) | `flext-infra/src/flext_infra/config/rules/ast-grep/` (`sgconfig.yml` with `scope: universal`) | `flext-infra/src/flext_infra/config/rules/mod/sed.yaml` |
@@ -125,7 +134,7 @@ declared at the generation owner; authored files are never retired by that decla
 
 | Workspace declaration | Infra implementation |
 | --- | --- |
-| ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/codemod_native_utilities.py) |
+| ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/_codemod/codemod_native_utilities.py) |
 | ADR-028 Decision 18 owns one generalized source rule per law. | Repository plans preserve renderer IDs; the source catalog remains the single rule owner. |
 
 Every finding is the native match; no Python admission runs after the scan. A
@@ -139,6 +148,22 @@ rule that still reports an actionable finding after the cascade fails `make mod`
 
 ## ast-grep rules
 
+Protocol field compatibility belongs to the existing canonical Pyrefly check,
+not a syntax-only rewrite. The Python typing specification permits readable,
+writable protocol attributes with compatible invariant types; a concrete field
+of the same type can satisfy that contract. A read-only property remains valid
+when the actual API requires read-only access or covariant return typing.
+
+The `settings-protocol-branch-property` rule is retired with its fixtures and
+snapshots: PascalCase namespace spelling and a `Settings(Protocol)` declaration
+do not establish a variance error or a read-only API requirement. Its universal
+claim that no concrete settings class satisfies a writable field was false.
+Neither a replacement name exclusion nor an N802 exemption repairs that claim.
+Ruff continues to validate getter names, including protocol properties, without
+the retired rule's N802 identity exemption. UP040 publication policy is separate
+and unchanged. This preserves ADR-028 Decision 8: transformations must not create
+new lint or type violations. See the [typing specification](https://typing.python.org/en/latest/spec/protocol.html#protocol-members).
+
 The universal `rewire-test-assert-*` family implements the
 workspace assertion standard.
 Its matcher owner is `flext-tests`; its patterns, native fixtures, and generated
@@ -149,6 +174,17 @@ the `assert` token. In particular, narrowing and lazy-message guards use the
 terminating public matcher without rebinding a referenced name or changing the
 exception category. Runtime comparisons against the original snippets validate
 these properties; snapshot text alone does not prove them.
+
+The universal `railroad-result.yml` rule family implements Railway-Oriented
+Programming (ROP) normalization over `FlextResult` (`r`): terminal `if res.failure:
+return ...` passthrough guards collapse to `return res`, single-argument transform
+and chain tails collapse to `.map(...)` and `.flat_map(...)`, ternary/branch
+unwraps collapse to `.unwrap_or(...)` and `.map_or(...)`, and manual
+`model_validate` `try`/`except` blocks collapse to `r[M].from_validation(...)`.
+Because the native `ast-grep` cascade repeats up to `mod.phases.pass-cap`,
+consecutive failure guards at the end of a function collapse bottom-up across
+passes without custom AST walkers, and unused local `outcome = r[...]` aliases
+and their orphaned imports are pruned automatically.
 
 A rule file holds one or more YAML documents (`---`). Each is standard ast-grep
 (`id`, `language`, `severity`, `message`, `files`, `rule`, `constraints`, `utils`

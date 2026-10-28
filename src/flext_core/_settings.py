@@ -58,9 +58,12 @@ from pydantic_core import PydanticUndefined, PydanticUndefinedType
 from pydantic_settings import (
     BaseSettings,
     InitSettingsSource,
-    PydanticBaseSettingsSource,
+    PydanticBaseSettingsSource as _PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
+
+PydanticBaseSettingsSource = _PydanticBaseSettingsSource
+"""Source interface for Pydantic custom settings loaders, re-exported for layer-0 parity."""
 
 
 class FlextSettings(BaseSettings):

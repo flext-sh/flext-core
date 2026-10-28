@@ -62,11 +62,12 @@ With the settings plugin loaded, its `pytest_runtest_setup` and
 `pytest_runtest_teardown` hooks perform automatic isolation. The two explicit fixtures
 above are not declared with `autouse=True`.
 
-```python
+```{.python .notest}
 from __future__ import annotations
 
-from flext_core import FlextSettings
 from flext_tests import FlextTestsSettings, tm
+
+from flext_core import FlextSettings
 
 
 def test_settings_isolation(settings: FlextTestsSettings) -> None:
@@ -80,9 +81,10 @@ def test_settings_isolation(settings: FlextTestsSettings) -> None:
 
 When a fixture is not enough:
 
-```python
-from flext_core import FlextContainer, FlextSettings
+```{.python .notest}
 from flext_tests import FlextTestsSettings
+
+from flext_core import FlextContainer, FlextSettings
 
 FlextSettings.reset_for_testing()
 FlextTestsSettings.reset_for_testing()
@@ -220,7 +222,7 @@ exercise the public `r` facade used by the production consumer.
 For a standalone test without the settings plugin, keep the reset on both sides of the
 mutation, including assertion failure:
 
-```python
+```{.python .notest}
 from flext_core import FlextSettings
 from flext_tests import tm
 

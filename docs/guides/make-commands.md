@@ -10,13 +10,27 @@
 - [Discover commands](#discover-commands)
 - [Architecture admission and acceptance](#architecture-admission-and-acceptance)
 - [Canonical workflow](#canonical-workflow)
+  - [Bootstrap and Member Lock Composition (ADR-030)](#bootstrap-and-member-lock-composition-adr-030)
+  - [Standard Lifecycle Sequence](#standard-lifecycle-sequence)
+  - [Submodule Initialization and Hook Dispatch](#submodule-initialization-and-hook-dispatch)
+  - [Release, Documentation, and Toolchain Contracts](#release-documentation-and-toolchain-contracts)
 - [Operation ownership](#operation-ownership)
+  - [Public Verb Matrix](#public-verb-matrix)
+  - [Profiling and Semantic Publication Boundaries](#profiling-and-semantic-publication-boundaries)
+  - [Conformance, Environment, and Runtime Bindings](#conformance-environment-and-runtime-bindings)
 - [Constants migration](#constants-migration)
 - [Verb single-pass contract](#verb-single-pass-contract)
+  - [Formatter and Repair Partitioning](#formatter-and-repair-partitioning)
+  - [Prerequisite and Full Check Execution](#prerequisite-and-full-check-execution)
+  - [Runtime Integrity and Report Receipts](#runtime-integrity-and-report-receipts)
 - [Markdown quality pipeline](#markdown-quality-pipeline)
 - [Test contract](#test-contract)
 - [Failure contract](#failure-contract)
 - [Scope and generation](#scope-and-generation)
+  - [Workspace vs. Member Scope Dispatch](#workspace-vs-member-scope-dispatch)
+  - [Scaffolding, Codemod Census, and Template Ownership](#scaffolding-codemod-census-and-template-ownership)
+  - [Convergence, Shared Worktree, and Clean Rules](#convergence-shared-worktree-and-clean-rules)
+  - [Git Lane and Worktree Hygiene Verification](#git-lane-and-worktree-hygiene-verification)
 - [Related guides](#related-guides)
 
 <!-- TOC END -->
@@ -89,6 +103,8 @@ checks are not fleet proof; failures and unexecuted gates remain explicit.
 
 ## Canonical workflow
 
+### Bootstrap and Member Lock Composition (ADR-030)
+
 The approved `flext-0029c` native-bootstrap target uses one root uv workspace in
 local execution and root CI; CI checks out declared submodules and installs
 noneditable. Locks follow
@@ -102,9 +118,11 @@ persisted state or synthetic resolvers. Official Mise acquisition and native loc
 tool provisioning precede `uv sync --frozen` into the owned physical `.venv`.
 No custom Python or AWK/shell lock/installer parser, copied admission resource or
 installed Infra check precedes successful provision. The task-only
-direct public CLI route
+[direct public CLI route](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/docs/guides/execution-context.md#native-bootstrap-task-route-flext-0029c)
 keeps Make integration last. This target contract does not attest current runtime;
 the general workflow below remains unchanged outside that task.
+
+### Standard Lifecycle Sequence
 
 Run each required operation explicitly from the workspace root:
 
@@ -131,6 +149,8 @@ Each standard verb executes its declared operation directly, without selectors t
 change its effect or phase. Domain commands may retain explicitly declared selectors
 interpreted by their owning registry; they never select a standard lifecycle's effect.
 
+### Submodule Initialization and Hook Dispatch
+
 Setup provisions governed gitlinks before creating the runtime environment. Its shared
 owner is `flext-infra/src/flext_infra/templates/project/base/submodule_setup_recipe.j2`;
 `config.Infra.codegen.make.submodule_timeout_seconds` bounds native provisioning, and
@@ -144,7 +164,7 @@ rewrites them.
 
 `make help` is the complete live inventory. The approved common surface is
 `setup`, `upg`, `gen`, `mod`, `fix`, `fmt`, `check`, `tests`, `help`, `build` and
-`clean`. Repository-owned product commands join it only through their declared
+`clean` (ADR-003). Repository-owned product commands join it only through their declared
 extension owner. No compatibility alias preserves a retired common verb.
 
 The ordinary dispatcher executes each declared `pre-<verb>` hook, handler and
@@ -152,6 +172,8 @@ The ordinary dispatcher executes each declared `pre-<verb>` hook, handler and
 declared scope; it does not bypass these extensions. Approval wrappers still
 must delegate to the corresponding builtin. Setup retains its separate
 provisioning and activation contract.
+
+### Release, Documentation, and Toolchain Contracts
 
 Release operations belong to an explicitly declared product protocol.
 `publishes_release` elects `release-<phase>` commands from the shared release
@@ -200,6 +222,8 @@ wrappers remain where used. These contracts are not current runtime receipts.
 
 ## Operation ownership
 
+### Public Verb Matrix
+
 Each verb enters its existing domain owner. Generation and conformance share the
 same projection planner and transaction publisher; they do not share permission
 to repair authored declarations.
@@ -217,6 +241,8 @@ to repair authored declarations.
 | `help` | Discover the declared public interface without effects |
 | `build` | Produce local distribution and documentation artifacts without publishing |
 | `clean` | Remove only declared disposable resources owned by the selected target |
+
+### Profiling and Semantic Publication Boundaries
 
 Generation and captured check processes share the validated
 `settings.Infra.profile` instrumentation setting, disabled by default.
@@ -247,6 +273,8 @@ and relevant canonical skills before code changes. Prove the public operation in
 the real consumer before changing tests. Tests then validate observable behavior
 without mocks, implementation-shaped assertions, tautologies, copied
 configuration values or fallback execution.
+
+### Conformance, Environment, and Runtime Bindings
 
 The generated dispatcher invokes conformance checking only through `make check`
 and conformance repair only through `make fix`. Installing, generating,
@@ -354,6 +382,8 @@ fresh-object identity; this rule does not extract new collection declarations.
 
 ## Verb single-pass contract
 
+### Formatter and Repair Partitioning
+
 The typed tooling and Make policy owns tool membership and capabilities; this guide
 does not maintain another gate matrix. `fix` applies declared repairs, `fmt` runs
 formatters and `check` performs read-only verification. A formatter does not become a
@@ -384,7 +414,9 @@ after relevant inputs change or to prove a fixed point. Normalizing bytes owned 
 generator remains part of its single publisher, not another formatter over authored
 sources.
 
-`make check` runs as one `flext-infra workspace check` process. Its captured checker
+### Prerequisite and Full Check Execution
+
+`make check` runs as one `flext-infra workspace check` process (ADR-004). Its captured checker
 first executes the declared `make.check_prerequisite_gates` across the complete
 selected composition. Ruff and Pyrefly are the prerequisites: every selected
 repository must finish both without errors before any remaining gate runs.
@@ -406,6 +438,8 @@ The remaining captured gates follow, then the read-only projection verdict
 validation and audit. All remain mandatory. Under the commit-hook token only its
 declared commit-stage gates participate. A dirty or changing tree is never a check
 condition.
+
+### Runtime Integrity and Report Receipts
 
 The checker owns runtime integrity as a registered gate alongside the other checks.
 It invokes the existing dependency, lock, environment-provenance and toolchain
@@ -506,6 +540,8 @@ recovery case are pending; this contract is not a successful recovery receipt.
 
 ## Scope and generation
 
+### Workspace vs. Member Scope Dispatch
+
 The parent `.gitmodules` owns membership and each repository owns its typed kind and
 local policy. Local workspace generation includes the root and eligible managed
 members; `CI=Y` limits generation to the selected project. An independent checkout
@@ -548,6 +584,8 @@ root. Selecting the member Makefile adds no project selector or alternate dispat
 Manifest exclusions remain authoritative. Generated Make surfaces and documentation
 are changed at their template or configuration owner, then regenerated with `make gen`.
 
+### Scaffolding, Codemod Census, and Template Ownership
+
 Explicit new-project declarations let `make gen` reuse the existing scaffold service.
 The target's project identity, kind, integration and provenance are validated before
 effects; its Git/worktree is prepared separately. A missing package manifest in an
@@ -587,6 +625,8 @@ physical scope without claiming completed generation. The publisher rechecks tho
 identities before effects. Profiling retains the same operation's outcome and raw
 evidence; wall time and function timings remain distinct.
 
+### Convergence, Shared Worktree, and Clean Rules
+
 Acceptance exercises each required public operation explicitly against workspace
 roots, selected members, independent checkouts and applicable CI contexts. Root
 mutation fanout follows declared membership; tests, checks and local builds retain
@@ -625,6 +665,8 @@ unreached commands remain unexecuted, never successful. Attached members share
 their physical superproject runtime, so attached validation does not substitute
 for standalone consumer proof. Ordinary root verbs remain repository-local and
 cannot, by themselves, establish a fleet-wide result.
+
+### Git Lane and Worktree Hygiene Verification
 
 The generated local `make check` includes the public
 `flext-infra workspace verify-lanes --repo-root <checkout>` gate. A workspace
@@ -685,3 +727,5 @@ governance consumer of this owner, not a second Git hygiene engine.
 - Development
 - Testing
 - Getting started
+- Codemod Rules
+- [Infra Execution Context](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/docs/guides/execution-context.md)

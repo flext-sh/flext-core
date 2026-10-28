@@ -51,7 +51,13 @@ The examples below import only the aliases they consume from `flext_core`.
 
 ## Result flow
 
-Use `r[T]` to construct explicit success or domain-failure results. Do not convert
+Use `r[T]` to construct explicit success or domain-failure results, and chain
+railway combinators (`.map`, `.flat_map`, `.map_or`, `.unwrap_or`, `r.traverse`,
+`r.from_validation`, `r.create_from_callable`) instead of repeating imperative
+`if result.failure: return ...` ladders or declaring local `outcome = r[T]`
+type aliases. Failure constructors (`r.fail`, `r.fail_op`, `r.from_failure`)
+return `p.Result[Never]`, which is covariant with every `p.Result[T]`, so no
+redundant type specialization is required on failure branches. Do not convert
 unexpected runtime exceptions into success or ad-hoc error dictionaries.
 
 ```python
@@ -70,14 +76,14 @@ def safe_divide(a: float, b: float) -> p.Result[float]:
 
     """
     if b == 0:
-        return r[float].fail("division_by_zero")
-    return r[float].ok(a / b)
+        return r.fail("division_by_zero")
+    return r.ok(a / b)
 
 
-expected_quotient = 5.0
-quotient = safe_divide(10, 2)
+expected_quotient = 10.0
+quotient = safe_divide(10, 2).map(lambda value: value * 2.0)
 if not quotient.success or not isclose(quotient.value, expected_quotient):
-    message = "Expected a successful quotient"
+    message = "Expected a successful doubled quotient"
     raise RuntimeError(message)
 if not safe_divide(10, 0).failure:
     message = "Expected division by zero to fail"
