@@ -13,6 +13,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from collections.abc import Mapping, Sequence
 from types import GenericAlias, NoneType, UnionType
 from typing import Annotated, TypeAliasType, TypeVar, Union, get_args, get_origin

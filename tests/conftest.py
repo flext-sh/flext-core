@@ -9,6 +9,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 # NOTE (multi-agent): Shared fixtures come only from flext-tests' pytest11 plugin.
 
 collect_ignore_glob = ["**/__init__.py"]

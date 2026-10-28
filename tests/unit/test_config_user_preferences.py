@@ -17,6 +17,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import importlib
 import sys
 from collections.abc import Iterator
@@ -30,6 +39,15 @@ from tests import tm, u
 
 _SUBCLASS_SOURCE = '''
 from __future__ import annotations
+
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
 
 from collections.abc import (
     Iterable,

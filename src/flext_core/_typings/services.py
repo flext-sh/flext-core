@@ -107,7 +107,7 @@ class FlextTypesServices:
         | FlextTypesServices.LoggingExceptionInfo
     )
     type LogPositionalValue[T] = (
-        FlextTypesServices.LogValue[T | Mapping[str, Scalar]]
+        FlextTypesServices.LogValue[T | Mapping[str, FlextTypingBase.Scalar]]
         | Sequence[tuple[FlextTypesPydantic.JsonValue, ...]]
     )
     type LoggingNativeRecord = LogRecord

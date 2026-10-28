@@ -7,13 +7,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._handlers.flexthandlers_part_01 import FlextHandlersPart01
+    from flext_core._handlers.flexthandlers_cqrs_base import FlextHandlersCqrsBase
     from flext_core._handlers.flexthandlers_part_02 import FlextHandlersPart02
     from flext_core._handlers.flexthandlers_part_03 import FlextHandlersPart03
     from flext_core._handlers.flexthandlers_part_04 import FlextHandlersPart04
@@ -23,7 +32,7 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "FlextHandlersPart01",
+    "FlextHandlersCqrsBase",
     "FlextHandlersPart02",
     "FlextHandlersPart03",
     "FlextHandlersPart04",
@@ -36,7 +45,7 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextHandlersPart01": ".flexthandlers_part_01",
+        "FlextHandlersCqrsBase": ".flexthandlers_cqrs_base",
         "FlextHandlersPart02": ".flexthandlers_part_02",
         "FlextHandlersPart03": ".flexthandlers_part_03",
         "FlextHandlersPart04": ".flexthandlers_part_04",

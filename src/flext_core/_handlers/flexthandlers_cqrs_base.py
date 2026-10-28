@@ -11,6 +11,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
 from flext_core import c, e, m, u, x
@@ -21,7 +30,7 @@ if TYPE_CHECKING:
     from flext_core import p
 
 
-class FlextHandlersPart01[MessageT_contra, ResultT](x):
+class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
@@ -98,7 +107,7 @@ class FlextHandlersPart01[MessageT_contra, ResultT](x):
         if abstract_methods:
             return
         for klass in cls.mro():
-            if klass is FlextHandlersPart01:
+            if klass is FlextHandlersCqrsBase:
                 msg = c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
                     qualname=cls.__qualname__,
                 )
@@ -147,4 +156,4 @@ class FlextHandlersPart01[MessageT_contra, ResultT](x):
         )
 
 
-__all__: list[str] = ["FlextHandlersPart01"]
+__all__: list[str] = ["FlextHandlersCqrsBase"]

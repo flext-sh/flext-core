@@ -11,10 +11,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from typing import TYPE_CHECKING, cast, override
 
 from flext_core import FlextContext, c, m, p, r, t
-from flext_core._handlers import FlextHandlersPart01, FlextHandlersPart05
+from flext_core._handlers import FlextHandlersCqrsBase, FlextHandlersPart05
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -34,7 +43,9 @@ class FlextHandlersPart06[MessageT_contra, ResultT](
             settings: Optional handler configuration model.
 
         """
-        FlextHandlersPart01[MessageT_contra, ResultT].__init__(self, settings=settings)
+        FlextHandlersCqrsBase[MessageT_contra, ResultT].__init__(
+            self, settings=settings
+        )
 
     @staticmethod
     def create_from_callable(

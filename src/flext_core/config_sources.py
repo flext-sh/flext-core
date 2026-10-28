@@ -17,6 +17,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import re
 from collections.abc import Callable, Mapping, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable

@@ -6,6 +6,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 import re
 from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import datetime
@@ -55,6 +64,19 @@ class FlextTypingBase(FlextTypesPydantic):
     )
     type RuntimeData = FlextTypesPydantic.JsonValue | Path | datetime
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
+    # Vocabulario de mapeamento/sequencia da familia (restaurado): os
+    # pacotes da frota e os consumers ainda falam StrMapping/MappingKV/
+    # SequenceOf; a onda de alias removal quebrou os irmaos que nao
+    # migraram. Formas imutaveis, mutaveis e genericas convivem aqui.
+    type StrMapping = Mapping[str, str]
+    type StrSequence = Sequence[str]
+    type StrPair = tuple[str, str]
+    type SequenceOf[T] = Sequence[T]
+    type MutableSequenceOf[T] = MutableSequence[T]
+    type MappingKV[K, V] = Mapping[K, V]
+    type MutableMappingKV[K, V] = MutableMapping[K, V]
+    type DictKV[K, V] = dict[K, V]
+    type Pair[K, V] = tuple[K, V]
     type IntMapping = Mapping[str, int]
     type IntDict = dict[str, int]
     type MutableIntMapping = MutableMapping[str, int]
