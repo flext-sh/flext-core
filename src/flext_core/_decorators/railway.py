@@ -58,7 +58,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
             def wrapper(
                 *args: PCallback.args,
                 **kwargs: PCallback.kwargs,
-            ) -> p.Result[TValue]]:
+            ) -> p.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
                     if is_result(result):
