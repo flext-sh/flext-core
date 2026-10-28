@@ -10,7 +10,7 @@ from flext_core import c, m, p, t
 from flext_core._exceptions import FlextExceptionsHelpers
 
 
-class FlextBaseErrorMetadataMixin:
+class FlextBaseErrorMetadata:
     @staticmethod
     def normalize_metadata(
         metadata: p.HasModelDump | t.JsonValue | None,
@@ -36,4 +36,4 @@ class FlextBaseErrorMetadataMixin:
         })
 
 
-__all__: list[str] = ["FlextBaseErrorMetadataMixin"]
+__all__: list[str] = ["FlextBaseErrorMetadata"]

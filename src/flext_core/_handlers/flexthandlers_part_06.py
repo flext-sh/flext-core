@@ -14,14 +14,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast, override
 
 from flext_core import FlextContext, c, m, p, r, t
-from flext_core._handlers import flexthandlers_part_01, flexthandlers_part_05
+from flext_core._handlers import FlextHandlersPart01, FlextHandlersPart05
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 class FlextHandlersPart06[MessageT_contra, ResultT](
-    flexthandlers_part_05.FlextHandlersPart05[MessageT_contra, ResultT],
+    FlextHandlersPart05[MessageT_contra, ResultT],
 ):
     def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
         """Initialize the handler, forwarding configuration to its owner.
@@ -34,9 +34,7 @@ class FlextHandlersPart06[MessageT_contra, ResultT](
             settings: Optional handler configuration model.
 
         """
-        flexthandlers_part_01.FlextHandlersPart01[MessageT_contra, ResultT].__init__(
-            self, settings=settings
-        )
+        FlextHandlersPart01[MessageT_contra, ResultT].__init__(self, settings=settings)
 
     @staticmethod
     def create_from_callable(

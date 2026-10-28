@@ -14,14 +14,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import c, m, p, t
-from flext_core._handlers import flexthandlers_part_02
+from flext_core._handlers import FlextHandlersPart02
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
 class FlextHandlersPart03[MessageT_contra, ResultT](
-    flexthandlers_part_02.FlextHandlersPart02[MessageT_contra, ResultT],
+    FlextHandlersPart02[MessageT_contra, ResultT],
 ):
     @staticmethod
     def handler[

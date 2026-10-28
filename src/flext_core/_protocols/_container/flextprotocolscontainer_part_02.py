@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsSettings
-from flext_core._protocols._container import flextprotocolscontainer_part_01
+from flext_core._protocols._container import FlextProtocolsContainerPart01
 
 if TYPE_CHECKING:
     from flext_core import m, t
@@ -21,9 +21,7 @@ if TYPE_CHECKING:
     )
 
 
-class FlextProtocolsContainerPart02(
-    flextprotocolscontainer_part_01.FlextProtocolsContainerPart01
-):
+class FlextProtocolsContainerPart02(FlextProtocolsContainerPart01):
     @runtime_checkable
     class Container(
         FlextProtocolsSettings.Configurable,
@@ -137,8 +135,7 @@ class FlextProtocolsContainerPart02(
             *,
             subproject: str | None = None,
             registration: (
-                flextprotocolscontainer_part_01.FlextProtocolsContainerPart01.ServiceRegistrationSpec
-                | None
+                FlextProtocolsContainerPart01.ServiceRegistrationSpec | None
             ) = None,
         ) -> Self:
             """Create an isolated container scope with optional overrides."""

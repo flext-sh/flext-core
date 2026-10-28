@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, m, t
 from flext_core._exceptions import FlextExceptionsHelpers
-from flext_core._exceptions._base import FlextBaseErrorStateMixin
+from flext_core._exceptions._base import FlextBaseErrorState
 
 if TYPE_CHECKING:
     from collections.abc import MutableMapping
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 class FlextExceptionsBasePart03:
     """BaseError and all typed exception subclasses."""
 
-    class BaseError(FlextBaseErrorStateMixin, Exception):
+    class BaseError(FlextBaseErrorState, Exception):
         """Base exception with correlation metadata and error codes."""
 
         params_cls: ClassVar[t.ModelClass[m.BaseModel] | None] = None

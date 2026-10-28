@@ -17,10 +17,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from flext_core import c, t
 from flext_core._models import FlextModelsBase
-from flext_core._models._cqrs import flextmodelscqrs_part_01
+from flext_core._models._cqrs import FlextModelsCqrsPart01
 
 
-class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
+class FlextModelsCqrs(FlextModelsCqrsPart01):
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
@@ -89,7 +89,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
             validate_default=True,
         )
         pagination: Annotated[
-            flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination,
+            FlextModelsCqrsPart01.Pagination,
             Field(
                 description=(
                     "Pagination settings controlling page number"
@@ -98,9 +98,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 title="Pagination",
                 examples=[{"page": c.FIRST_PAGE_INDEX, "size": c.DEFAULT_PAGE_SIZE}],
             ),
-        ] = Field(
-            default_factory=flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination
-        )
+        ] = Field(default_factory=FlextModelsCqrsPart01.Pagination)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -137,7 +135,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
             pagination_cls: type[BaseModel] = getattr(
                 cls,
                 "Pagination",
-                flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination,
+                FlextModelsCqrsPart01.Pagination,
             )
             if v is None:
                 return pagination_cls()

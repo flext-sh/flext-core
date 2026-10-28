@@ -12,13 +12,13 @@ from typing import TYPE_CHECKING, ClassVar, override
 
 from flext_core import c, m, t
 from flext_core._exceptions import FlextExceptionsHelpers
-from flext_core._exceptions._base import FlextBaseErrorMetadataMixin
+from flext_core._exceptions._base import FlextBaseErrorMetadata
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
 
-class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
+class FlextBaseErrorState(FlextBaseErrorMetadata):
     message: str
     error_code: str
     correlation_id: str | None
@@ -113,4 +113,4 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         return self.message
 
 
-__all__: list[str] = ["FlextBaseErrorStateMixin"]
+__all__: list[str] = ["FlextBaseErrorState"]

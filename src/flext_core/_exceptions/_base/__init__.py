@@ -14,10 +14,10 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._exceptions._base.flextexceptionsbase_part_01 import (
-        FlextBaseErrorMetadataMixin,
+        FlextBaseErrorMetadata,
     )
     from flext_core._exceptions._base.flextexceptionsbase_part_02 import (
-        FlextBaseErrorStateMixin,
+        FlextBaseErrorState,
     )
     from flext_core._exceptions._base.flextexceptionsbase_part_03 import (
         FlextExceptionsBasePart03,
@@ -25,8 +25,8 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "FlextBaseErrorMetadataMixin",
-    "FlextBaseErrorStateMixin",
+    "FlextBaseErrorMetadata",
+    "FlextBaseErrorState",
     "FlextExceptionsBasePart03",
 )
 
@@ -34,8 +34,8 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextBaseErrorMetadataMixin": ".flextexceptionsbase_part_01",
-        "FlextBaseErrorStateMixin": ".flextexceptionsbase_part_02",
+        "FlextBaseErrorMetadata": ".flextexceptionsbase_part_01",
+        "FlextBaseErrorState": ".flextexceptionsbase_part_02",
         "FlextExceptionsBasePart03": ".flextexceptionsbase_part_03",
     }),
     public_exports=__all__,

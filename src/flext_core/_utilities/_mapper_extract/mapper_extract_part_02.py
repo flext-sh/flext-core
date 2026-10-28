@@ -8,12 +8,10 @@ from __future__ import annotations
 
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore
-from flext_core._utilities._mapper_extract import mapper_extract_part_01
+from flext_core._utilities._mapper_extract import FlextUtilitiesMapperExtractPart01
 
 
-class FlextUtilitiesMapperExtractPart02(
-    mapper_extract_part_01.FlextUtilitiesMapperExtractPart01
-):
+class FlextUtilitiesMapperExtractPart02(FlextUtilitiesMapperExtractPart01):
     @staticmethod
     def _extract_path_parts(
         data: p.AccessibleData,

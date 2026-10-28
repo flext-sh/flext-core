@@ -12,11 +12,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, p, r, u
-from flext_core._handlers import flexthandlers_part_04
+from flext_core._handlers import FlextHandlersPart04
 
 
 class FlextHandlersPart05[MessageT_contra, ResultT](
-    flexthandlers_part_04.FlextHandlersPart04[MessageT_contra, ResultT],
+    FlextHandlersPart04[MessageT_contra, ResultT],
 ):
     def _run_pipeline(
         self,

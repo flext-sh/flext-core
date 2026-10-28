@@ -12,10 +12,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._models._base import flextmodelsbase_part_03
+from flext_core._models._base import FlextModelsBasePart03
 
 
-class FlextModelsBase(flextmodelsbase_part_03.FlextModelsBasePart03):
+class FlextModelsBase(FlextModelsBasePart03):
     """Public facade for FlextModelsBase."""
 
 

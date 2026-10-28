@@ -15,10 +15,10 @@ from types import FunctionType, MethodType
 from typing import get_origin, get_type_hints
 
 from flext_core import FlextResult, c, p, t
-from flext_core._utilities._checker import checker_part_01
+from flext_core._utilities._checker import FlextUtilitiesCheckerPart01
 
 
-class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
+class FlextUtilitiesCheckerPart02(FlextUtilitiesCheckerPart01):
     @classmethod
     def _extract_message_type_from_parameter(
         cls,

@@ -11,11 +11,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._handlers import flexthandlers_part_01
+from flext_core._handlers import FlextHandlersPart01
 
 
 class FlextHandlersPart02[MessageT_contra, ResultT](
-    flexthandlers_part_01.FlextHandlersPart01[MessageT_contra, ResultT],
+    FlextHandlersPart01[MessageT_contra, ResultT],
 ):
     """Generated MRO anchor for handler parts."""
 

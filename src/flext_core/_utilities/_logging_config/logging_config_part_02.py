@@ -28,12 +28,10 @@ from structlog.typing import Processor
 
 from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesMetadata
-from flext_core._utilities._logging_config import logging_config_part_01
+from flext_core._utilities._logging_config import FlextUtilitiesLoggingConfigPart01
 
 
-class FlextUtilitiesLoggingConfigPart02(
-    logging_config_part_01.FlextUtilitiesLoggingConfigPart01
-):
+class FlextUtilitiesLoggingConfigPart02(FlextUtilitiesLoggingConfigPart01):
     @staticmethod
     def level_based_context_filter(
         _logger: p.OutputLogger | None,
@@ -81,10 +79,7 @@ class FlextUtilitiesLoggingConfigPart02(
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
-        if (
-            level
-            < logging_config_part_01.FlextUtilitiesLoggingConfigPart01.log_threshold()
-        ):
+        if level < FlextUtilitiesLoggingConfigPart01.log_threshold():
             raise structlog.DropEvent
         return event_dict
 

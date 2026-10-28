@@ -13,12 +13,10 @@ from typing_extensions import TypeForm
 
 from flext_core import m, p, t
 from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesPydantic
-from flext_core._utilities._logging_context import logging_context_part_01
+from flext_core._utilities._logging_context import FlextUtilitiesLoggingContextPart01
 
 
-class FlextUtilitiesLoggingContextPart02(
-    logging_context_part_01.FlextUtilitiesLoggingContextPart01
-):
+class FlextUtilitiesLoggingContextPart02(FlextUtilitiesLoggingContextPart01):
     @staticmethod
     def to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
         """Admit ordinary fields before canonical JSON normalization.

@@ -11,14 +11,14 @@ from typing import TYPE_CHECKING
 from typing_extensions import TypeForm
 
 from flext_core import p, t, u
-from flext_core._handlers import flexthandlers_part_06
+from flext_core._handlers import FlextHandlersPart06
 
 if TYPE_CHECKING:
     from types import ModuleType
 
 
 class FlextHandlersPart07[MessageT_contra, ResultT](
-    flexthandlers_part_06.FlextHandlersPart06[MessageT_contra, ResultT],
+    FlextHandlersPart06[MessageT_contra, ResultT],
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 

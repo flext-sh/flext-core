@@ -16,12 +16,10 @@ from typing import Annotated, ClassVar
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._container import flextmodelscontainer_part_02
+from flext_core._models._container import FlextModelsContainerPart02
 
 
-class FlextModelsContainerPart03(
-    flextmodelscontainer_part_02.FlextModelsContainerPart02
-):
+class FlextModelsContainerPart03(FlextModelsContainerPart02):
     class ServiceRegistrationSpec(FlextModelsBase.ArbitraryTypesModel):
         """Bootstrap specification for container registration.
 

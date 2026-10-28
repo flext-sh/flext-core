@@ -35,7 +35,7 @@ def _is_same(expected: object) -> Callable[[object], bool]:
 
 
 class TestsFlextCoreModelsBaseFullCoverage:
-    """Tests for ``FlextCoreModelsBaseFullCoverage``."""
+    """Tests for ``FlextModelsCoreBaseFullCoverage``."""
 
     class _FrozenValue(m.FrozenValueModel):
         name: Annotated[str, m.Field(description="Frozen value name")]
