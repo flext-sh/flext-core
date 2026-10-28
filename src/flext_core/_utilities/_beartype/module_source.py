@@ -10,7 +10,9 @@ import ast
 import sys
 from typing import runtime_checkable
 
-from flext_core._utilities import FlextUtilitiesBeartypeModuleSourceDeferred
+from flext_core._utilities._beartype._module.source_deferred import (
+    FlextUtilitiesBeartypeModuleSourceDeferred,
+)
 
 
 class FlextUtilitiesBeartypeModuleSource(FlextUtilitiesBeartypeModuleSourceDeferred):

@@ -11,14 +11,12 @@ import sys
 from flext_core import c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities import (
-    FlextUtilitiesFamilySurface,
-    FlextUtilitiesProjectMetadata,
-)
 from flext_core._utilities._beartype._class_visitor.visitor_base import (
     BINARY_ARITY,
     NO_VIOLATION,
 )
+from flext_core._utilities.family_surface import FlextUtilitiesFamilySurface
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
 
 type _AliasRows = tuple[tuple[str, str, str], ...]
 type _AliasContext = tuple[

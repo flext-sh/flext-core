@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 from pydantic import Discriminator, Field
 
 from flext_core import c, t
-from flext_core._models import FlextModelsEnforcementBase
+from flext_core._models._enforcement import FlextModelsEnforcementBase
 
 type _EnforcementPredicateParams = (
     FlextModelsEnforcementParams.FieldShapeParams

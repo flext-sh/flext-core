@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from flext_core import c, p, t
-from flext_core._utilities import FlextUtilitiesFamilySurface
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities.family_surface import FlextUtilitiesFamilySurface
 
 if TYPE_CHECKING:
     from flext_core import m

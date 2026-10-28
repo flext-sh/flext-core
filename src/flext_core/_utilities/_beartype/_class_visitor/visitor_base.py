@@ -11,8 +11,8 @@ from enum import EnumType
 from flext_core import c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities import (
-    FlextUtilitiesBeartypeHelpers,
+from flext_core._utilities._beartype.helpers import FlextUtilitiesBeartypeHelpers
+from flext_core._utilities._beartype.module_source import (
     FlextUtilitiesBeartypeModuleSource,
 )
 

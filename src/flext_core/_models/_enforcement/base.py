@@ -19,12 +19,12 @@ class FlextModelsEnforcementBase(FlextModelsPydantic.BaseModel):
         FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
     )
 
-
-class FlextModelsEnforcementBase:
-    """Foundational enforcement models shared by catalog and predicates."""
-
-    class Violation(FlextModelsEnforcementBase):
+    class Violation(FlextModelsPydantic.BaseModel):
         """Single enforcement violation located at qualname."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+        )
 
         qualname: str
         layer: str
@@ -35,8 +35,12 @@ class FlextModelsEnforcementBase:
         file_path: str = ""
         line_number: int = 0
 
-    class Report(FlextModelsEnforcementBase):
+    class Report(FlextModelsPydantic.BaseModel):
         """Aggregated violation report returned by a check or runner."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True, extra="forbid")
+        )
 
         violations: t.SequenceOf[FlextModelsEnforcementBase.Violation] = ()
 

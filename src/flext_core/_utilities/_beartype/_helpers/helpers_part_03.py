@@ -19,8 +19,8 @@ from types import UnionType
 from typing import TYPE_CHECKING, ForwardRef, TypeAliasType, Union, get_args, get_origin
 
 from flext_core import c
-from flext_core._utilities import helpers_part_02
 from flext_core._utilities._beartype import FlextUtilitiesBeartypeTypeAliases
+from flext_core._utilities._beartype._helpers import helpers_part_02
 
 # Import directly from base modules to avoid a circular load through the public
 # flext_core facade while this module is still being initialized.

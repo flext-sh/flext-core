@@ -20,8 +20,10 @@ from typing import TYPE_CHECKING, ClassVar
 
 from packaging.version import Version
 
-from flext_core import FlextModels, c
-from flext_core._models import FlextModelsProjectMetadata
+from flext_core._constants.file import FlextConstantsFile
+from flext_core._constants.mixins import FlextConstantsMixins
+from flext_core._constants.project_metadata import FlextConstantsProjectMetadata
+from flext_core._models import FlextModelsBase, FlextModelsProjectMetadata
 from flext_core._protocols import FlextProtocolsProjectMetadata
 from flext_core._typings import FlextTypingBase
 
@@ -30,7 +32,7 @@ if TYPE_CHECKING:
 
 
 class FlextUtilitiesProjectMetadata(
-    FlextModels,
+    FlextModelsBase,
 ):
     """Project metadata ingress and canonical name derivation."""
 
@@ -65,7 +67,7 @@ class FlextUtilitiesProjectMetadata(
             The resulting ``FlextModelsProjectMetadata.PyprojectDocument``.
 
         """
-        pyproject = root / c.PYPROJECT_FILENAME
+        pyproject = root / FlextConstantsFile.PYPROJECT_FILENAME
         with pyproject.open("rb") as stream:
             return FlextModelsProjectMetadata.PyprojectDocument.model_validate(
                 tomllib.load(stream),
@@ -94,13 +96,15 @@ class FlextUtilitiesProjectMetadata(
         project = document.project
         flext = document.tool.flext
         if project is None:
-            package_name = flext.docs.package_name or c.IDENTIFIER_UNKNOWN
+            package_name = (
+                flext.docs.package_name or FlextConstantsMixins.IDENTIFIER_UNKNOWN
+            )
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
                 package_name,
             )
             resolved_project = FlextModelsProjectMetadata.Project(
                 name=package_name,
-                version=c.PROJECT_VERSION_PLACEHOLDER,
+                version=FlextConstantsProjectMetadata.PROJECT_VERSION_PLACEHOLDER,
             )
             return FlextModelsProjectMetadata.ProjectMetadata(
                 root=root,
@@ -138,7 +142,11 @@ class FlextUtilitiesProjectMetadata(
         """
         normalized = project_name.lower()
         override = next(
-            (value for name, value in c.SPECIAL_NAME_OVERRIDES if name == normalized),
+            (
+                value
+                for name, value in FlextConstantsProjectMetadata.SPECIAL_NAME_OVERRIDES
+                if name == normalized
+            ),
             None,
         )
         parts = normalized.replace("-", "_").split("_")

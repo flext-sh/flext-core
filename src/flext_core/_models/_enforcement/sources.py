@@ -12,7 +12,7 @@ from typing import Annotated, Literal
 from pydantic import Field
 
 from flext_core import t
-from flext_core._models import FlextModelsEnforcementBase
+from flext_core._models._enforcement import FlextModelsEnforcementBase
 
 
 class FlextModelsEnforcementSources(FlextModelsEnforcementBase):

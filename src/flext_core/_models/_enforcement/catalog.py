@@ -11,7 +11,10 @@ from typing import Annotated
 from pydantic import Discriminator, Field, model_validator
 
 from flext_core import c, t
-from flext_core._models import FlextModelsEnforcementBase, FlextModelsEnforcementSources
+from flext_core._models._enforcement import (
+    FlextModelsEnforcementBase,
+    FlextModelsEnforcementSources,
+)
 
 
 class FlextModelsEnforcementCatalog(FlextModelsEnforcementSources):

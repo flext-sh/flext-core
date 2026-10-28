@@ -14,7 +14,7 @@ from types import MappingProxyType
 from typing import TYPE_CHECKING, cast
 
 from flext_core import c, normalize_lazy_imports
-from flext_core._utilities import FlextUtilitiesProjectMetadata
+from flext_core._utilities.project_metadata import FlextUtilitiesProjectMetadata
 
 if TYPE_CHECKING:
     from flext_core._typings import FlextTypingBase
@@ -101,6 +101,9 @@ class FlextUtilitiesFamilySurface:
             FlextUtilitiesFamilySurface._module_names_by_distribution()
         )
         candidates: list[FlextTypingBase.StrPair] = []
+        # Deferred: this module loads inside the package init chain; the
+        # sibling is imported at call time to avoid a re-entrant cycle.
+
         for dist in FlextUtilitiesProjectMetadata.installed_distributions():
             raw_name = dist.metadata["Name"] or ""
             name = raw_name.lower().replace("-", "_")

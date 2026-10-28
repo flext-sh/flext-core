@@ -9,7 +9,7 @@ from __future__ import annotations
 from flext_core import FlextConfig, c
 from flext_core._models import FlextModelsEnforcement
 from flext_core._typings import FlextTypingBase
-from flext_core._utilities import visitor_checks
+from flext_core._utilities._beartype._class_visitor import visitor_checks
 from flext_core._utilities._beartype._class_visitor.visitor_base import NO_VIOLATION
 
 
