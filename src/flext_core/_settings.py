@@ -63,7 +63,10 @@ from pydantic_settings import (
 )
 
 PydanticBaseSettingsSource = _PydanticBaseSettingsSource
-"""Source interface for Pydantic custom settings loaders, re-exported for layer-0 parity."""
+"""Source interface for Pydantic custom settings loaders.
+
+Re-exported for layer-0 parity.
+"""
 
 
 class FlextSettings(BaseSettings):

@@ -45,8 +45,8 @@ class TestsFlextCoreRegistry:
             setattr(registry, field_name, "invalid")
         tm.that(registry.registry_runtime is runtime, truth=True)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def registry() -> p.Registry:
         """Build a registry backed by an accepting dispatcher.
 

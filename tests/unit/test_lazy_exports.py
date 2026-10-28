@@ -444,8 +444,8 @@ class TestsFlextCoreLazyExports:
 class TestsFlextCoreLazyExportCaching:
     """In-progress import rebinding and completed export caching."""
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def rebinding_package(tmp_path: Path) -> Iterator[str]:
         """Write a real lazy package whose child rebinds ``u`` mid-body.
 

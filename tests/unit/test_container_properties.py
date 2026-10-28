@@ -24,8 +24,8 @@ class TestsFlextCoreContainerProperties:
     never internal registries or DI wiring.
     """
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def container() -> Iterator[FlextContainer]:
         """Yield the shared container and reset the singleton afterwards.
 
