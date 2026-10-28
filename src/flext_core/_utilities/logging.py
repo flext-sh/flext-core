@@ -17,8 +17,11 @@ from typing import Self
 
 import structlog
 
-from flext_core import FlextBoundLogger, c, p, t
-from flext_core._utilities import FlextUtilitiesLoggingContext
+from flext_core import c, p, t
+from flext_core._utilities import (
+    FlextUtilitiesLoggingBoundLogger,
+    FlextUtilitiesLoggingContext,
+)
 
 
 class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
@@ -189,7 +192,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
         """
         # Foreign utility facades must construct the canonical logger, not `cls`.
-        return FlextBoundLogger(name, context=context)
+        return FlextUtilitiesLoggingBoundLogger(name, owner=cls, context=context)
 
 
 __all__: tuple[str, ...] = ("FlextUtilitiesLogging",)
