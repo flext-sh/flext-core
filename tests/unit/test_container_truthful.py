@@ -183,13 +183,17 @@ class TestsFlextCoreContainerTruthful:
         """The registry model port admits list output, not only named fields."""
         instant = datetime.now(UTC)
         path = Path("sequence-payload")
-        payload: t.ListOf[t.JsonPayload] = ["entry", path, instant]
+        payload: list[t.JsonPayload] = ["entry", path, instant]
         registered = m.ObjectList(root=payload)
         _ = clean_container.bind("sequence-payload", registered)
         value: p.Model[list[t.JsonValue]] = tm.ok(
             clean_container.resolve("sequence-payload", type_cls=m.ObjectList)
         )
-        tm.that(value, where=lambda resolved: resolved is registered)
+
+        def resolves_registered(resolved: object) -> bool:
+            return resolved is registered
+
+        tm.that(value, where=resolves_registered)
         tm.that(
             value.model_dump(mode="json"),
             eq=u.normalize_to_json_value(payload),

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import Protocol, Self, runtime_checkable
 
 from structlog.types import BindableLogger
@@ -74,7 +75,7 @@ class FlextProtocolsLoggingPart01:
             *,
             exception: BaseException | None,
             exc_info: bool,
-            context: t.MappingKV[str, t.JsonPayload | Exception],
+            context: Mapping[str, t.JsonPayload | Exception],
         ) -> FlextProtocolsLoggingPart01.LoggingEvent:
             """Build normalized structured exception context."""
             ...
@@ -202,7 +203,7 @@ class FlextProtocolsLoggingPart01:
         def __init__(
             self,
             logger: FlextProtocolsLoggingPart01.OutputLogger,
-            processors: t.SequenceOf[Processor],
+            processors: Sequence[Processor],
             context: FlextProtocolsLoggingPart01.LoggingContext,
         ) -> None: ...
 
@@ -266,23 +267,23 @@ class FlextProtocolsLoggingPart01:
         @property
         def processing_stages(
             self,
-        ) -> t.SequenceOf[FlextProtocolsLoggingPart01.LoggingStage]: ...
+        ) -> Sequence[FlextProtocolsLoggingPart01.LoggingStage]: ...
 
         @property
         def observers(
             self,
-        ) -> t.SequenceOf[FlextProtocolsLoggingPart01.LoggingObserver]: ...
+        ) -> Sequence[FlextProtocolsLoggingPart01.LoggingObserver]: ...
 
         @property
         def handlers(
             self,
-        ) -> t.SequenceOf[FlextProtocolsLoggingPart01.LoggingHandler]: ...
+        ) -> Sequence[FlextProtocolsLoggingPart01.LoggingHandler]: ...
 
         @property
-        def redacted_keys(self) -> t.SequenceOf[str]: ...
+        def redacted_keys(self) -> Sequence[str]: ...
 
         @property
-        def redacted_values(self) -> t.SequenceOf[str]: ...
+        def redacted_values(self) -> Sequence[str]: ...
 
         @property
         def wrapper_class_factory(

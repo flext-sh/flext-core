@@ -13,13 +13,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-
-# AGENT-COORDINATION (2026-07-11, ai-hub-mkzg): t MUST stay a RUNTIME import.
-# beartype.claw evaluates annotations at runtime; moving FlextTypes
-# under TYPE_CHECKING raises NameError at import (test_beartype_engine_claw_packages).
-# Do NOT "optimize" this into a TYPE_CHECKING block. Same precedent: model_options.py,
-# model_runtime.py. Contact owner of bead ai-hub-mkzg before touching this line.
-from flext_core import t
+from collections.abc import Mapping, MutableSequence
 
 
 class FlextUtilitiesSettings:
@@ -33,14 +27,14 @@ class FlextUtilitiesSettings:
     """
 
     @staticmethod
-    def resolve_process_environment() -> t.StrMapping:
+    def resolve_process_environment() -> Mapping[str, str]:
         """Resolve the inherited process environment as a plain string mapping.
 
         Returns:
-            The resulting ``t.StrMapping``.
+            The resulting ``Mapping[str, str]``.
 
         """
         return dict(os.environ)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesSettings"]
+__all__: MutableSequence[str] = ["FlextUtilitiesSettings"]

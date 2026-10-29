@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import math
+from collections.abc import Sequence
 
 from flext_core import c, m, t
 from flext_core._utilities import (
@@ -22,7 +23,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def join(
-        values: t.StrSequence,
+        values: Sequence[str],
         *,
         separator: str = " ",
         case: str | None = None,
@@ -59,7 +60,7 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str(
-        value: t.JsonPayload | t.StrictValue | t.JsonMapping | t.StrSequence | None,
+        value: t.JsonPayload | t.StrictValue | t.JsonMapping | Sequence[str] | None,
         *,
         default: str | None = None,
     ) -> str:
@@ -87,12 +88,12 @@ class FlextUtilitiesConversion:
     def to_str_list(
         value: t.StrictValue | None,
         *,
-        default: t.StrSequence | None = None,
-    ) -> t.StrSequence:
+        default: Sequence[str] | None = None,
+    ) -> Sequence[str]:
         """Convert value to list of strings.
 
         Returns:
-            The resulting ``t.StrSequence``.
+            The resulting ``Sequence[str]``.
 
         """
         if value is None:

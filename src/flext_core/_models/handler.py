@@ -12,7 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import MutableSequence
+from collections.abc import MutableSequence, Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import c, p, t
@@ -232,7 +232,7 @@ class FlextModelsHandler:
             ),
         ] = None
         middleware: Annotated[
-            t.SequenceOf[type[p.Middleware]],
+            Sequence[type[p.Middleware]],
             FlextModelsPydantic.Field(
                 description="Middleware types to apply to this handler",
             ),

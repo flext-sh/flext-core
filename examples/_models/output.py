@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from enum import StrEnum
 from types import MappingProxyType
 from typing import TYPE_CHECKING, ClassVar
@@ -13,8 +14,6 @@ from typing import TYPE_CHECKING, ClassVar
 from examples import c
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
-
     from examples import t
 
 

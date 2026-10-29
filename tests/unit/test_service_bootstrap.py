@@ -42,6 +42,23 @@ class TestsFlextCoreServiceBootstrap:
                 container=source,
             )
 
+    class GenericPort[PortT](m.ManagedModel):
+        """A generic dependency declaration requires an instance contract on use."""
+
+        counter: t.Port[PortT] = m.Field(
+            exclude=True,
+            description="Generic counter dependency.",
+        )
+
+    class BoundedPort[PortT: p.Tests.Counter](GenericPort[PortT]):
+        """An unspecialized parameter retains its declared counter capability."""
+
+    class DefaultedPort[PortT = p.Tests.Counter](GenericPort[PortT]):
+        """A parameter's declared default supplies the instance contract."""
+
+    class ConstrainedPort[PortT: (p.Tests.Counter, BaseException)](GenericPort[PortT]):
+        """Only the parameter's explicitly declared alternatives are admitted."""
+
     # --- Service execution contract ------------------------------------
 
     def test_execute_returns_successful_result_with_payload(self) -> None:
@@ -324,3 +341,37 @@ class TestsFlextCoreServiceBootstrap:
 
         tm.ok(service.counter is counter)
         tm.that(service.execute().unwrap(), eq=3)
+
+    @staticmethod
+    @pytest.mark.parametrize(
+        ("model", "has_contract"),
+        [
+            (GenericPort, False),
+            (GenericPort[p.Tests.Counter], True),
+            (BoundedPort, True),
+            (DefaultedPort, True),
+            (ConstrainedPort, True),
+        ],
+    )
+    def test_generic_port_requires_a_declared_instance_contract(
+        model: type[GenericPort[p.Tests.Counter]], *, has_contract: bool
+    ) -> None:
+        """Specialization, bounds and defaults validate ports without an any schema."""
+        counter = u.Tests.MemoryCounter()
+        tm.that(model.model_json_schema().get("properties", {}), eq={})
+        if not has_contract:
+            with pytest.raises(m.ValidationError, match="requires specialization"):
+                model.model_validate({"counter": counter})
+            return
+
+        payload = model.model_validate({"counter": counter})
+        tm.ok(payload.counter is counter)
+        tm.that(counter.next_value(), eq=1)
+        tm.rejects_assignment(
+            payload,
+            "counter",
+            c.Tests.DEFAULT_ERROR_MESSAGE,
+            expected=m.ValidationError,
+        )
+        with pytest.raises(m.ValidationError):
+            model.model_validate({"counter": c.Tests.DEFAULT_ERROR_MESSAGE})

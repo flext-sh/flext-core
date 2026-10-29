@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, MutableMapping
+from collections.abc import Callable, MutableMapping, Sequence
 from types import ModuleType
 
 from flext_core._typings import FlextTypingBase
@@ -18,16 +18,12 @@ class FlextTypesLazy:
     type ModuleGlobalValue = (
         FlextTypingBase.JsonValue
         | FlextTypingBase.LazyImportMap
-        | FlextTypingBase.StrSequence
+        | Sequence[str]
         | ModuleType
         | type
         | Callable[
             ...,
-            FlextTypingBase.JsonValue
-            | FlextTypingBase.StrSequence
-            | ModuleType
-            | type
-            | None,
+            FlextTypingBase.JsonValue | Sequence[str] | ModuleType | type | None,
         ]
         | None
     )

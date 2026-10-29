@@ -14,8 +14,6 @@ from __future__ import annotations
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
-    FlextUtilitiesBeartypeConf,
-    FlextUtilitiesBeartypeEngine,
     FlextUtilitiesChecker,
     FlextUtilitiesCollection,
     FlextUtilitiesCollectionIter,
@@ -27,9 +25,6 @@ from flext_core._utilities import (
     FlextUtilitiesDiscovery,
     FlextUtilitiesDispatcherExecute,
     FlextUtilitiesDomain,
-    FlextUtilitiesEnforcement,
-    FlextUtilitiesEnforcementCollect,
-    FlextUtilitiesEnforcementEmit,
     FlextUtilitiesEnum,
     FlextUtilitiesFamilySurface,
     FlextUtilitiesFiles,
@@ -38,8 +33,6 @@ from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
     FlextUtilitiesHandler,
     FlextUtilitiesLogging,
     FlextUtilitiesLoggingConfig,
@@ -57,23 +50,15 @@ from flext_core._utilities import (
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
-    FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesSettings,
     FlextUtilitiesText,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
 )
-from flext_core._utilities._beartype import (
-    FlextUtilitiesBeartypeImportBlacklistVisitor,
-    FlextUtilitiesBeartypeModuleSource,
-    FlextUtilitiesBeartypeTypeAliases,
-)
 
 
 class FlextUtilities(
     FlextUtilitiesArgs,
-    FlextUtilitiesBeartypeConf,
-    FlextUtilitiesBeartypeEngine,
     FlextUtilitiesCollection,
     FlextUtilitiesCollectionIter,
     FlextUtilitiesCollectionMerge,
@@ -92,8 +77,6 @@ class FlextUtilities(
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesGuardsTypeProtocol,
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
     FlextUtilitiesHandler,
     FlextUtilitiesLogging,
     FlextUtilitiesLoggingContext,
@@ -114,16 +97,9 @@ class FlextUtilities(
     FlextUtilitiesTypingAdapterScalars,
     FlextUtilitiesBase,
     FlextUtilitiesReliability,
-    FlextUtilitiesRuntimeViolationRegistry,
     FlextUtilitiesSettings,
     FlextUtilitiesText,
     FlextUtilitiesChecker,
-    FlextUtilitiesEnforcement,
-    FlextUtilitiesEnforcementCollect,
-    FlextUtilitiesEnforcementEmit,
-    FlextUtilitiesBeartypeModuleSource,
-    FlextUtilitiesBeartypeTypeAliases,
-    FlextUtilitiesBeartypeImportBlacklistVisitor,
 ):
     """Unified facade for all FLEXT utility functionality.
 

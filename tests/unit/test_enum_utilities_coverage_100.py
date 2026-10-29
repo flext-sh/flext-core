@@ -14,15 +14,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from enum import StrEnum, unique
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
 import pytest
 
 from tests import m, tm, u
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
 
 
 class TestsFlextCoreEnumUtilities:

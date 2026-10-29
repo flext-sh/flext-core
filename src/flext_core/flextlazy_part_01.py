@@ -8,8 +8,7 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import sys
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from importlib.util import resolve_name
 from types import ModuleType
 from typing import TYPE_CHECKING
@@ -32,7 +31,6 @@ class FlextLazyPart01:
     """
 
     __slots__ = (
-        "_activating_core_beartype",
         "_import_module",
         "child_lazy_cache",
         "child_merge_cache",
@@ -47,29 +45,28 @@ class FlextLazyPart01:
 
     def __init__(self) -> None:
         """Initialize the empty reuse caches and the default module importer."""
-        self.module_cache: t.MutableMappingKV[str, ModuleType] = {}
-        self.child_lazy_cache: t.MutableMappingKV[
-            str, t.MutableMappingKV[str, str | tuple[str, str]]
+        self.module_cache: MutableMapping[str, ModuleType] = {}
+        self.child_lazy_cache: MutableMapping[
+            str, MutableMapping[str, str | tuple[str, str]]
         ] = {}
-        self.child_merge_cache: t.MutableMappingKV[
+        self.child_merge_cache: MutableMapping[
             tuple[str, ...],
-            t.MutableMappingKV[str, str | tuple[str, str]],
+            MutableMapping[str, str | tuple[str, str]],
         ] = {}
         # The entry keeps its source map alive: an ``id()`` key alone is reused
         # once a transient map is freed, and would serve another map's
         # normalization.
-        self.normalized_map_cache: t.MutableMappingKV[
+        self.normalized_map_cache: MutableMapping[
             tuple[str, int],
             tuple[
                 Mapping[str, str | tuple[str, str]] | None,
-                t.MutableMappingKV[str, str | tuple[str, str]],
+                MutableMapping[str, str | tuple[str, str]],
             ],
         ] = {}
-        self.install_cache: t.MutableMappingKV[
+        self.install_cache: MutableMapping[
             str, tuple[tuple[int, int, int, bool], t.LazyExportHooks]
         ] = {}
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
-        self._activating_core_beartype = False
 
     @property
     def cache_stats(self) -> Mapping[str, int]:
@@ -93,7 +90,7 @@ class FlextLazyPart01:
         self,
         module_path: str,
         raw: Mapping[str, str | tuple[str, str]] | None,
-    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
+    ) -> MutableMapping[str, str | tuple[str, str]]:
         cache_key = self._norm_cache_key(module_path, raw)
         cached = self.normalized_map_cache.get(cache_key)
         if cached is not None and cached[0] is raw:
@@ -106,7 +103,7 @@ class FlextLazyPart01:
         # ValidationError escapes unchanged.
         validated = RootModel[dict[str, str | tuple[str, str]]].model_validate(raw).root
 
-        out: t.MutableMappingKV[str, str | tuple[str, str]] = {}
+        out: MutableMapping[str, str | tuple[str, str]] = {}
         for name, entry in validated.items():
             if isinstance(entry, str):
                 out[name] = self._child_path(entry, module_path)
@@ -118,27 +115,11 @@ class FlextLazyPart01:
         self.normalized_map_cache[cache_key] = (raw, out)
         return out
 
-    @staticmethod
-    def _must_activate_core_beartype(module_path: str) -> bool:
-        """Return whether importing a module should activate flext_core beartype.
-
-        Returns:
-            Whether importing a module should activate flext_core beartype.
-
-        """
-        root_module = sys.modules.get("flext_core")
-        root_ready = root_module is not None and "t" in vars(root_module)
-        return (
-            root_ready
-            and module_path.startswith("flext_core.")
-            and not module_path.startswith("flext_core._constants")
-        )
-
     def normalize_map(
         self,
         module_path: str,
         raw: Mapping[str, str | tuple[str, str]] | None,
-    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
+    ) -> MutableMapping[str, str | tuple[str, str]]:
         """Return normalized lazy-import entries for runtime metadata readers.
 
         Returns:
@@ -186,35 +167,21 @@ class FlextLazyPart01:
         cached = self.module_cache.get(module_path)
         if cached is not None:
             return cached
-        if (
-            self._must_activate_core_beartype(module_path)
-            and not self._activating_core_beartype
-        ):
-            self._activating_core_beartype = True
-            try:
-                self._activate_core_beartype()
-            finally:
-                self._activating_core_beartype = False
         mod = self._import_module(module_path)
         if not self._module_is_initializing(mod):
             self.module_cache[module_path] = mod
         return mod
 
-    def _activate_core_beartype(self) -> None:
-        """Resolve the bootstrap only after the root installs its public bindings."""
-        bootstrap = self._import_module("flext_core._beartype_bootstrap")
-        bootstrap.FlextCoreBeartypeBootstrap.activate_package_beartype()
-
     def _child_map(
         self, module_path: str
-    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
+    ) -> MutableMapping[str, str | tuple[str, str]]:
         cached = self.child_lazy_cache.get(module_path)
         if cached is not None:
             return cached
         child = self._load(module_path)
         raw_lazy_imports = vars(child).get("_LAZY_IMPORTS")
         if raw_lazy_imports is None:
-            normalized: t.MutableMappingKV[str, str | tuple[str, str]] = {}
+            normalized: MutableMapping[str, str | tuple[str, str]] = {}
             self.child_lazy_cache[module_path] = normalized
             return normalized
         normalized = self._norm_map(child.__name__, raw_lazy_imports)
@@ -242,14 +209,14 @@ class FlextLazyPart01:
         *,
         alias_groups: Mapping[str, Sequence[tuple[str, str]]] | None = None,
         sort_keys: bool = True,
-    ) -> t.MutableMappingKV[str, str | tuple[str, str]]:
+    ) -> MutableMapping[str, str | tuple[str, str]]:
         """Build one flat lazy-import map.
 
         Returns:
             The resulting ``LazyImportDict``.
 
         """
-        out: t.MutableMappingKV[str, str | tuple[str, str]] = {
+        out: MutableMapping[str, str | tuple[str, str]] = {
             name: module
             for module, names in (module_groups or {}).items()
             for name in names

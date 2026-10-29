@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core import t
 
 
 class FlextUtilitiesCheckerPart01:
@@ -22,7 +22,7 @@ class FlextUtilitiesCheckerPart01:
 
     @staticmethod
     def _is_subclass_of(
-        candidate: FlextTypingBase.TypeHintSpecifier,
+        candidate: t.TypeHintSpecifier,
         parent: type,
     ) -> bool:
         """Safe subclass check that never raises TypeError.
@@ -34,7 +34,7 @@ class FlextUtilitiesCheckerPart01:
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
-    def _is_dict_type(cls, candidate: FlextTypingBase.TypeHintSpecifier) -> bool:
+    def _is_dict_type(cls, candidate: t.TypeHintSpecifier) -> bool:
         """Check if candidate is dict or a subclass of dict.
 
         Returns:
@@ -46,10 +46,10 @@ class FlextUtilitiesCheckerPart01:
     @classmethod
     def _check_dict_compatibility(
         cls,
-        expected_type: FlextTypingBase.TypeHintSpecifier,
-        message_type: FlextTypesServices.MessageTypeSpecifier,
-        origin_type: FlextTypingBase.TypeHintSpecifier,
-        message_origin: FlextTypingBase.TypeHintSpecifier,
+        expected_type: t.TypeHintSpecifier,
+        message_type: t.MessageTypeSpecifier,
+        origin_type: t.TypeHintSpecifier,
+        message_origin: t.TypeHintSpecifier,
     ) -> bool:
         """Check dict type compatibility between expected and message types.
 
@@ -70,7 +70,7 @@ class FlextUtilitiesCheckerPart01:
     @classmethod
     def _check_object_type_compatibility(
         cls,
-        expected_type: FlextTypingBase.TypeHintSpecifier,
+        expected_type: t.TypeHintSpecifier,
     ) -> bool:
         """Check if expected type is a canonical catch-all value contract.
 
@@ -78,7 +78,7 @@ class FlextUtilitiesCheckerPart01:
             The resulting ``bool``.
 
         """
-        return expected_type is FlextTypesServices.JsonPayload
+        return expected_type is t.JsonPayload
 
 
 __all__: list[str] = ["FlextUtilitiesCheckerPart01"]

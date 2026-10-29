@@ -13,17 +13,14 @@ from __future__ import annotations
 import secrets
 import string
 import uuid
+from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, tzinfo
 from importlib import import_module
 from zoneinfo import ZoneInfo
 
-from flext_core import c, t
-from flext_core._models import FlextModelsOptions
+from flext_core import c, m, t
 
 
-# NOTE (multi-agent): mro-i6nq.12 — consolidated _generators_parts/part_01..02 (one
-# FlextUtilitiesGenerators class split across a numbered MRO chain) into this single
-# facade module.
 class FlextUtilitiesGenerators:
     """Generate deterministic IDs and timestamps for CQRS workflows.
 
@@ -34,18 +31,18 @@ class FlextUtilitiesGenerators:
     def _determine_prefix(
         kind: str | None,
         prefix: str | None,
-    ) -> t.Pair[bool, str | None]:
+    ) -> tuple[bool, str | None]:
         """Resolve ID prefix from kind or custom override.
 
         Returns:
-            The resulting ``t.Pair[bool, str | None]``.
+            The resulting ``tuple[bool, str | None]``.
 
         """
         if prefix is not None:
             return (True, prefix)
         if kind is None:
             return (False, None)
-        kind_prefix_map: t.StrMapping = {
+        kind_prefix_map: Mapping[str, str] = {
             "correlation": "corr",
             "entity": "ent",
             c.ProcessingMode.BATCH: c.ProcessingMode.BATCH,
@@ -90,17 +87,17 @@ class FlextUtilitiesGenerators:
 
     @staticmethod
     def _build_parts_list(
-        parts: t.VariadicTuple[t.JsonValue] | None,
+        parts: tuple[t.JsonValue, ...] | None,
         *,
         include_timestamp: bool,
-    ) -> t.SequenceOf[t.JsonValue]:
+    ) -> Sequence[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix.
 
         Returns:
-            The resulting ``t.SequenceOf[t.JsonValue]``.
+            The resulting ``Sequence[t.JsonValue]``.
 
         """
-        all_parts: t.JsonValueList = []
+        all_parts: list[t.JsonValue] = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -110,7 +107,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_custom_separator_id(
         actual_prefix: str,
-        all_parts: t.SequenceOf[t.JsonValue],
+        all_parts: Sequence[t.JsonValue],
         separator: str,
         id_length: int,
     ) -> str:
@@ -130,7 +127,7 @@ class FlextUtilitiesGenerators:
     def generate(
         kind: str | None = None,
         *,
-        options: FlextModelsOptions.GenerateOptions | None = None,
+        options: m.GenerateOptions | None = None,
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method).
 
@@ -138,7 +135,7 @@ class FlextUtilitiesGenerators:
             The resulting ``str``.
 
         """
-        resolved_options = options or FlextModelsOptions.GenerateOptions()
+        resolved_options = options or m.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
             kind,
             resolved_options.prefix,

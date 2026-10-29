@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Generator
+from collections.abc import Generator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime, timedelta
@@ -15,10 +15,7 @@ from typing import ClassVar
 
 import structlog.contextvars
 
-from flext_core import c, p, t
-from flext_core._models import FlextModelsContainers
-from flext_core._models._context import FlextModelsContextTokens
-from flext_core._models._context._scope import FlextModelsContextScope
+from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
@@ -50,7 +47,7 @@ class FlextUtilitiesContext:
                 The bound value or this proxy's default.
 
             """
-            context: t.MappingKV[str, t.JsonPayload | datetime] = (
+            context: Mapping[str, t.JsonPayload | datetime] = (
                 structlog.contextvars.get_contextvars()
             )
             value = context.get(self._key)
@@ -68,9 +65,7 @@ class FlextUtilitiesContext:
                 structlog.contextvars.unbind_contextvars(self._key)
             else:
                 _ = structlog.contextvars.bind_contextvars(**{self._key: value})
-            return FlextModelsContextTokens.StructlogProxyToken(
-                key=self._key, previous_value=previous
-            )
+            return m.StructlogProxyToken(key=self._key, previous_value=previous)
 
     CORRELATION_ID: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[str](
         c.ContextKey.CORRELATION_ID
@@ -229,7 +224,7 @@ class FlextUtilitiesContext:
     @contextmanager
     def timed_operation(
         operation_name: str | None = None,
-    ) -> Generator[FlextModelsContainers.ConfigMap]:
+    ) -> Generator[m.ConfigMap]:
         """Scope operation timing and finalize the yielded metadata on exit.
 
         Yields:
@@ -242,7 +237,7 @@ class FlextUtilitiesContext:
             str(c.MetadataKey.START_TIME): start.isoformat(),
             str(c.ContextKey.OPERATION_NAME): operation_name or "",
         }
-        metadata = FlextModelsContainers.ConfigMap.model_validate(payload)
+        metadata = m.ConfigMap.model_validate(payload)
         start_token = FlextUtilitiesContext.OPERATION_START_TIME.set(start)
         meta_token = FlextUtilitiesContext.OPERATION_METADATA.set(payload)
         op_token = (
@@ -266,14 +261,14 @@ class FlextUtilitiesContext:
                 FlextUtilitiesContext.OPERATION_NAME.reset(op_token)
 
     @staticmethod
-    def export_full_context() -> t.MappingKV[str, t.Scalar]:
+    def export_full_context() -> Mapping[str, t.Scalar]:
         """Export active scalar context variables, formatting operation timestamps.
 
         Returns:
             The active scalar context snapshot.
 
         """
-        exported: t.MutableMappingKV[str, t.Scalar] = {}
+        exported: MutableMapping[str, t.Scalar] = {}
         for key, proxy in (
             (c.ContextKey.CORRELATION_ID, FlextUtilitiesContext.CORRELATION_ID),
             (
@@ -321,7 +316,7 @@ class FlextUtilitiesContext:
             The independent runtime state.
 
         """
-        scope_vars: t.MutableMappingKV[
+        scope_vars: MutableMapping[
             str, ContextVar[p.MutableRootDict[t.JsonPayload] | None]
         ] = {
             scope: ContextVar(f"flext_{scope}_context", default=None)
@@ -333,11 +328,11 @@ class FlextUtilitiesContext:
         }
         values = {"scope_vars": scope_vars}
         if metadata is not None:
-            return FlextModelsContextScope.ContextRuntimeState.model_validate({
+            return m.ContextRuntimeState.model_validate({
                 **values,
                 "metadata": metadata.model_copy(),
             })
-        return FlextModelsContextScope.ContextRuntimeState.model_validate(values)
+        return m.ContextRuntimeState.model_validate(values)
 
     @staticmethod
     def resolve_context_scope_var(
@@ -371,13 +366,13 @@ class FlextUtilitiesContext:
             The state with updated operation statistics.
 
         """
-        counters: t.MappingKV[str, int] = {
+        counters: Mapping[str, int] = {
             "sets": state.statistics.sets,
             "gets": state.statistics.gets,
             "removes": state.statistics.removes,
             "clears": state.statistics.clears,
         }
-        updates: t.MutableMappingKV[str, t.JsonPayload] = {}
+        updates: MutableMapping[str, t.JsonPayload] = {}
         counter = f"{operation}s"
         if counter in counters:
             updates[counter] = counters[counter] + 1
@@ -396,4 +391,4 @@ class FlextUtilitiesContext:
         return state.model_copy(update={"statistics": statistics})
 
 
-__all__: t.StrSequence = ("FlextUtilitiesContext",)
+__all__: Sequence[str] = ("FlextUtilitiesContext",)

@@ -7,10 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from pathlib import Path
 from typing import override
 
-from examples import c, t
+from examples import c
 from examples.ex_02_flext_settings_helpers import ExamplesFlextSettingsFieldChecks
 from flext_core import FlextSettings
 
@@ -39,11 +40,11 @@ class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):
         self._TestConfig.reset_for_testing()
 
     @staticmethod
-    def _strip_flext_env() -> t.StrMapping:
+    def _strip_flext_env() -> Mapping[str, str]:
         """Remove ``FLEXT_``-prefixed vars so field defaults are deterministic.
 
         Returns:
-            The resulting ``t.StrDict``.
+            The resulting ``dict[str, str]``.
 
         """
         saved = {k: v for k, v in os.environ.items() if k.startswith("FLEXT_")}
@@ -52,7 +53,7 @@ class ExamplesFlextSettingsUsage(ExamplesFlextSettingsFieldChecks):
         return saved
 
     @staticmethod
-    def _restore_flext_env(saved: t.StrMapping) -> None:
+    def _restore_flext_env(saved: Mapping[str, str]) -> None:
         """Restore previously stripped ``FLEXT_`` env vars."""
         for key, value in saved.items():
             os.environ[key] = value

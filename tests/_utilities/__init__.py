@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests._utilities.beartype_engine import TestsFlextBeartypeEngine
     from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
     from tests._utilities.decorators import TestsFlextDecoratorsLegacy
     from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
@@ -61,7 +60,6 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "TestsFlextBeartypeEngine",
     "TestsFlextDecoratorsLegacy",
     "TestsFlextFlextHandlers",
     "TestsFlextResultExceptionCarrying",
@@ -88,7 +86,6 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "TestsFlextBeartypeEngine": ".beartype_engine",
         "TestsFlextDecoratorsLegacy": ".decorators",
         "TestsFlextFlextHandlers": ".handlers",
         "TestsFlextResultExceptionCarrying": ".result_exception_carrying",

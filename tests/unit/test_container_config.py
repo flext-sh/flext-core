@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
 from flext_core import FlextContainer, FlextSettings
@@ -22,7 +24,7 @@ class TestsFlextCoreContainerConfig:
         ids=str,
     )
     def test_configure_container(
-        settings: t.MappingKV[str, t.JsonPayload],
+        settings: Mapping[str, t.JsonPayload],
         clean_container: p.Container,
     ) -> None:
         """Test container configuration."""
@@ -62,7 +64,7 @@ class TestsFlextCoreContainerConfig:
     def test_with_config_fluent(clean_container: p.Container) -> None:
         """Test fluent interface for configuration."""
         container = clean_container
-        settings: t.MappingKV[str, t.JsonPayload] = {"max_services": 32}
+        settings: Mapping[str, t.JsonPayload] = {"max_services": 32}
         result = container.apply(settings)
         tm.that(
             result is container,
@@ -132,7 +134,7 @@ class TestsFlextCoreContainerConfig:
     def test_apply_is_idempotent(clean_container: p.Container) -> None:
         """Applying the same overrides twice must yield identical public settings."""
         container = clean_container
-        settings: t.MappingKV[str, t.JsonPayload] = {
+        settings: Mapping[str, t.JsonPayload] = {
             "max_services": 16,
             "enable_singleton": True,
         }

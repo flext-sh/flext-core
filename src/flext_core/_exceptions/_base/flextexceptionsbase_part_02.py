@@ -8,26 +8,22 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import TYPE_CHECKING, ClassVar, override
+from collections.abc import Mapping
+from typing import ClassVar, override
 
-from flext_core import c, m
+from flext_core import c, m, t
 from flext_core._exceptions import FlextExceptionsHelpers
-from flext_core._exceptions._base import FlextBaseErrorMetadataMixin
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from flext_core._typings import FlextTypesServices, FlextTypingBase
+from flext_core._exceptions._base import FlextBaseErrorMetadata
 
 
-class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
+class FlextBaseErrorState(FlextBaseErrorMetadata):
     message: str
     error_code: str
     correlation_id: str | None
     metadata: m.Metadata
     timestamp: float
     auto_log: bool
-    args: FlextTypingBase.VariadicTuple[str]
+    args: tuple[str, ...]
 
     _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
         c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
@@ -77,15 +73,13 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         *,
         error_code: str,
         options: m.ExceptionInitOptions,
-        extra_kwargs: FlextTypingBase.MappingKV[
-            str, FlextTypesServices.JsonPayload | None
-        ],
+        extra_kwargs: Mapping[str, t.JsonPayload | None],
     ) -> None:
         """Initialize the shared base error state without subclass metaprogramming."""
         self.args = (message,)
         self.message = message
         self.error_code = error_code
-        final_kwargs_dict: FlextTypingBase.JsonDict = {}
+        final_kwargs_dict: t.JsonDict = {}
         for source_value in (options.merged_kwargs, options.context, extra_kwargs):
             if source_value is None:
                 continue
@@ -117,4 +111,4 @@ class FlextBaseErrorStateMixin(FlextBaseErrorMetadataMixin):
         return self.message
 
 
-__all__: list[str] = ["FlextBaseErrorStateMixin"]
+__all__: list[str] = ["FlextBaseErrorState"]

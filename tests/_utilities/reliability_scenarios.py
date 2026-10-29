@@ -6,14 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Sequence
+from typing import ClassVar
 
 from tests import m
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-from tests import t
 
 
 class TestsFlextUtilitiesReliabilityScenariosMixin:
@@ -57,7 +53,7 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
             description="All retries exhausted",
         ),
     ]
-    CIRCUIT_BREAKER_SCENARIOS: ClassVar[t.SequenceOf[m.Tests.ReliabilityScenario]] = [
+    CIRCUIT_BREAKER_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [
         m.Tests.ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",

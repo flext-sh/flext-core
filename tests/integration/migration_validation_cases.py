@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from flext_core import FlextContainer
@@ -47,7 +48,7 @@ class TestsFlextFlextMigrationApplicationCase:
                 self.logger = u.fetch_logger(__name__)
                 self.container = FlextContainer()
 
-            def process_data(self, data: t.StrMapping) -> p.Result[t.JsonMapping]:
+            def process_data(self, data: Mapping[str, str]) -> p.Result[t.JsonMapping]:
                 """Typical data processing method.
 
                 Returns:

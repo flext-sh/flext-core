@@ -13,6 +13,7 @@ from __future__ import annotations
 import re
 import sys
 import tomllib
+from collections.abc import Sequence
 from email.utils import parseaddr
 from functools import cache
 from importlib.metadata import Distribution, DistributionFinder, PackageMetadata
@@ -20,22 +21,21 @@ from typing import TYPE_CHECKING, ClassVar
 
 from packaging.version import Version
 
-from flext_core import c
-from flext_core._models import FlextModelsProjectMetadata
-from flext_core._protocols import FlextProtocolsProjectMetadata
-from flext_core._typings import FlextTypingBase
+from flext_core import c, m, p, t
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
+class FlextUtilitiesProjectMetadata(
+    m,
+):
     """Project metadata ingress and canonical name derivation."""
 
-    _DISTRIBUTION_SEPARATOR_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    _DISTRIBUTION_SEPARATOR_RE: ClassVar[t.RegexPattern] = re.compile(
         r"[-_.]+",
     )
-    _REQUIREMENT_NAME_RE: ClassVar[FlextTypingBase.RegexPattern] = re.compile(
+    _REQUIREMENT_NAME_RE: ClassVar[t.RegexPattern] = re.compile(
         r"^\s*(?P<name>[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)"
         r"(?=\s*(?:\[|@|[<>=!~;]|$))",
     )
@@ -51,7 +51,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
     @cache
     def read_project_document_cached(
         root: Path,
-    ) -> FlextModelsProjectMetadata.PyprojectDocument:
+    ) -> m.PyprojectDocument:
         """Read and validate the ``pyproject.toml`` document at one root.
 
         The parsed document is cached per root path.
@@ -60,12 +60,12 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
             root: The project root holding ``pyproject.toml``.
 
         Returns:
-            The resulting ``FlextModelsProjectMetadata.PyprojectDocument``.
+            The resulting ``m.PyprojectDocument``.
 
         """
         pyproject = root / c.PYPROJECT_FILENAME
         with pyproject.open("rb") as stream:
-            return FlextModelsProjectMetadata.PyprojectDocument.model_validate(
+            return m.PyprojectDocument.model_validate(
                 tomllib.load(stream),
             )
 
@@ -73,8 +73,8 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
     def build_project_metadata(
         cls,
         root: Path,
-        document: FlextModelsProjectMetadata.PyprojectDocument,
-    ) -> FlextModelsProjectMetadata.ProjectMetadata:
+        document: m.PyprojectDocument,
+    ) -> m.ProjectMetadata:
         """Build canonical project metadata from a parsed pyproject document.
 
         When the document carries no ``[project]`` table, the package name
@@ -86,7 +86,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
             document: The parsed ``pyproject.toml`` document.
 
         Returns:
-            The resulting ``FlextModelsProjectMetadata.ProjectMetadata``.
+            The resulting ``m.ProjectMetadata``.
 
         """
         project = document.project
@@ -96,11 +96,11 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
             class_stem = flext.project.class_stem_override or cls.derive_class_stem(
                 package_name,
             )
-            resolved_project = FlextModelsProjectMetadata.Project(
+            resolved_project = m.Project(
                 name=package_name,
                 version=c.PROJECT_VERSION_PLACEHOLDER,
             )
-            return FlextModelsProjectMetadata.ProjectMetadata(
+            return m.ProjectMetadata(
                 root=root,
                 package_name=package_name,
                 class_stem=class_stem,
@@ -108,7 +108,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
                 flext=flext,
             )
         resolved_project = project
-        return FlextModelsProjectMetadata.ProjectMetadata(
+        return m.ProjectMetadata(
             root=root,
             package_name=flext.docs.package_name
             or resolved_project.name.replace("-", "_"),
@@ -148,8 +148,8 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
     def installed_distributions(
         *,
         name: str | None = None,
-        path: FlextTypingBase.StrSequence | None = None,
-    ) -> FlextTypingBase.VariadicTuple[Distribution]:
+        path: Sequence[str] | None = None,
+    ) -> tuple[Distribution, ...]:
         """Enumerate installed distributions over one snapshot of the finder chain.
 
         ``importlib.metadata.distributions()`` walks the live ``sys.meta_path``
@@ -170,7 +170,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
         return tuple(
             distribution
             for finder in tuple(sys.meta_path)
-            if isinstance(finder, FlextProtocolsProjectMetadata.DistributionSource)
+            if isinstance(finder, p.DistributionSource)
             for distribution in finder.find_distributions(context)
         )
 
@@ -178,7 +178,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
     def distribution_requirement_names(
         cls,
         distribution: Distribution,
-    ) -> FlextTypingBase.VariadicTuple[str]:
+    ) -> tuple[str, ...]:
         """Return the normalized underscore names of declared requirements.
 
         Each ``Requires-Dist`` entry is parsed by the same requirement-name
@@ -200,7 +200,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
     @classmethod
     def project_uses_distribution(
         cls,
-        metadata: FlextProtocolsProjectMetadata.ProjectMetadata,
+        metadata: p.ProjectMetadata,
         distribution_name: str,
     ) -> bool:
         """Report whether a project declares a distribution by name.
@@ -231,7 +231,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
         return False
 
     @staticmethod
-    def package_author(package_metadata: PackageMetadata) -> FlextTypingBase.StrPair:
+    def package_author(package_metadata: PackageMetadata) -> tuple[str, str]:
         """Return the first normalized author identity from package metadata.
 
         Returns:
@@ -276,7 +276,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
         return ""
 
     @staticmethod
-    def package_version_info(version: str) -> FlextTypingBase.Triple[int, int, int]:
+    def package_version_info(version: str) -> tuple[int, int, int]:
         """Return the exact three-component PEP 440 release tuple.
 
         Returns:
@@ -304,7 +304,7 @@ class FlextUtilitiesProjectMetadata(FlextModelsProjectMetadata):
 
         _metadata: PackageMetadata
         __version__: str = ""
-        __version_info__: FlextTypingBase.Triple[int, int, int]
+        __version_info__: tuple[int, int, int]
         __title__: str = ""
         __description__: str = ""
         __author__: str = ""

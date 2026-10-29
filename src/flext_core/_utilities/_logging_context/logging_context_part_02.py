@@ -9,19 +9,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing_extensions import TypeForm
+from collections.abc import Mapping
 
-from flext_core import FlextRuntime, p, t
-from flext_core._models import FlextModelsBase
-from flext_core._utilities import FlextUtilitiesBase
-from flext_core._utilities._logging_context import logging_context_part_01
+from flext_core import m, p, t
+from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesPydantic
+from flext_core._utilities._logging_context import FlextUtilitiesLoggingContextPart01
 
 
-class FlextUtilitiesLoggingContextPart02(
-    logging_context_part_01.FlextUtilitiesLoggingContextPart01
-):
+class FlextUtilitiesLoggingContextPart02(FlextUtilitiesLoggingContextPart01):
     @staticmethod
-    def _to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
+    def to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
         """Admit ordinary fields before canonical JSON normalization.
 
         Native exception triples belong to reserved ``exc_info`` and bypass
@@ -35,15 +32,15 @@ class FlextUtilitiesLoggingContextPart02(
             return str(value)
         if isinstance(value, tuple):
             admitted = FlextUtilitiesBase.type_adapter(
-                TypeForm(t.JsonPayload),
-                config=FlextModelsBase.ArbitraryTypesModel.model_config,
+                t.TypeForm(t.JsonPayload),
+                config=m.ArbitraryTypesModel.model_config,
             ).validate_python(list(value))
-            return FlextRuntime.normalize_to_json_value(admitted)
-        return FlextRuntime.normalize_to_json_value(value)
+            return FlextUtilitiesPydantic.normalize_to_json_value(admitted)
+        return FlextUtilitiesPydantic.normalize_to_json_value(value)
 
     @staticmethod
     def to_container_context(
-        context: t.MappingKV[str, p.LogValue | t.JsonValue],
+        context: Mapping[str, p.LogValue | t.JsonValue],
     ) -> t.JsonMapping:
         """Serialize owned fields once before entering the native processor chain.
 
@@ -52,7 +49,7 @@ class FlextUtilitiesLoggingContextPart02(
 
         """
         return {
-            key: FlextUtilitiesLoggingContextPart02._to_container_value(value)
+            key: FlextUtilitiesLoggingContextPart02.to_container_value(value)
             for key, value in context.items()
         }
 

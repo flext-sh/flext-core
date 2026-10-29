@@ -9,10 +9,8 @@ from __future__ import annotations
 
 from flext_core._constants import (
     FlextConstantsBase,
-    FlextConstantsBeartype,
     FlextConstantsConfig,
     FlextConstantsCqrs,
-    FlextConstantsEnforcement,
     FlextConstantsEnvironment,
     FlextConstantsErrors,
     FlextConstantsFile,
@@ -29,14 +27,18 @@ from flext_core._constants import (
     FlextConstantsTimeout,
     FlextConstantsValidation,
 )
+from flext_core._constants.violations import (
+    FlextMroViolation,
+    FlextMroViolationError,
+    FlextSmellViolation,
+    FlextSmellViolationError,
+)
 
 
 class FlextConstants(
     FlextConstantsBase,
-    FlextConstantsBeartype,
     FlextConstantsConfig,
     FlextConstantsCqrs,
-    FlextConstantsEnforcement,
     FlextConstantsEnvironment,
     FlextConstantsErrors,
     FlextConstantsFile,
@@ -59,6 +61,11 @@ class FlextConstants(
     groups (timeouts, environment, logging, status, errors, ...) each live in
     their own module and flatten onto this single namespace at import time.
     """
+
+    FlextMroViolationError = FlextMroViolationError
+    FlextSmellViolationError = FlextSmellViolationError
+    FlextMroViolation = FlextMroViolation
+    FlextSmellViolation = FlextSmellViolation
 
 
 c = FlextConstants

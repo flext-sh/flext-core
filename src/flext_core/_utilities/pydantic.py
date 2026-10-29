@@ -33,8 +33,7 @@ from pydantic import (
 from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
-from flext_core import _models, c, p, t
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core import c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
@@ -53,7 +52,7 @@ class FlextUtilitiesPydantic(
     Use u.* / up.* instead.
     """
 
-    Field = FlextTypingNativeExport(FlextModelsPydantic.Field)
+    Field = FlextTypingNativeExport(m.Field)
     SkipValidation = SkipValidation
 
     AfterValidator = AfterValidator
@@ -68,13 +67,13 @@ class FlextUtilitiesPydantic(
         warnings.deprecated(
             "compat: u.field_validator -> m.field_validator; "
             "fix: decorate with m.field_validator"
-        )(FlextModelsPydantic.field_validator)
+        )(m.field_validator)
     )
     model_validator = FlextTypingNativeExport(
         warnings.deprecated(
             "compat: u.model_validator -> m.model_validator; "
             "fix: decorate with m.model_validator"
-        )(FlextModelsPydantic.model_validator)
+        )(m.model_validator)
     )
 
     computed_field = FlextTypingNativeExport(computed_field)
@@ -98,10 +97,7 @@ class FlextUtilitiesPydantic(
             TypeError: If the value has no supported container representation.
 
         """
-        models = _models.FlextModelsContainers
-        root_model = isinstance(
-            value, (models.ConfigMap, models.Dict, models.ObjectList)
-        )
+        root_model = isinstance(value, (m.ConfigMap, m.Dict, m.ObjectList))
         if value is None:
             return None
         if isinstance(value, BaseModel) and not root_model:
@@ -130,7 +126,7 @@ class FlextUtilitiesPydantic(
         if isinstance(value, p.HasModelDump):
             return adapter.validate_python(value.model_dump(mode="json"), strict=True)
         payload = (
-            _models.FlextModelsContainers.ConfigMap.model_validate(value).root
+            m.ConfigMap.model_validate(value).root
             if isinstance(value, Mapping)
             else value
         )
@@ -177,7 +173,7 @@ class FlextUtilitiesPydantic(
             if isinstance(value, p.HasModelDump)
             else value
         )
-        parsed = _models.FlextModelsContainers.ConfigMap.model_validate(payload)
+        parsed = m.ConfigMap.model_validate(payload)
         return FlextUtilitiesPydantic.normalize_to_json_mapping(parsed)
 
     @staticmethod
@@ -193,28 +189,6 @@ class FlextUtilitiesPydantic(
         if value is None:
             return None
         return FlextUtilitiesPydantic.normalize_to_json_mapping(value)
-
-    @staticmethod
-    def validate_metadata_attributes(value: p.MetadataInput) -> t.JsonMapping:
-        """Validate attribute keys without stringifying unsupported values.
-
-        Returns:
-            Validated public attributes, excluding absent values.
-
-        Raises:
-            ValueError: If an attribute key is reserved for internal metadata.
-
-        """
-        normalized = FlextUtilitiesPydantic.normalize_metadata_input_mapping(value)
-        if normalized is None:
-            return {}
-        for key in normalized:
-            if key.startswith("_"):
-                message = c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(key=key)
-                raise ValueError(message)
-        return FlextUtilitiesTypingAdapterJson.json_mapping_adapter().validate_python({
-            key: item for key, item in normalized.items() if item is not None
-        })
 
     @staticmethod
     def validate_metadata_model_input[ModelT: BaseModel](
@@ -319,7 +293,7 @@ class FlextUtilitiesPydantic(
                 seed = FlextUtilitiesPydantic._empty_collection_seed(resolved_contract)
                 native_adapter = FlextUtilitiesBase.type_adapter(
                     resolved_contract,
-                    config=_models.FlextModelsBase.ArbitraryTypesModel.model_config,
+                    config=m.ArbitraryTypesModel.model_config,
                 )
                 adapter = native_adapter
             return adapter.validate_json(seed)

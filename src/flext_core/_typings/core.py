@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from types import ModuleType
 
 from flext_core._typings import (
@@ -27,9 +28,9 @@ class FlextTypesCore(FlextTypesAnnotateds):
     type FileContent = (
         FlextTypesPydantic.StrictStr
         | FlextTypesPydantic.StrictBytes
-        | FlextTypingBase.SequenceOf[FlextTypingBase.StrSequence]
+        | Sequence[Sequence[str]]
     )
-    type GeneralValueTypeMapping = FlextTypingBase.MappingKV[
+    type GeneralValueTypeMapping = Mapping[
         str,
         FlextTypingBase.Scalar,
     ]

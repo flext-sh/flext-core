@@ -7,13 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from typing import TYPE_CHECKING, Annotated, Literal, override
+from collections.abc import Iterator, Mapping
+from typing import Annotated, Literal, override
 
 from flext_core import m
 from tests import t
-
-if TYPE_CHECKING:
-    from collections.abc import Iterator
 
 
 class TestsFlextModelsCoreErrorsMixin:
@@ -59,8 +57,8 @@ class TestsFlextModelsCoreErrorsMixin:
         def __len__(self) -> int:
             return 1
 
-    type TestCaseMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
-    type InputPayloadMap = t.MappingKV[str, t.Tests.TestobjectSerializable]
+    type TestCaseMap = Mapping[str, t.Tests.TestobjectSerializable]
+    type InputPayloadMap = Mapping[str, t.Tests.TestobjectSerializable]
 
     class SampleModel(m.BaseModel):
         """Sample model for testing."""

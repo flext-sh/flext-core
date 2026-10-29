@@ -6,13 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Self
 
-from flext_core import FlextExceptions, FlextResult, c, m, p, t
-from flext_core._utilities import FlextUtilitiesContext, FlextUtilitiesPydantic
+from flext_core import FlextExceptions, FlextResult, FlextUtilities, c, m, p, t
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
-class FlextContext(m.ContextState, FlextUtilitiesContext):
+class FlextContext(
+    m.ContextState,
+    FlextUtilities,
+):
     """Scoped store, metadata and shared structlog context-variable operations."""
 
     @classmethod
@@ -102,7 +106,7 @@ class FlextContext(m.ContextState, FlextUtilitiesContext):
         """
         return key in self.data.root
 
-    def keys(self) -> t.StrSequence:
+    def keys(self) -> Sequence[str]:
         """Return stored keys in insertion order."""
         return tuple(self.data.root)
 
@@ -125,9 +129,7 @@ class FlextContext(m.ContextState, FlextUtilitiesContext):
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Replace metadata with a snapshot containing the supplied attribute."""
-        attributes: t.MutableMappingKV[str, t.JsonValue] = dict(
-            self.metadata.attributes
-        )
+        attributes: MutableMapping[str, t.JsonValue] = dict(self.metadata.attributes)
         attributes[key] = value
         snapshot = FlextUtilitiesPydantic.normalize_to_json_mapping(attributes)
         self.metadata = self.metadata.model_copy(update={"attributes": snapshot})
@@ -140,7 +142,7 @@ class FlextContext(m.ContextState, FlextUtilitiesContext):
         """Clear the instance scope without changing process context variables."""
         self.data.root.clear()
 
-    def merge(self, other: p.Context | t.MappingKV[str, t.JsonPayload]) -> Self:
+    def merge(self, other: p.Context | Mapping[str, t.JsonPayload]) -> Self:
         """Merge a context or mapping into this instance and return it.
 
         Returns:
@@ -162,7 +164,7 @@ class FlextContext(m.ContextState, FlextUtilitiesContext):
             metadata=self.metadata.model_copy(),
         )
 
-    def export(self, *, as_dict: bool = True) -> t.MappingKV[str, t.JsonPayload] | Self:
+    def export(self, *, as_dict: bool = True) -> Mapping[str, t.JsonPayload] | Self:
         """Export a scope mapping or return this context unchanged.
 
         Returns:
@@ -172,4 +174,4 @@ class FlextContext(m.ContextState, FlextUtilitiesContext):
         return dict(self.data.root) if as_dict else self
 
 
-__all__: t.StrSequence = ("FlextContext",)
+__all__: Sequence[str] = ("FlextContext",)

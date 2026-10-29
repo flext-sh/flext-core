@@ -10,6 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
@@ -117,4 +119,4 @@ class FlextModelsService:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsService"]
+__all__: MutableSequence[str] = ["FlextModelsService"]

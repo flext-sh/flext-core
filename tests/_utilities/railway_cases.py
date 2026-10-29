@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from tests import c, t
 
 
@@ -13,7 +15,7 @@ class TestsFlextUtilitiesRailwayCasesMixin:
     """Railway case helpers."""
 
     @staticmethod
-    def success_cases() -> t.SequenceOf[tuple[str, str]]:
+    def success_cases() -> Sequence[tuple[str, str]]:
         return [
             (c.Tests.USER_IDS_SUCCESS[0], "Valid user ID"),
             (c.Tests.USER_IDS_SUCCESS[1], "Another valid user ID"),
@@ -21,15 +23,15 @@ class TestsFlextUtilitiesRailwayCasesMixin:
         ]
 
     @staticmethod
-    def failure_cases() -> t.SequenceOf[tuple[str, str, str]]:
+    def failure_cases() -> Sequence[tuple[str, str, str]]:
         return [
             ("invalid", "not found", "Invalid user ID"),
             ("", "not found", "Empty user ID"),
         ]
 
     @staticmethod
-    def railway_success_cases() -> t.SequenceOf[
-        tuple[t.StrSequence, t.StrSequence, int, str]
+    def railway_success_cases() -> Sequence[
+        tuple[Sequence[str], Sequence[str], int, str]
     ]:
         return [
             ([c.Tests.USER_IDS_SUCCESS[0]], (), 1, "Simple user retrieval"),
@@ -52,7 +54,7 @@ class TestsFlextUtilitiesRailwayCasesMixin:
         ]
 
     @staticmethod
-    def multi_operation_cases() -> t.SequenceOf[tuple[str, int, t.JsonMapping]]:
+    def multi_operation_cases() -> Sequence[tuple[str, int, t.JsonMapping]]:
         return [
             (
                 c.Tests.RAILWAY_OPERATION_DOUBLE,

@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableSequence
+from collections.abc import Mapping, MutableSequence, Sequence
 from types import FunctionType, MethodType
 from typing import get_args, get_origin
 
@@ -19,15 +19,15 @@ from pydantic import BaseModel
 from flext_core import FlextResult, c, p
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._typings import FlextTypesServices, FlextTypingBase
-from flext_core._utilities._checker import checker_part_02
+from flext_core._utilities._checker import FlextUtilitiesCheckerPart02
 
 
-class FlextUtilitiesCheckerPart03(checker_part_02.FlextUtilitiesCheckerPart02):
+class FlextUtilitiesCheckerPart03(FlextUtilitiesCheckerPart02):
     @classmethod
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> FlextTypingBase.SequenceOf[FlextTypingBase.TypeHintSpecifier]:
+    ) -> Sequence[FlextTypingBase.TypeHintSpecifier]:
         """Extract message types from generic base annotations.
 
         Returns:
@@ -56,7 +56,7 @@ class FlextUtilitiesCheckerPart03(checker_part_02.FlextUtilitiesCheckerPart02):
         metadata_types: MutableSequence[FlextTypingBase.TypeHintSpecifier] = []
         for parent_cls in handler_class.__bases__:
             metadata: (
-                FlextTypingBase.MappingKV[
+                Mapping[
                     str,
                     FlextTypingBase.TypeHintSpecifier
                     | FlextTypingBase.VariadicTuple[FlextTypingBase.TypeHintSpecifier]

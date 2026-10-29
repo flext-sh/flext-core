@@ -45,19 +45,28 @@ Use explicit bind/factory loops.
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import p, r, t
 
 
-def validate_payload(payload: t.StrDict) -> p.Result[t.StrDict]:
+def validate_payload(payload: dict[str, str]) -> p.Result[dict[str, str]]:
     """Require the email key before accepting a payload.
 
     Returns:
-        The resulting ``p.Result[t.StrDict]``.
+        The resulting ``p.Result[dict[str, str]]``.
 
     """
     if "email" not in payload:
-        return r[t.StrDict].fail("missing_email")
-    return r[t.StrDict].ok(payload)
+        return r[dict[str, str]].fail("missing_email")
+    return r[dict[str, str]].ok(payload)
 
 
 valid_payload = validate_payload({"email": "a@b.com"})

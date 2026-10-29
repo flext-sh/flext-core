@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
-from flext_core._protocols._container import flextprotocolscontainer_part_02
+from flext_core._protocols._container import FlextProtocolsContainerPart02
 
 if TYPE_CHECKING:
     from flext_core._protocols import (
@@ -18,12 +18,10 @@ if TYPE_CHECKING:
     )
 
 
-class FlextProtocolsContainerPart03(
-    flextprotocolscontainer_part_02.FlextProtocolsContainerPart02
-):
+class FlextProtocolsContainerPart03(FlextProtocolsContainerPart02):
     @runtime_checkable
     class ContainerLifecycle(
-        flextprotocolscontainer_part_02.FlextProtocolsContainerPart02.Container,
+        FlextProtocolsContainerPart02.Container,
         Protocol,
     ):
         """Extended container contract for bootstrap and lifecycle operations."""
@@ -46,9 +44,9 @@ class FlextProtocolsContainerPart03(
 
     @runtime_checkable
     class ContainerType[
-        TContainer: (
-            flextprotocolscontainer_part_02.FlextProtocolsContainerPart02.Container
-        ) = (flextprotocolscontainer_part_02.FlextProtocolsContainerPart02.Container),
+        TContainer: (FlextProtocolsContainerPart02.Container) = (
+            FlextProtocolsContainerPart02.Container
+        ),
     ](Protocol):
         """Protocol for concrete container classes exposing canonical factories."""
 

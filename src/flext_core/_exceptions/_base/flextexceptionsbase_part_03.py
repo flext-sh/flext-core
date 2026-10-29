@@ -6,40 +6,35 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import c, m
+from flext_core import c, m, t
 from flext_core._exceptions import FlextExceptionsHelpers
-from flext_core._exceptions._base import FlextBaseErrorStateMixin
-from flext_core._typings import FlextTypingBase
+from flext_core._exceptions._base import FlextBaseErrorState
 
 if TYPE_CHECKING:
-    from collections.abc import MutableMapping
-
-    from flext_core._protocols import FlextProtocolsResult
-    from flext_core._typings import FlextTypesServices
+    from flext_core import p
 
 
 class FlextExceptionsBasePart03:
     """BaseError and all typed exception subclasses."""
 
-    class BaseError(FlextBaseErrorStateMixin, Exception):
+    class BaseError(FlextBaseErrorState, Exception):
         """Base exception with correlation metadata and error codes."""
 
-        params_cls: ClassVar[FlextTypesServices.ModelClass[m.BaseModel] | None] = None
+        params_cls: ClassVar[t.ModelClass[m.BaseModel] | None] = None
         excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
         _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
 
         def __init__(
             self,
             message: str,
-            *format_args: FlextTypesServices.JsonPayload,
+            *format_args: t.JsonPayload,
             options: m.ExceptionInitOptions | None = None,
             params: m.BaseModel | None = None,
-            metadata: FlextProtocolsResult.HasModelDump
-            | FlextTypingBase.JsonValue
-            | None = None,
-            **extra_kwargs: FlextTypingBase.JsonValue,
+            metadata: p.HasModelDump | t.JsonValue | None = None,
+            **extra_kwargs: t.JsonValue,
         ) -> None:
             """Initialize base error with message and optional metadata.
 
@@ -58,11 +53,9 @@ class FlextExceptionsBasePart03:
                 # Extract exactly the remaining option keys from the kwargs so
                 # they feed the typed options instead of falling into the
                 # generic extra bucket; ``metadata`` is a named parameter.
-                option_kwargs: FlextTypingBase.MutableMappingKV[
+                option_kwargs: MutableMapping[
                     str,
-                    FlextProtocolsResult.HasModelDump
-                    | FlextTypingBase.JsonValue
-                    | None,
+                    p.HasModelDump | t.JsonValue | None,
                 ] = {
                     key: extra_kwargs.pop(key)
                     for key in (
@@ -133,13 +126,9 @@ class FlextExceptionsBasePart03:
 
         @staticmethod
         def _build_declared_extra(
-            merged_kwargs: FlextTypingBase.MappingKV[
-                str, FlextTypesServices.JsonPayload | None
-            ]
-            | FlextProtocolsResult.HasModelDump
-            | None,
-            extra_kwargs: FlextTypingBase.MappingKV[str, FlextTypingBase.JsonValue],
-        ) -> MutableMapping[str, FlextTypesServices.JsonPayload | None]:
+            merged_kwargs: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+            extra_kwargs: Mapping[str, t.JsonValue],
+        ) -> MutableMapping[str, t.JsonPayload | None]:
             """Normalize merged and extra kwargs into the declared-extra mapping.
 
             Returns:
@@ -152,10 +141,10 @@ class FlextExceptionsBasePart03:
 
         @staticmethod
         def _extract_declared_remaining(
-            combined_extra: MutableMapping[str, FlextTypesServices.JsonPayload | None],
+            combined_extra: MutableMapping[str, t.JsonPayload | None],
         ) -> tuple[
-            FlextTypingBase.MutableJsonMapping,
-            FlextTypingBase.JsonValue | None,
+            t.MutableJsonMapping,
+            t.JsonValue | None,
             str | None,
         ]:
             """Split declared params from remaining extras in the combined mapping.
@@ -179,19 +168,15 @@ class FlextExceptionsBasePart03:
 
         @staticmethod
         def _resolve_named_param_values(
-            context: FlextTypingBase.MappingKV[
-                str, FlextTypesServices.JsonPayload | None
-            ]
-            | FlextProtocolsResult.HasModelDump
-            | None,
-            remaining_extra: FlextTypingBase.MutableJsonMapping,
+            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+            remaining_extra: t.MutableJsonMapping,
             declared_param_keys: frozenset[str],
-            resolved_named: MutableMapping[str, FlextTypesServices.JsonPayload | None],
-        ) -> FlextTypingBase.JsonDict:
+            resolved_named: MutableMapping[str, t.JsonPayload | None],
+        ) -> t.JsonDict:
             """Fold resolved named params into the declared param-value map.
 
             Returns:
-                The resulting ``FlextTypingBase.JsonDict``.
+                The resulting ``t.JsonDict``.
 
             """
             param_values = FlextExceptionsHelpers.build_param_map(
@@ -208,8 +193,8 @@ class FlextExceptionsBasePart03:
 
         @staticmethod
         def _attach_declared_field_context(
-            ctx: FlextTypingBase.MutableJsonMapping,
-            declaredparams_cls: FlextTypesServices.ModelClass[m.BaseModel],
+            ctx: t.MutableJsonMapping,
+            declaredparams_cls: t.ModelClass[m.BaseModel],
             resolved: m.BaseModel,
             declared_param_keys: frozenset[str],
         ) -> None:
@@ -230,15 +215,11 @@ class FlextExceptionsBasePart03:
 
         def _resolve_declared_params(
             self,
-            declaredparams_cls: FlextTypesServices.ModelClass[m.BaseModel],
-            context: FlextTypingBase.MappingKV[
-                str, FlextTypesServices.JsonPayload | None
-            ]
-            | FlextProtocolsResult.HasModelDump
-            | None,
-            remaining_extra: FlextTypingBase.MutableJsonMapping,
+            declaredparams_cls: t.ModelClass[m.BaseModel],
+            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
+            remaining_extra: t.MutableJsonMapping,
             params: m.BaseModel | None,
-        ) -> tuple[m.BaseModel, FlextTypingBase.MutableJsonMapping]:
+        ) -> tuple[m.BaseModel, t.MutableJsonMapping]:
             """Validate declared params and build the structured context mapping.
 
             Returns:
@@ -246,9 +227,7 @@ class FlextExceptionsBasePart03:
 
             """
             declared_param_keys = frozenset(declaredparams_cls.model_fields)
-            resolved_named: MutableMapping[
-                str, FlextTypesServices.JsonPayload | None
-            ] = {}
+            resolved_named: MutableMapping[str, t.JsonPayload | None] = {}
             for key in declared_param_keys:
                 resolved_named.setdefault(key, remaining_extra.pop(key, None))
             param_values = self._resolve_named_param_values(
@@ -278,8 +257,8 @@ class FlextExceptionsBasePart03:
         @staticmethod
         def _resolve_declared_options(
             options: m.ExceptionInitOptions,
-            ctx: FlextTypingBase.MutableJsonMapping,
-            preserved_metadata: FlextTypingBase.JsonValue | None,
+            ctx: t.MutableJsonMapping,
+            preserved_metadata: t.JsonValue | None,
             declared_correlation_id: str | None,
         ) -> m.ExceptionInitOptions:
             """Fold declared-params resolutions back into the init options.

@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Iterable
 from types import TracebackType
 from typing import TextIO, override
 
@@ -70,7 +71,7 @@ class FlextUtilitiesLoggingStream:
 
         @property
         @override
-        def newlines(self) -> str | t.VariadicTuple[str] | None:
+        def newlines(self) -> str | tuple[str, ...] | None:
             newlines = self._target_stream.newlines
             if newlines is None or isinstance(newlines, str):
                 return newlines
@@ -160,7 +161,7 @@ class FlextUtilitiesLoggingStream:
             self._target_stream.flush()
 
         @override
-        def writelines(self, lines: t.IterableOf[str], /) -> None:
+        def writelines(self, lines: Iterable[str], /) -> None:
             for line in lines:
                 _ = self.write(line)
 

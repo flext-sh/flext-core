@@ -9,19 +9,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import uuid
+from collections.abc import Mapping
 from types import MappingProxyType
 from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from flext_core import c, t
 from flext_core._models import FlextModelsBase
-from flext_core._models._cqrs import flextmodelscqrs_part_01
-from flext_core._utilities import FlextUtilitiesGenerators
-from flext_core.constants import c
-from flext_core.typings import t
+from flext_core._models._cqrs import FlextModelsCqrsPart01
 
 
-class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
+class FlextModelsCqrs(FlextModelsCqrsPart01):
     """CQRS pattern container class.
 
     This class acts as a namespace container for CQRS patterns.
@@ -54,9 +54,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                "cmd",
-            ),
+            default_factory=lambda: "cmd_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH],
         )
         issuer_id: Annotated[
             t.NonEmptyStr | None,
@@ -78,7 +76,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
             Field(frozen=True, description="Message type discriminator"),
         ] = c.HandlerMode.QUERY
         filters: Annotated[
-            t.MappingKV[str, t.Scalar],
+            Mapping[str, t.Scalar],
             Field(
                 description=(
                     "Filter values that restrict"
@@ -92,7 +90,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
             validate_default=True,
         )
         pagination: Annotated[
-            flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination,
+            FlextModelsCqrsPart01.Pagination,
             Field(
                 description=(
                     "Pagination settings controlling page number"
@@ -101,9 +99,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 title="Pagination",
                 examples=[{"page": c.FIRST_PAGE_INDEX, "size": c.DEFAULT_PAGE_SIZE}],
             ),
-        ] = Field(
-            default_factory=flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination
-        )
+        ] = Field(default_factory=FlextModelsCqrsPart01.Pagination)
         query_id: Annotated[
             t.NonEmptyStr,
             Field(
@@ -114,8 +110,8 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 examples=["query_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                c.HandlerMode.QUERY,
+            default_factory=lambda: (
+                f"{c.HandlerMode.QUERY}_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH]
             ),
         )
         query_type: Annotated[
@@ -127,7 +123,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | t.MappingKV[str, t.Scalar] | None,
+            v: BaseModel | Mapping[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance.
 
@@ -140,7 +136,7 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
             pagination_cls: type[BaseModel] = getattr(
                 cls,
                 "Pagination",
-                flextmodelscqrs_part_01.FlextModelsCqrsPart01.Pagination,
+                FlextModelsCqrsPart01.Pagination,
             )
             if v is None:
                 return pagination_cls()
@@ -225,19 +221,17 @@ class FlextModelsCqrs(flextmodelscqrs_part_01.FlextModelsCqrsPart01):
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: FlextUtilitiesGenerators.generate_prefixed_id(
-                "evt",
-            ),
+            default_factory=lambda: "evt_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH],
         )
         data: Annotated[
-            t.MappingKV[str, t.Scalar],
+            Mapping[str, t.Scalar],
             Field(description="Event payload data"),
         ] = Field(
             default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
         metadata: Annotated[
-            t.MappingKV[str, t.Scalar],
+            Mapping[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
         ] = Field(
             default_factory=lambda: MappingProxyType[str, t.Scalar]({}),

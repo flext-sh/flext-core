@@ -8,13 +8,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from importlib import import_module
 from typing import overload
 
 from pydantic import TypeAdapter
 
-from flext_core import FlextExceptions, FlextResult, c, p, t
-from flext_core._models import FlextModelsConfig, FlextModelsPydantic
+from flext_core import FlextExceptions, FlextResult, c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
@@ -27,10 +27,10 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def dump(
-        model: FlextModelsPydantic.BaseModel,
-        options: FlextModelsConfig.ModelDumpOptions | None = None,
+        model: m.BaseModel,
+        options: m.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
-    ) -> t.MappingKV[str, t.JsonPayload]:
+    ) -> Mapping[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -49,7 +49,7 @@ class FlextUtilitiesModel:
         opts = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
-            FlextModelsConfig.ModelDumpOptions,
+            m.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         adapter = FlextUtilitiesTypingAdapterJson.json_mapping_adapter()
@@ -59,7 +59,7 @@ class FlextUtilitiesModel:
         return dumped
 
     @staticmethod
-    def _settings_base() -> p.SettingsType:
+    def settings_base() -> p.SettingsType:
         """Resolve FlextSettings lazily to avoid runtime import cycles.
 
         Returns:
@@ -71,7 +71,7 @@ class FlextUtilitiesModel:
         return settings_cls
 
     @staticmethod
-    def _container_type() -> p.ContainerType:
+    def container_type() -> p.ContainerType:
         """Resolve FlextContainer lazily to avoid runtime import cycles.
 
         Returns:
@@ -83,7 +83,7 @@ class FlextUtilitiesModel:
         return container_cls
 
     @staticmethod
-    def _context_type() -> p.ContextType:
+    def context_type() -> p.ContextType:
         """Resolve FlextContext lazily to avoid runtime import cycles.
 
         Returns:

@@ -25,7 +25,7 @@ class FlextConstantsProjectMetadata:
     METADATA_SCHEMA_VERSION_DEFAULT: Final[str] = "1.0.0"
 
     # Family surface: runtime facts the family-surface derivation consumes.
-    NAMESPACE_LAYER_NAMES: Final[t.VariadicTuple[str]] = (
+    NAMESPACE_LAYER_NAMES: Final[tuple[str, ...]] = (
         "Constants",
         "Models",
         "Protocols",

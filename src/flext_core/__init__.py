@@ -24,18 +24,17 @@ if TYPE_CHECKING:
         __version__,
         __version_info__,
     )
-    from flext_core._beartype_bootstrap import FlextCoreBeartypeBootstrap
-    from flext_core._bound_logger import FlextBoundLogger
     from flext_core._config import FlextConfig, config
     from flext_core._settings import FlextSettings, PydanticBaseSettingsSource, settings
+    from flext_core._utilities.logging import FlextUtilitiesLogging
     from flext_core.api import FlextCore, core
-    from flext_core.base import FlextBase
+    from flext_core.bound_logger import FlextBoundLogger
     from flext_core.cli import FlextCli
     from flext_core.config_sources import FlextStrictYamlConfigSource
     from flext_core.constants import FlextConstants, c
     from flext_core.container import FlextContainer
     from flext_core.context import FlextContext
-    from flext_core.decorators import FlextDecorators, d
+    from flext_core.decorators import FlextDecoratorsRuntime, d
     from flext_core.dispatcher import FlextDispatcher
     from flext_core.exceptions import FlextExceptions, FlextMroViolation, e
     from flext_core.flextlazy_attribute import FlextLazyAttribute
@@ -54,20 +53,16 @@ if TYPE_CHECKING:
         normalize_lazy_imports,
         resolve_lazy_members,
     )
-    from flext_core.loggings import FlextUtilitiesLogging
     from flext_core.mixins import FlextMixins, x
     from flext_core.models import FlextModels, m
     from flext_core.protocols import FlextProtocols, p
     from flext_core.registry import FlextRegistry
     from flext_core.result import FlextResult, r
-    from flext_core.runtime import FlextRuntime
     from flext_core.service import FlextService, s
     from flext_core.typings import FlextTypes, t
     from flext_core.utilities import FlextUtilities, u
 
-
 __all__: tuple[str, ...] = (
-    "FlextBase",
     "FlextBoundLogger",
     "FlextCli",
     "FlextConfig",
@@ -75,8 +70,7 @@ __all__: tuple[str, ...] = (
     "FlextContainer",
     "FlextContext",
     "FlextCore",
-    "FlextCoreBeartypeBootstrap",
-    "FlextDecorators",
+    "FlextDecoratorsRuntime",
     "FlextDispatcher",
     "FlextExceptions",
     "FlextHandlers",
@@ -91,7 +85,6 @@ __all__: tuple[str, ...] = (
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
-    "FlextRuntime",
     "FlextService",
     "FlextSettings",
     "FlextStrictYamlConfigSource",
@@ -138,16 +131,14 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextBase": ".base",
-        "FlextBoundLogger": "._bound_logger",
+        "FlextBoundLogger": ".bound_logger",
         "FlextCli": ".cli",
         "FlextConfig": "._config",
         "FlextConstants": ".constants",
         "FlextContainer": ".container",
         "FlextContext": ".context",
         "FlextCore": ".api",
-        "FlextCoreBeartypeBootstrap": "._beartype_bootstrap",
-        "FlextDecorators": ".decorators",
+        "FlextDecoratorsRuntime": ".decorators",
         "FlextDispatcher": ".dispatcher",
         "FlextExceptions": ".exceptions",
         "FlextHandlers": ".handlers",
@@ -162,14 +153,12 @@ install_lazy_exports(
         "FlextProtocols": ".protocols",
         "FlextRegistry": ".registry",
         "FlextResult": ".result",
-        "FlextRuntime": ".runtime",
         "FlextService": ".service",
         "FlextSettings": "._settings",
         "FlextStrictYamlConfigSource": ".config_sources",
         "FlextTypes": ".typings",
         "FlextTypingNativeExport": ".flextlazy_native_export",
         "FlextUtilities": ".utilities",
-        "FlextUtilitiesLogging": ".loggings",
         "FlextVersion": ".__version__",
         "PydanticBaseSettingsSource": "._settings",
         "__author__": ".__version__",
@@ -200,9 +189,7 @@ install_lazy_exports(
         "t": ".typings",
         "u": ".utilities",
         "x": ".mixins",
+        "FlextUtilitiesLogging": "._utilities.logging",
     }),
     public_exports=__all__,
 )
-
-if not TYPE_CHECKING:
-    from flext_core.__version__ import __version__

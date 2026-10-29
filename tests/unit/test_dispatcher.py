@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -33,7 +34,7 @@ class TestsFlextCoreDispatcher:
     def test_builder_and_explicit_callback_registration() -> None:
         """The builder returns the public capability and binds the original callable."""
         dispatcher: p.Dispatcher = u.build_dispatcher()
-        received: t.MutableSequenceOf[p.Routable] = []
+        received: MutableSequence[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
             received.append(message)
@@ -63,7 +64,7 @@ class TestsFlextCoreDispatcher:
     def test_unmatched_route_never_invokes_a_handler(*, registered: bool) -> None:
         """Missing routes fail without executing another route's handler."""
         dispatcher = u.build_dispatcher()
-        received: t.MutableSequenceOf[p.Routable] = []
+        received: MutableSequence[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
             received.append(message)
@@ -84,7 +85,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_callable_without_a_route_fails_before_execution() -> None:
         """Opaque callbacks require explicit route metadata or a matching capability."""
-        received: t.MutableSequenceOf[p.Routable] = []
+        received: MutableSequence[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
             received.append(message)
@@ -100,7 +101,7 @@ class TestsFlextCoreDispatcher:
     ) -> None:
         """Events reach the same subscriber without reconstruction."""
         dispatcher = u.build_dispatcher()
-        received: t.MutableSequenceOf[p.Routable] = []
+        received: MutableSequence[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
             received.append(message)
@@ -243,7 +244,7 @@ class TestsFlextCoreDispatcher:
     def test_event_batch_fans_out_distinct_callbacks_once() -> None:
         """Each distinct subscriber receives one event from the batch."""
         dispatcher = u.build_dispatcher()
-        calls: t.MutableSequenceOf[str] = []
+        calls: MutableSequence[str] = []
 
         def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("first")
@@ -274,7 +275,7 @@ class TestsFlextCoreDispatcher:
     def test_publication_stops_at_failure_without_undoing_prior_effects() -> None:
         """Publication retains prior effects and stops at the first failure."""
         dispatcher = u.build_dispatcher()
-        calls: t.MutableSequenceOf[str] = []
+        calls: MutableSequence[str] = []
         cause = RuntimeError("subscriber failure")
         failure = r[t.JsonPayload].fail(
             "subscriber rejected", exception=cause, error_code="event-rejected"
@@ -315,7 +316,7 @@ class TestsFlextCoreDispatcher:
     def test_reentrant_registration_is_visible_only_to_the_next_snapshot() -> None:
         """Registration during publication affects only later snapshots."""
         dispatcher = u.build_dispatcher()
-        calls: t.MutableSequenceOf[str] = []
+        calls: MutableSequence[str] = []
 
         def later(_message: p.Routable) -> p.Result[t.JsonPayload]:
             calls.append("later")
@@ -372,7 +373,7 @@ class TestsFlextCoreDispatcher:
         """Automatic and explicit subscribers retain registration order."""
         dispatcher = u.build_dispatcher()
         auto = u.Tests.AutoSubscriber()
-        observed: t.MutableSequenceOf[t.StrSequence] = []
+        observed: MutableSequence[Sequence[str]] = []
 
         def explicit(_message: p.Routable) -> p.Result[t.JsonPayload]:
             observed.append(tuple(auto.handled))

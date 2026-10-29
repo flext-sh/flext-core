@@ -15,6 +15,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+
 import pytest
 
 from flext_core import FlextContext
@@ -82,7 +84,11 @@ class TestsFlextMixins:
             ),
         )
         tm.that(captured["operation_count"], eq=1)
-        tm.that(captured["body_metadata"], where=lambda value: value is body_metadata)
+
+        def resolves_metadata(value: object) -> bool:
+            return value is body_metadata
+
+        tm.that(captured["body_metadata"], where=resolves_metadata)
 
     def test_track_increments_operation_count_across_invocations(self) -> None:
         """Test track increments operation count across invocations."""
@@ -164,7 +170,7 @@ class TestsFlextMixins:
     def test_settings_overrides_setter_round_trips(self) -> None:
         """Test settings overrides setter round trips."""
         service = self._service()
-        overrides: t.MappingKV[str, t.JsonValue] = {"feature_flag": True, "retries": 3}
+        overrides: Mapping[str, t.JsonValue] = {"feature_flag": True, "retries": 3}
 
         service.settings_overrides = overrides
 

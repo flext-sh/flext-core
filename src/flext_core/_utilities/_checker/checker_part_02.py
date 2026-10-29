@@ -11,45 +11,43 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import inspect
+from collections.abc import Mapping
 from types import FunctionType, MethodType
 from typing import get_origin, get_type_hints
 
-from flext_core import FlextResult, c, p
-from flext_core._typings import FlextTypesServices, FlextTypingBase
-from flext_core._utilities._checker import checker_part_01
+from flext_core import FlextResult, c, p, t
+from flext_core._utilities._checker import FlextUtilitiesCheckerPart01
 
 
-class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
+class FlextUtilitiesCheckerPart02(FlextUtilitiesCheckerPart01):
     @classmethod
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: FlextTypingBase.MappingKV[
-            str, FlextTypingBase.TypeHintSpecifier | None
-        ],
+        type_hints: Mapping[str, t.TypeHintSpecifier | None],
         param_name: str,
-    ) -> p.Result[FlextTypingBase.TypeHintSpecifier]:
+    ) -> p.Result[t.TypeHintSpecifier]:
         """Extract message type from parameter hints or signature annotation.
 
         Returns:
-            The resulting ``p.Result[FlextTypingBase.TypeHintSpecifier]``.
+            The resulting ``p.Result[t.TypeHintSpecifier]``.
 
         """
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
-                return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
+                return FlextResult[t.TypeHintSpecifier].fail(
                     c.ERR_CHECKER_TYPE_HINT_NONE
                 )
-            return FlextResult[FlextTypingBase.TypeHintSpecifier].ok(
+            return FlextResult[t.TypeHintSpecifier].ok(
                 hint if isinstance(hint, (str, type)) else str(hint),
             )
         annotation = parameter.annotation
         if annotation is inspect.Signature.empty:
-            return FlextResult[FlextTypingBase.TypeHintSpecifier].fail(
+            return FlextResult[t.TypeHintSpecifier].fail(
                 c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
             )
-        return FlextResult[FlextTypingBase.TypeHintSpecifier].ok(
+        return FlextResult[t.TypeHintSpecifier].ok(
             annotation if isinstance(annotation, (str, type)) else str(annotation),
         )
 
@@ -76,16 +74,14 @@ class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
         cls,
         handle_method: FunctionType | MethodType,
         handler_class: type,
-    ) -> FlextTypingBase.MappingKV[str, FlextTypingBase.TypeHintSpecifier | None]:
+    ) -> Mapping[str, t.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error.
 
         Returns:
             The resulting mapping of type-hint specifiers, ``None`` for absent.
 
         """
-        hints: FlextTypingBase.MappingKV[
-            str, FlextTypingBase.TypeHintSpecifier | None
-        ] = {}
+        hints: Mapping[str, t.TypeHintSpecifier | None] = {}
         function = (
             handle_method.__func__
             if isinstance(handle_method, MethodType)
@@ -104,8 +100,8 @@ class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
     @classmethod
     def _handle_instance_check(
         cls,
-        message_type: FlextTypingBase.TypeHintSpecifier,
-        origin_type: FlextTypingBase.TypeHintSpecifier,
+        message_type: t.TypeHintSpecifier,
+        origin_type: t.TypeHintSpecifier,
     ) -> bool:
         """Instance check for non-type objects; returns True on TypeError.
 
@@ -129,10 +125,10 @@ class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
     @classmethod
     def _handle_type_or_origin_check(
         cls,
-        expected_type: FlextTypingBase.TypeHintSpecifier,
-        message_type: FlextTypingBase.TypeHintSpecifier,
-        origin_type: FlextTypingBase.TypeHintSpecifier,
-        message_origin: FlextTypingBase.TypeHintSpecifier,
+        expected_type: t.TypeHintSpecifier,
+        message_type: t.TypeHintSpecifier,
+        origin_type: t.TypeHintSpecifier,
+        message_origin: t.TypeHintSpecifier,
     ) -> bool:
         """Type checking for types or objects with __origin__.
 
@@ -155,10 +151,10 @@ class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
     @classmethod
     def _match_type_or_origin(
         cls,
-        expected_type: FlextTypingBase.TypeHintSpecifier,
-        message_type: FlextTypingBase.TypeHintSpecifier,
-        origin_type: FlextTypingBase.TypeHintSpecifier,
-        message_origin: FlextTypingBase.TypeHintSpecifier,
+        expected_type: t.TypeHintSpecifier,
+        message_type: t.TypeHintSpecifier,
+        origin_type: t.TypeHintSpecifier,
+        message_origin: t.TypeHintSpecifier,
     ) -> bool:
         """Resolve the origin/type match without guarding against TypeError.
 
@@ -175,8 +171,8 @@ class FlextUtilitiesCheckerPart02(checker_part_01.FlextUtilitiesCheckerPart01):
     @classmethod
     def _evaluate_type_compatibility(
         cls,
-        expected_type: FlextTypingBase.TypeHintSpecifier,
-        message_type: FlextTypesServices.MessageTypeSpecifier,
+        expected_type: t.TypeHintSpecifier,
+        message_type: t.MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types.
 

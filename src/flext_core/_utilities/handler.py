@@ -12,11 +12,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableSequence
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import FlextResult, FlextRuntime, c, m, p, t
+from flext_core import FlextResult, c, m, p, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextUtilitiesHandler:
@@ -65,7 +66,7 @@ class FlextUtilitiesHandler:
             The resulting ``p.Result[bool]``.
 
         """
-        normalized = FlextRuntime.normalize_to_container(value)
+        normalized = FlextUtilitiesPydantic.normalize_to_container(value)
         ctx.metrics_state_data.root[name] = (
             normalized
             if isinstance(normalized, (str, int, float, bool, datetime, Path))
@@ -104,7 +105,7 @@ class FlextUtilitiesHandler:
     @staticmethod
     def pop_context(
         state: p.HandlerRuntimeState,
-    ) -> p.Result[t.Pair[p.HandlerRuntimeState, p.RootDict[t.JsonPayload]]]:
+    ) -> p.Result[tuple[p.HandlerRuntimeState, p.RootDict[t.JsonPayload]]]:
         """Return state without the top context plus its validated identity.
 
         Returns:
@@ -127,4 +128,4 @@ class FlextUtilitiesHandler:
         return FlextResult.ok((next_state, popped_context))
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesHandler"]
+__all__: MutableSequence[str] = ["FlextUtilitiesHandler"]

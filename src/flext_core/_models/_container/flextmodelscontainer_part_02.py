@@ -16,14 +16,12 @@ from typing import Annotated
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._container import flextmodelscontainer_part_01
+from flext_core._models._container import FlextModelsContainerPart01
 
 
-class FlextModelsContainerPart02(
-    flextmodelscontainer_part_01.FlextModelsContainerPart01
-):
+class FlextModelsContainerPart02(FlextModelsContainerPart01):
     class ResourceRegistration(
-        flextmodelscontainer_part_01.FlextModelsContainerPart01.RegistrationEnvelope,
+        FlextModelsContainerPart01.RegistrationEnvelope,
     ):
         """Model for lifecycle-managed resource registrations.
 

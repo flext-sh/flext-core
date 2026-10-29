@@ -35,19 +35,28 @@ if result.value != expected_value:
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import p, r, t
 
 
-def create_user(command: t.StrDict) -> p.Result[t.StrDict]:
+def create_user(command: dict[str, str]) -> p.Result[dict[str, str]]:
     """Create a user payload when the required email is present.
 
     Returns:
-        The resulting ``p.Result[t.StrDict]``.
+        The resulting ``p.Result[dict[str, str]]``.
 
     """
     if "email" not in command:
-        return r[t.StrDict].fail("missing_email")
-    return r[t.StrDict].ok({"status": "created", "email": command["email"]})
+        return r[dict[str, str]].fail("missing_email")
+    return r[dict[str, str]].ok({"status": "created", "email": command["email"]})
 
 
 ok = create_user({"email": "user@example.com"})
@@ -66,7 +75,7 @@ if not ko.failure:
 ```text
 Internal state sketch (illustrative):
 
-self._context_stack: t.SequenceOf[t.JsonMapping] = []
+self._context_stack: Sequence[t.JsonMapping] = []
 self._metrics = {}
 
 Typical runtime interactions:

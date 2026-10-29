@@ -6,27 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
-from flext_core import c, t
+from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesModel
-from flext_core._utilities._parser_targets import parser_targets_part_01
+from flext_core._utilities._parser_targets import FlextUtilitiesParserTargetsPart01
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Mapping
-
-    from flext_core import p
-    from flext_core._models import FlextModelsConfig
+    from collections.abc import Callable
 
 
-class FlextUtilitiesParserTargetsPart02(
-    parser_targets_part_01.FlextUtilitiesParserTargetsPart01
-):
+class FlextUtilitiesParserTargetsPart02(FlextUtilitiesParserTargetsPart01):
     @staticmethod
     def _parse_try_primitive[T](
         value: t.JsonPayload,
         target: type[T],
-        options: FlextModelsConfig.ParseOptions[T] | None = None,
+        options: m.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
         """Fall back to primitive type parsing.

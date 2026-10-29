@@ -164,10 +164,12 @@ class TestsFlextService(FlextTestsCase):
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         """Test fetch logger matches shared service logger."""
         with self._PureService.isolated_test_runtime():
-            tm.that(
-                self._PureService.fetch_logger(),
-                where=lambda logger: logger is self._PureService.fetch_global().logger,
-            )
+            expected_logger = self._PureService.fetch_global().logger
+
+            def resolves_logger(logger: object) -> bool:
+                return logger is expected_logger
+
+            tm.that(self._PureService.fetch_logger(), where=resolves_logger)
 
     # --- with_settings(): runtime snapshot -------------------------------
 

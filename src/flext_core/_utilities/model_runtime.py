@@ -9,14 +9,13 @@ from __future__ import annotations
 from importlib import import_module
 from types import MethodType
 
-from flext_core import c, m, p, r, t
-from flext_core._models import FlextModelsNamespace
-from flext_core._utilities import FlextUtilitiesModelOptions
+from flext_core import FlextModels, c, m, p, r, t
+from flext_core._utilities import FlextUtilitiesModel, FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(
     FlextUtilitiesModelOptions,
-    FlextModelsNamespace,
+    FlextModels,
 ):
     """Runtime DSL: dispatcher, registry, and service-runtime construction.
 
@@ -207,7 +206,9 @@ class FlextUtilitiesModelRuntime(
         overrides = runtime_options.settings_overrides
         if settings is not None:
             return settings.clone(**overrides) if overrides else settings
-        settings_type = runtime_options.settings_type or cls._settings_base()
+        settings_type = (
+            runtime_options.settings_type or FlextUtilitiesModel.settings_base()
+        )
         return settings_type.fetch_global(overrides=overrides)
 
     @classmethod
@@ -234,11 +235,11 @@ class FlextUtilitiesModelRuntime(
         context = (
             options.context
             if options.context is not None
-            else cls._context_type().create()
+            else FlextUtilitiesModel.context_type().create()
         )
         source_container = options.container
         if source_container is None:
-            source_container = cls._container_type().shared()
+            source_container = FlextUtilitiesModel.container_type().shared()
         container = source_container.scope(
             registration=m.ServiceRegistrationSpec(
                 settings=settings,

@@ -58,9 +58,15 @@ from pydantic_core import PydanticUndefined, PydanticUndefinedType
 from pydantic_settings import (
     BaseSettings,
     InitSettingsSource,
-    PydanticBaseSettingsSource,
+    PydanticBaseSettingsSource as _PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
+
+PydanticBaseSettingsSource = _PydanticBaseSettingsSource
+"""Source interface for Pydantic custom settings loaders.
+
+Re-exported for layer-0 parity.
+"""
 
 
 class FlextSettings(BaseSettings):
@@ -138,17 +144,6 @@ class FlextSettings(BaseSettings):
     logging_profile: Literal["console", "json"] = Field(
         default="console", description="Diagnostic output presentation"
     )
-    type BeartypeMode = Literal["off", "warn", "strict"]
-    beartype_mode: Annotated[
-        BeartypeMode,
-        Field(
-            description=(
-                "Runtime type checking of flext_core through beartype.claw: "
-                "off, warn (UserWarning) or strict (TypeError); read once at "
-                "the bootstrap's single activation"
-            )
-        ),
-    ] = "off"
     timezone: Annotated[
         str,
         Field(description="IANA timezone for datetime operations"),

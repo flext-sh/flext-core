@@ -6,25 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from collections.abc import Sequence
+from typing import ClassVar
 
 from flext_core import FlextConstants
 
-if TYPE_CHECKING:
-    from flext_core import t
-
 
 class TestsFlextConstantsOther:
-    PUBLIC_ALIAS_NAMES: ClassVar[t.VariadicTuple[str]] = (
+    PUBLIC_ALIAS_NAMES: ClassVar[tuple[str, ...]] = (
         "Primitives",
         "Scalar",
         "Numeric",
         "JsonValue",
         "JsonMapping",
         "JsonList",
-        "StrMapping",
-        "StrSequence",
-        "ScalarMapping",
+        "Mapping[str, str]",
+        "Sequence[str]",
+        "Mapping[str, Scalar]",
         "SecretValue",
         "SettingsValue",
         "IntPair",
@@ -53,7 +51,7 @@ class TestsFlextConstantsOther:
         "SortableObjectType",
         "TypeHintSpecifier",
     )
-    FLAT_ALIAS_NAMES: ClassVar[t.VariadicTuple[str]] = (
+    FLAT_ALIAS_NAMES: ClassVar[tuple[str, ...]] = (
         "AttributeMapping",
         "MutableAttributeMapping",
         "ConfigValueMapping",
@@ -65,7 +63,7 @@ class TestsFlextConstantsOther:
         "OptionalBoolMapping",
         "MutableOptionalBoolMapping",
     )
-    LEGACY_GENERIC_NAMES: ClassVar[t.VariadicTuple[str]] = (
+    LEGACY_GENERIC_NAMES: ClassVar[tuple[str, ...]] = (
         "EnumT",
         "MessageT_contra",
         "P",
@@ -93,7 +91,7 @@ class TestsFlextConstantsOther:
     DOCUMENTED_INCREMENTED_VALUE: ClassVar[int] = 4
     DOCUMENTED_RECOVERED_VALUE: ClassVar[int] = 99
 
-    NON_GOLDEN_EXAMPLE_MODULES: ClassVar[t.StrSequence] = (
+    NON_GOLDEN_EXAMPLE_MODULES: ClassVar[Sequence[str]] = (
         "examples.ex_05_flext_mixins",
         "examples.ex_06_flext_context",
     )
@@ -128,7 +126,7 @@ class TestsFlextConstantsOther:
         ),
     )
 
-    LAZY_BENCHMARK_REAL_SYMBOLS: ClassVar[t.StrSequence] = (
+    LAZY_BENCHMARK_REAL_SYMBOLS: ClassVar[Sequence[str]] = (
         "FlextConstants",
         "FlextContainer",
         "FlextContext",
@@ -144,7 +142,7 @@ class TestsFlextConstantsOther:
         "t",
         "u",
     )
-    LAZY_BENCHMARK_EXTRA_INSTALL_MAPS: ClassVar[tuple[t.StrDict, ...]] = (
+    LAZY_BENCHMARK_EXTRA_INSTALL_MAPS: ClassVar[tuple[dict[str, str], ...]] = (
         {
             "_types": ".typings:FlextTypes",
             "_models": ".models:FlextModels",
@@ -176,7 +174,7 @@ class TestsFlextConstantsOther:
         (0, 0, 0, True),
         (999, 0, 0, False),
     )
-    AT_LEAST_CASE_IDS: ClassVar[t.StrSequence] = (
+    AT_LEAST_CASE_IDS: ClassVar[Sequence[str]] = (
         "at-or-above-zero",
         "below-impossibly-high-major",
     )

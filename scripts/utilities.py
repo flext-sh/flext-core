@@ -6,8 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
+
 from flext_core import FlextUtilities
-from scripts import t
 
 
 class ScriptsFlextUtilities(FlextUtilities):
@@ -16,4 +17,4 @@ class ScriptsFlextUtilities(FlextUtilities):
 
 u = ScriptsFlextUtilities
 
-__all__: t.MutableSequenceOf[str] = ["ScriptsFlextUtilities", "u"]
+__all__: MutableSequence[str] = ["ScriptsFlextUtilities", "u"]

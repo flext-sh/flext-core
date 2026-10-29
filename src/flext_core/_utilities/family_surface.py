@@ -10,14 +10,12 @@ import functools
 import importlib
 import importlib.metadata
 import sys
+from collections.abc import Mapping, MutableMapping, Sequence
 from types import MappingProxyType
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from flext_core import c, normalize_lazy_imports
+from flext_core import c, normalize_lazy_imports, t
 from flext_core._utilities import FlextUtilitiesProjectMetadata
-
-if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
 
 
 class FlextUtilitiesFamilySurface:
@@ -40,7 +38,7 @@ class FlextUtilitiesFamilySurface:
     @staticmethod
     def distribution_in_family_discovery(
         distribution_name: str,
-        requirement_names: FlextTypingBase.StrSequence,
+        requirement_names: Sequence[str],
     ) -> bool:
         """Return True when a distribution is a family discovery candidate.
 
@@ -63,7 +61,7 @@ class FlextUtilitiesFamilySurface:
 
     @staticmethod
     @functools.lru_cache(maxsize=1)
-    def _module_names_by_distribution() -> FlextTypingBase.MappingKV[str, str]:
+    def _module_names_by_distribution() -> Mapping[str, str]:
         """Map every installed distribution name to its importable root package.
 
         A distribution's import name is the top-level package it ships, which
@@ -75,10 +73,10 @@ class FlextUtilitiesFamilySurface:
         the authority and the normalized name is only the fallback.
 
         Returns:
-            The resulting ``t.MappingKV[str, str]``.
+            The resulting ``Mapping[str, str]``.
 
         """
-        module_names: FlextTypingBase.MutableStrMapping = {}
+        module_names: t.MutableStrMapping = {}
         for (
             module_name,
             distribution_names,
@@ -88,9 +86,7 @@ class FlextUtilitiesFamilySurface:
         return MappingProxyType(module_names)
 
     @staticmethod
-    def family_discovery_candidates() -> FlextTypingBase.VariadicTuple[
-        FlextTypingBase.StrPair
-    ]:
+    def family_discovery_candidates() -> tuple[tuple[str, str], ...]:
         """Elect installed roots inspected before their family contract is known.
 
         Returns:
@@ -100,7 +96,10 @@ class FlextUtilitiesFamilySurface:
         module_by_distribution = (
             FlextUtilitiesFamilySurface._module_names_by_distribution()
         )
-        candidates: list[FlextTypingBase.StrPair] = []
+        candidates: list[tuple[str, str]] = []
+        # Deferred: this module loads inside the package init chain; the
+        # sibling is imported at call time to avoid a re-entrant cycle.
+
         for dist in FlextUtilitiesProjectMetadata.installed_distributions():
             raw_name = dist.metadata["Name"] or ""
             name = raw_name.lower().replace("-", "_")
@@ -120,15 +119,14 @@ class FlextUtilitiesFamilySurface:
         tuple[
             str,
             frozenset[str],
-            FlextTypingBase.MappingKV[str, FlextTypingBase.StrPair | str],
+            Mapping[str, tuple[str, str] | str],
         ],
         ...,
     ]:
         """Import every family root once and snapshot its published contract.
 
         Returns:
-            The resulting ``tuple[tuple[str, frozenset[str], t.MappingKV[str, t.StrPair
-                | str]], ...]``.
+            The immutable family-root contracts and their published exports.
 
         Raises:
             RuntimeError: If family-surface derivation found no distribution publishing
@@ -139,7 +137,7 @@ class FlextUtilitiesFamilySurface:
             tuple[
                 str,
                 frozenset[str],
-                FlextTypingBase.MappingKV[str, FlextTypingBase.StrPair | str],
+                Mapping[str, tuple[str, str] | str],
             ]
         ] = []
         for (
@@ -178,9 +176,9 @@ class FlextUtilitiesFamilySurface:
         return tuple(snapshot)
 
     @staticmethod
-    def project_alias_owners() -> FlextTypingBase.MappingKV[
+    def project_alias_owners() -> Mapping[
         str,
-        FlextTypingBase.VariadicTuple[str],
+        tuple[str, ...],
     ]:
         """Map family package name to the declaration aliases it publishes.
 
@@ -189,7 +187,7 @@ class FlextUtilitiesFamilySurface:
         replacing the frozen per-member roster with per-package truth.
 
         Returns:
-            The resulting ``t.MappingKV[str, t.VariadicTuple[str]]``.
+            The resulting ``Mapping[str, tuple[str, ...]]``.
 
         """
         declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
@@ -200,18 +198,16 @@ class FlextUtilitiesFamilySurface:
         return MappingProxyType(owners)
 
     @staticmethod
-    def _grouped_surface_entries() -> FlextTypingBase.MappingKV[
-        str, FlextTypingBase.MutableMappingKV[str, list[str]]
-    ]:
+    def _grouped_surface_entries() -> Mapping[str, MutableMapping[str, list[str]]]:
         """Group each family root's lazy-map entries by owner module and kind.
 
         Returns:
             The resulting mapping of family roots to owner-module entries.
 
         """
-        grouped: FlextTypingBase.MutableMappingKV[
+        grouped: MutableMapping[
             str,
-            FlextTypingBase.MutableMappingKV[str, list[str]],
+            MutableMapping[str, list[str]],
         ] = {}
         for _, _, entries in FlextUtilitiesFamilySurface._surface_snapshot():
             for alias, entry in entries.items():
@@ -223,7 +219,7 @@ class FlextUtilitiesFamilySurface:
 
     @staticmethod
     def _canonical_letters(
-        bucket: FlextTypingBase.MappingKV[str, list[str]],
+        bucket: Mapping[str, list[str]],
     ) -> list[str]:
         """Return the canonical single-letter aliases of one module bucket.
 
@@ -237,7 +233,7 @@ class FlextUtilitiesFamilySurface:
 
     @staticmethod
     def _register_alias_rename(
-        renames: FlextTypingBase.MutableMappingKV[str, str],
+        renames: MutableMapping[str, str],
         long_name: str,
         alias: str,
         module: str,
@@ -257,7 +253,7 @@ class FlextUtilitiesFamilySurface:
             raise ValueError(msg)
 
     @staticmethod
-    def compatibility_alias_renames() -> FlextTypingBase.MappingKV[str, str]:
+    def compatibility_alias_renames() -> Mapping[str, str]:
         """Map published long facade class name to its canonical alias.
 
         Derived by grouping each family root's normalized lazy map entries
@@ -269,10 +265,10 @@ class FlextUtilitiesFamilySurface:
         current and future member is covered without per-member tables.
 
         Returns:
-            The resulting ``t.MappingKV[str, str]``.
+            The resulting ``Mapping[str, str]``.
 
         """
-        renames: FlextTypingBase.MutableMappingKV[str, str] = {}
+        renames: MutableMapping[str, str] = {}
         for (
             module,
             bucket,
@@ -288,7 +284,7 @@ class FlextUtilitiesFamilySurface:
                         alias,
                         module,
                     )
-        return cast("FlextTypingBase.StrMapping", MappingProxyType(renames))
+        return cast("Mapping[str, str]", MappingProxyType(renames))
 
     @staticmethod
     def _lazy_suffix(module_path: str) -> str:

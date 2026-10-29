@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -14,8 +15,6 @@ from flext_core.flextlazy_member import FlextLazyMember
 from flext_core.flextlazy_part_01 import FlextLazyPart01
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping, MutableMapping, Sequence
-
     from flext_core import t
 
 
@@ -88,6 +87,7 @@ class FlextLazyPart02(FlextLazyPart01):
                 f"lazy import of {module_path!r} for {name!r} in {module_name!r} failed"
             )
             raise ImportError(msg, name=module_path) from exc
+        self.cleanup(module_name, lazy_imports)
         if not attr:
             if not self._module_is_initializing(mod):
                 module_globals[name] = mod
@@ -124,12 +124,23 @@ class FlextLazyPart02(FlextLazyPart01):
         mod_dict, seen, prefix = vars(current), set[str](), f"{module_name}."
         for entry in lazy_imports.values():
             path = entry if isinstance(entry, str) else entry[0]
+            if path.startswith("."):
+                path = f"{module_name}{path}"
             if not path.startswith(prefix):
                 continue
             sub = path[len(prefix) :].partition(".")[0]
             if sub and sub not in seen and isinstance(mod_dict.get(sub), ModuleType):
-                seen.add(sub)
-                mod_dict.pop(sub, None)
+                declared = lazy_imports.get(sub)
+                declared_path = (
+                    (declared if isinstance(declared, str) else declared[0])
+                    if declared is not None
+                    else None
+                )
+                if declared_path is not None and declared_path.startswith("."):
+                    declared_path = f"{module_name}{declared_path}"
+                if declared_path != f"{prefix}{sub}":
+                    seen.add(sub)
+                    mod_dict.pop(sub, None)
 
     def merge(
         self,

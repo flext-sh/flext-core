@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
@@ -19,8 +20,22 @@ import pytest
 from tests import c, m, t, tm, u
 
 
+def _is_same(expected: object) -> Callable[[object], bool]:
+    """Build a typed identity predicate for ``tm.that(where=...)``.
+
+    Returns:
+        The resulting ``Callable[[object], bool]``.
+
+    """
+
+    def matches(candidate: object) -> bool:
+        return candidate is expected
+
+    return matches
+
+
 class TestsFlextCoreModelsBaseFullCoverage:
-    """Tests for ``FlextCoreModelsBaseFullCoverage``."""
+    """Tests for ``FlextModelsCoreBaseFullCoverage``."""
 
     class _FrozenValue(m.FrozenValueModel):
         name: Annotated[str, m.Field(description="Frozen value name")]
@@ -61,12 +76,12 @@ class TestsFlextCoreModelsBaseFullCoverage:
     @staticmethod
     @pytest.mark.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
     def test_metadata_attributes_non_mapping_rejected(
-        bad_value: t.Scalar | t.SequenceOf[str],
+        bad_value: t.Scalar | Sequence[str],
     ) -> None:
         """Test metadata attributes non mapping rejected."""
         tm.that(
             c.ValidationError,
-            where=lambda error_type: error_type is m.ValidationError,
+            where=_is_same(m.ValidationError),
             msg=(
                 f"constants binding {c.ValidationError!r} ({id(c.ValidationError)}) "
                 f"differs from model SDK binding {m.ValidationError!r} "

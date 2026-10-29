@@ -6,12 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import MutableSequence
 
 from flext_core import FlextConstants
-
-if TYPE_CHECKING:
-    from scripts import t
 
 
 class ScriptsFlextConstants(FlextConstants):
@@ -20,4 +17,4 @@ class ScriptsFlextConstants(FlextConstants):
 
 c = ScriptsFlextConstants
 
-__all__: t.MutableSequenceOf[str] = ["ScriptsFlextConstants", "c"]
+__all__: MutableSequence[str] = ["ScriptsFlextConstants", "c"]

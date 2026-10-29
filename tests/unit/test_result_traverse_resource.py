@@ -6,16 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import MutableSequence
 
 import pytest
 
-from tests import c, m, r, tm, u
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence
-
-from tests import p, t
+from tests import c, m, p, r, t, tm, u
 
 
 class TestsFlextResultTraverseResource:

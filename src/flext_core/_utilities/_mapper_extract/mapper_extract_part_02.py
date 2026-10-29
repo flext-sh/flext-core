@@ -7,14 +7,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
-from flext_core._models import FlextModelsExceptionParams
-from flext_core._utilities import FlextUtilitiesGuards
-from flext_core._utilities._mapper_extract import mapper_extract_part_01
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore
+from flext_core._utilities._mapper_extract import FlextUtilitiesMapperExtractPart01
 
 
-class FlextUtilitiesMapperExtractPart02(
-    mapper_extract_part_01.FlextUtilitiesMapperExtractPart01
-):
+class FlextUtilitiesMapperExtractPart02(FlextUtilitiesMapperExtractPart01):
     @staticmethod
     def _extract_path_parts(
         data: p.AccessibleData,
@@ -56,7 +53,9 @@ class FlextUtilitiesMapperExtractPart02(
                 required=required,
             )
         value = (
-            current if FlextUtilitiesGuards.container_value(current) else str(current)
+            current
+            if FlextUtilitiesGuardsTypeCore.container_value(current)
+            else str(current)
         )
         return FlextResult[t.JsonPayload].ok(value)
 
@@ -90,7 +89,7 @@ class FlextUtilitiesMapperExtractPart02(
                     c.ERR_TEMPLATE_EXTRACT_FAILED,
                     operation="extract",
                     error=str(exc),
-                    params=FlextModelsExceptionParams.OperationErrorParams(
+                    params=m.OperationErrorParams(
                         operation="extract",
                         reason=str(exc),
                     ),

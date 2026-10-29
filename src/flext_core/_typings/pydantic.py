@@ -14,13 +14,29 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
+from functools import partial
 from types import GenericAlias, NoneType, UnionType
-from typing import Annotated, TypeAliasType, TypeVar, Union, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Never,
+    TypeAliasType,
+    TypedDict,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 
 import pydantic
 import pydantic_core
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
+
+from flext_core import c
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 class FlextTypesPydantic:
@@ -178,9 +194,126 @@ class FlextTypesPydantic:
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
 
+    class DocumentInputContext[MetadataT](TypedDict):
+        """Typed source selection and separately validated operational metadata."""
+
+        kind: c.ValidationInputKind
+        metadata: MetadataT
+
+    @staticmethod
+    def _document_input_schema(
+        source: type | GenericAlias | TypeAliasType,
+        handler: pydantic.GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        """Decode an elected document representation before its strict schema.
+
+        The SDK composes tuple arity/items and enum membership after the source
+        grammar. Ordinary Python construction never selects that grammar.
+
+        Returns:
+            The original domain schema with source-context decoding.
+
+        Raises:
+            TypeError: The annotation is not an enum or tuple contract.
+
+        """
+        domain = handler(source)
+        resolved = handler.resolve_ref_schema(domain)
+        codec: core_schema.CoreSchema
+        if resolved["type"] == "tuple":
+            codec = core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(tuple),
+                    core_schema.no_info_after_validator_function(
+                        tuple, core_schema.list_schema(strict=True)
+                    ),
+                ],
+                mode="left_to_right",
+            )
+        elif resolved["type"] == "enum":
+            adapter = pydantic.TypeAdapter(resolved["cls"])
+            codec = core_schema.union_schema(
+                [
+                    core_schema.is_instance_schema(resolved["cls"]),
+                    core_schema.no_info_after_validator_function(
+                        partial(adapter.validate_strings, strict=True),
+                        core_schema.str_schema(strict=True),
+                    ),
+                ],
+                mode="left_to_right",
+            )
+        else:
+            message = "DocumentInput requires an enum or tuple annotation"
+            raise TypeError(message)
+        decoder = pydantic_core.SchemaValidator(codec)
+
+        def decode(
+            value: p.GuardInput, info: core_schema.ValidationInfo
+        ) -> p.GuardInput:
+            """Decode only the context elected by the document entry owner.
+
+            Returns:
+                The original input or its source-decoded representation.
+
+            """
+            context = info.context
+            return (
+                decoder.validate_python(value, strict=True)
+                if isinstance(context, Mapping)
+                and context.get("kind") is c.ValidationInputKind.DOCUMENT
+                else value
+            )
+
+        return core_schema.json_or_python_schema(
+            json_schema=domain,
+            python_schema=core_schema.with_info_before_validator_function(
+                decode, domain
+            ),
+        )
+
+    type DocumentInput[ValueT] = Annotated[
+        ValueT,
+        pydantic.GetPydanticSchema(_document_input_schema),
+    ]
+
     # A port target as pydantic hands it over: a class, a PEP 695 alias, a
     # type parameter, a generic or union form, or None.
     type PortTarget = type | TypeVar | TypeAliasType | GenericAlias | UnionType | None
+
+    @staticmethod
+    def _port_parameter_schema(
+        target: TypeVar,
+        bound: Mapping[TypeVar, PortTarget],
+    ) -> core_schema.CoreSchema:
+        """Resolve a generic parameter's declared instance contract.
+
+        Returns:
+            The bound contract's schema, or a validator requiring specialization.
+
+        """
+        resolve = FlextTypesPydantic.port_instance_schema
+        if target in bound:
+            return resolve(bound[target], bound)
+        if target.has_default():
+            return resolve(target.__default__, bound)
+        if target.__constraints__:
+            return core_schema.union_schema([
+                resolve(constraint, bound) for constraint in target.__constraints__
+            ])
+        if target.__bound__ is not None:
+            return resolve(target.__bound__, bound)
+
+        def require_specialization(_value: p.AttributeProbe) -> Never:
+            """Reject a concrete value without a declared dependency contract.
+
+            Raises:
+                ValueError: The generic port has not been specialized.
+
+            """
+            message = f"Dependency port {target} requires specialization"
+            raise ValueError(message)
+
+        return core_schema.no_info_plain_validator_function(require_specialization)
 
     @staticmethod
     def port_instance_schema(
@@ -196,6 +329,10 @@ class FlextTypesPydantic:
         the classes ``isinstance`` accepts, so no model needs
         ``arbitrary_types_allowed``.
 
+        A generic declaration may retain an unresolved parameter, but cannot
+        validate a concrete port until specialization, a declared default,
+        constraints or a bound supplies its instance contract.
+
         Returns:
             The ``is_instance``/``none``/``union`` core schema for ``target``.
 
@@ -206,9 +343,7 @@ class FlextTypesPydantic:
         resolve = FlextTypesPydantic.port_instance_schema
         schema: core_schema.CoreSchema
         if isinstance(target, TypeVar):
-            schema = (
-                resolve(scope[target]) if target in scope else core_schema.any_schema()
-            )
+            schema = FlextTypesPydantic._port_parameter_schema(target, scope)
         elif isinstance(target, TypeAliasType):
             schema = resolve(target.__value__, scope)
         elif isinstance(origin, TypeAliasType):

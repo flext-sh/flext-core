@@ -32,7 +32,7 @@ class FlextModelsOptions:
             FlextModelsPydantic.Field(description="Custom ID prefix"),
         ] = None
         parts: Annotated[
-            t.VariadicTuple[t.JsonValue] | None,
+            tuple[t.JsonValue, ...] | None,
             FlextModelsPydantic.Field(
                 description="Optional parts inserted between prefix and random suffix",
             ),

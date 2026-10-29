@@ -14,17 +14,15 @@ from collections.abc import Mapping, Sequence
 
 from flext_core import FlextExceptions, FlextResult, c, m, p, t
 from flext_core._models import FlextModelsContainers
-from flext_core._utilities._mapper_access import mapper_access_part_01
+from flext_core._utilities._mapper_access import FlextUtilitiesMapperAccessPart01
 
 
-class FlextUtilitiesMapperAccessPart02(
-    mapper_access_part_01.FlextUtilitiesMapperAccessPart01
-):
+class FlextUtilitiesMapperAccessPart02(FlextUtilitiesMapperAccessPart01):
     @staticmethod
     def _extract_handle_array_index(
         current: t.JsonPayload
         | t.JsonMapping
-        | t.SequenceOf[t.JsonValue | t.JsonPayload]
+        | Sequence[t.JsonValue | t.JsonPayload]
         | FlextModelsContainers.ObjectList,
         array_match: str,
     ) -> p.Result[t.JsonPayload | None]:
@@ -35,7 +33,7 @@ class FlextUtilitiesMapperAccessPart02(
 
         """
         if isinstance(current, FlextModelsContainers.ObjectList):
-            sequence: t.SequenceOf[t.JsonValue | t.JsonPayload] = current.root
+            sequence: Sequence[t.JsonValue | t.JsonPayload] = current.root
         elif isinstance(current, Sequence) and not isinstance(
             current,
             c.STR_BYTES_TYPES,

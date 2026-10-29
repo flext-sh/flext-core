@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import override
 
 import pytest
@@ -42,7 +43,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
             @override
             def handle(
                 self,
-                message: t.MappingKV[str, t.JsonValue],
+                message: Mapping[str, t.JsonValue],
             ) -> p.Result[t.JsonPayload]:
                 if not isinstance(message, dict):
                     return r[t.JsonPayload].fail(c.Tests.UNEXPECTED_MESSAGE_TYPE)

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsBase
@@ -48,18 +49,18 @@ class FlextProtocolsLoggingPart02(FlextProtocolsLoggingPart01):
         @classmethod
         def model_validate(
             cls,
-            obj: t.MappingKV[
+            obj: Mapping[
                 str,
                 t.Scalar
-                | t.MappingKV[str, t.Scalar | t.SequenceOf[t.Scalar]]
-                | t.SequenceOf[t.Scalar]
+                | Mapping[str, t.Scalar | Sequence[t.Scalar]]
+                | Sequence[t.Scalar]
                 | None,
             ]
             | Self,
             *,
             strict: bool | None = None,
             from_attributes: bool | None = None,
-            context: t.MappingKV[str, t.Scalar] | None = None,
+            context: Mapping[str, t.Scalar] | None = None,
         ) -> Self:
             """Validate and create metadata from input data."""
             ...
@@ -121,7 +122,7 @@ class FlextProtocolsLoggingPart02(FlextProtocolsLoggingPart01):
         """Entry protocol (read-only)."""
 
         @property
-        def attributes(self) -> t.MappingKV[str, t.StrSequence]:
+        def attributes(self) -> Mapping[str, Sequence[str]]:
             """Entry attributes as immutable mapping."""
             ...
 
@@ -130,7 +131,7 @@ class FlextProtocolsLoggingPart02(FlextProtocolsLoggingPart01):
             """Distinguished name."""
             ...
 
-        def add_attribute(self, name: str, values: t.StrSequence) -> Self:
+        def add_attribute(self, name: str, values: Sequence[str]) -> Self:
             """Add attribute values, returning self for chaining."""
             ...
 
@@ -138,11 +139,11 @@ class FlextProtocolsLoggingPart02(FlextProtocolsLoggingPart01):
             """Remove attribute, returning self for chaining."""
             ...
 
-        def update_attribute(self, name: str, values: t.StrSequence) -> Self:
+        def update_attribute(self, name: str, values: Sequence[str]) -> Self:
             """Update attribute values, returning self for chaining."""
             ...
 
-        def to_dict(self) -> t.ScalarMapping:
+        def to_dict(self) -> Mapping[str, t.Scalar]:
             """Convert to dictionary representation."""
             ...
 

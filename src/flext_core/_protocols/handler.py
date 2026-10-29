@@ -10,6 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
 
 from flext_core import t
@@ -87,11 +88,11 @@ class FlextProtocolsHandler:
         def model_copy(
             self,
             *,
-            update: t.MappingKV[
+            update: Mapping[
                 str,
                 t.JsonPayload
                 | FlextProtocolsBase.Model
-                | t.SequenceOf[FlextProtocolsBase.Model],
+                | Sequence[FlextProtocolsBase.Model],
             ]
             | None = None,
             deep: bool = False,
@@ -107,17 +108,17 @@ class FlextProtocolsHandler:
         @property
         def context_stack(
             self,
-        ) -> t.SequenceOf[FlextProtocolsHandler.ExecutionContext]: ...
+        ) -> Sequence[FlextProtocolsHandler.ExecutionContext]: ...
 
         @override
         def model_copy(
             self,
             *,
-            update: t.MappingKV[
+            update: Mapping[
                 str,
                 t.JsonPayload
                 | FlextProtocolsBase.Model
-                | t.SequenceOf[FlextProtocolsBase.Model],
+                | Sequence[FlextProtocolsBase.Model],
             ]
             | None = None,
             deep: bool = False,
@@ -139,7 +140,7 @@ class FlextProtocolsHandler:
         @property
         def middleware(
             self,
-        ) -> t.SequenceOf[type[FlextProtocolsHandler.Middleware]]: ...
+        ) -> Sequence[type[FlextProtocolsHandler.Middleware]]: ...
 
     # ------------------------------------------------------------------
     # Handler — mirrors FlextHandlers public instance surface
@@ -308,8 +309,7 @@ class FlextProtocolsHandler:
 
         def publish(
             self,
-            event: FlextProtocolsBase.Routable
-            | t.SequenceOf[FlextProtocolsBase.Routable],
+            event: FlextProtocolsBase.Routable | Sequence[FlextProtocolsBase.Routable],
         ) -> FlextProtocolsResult.Result[bool]:
             """Publish event(s) to all registered subscribers."""
             ...
@@ -325,7 +325,7 @@ class FlextProtocolsHandler:
             ...
 
         def register_handlers(
-            self, bindings: t.SequenceOf[FlextProtocolsHandler.HandlerRegistration]
+            self, bindings: Sequence[FlextProtocolsHandler.HandlerRegistration]
         ) -> FlextProtocolsResult.Result[
             FlextProtocolsHandler.HandlerRegistrationReport
         ]:
@@ -361,7 +361,7 @@ class FlextProtocolsHandler:
             ...
 
         def register_handlers(
-            self, bindings: t.SequenceOf[FlextProtocolsHandler.HandlerRegistration]
+            self, bindings: Sequence[FlextProtocolsHandler.HandlerRegistration]
         ) -> FlextProtocolsResult.Result[
             FlextProtocolsHandler.HandlerRegistrationReport
         ]:

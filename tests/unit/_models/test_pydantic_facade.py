@@ -15,7 +15,6 @@ from collections.abc import Callable
 from typing import Annotated, ClassVar, Literal
 
 import pytest
-from typing_extensions import TypeForm
 
 from tests import m, p, t, tm, u
 
@@ -41,7 +40,7 @@ class TestsFlextCorePydanticDeclarations:
             required: str = m.Field(description="Required value")
             defaulted: int = m.Field(default=3, description="Default value")
             nullable: str | None = m.Field(default=None, description="Nullable value")
-            generated: t.VariadicTuple[str] = m.Field(
+            generated: tuple[str, ...] = m.Field(
                 default_factory=tuple, description="Factory value"
             )
 
@@ -319,7 +318,7 @@ class TestsFlextCorePydanticDeclarations:
         }
         tm.that(payload.model_dump(mode="json"), eq=expected_json)
         tm.that(
-            u.type_adapter(TypeForm(t.JsonDict)).validate_json(
+            u.type_adapter(t.TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json()
             ),
             eq=expected_json,
@@ -370,7 +369,7 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(payload.model_dump(by_alias=True), eq=expected)
         tm.that(payload.model_dump(mode="json", by_alias=True), eq=expected)
         tm.that(
-            u.type_adapter(TypeForm(t.JsonDict)).validate_json(
+            u.type_adapter(t.TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json(by_alias=True)
             ),
             eq=expected,

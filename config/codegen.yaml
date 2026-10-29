@@ -4,6 +4,9 @@ Infra:
       examples_module: examples.ex_12_flext_registry
       namespace_scan_dirs:
       - src
+      # Opt into the per-repo release protocol (release-plan/version/tag/build/
+      # publish verbs + release workflows) per consumption-law R5.
+      publishes_release: true
     toolchain:
       # flext-infra and flext-tests overrides derive from this project's own
       # Git URL requirements. flext-cli is not a declared requirement: it

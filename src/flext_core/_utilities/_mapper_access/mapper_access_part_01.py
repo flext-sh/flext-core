@@ -13,9 +13,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextExceptions, FlextResult, FlextRuntime, c, m, p, t
-from flext_core._models import FlextModelsContainers, FlextModelsPydantic
-from flext_core._utilities import FlextUtilitiesGuards, FlextUtilitiesGuardsTypeCore
+from flext_core import FlextExceptions, FlextResult, c, m, p, t
+from flext_core._utilities import FlextUtilitiesGuardsTypeCore, FlextUtilitiesPydantic
 
 
 class FlextUtilitiesMapperAccessPart01:
@@ -36,11 +35,11 @@ class FlextUtilitiesMapperAccessPart01:
         if value is None:
             # Preserve nulls so the extraction contract decides fail/default policy.
             return None
-        if isinstance(value, FlextModelsPydantic.BaseModel):
+        if isinstance(value, m.BaseModel):
             return value
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
-            return FlextRuntime.normalize_to_container(
+            return FlextUtilitiesPydantic.normalize_to_container(
                 m.ConfigMap.model_validate(model_dump_attr()),
             )
         return FlextUtilitiesMapperAccessPart01._normalize_payload_value(value)
@@ -105,15 +104,15 @@ class FlextUtilitiesMapperAccessPart01:
                 ),
             )
         return FlextResult[t.JsonPayload].ok(
-            raw if FlextUtilitiesGuards.container_value(raw) else str(raw),
+            raw if FlextUtilitiesGuardsTypeCore.container_value(raw) else str(raw),
         )
 
     @staticmethod
     def _extract_get_value(
         current: t.JsonPayload
         | t.JsonMapping
-        | FlextModelsContainers.ConfigMap
-        | t.SequenceOf[t.JsonValue | t.JsonPayload]
+        | m.ConfigMap
+        | Sequence[t.JsonValue | t.JsonPayload]
         | None,
         key_part: str,
     ) -> p.Result[t.JsonPayload]:
@@ -128,8 +127,8 @@ class FlextUtilitiesMapperAccessPart01:
             FlextExceptions.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
         result: p.Result[t.JsonPayload]
-        mapping_obj: t.MappingKV[str, t.JsonValue | t.JsonPayload] | None = None
-        if isinstance(current, FlextModelsContainers.ConfigMap):
+        mapping_obj: Mapping[str, t.JsonValue | t.JsonPayload] | None = None
+        if isinstance(current, m.ConfigMap):
             mapping_obj = current.root
         elif isinstance(current, Mapping):
             mapping_obj = current

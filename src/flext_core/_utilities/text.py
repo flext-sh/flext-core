@@ -11,9 +11,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from pathlib import Path
 
-from flext_core import c, t
+from flext_core import c
 
 
 class FlextUtilitiesText:
@@ -70,4 +71,4 @@ class FlextUtilitiesText:
         Path(path).write_text(content, encoding=encoding)
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextUtilitiesText"]
+__all__: MutableSequence[str] = ["FlextUtilitiesText"]

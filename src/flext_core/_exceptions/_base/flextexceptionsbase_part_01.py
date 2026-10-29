@@ -6,21 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from collections.abc import Mapping, MutableMapping
 
-from flext_core import c, m
+from flext_core import c, m, p, t
 from flext_core._exceptions import FlextExceptionsHelpers
-from flext_core._protocols import FlextProtocolsResult
-
-if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
-class FlextBaseErrorMetadataMixin:
+class FlextBaseErrorMetadata:
     @staticmethod
     def normalize_metadata(
-        metadata: FlextProtocolsResult.HasModelDump | FlextTypingBase.JsonValue | None,
-        merged_kwargs: FlextTypingBase.MappingKV[str, FlextTypesServices.JsonPayload],
+        metadata: p.HasModelDump | t.JsonValue | None,
+        merged_kwargs: Mapping[str, t.JsonPayload],
     ) -> m.Metadata:
         """Normalize metadata from various input types to m.Metadata model.
 
@@ -32,9 +28,9 @@ class FlextBaseErrorMetadataMixin:
         source = (
             metadata_model.model_dump(mode="json") if metadata_model is not None else {}
         )
-        merged_attrs: FlextTypingBase.MutableMappingKV[
-            str, FlextTypesServices.JsonPayload | None
-        ] = dict(metadata_model.attributes) if metadata_model is not None else {}
+        merged_attrs: MutableMapping[str, t.JsonPayload | None] = (
+            dict(metadata_model.attributes) if metadata_model is not None else {}
+        )
         merged_attrs.update(merged_kwargs)
         return m.Metadata.model_validate({
             **source,
@@ -42,4 +38,4 @@ class FlextBaseErrorMetadataMixin:
         })
 
 
-__all__: list[str] = ["FlextBaseErrorMetadataMixin"]
+__all__: list[str] = ["FlextBaseErrorMetadata"]

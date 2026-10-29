@@ -10,15 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import Annotated, Literal
 
+from flext_core import c, t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsContainers,
     FlextModelsPydantic,
 )
-from flext_core.constants import c
-from flext_core.typings import t
 
 
 class FlextModelsDomainEvent:
@@ -61,4 +61,4 @@ class FlextModelsDomainEvent:
         )
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsDomainEvent"]
+__all__: MutableSequence[str] = ["FlextModelsDomainEvent"]

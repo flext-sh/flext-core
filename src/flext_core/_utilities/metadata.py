@@ -6,6 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Sequence
+
 from pydantic import ValidationError
 
 from flext_core import t
@@ -19,8 +21,8 @@ class FlextUtilitiesMetadata:
     def redact_metadata(
         value: t.JsonMapping,
         *,
-        keys: t.StrSequence,
-        values: t.StrSequence = (),
+        keys: Sequence[str],
+        values: Sequence[str] = (),
         replacement: str | None = None,
     ) -> t.JsonDict:
         """Remove or replace sensitive keys before any diagnostic serialization.
@@ -44,7 +46,7 @@ class FlextUtilitiesMetadata:
         item: t.JsonMapping,
         *,
         protected: frozenset[str],
-        secrets: t.StrSequence,
+        secrets: Sequence[str],
         replacement: str | None,
     ) -> t.JsonDict:
         """Drop or replace protected keys and redact every retained value.
@@ -68,7 +70,7 @@ class FlextUtilitiesMetadata:
         item: t.JsonValue,
         *,
         protected: frozenset[str],
-        secrets: t.StrSequence,
+        secrets: Sequence[str],
         replacement: str | None,
     ) -> t.JsonValue:
         """Redact one JSON value by its shape: object, array, text or scalar.
@@ -102,7 +104,7 @@ class FlextUtilitiesMetadata:
         text: str,
         *,
         protected: frozenset[str],
-        secrets: t.StrSequence,
+        secrets: Sequence[str],
         replacement: str | None,
     ) -> str:
         """Redact embedded JSON text in place of its literal, then mask secrets.

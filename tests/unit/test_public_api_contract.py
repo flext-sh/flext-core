@@ -22,16 +22,16 @@ from typing import cast
 import pytest
 
 import flext_core
-from flext_core import FlextMroViolation, FlextSettings
+from flext_core import FlextSettings, c
 from tests import e, p, r, t, tm
 
 # Public facade names a caller can import from ``flext_core``.
-_FACADES: t.VariadicTuple[str] = (
+_FACADES: tuple[str, ...] = (
     "FlextCore",
     "FlextConstants",
     "FlextContainer",
     "FlextContext",
-    "FlextDecorators",
+    "FlextDecoratorsRuntime",
     "FlextDispatcher",
     "FlextExceptions",
     "FlextHandlers",
@@ -49,7 +49,7 @@ _FACADES: t.VariadicTuple[str] = (
 )
 
 # alias -> facade name published by the package's public contract
-_ALIASES: t.StrPairTuple = (
+_ALIASES: tuple[tuple[str, str], ...] = (
     ("r", "FlextResult"),
     ("u", "FlextUtilities"),
     ("m", "FlextModels"),
@@ -58,7 +58,7 @@ _ALIASES: t.StrPairTuple = (
     ("t", "FlextTypes"),
     ("s", "FlextService"),
     ("e", "FlextExceptions"),
-    ("d", "FlextDecorators"),
+    ("d", "FlextDecoratorsRuntime"),
     ("h", "FlextHandlers"),
     ("x", "FlextMixins"),
 )
@@ -292,7 +292,8 @@ class TestsFlextCoreFacadeLifecycle:
     def test_exceptions_mro_violation_is_real_reference() -> None:
         """``FlextExceptions.MroViolation`` is the canonical violation class."""
         tm.that(
-            flext_core.FlextExceptions.MroViolation is FlextMroViolation, truth=True
+            flext_core.FlextExceptions.MroViolation is c.FlextMroViolationError,
+            truth=True,
         )
 
     @staticmethod

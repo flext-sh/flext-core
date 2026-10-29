@@ -1,7 +1,7 @@
 """Behavioral integration tests for documented flext-core public patterns.
 
 Every assertion targets the observable public contract of ``r`` (FlextResult),
-``e`` (FlextExceptions) and ``d`` (FlextDecorators): return values, the ``r[T]``
+``e`` (FlextExceptions) and ``d`` (FlextDecoratorsRuntime): return values, the ``r[T]``
 success/failure outcome, structured error payloads and raised exception fields.
 No private attribute, internal collaborator or implementation detail is inspected.
 

@@ -6,9 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
-from flext_core import FlextRuntime, c, m, p
+from flext_core import c, m, p
+from flext_core._utilities import FlextUtilitiesPydantic
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -40,15 +42,15 @@ class FlextExceptionsHelpers:
             )
             for key, value in source_mapping.items():
                 if value is not None:
-                    entries.append((key, FlextRuntime.normalize_to_json_value(value)))
+                    entries.append((
+                        key,
+                        FlextUtilitiesPydantic.normalize_to_json_value(value),
+                    ))
         return tuple(entries)
 
     @staticmethod
     def safe_metadata(
-        value: p.HasModelDump
-        | t.MappingKV[str, t.JsonPayload | None]
-        | t.JsonValue
-        | None,
+        value: p.HasModelDump | Mapping[str, t.JsonPayload | None] | t.JsonValue | None,
     ) -> m.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model.
 

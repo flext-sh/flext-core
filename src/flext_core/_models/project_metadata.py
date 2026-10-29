@@ -14,27 +14,31 @@ from typing import Annotated
 
 from pydantic import Field
 
-from flext_core._models._project_metadata import aggregates, document, pyproject_ingress
+from flext_core._models._project_metadata import (
+    FlextModelsProjectMetadataAggregates,
+    FlextModelsProjectMetadataDocument,
+    FlextModelsPyprojectIngressContract,
+)
 
 
-class FlextModelsProjectMetadata(document.FlextModelsProjectMetadataDocument):
+class FlextModelsProjectMetadata(FlextModelsProjectMetadataDocument):
     """Public project metadata model facade."""
 
-    class PyprojectDocument(pyproject_ingress.FlextModelsPyprojectIngressContract):
+    class PyprojectDocument(FlextModelsPyprojectIngressContract):
         """Complete validated project document ingress."""
 
         project: Annotated[
-            aggregates.FlextModelsProjectMetadataAggregates.Project | None,
+            FlextModelsProjectMetadataAggregates.Project | None,
             Field(default=None, description="Optional PEP 621 project table"),
         ] = None
         tool: Annotated[
-            document.FlextModelsProjectMetadataDocument.PyprojectTool,
+            FlextModelsProjectMetadataDocument.PyprojectTool,
             Field(
-                default_factory=document.FlextModelsProjectMetadataDocument.PyprojectTool,
+                default_factory=FlextModelsProjectMetadataDocument.PyprojectTool,
                 description="Owned tool tables",
             ),
         ] = Field(
-            default_factory=document.FlextModelsProjectMetadataDocument.PyprojectTool,
+            default_factory=FlextModelsProjectMetadataDocument.PyprojectTool,
         )
 
 

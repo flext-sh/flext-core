@@ -9,13 +9,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, overload
+from collections.abc import Callable, Mapping, Sequence
+from typing import overload
 
-from flext_core._utilities import FlextUtilitiesCollectionMerge
-
-if TYPE_CHECKING:
-    from flext_core import t
+from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
 
 class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
@@ -24,81 +21,81 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def filter[TItem](
-        items: t.SequenceOf[TItem],
+        items: Sequence[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.SequenceOf[TItem]: ...
+    ) -> Sequence[TItem]: ...
 
     @overload
     @staticmethod
     def filter[TItem, TMapped](
-        items: t.SequenceOf[TItem],
+        items: Sequence[TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.SequenceOf[TMapped]: ...
+    ) -> Sequence[TMapped]: ...
 
     @overload
     @staticmethod
     def filter[TItem](
-        items: t.VariadicTuple[TItem],
+        items: tuple[TItem, ...],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.VariadicTuple[TItem]: ...
+    ) -> tuple[TItem, ...]: ...
 
     @overload
     @staticmethod
     def filter[TItem, TMapped](
-        items: t.VariadicTuple[TItem],
+        items: tuple[TItem, ...],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]: ...
+    ) -> tuple[TMapped, ...]: ...
 
     @overload
     @staticmethod
     def filter[TItem](
-        items: t.MappingKV[str, TItem],
+        items: Mapping[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: None = None,
-    ) -> t.MappingKV[str, TItem]: ...
+    ) -> Mapping[str, TItem]: ...
 
     @overload
     @staticmethod
     def filter[TItem, TMapped](
-        items: t.MappingKV[str, TItem],
+        items: Mapping[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped],
-    ) -> t.MappingKV[str, TMapped]: ...
+    ) -> Mapping[str, TMapped]: ...
 
     @staticmethod
     def filter[TItem, TMapped](
-        items: t.SequenceOf[TItem] | t.MappingKV[str, TItem],
+        items: Sequence[TItem] | Mapping[str, TItem],
         predicate: Callable[[TItem], bool],
         *,
         mapper: Callable[[TItem], TMapped] | None = None,
     ) -> (
-        t.SequenceOf[TItem]
-        | t.SequenceOf[TMapped]
-        | t.MappingKV[str, TItem]
-        | t.MappingKV[str, TMapped]
+        Sequence[TItem]
+        | Sequence[TMapped]
+        | Mapping[str, TItem]
+        | Mapping[str, TMapped]
     ):
         """Unified filter function — preserves container type, optional mapper.
 
         Returns:
-            The resulting ``t.SequenceOf[TItem] | t.SequenceOf[TMapped] |
-                t.MappingKV[str, TItem] | t.MappingKV[str, TMapped]``.
+            The resulting ``Sequence[TItem] | Sequence[TMapped] |
+                Mapping[str, TItem] | Mapping[str, TMapped]``.
 
         """
         filtered_output: (
-            t.SequenceOf[TItem]
-            | t.SequenceOf[TMapped]
-            | t.MappingKV[str, TItem]
-            | t.MappingKV[str, TMapped]
+            Sequence[TItem]
+            | Sequence[TMapped]
+            | Mapping[str, TItem]
+            | Mapping[str, TMapped]
         )
         if isinstance(items, Mapping):
             filtered_mapping = {
@@ -110,7 +107,7 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
                 else filtered_mapping
             )
         else:
-            sequence_items: t.SequenceOf[TItem] = items
+            sequence_items: Sequence[TItem] = items
             filtered_sequence: list[TItem] = [
                 sequence_items[index]
                 for index in range(len(sequence_items))
@@ -134,23 +131,23 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.SequenceOf[TItem],
+        items: Sequence[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.SequenceOf[TMapped]: ...
+    ) -> Sequence[TMapped]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.VariadicTuple[TItem],
+        items: tuple[TItem, ...],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.VariadicTuple[TMapped]: ...
+    ) -> tuple[TMapped, ...]: ...
 
     @overload
     @staticmethod
     def map[TItem, TMapped](
-        items: t.MappingKV[str, TItem],
+        items: Mapping[str, TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> t.MappingKV[str, TMapped]: ...
+    ) -> Mapping[str, TMapped]: ...
 
     @overload
     @staticmethod
@@ -168,21 +165,13 @@ class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):
 
     @staticmethod
     def map[TItem, TMapped](
-        items: t.SequenceOf[TItem]
-        | t.MappingKV[str, TItem]
-        | set[TItem]
-        | frozenset[TItem],
+        items: Sequence[TItem] | Mapping[str, TItem] | set[TItem] | frozenset[TItem],
         mapper: Callable[[TItem], TMapped],
-    ) -> (
-        t.SequenceOf[TMapped]
-        | t.MappingKV[str, TMapped]
-        | set[TMapped]
-        | frozenset[TMapped]
-    ):
+    ) -> Sequence[TMapped] | Mapping[str, TMapped] | set[TMapped] | frozenset[TMapped]:
         """Unified map function — preserves container type.
 
         Returns:
-            The resulting ``t.SequenceOf[TMapped] | t.MappingKV[str, TMapped] |
+            The resulting ``Sequence[TMapped] | Mapping[str, TMapped] |
                 set[TMapped] | frozenset[TMapped]``.
 
         """

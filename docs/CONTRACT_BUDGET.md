@@ -18,6 +18,13 @@
 
 <!-- TOC END -->
 
+**Current amendment — 2026-10-28:** the generic collection-wrapper cutover follows
+[FLEXT ADR-028 Decision 7](../../docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-7)
+and tracker memory `operator-ruling-2026-10-28-generic-typing-wrapper-cutover`.
+The budget and baseline below are historical inventory, not a second execution
+queue or evidence that a migration has passed. Current execution and acceptance
+belong to the active Bead and branch-matched workspace law.
+
 **Owner**: this session **Scope**: flext-core/src ONLY (tests/examples/docs follow after
 src is green) **Gate order**: per-module ruff = 0 → pyrefly = 0 → next module. pytest
 ONLY after all src green.
@@ -60,14 +67,16 @@ ONLY after all src green.
 
 - `Numeric`, `Primitives`, `Scalar`, `Container`
 - `FlatScalarMapping`, `FlatScalarSequence`
-- `StrMapping` / `MutableStrMapping`, `StrSequence`
-- `ScalarMapping` / `MutableScalarMapping`, `ScalarList`
+- `Mapping[str, str]` / `MutableStrMapping`, `Sequence[str]`
+- `Mapping[str, Scalar]` / `MutableMapping[str, Scalar]`, `Sequence[Scalar]`
 - `FlatContainerList`
 - `IntMapping` / `BoolMapping` / `FrozensetMapping` / `StrSequenceMapping` (+ mutable
   twins)
 - `AttributeMapping`, `ConfigValueMapping`, `HeaderMapping`, `FeatureFlagMapping` (+
   mutable)
-- `Pair/Triple/Quad/Quint/VariadicTuple/IntPair`
+- Domain aliases such as `IntPair` retain their exact contract (`tuple[int, int]`).
+  External typing contracts such as PEP 747 `TypeForm` are not generic collection
+  wrappers and are outside this retirement.
 - `OpaqueValue = object` — KEEP for one specific boundary (TypeAdapter erased values)
   but audit callers.
 - Concrete bases `ContainerMappingBase`, `ContainerListBase`,
@@ -79,7 +88,16 @@ ONLY after all src green.
 
 ### FlextTypingBase — REMOVE / MIGRATE
 
-- None yet (already lean).
+- Generic collection wrappers (`MappingKV`, `DictKV`, `MutableMappingKV`,
+  `IterableOf`, `IteratorOf`, `SequenceOf`, `ListOf`, `MutableSequenceOf`, `Pair`,
+  `Triple`, `Quad`, `Quint` and `VariadicTuple`) migrate through the existing
+  semantic owner to their native collection expressions. Do not restore a removed
+  wrapper to accommodate an unmigrated consumer.
+- Complete the consumer, rule, template and documentation closure, including
+  external consumers, before acceptance. Preserve tuple arity and each positional
+  type, sequence versus concrete-list behavior, mapping mutability and validation
+  metadata. Domain aliases remain owned declarations; migrate their internal
+  expressions without replacing their domain meaning with a generic wrapper.
 
 ### FlextTypesServices — KEEP (signature composition only)
 
@@ -133,7 +151,7 @@ Keep only behavioral:
 - `ProjectMetadata`
 
 Nothing else. All dict/list recursive hints in protocol signatures must switch to
-`t.FlatContainerMapping` / `t.StrMapping` / `m.*` / concrete payload models.
+`t.FlatContainerMapping` / `Mapping[str, str]` / `m.*` / concrete payload models.
 
 ## Budget: m._(FlextModels_)
 

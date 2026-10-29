@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
 from traceback import format_exception, walk_tb
 from typing import Annotated
@@ -70,10 +71,10 @@ class TestsFlextCoreResultExceptionFailures:
     @staticmethod
     def test_fail_exposes_error_data_mapping_alongside_exception() -> None:
         """Test fail exposes error data mapping alongside exception."""
-        error_data: t.StrMapping = {"field": "email", "reason": "invalid format"}
+        error_data: Mapping[str, str] = {"field": "email", "reason": "invalid format"}
         exc = ValueError("invalid email")
 
-        result: p.Result[t.StrMapping] = r[t.StrMapping].fail(
+        result: p.Result[Mapping[str, str]] = r[Mapping[str, str]].fail(
             "Validation failed",
             error_data=error_data,
             exception=exc,

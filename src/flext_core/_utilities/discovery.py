@@ -11,13 +11,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import ast
 import functools
 import inspect
 import operator
-from collections import ChainMap
+from collections.abc import Sequence
 from types import FunctionType
-from typing import TYPE_CHECKING, TypeAliasType, get_protocol_members, is_protocol
+from typing import (
+    TYPE_CHECKING,
+    get_origin,
+    get_protocol_members,
+    get_type_hints,
+    is_protocol,
+)
 
 from pydantic import BaseModel
 
@@ -47,11 +52,11 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> t.SequenceOf[tuple[str, m.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name.
 
         Returns:
-            The resulting ``t.SequenceOf[tuple[str,
+            The resulting ``Sequence[tuple[str,
                 m.FactoryDecoratorConfig]]``.
 
         """
@@ -256,6 +261,34 @@ class FlextUtilitiesDiscovery:
         return doc
 
     @staticmethod
+    def _inherited_handler_metadata(
+        func: FunctionType,
+        where: tuple[type, str, str],
+    ) -> p.DecoratorConfig | None:
+        """Resolve the handler metadata, falling back to superclass overrides.
+
+        Returns:
+            The resolved metadata, or none when no declaration carries one.
+
+        """
+        metadata = FlextUtilitiesModelRuntime.handler_metadata(
+            func,
+            name=f"{where[2]}.{where[0].__qualname__}.{where[1]}",
+        )
+        if metadata is not None or not hasattr(where[0], "__mro__"):
+            return metadata
+        for base in where[0].__mro__[1:]:
+            base_func = inspect.getattr_static(base, where[1], None)
+            if isinstance(base_func, FunctionType):
+                base_meta = FlextUtilitiesModelRuntime.handler_metadata(
+                    base_func,
+                    name=f"{where[2]}.{base.__qualname__}.{where[1]}",
+                )
+                if base_meta is not None:
+                    return base_meta
+        return None
+
+    @staticmethod
     def _resolve_operation_request(
         func: FunctionType,
         where: tuple[type, str, str],
@@ -269,26 +302,23 @@ class FlextUtilitiesDiscovery:
         """
         error = FlextUtilitiesDiscovery._error
         annotations = inspect.get_annotations(func)
-        if "return" not in annotations:
+        hints = get_type_hints(func)
+        if "return" not in hints:
             raise error(where, signature, c.ERR_SERVICE_OPERATION_RESULT)
-        returned = annotations["return"]
-        origin = FlextUtilitiesDiscovery._resolve(func, where, returned, subscript=True)
-        if origin is not p.Result:
-            raise error(where, returned, c.ERR_SERVICE_OPERATION_RESULT)
-        metadata = FlextUtilitiesModelRuntime.handler_metadata(
-            func,
-            name=f"{where[2]}.{where[0].__qualname__}.{where[1]}",
-        )
+        returned = hints["return"]
+        if get_origin(returned) is not p.Result:
+            raise error(where, annotations["return"], c.ERR_SERVICE_OPERATION_RESULT)
+        metadata = FlextUtilitiesDiscovery._inherited_handler_metadata(func, where)
         params = tuple(signature.parameters.values())[1:]
         if not params:
             if metadata is not None:
                 raise error(where, signature, c.ERR_SERVICE_OPERATION_INPUTLESS_COMMAND)
             return None
         param = params[0]
-        if param.name not in annotations:
+        if param.name not in hints:
             raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
         annotation = annotations[param.name]
-        contract = FlextUtilitiesDiscovery._resolve(func, where, annotation)
+        contract = hints[param.name]
         if not is_protocol(contract):
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
         if metadata is None:
@@ -305,86 +335,6 @@ class FlextUtilitiesDiscovery:
             )
             raise error(where, annotation, defect)
         return request
-
-    @staticmethod
-    def _annotation_node(
-        annotation: t.TypeHintSpecifier,
-        where: tuple[type, str, str],
-        *,
-        subscript: bool,
-    ) -> ast.expr:
-        """Parse a source annotation and select its requested outer node.
-
-        Returns:
-            The annotation expression to resolve.
-
-        """
-        error = FlextUtilitiesDiscovery._error
-        if not isinstance(annotation, str):
-            raise error(where, annotation, c.ERR_SERVICE_OPERATION_EVALUATED)
-        node = ast.parse(annotation, mode="eval").body
-        if isinstance(node, ast.Constant) and isinstance(node.value, str):
-            node = ast.parse(node.value, mode="eval").body
-        if not subscript:
-            return node
-        if not isinstance(node, ast.Subscript):
-            raise error(where, annotation, c.ERR_SERVICE_OPERATION_RESULT)
-        return node.value
-
-    @staticmethod
-    def _resolve(
-        func: FunctionType,
-        where: tuple[type, str, str],
-        annotation: t.TypeHintSpecifier,
-        *,
-        subscript: bool = False,
-    ) -> type:
-        """Resolve an annotation to its object without ``eval``.
-
-        The module declares ``from __future__ import annotations`` (fleet law),
-        so every annotation is a string: it is parsed, never evaluated. Its
-        dotted name resolves the first part in the function's module namespace
-        (globals, then builtins, as Python resolves a module-level name) and the
-        rest by attribute. ``subscript`` resolves the origin of ``X[...]``.
-
-        Returns:
-            The resolved class consumed by request and result validation.
-
-        """
-        error = FlextUtilitiesDiscovery._error
-        node = FlextUtilitiesDiscovery._annotation_node(
-            annotation, where, subscript=subscript
-        )
-        parts: list[str] = []
-        while isinstance(node, ast.Attribute):
-            parts.insert(0, node.attr)
-            node = node.value
-        if not isinstance(node, ast.Name):
-            raise error(where, annotation, c.ERR_SERVICE_OPERATION_NAME)
-        # FunctionType owns this runtime descriptor, absent from its typing stub.
-        namespace = ChainMap(
-            func.__globals__,
-            operator.attrgetter("__builtins__")(func),
-        )
-        if node.id not in namespace:
-            raise error(where, annotation, c.ERR_SERVICE_OPERATION_UNBOUND)
-        resolved = namespace[node.id]
-        for part in parts:
-            try:
-                resolved = getattr(resolved, part)
-            except AttributeError as exc:
-                defect = c.ERR_SERVICE_OPERATION_UNBOUND
-                raise error(where, annotation, defect) from exc
-        if isinstance(resolved, TypeAliasType):
-            resolved = resolved.__value__
-        if not isinstance(resolved, type):
-            defect = (
-                c.ERR_SERVICE_OPERATION_RESULT
-                if subscript
-                else c.ERR_SERVICE_OPERATION_REQUEST
-            )
-            raise error(where, annotation, defect)
-        return resolved
 
     @staticmethod
     def _error(

@@ -10,19 +10,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import logging
+from collections.abc import MutableMapping
 
 import structlog
 
 from flext_core import FlextSettings, c, m, p, t
 from flext_core._utilities._logging_config import (
-    logging_config_part_01,
-    logging_config_part_02,
+    FlextUtilitiesLoggingConfigPart01,
+    FlextUtilitiesLoggingConfigPart02,
 )
 
 
-class FlextUtilitiesLoggingConfigPart03(
-    logging_config_part_02.FlextUtilitiesLoggingConfigPart02
-):
+class FlextUtilitiesLoggingConfigPart03(FlextUtilitiesLoggingConfigPart02):
     @staticmethod
     def resolve_effective_log_level(
         *,
@@ -69,7 +68,7 @@ class FlextUtilitiesLoggingConfigPart03(
         current = (
             runtime_settings if runtime_settings is not None else cls.logging_settings()
         )
-        overrides: t.MutableMappingKV[str, p.SettingsOverride | None] = {
+        overrides: MutableMapping[str, p.SettingsOverride | None] = {
             key: value
             for key, value in (
                 ("log_level", log_level),
@@ -133,7 +132,7 @@ class FlextUtilitiesLoggingConfigPart03(
         Cached public loggers lazily consume the same elected composition.
         Caller-supplied handlers retain ownership of their delivery lifecycle.
         """
-        owner = logging_config_part_01.FlextUtilitiesLoggingConfigPart01
+        owner = FlextUtilitiesLoggingConfigPart01
         if (
             owner.selected_logging_options() is not None
             and settings is None

@@ -12,13 +12,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from collections.abc import Mapping, MutableMapping
 from types import TracebackType
 from typing import Self
 
 import structlog
 
-from flext_core import FlextBoundLogger, c, p, t
-from flext_core._utilities import FlextUtilitiesLoggingContext
+from flext_core import c, p, t
+from flext_core._utilities import (
+    FlextUtilitiesLoggingBoundLogger,
+    FlextUtilitiesLoggingContext,
+)
 
 
 class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
@@ -59,7 +63,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             elapsed = time.time() - self._start_time
             success = exc_type is None
             status = c.Status.SUCCESS if success else c.Status.FAILED
-            context: t.MutableMappingKV[str, p.LogValue] = {
+            context: MutableMapping[str, p.LogValue] = {
                 c.MetadataKey.DURATION_SECONDS: elapsed,
                 c.HandlerType.OPERATION: self._operation_name,
                 c.FIELD_STATUS: status,
@@ -180,7 +184,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         cls,
         name: str,
         *,
-        context: t.MappingKV[str, t.JsonPayload | None] | None = None,
+        context: Mapping[str, t.JsonPayload | None] | None = None,
     ) -> p.Logger:
         """Construct a lazy module logger without configuring a destination.
 
@@ -189,7 +193,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
         """
         # Foreign utility facades must construct the canonical logger, not `cls`.
-        return FlextBoundLogger(name, context=context)
+        return FlextUtilitiesLoggingBoundLogger(name, owner=cls, context=context)
 
 
 __all__: tuple[str, ...] = ("FlextUtilitiesLogging",)

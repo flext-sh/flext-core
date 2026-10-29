@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence
 from typing import ClassVar
 
 from flext_core import m, t
@@ -47,4 +48,4 @@ class FlextExceptionsMetrics:
         return cls.resolve_metrics_snapshot().to_config_map()
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextExceptionsMetrics"]
+__all__: MutableSequence[str] = ["FlextExceptionsMetrics"]

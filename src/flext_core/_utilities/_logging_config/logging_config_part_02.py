@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import logging
 import sys
+from collections.abc import MutableSequence, Sequence
 from functools import partial
 
 import structlog
@@ -27,13 +28,11 @@ from structlog.tracebacks import ExceptionDictTransformer
 from structlog.typing import Processor
 
 from flext_core import c, m, p, t
-from flext_core._utilities._logging_config import logging_config_part_01
-from flext_core._utilities.metadata import FlextUtilitiesMetadata
+from flext_core._utilities import FlextUtilitiesMetadata
+from flext_core._utilities._logging_config import FlextUtilitiesLoggingConfigPart01
 
 
-class FlextUtilitiesLoggingConfigPart02(
-    logging_config_part_01.FlextUtilitiesLoggingConfigPart01
-):
+class FlextUtilitiesLoggingConfigPart02(FlextUtilitiesLoggingConfigPart01):
     @staticmethod
     def level_based_context_filter(
         _logger: p.OutputLogger | None,
@@ -81,10 +80,7 @@ class FlextUtilitiesLoggingConfigPart02(
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
-        if (
-            level
-            < logging_config_part_01.FlextUtilitiesLoggingConfigPart01.log_threshold()
-        ):
+        if level < FlextUtilitiesLoggingConfigPart01.log_threshold():
             raise structlog.DropEvent
         return event_dict
 
@@ -174,14 +170,14 @@ class FlextUtilitiesLoggingConfigPart02(
         console_renderer: bool,
         options: p.StructlogOptions,
         trace: bool,
-    ) -> t.SequenceOf[Processor]:
+    ) -> Sequence[Processor]:
         """Compose one shared event pipeline and a native terminal renderer.
 
         Returns:
             The ordered native processors.
 
         """
-        processors: t.MutableSequenceOf[Processor] = [
+        processors: MutableSequence[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
             cls.drop_below_threshold,
@@ -190,7 +186,7 @@ class FlextUtilitiesLoggingConfigPart02(
             TimeStamper(fmt="iso"),
             CallsiteParameterAdder(
                 additional_ignores=[
-                    "flext_core._bound_logger",
+                    "flext_core.bound_logger",
                     "flext_core._utilities.logging",
                 ]
             ),

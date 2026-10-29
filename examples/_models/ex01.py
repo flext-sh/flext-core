@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import t
 from flext_core import m
 
 
@@ -25,7 +24,7 @@ class ExamplesFlextModelsEx01:
         demonstrations_completed: int = m.Field(
             description="Count of completed demonstrations",
         )
-        patterns_covered: t.VariadicTuple[str] = m.Field(
+        patterns_covered: tuple[str, ...] = m.Field(
             description="Tuple of covered pattern names",
         )
         completed_at: str = m.Field(description="ISO 8601 completion timestamp")

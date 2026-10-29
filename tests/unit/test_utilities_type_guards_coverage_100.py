@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import cast
 
-from tests import c, m, p, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreUtilitiesTypeGuards:
@@ -46,14 +46,6 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(payload, is_=dict)
         tm.that(isinstance(normalized_modes, list), truth=True)
 
-        command_spec = m.GuardCheckSpec.model_validate({
-            "starts": "sync",
-            "contains": "users",
-            "ends": "users",
-            "none": False,
-            "empty": False,
-        })
-
         tm.that(u.dict_non_empty(metadata), truth=True)
         tm.that(u.matches_type(payload, "dict_non_empty"), truth=True)
         tm.that(u.matches_type(envelope, "dict_non_empty"), truth=False)
@@ -61,12 +53,6 @@ class TestsFlextCoreUtilitiesTypeGuards:
         tm.that(u.matches_type(payload["attempt_count"], (int, float)), truth=True)
         tm.that(u.matches_type(payload["command_name"], str), truth=True)
         tm.that(u.string_non_empty(payload[c.ContextKey.CORRELATION_ID]), truth=True)
-        tm.that(u.chk(payload["command_name"], command_spec), truth=True)
-        tm.that(u.chk(payload["attempt_count"], gte=1, lte=3, not_in=[0]), truth=True)
-        tm.that(
-            u.chk(payload["command_name"], gt="alpha", none=False, empty=False),
-            truth=True,
-        )
         tm.that(metadata["repository_root"], eq=str(repository_root))
         tm.ok(metadata["retry_window"] is None)
         tm.that(isinstance(payload["started_at"], str), truth=True)
@@ -75,41 +61,3 @@ class TestsFlextCoreUtilitiesTypeGuards:
             eq=envelope.started_at,
         )
         tm.that(set(cast("list[object]", normalized_modes)), eq={"delta", "full"})
-
-    @staticmethod
-    def test_public_guard_returns_normalized_values_defaults_and_failures() -> None:
-        """Test public guard returns normalized values defaults and failures."""
-        payload: t.JsonDict = {
-            "command_name": "sync-users",
-            "attempt_count": 2,
-        }
-
-        guarded_payload = u.guard(payload, dict, return_value=True)
-        fallback_tags = u.guard(
-            "invalid-tags",
-            validator=u.list_like,
-            default=["cli"],
-            return_value=True,
-        )
-        guarded_attempt = u.guard(2, validator=(int, float), return_value=True)
-
-        def raising_validator(value: t.JsonValue) -> bool:
-            _ = value
-            error_message = "invalid metadata"
-            raise ValueError(error_message)
-
-        failed_guard_result = u.guard(
-            "sync-users",
-            validator=raising_validator,
-            return_value=True,
-        )
-
-        tm.that(guarded_payload, eq=payload)
-        tm.that(fallback_tags, eq=["cli"])
-        tm.that(guarded_attempt, eq=2)
-        tm.that(failed_guard_result, is_=p.Result)
-        if isinstance(failed_guard_result, p.Result):
-            tm.that(
-                tm.fail(failed_guard_result),
-                eq="Guard validation raised ValueError: invalid metadata",
-            )

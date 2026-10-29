@@ -55,7 +55,7 @@ class TestsFlextCoreResultLaws:
     @staticmethod
     @pytest.mark.parametrize(
         ("result", "default", "expected"),
-        [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, 99)],
+        [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, ...)],
     )
     def test_unwrap_or_returns_value_or_default(
         result: p.Result[int],

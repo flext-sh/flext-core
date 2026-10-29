@@ -37,6 +37,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import threading
+from collections.abc import MutableSequence
 from types import NoneType, UnionType
 from typing import ClassVar, Self, Unpack, get_args, get_origin, is_protocol, override
 
@@ -56,7 +57,6 @@ class FlextService[TDomainResult = p.Base](x):
         extra="forbid",
         validate_by_name=True,
         validate_by_alias=True,
-        use_enum_values=True,
         validate_assignment=True,
     )
 
@@ -86,7 +86,12 @@ class FlextService[TDomainResult = p.Base](x):
                 get_args(declared) if isinstance(declared, UnionType) else (declared,)
             )
             for member in members:
-                if member is not NoneType and not is_protocol(member):
+                origin = get_origin(member) or member
+                if origin is NoneType:
+                    continue
+                if is_protocol(origin) and not getattr(
+                    origin, "_is_runtime_protocol", False
+                ):
                     msg = c.ERR_SERVICE_PORT_TYPE.format(
                         service=cls.__name__,
                         field=name,
@@ -143,4 +148,4 @@ class FlextService[TDomainResult = p.Base](x):
 
 
 s = FlextService
-__all__: t.MutableSequenceOf[str] = ["FlextService", "s"]
+__all__: MutableSequence[str] = ["FlextService", "s"]

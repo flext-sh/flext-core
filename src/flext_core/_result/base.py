@@ -8,17 +8,14 @@ from __future__ import annotations
 
 from typing import Self
 
-from flext_core import c, t
-from flext_core._models.pydantic import FlextModelsPydantic
-from flext_core._protocols import FlextProtocolsResult
-from flext_core._typings import FlextTypingBase
+from flext_core import c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesPydantic,
     FlextUtilitiesTypingAdapterJson,
 )
 
 
-class FlextResultBase[T](FlextModelsPydantic.BaseModel):
+class FlextResultBase[T](m.BaseModel):
     """Internal data container for FlextResult.
 
     Population keeps pydantic's own ``(**data)`` contract; the result family
@@ -26,15 +23,15 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
     which validate the public fields and then bind the private payload.
     """
 
-    model_config = FlextModelsPydantic.ConfigDict(extra="forbid")
+    model_config = m.ConfigDict(extra="forbid")
 
     success: bool = True
     error: str | None = None
     error_code: str | None = None
     error_data: t.JsonDict | None = None
 
-    _payload: T = FlextModelsPydantic.PrivateAttr()
-    _exception: BaseException | None = FlextModelsPydantic.PrivateAttr(default=None)
+    _payload: T = m.PrivateAttr()
+    _exception: BaseException | None = m.PrivateAttr(default=None)
 
     @classmethod
     def create_success(cls, value: T) -> Self:
@@ -116,9 +113,7 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
 
     @staticmethod
     def validate_error_data(
-        error_data: FlextTypingBase.JsonMapping
-        | FlextProtocolsResult.ConfigModelInput
-        | None,
+        error_data: t.JsonMapping | p.ConfigModelInput | None,
     ) -> t.JsonDict | None:
         """Validate and normalize error data into a plain JSON mapping.
 
@@ -134,7 +129,7 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
             return None
         payload = (
             error_data.model_dump(mode="json")
-            if isinstance(error_data, FlextProtocolsResult.HasModelDump)
+            if isinstance(error_data, p.HasModelDump)
             else error_data
         )
         return FlextUtilitiesTypingAdapterJson.json_dict_adapter().validate_python(

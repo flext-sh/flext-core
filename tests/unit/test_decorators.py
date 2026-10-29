@@ -1,4 +1,4 @@
-"""Behavioral contract tests for the public ``FlextDecorators`` facade (``d``).
+"""Behavioral contract tests for the public ``FlextDecoratorsRuntime`` facade (``d``).
 
 Railway, retry, timeout, combined, inject and logging behavior is asserted in
 the dedicated decorator modules. This module keeps only the contracts owned by

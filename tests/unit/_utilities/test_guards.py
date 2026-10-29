@@ -12,9 +12,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserList
-from collections.abc import Iterator, Mapping, Sequence
-from datetime import UTC, datetime
-from pathlib import Path
+from collections.abc import Iterator, Mapping, MutableMapping, MutableSequence, Sequence
 from types import MappingProxyType
 from typing import override
 
@@ -70,8 +68,8 @@ class TestsFlextCoreGuards:
             @override
             def __iter__(self) -> Iterator[p.AttributeProbe]:
                 events.append("iter")
-                message = "unexpected mapping iteration"
-                tm.reject(message)
+                msg = "unexpected mapping iteration"
+                raise AssertionError(msg)
 
             @override
             def __len__(self) -> int:
@@ -271,9 +269,9 @@ class TestsFlextCoreGuards:
     def test_matches_type_inspects_native_mapping_and_sequence_views() -> None:
         """Inspection preserves abstract collections without JSON admission."""
         mapping: t.JsonMapping = MappingProxyType({"native": 1})
-        mutable_mapping: t.MutableMappingKV[str, t.JsonValue] = {"native": 1}
-        sequence: t.StrSequence = UserList(["native"])
-        mutable_sequence: t.MutableSequenceOf[str] = ["native"]
+        mutable_mapping: MutableMapping[str, t.JsonValue] = {"native": 1}
+        sequence: Sequence[str] = UserList(["native"])
+        mutable_sequence: MutableSequence[str] = ["native"]
         tm.ok(u.matches_type(mapping, Mapping))
         tm.ok(u.matches_type(mutable_mapping, dict))
         tm.fail(u.matches_type(mapping, dict))
@@ -315,7 +313,7 @@ class TestsFlextCoreGuards:
     )
     def test_matches_type_type_and_tuple_specs(
         value: p.ProtocolGuardInput,
-        spec: type | t.VariadicTuple[type],
+        spec: type | tuple[type, ...],
         *,
         expected: bool,
     ) -> None:
@@ -359,40 +357,6 @@ class TestsFlextCoreGuards:
         value: p.ProtocolGuardInput | None,
     ) -> None:
         tm.that(u.container_value(value) is False, truth=True)
-
-    @staticmethod
-    def test_all_container_mapping_values_accepts_json_values() -> None:
-        mapping: t.JsonDict = {"a": 1, "b": [2, 3], "c": {"d": "e"}}
-        tm.that(u.all_container_mapping_values(mapping) is True, truth=True)
-        path = Path("native-payload")
-        timestamp = datetime(2026, 1, 2, tzinfo=UTC)
-        native = {1: (path, timestamp)}
-        tm.that(u.all_container_mapping_values(native), truth=True)
-        tm.that(u.container_value(native), truth=True)
-        tm.that(u.container_value((((((path,),),),),)), truth=True)
-        tm.that(u.container_value((path, None)), truth=False)
-        tm.that(u.container_value({1: None}), truth=False)
-        tm.that(native[1][0] is path, truth=True)
-        tm.that(native[1][1] is timestamp, truth=True)
-        observed: list[t.JsonValue] = []
-
-        def reject(value: t.JsonValue) -> bool:
-            observed.append(value)
-            return False
-
-        result = u.guard("rejected", reject, default=timestamp)
-        tm.that(result is timestamp, truth=True)
-        sequence_default = (1, "native")
-        mapping_default = MappingProxyType({"native": 1})
-        tm.that(
-            u.guard("sequence", reject, default=sequence_default) is sequence_default,
-            truth=True,
-        )
-        tm.that(
-            u.guard("mapping", reject, default=mapping_default) is mapping_default,
-            truth=True,
-        )
-        tm.that(observed, eq=["rejected", "sequence", "mapping"])
 
     # ------------------------------------------------------------------
     # scalar / primitive

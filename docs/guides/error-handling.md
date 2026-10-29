@@ -18,6 +18,15 @@ Use `r[T]` to keep errors explicit and composable.
 ```python
 from __future__ import annotations
 
+from collections.abc import (
+    Iterable,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    Sequence,
+)
+
 from flext_core import c, p, r
 
 

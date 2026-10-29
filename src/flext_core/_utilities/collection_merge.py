@@ -148,9 +148,9 @@ class FlextUtilitiesCollectionMerge:
                 return FlextResult[t.JsonMapping].from_failure(merge_result)
         return FlextResult[t.JsonMapping].ok(result)
 
-    _MergeHandler = Callable[[t.JsonMapping, t.JsonMapping], "p.Result[t.JsonMapping]"]
-
-    _MERGE_STRATEGIES: ClassVar[Mapping[str, _MergeHandler]] = {
+    _MERGE_STRATEGIES: ClassVar[
+        Mapping[str, Callable[[t.JsonMapping, t.JsonMapping], p.Result[t.JsonMapping]]]
+    ] = {
         c.MergeStrategy.REPLACE: _merge_replace,
         c.MergeStrategy.OVERRIDE: _merge_replace,
         c.MergeStrategy.FILTER_NONE: _merge_filter_none,

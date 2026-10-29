@@ -14,11 +14,9 @@ from __future__ import annotations
 
 import inspect
 import sys
-from collections.abc import Mapping
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
-
-from typing_extensions import TypeForm
 
 from flext_core import (
     FlextContext,
@@ -35,7 +33,7 @@ from flext_core import (
 from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, MutableMapping
+    from collections.abc import Callable
     from types import FrameType, ModuleType
 
 
@@ -343,11 +341,11 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         return name in self._registrations and name not in c.CONTAINER_RESERVED_NAMES
 
     @override
-    def names(self) -> t.StrSequence:
+    def names(self) -> Sequence[str]:
         """List the public services, factories, and resources.
 
         Returns:
-            The resulting ``t.StrSequence``.
+            The resulting ``Sequence[str]``.
 
         """
         return [name for name in self._registrations if self.has(name)]
@@ -605,7 +603,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         non-callable, duplicate or reserved factory raises ``e.ValidationError``.
         """
         module_symbols = vars(caller_module)
-        factory_adapter = u.type_adapter(TypeForm(p.FactoryCallable))
+        factory_adapter = u.type_adapter(t.TypeForm(p.FactoryCallable))
         for factory_name, factory_config in u.scan_module(caller_module):
             impl = factory_adapter.validate_python(module_symbols[factory_name])
             _ = instance.factory(factory_config.name, impl)
@@ -669,4 +667,4 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         return self
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextContainer"]
+__all__: MutableSequence[str] = ["FlextContainer"]

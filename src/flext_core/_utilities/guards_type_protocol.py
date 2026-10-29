@@ -6,18 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import c, t
-from flext_core._models import FlextModelsPydantic
-from flext_core._protocols import FlextProtocolsContainer
-from flext_core._utilities import (
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
+from flext_core import c, m, p, t
+from flext_core._utilities._guards.type_protocol_specs import (
+    FlextUtilitiesGuardsTypeProtocolSpecs,
+)
+from flext_core._utilities._guards.type_protocol_string import (
+    FlextUtilitiesGuardsTypeProtocolString,
 )
 
 
 class FlextUtilitiesGuardsTypeProtocol(
-    FlextUtilitiesGuardsTypeProtocolStringMixin,
-    FlextUtilitiesGuardsTypeProtocolSpecsMixin,
+    FlextUtilitiesGuardsTypeProtocolSpecs,
+    FlextUtilitiesGuardsTypeProtocolString,
 ):
     """Protocol-based type guards for flext type checking.
 
@@ -28,10 +28,10 @@ class FlextUtilitiesGuardsTypeProtocol(
 
     @staticmethod
     def matches_type(
-        value: FlextProtocolsContainer.ProtocolGuardInput,
+        value: p.ProtocolGuardInput,
         type_spec: str
         | type
-        | t.VariadicTuple[type]
+        | tuple[type, ...]
         | t.Scalar,  # Scalar arm handles invalid spec at runtime
     ) -> bool:
         """Check if value matches a type spec (string name, type, or tuple of types).
@@ -55,7 +55,7 @@ class FlextUtilitiesGuardsTypeProtocol(
                     in {"string_non_empty", "dict_non_empty", "list_non_empty"}
                     and isinstance(
                         value,
-                        (FlextModelsPydantic.BaseModel, FlextModelsPydantic.RootModel),
+                        (m.BaseModel, m.RootModel),
                     )
                 ) and FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
                     type_name,

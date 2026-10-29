@@ -24,8 +24,7 @@ class TestsFlextLoggingScopes:
         ],
     )
     def test_clear_scope_returns_success_for_bound_scopes(
-        scope: str,
-        context: t.MappingKV[str, str],
+        scope: str, context: t.JsonMapping
     ) -> None:
         """Clearing a bound scope succeeds."""
         bind_result = u.bind_context(scope=scope, **context)

@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableSequence, Sequence
 from typing import Self, override
 
 from flext_core import c, t
@@ -40,8 +41,8 @@ class FlextModelsBuilder:
         def _set(
             self,
             **updates: t.JsonPayload
-            | t.SequenceOf[t.JsonPayload]
-            | t.SequenceOf[FlextModelsBase.ContractModel],
+            | Sequence[t.JsonPayload]
+            | Sequence[FlextModelsBase.ContractModel],
         ) -> Self:
             """Apply one immutable ``model_copy(update=...)`` transition.
 
@@ -67,7 +68,7 @@ class FlextModelsBuilder:
                 The resulting ``Self``.
 
             """
-            current_values: t.VariadicTuple[t.JsonValue] = tuple(
+            current_values: tuple[t.JsonValue, ...] = tuple(
                 getattr(self.state, field_name),
             )
             return self._set(**{field_name: (*current_values, value)})
@@ -76,7 +77,7 @@ class FlextModelsBuilder:
         def _model[ModelT: FlextModelsBase.ContractModel](
             model_type: type[ModelT],
             /,
-            **data: t.JsonPayload | t.SequenceOf[t.JsonPayload],
+            **data: t.JsonPayload | Sequence[t.JsonPayload],
         ) -> ModelT:
             """Build one ContractModel payload for DSL composition.
 
@@ -92,7 +93,7 @@ class FlextModelsBuilder:
             field_name: str,
             model_type: type[ModelT],
             /,
-            **data: t.JsonPayload | t.SequenceOf[t.JsonPayload],
+            **data: t.JsonPayload | Sequence[t.JsonPayload],
         ) -> Self:
             """Build and append one ContractModel item to a sequence field.
 
@@ -101,10 +102,10 @@ class FlextModelsBuilder:
 
             """
             model_item = self._model(model_type, **data)
-            current_values: t.VariadicTuple[FlextModelsBase.ContractModel] = tuple(
+            current_values: tuple[FlextModelsBase.ContractModel, ...] = tuple(
                 getattr(self.state, field_name),
             )
-            updated: t.SequenceOf[FlextModelsBase.ContractModel] = (
+            updated: Sequence[FlextModelsBase.ContractModel] = (
                 *current_values,
                 model_item,
             )
@@ -134,4 +135,4 @@ class FlextModelsBuilder:
             return state
 
 
-__all__: t.MutableSequenceOf[str] = ["FlextModelsBuilder"]
+__all__: MutableSequence[str] = ["FlextModelsBuilder"]

@@ -1,0 +1,221 @@
+"""Railway and retry decorators.
+
+Copyright (c) 2025 FLEXT Team. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import time
+from functools import wraps
+from typing import TYPE_CHECKING, TypeIs, overload
+
+from flext_core import c, m, p, r
+from flext_core._decorators import FlextDecoratorsLogging
+from flext_core._exceptions import FlextExceptionsTypes
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+
+class FlextDecoratorsRailway(FlextDecoratorsLogging):
+    """Decorators that convert failures to results or retry operations."""
+
+    @classmethod
+    def railway(
+        cls,
+        error_code: str | None = None,
+    ) -> p.RailwayDecorator:
+        """Wrap a callable in the FLEXT railway result pattern.
+
+        Returns:
+            A decorator preserving existing results and wrapping raw returns once.
+
+        """
+
+        @overload
+        def decorator[**PCallback, TValue](
+            func: Callable[PCallback, p.Result[TValue]],
+            /,
+        ) -> Callable[PCallback, p.Result[TValue]]: ...
+
+        @overload
+        def decorator[**PCallback, TValue](
+            func: Callable[PCallback, TValue | p.Result[TValue]],
+            /,
+        ) -> Callable[PCallback, p.Result[TValue]]: ...
+
+        def decorator[**PCallback, TValue](
+            func: Callable[PCallback, TValue | p.Result[TValue]],
+            /,
+        ) -> Callable[PCallback, p.Result[TValue]]:
+            def is_result(
+                value: TValue | p.Result[TValue],
+            ) -> TypeIs[p.Result[TValue]]:
+                return isinstance(value, p.Result)
+
+            @wraps(func)
+            def wrapper(
+                *args: PCallback.args,
+                **kwargs: PCallback.kwargs,
+            ) -> p.Result[TValue]:
+                try:
+                    result = func(*args, **kwargs)
+                    if is_result(result):
+                        return result
+                    return r[TValue].ok(result)
+                except cls._CAUGHT_EXCEPTIONS as exc:
+                    effective_error_code = (
+                        error_code
+                        if error_code is not None
+                        else c.ErrorCode.OPERATION_ERROR.value
+                    )
+                    error_msg = f"{func.__name__} failed: {type(exc).__name__}: {exc}"
+                    return r[TValue].fail(error_msg, error_code=effective_error_code)
+
+            return wrapper
+
+        return decorator
+
+    @classmethod
+    def retry[**PCallback, TResult](
+        cls,
+        max_attempts: int | None = None,
+        delay_seconds: float | None = None,
+        backoff_strategy: str | None = None,
+        error_code: str | None = None,
+    ) -> Callable[[Callable[PCallback, TResult]], Callable[PCallback, TResult]]:
+        """Retry failed operations using configured backoff.
+
+        Returns:
+            The resulting ``Callable[[Callable[PCallback, TResult]], Callable[PCallback,
+                TResult]]``.
+
+        """
+        attempts = max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
+        delay = (
+            delay_seconds
+            if delay_seconds is not None
+            else float(c.DEFAULT_RETRY_DELAY_SECONDS)
+        )
+        strategy = (
+            backoff_strategy
+            if backoff_strategy is not None
+            else c.BackoffStrategy.EXPONENTIAL
+        )
+
+        def decorator(
+            func: Callable[PCallback, TResult],
+        ) -> Callable[PCallback, TResult]:
+            @wraps(func)
+            def wrapper(*args: PCallback.args, **kwargs: PCallback.kwargs) -> TResult:
+                logger_carrier: FlextDecoratorsLogging._LoggerCarrier | None = None
+                if args:
+                    first_arg_raw = args[0]
+                    if cls._is_logger_carrier(first_arg_raw):
+                        logger_carrier = first_arg_raw
+                logger = cls._resolve_logger(
+                    logger_carrier,
+                    func_module=func.__module__,
+                )
+                retry_settings = m.RetryConfiguration.model_validate({
+                    "max_retries": attempts,
+                    "initial_delay_seconds": delay,
+                    "exponential_backoff": strategy == c.BackoffStrategy.EXPONENTIAL,
+                    "retry_on_exceptions": [],
+                    "retry_on_status_codes": [],
+                })
+                retry_result = cls._execute_retry_loop(
+                    lambda: func(*args, **kwargs),
+                    func.__name__,
+                    logger,
+                    retry_settings=retry_settings,
+                )
+                if isinstance(retry_result, Exception):
+                    logger.error(
+                        "operation_failed_all_retries_exhausted",
+                        function=func.__name__,
+                        attempts=attempts,
+                        error=str(retry_result),
+                        error_type=retry_result.__class__.__name__,
+                    )
+                    effective_error_code = (
+                        error_code
+                        if error_code is not None
+                        else c.ErrorCode.TIMEOUT_ERROR.value
+                    )
+                    timeout_message = (
+                        f"Operation {func.__name__} failed after {attempts} attempts"
+                    )
+                    raise FlextExceptionsTypes.FlextTimeoutError(
+                        timeout_message,
+                        options=m.ExceptionInitOptions(error_code=effective_error_code),
+                        operation=func.__name__,
+                        attempts=attempts,
+                        original_error=str(retry_result),
+                    ) from retry_result
+                return retry_result
+
+            return wrapper
+
+        return decorator
+
+    @classmethod
+    def _execute_retry_loop[TResult](
+        cls,
+        call: Callable[[], TResult],
+        func_name: str,
+        logger: p.Logger,
+        *,
+        retry_settings: m.RetryConfiguration,
+    ) -> TResult | Exception:
+        """Execute retry loop with closure; return last exception on exhaustion.
+
+        Returns:
+            The resulting ``TResult | Exception``.
+
+        """
+        attempts = retry_settings.max_retries
+        delay = retry_settings.initial_delay_seconds
+        strategy = (
+            c.BackoffStrategy.EXPONENTIAL
+            if retry_settings.exponential_backoff
+            else c.BackoffStrategy.LINEAR
+        )
+        last_exception: Exception | None = None
+        current_delay = delay
+        for attempt in range(1, attempts + 1):
+            try:
+                if attempt > 1:
+                    logger.info(
+                        "retry_attempt",
+                        function=func_name,
+                        attempt=attempt,
+                        max_attempts=attempts,
+                        delay_seconds=current_delay,
+                    )
+                    time.sleep(current_delay)
+                return call()
+            except cls._CAUGHT_EXCEPTIONS as exc:
+                last_exception = exc
+                logger.warning(
+                    "operation_failed_retrying",
+                    function=func_name,
+                    attempt=attempt,
+                    max_attempts=attempts,
+                    error=str(exc),
+                    error_type=exc.__class__.__name__,
+                )
+                if strategy == c.BackoffStrategy.EXPONENTIAL:
+                    current_delay *= 2
+                elif strategy == c.BackoffStrategy.LINEAR:
+                    current_delay += delay
+                if attempt == attempts:
+                    break
+        if last_exception is None:
+            msg = c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
+            return RuntimeError(msg)
+        return last_exception
+
+
+__all__: list[str] = ["FlextDecoratorsRailway"]

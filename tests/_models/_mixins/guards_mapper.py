@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections import UserDict
 from typing import TYPE_CHECKING, Annotated, override
 
-from typing_extensions import TypeForm
-
 from flext_core import m, u
 from tests import t
 
@@ -30,7 +28,7 @@ class TestsFlextModelsGuardsMapperMixin:
 
         port: int = 0
         nested: t.JsonMapping = m.Field(
-            default_factory=u.empty(TypeForm(t.JsonMapping))
+            default_factory=u.empty(t.TypeForm(t.JsonMapping))
         )
 
     class MaybeModel(m.BaseModel):

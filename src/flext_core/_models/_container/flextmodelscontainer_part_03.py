@@ -14,21 +14,12 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
+from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
-from flext_core._models._container import flextmodelscontainer_part_02
-from flext_core._protocols import (
-    FlextProtocolsBase,
-    FlextProtocolsContainer,
-    FlextProtocolsContext,
-    FlextProtocolsHandler,
-    FlextProtocolsSettings,
-)
-from flext_core._typings import FlextTypesPydantic, FlextTypesServices
+from flext_core._models._container import FlextModelsContainerPart02
 
 
-class FlextModelsContainerPart03(
-    flextmodelscontainer_part_02.FlextModelsContainerPart02
-):
+class FlextModelsContainerPart03(FlextModelsContainerPart02):
     class ServiceRegistrationSpec(FlextModelsBase.ArbitraryTypesModel):
         """Bootstrap specification for container registration.
 
@@ -43,7 +34,7 @@ class FlextModelsContainerPart03(
         )
 
         settings: Annotated[
-            FlextTypesPydantic.Port[FlextProtocolsSettings.Settings] | None,
+            t.Port[p.Settings] | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Config",
@@ -51,25 +42,23 @@ class FlextModelsContainerPart03(
             ),
         ] = None
         context: Annotated[
-            FlextTypesPydantic.Port[FlextProtocolsContext.Context] | None,
+            t.Port[p.Context] | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Context",
                 description="Execution context attached to the container.",
             ),
         ] = None
-        dispatcher: FlextTypesPydantic.Port[FlextProtocolsHandler.Dispatcher | None] = (
-            FlextModelsPydantic.Field(
-                default=None,
-                exclude=True,
-                description=(
-                    "Explicit command bus retained by this scope; "
-                    "otherwise a fresh bus is built."
-                ),
-            )
+        dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description=(
+                "Explicit command bus retained by this scope; "
+                "otherwise a fresh bus is built."
+            ),
         )
         services: Annotated[
-            FlextProtocolsContainer.ServiceMap | None,
+            p.ServiceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Services",
@@ -78,7 +67,7 @@ class FlextModelsContainerPart03(
             ),
         ] = None
         factories: Annotated[
-            FlextProtocolsContainer.FactoryMap | None,
+            p.FactoryMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Factories",
@@ -87,7 +76,7 @@ class FlextModelsContainerPart03(
             ),
         ] = None
         resources: Annotated[
-            FlextProtocolsContainer.ResourceMap | None,
+            p.ResourceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Resources",
@@ -95,23 +84,21 @@ class FlextModelsContainerPart03(
                 validate_default=True,
             ),
         ] = None
-        user_overrides: (
-            FlextTypesPydantic.Port[FlextProtocolsBase.Model]
-            | FlextTypesServices.UserOverridesMapping
-            | None
-        ) = FlextModelsPydantic.Field(
-            default=None,
-            title="User Overrides",
-            description="User-level configuration overrides applied after defaults.",
-            validate_default=True,
-        )
-        container_config: FlextTypesPydantic.Port[FlextProtocolsBase.Model] | None = (
+        user_overrides: t.Port[p.Model] | t.UserOverridesMapping | None = (
             FlextModelsPydantic.Field(
                 default=None,
-                title="Container Config",
-                description="Container configuration model controlling DI behavior.",
+                title="User Overrides",
+                description=(
+                    "User-level configuration overrides applied after defaults."
+                ),
                 validate_default=True,
             )
+        )
+        container_config: t.Port[p.Model] | None = FlextModelsPydantic.Field(
+            default=None,
+            title="Container Config",
+            description="Container configuration model controlling DI behavior.",
+            validate_default=True,
         )
 
 

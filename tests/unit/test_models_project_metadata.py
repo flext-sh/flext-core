@@ -13,6 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
 from pathlib import Path
 from typing import Literal
 
@@ -88,7 +89,7 @@ class TestsFlextModelsProjectMetadata:
         tmp_path: Path,
         **overrides: p.AttributeProbe,
     ) -> m.ProjectMetadata:
-        payload: t.MutableMappingKV[str, p.AttributeProbe] = {
+        payload: MutableMapping[str, p.AttributeProbe] = {
             "root": tmp_path,
             "package_name": "flext_ldif",
             "class_stem": c.Tests.SAMPLE_PROJECT_CLASS_STEM,

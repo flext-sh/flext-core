@@ -6,13 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextRuntime, c, m, t
+from collections.abc import Mapping
+
+from flext_core import c, m, t
+from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
 class FlextExceptionsTemplate:
     """Template rendering helpers for exception and result messages."""
 
-    type TemplateValues = t.MappingKV[str, t.JsonPayload | None] | m.ConfigMap
+    type TemplateValues = Mapping[str, t.JsonPayload | None] | m.ConfigMap
 
     @staticmethod
     def template_values(
@@ -41,7 +44,7 @@ class FlextExceptionsTemplate:
                 and field_help
             }
         payload |= {
-            key: FlextRuntime.normalize_to_json_value(value)
+            key: FlextUtilitiesPydantic.normalize_to_json_value(value)
             for key, value in values.items()
             if value is not None
         }

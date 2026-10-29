@@ -6,11 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
 from flext_core import m
-from tests import t
 
 
 class TestsFlextModelsCorePublicMixin:
@@ -24,7 +24,7 @@ class TestsFlextModelsCorePublicMixin:
     class HandlerObservations(m.ManagedModel):
         """Owned effects recorded by an actual capability-based test handler."""
 
-        handled: t.MutableSequenceOf[str] = m.Field(default_factory=list)
+        handled: MutableSequence[str] = m.Field(default_factory=list)
 
     class BinaryContract(m.ContractModel):
         """Binary contract exercising the public JSON persistence boundary."""
@@ -88,7 +88,7 @@ class TestsFlextModelsCorePublicMixin:
         command_name: str
         correlation_id: str
         attempt_count: int
-        tags: t.StrSequence
+        tags: Sequence[str]
         started_at: datetime
 
     class ManifestSnapshot(m.BaseModel):
@@ -107,7 +107,7 @@ class TestsFlextModelsCorePublicMixin:
         model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         env_file: str
-        process_environment: t.StrMapping
+        process_environment: Mapping[str, str]
         log_level: str
 
     class PublicPayload(m.BaseModel):

@@ -8,14 +8,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core._handlers.flexthandlers_part_07 import FlextHandlersPart07
+from flext_core._handlers.flexthandlers_discovery import FlextHandlersDiscovery
 
 if TYPE_CHECKING:
     from flext_core import p
 
 
 class FlextHandlers[MessageT_contra, ResultT](
-    FlextHandlersPart07[MessageT_contra, ResultT]
+    FlextHandlersDiscovery[MessageT_contra, ResultT]
 ):
     """Public CQRS handler facade."""
 

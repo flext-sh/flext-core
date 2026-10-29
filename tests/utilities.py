@@ -177,14 +177,6 @@ class TestsFlextUtilities(flext_tests_u):
         class HandlerTypeScenario(m.Value):
             """Scenario for handler types."""
 
-            # Why use_enum_values=False: the fields contract the ``c.HandlerType``
-            # members themselves (consumers feed them into typed params models
-            # that validate ``is_instance_of``); the carrier must not downcast
-            # them to plain strings the way the shared ``m.Value`` default does.
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-                frozen=True,
-                use_enum_values=False,
-            )
             name: Annotated[str, m.Field(description="Handler type scenario name")]
             handler_type: Annotated[c.HandlerType, m.Field(description="Type")]
             handler_mode: Annotated[c.HandlerType, m.Field(description="Mode")]
@@ -212,7 +204,7 @@ class TestsFlextUtilities(flext_tests_u):
             ),
         ]
 
-        VALIDATION_TYPES: ClassVar[Sequence[t.Pair[str, t.JsonPayload]]] = [
+        VALIDATION_TYPES: ClassVar[Sequence[tuple[str, t.JsonPayload]]] = [
             ("str", "test_message"),
             ("int", 42),
             ("float", math.pi),
@@ -369,9 +361,6 @@ class TestsFlextUtilities(flext_tests_u):
                 operation=DecoratorOperationType.COMBINED_WITH_RAILWAY,
             ),
         ]
-
-    class TestsFlextBeartypeEngine:
-        """Shared beartype engine test support."""
 
         FORBIDDEN: frozenset[str] = frozenset({"dict", c.Action.LIST, "set"})
 

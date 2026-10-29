@@ -6,16 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Mapping, Sequence
 from enum import StrEnum, unique
 from types import MappingProxyType
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 from flext_core import c
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
-
-    from flext_core import t
 
 
 class TestsFlextConstantsServices:
@@ -36,7 +32,7 @@ class TestsFlextConstantsServices:
     DEFAULT_USER_NAME_PREFIX: ClassVar[str] = "User "
     DEFAULT_EMAIL_DOMAIN: ClassVar[str] = "@example.com"
     DEFAULT_ERROR_MESSAGE: ClassVar[str] = "Test error"
-    USER_IDS_SUCCESS: ClassVar[t.StrSequence] = ("123", "456", "789")
+    USER_IDS_SUCCESS: ClassVar[Sequence[str]] = ("123", "456", "789")
     USER_IDS_INVALID: ClassVar[frozenset[str]] = frozenset({"invalid", ""})
 
     OPERATION_RESULT_KEY: ClassVar[str] = "result"

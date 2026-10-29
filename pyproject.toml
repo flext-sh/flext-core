@@ -20,15 +20,14 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-  "annotated-types>=0.8.0",
-  "beartype>=0.23.1",
-  "packaging>=26.3",
-  "pydantic>=2.14.1,<3",
-  "pydantic-core>=2.41.5",
-  "pydantic-settings>=2.15.0",
-  "pyyaml>=6.0.3",
-  "structlog>=26.1.0",
-  "typing-extensions>=4.16.0",
+    "annotated-types>=0.8.0",
+    "packaging>=26.3",
+    "pydantic>=2.14.1,<3",
+    "pydantic-core>=2.41.5",
+    "pydantic-settings>=2.15.0",
+    "pyyaml>=6.0.3",
+    "structlog>=26.1.0",
+    "typing-extensions>=4.16.0",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 keywords = [
@@ -647,20 +646,20 @@ runtime-evaluated-base-classes = [
   "flext_core._models.FlextModelsPydantic.BaseModel",
   "flext_core._models.FlextModelsPydantic.RootModel",
   "flext_core._models._base.FlextModelsBasePart01.StrictModel",
-  "flext_core._models._base.flextmodelsbase_part_01.ArbitraryTypesModel",
-  "flext_core._models._base.flextmodelsbase_part_01.DynamicModel",
-  "flext_core._models._base.flextmodelsbase_part_01.EnforcedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.EnumManagedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.FlexibleModel",
-  "flext_core._models._base.flextmodelsbase_part_01.FrozenModel",
-  "flext_core._models._base.flextmodelsbase_part_01.ManagedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.NormalizedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.StrictManagedModel",
-  "flext_core._models._base.flextmodelsbase_part_01.StrictModel",
-  "flext_core._models._base.flextmodelsbase_part_02.ContractModel",
-  "flext_core._models._base.flextmodelsbase_part_02.FlextModelsBasePart02.ArbitraryTypesModel",
-  "flext_core._models._container.flextmodelscontainer_part_01.FlextModelsContainerPart01.RegistrationEnvelope",
-  "flext_core._models._container.flextmodelscontainer_part_01.RegistrationEnvelope",
+  "flext_core._models._base.Flextmodelsbase_part_01.ArbitraryTypesModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.DynamicModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.EnforcedModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.EnumManagedModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.FlexibleModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.FrozenModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.ManagedModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.NormalizedModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.StrictManagedModel",
+  "flext_core._models._base.Flextmodelsbase_part_01.StrictModel",
+  "flext_core._models._base.Flextmodelsbase_part_02.ContractModel",
+  "flext_core._models._base.Flextmodelsbase_part_02.FlextModelsBasePart02.ArbitraryTypesModel",
+  "flext_core._models._container.Flextmodelscontainer_part_01.FlextModelsContainerPart01.RegistrationEnvelope",
+  "flext_core._models._container.Flextmodelscontainer_part_01.RegistrationEnvelope",
   "flext_core._models._enforcement.FlextModelsEnforcementBase.Report",
   "flext_core._models._enforcement.FlextModelsEnforcementModelBase",
   "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
@@ -772,12 +771,7 @@ constraint-dependencies = [
 ]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
-override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@8414232e12b6328ba812bf49fe465fde65774dfd",
-  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
-]
+override-dependencies = ["flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev", "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev", "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev", "rope @ git+https://github.com/marlon-costa-dc/rope.git@becece05c27c3189b12a06f3fbfa28ad62a98a96"]
 
 [[tool.uv.exclude-dependencies]]
 dependencies = ["flext-core"]

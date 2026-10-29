@@ -6,16 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
     from importlib.metadata import Distribution, DistributionFinder
     from pathlib import Path, PurePosixPath
-
-    from flext_core import t
 
 
 class FlextProtocolsProjectMetadata:
@@ -61,7 +59,7 @@ class FlextProtocolsProjectMetadata:
         def requires_python(self) -> str: ...
 
         @property
-        def dependencies(self) -> t.VariadicTuple[str]: ...
+        def dependencies(self) -> tuple[str, ...]: ...
 
         @property
         def authors(
@@ -72,10 +70,10 @@ class FlextProtocolsProjectMetadata:
         def urls(self) -> FlextProtocolsProjectMetadata.ProjectUrls: ...
 
         @property
-        def classifiers(self) -> t.VariadicTuple[str]: ...
+        def classifiers(self) -> tuple[str, ...]: ...
 
         @property
-        def keywords(self) -> t.VariadicTuple[str]: ...
+        def keywords(self) -> tuple[str, ...]: ...
 
     @runtime_checkable
     class ProjectToolFlextProject(FlextProtocolsBase.Model, Protocol):
