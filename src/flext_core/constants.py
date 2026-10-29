@@ -28,9 +28,7 @@ from flext_core._constants import (
     FlextConstantsValidation,
 )
 from flext_core._constants.violations import (
-    FlextMroViolation,
     FlextMroViolationError,
-    FlextSmellViolation,
     FlextSmellViolationError,
 )
 
@@ -62,10 +60,6 @@ class FlextConstants(
     their own module and flatten onto this single namespace at import time.
     """
 
-    FlextMroViolationError = FlextMroViolationError
-    FlextSmellViolationError = FlextSmellViolationError
-    FlextMroViolation = FlextMroViolation
-    FlextSmellViolation = FlextSmellViolation
 
 
 c = FlextConstants
