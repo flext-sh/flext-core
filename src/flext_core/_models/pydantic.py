@@ -82,6 +82,8 @@ class FlextModelsPydantic:
     class SettingsConfigDict(pydantic_settings.SettingsConfigDict, total=False):
         """Canonical settings configuration exported through the models facade."""
 
+    ForceDecode = FlextTypingNativeExport(pydantic_settings.ForceDecode)
+
     field_validator = FlextTypingNativeExport(pydantic.field_validator)
     model_validator = FlextTypingNativeExport(pydantic.model_validator)
     field_serializer = FlextTypingNativeExport(pydantic.field_serializer)

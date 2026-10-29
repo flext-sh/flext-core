@@ -17,8 +17,8 @@ if TYPE_CHECKING:
     from flext_core._handlers.flexthandlers_discovery import FlextHandlersDiscovery
     from flext_core._handlers.flexthandlers_dispatch import FlextHandlersDispatch
     from flext_core._handlers.flexthandlers_execution import FlextHandlersExecution
-    from flext_core._handlers.flexthandlers_pipeline import FlextHandlersPipeline
     from flext_core._handlers.flexthandlers_factory import FlextHandlersFactory
+    from flext_core._handlers.flexthandlers_pipeline import FlextHandlersPipeline
     from flext_core._handlers.flexthandlers_settings import FlextHandlersSettings
 
 
@@ -27,8 +27,8 @@ __all__: tuple[str, ...] = (
     "FlextHandlersDiscovery",
     "FlextHandlersDispatch",
     "FlextHandlersExecution",
-    "FlextHandlersPipeline",
     "FlextHandlersFactory",
+    "FlextHandlersPipeline",
     "FlextHandlersSettings",
 )
 

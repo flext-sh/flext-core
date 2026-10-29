@@ -32,6 +32,8 @@ class FlextTypingBase(FlextTypesPydantic):
 
     type Scalar = Primitives | FlextTypesPydantic.StrictBytes | datetime
 
+    type StrDict = dict[str, str]
+    type ScalarMapping = Mapping[str, Scalar]
     type MutableStrMapping = MutableMapping[str, str]
     type OptionalStrMapping = Mapping[str, str | None]
     type MutableOptionalStrMapping = MutableMapping[str, str | None]

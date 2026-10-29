@@ -15,12 +15,24 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from types import GenericAlias, NoneType, UnionType
-from typing import Annotated, TypeAliasType, TypeVar, Union, get_args, get_origin
+from typing import (
+    TYPE_CHECKING,
+    Annotated,
+    Never,
+    TypeAliasType,
+    TypeVar,
+    Union,
+    get_args,
+    get_origin,
+)
 
 import pydantic
 import pydantic_core
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 class FlextTypesPydantic:
@@ -196,6 +208,10 @@ class FlextTypesPydantic:
         the classes ``isinstance`` accepts, so no model needs
         ``arbitrary_types_allowed``.
 
+        A generic declaration may retain an unresolved parameter, but cannot
+        validate a concrete port until specialization, a declared default,
+        constraints or a bound supplies its instance contract.
+
         Returns:
             The ``is_instance``/``none``/``union`` core schema for ``target``.
 
@@ -206,9 +222,26 @@ class FlextTypesPydantic:
         resolve = FlextTypesPydantic.port_instance_schema
         schema: core_schema.CoreSchema
         if isinstance(target, TypeVar):
-            schema = (
-                resolve(scope[target]) if target in scope else core_schema.any_schema()
-            )
+            if target in scope:
+                schema = resolve(scope[target], scope)
+            elif target.has_default():
+                schema = resolve(target.__default__, scope)
+            elif target.__constraints__:
+                schema = core_schema.union_schema([
+                    resolve(constraint, scope) for constraint in target.__constraints__
+                ])
+            elif target.__bound__ is not None:
+                schema = resolve(target.__bound__, scope)
+            else:
+
+                def require_specialization(_value: p.AttributeProbe) -> Never:
+                    """Reject a value whose generic port declares no contract."""
+                    message = f"Dependency port {target} requires specialization"
+                    raise ValueError(message)
+
+                schema = core_schema.no_info_plain_validator_function(
+                    require_specialization
+                )
         elif isinstance(target, TypeAliasType):
             schema = resolve(target.__value__, scope)
         elif isinstance(origin, TypeAliasType):

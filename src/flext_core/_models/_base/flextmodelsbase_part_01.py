@@ -29,7 +29,10 @@ class FlextModelsBasePart01:
         # Schemas build lazily on first use (lazy-import law); the fresh-import
         # gate builds every model so a broken annotation still fails check.
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra=c.EXTRA_CONFIG_FORBID, defer_build=True
+            extra=c.EXTRA_CONFIG_FORBID,
+            defer_build=True,
+            use_enum_values=c.DOMAIN_MODEL_CONFIG["use_enum_values"],
+            validate_default=c.DOMAIN_MODEL_CONFIG["validate_default"],
         )
 
         @classmethod
@@ -46,9 +49,7 @@ class FlextModelsBasePart01:
         )
 
     class EnumManagedModel(ManagedModel):
-        """Shared preset for managed models that serialize enum values."""
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(use_enum_values=True)
+        """Managed enum-value contract inherited from the shared model owner."""
 
     class NormalizedModel(EnumManagedModel):
         """Shared preset for managed models with whitespace normalization."""
@@ -58,10 +59,7 @@ class FlextModelsBasePart01:
     class StrictManagedModel(NormalizedModel):
         """Shared preset for strict managed validation boundaries."""
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            strict=True,
-            validate_default=True,
-        )
+        model_config: ClassVar[ConfigDict] = ConfigDict(strict=True)
 
     class StrictModel(StrictManagedModel):
         """Reusable strict model preset for validated domain boundaries."""

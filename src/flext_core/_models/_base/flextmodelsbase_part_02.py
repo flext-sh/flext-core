@@ -153,10 +153,9 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
             )
 
     class ContractModel(FlextModelsBasePart01.StrictModel):
-        """Immutable strict contract preserving Enum identity until serialization."""
+        """Immutable strict contract using its inherited validated enum values."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            use_enum_values=False,
             validate_return=True,
             ser_json_timedelta=c.SERIALIZATION_ISO8601,
             ser_json_bytes=c.SERIALIZATION_BASE64,
