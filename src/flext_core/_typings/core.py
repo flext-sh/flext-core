@@ -28,7 +28,7 @@ class FlextTypesCore(FlextTypesAnnotateds):
     type FileContent = (
         FlextTypesPydantic.StrictStr
         | FlextTypesPydantic.StrictBytes
-        | Sequence[FlextTypingBase.Sequence[str]]
+        | Sequence[Sequence[str]]
     )
     type GeneralValueTypeMapping = Mapping[
         str,

@@ -26,13 +26,13 @@ class FlextModelsBasePart01:
     class EnforcedModel(FlextModelsPydantic.BaseModel):
         """Base model that enforces architectural rules on subclasses."""
 
-        # Schemas build lazily on first use (lazy-import law); the fresh-import
-        # gate builds every model so a broken annotation still fails check.
+        # Schema deferral remains an implementation gap under ADR-028 D14.
+        # Its removal must preserve lazy module imports and complete declarations.
         model_config: ClassVar[ConfigDict] = ConfigDict(
             extra=c.EXTRA_CONFIG_FORBID,
             defer_build=True,
-            use_enum_values=c.DOMAIN_MODEL_CONFIG["use_enum_values"],
-            validate_default=c.DOMAIN_MODEL_CONFIG["validate_default"],
+            use_enum_values=c.MODEL_USE_ENUM_VALUES,
+            validate_default=c.MODEL_VALIDATE_DEFAULT,
         )
 
         @classmethod
@@ -49,7 +49,7 @@ class FlextModelsBasePart01:
         )
 
     class EnumManagedModel(ManagedModel):
-        """Managed enum-value contract inherited from the shared model owner."""
+        """Managed model preserving enum members through the shared preset."""
 
     class NormalizedModel(EnumManagedModel):
         """Shared preset for managed models with whitespace normalization."""

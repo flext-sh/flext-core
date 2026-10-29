@@ -28,7 +28,6 @@ class FlextModelsExceptionParamsBase:
                 extra="forbid",
                 strict=True,
                 validate_assignment=True,
-                use_enum_values=True,
             )
         )
 

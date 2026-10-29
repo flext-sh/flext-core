@@ -16,6 +16,12 @@ class FlextConstantsValidation:
     LEVEL_PREFIX_PARTS_COUNT: ClassVar[int] = 4
 
     @unique
+    class ValidationInputKind(StrEnum):
+        """Explicit context selecting the textual document grammar."""
+
+        DOCUMENT = "document"
+
+    @unique
     class ErrorCode(StrEnum):
         """Structured error code identifiers for exception classification."""
 

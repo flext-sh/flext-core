@@ -31,7 +31,6 @@ class FlextModelsSettings:
         """Frozen settings branch model that preserves Pydantic env coercion."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            use_enum_values=True,
             str_strip_whitespace=True,
             validate_default=True,
             validate_return=True,

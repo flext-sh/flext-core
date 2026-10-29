@@ -354,7 +354,7 @@ class TestsFlextCoreServiceBootstrap:
         ],
     )
     def test_generic_port_requires_a_declared_instance_contract(
-        model: type[m.BaseModel], *, has_contract: bool
+        model: type[GenericPort[p.Tests.Counter]], *, has_contract: bool
     ) -> None:
         """Specialization, bounds and defaults validate ports without an any schema."""
         counter = u.Tests.MemoryCounter()

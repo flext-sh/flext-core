@@ -29,12 +29,15 @@ class FlextConstantsSettings:
     SERIALIZATION_ISO8601: Final = "iso8601"
     SERIALIZATION_BASE64: Final = "base64"
 
+    MODEL_USE_ENUM_VALUES: Final[bool] = False
+    MODEL_VALIDATE_DEFAULT: Final[bool] = True
+
     DOMAIN_MODEL_CONFIG: Final = MappingProxyType(
         ConfigDict(
-            use_enum_values=True,
+            use_enum_values=MODEL_USE_ENUM_VALUES,
             validate_assignment=True,
             validate_return=True,
-            validate_default=True,
+            validate_default=MODEL_VALIDATE_DEFAULT,
             str_strip_whitespace=True,
             arbitrary_types_allowed=False,
             extra="forbid",
