@@ -10,7 +10,6 @@ from collections.abc import Callable
 from typing import Annotated, ClassVar
 
 import pytest
-from typing_extensions import TypeForm
 
 from tests import m, t, tm, u
 
@@ -35,10 +34,10 @@ class TestsFlextUtilitiesPydantic:
         label: str = m.Field(min_length=1)
         echo: str = m.Field(default_factory=u.Tests.validated_label)
         model_values: t.MutableStrMapping = m.Field(
-            default_factory=u.empty(TypeForm(t.MutableStrMapping)),
+            default_factory=u.empty(t.TypeForm(t.MutableStrMapping)),
         )
         utility_values: t.MutableStrMapping = m.Field(
-            default_factory=u.empty(TypeForm(t.MutableStrMapping)),
+            default_factory=u.empty(t.TypeForm(t.MutableStrMapping)),
         )
 
     class _RequiredFieldContract(m.BaseModel):
@@ -113,11 +112,11 @@ class TestsFlextUtilitiesPydantic:
 
         model_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(t.TypeForm(t.MutableStrMapping))),
         ] = m.Field(description="Model collection with an annotation-owned factory.")
         utility_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(t.TypeForm(t.MutableStrMapping))),
         ] = m.Field(description="Utility collection with an annotation-owned factory.")
 
     @staticmethod
@@ -144,12 +143,12 @@ class TestsFlextUtilitiesPydantic:
 
         model_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(t.TypeForm(t.MutableStrMapping))),
             m.FieldInfo.from_field(default_factory=None),
         ]
         utility_values: Annotated[
             t.MutableStrMapping,
-            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
+            m.Field(default_factory=u.empty(t.TypeForm(t.MutableStrMapping))),
             m.FieldInfo.from_field(default_factory=None),
         ]
 
@@ -206,7 +205,7 @@ class TestsFlextUtilitiesPydantic:
             default_factory=list[str],
         )
         _utility_values: list[str] = m.PrivateAttr(
-            default_factory=u.empty(TypeForm(list[str])),
+            default_factory=u.empty(t.TypeForm(list[str])),
         )
         _label_copy: str = m.PrivateAttr(default_factory=u.Tests.validated_label)
         _reader: Callable[[str], str] = m.PrivateAttr(

@@ -51,8 +51,8 @@ class ExamplesFlextContainerRegistration(ExamplesFlextShared):
     _registered_resource_name: str
     _registered_missing_name: str
     _registered_bad_factory_name: str
-    _factory_calls: t.IntDict
-    _resource_calls: t.IntDict
+    _factory_calls: dict[str, int]
+    _resource_calls: dict[str, int]
 
     def _exercise_registration_and_resolution(self, container: p.Container) -> None:
         """Exercise register APIs plus get/get_typed/list/has checks."""

@@ -189,12 +189,12 @@ class FlextUtilitiesConfig:
             except OSError as exc:
                 return r[bool].fail(f"YAML write error: {exc}", exception=exc)
 
-    _EXPAND_PATTERN: ClassVar[re.Pattern[str]] = re.compile(
+    _EXPAND_PATTERN: ClassVar[t.RegexPattern] = re.compile(
         r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}",
     )
 
     @staticmethod
-    def _expand_one(match: re.Match[str], env: Mapping[str, str]) -> str:
+    def _expand_one(match: t.RegexMatch, env: Mapping[str, str]) -> str:
         """Resolve one ``${VAR}`` / ``${VAR:-default}`` match against ``env``.
 
         Returns:
@@ -217,7 +217,7 @@ class FlextUtilitiesConfig:
         """
         current = value
 
-        def _expand_match(match: re.Match[str]) -> str:
+        def _expand_match(match: t.RegexMatch) -> str:
             return FlextUtilitiesConfig._expand_one(match, env)
 
         for _ in range(c.CONFIG_EXPAND_MAX_PASSES):

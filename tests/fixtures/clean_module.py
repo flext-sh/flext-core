@@ -60,11 +60,11 @@ class TestsFlextCleanModels:
                 tags: Annotated[
                     Sequence[str],
                     m.Field(description="Tag collection."),
-                ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
+                ] = m.Field(default_factory=u.empty(t.TypeForm(Sequence[str])))
                 metadata: Annotated[
                     Mapping[str, str],
                     m.Field(description="Attribute map."),
-                ] = m.Field(default_factory=u.empty(TypeForm(Mapping[str, str])))
+                ] = m.Field(default_factory=u.empty(t.TypeForm(Mapping[str, str])))
                 aliased_value: Annotated[
                     t.Core.Tests.CentralizedUnion,
                     m.Field(description="Value declared through a t.* alias."),

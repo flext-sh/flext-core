@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from typing_extensions import TypeForm
-
 from flext_core import m, p, t
 from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesPydantic
 from flext_core._utilities._logging_context import FlextUtilitiesLoggingContextPart01
@@ -34,7 +32,7 @@ class FlextUtilitiesLoggingContextPart02(FlextUtilitiesLoggingContextPart01):
             return str(value)
         if isinstance(value, tuple):
             admitted = FlextUtilitiesBase.type_adapter(
-                TypeForm(t.JsonPayload),
+                t.TypeForm(t.JsonPayload),
                 config=m.ArbitraryTypesModel.model_config,
             ).validate_python(list(value))
             return FlextUtilitiesPydantic.normalize_to_json_value(admitted)

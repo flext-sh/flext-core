@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableMapping, MutableSequence, Sequence
 from typing import Annotated, ClassVar, override
 
-from typing_extensions import TypeForm
-
-from tests import m, p, r, s, u
+from tests import m, p, r, s, t, u
 
 
 class TestsFlextUserServiceEntity(m.BaseModel):
@@ -28,7 +26,7 @@ class TestsFlextUserQueryService(s[bool]):
 
     _users: MutableMapping[str, TestsFlextUserServiceEntity] = m.PrivateAttr(
         default_factory=u.empty(
-            TypeForm(MutableMapping[str, TestsFlextUserServiceEntity]),
+            t.TypeForm(MutableMapping[str, TestsFlextUserServiceEntity]),
         ),
     )
     _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)
@@ -84,7 +82,7 @@ class TestsFlextNotificationService(s[str]):
     """Real notification service using ``s``."""
 
     _sent_notifications: MutableSequence[str] = m.PrivateAttr(
-        default_factory=u.empty(TypeForm(MutableSequence[str])),
+        default_factory=u.empty(t.TypeForm(MutableSequence[str])),
     )
     _call_count: int = m.PrivateAttr(default_factory=lambda: 0)
     _should_fail: bool = m.PrivateAttr(default_factory=lambda: False)

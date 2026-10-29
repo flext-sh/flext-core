@@ -32,7 +32,6 @@ class FlextTypingBase(FlextTypesPydantic):
 
     type Scalar = Primitives | FlextTypesPydantic.StrictBytes | datetime
 
-    type StrDict = dict[str, str]
     type ScalarMapping = Mapping[str, Scalar]
     type MutableStrMapping = MutableMapping[str, str]
     type OptionalStrMapping = Mapping[str, str | None]
@@ -63,15 +62,11 @@ class FlextTypingBase(FlextTypesPydantic):
     # migraram. Formas imutaveis, mutaveis e genericas convivem aqui.
     type StrMapping = Mapping[str, str]
     type StrSequence = Sequence[str]
-    type StrPair = tuple[str, str]
     type SequenceOf[T] = Sequence[T]
     type MutableSequenceOf[T] = MutableSequence[T]
     type MappingKV[K, V] = Mapping[K, V]
     type MutableMappingKV[K, V] = MutableMapping[K, V]
-    type DictKV[K, V] = dict[K, V]
-    type Pair[K, V] = tuple[K, V]
     type IntMapping = Mapping[str, int]
-    type IntDict = dict[str, int]
     type MutableIntMapping = MutableMapping[str, int]
     type BoolMapping = Mapping[str, bool]
     type MutableBoolMapping = MutableMapping[str, bool]
@@ -117,20 +112,19 @@ class FlextTypingBase(FlextTypesPydantic):
     type MutableLazyImportMap = MutableMapping[str, LazyImportEntry]
     type LazyImportAliasGroups = Mapping[str, StrPairSequence]
     type LazyAliasMap = Mapping[str, tuple[str, str]]
-    type LazyAliasDict = dict[str, tuple[str, str]]
     type MutableLazyAliasMap = MutableMapping[str, tuple[str, str]]
-    type IntPair = tuple[int, int]
 
     type TypeHintSpecifier = (
         type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )
     type TypeFormSpecifier = TypeHintSpecifier | typing_extensions.TypeForm[object]
 
-    type TypeForm[T] = typing_extensions.TypeForm[T]
-    """PEP 747 ``TypeForm`` for annotations: a ``t.TypeForm[T]`` parameter takes a
-    bare type expression (``u.type_adapter(Mapping[str, int])``) without importing
-    typing_extensions outside the facades (ADR-028). A generic type alias, never
-    called: a class attribute bound to the special form is not a type form."""
+    TypeForm = typing_extensions.TypeForm
+    """PEP 747 ``TypeForm`` re-bound from its canonical owner (ADR-028, operator
+    order 2026-10-29): usable both in annotations and in call position
+    (``t.TypeForm(Mapping[str, int])``), without importing typing_extensions
+    outside the facades. A PEP 695 ``type`` alias is not callable; the owner's
+    special form is."""
 
 
 __all__: list[str] = ["FlextTypingBase"]

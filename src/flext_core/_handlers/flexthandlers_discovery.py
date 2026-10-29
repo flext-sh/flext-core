@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
-from typing_extensions import TypeForm
-
-from flext_core import p, u
+from flext_core import p, t, u
 from flext_core._handlers import FlextHandlersFactory
 
 if TYPE_CHECKING:
@@ -83,7 +81,7 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
 
             """
             handlers: MutableSequence[tuple[str, p.DecoratorConfig]] = []
-            callable_adapter = u.type_adapter(TypeForm(p.ResolvedHandlerCallable))
+            callable_adapter = u.type_adapter(t.TypeForm(p.ResolvedHandlerCallable))
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
                 if callable_adapter.validator.isinstance_python(method):
@@ -122,7 +120,7 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
             handlers: list[
                 tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]
             ] = []
-            callable_adapter = u.type_adapter(TypeForm(p.ResolvedHandlerCallable))
+            callable_adapter = u.type_adapter(t.TypeForm(p.ResolvedHandlerCallable))
             for name, func in vars(module).items():
                 if name.startswith(
                     "_"

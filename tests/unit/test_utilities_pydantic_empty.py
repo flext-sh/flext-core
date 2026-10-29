@@ -42,15 +42,15 @@ class TestsFlextUtilitiesPydanticEmpty:
 
     class _Defaults(m.ArbitraryTypesModel):
         json_mapping: t.JsonMapping = m.Field(
-            default_factory=u.empty(TypeForm(t.JsonMapping)),
+            default_factory=u.empty(t.TypeForm(t.JsonMapping)),
             description="Read-only JSON mapping contract.",
         )
         mutable_json_mapping: t.MutableJsonMapping = m.Field(
-            default_factory=u.empty(TypeForm(t.MutableJsonMapping)),
+            default_factory=u.empty(t.TypeForm(t.MutableJsonMapping)),
             description="Mutable JSON mapping contract.",
         )
         str_sequence: Sequence[str] = m.Field(
-            default_factory=u.empty(TypeForm(Sequence[str])),
+            default_factory=u.empty(t.TypeForm(Sequence[str])),
             description="Read-only string sequence contract.",
         )
         items: MutableSequence[TestsFlextUtilitiesPydanticEmpty._Item] = m.Field(
@@ -63,15 +63,15 @@ class TestsFlextUtilitiesPydanticEmpty:
             description="Mutable sequence of a forward-referenced model.",
         )
         frozen_tags: AbstractSet[str] = m.Field(
-            default_factory=u.empty(TypeForm(AbstractSet[str])),
+            default_factory=u.empty(t.TypeForm(AbstractSet[str])),
             description="Read-only set contract.",
         )
         mutable_tags: MutableSet[str] = m.Field(
-            default_factory=u.empty(TypeForm(MutableSet[str])),
+            default_factory=u.empty(t.TypeForm(MutableSet[str])),
             description="Mutable set contract.",
         )
         modules: MutableMapping[str, ModuleType] = m.Field(
-            default_factory=u.empty(TypeForm(MutableMapping[str, ModuleType])),
+            default_factory=u.empty(t.TypeForm(MutableMapping[str, ModuleType])),
             description="Mapping of an arbitrary, JSON-unrepresentable element.",
         )
 
@@ -127,22 +127,22 @@ class TestsFlextUtilitiesPydanticEmpty:
         "factory",
         [
             pytest.param(
-                u.empty(TypeForm(_AnnotatedList)),
+                u.empty(t.TypeForm(_AnnotatedList)),
                 id="annotated-list",
             ),
             pytest.param(
                 u.empty(
-                    TypeForm(_AnnotatedMapping),
+                    t.TypeForm(_AnnotatedMapping),
                 ),
                 id="annotated-mapping",
             ),
             pytest.param(
-                u.empty(TypeForm(_AnnotatedSet)),
+                u.empty(t.TypeForm(_AnnotatedSet)),
                 id="annotated-set",
             ),
-            pytest.param(u.empty(TypeForm(tuple[int, str])), id="fixed-tuple"),
-            pytest.param(u.empty(TypeForm(_NonEmptyAlias)), id="nested-alias"),
-            pytest.param(u.empty(TypeForm(_NonEmptyValues[int])), id="generic-alias"),
+            pytest.param(u.empty(t.TypeForm(tuple[int, str])), id="fixed-tuple"),
+            pytest.param(u.empty(t.TypeForm(_NonEmptyAlias)), id="nested-alias"),
+            pytest.param(u.empty(t.TypeForm(_NonEmptyValues[int])), id="generic-alias"),
         ],
     )
     def test_full_contract_rejects_invalid_empty_input(
@@ -180,7 +180,7 @@ class TestsFlextUtilitiesPydanticEmpty:
     def test_resolved_model_element_contract_preserves_native_model_config() -> None:
         """A collection adapter does not override its element model's own config."""
         factory = u.empty(
-            TypeForm(list[TestsFlextUtilitiesPydanticEmpty._Item]),
+            t.TypeForm(list[TestsFlextUtilitiesPydanticEmpty._Item]),
         )
         tm.that(factory(), eq=[])
         with pytest.raises(m.ValidationError):
@@ -215,13 +215,13 @@ class TestsFlextUtilitiesPydanticEmpty:
     @pytest.mark.parametrize(
         "factory",
         [
-            pytest.param(u.empty(TypeForm(int)), id="scalar"),
-            pytest.param(u.empty(TypeForm(str)), id="text"),
+            pytest.param(u.empty(t.TypeForm(int)), id="scalar"),
+            pytest.param(u.empty(t.TypeForm(str)), id="text"),
             pytest.param(
                 u.empty(contract_factory=lambda: TypeForm(int)),
                 id="deferred-scalar",
             ),
-            pytest.param(u.empty(TypeForm(_Item)), id="model"),
+            pytest.param(u.empty(t.TypeForm(_Item)), id="model"),
         ],
     )
     def test_non_collection_contract_fails_loud(
