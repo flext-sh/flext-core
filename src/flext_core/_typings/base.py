@@ -56,10 +56,11 @@ class FlextTypingBase(FlextTypesPydantic):
     )
     type RuntimeData = FlextTypesPydantic.JsonValue | Path | datetime
     type MutableOptionalFeatureFlagMapping = MutableMapping[str, str | bool | None]
-    # Vocabulario de mapeamento/sequencia da familia (restaurado): os
-    # pacotes da frota e os consumers ainda falam StrMapping/MappingKV/
-    # SequenceOf; a onda de alias removal quebrou os irmaos que nao
-    # migraram. Formas imutaveis, mutaveis e genericas convivem aqui.
+    # Family mapping/sequence vocabulary, restored fix-forward per ADR-028
+    # Decision 7 (amended 2026-10-29): the first removal wave deleted these
+    # while non-migrated consumers still spoke them. Managed transition — the
+    # native-annotation cutover resumes; each alias retires when its consumer
+    # census reaches zero.
     type StrMapping = Mapping[str, str]
     type StrSequence = Sequence[str]
     type SequenceOf[T] = Sequence[T]
