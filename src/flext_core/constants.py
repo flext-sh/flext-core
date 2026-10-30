@@ -27,10 +27,6 @@ from flext_core._constants import (
     FlextConstantsTimeout,
     FlextConstantsValidation,
 )
-from flext_core._constants.violations import (
-    FlextMroViolationError,
-    FlextSmellViolationError,
-)
 
 
 class FlextConstants(
@@ -59,7 +55,6 @@ class FlextConstants(
     groups (timeouts, environment, logging, status, errors, ...) each live in
     their own module and flatten onto this single namespace at import time.
     """
-
 
 
 c = FlextConstants
