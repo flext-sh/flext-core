@@ -333,7 +333,7 @@ endif
 # === SECTION: verb dispatch (managed) ===
 # Source: config:make.verbs and the canonical gate vocabulary. A verb exists
 # only in the profiles it declares (make.verbs[].profiles).
-PUBLIC_VERBS := setup upg gen mod fix fmt check tests help build clean
+PUBLIC_VERBS := setup upg gen mod fix fmt check tests tests-full help build clean release-plan release-version release-tag release-build release-publish
 SCRIPT_VERBS :=
 
 CUSTOM_MAKEFILE := $(MAKEFILE_ROOT)/custom.mk
@@ -606,6 +606,10 @@ INSTALL_RUNTIME_RECIPE = set -eu; \
 		exit 2; \
 	fi; \
 	UV_PROJECT_ENVIRONMENT="$(RUNTIME_VENV)" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $(SETUP_SYNC_ARGS); \
+	if [ -n "$(strip $(FLEXT))" ]; then \
+		if [ "$(CI)" = "Y" ]; then printf 'ERROR[setup] local editable sources are forbidden in CI\n' >&2; exit 2; fi; \
+		(cd "$(FLEXT)"; "$(RUNTIME_PYTHON)" -m pip install --no-deps --requirement "requirements-infra.txt"); \
+	fi; \
 	$(FLEXT_EDITABLE_RECIPE)
 
 # `make setup FLEXT=<path>` (operator ruling 2026-10-24, tracker memory
@@ -785,6 +789,9 @@ VERB_ARGUMENTS_check := CHECK_PHASE
 VERB_DESCRIPTION_tests := Discover the complete global pytest inventory and execute testmon-selected cases with the persistent external database.
 VERB_ARGUMENTS_tests :=
 
+VERB_DESCRIPTION_tests-full := Execute the complete applicable population once without Testmon or a preliminary incremental run, preserving the existing database untouched.
+VERB_ARGUMENTS_tests-full :=
+
 VERB_DESCRIPTION_help := Discover the declared public interface without effects.
 VERB_ARGUMENTS_help :=
 
@@ -794,13 +801,28 @@ VERB_ARGUMENTS_build :=
 VERB_DESCRIPTION_clean := Remove only declared disposable resources owned by the selected target.
 VERB_ARGUMENTS_clean :=
 
+VERB_DESCRIPTION_release-plan := Execute the declared release plan phase.
+VERB_ARGUMENTS_release-plan := PR_TITLE
+
+VERB_DESCRIPTION_release-version := Execute the declared release version phase.
+VERB_ARGUMENTS_release-version := LANE_CHECKPOINT_REF
+
+VERB_DESCRIPTION_release-tag := Execute the declared release tag phase.
+VERB_ARGUMENTS_release-tag :=
+
+VERB_DESCRIPTION_release-build := Execute the declared release build phase.
+VERB_ARGUMENTS_release-build :=
+
+VERB_DESCRIPTION_release-publish := Execute the declared release publish phase.
+VERB_ARGUMENTS_release-publish := INDEX
+
 VERB_HELP_LINE = printf '  %-16s %s\n' '$(1)' '$(VERB_DESCRIPTION_$(1))'$(if $(strip $(VERB_ARGUMENTS_$(1))),; printf '    Inputs: %s\n' '$(VERB_ARGUMENTS_$(1))')
 # OPTIONS=Y (or HELP=Y) displays every public verb's catalog contract without
 # running its prerequisites, hooks, handler or product dispatcher.
 ifeq ($(VERB_CONTRACT),)
 PROFILE_VERBS_PLAIN := gen
 PROFILE_VERBS_DISPATCH := help clean
-PROFILE_VERBS_ACTIVATED := mod fix fmt check tests build
+PROFILE_VERBS_ACTIVATED := mod fix fmt check tests tests-full build release-plan release-version release-tag release-build release-publish
 PROFILE_VERBS_INTERPRETER :=
 PROFILE_VERBS_HOOKED := $(foreach v,$(filter-out $(PROFILE_VERBS_INTERPRETER),$(PROFILE_VERBS_ACTIVATED)),$(if $(filter pre-$(v) _custom-$(v) post-$(v),$(CUSTOM_DECLARED_TARGETS)),$(v)))
 PROFILE_VERBS_DIRECT := $(filter-out $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INTERPRETER),$(PROFILE_VERBS_ACTIVATED))
@@ -1089,6 +1111,9 @@ _builtin_check_all: _builtin_require_environment
 _builtin_tests_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) workspace tests --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"
 
+_builtin_tests_full_all: _builtin_require_environment
+	@$(PROJECT_FLEXT_INFRA) workspace tests-full --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"
+
 # fmt is format-only (single-pass verb law): ruff formats Python, the
 # fmt_gates formatters run once through the checker's apply mode, and every
 # lint repair belongs to `make fix`. Every repair requires read-only native
@@ -1120,8 +1145,51 @@ _builtin-build: _builtin_build_artifacts
 _builtin-check: _builtin_check_all
 
 _builtin-tests: _builtin_tests_all
+_builtin-tests-full: _builtin_tests_full_all
 _builtin-fmt: _builtin_fmt_all
 _builtin-fix: _builtin_fix_all
 _builtin-clean: _builtin_clean_generated
 _builtin-gen: _builtin_gen_all
 _builtin-mod: _builtin_mod_apply
+# The repository's release capability elects these product operations.
+# Operator values cross the shell boundary as environment data.
+
+
+export FLEXT_RELEASE_PR_TITLE := $(value PR_TITLE)
+
+
+
+export FLEXT_RELEASE_LANE_CHECKPOINT_REF := $(value LANE_CHECKPOINT_REF)
+
+
+
+
+
+
+
+export FLEXT_RELEASE_INDEX := $(value INDEX)
+
+
+
+_builtin-release-plan: _builtin_require_environment
+	@set -eu; set --; \
+	if [ -n "$$FLEXT_RELEASE_PR_TITLE" ]; then set -- --pr-title "$$FLEXT_RELEASE_PR_TITLE"; fi; \
+	$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase plan "$$@"
+
+_builtin-release-version: _builtin_require_environment
+	@set -eu; set --; \
+	if [ -n "$$FLEXT_RELEASE_LANE_CHECKPOINT_REF" ]; then set -- --checkpoint-ref "$$FLEXT_RELEASE_LANE_CHECKPOINT_REF"; fi; \
+	$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase version --apply "$$@"
+
+_builtin-release-tag: _builtin_require_environment
+	@set -eu; set --; \
+	$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase tag --apply "$$@"
+
+_builtin-release-build: _builtin_require_environment
+	@set -eu; set --; \
+	$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase build --apply "$$@"
+
+_builtin-release-publish: _builtin_require_environment
+	@set -eu; set --; \
+	if [ "$$FLEXT_RELEASE_INDEX" = Y ]; then set -- --index; fi; \
+	$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase publish --apply "$$@"

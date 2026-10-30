@@ -1,8 +1,3 @@
-# @flext-generated: continuous
-# @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
-# @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
-# @flext-regenerate: make gen
-# @flext-rendered-by: flext-infra 0.12.0
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
@@ -20,14 +15,14 @@ classifiers = [
   "Typing :: Typed",
 ]
 dependencies = [
-    "annotated-types>=0.8.0",
-    "packaging>=26.3",
-    "pydantic>=2.14.1,<3",
-    "pydantic-core>=2.41.5",
-    "pydantic-settings>=2.15.0",
-    "pyyaml>=6.0.3",
-    "structlog>=26.1.0",
-    "typing-extensions>=4.16.0",
+  "annotated-types>=0.8.0",
+  "packaging>=26.3",
+  "pydantic>=2.14.1,<3",
+  "pydantic-core>=2.41.5",
+  "pydantic-settings>=2.15.0",
+  "pyyaml>=6.0.3",
+  "structlog>=26.1.0",
+  "typing-extensions>=4.16.0",
 ]
 description = "Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture"
 keywords = [
@@ -771,7 +766,12 @@ constraint-dependencies = [
 ]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
-override-dependencies = ["flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev", "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev", "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev", "rope @ git+https://github.com/marlon-costa-dc/rope.git@becece05c27c3189b12a06f3fbfa28ad62a98a96"]
+override-dependencies = [
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@becece05c27c3189b12a06f3fbfa28ad62a98a96",
+  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+]
 
 [[tool.uv.exclude-dependencies]]
 dependencies = ["flext-core"]

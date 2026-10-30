@@ -33,7 +33,10 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         cls: type[Self],
         *results: p.Result[ValueT],
     ) -> p.Result[Sequence[ValueT]]:
-        """Collect every payload, or fail joining all error messages.
+        """Collect payloads or retain the first failure's causal context.
+
+        A single failure retains its original message, code, data and exception.
+        Multiple failures retain that first context alongside every error message.
 
         Args:
             *results: The results to combine.
@@ -44,13 +47,23 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         """
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
+        first_failure: p.Result[ValueT] | None = None
         for result in results:
             if result.success:
                 successes.append(result.value)
             else:
                 errors.append(cls.require_error(result))
-        if errors:
-            return cls._failure("; ".join(errors))
+                if first_failure is None:
+                    first_failure = result
+        if first_failure is not None:
+            if len(errors) == 1:
+                return cls._copy_failure(first_failure)
+            return cls._failure(
+                "; ".join(errors),
+                error_code=first_failure.error_code,
+                error_data=first_failure.error_data,
+                exception=first_failure.exception,
+            )
         payload: Sequence[ValueT] = successes
         return cls._create_success(payload)
 
@@ -61,17 +74,21 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         func: Callable[[V], p.Result[U]],
         *,
         fail_fast: bool = True,
+        exceptions: tuple[type[Exception], ...] = c.CATCHABLE_RUNTIME_EXCEPTIONS,
     ) -> p.Result[Sequence[U]]:
         """Map a result-returning function over every item.
 
-        With ``fail_fast`` the first failure (or catchable exception) returns
-        immediately; otherwise every item runs and all error messages
-        accumulate into one failure.
+        With ``fail_fast`` the first failure or selected exception returns
+        immediately; otherwise every item runs and failures accumulate. The
+        default exception policy remains the canonical runtime family; an
+        operation boundary may explicitly select additional ``Exception`` types.
+        Process cancellation and other ``BaseException`` signals propagate.
 
         Args:
             items: The input sequence mapped over.
             func: The result-returning function applied to each item.
             fail_fast: Whether to stop at the first failure.
+            exceptions: Exception types converted into failures at this boundary.
 
         Returns:
             The resulting ``p.Result[Sequence[U]]``.
@@ -82,7 +99,9 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
             for item in items:
                 try:
                     result = func(item)
-                except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+                except exceptions as exc:
+                    if isinstance(exc, c.EXC_CANCELLATION):
+                        raise
                     return cls._failure(str(exc), exception=exc)
                 if result.failure:
                     return cls._copy_failure(result)
@@ -93,7 +112,9 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         for item in items:
             try:
                 all_results.append(cls.from_result(func(item)))
-            except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+            except exceptions as exc:
+                if isinstance(exc, c.EXC_CANCELLATION):
+                    raise
                 all_results.append(
                     cls._failure(str(exc), exception=exc),
                 )
@@ -149,11 +170,19 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
     def safe[U, **PFunc](
         cls: type[Self],
         func: Callable[PFunc, U],
+        *,
+        exceptions: tuple[type[Exception], ...] = c.CATCHABLE_RUNTIME_EXCEPTIONS,
     ) -> Callable[PFunc, p.Result[U]]:
-        """Wrap a callable so catchable runtime exceptions become failures.
+        """Convert explicitly selected runtime exceptions into causal failures.
+
+        The default policy remains the canonical runtime family. A composition
+        boundary may opt into additional ``Exception`` types without changing
+        other consumers. Process cancellation and other ``BaseException``
+        signals propagate; ordinary returned values are never failure signals.
 
         Args:
             func: The callable to guard.
+            exceptions: Exception types converted into failures at this boundary.
 
         Returns:
             The resulting ``Callable[PFunc, p.Result[U]]``.
@@ -163,7 +192,9 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
             try:
                 return cls._create_success(func(*args, **kwargs))
-            except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+            except exceptions as exc:
+                if isinstance(exc, c.EXC_CANCELLATION):
+                    raise
                 return cls._failure(str(exc), exception=exc)
 
         return wrapper

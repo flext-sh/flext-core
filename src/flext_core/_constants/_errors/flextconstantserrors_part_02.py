@@ -6,11 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from concurrent.futures import CancelledError
 from typing import ClassVar
 
 
 class FlextConstantsErrorsRuntimeExceptions:
-    """Runtime and IO exception families for boundary catches."""
+    """Runtime, IO and cancellation families for explicit boundary policies.
+
+    Cancellation remains a control signal even when an operation selects every
+    ordinary exception for conversion into a Result failure.
+    """
 
     _ARITH: ClassVar[tuple[type[Exception], ...]] = (ArithmeticError,)
     _ATTR: ClassVar[tuple[type[Exception], ...]] = (AttributeError,)
@@ -22,6 +27,9 @@ class FlextConstantsErrorsRuntimeExceptions:
     _TYPE: ClassVar[tuple[type[Exception], ...]] = (TypeError,)
     _UNICODE_DECODE: ClassVar[tuple[type[Exception], ...]] = (UnicodeDecodeError,)
     _VALUE: ClassVar[tuple[type[Exception], ...]] = (ValueError,)
+
+    EXC_CANCELLATION: ClassVar[tuple[type[Exception], ...]] = (CancelledError,)
+    """Ordinary-exception cancellation signals that must propagate unchanged."""
 
     EXC_TYPE_VALIDATION: ClassVar[tuple[type[Exception], ...]] = _TYPE + _VALUE
     """Minimal type-validation catch for value-coercion boundaries."""
