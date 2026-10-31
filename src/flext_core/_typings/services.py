@@ -37,8 +37,12 @@ class FlextTypesServices:
         | datetime
     )
 
+    # Python inputs keep their native types until the target validates them,
+    # so every strict value form (scalar tuples, configuration mappings) is
+    # an admissible input, not only JSON payloads.
     type ValidationInput[TModel] = (
         FlextTypesServices.JsonPayload
+        | FlextTypesServices.StrictValue
         | bytes
         | bytearray
         | FlextTypesServices.ModelInput[
