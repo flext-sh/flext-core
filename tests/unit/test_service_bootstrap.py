@@ -154,7 +154,7 @@ class TestsFlextCoreServiceBootstrap:
         """The runtime uses the container's context and command bus."""
         declared = self.ConcreteTestService.runtime_bootstrap_options().settings_type
 
-        runtime = u.build_service_runtime(self.ConcreteTestService())
+        runtime = FlextContainer.build_service_runtime(self.ConcreteTestService())
 
         declared = tm.not_none(declared)
         tm.ok(runtime.settings is declared.fetch_global())
@@ -172,7 +172,7 @@ class TestsFlextCoreServiceBootstrap:
         context = FlextContext.create()
         dispatcher = source.dispatcher().unwrap()
         provider = FlextSettings.fetch_global().clone(log_level=c.LogLevel.ERROR)
-        initial = u.build_service_runtime(
+        initial = FlextContainer.build_service_runtime(
             m.RuntimeBootstrapOptions(
                 settings=provider,
                 container=source,
@@ -185,7 +185,7 @@ class TestsFlextCoreServiceBootstrap:
         resolved = u.resolve_logging_settings(
             runtime_settings=initial.settings, debug=True
         )
-        rebound = u.build_service_runtime(
+        rebound = FlextContainer.build_service_runtime(
             m.RuntimeBootstrapOptions(
                 settings=resolved,
                 container=initial.container,

@@ -18,19 +18,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
-from flext_core import (
-    FlextContext,
-    FlextDispatcher,
-    FlextSettings,
-    FlextUtilitiesLogging,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core import FlextContext, FlextDispatcher, FlextSettings, c, e, m, p, r, t, u
 from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
@@ -115,25 +103,6 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def context(self) -> p.Context:
         """Execution context bound to this container."""
         return self._context
-
-    @override
-    def logger(
-        self,
-        module_name: str,
-        *,
-        service_name: str | None = None,
-        service_version: str | None = None,
-        correlation_id: str | None = None,
-    ) -> p.Logger:
-        """Create a module logger for the specified runtime scope.
-
-        Returns:
-            The resulting ``p.Logger``.
-
-        """
-        _ = service_name, service_version, correlation_id
-        logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
-        return logger
 
     @staticmethod
     def _matches_service_type[T: p.RegisterableService](

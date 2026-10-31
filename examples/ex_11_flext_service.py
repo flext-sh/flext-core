@@ -9,7 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Annotated, override
 
-from examples import ExamplesFlextShared, m, p, r, s, t, u
+from examples import ExamplesFlextShared, m, p, r, s, t
+from flext_core import FlextContainer
 
 
 class ExamplesFlextEchoService(s[str]):
@@ -94,7 +95,7 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         self.section("service_core_api")
         execute_result = service.execute()
         failed_validation = validation_failure.validate_business_rules()
-        service_runtime = u.build_service_runtime(service)
+        service_runtime = FlextContainer.build_service_runtime(service)
         self.audit_check("execute.unwrap", execute_result.unwrap_or(""))
         self.audit_check(
             "execute.unwrap.matches",
@@ -120,8 +121,8 @@ class _ExampleServiceGolden(ExamplesFlextShared):
         self.audit_check("valid.override", validation_failure.valid())
 
         self.section("runtime_creation_and_serialization")
-        runtime_default = u.build_service_runtime(service)
-        runtime_with_override = u.build_service_runtime(
+        runtime_default = FlextContainer.build_service_runtime(service)
+        runtime_with_override = FlextContainer.build_service_runtime(
             m.RuntimeBootstrapOptions(context=runtime_default.context),
         )
         info = service.service_info()

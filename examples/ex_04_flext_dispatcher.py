@@ -9,7 +9,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import override
 
-from examples import ExamplesFlextShared, m, p, r, t, u
+from examples import ExamplesFlextShared, m, p, r, t
+from flext_core import FlextDispatcher
 
 
 class ExamplesFlextCreateUserHandler:
@@ -138,7 +139,7 @@ class Ex04DispatchDsl:
             The resulting ``p.Dispatcher``.
 
         """
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         dispatcher.register_handler(ExamplesFlextCreateUserHandler()).unwrap()
         dispatcher.register_handler(_GetUserHandler()).unwrap()
         dispatcher.register_handler(_DeleteUserHandler()).unwrap()
@@ -166,7 +167,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
     @override
     def exercise(self) -> None:
         """Exercise handler registration, dispatching, auto-discovery, and events."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
 
         self._exercise_register_and_dispatch(dispatcher)
         self._exercise_auto_discovery(dispatcher)
@@ -227,7 +228,7 @@ class _Ex04DispatchGolden(ExamplesFlextShared):
         """Exercise one phase of the dispatcher example."""
         self.section("error_cases")
         no_route_registration = dispatcher.register_handler(_no_route_handler)
-        no_handler = u.build_dispatcher().dispatch(
+        no_handler = FlextDispatcher().dispatch(
             m.Examples.GetUser(username="missing"),
         )
         failing_registration = dispatcher.register_handler(_FailingDeleteHandler())

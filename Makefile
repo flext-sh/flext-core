@@ -597,14 +597,33 @@ GATE_SCOPE := self
 # uv.lock without re-resolving or rewriting it, so manifest drift never blocks
 # provisioning. Check reports drift through `uv lock --check`; only `make upg`
 # writes the lock.
-INSTALL_RUNTIME_RECIPE = set -eu; \
-	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
-	desired_python="$$($(MISE) -C "$(RUNTIME_ROOT)" which python)"; \
+RESOLVE_DESIRED_PYTHON = desired_python="$$($(MISE) -C "$(RUNTIME_ROOT)" which python)"; \
 	if [ "$${OS:-}" = Windows_NT ]; then desired_python="$$(cygpath --unix "$$desired_python")"; fi; \
 	if [ ! -x "$$desired_python" ]; then \
 		printf 'ERROR[setup] Mise-resolved Python is not executable: %s\n' "$$desired_python" >&2; \
 		exit 2; \
-	fi; \
+	fi
+# `uv sync` keeps an environment whose interpreter still satisfies the request,
+# so one created by an older uv (or another Python) survives every setup. Setup
+# owns the runtime environment: it compares the creator identity uv recorded
+# (make.environment_identity) with the Mise-resolved uv and Python and, on any
+# divergence, recreates it through native `uv venv --clear` before the frozen
+# installation. A current environment is left untouched.
+RECREATE_DIVERGENT_RUNTIME = identity_file="$(RUNTIME_VENV)/pyvenv.cfg"; \
+	if [ -f "$$identity_file" ]; then \
+		declared_uv="$$($(UV) self version --short)"; \
+		declared_python="$$("$$desired_python" --version)"; declared_python="$${declared_python\#Python }"; \
+		created_uv="$$(sed -n 's/^uv[[:space:]]*=[[:space:]]*//p' "$$identity_file")"; \
+		created_python="$$(sed -n 's/^version_info[[:space:]]*=[[:space:]]*//p' "$$identity_file")"; \
+		if [ "$$created_uv" != "$$declared_uv" ] || [ "$$created_python" != "$$declared_python" ]; then \
+			printf 'setup: recreating %s: created by uv %s / Python %s, declared uv %s / Python %s\n' "$(RUNTIME_VENV)" "$${created_uv:-<none>}" "$${created_python:-<none>}" "$$declared_uv" "$$declared_python"; \
+			$(UV) venv --clear --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads "$(RUNTIME_VENV)"; \
+		fi; \
+	fi
+INSTALL_RUNTIME_RECIPE = set -eu; \
+	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
+	$(RESOLVE_DESIRED_PYTHON); \
+	$(RECREATE_DIVERGENT_RUNTIME); \
 	sync_args="$(SETUP_SYNC_ARGS)"; \
 	UV_PROJECT_ENVIRONMENT="$(RUNTIME_VENV)" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $$sync_args; \
 	if [ -n "$(strip $(FLEXT))" ]; then \
@@ -877,9 +896,10 @@ setup: _builtin_require_workspace
 	@$(if $(filter Y,$(CI)),:,direnv allow "$(PROJECT_ROOT)")
 endif
 
-# Upgrade only resolves dependencies and writes locks. Provisioning belongs
-# to setup and projections belong to gen. Attached members delegate the same
-# operation to their physical workspace owner before resolving anything.
+# Upgrade resolves dependencies and writes locks; projections belong to gen.
+# Its Python half runs only over the fresh lock it installed (_upg_lifecycle).
+# Attached members delegate the same operation to their physical workspace
+# owner before resolving anything.
 ifeq ($(PROJECT_ROOT),$(RUNTIME_ROOT))
 upg: _builtin_require_workspace _builtin_require_github_credential
 	+@$(SELF_MAKE) _upg_lifecycle
@@ -1077,8 +1097,14 @@ _builtin_require_environment: _builtin_require_interpreter
 # private installer or alternative source-selection pipeline.
 # End SECTION: setup environment
 
-# Upgrade consumes the native declarations without installing packages,
-# generating projections, or auditing the running environment.
+# Upgrade always cures, even when the environment or locks are broken
+# (tracker memories operator-ruling-2026-10-02-repair-never-deadlocks and
+# operator-ruling-2026-10-09-setup-always-upg-cures). The flext_infra executor
+# imports its FLEXT dependencies from this environment, so a stale lock (or a
+# project whose own source needs newer suppliers) cannot run it. Native uv
+# therefore writes the upgraded lock first, with no Python of ours, and the
+# setup installation provisions exactly that lock; only then does the executor
+# run its verified UV and Mise half. It generates no projection.
 .PHONY: _upg_lifecycle
 _upg_lifecycle:
 	+@set -eu; \
@@ -1096,6 +1122,9 @@ _upg_lifecycle:
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac; \
+	$(RESOLVE_DESIRED_PYTHON); \
+	$(UV) lock --upgrade --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads; \
+	$(INSTALL_RUNTIME_RECIPE); \
 	$(PROJECT_FLEXT_INFRA) deps upgrade-lock --repository-root "$(RUNTIME_ROOT)"; \
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" post-upg "*) $(SELF_MAKE) post-upg ;; \
