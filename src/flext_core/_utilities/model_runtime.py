@@ -1,4 +1,4 @@
-"""Runtime DI builders + ``build_service_runtime`` orchestration.
+"""Runtime registry and settings-election utilities.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from types import MethodType
 
-import flext_core
-from flext_core import FlextModels, c, m, p, r, t
+from flext_core import FlextModels, c, m, p, r
 from flext_core._utilities import FlextUtilitiesModel, FlextUtilitiesModelOptions
 
 
@@ -17,71 +16,12 @@ class FlextUtilitiesModelRuntime(
     FlextUtilitiesModelOptions,
     FlextModels,
 ):
-    """Runtime DSL: dispatcher, registry, and service-runtime construction.
+    """Runtime DSL: registry comparison, plugin keys and settings election.
 
-    Namespace enforcement composes independently of the service-runtime builders.
+    Dispatcher, registry and service-runtime construction belong to their
+    owner classes (``FlextDispatcher``, ``FlextRegistry.create``,
+    ``FlextContainer.build_service_runtime``), never to this layer.
     """
-
-    @classmethod
-    def build_dispatcher(cls) -> p.Dispatcher:
-        """Materialize the canonical dispatcher implementation behind ``p.Dispatcher``.
-
-        Returns:
-            The resulting ``p.Dispatcher``.
-
-        Raises:
-            TypeError: If Resolved dispatcher implementation does not satisfy
-                p.Dispatcher.
-
-        """
-        # The dispatcher depends on this utility layer: its class is read from
-        # the ``flext_core`` lazy export owner at call time, never at import.
-        dispatcher_candidate = flext_core.FlextDispatcher()
-        if not isinstance(dispatcher_candidate, p.Dispatcher):
-            msg = "Resolved dispatcher implementation does not satisfy p.Dispatcher"
-            raise TypeError(msg)
-        return dispatcher_candidate
-
-    @classmethod
-    def build_registry(
-        cls,
-        dispatcher: p.Dispatcher | None = None,
-        *,
-        discovery_module: t.RegistryModule | None = None,
-    ) -> p.Registry:
-        """Materialize the canonical registry implementation behind ``p.Registry``.
-
-        Returns:
-            The resulting ``p.Registry``.
-
-        Raises:
-            TypeError: If Resolved registry implementation does not satisfy p.Registry.
-
-        """
-        elected_dispatcher = (
-            dispatcher if dispatcher is not None else cls.build_dispatcher()
-        )
-        registry_candidate = flext_core.FlextRegistry(
-            registry_runtime=cls.build_service_runtime(
-                m.RuntimeBootstrapOptions(
-                    dispatcher=elected_dispatcher,
-                )
-            ),
-        )
-        if not isinstance(registry_candidate, p.Registry):
-            msg = "Resolved registry implementation does not satisfy p.Registry"
-            raise TypeError(msg)
-        if discovery_module is not None:
-            discovery = flext_core.FlextHandlers.Discovery
-            elected_dispatcher.register_handlers(
-                tuple(
-                    m.HandlerRegistration(
-                        handler=handler, message_type=metadata.command
-                    )
-                    for _, handler, metadata in discovery.scan_module(discovery_module)
-                )
-            ).unwrap()
-        return registry_candidate
 
     @staticmethod
     def registry_same_value(
@@ -195,11 +135,16 @@ class FlextUtilitiesModelRuntime(
         )
 
     @classmethod
-    def _resolve_runtime_settings(
+    def resolve_runtime_settings(
         cls,
         runtime_options: p.RuntimeBootstrapOptions,
     ) -> p.Settings:
-        """Return the injected provider or load the declared settings class."""
+        """Return the injected provider or load the declared settings class.
+
+        Returns:
+            The elected settings provider.
+
+        """
         settings = runtime_options.settings
         overrides = runtime_options.settings_overrides
         if settings is not None:
@@ -208,49 +153,6 @@ class FlextUtilitiesModelRuntime(
             runtime_options.settings_type or FlextUtilitiesModel.settings_base()
         )
         return settings_type.fetch_global(overrides=overrides)
-
-    @classmethod
-    def build_service_runtime(
-        cls,
-        source: p.RuntimeBootstrapProvider
-        | p.RuntimeBootstrapOptions
-        | p.MixinsInfrastructure
-        | None = None,
-    ) -> p.ServiceRuntime:
-        """Materialize settings, context, container and dispatcher for one component.
-
-        The container scopes the injected container, or the shared container,
-        preserving public DI registrations. Its settings are the runtime's
-        actual elected provider. A dispatcher the options do not inject is the
-        container's command bus; failing to resolve it raises with its cause.
-
-        Returns:
-            The resulting ``p.ServiceRuntime``.
-
-        """
-        options = cls.resolve_runtime_options(source)
-        settings = cls._resolve_runtime_settings(options)
-        context = (
-            options.context
-            if options.context is not None
-            else FlextUtilitiesModel.context_type().create()
-        )
-        source_container = options.container
-        if source_container is None:
-            source_container = FlextUtilitiesModel.container_type().shared()
-        container = source_container.scope(
-            registration=m.ServiceRegistrationSpec(
-                settings=settings,
-                context=context,
-                dispatcher=options.dispatcher,
-            ),
-        )
-        return m.ServiceRuntime(
-            settings=container.settings,
-            context=container.context,
-            container=container,
-            dispatcher=container.dispatcher().unwrap(),
-        )
 
 
 __all__: list[str] = ["FlextUtilitiesModelRuntime"]

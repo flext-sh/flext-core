@@ -13,7 +13,6 @@ from typing import overload
 
 from pydantic import TypeAdapter
 
-import flext_core
 from flext_core import FlextExceptions, FlextResult, FlextSettings, c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesArgs,
@@ -68,34 +67,6 @@ class FlextUtilitiesModel:
         """
         settings_cls: p.SettingsType = FlextSettings
         return settings_cls
-
-    @staticmethod
-    def container_type() -> p.ContainerType:
-        """Resolve ``FlextContainer`` through the package's lazy export.
-
-        The container depends on this utility layer, so the class is read from
-        the ``flext_core`` lazy export owner at call time, never at import.
-
-        Returns:
-            The resulting ``p.ContainerType``.
-
-        """
-        container_cls: p.ContainerType = flext_core.FlextContainer
-        return container_cls
-
-    @staticmethod
-    def context_type() -> p.ContextType:
-        """Resolve ``FlextContext`` through the package's lazy export.
-
-        The context depends on this utility layer, so the class is read from
-        the ``flext_core`` lazy export owner at call time, never at import.
-
-        Returns:
-            The resulting ``p.ContextType``.
-
-        """
-        context_cls: p.ContextType = flext_core.FlextContext
-        return context_cls
 
     @overload
     @staticmethod

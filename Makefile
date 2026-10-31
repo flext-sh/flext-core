@@ -1168,9 +1168,10 @@ _builtin_gen_scope_all: _builtin_require_interpreter
 	flock --exclusive --wait 0 9 || { echo "gen-scope: another codegen generation holds the tree ($(GEN_LOCK_FILE))" >&2; exit 1; }; \
 	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(basename $(PROJECT_ROOT)/.reports/codegen/gen.pstats)-scope.pstats" timeout --signal=TERM --kill-after=$(GEN_KILL_RESERVE_SECONDS)s $(GEN_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what "$(strip $(WHAT))" --scope "$$scope"$$module_args
 
-# Structural rewrites use the target's existing semantic operation.
+# Structural rewrites use the target's existing semantic operation; the
+# operation performs the transformation directly (no apply mode, no rule selector).
 _builtin_mod_apply: _builtin_require_environment
-	@FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/refactor/mod.pstats" $(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)" --apply
+	@FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/refactor/mod.pstats" $(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)"
 
 # Public operations invoke only their own canonical implementation.
 _builtin-build: _builtin_build_artifacts

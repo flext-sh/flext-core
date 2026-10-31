@@ -20,6 +20,7 @@ from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, ove
 
 from flext_core import (
     FlextContext,
+    FlextDispatcher,
     FlextSettings,
     FlextUtilitiesLogging,
     c,
@@ -426,9 +427,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 c.ServiceName.COMMAND_BUS,
                 lambda: m.ServiceRegistration(
                     name=c.ServiceName.COMMAND_BUS,
-                    service=dispatcher
-                    if dispatcher is not None
-                    else u.build_dispatcher(),
+                    service=dispatcher if dispatcher is not None else FlextDispatcher(),
                 ),
             ),
         )
@@ -544,6 +543,45 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 u.type_name(result.value),
                 result_type=r[p.Dispatcher],
             ),
+        )
+
+    @classmethod
+    def build_service_runtime(
+        cls,
+        source: p.RuntimeBootstrapProvider
+        | p.RuntimeBootstrapOptions
+        | p.MixinsInfrastructure
+        | None = None,
+    ) -> p.ServiceRuntime:
+        """Materialize settings, context, container and dispatcher for one component.
+
+        The container scopes the injected container, or the shared container,
+        preserving public DI registrations. Its settings are the runtime's
+        actual elected provider. A dispatcher the options do not inject is the
+        container's command bus; failing to resolve it raises with its cause.
+
+        Returns:
+            The component's service runtime.
+
+        """
+        options = u.resolve_runtime_options(source)
+        settings = u.resolve_runtime_settings(options)
+        context = (
+            options.context if options.context is not None else FlextContext.create()
+        )
+        source_container = options.container or cls.shared()
+        container = source_container.scope(
+            registration=m.ServiceRegistrationSpec(
+                settings=settings,
+                context=context,
+                dispatcher=options.dispatcher,
+            ),
+        )
+        return m.ServiceRuntime(
+            settings=container.settings,
+            context=container.context,
+            container=container,
+            dispatcher=container.dispatcher().unwrap(),
         )
 
     @classmethod

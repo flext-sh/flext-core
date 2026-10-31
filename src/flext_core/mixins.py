@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from contextlib import contextmanager
 
-from flext_core import FlextContext, c, m, p, t, u
+from flext_core import FlextContainer, FlextContext, c, m, p, t, u
 
 
 class FlextMixins(m.ServiceState):
@@ -113,7 +113,7 @@ class FlextMixins(m.ServiceState):
 
         """
         if self._runtime is None:
-            self._runtime = u.build_service_runtime(self)
+            self._runtime = FlextContainer.build_service_runtime(self)
         return self._runtime
 
 
