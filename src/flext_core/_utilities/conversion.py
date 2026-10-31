@@ -11,8 +11,9 @@ from __future__ import annotations
 import math
 from collections.abc import Sequence
 
-from flext_core import c, m, t
+from flext_core import c, t
 from flext_core._utilities import (
+    FlextUtilitiesModel,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
 )
@@ -74,15 +75,15 @@ class FlextUtilitiesConversion:
             return default if default is not None else ""
         if isinstance(value, str):
             return value
-        adapter = FlextUtilitiesTypingAdapterScalars.float_adapter()
-        try:
-            float_value = adapter.validate_python(value)
-        except m.ValidationError:
+        float_result = FlextUtilitiesModel.validate_value(
+            FlextUtilitiesTypingAdapterScalars.float_adapter(), value
+        )
+        if float_result.failure:
             return str(value)
-        else:
-            if float_value.is_integer():
-                return str(int(float_value))
-            return f"{float_value:.2f}"
+        float_value = float_result.value
+        if float_value.is_integer():
+            return str(int(float_value))
+        return f"{float_value:.2f}"
 
     @staticmethod
     def to_str_list(
@@ -101,12 +102,12 @@ class FlextUtilitiesConversion:
         value_class = value.__class__
         if value_class is str:
             return [str(value)]
-        list_adapter = FlextUtilitiesTypingAdapterJson.strict_json_list_adapter()
-        try:
-            list_value = list_adapter.validate_python(value)
-            return [str(item) for item in list_value]
-        except m.ValidationError:
+        list_result = FlextUtilitiesModel.validate_value(
+            FlextUtilitiesTypingAdapterJson.strict_json_list_adapter(), value
+        )
+        if list_result.failure:
             return [str(value)]
+        return [str(item) for item in list_result.value]
 
     @staticmethod
     def to_int(value: t.JsonPayload | t.Scalar | None, *, default: int = 0) -> int:

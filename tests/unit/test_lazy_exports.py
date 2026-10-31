@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 import shutil
 import sys
 from collections.abc import Callable, Iterator
@@ -16,6 +15,7 @@ from typing import cast
 
 import pytest
 
+import flext_core
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
 from tests import t, tm, u
 
@@ -90,7 +90,7 @@ class TestsFlextCoreLazyExports:
     ) -> None:
         # Arrange / Act
         """Test thin facade modules export facade and short alias."""
-        module = importlib.import_module(module_name)
+        module = lazy.load(module_name)
 
         # Assert — public contract: facade + alias resolve to the same object
         facade = getattr(module, facade_name)
@@ -101,7 +101,7 @@ class TestsFlextCoreLazyExports:
     def test_root_package_resolves_primary_facades_via_aliases() -> None:
         # Arrange / Act
         """Test root package resolves primary facades via aliases."""
-        package = importlib.import_module("flext_core")
+        package = flext_core
 
         # Assert — each short alias resolves to its full facade
         tm.ok(package.c is package.FlextConstants)
@@ -515,9 +515,9 @@ class TestsFlextCoreLazyExportCaching:
     ) -> None:
         # Act — first access imports the child, whose body resolves ``u`` again
         """Test get serves but never caches symbol of initializing module."""
-        package = importlib.import_module(rebinding_package)
+        package = lazy.load(rebinding_package)
         first_access = package.u
-        child = importlib.import_module(f"{rebinding_package}.child")
+        child = lazy.load(f"{rebinding_package}.child")
 
         # Assert — the mid-body resolution saw the current binding, uncached;
         # the completed module's final binding is what gets cached.
@@ -539,8 +539,8 @@ class TestsFlextCoreLazyExportCaching:
     ) -> None:
         # Arrange — import the child completely before any lazy resolution
         """Test get caches symbol of fully imported module."""
-        child = importlib.import_module(f"{rebinding_package}.child")
-        package = importlib.import_module(rebinding_package)
+        child = lazy.load(f"{rebinding_package}.child")
+        package = lazy.load(rebinding_package)
 
         # Act
         resolved = package.u

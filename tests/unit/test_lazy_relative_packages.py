@@ -6,12 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from types import ModuleType
 
 import pytest
 
-from flext_core.lazy import merge_lazy_imports, normalize_lazy_imports
+from flext_core.lazy import lazy, merge_lazy_imports, normalize_lazy_imports
 from tests import tm
 
 
@@ -38,12 +37,12 @@ class TestsFlextCoreLazyRelativePackages:
         target = normalized["module"]
         tm.that(target, is_=str)
         if isinstance(target, str):
-            absolute_module = importlib.import_module(absolute)
+            absolute_module = lazy.load(absolute)
 
             def resolves_absolute(module: ModuleType) -> bool:
                 return module is absolute_module
 
-            tm.that(importlib.import_module(target), where=resolves_absolute)
+            tm.that(lazy.load(target), where=resolves_absolute)
 
     @staticmethod
     def test_symbol_target_resolves_parent_package() -> None:
@@ -52,8 +51,8 @@ class TestsFlextCoreLazyRelativePackages:
         target = normalized["Node"]
         tm.that(target, is_=tuple)
         module_name, attribute = target[0], target[1]
-        module = importlib.import_module(module_name)
-        expected = importlib.import_module("xml.dom")
+        module = lazy.load(module_name)
+        expected = lazy.load("xml.dom")
         tm.that(getattr(module, attribute) is expected.Node, truth=True)
 
     @staticmethod

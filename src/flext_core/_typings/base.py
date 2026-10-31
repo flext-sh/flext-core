@@ -109,14 +109,13 @@ class FlextTypingBase(FlextTypesPydantic):
     type StrPairSequencePairSequence = Sequence[StrPairSequencePair]
     type LazyImportEntry = str | tuple[str, str]
     type LazyImportMap = Mapping[str, LazyImportEntry]
-    type LazyImportDict = dict[str, LazyImportEntry]
     type MutableLazyImportMap = MutableMapping[str, LazyImportEntry]
     type LazyImportAliasGroups = Mapping[str, StrPairSequence]
     type LazyAliasMap = Mapping[str, tuple[str, str]]
     type MutableLazyAliasMap = MutableMapping[str, tuple[str, str]]
 
     type TypeHintSpecifier = (
-        type[object] | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
+        type | str | UnionType | GenericAlias | TypeAliasType | ForwardRef
     )
     type TypeFormSpecifier = TypeHintSpecifier | typing_extensions.TypeForm[object]
 

@@ -6,9 +6,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from importlib import import_module
 from types import MethodType
 
+import flext_core
 from flext_core import FlextModels, c, m, p, r, t
 from flext_core._utilities import FlextUtilitiesModel, FlextUtilitiesModelOptions
 
@@ -34,8 +34,9 @@ class FlextUtilitiesModelRuntime(
                 p.Dispatcher.
 
         """
-        dispatcher_module = import_module("flext_core.dispatcher")
-        dispatcher_candidate = dispatcher_module.FlextDispatcher()
+        # The dispatcher depends on this utility layer: its class is read from
+        # the ``flext_core`` lazy export owner at call time, never at import.
+        dispatcher_candidate = flext_core.FlextDispatcher()
         if not isinstance(dispatcher_candidate, p.Dispatcher):
             msg = "Resolved dispatcher implementation does not satisfy p.Dispatcher"
             raise TypeError(msg)
@@ -57,11 +58,10 @@ class FlextUtilitiesModelRuntime(
             TypeError: If Resolved registry implementation does not satisfy p.Registry.
 
         """
-        registry_module = import_module("flext_core.registry")
         elected_dispatcher = (
             dispatcher if dispatcher is not None else cls.build_dispatcher()
         )
-        registry_candidate = registry_module.FlextRegistry(
+        registry_candidate = flext_core.FlextRegistry(
             registry_runtime=cls.build_service_runtime(
                 m.RuntimeBootstrapOptions(
                     dispatcher=elected_dispatcher,
@@ -72,15 +72,13 @@ class FlextUtilitiesModelRuntime(
             msg = "Resolved registry implementation does not satisfy p.Registry"
             raise TypeError(msg)
         if discovery_module is not None:
-            handlers_module = import_module("flext_core.handlers")
+            discovery = flext_core.FlextHandlers.Discovery
             elected_dispatcher.register_handlers(
                 tuple(
                     m.HandlerRegistration(
                         handler=handler, message_type=metadata.command
                     )
-                    for _, handler, metadata in handlers_module.h.Discovery.scan_module(
-                        discovery_module
-                    )
+                    for _, handler, metadata in discovery.scan_module(discovery_module)
                 )
             ).unwrap()
         return registry_candidate

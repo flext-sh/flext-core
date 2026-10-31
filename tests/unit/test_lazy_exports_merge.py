@@ -183,7 +183,7 @@ class TestsFlextCoreLazyExportsMerge:
     def test_normalize_map_resolves_relative_and_preserves_absolute(
         module_path: str,
         raw: t.LazyImportMap,
-        expected: t.LazyImportDict,
+        expected: t.LazyImportMap,
     ) -> None:
         """Relative targets bind to the module; absolute targets pass through."""
         tm.that(normalize_lazy_imports(module_path, raw), eq=expected)

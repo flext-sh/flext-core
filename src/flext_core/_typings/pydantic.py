@@ -30,6 +30,7 @@ from typing import (
 
 import pydantic
 import pydantic_core
+import typing_extensions
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
 
@@ -188,8 +189,10 @@ class FlextTypesPydantic:
     Tag = pydantic.Tag
     ValidateAs = pydantic.ValidateAs
     WithJsonSchema = pydantic.WithJsonSchema
-    SkipJsonSchema = pydantic_json_schema.SkipJsonSchema
-    SerializeAsAny = pydantic.SerializeAsAny
+    # PEP 695 generic aliases (as ``Port`` below): a class-attribute re-binding
+    # is never a type alias for mypy, which then reads every use as ``Any``.
+    type SkipJsonSchema[X] = pydantic_json_schema.SkipJsonSchema[X]
+    type SerializeAsAny[X] = pydantic.SerializeAsAny[X]
     AllowInfNan = pydantic.AllowInfNan
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
@@ -256,7 +259,8 @@ class FlextTypesPydantic:
                 The original input or its source-decoded representation.
 
             """
-            context = info.context
+            # contexto vem do pydantic-core como Any: tipado uma vez na fronteira
+            context: Mapping[str, p.GuardInput] | None = info.context
             return (
                 decoder.validate_python(value, strict=True)
                 if isinstance(context, Mapping)
@@ -273,12 +277,22 @@ class FlextTypesPydantic:
 
     type DocumentInput[ValueT] = Annotated[
         ValueT,
-        pydantic.GetPydanticSchema(_document_input_schema),
+        pydantic.GetPydanticSchema(FlextTypesPydantic._document_input_schema),
     ]
 
-    # A port target as pydantic hands it over: a class, a PEP 695 alias, a
-    # type parameter, a generic or union form, or None.
-    type PortTarget = type | TypeVar | TypeAliasType | GenericAlias | UnionType | None
+    # A port target as pydantic hands it over: a class, a PEP 695 alias (from
+    # ``typing`` or ``typing_extensions`` — pydantic's own aliases such as
+    # ``JsonValue`` are ``typing_extensions.TypeAliasType``, a different class
+    # on Python 3.13), a type parameter, a generic or union form, or None.
+    type PortTarget = (
+        type
+        | TypeVar
+        | TypeAliasType
+        | typing_extensions.TypeAliasType
+        | GenericAlias
+        | UnionType
+        | None
+    )
 
     @staticmethod
     def _port_parameter_schema(
@@ -344,9 +358,9 @@ class FlextTypesPydantic:
         schema: core_schema.CoreSchema
         if isinstance(target, TypeVar):
             schema = FlextTypesPydantic._port_parameter_schema(target, scope)
-        elif isinstance(target, TypeAliasType):
+        elif isinstance(target, (TypeAliasType, typing_extensions.TypeAliasType)):
             schema = resolve(target.__value__, scope)
-        elif isinstance(origin, TypeAliasType):
+        elif isinstance(origin, (TypeAliasType, typing_extensions.TypeAliasType)):
             parameters = {
                 parameter: scope.get(arg, arg)
                 for parameter, arg in zip(origin.__type_params__, args, strict=False)

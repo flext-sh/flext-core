@@ -6,10 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from typing import TYPE_CHECKING, cast
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+    from types import ModuleType
+
     from flext_core import t
 
 
@@ -24,13 +26,29 @@ class FlextLazyMember:
     caches nothing.
     """
 
-    __slots__ = ("_host", "_member", "_module", "_owner")
+    __slots__ = ("_host", "_load", "_member", "_module", "_owner")
 
-    def __init__(self, module: str, owner: str, member: str) -> None:
-        """Record the mixin member to resolve when the descriptor is accessed."""
+    def __init__(
+        self,
+        module: str,
+        owner: str,
+        member: str,
+        load: Callable[[str], ModuleType],
+    ) -> None:
+        """Record the mixin member and the lazy owner's module loader.
+
+        Args:
+            module: Dotted path of the module declaring the mixin.
+            owner: Name of the mixin class inside ``module``.
+            member: Name of the member to resolve from the mixin's MRO.
+            load: The ``FlextLazy`` module loader, the single dynamic-import
+                owner, used on first access.
+
+        """
         self._module = module
         self._owner = owner
         self._member = member
+        self._load = load
         self._host: type | None = None
 
     def __set_name__(self, owner: type, name: str) -> None:
@@ -90,7 +108,7 @@ class FlextLazyMember:
         try:
             source = cast(
                 "type",
-                getattr(importlib.import_module(self._module), self._owner),
+                getattr(self._load(self._module), self._owner),
             )
         except AttributeError as exc:
             msg = f"lazy member {self._member!r} cannot load {target!r}"

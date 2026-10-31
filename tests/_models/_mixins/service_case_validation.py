@@ -115,10 +115,7 @@ class TestsFlextModelsServiceCaseValidationMixin:
     class PublicParseCase(m.BaseModel):
         """Data-driven public parser contract scenario."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
-        )
+        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
         input_value: Annotated[

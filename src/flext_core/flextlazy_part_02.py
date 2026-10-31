@@ -21,15 +21,17 @@ if TYPE_CHECKING:
 class FlextLazyPart02(FlextLazyPart01):
     """Install and resolve exports without generated-package bootstrap imports."""
 
-    @staticmethod
-    def member(module: str, owner: str, member: str) -> FlextLazyMember:
+    def member(self, module: str, owner: str, member: str) -> FlextLazyMember:
         """Return a descriptor deferring ``owner.member`` from ``module``.
+
+        The descriptor loads ``module`` through this owner's ``load``, the
+        single dynamic-import path of the lazy machinery.
 
         Returns:
             A descriptor deferring ``owner.member`` from ``module``.
 
         """
-        return FlextLazyMember(module, owner, member)
+        return FlextLazyMember(module, owner, member, self.load)
 
     @staticmethod
     def resolve_members(target: type) -> tuple[str, ...]:
@@ -78,7 +80,7 @@ class FlextLazyPart02(FlextLazyPart01):
         module_path, attr = (entry, name) if isinstance(entry, str) else entry
 
         try:
-            mod = self._load(module_path)
+            mod = self.load(module_path)
         except AttributeError as exc:
             # CPython's from-import swallows an AttributeError escaping a module
             # __getattr__ together with its cause; a target module that fails
