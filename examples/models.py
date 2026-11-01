@@ -48,6 +48,8 @@ class ExamplesFlextModels(flext_core_m):
         ExamplesFlextModelsPerson,
         ExamplesFlextModelsErrors.Examples,
         ExamplesFlextModelsOutput.Examples,
+        ExamplesFlextModelsErrors,
+        ExamplesFlextModelsOutput,
     ):
         """Canonical namespace for all example domain models.
 
