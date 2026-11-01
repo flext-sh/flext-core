@@ -20,6 +20,7 @@ from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
 from flext_core import c, m, p, t
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
@@ -29,14 +30,25 @@ from flext_core.flextlazy_native_export import FlextTypingNativeExport
 
 
 class FlextUtilitiesPydantic(
+    FlextModelsPydantic,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
 ):
     """Runtime utilities: field helpers, validators, type adapters, JSON handlers.
 
+    Extends the models pydantic part (same re-exports, one lineage): the
+    facade collision law sees a single declaring root per pydantic name.
+
     **NEVER import pydantic directly outside flext-core/src/.**
     Use u.* / up.* instead.
     """
+
+    # Re-exports inherited from FlextModelsPydantic (Field, SkipValidation,
+    # AfterValidator, PlainValidator, WrapValidator, PlainSerializer,
+    # computed_field, model_serializer, field_validator, model_validator):
+    # single declaring root per pydantic name keeps the facade collision law
+    # green; the u.field_validator/u.model_validator pass-throughs retired at
+    # census zero (fleet, merges and ai-hub).
 
     validate_call = FlextTypingNativeExport(validate_call)
     with_config = FlextTypingNativeExport(with_config)
