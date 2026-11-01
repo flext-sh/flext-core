@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Callable, Mapping, Sequence, Set as AbstractSet
 from pathlib import Path
 from types import EllipsisType
@@ -24,9 +23,6 @@ from pydantic import (
     SkipValidation,
     WrapSerializer,
     WrapValidator,
-    computed_field,
-    field_serializer,
-    model_serializer,
     validate_call,
     with_config,
 )
@@ -52,7 +48,6 @@ class FlextUtilitiesPydantic(
     Use u.* / up.* instead.
     """
 
-    Field = FlextTypingNativeExport(m.Field)
     SkipValidation = SkipValidation
 
     AfterValidator = AfterValidator
@@ -61,24 +56,6 @@ class FlextUtilitiesPydantic(
     PlainSerializer = PlainSerializer
     WrapSerializer = WrapSerializer
 
-    # Deprecated-signature window: consumers outside the upload line still read
-    # these from u; the pass-through warns at call time and dies at census zero.
-    field_validator = FlextTypingNativeExport(
-        warnings.deprecated(
-            "compat: u.field_validator -> m.field_validator; "
-            "fix: decorate with m.field_validator"
-        )(m.field_validator)
-    )
-    model_validator = FlextTypingNativeExport(
-        warnings.deprecated(
-            "compat: u.model_validator -> m.model_validator; "
-            "fix: decorate with m.model_validator"
-        )(m.model_validator)
-    )
-
-    computed_field = FlextTypingNativeExport(computed_field)
-    field_serializer = FlextTypingNativeExport(field_serializer)
-    model_serializer = FlextTypingNativeExport(model_serializer)
     validate_call = FlextTypingNativeExport(validate_call)
     with_config = FlextTypingNativeExport(with_config)
 
