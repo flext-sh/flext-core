@@ -184,7 +184,7 @@ optional_dependencies_dev_groups = []
 allow_redefinition = true
 check_untyped_defs = true
 disable_error_code = ["call-arg", "prop-decorator"]
-exclude = "(?s:(?:.+/)?[^/]*\\.bak)\\Z|(?s:(?:.+/)?[^/]*\\.egg\\-info/.*)\\Z|(?s:(?:.+/)?[^/]*\\.orig)\\Z|(?s:(?:.+/)?[^/]*\\.rej)\\Z|(?s:(?:.+/)?[^/]*\\.swp)\\Z|(?s:(?:.+/)?\\.agents\\-sync\\-home/.*)\\Z|(?s:(?:.+/)?\\.agents/.*)\\Z|(?s:(?:.+/)?\\.archive/.*)\\Z|(?s:(?:.+/)?\\.beads/.*)\\Z|(?s:(?:.+/)?\\.benchmarks/.*)\\Z|(?s:(?:.+/)?\\.bkp/.*)\\Z|(?s:(?:.+/)?\\.cache/.*)\\Z|(?s:(?:.+/)?\\.claude/.*)\\Z|(?s:(?:.+/)?\\.codex/.*)\\Z|(?s:(?:.+/)?\\.cursor/.*)\\Z|(?s:(?:.+/)?\\.gemini/.*)\\Z|(?s:(?:.+/)?\\.git/.*)\\Z|(?s:(?:.+/)?\\.hypothesis/.*)\\Z|(?s:(?:.+/)?\\.kilo/.*)\\Z|(?s:(?:.+/)?\\.mypy_cache/.*)\\Z|(?s:(?:.+/)?\\.omo/.*)\\Z|(?s:(?:.+/)?\\.opencode/.*)\\Z|(?s:(?:.+/)?\\.pylance_cache/.*)\\Z|(?s:(?:.+/)?\\.pyrefly_cache/.*)\\Z|(?s:(?:.+/)?\\.pytest_cache/.*)\\Z|(?s:(?:.+/)?\\.reports/.*)\\Z|(?s:(?:.+/)?\\.ruff_cache/.*)\\Z|(?s:(?:.+/)?\\.serena/.*)\\Z|(?s:(?:.+/)?\\.snapshots/.*)\\Z|(?s:(?:.+/)?\\.test\\-tmp/.*)\\Z|(?s:(?:.+/)?\\.tmp/.*)\\Z|(?s:(?:.+/)?\\.tox/.*)\\Z|(?s:(?:.+/)?\\.venv\\.[^/]*/.*)\\Z|(?s:(?:.+/)?\\.venv/.*)\\Z|(?s:(?:.+/)?\\.vscode/.*)\\Z|(?s:(?:.+/)?\\.worktrees/.*)\\Z|(?s:(?:.+/)?__pycache__/.*)\\Z|(?s:(?:.+/)?__pyrefly_virtual__/.*)\\Z|(?s:(?:.+/)?_tmp_[^/]*/.*)\\Z|(?s:(?:.+/)?build/.*)\\Z|(?s:(?:.+/)?dist\\-packages/.*)\\Z|(?s:(?:.+/)?dist/.*)\\Z|(?s:(?:.+/)?htmlcov/.*)\\Z|(?s:(?:.+/)?incoming/.*)\\Z|(?s:(?:.+/)?legado/.*)\\Z|(?s:(?:.+/)?node_modules/.*)\\Z|(?s:(?:.+/)?reports/.*)\\Z|(?s:(?:.+/)?site\\-packages/.*)\\Z|(?s:(?:.+/)?site/.*)\\Z|(?s:(?:.+/)?target/.*)\\Z|(?s:(?:.+/)?venv/.*)\\Z"
+exclude = "(?s:(?:.+/)?[^/]*\\.bak)\\Z|(?s:(?:.+/)?[^/]*\\.egg\\-info/.*)\\Z|(?s:(?:.+/)?[^/]*\\.orig)\\Z|(?s:(?:.+/)?[^/]*\\.rej)\\Z|(?s:(?:.+/)?[^/]*\\.swp)\\Z|(?s:(?:.+/)?\\.agents\\-sync\\-home/.*)\\Z|(?s:(?:.+/)?\\.agents/.*)\\Z|(?s:(?:.+/)?\\.archive/.*)\\Z|(?s:(?:.+/)?\\.beads/.*)\\Z|(?s:(?:.+/)?\\.benchmarks/.*)\\Z|(?s:(?:.+/)?\\.bkp/.*)\\Z|(?s:(?:.+/)?\\.cache/.*)\\Z|(?s:(?:.+/)?\\.claude/.*)\\Z|(?s:(?:.+/)?\\.codex/.*)\\Z|(?s:(?:.+/)?\\.cursor/.*)\\Z|(?s:(?:.+/)?\\.gemini/.*)\\Z|(?s:(?:.+/)?\\.git/.*)\\Z|(?s:(?:.+/)?\\.hypothesis/.*)\\Z|(?s:(?:.+/)?\\.kilo/.*)\\Z|(?s:(?:.+/)?\\.mypy_cache/.*)\\Z|(?s:(?:.+/)?\\.omo/.*)\\Z|(?s:(?:.+/)?\\.opencode/.*)\\Z|(?s:(?:.+/)?\\.pylance_cache/.*)\\Z|(?s:(?:.+/)?\\.pyrefly_cache/.*)\\Z|(?s:(?:.+/)?\\.pytest_cache/.*)\\Z|(?s:(?:.+/)?\\.reports/.*)\\Z|(?s:(?:.+/)?\\.ruff_cache/.*)\\Z|(?s:(?:.+/)?\\.serena/.*)\\Z|(?s:(?:.+/)?\\.snapshots/.*)\\Z|(?s:(?:.+/)?\\.test\\-tmp/.*)\\Z|(?s:(?:.+/)?\\.tmp/.*)\\Z|(?s:(?:.+/)?\\.tox/.*)\\Z|(?s:(?:.+/)?\\.venv\\.[^/]*/.*)\\Z|(?s:(?:.+/)?\\.venv/.*)\\Z|(?s:(?:.+/)?\\.vscode/.*)\\Z|(?s:(?:.+/)?\\.worktrees/.*)\\Z|(?s:(?:.+/)?__pycache__/.*)\\Z|(?s:(?:.+/)?__pyrefly_virtual__/.*)\\Z|(?s:(?:.+/)?_tmp_[^/]*/.*)\\Z|(?s:(?:.+/)?build/.*)\\Z|(?s:(?:.+/)?dist\\-packages/.*)\\Z|(?s:(?:.+/)?dist/.*)\\Z|(?s:(?:.+/)?htmlcov/.*)\\Z|(?s:(?:.+/)?incoming/.*)\\Z|(?s:(?:.+/)?legado/.*)\\Z|(?s:(?:.+/)?node_modules/.*)\\Z|(?s:(?:.+/)?reports/.*)\\Z|(?s:(?:.+/)?site\\-packages/.*)\\Z|(?s:(?:.+/)?site/.*)\\Z|(?s:(?:.+/)?target/.*)\\Z|(?s:(?:.+/)?tests/fixtures/.*)\\Z|(?s:(?:.+/)?venv/.*)\\Z"
 explicit_package_bases = true
 extra_checks = true
 follow_imports = "normal"
@@ -264,6 +264,7 @@ project-excludes = [
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
+  "**/tests/fixtures/**",
   "**/venv/**",
 ]
 project-includes = [
@@ -411,6 +412,7 @@ exclude = [
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
+  "**/tests/fixtures/**",
   "**/venv/**",
 ]
 extraPaths = ["src", "."]
@@ -435,7 +437,7 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
 venv = ".venv"
-venvPath = "."
+venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = ["src", "."]
@@ -546,6 +548,7 @@ extend-exclude = [
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
+  "**/tests/fixtures/**",
   "**/venv/**",
 ]
 fix = false
@@ -770,7 +773,7 @@ constraint-dependencies = [
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 link-mode = "copy"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@d56a179adcb2a8d932d96e742cdc42abebaf3885",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@5ebf6d5c477fbf8fc66191bd991a27ca1b9eed7a",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",

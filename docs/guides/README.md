@@ -15,6 +15,7 @@ sourced from code and docstrings.
 - [Dependency injection advanced](dependency-injection-advanced.md)
 - [Development](development.md)
 - [Domain driven design](domain-driven-design.md)
+- [Engine](engine.md)
 - [Error handling](error-handling.md)
 - [Getting started](getting-started.md)
 - [Logging](logging.md)

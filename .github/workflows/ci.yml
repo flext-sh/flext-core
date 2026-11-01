@@ -69,22 +69,31 @@ jobs:
     env:
       CI: Y
       GITHUB_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: flext-core
     steps:
-      - name: Checkout
+      - name: Checkout workspace flext-sh/flext
         uses: actions/checkout@v7
         with:
+          repository: flext-sh/flext
+          ref: 0.12.0-dev
           submodules: recursive
-
           persist-credentials: false
-
           fetch-depth: 0
-          ref: ${{ inputs.ref || github.sha }}
+      - name: Pin flext-core at the tested commit
+        working-directory: .
+        run: |
+          set -eu
+          git -C "flext-core" fetch --no-tags origin "${{ inputs.ref || github.sha }}"
+          git -C "flext-core" checkout --detach FETCH_HEAD
       # Why: GitHub runners expose umask 002, so git checkout materializes
       # group-writable modes (0664) for tracked files. Canonical Mise
       # artifacts demand exact modes (0o644) and the conform gate fails loud
       # on any drift, so checkout content is normalized to canonical modes
       # once, before any gate runs.
       - name: Normalize checkout modes
+        working-directory: .
         run: chmod -R go-w .
 
       # Why: every fresh runner paid a cold full-dependency Mypy,
@@ -226,36 +235,36 @@ jobs:
           # Structured reports only — omit raw pytest/tool logs that may carry
           # connection strings or env-derived secrets from integration fixtures.
           path: |
-            .reports/**/junit.xml
-            .reports/**/coverage.xml
-            .reports/**/coverage.json
-            .reports/**/audit-summary.json
-            .reports/**/audit-report.md
-            .reports/**/validate-summary.json
-            .reports/**/validate-report.md
-            .reports/check/**/*.sarif
-            .reports/check/**/*.md
-            .reports/gates/**/original-receipt.json
-            .reports/gates/**/check/**/*.sarif
-            .reports/gates/**/check/**/*.md
-            .reports/codegen-plan.json
-            .reports/codegen-publication.json
-            .reports/codegen-publication/**/*.json
-            .reports/setup-operations/*.json
-            .reports/tests/**/suite-outcome.json
-            .reports/tests/**/selection-outcome.json
-            .reports/tests/**/inventory-outcome.json
-            .reports/tests/**/run-context.json
-            .reports/tests/**/selection-plan.json
-            .reports/tests/**/testmon-selection.json
-            .reports/tests/**/testmon-inventory.json
-            .reports/tests/**/run-accounting.json
-            .reports/tests/**/diagnostics.json
-            .reports/tests/**/original-receipt.json
-            .reports/tests/**/cache-before.json
-            .reports/tests/**/cache-after.json
-            .reports/tests/**/cache-policy.json
-            .reports/tests/**/markdown-reconciliation.json
+            flext-core/.reports/**/junit.xml
+            flext-core/.reports/**/coverage.xml
+            flext-core/.reports/**/coverage.json
+            flext-core/.reports/**/audit-summary.json
+            flext-core/.reports/**/audit-report.md
+            flext-core/.reports/**/validate-summary.json
+            flext-core/.reports/**/validate-report.md
+            flext-core/.reports/check/**/*.sarif
+            flext-core/.reports/check/**/*.md
+            flext-core/.reports/gates/**/original-receipt.json
+            flext-core/.reports/gates/**/check/**/*.sarif
+            flext-core/.reports/gates/**/check/**/*.md
+            flext-core/.reports/codegen-plan.json
+            flext-core/.reports/codegen-publication.json
+            flext-core/.reports/codegen-publication/**/*.json
+            flext-core/.reports/setup-operations/*.json
+            flext-core/.reports/tests/**/suite-outcome.json
+            flext-core/.reports/tests/**/selection-outcome.json
+            flext-core/.reports/tests/**/inventory-outcome.json
+            flext-core/.reports/tests/**/run-context.json
+            flext-core/.reports/tests/**/selection-plan.json
+            flext-core/.reports/tests/**/testmon-selection.json
+            flext-core/.reports/tests/**/testmon-inventory.json
+            flext-core/.reports/tests/**/run-accounting.json
+            flext-core/.reports/tests/**/diagnostics.json
+            flext-core/.reports/tests/**/original-receipt.json
+            flext-core/.reports/tests/**/cache-before.json
+            flext-core/.reports/tests/**/cache-after.json
+            flext-core/.reports/tests/**/cache-policy.json
+            flext-core/.reports/tests/**/markdown-reconciliation.json
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -268,7 +277,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: flext-gate-receipts-${{ github.job }}-${{ github.run_id }}
-          path: .reports/gates/**
+          path: flext-core/.reports/gates/**
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7

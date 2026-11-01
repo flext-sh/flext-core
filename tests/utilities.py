@@ -12,15 +12,12 @@ import sys
 from collections.abc import Sequence
 from enum import StrEnum, unique
 from pathlib import Path
-from typing import Annotated, ClassVar, TypeAlias, override
+from typing import Annotated, ClassVar, override
 
 from flext_tests import u as flext_tests_u
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
-    TestsFlextDecoratorsLegacy,
-    TestsFlextFlextHandlers,
-    TestsFlextResultExceptionCarrying,
     TestsFlextUtilitiesContractsMixin,
     TestsFlextUtilitiesDispatchMixin,
     TestsFlextUtilitiesParserReliabilityMixin,
@@ -28,7 +25,6 @@ from tests._utilities import (
     TestsFlextUtilitiesRailwayMixin,
     TestsFlextUtilitiesReliabilityScenariosMixin,
     TestsFlextUtilitiesResultCombinators,
-    TestsFlextUtilitiesServicesMixin,
     TestsFlextUtilitiesValidationFactoriesMixin,
     TestsFlextUtilitiesValidationNetworkScenarios,
     TestsFlextUtilitiesValidationNumericScenarios,
@@ -403,11 +399,6 @@ class TestsFlextUtilities(flext_tests_u):
         flext_tests_u.Tests,
     ):
         """flext-core test utilities namespace."""
-
-        TestsFlextDecoratorsLegacy: TypeAlias = TestsFlextDecoratorsLegacy
-        TestsFlextFlextHandlers: TypeAlias = TestsFlextFlextHandlers
-        TestsFlextResultExceptionCarrying: TypeAlias = TestsFlextResultExceptionCarrying
-        TestsFlextUtilitiesServicesMixin: TypeAlias = TestsFlextUtilitiesServicesMixin
 
 
 u = TestsFlextUtilities

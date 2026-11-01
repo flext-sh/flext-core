@@ -52,6 +52,7 @@
 **/site-packages/**
 **/site/**
 **/target/**
+**/tests/fixtures/**
 **/venv/**
 .zcode/**
 CHANGELOG.md

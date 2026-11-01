@@ -38,15 +38,24 @@ jobs:
     env:
       CI: Y
       GITHUB_TOKEN: ${{ github.token }}
+    defaults:
+      run:
+        working-directory: flext-core
     steps:
-      - name: Checkout
+      - name: Checkout workspace flext-sh/flext
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          repository: flext-sh/flext
+          ref: 0.12.0-dev
           submodules: recursive
-
           persist-credentials: false
-
+          fetch-depth: 0
+      - name: Pin flext-core at the tested commit
+        working-directory: .
+        run: |
+          set -eu
+          git -C "flext-core" fetch --no-tags origin "${{ github.sha }}"
+          git -C "flext-core" checkout --detach FETCH_HEAD
       # Why: the cache keeps Mise's installs and downloads but never its shims.
       # A restored shim points at the Mise binary of an earlier run, which Mise
       # treats as unmanaged ("not replacing unmanaged file in shims directory",

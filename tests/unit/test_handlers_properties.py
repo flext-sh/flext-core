@@ -24,7 +24,7 @@ _TOKENS: st.SearchStrategy[str] = st.text(
 
 
 class TestsFlextCoreHandlersProperties(
-    u.Tests.TestsFlextFlextHandlers,
+    u.TestsFlextFlextHandlers,
 ):
     """Public-contract behavior of the callable handler factory."""
 

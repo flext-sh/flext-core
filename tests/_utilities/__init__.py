@@ -14,9 +14,7 @@ from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from tests._utilities.contracts import TestsFlextUtilitiesContractsMixin
-    from tests._utilities.decorators import TestsFlextDecoratorsLegacy
     from tests._utilities.dispatch import TestsFlextUtilitiesDispatchMixin
-    from tests._utilities.handlers import TestsFlextFlextHandlers
     from tests._utilities.parser_reliability import (
         TestsFlextUtilitiesParserReliabilityMixin,
     )
@@ -35,9 +33,6 @@ if TYPE_CHECKING:
         TestsFlextUtilitiesReliabilityScenariosMixin,
     )
     from tests._utilities.result_combinators import TestsFlextUtilitiesResultCombinators
-    from tests._utilities.result_exception_carrying import (
-        TestsFlextResultExceptionCarrying,
-    )
     from tests._utilities.services import TestsFlextUtilitiesServicesMixin
     from tests._utilities.validation_factories import (
         TestsFlextUtilitiesValidationFactoriesMixin,
@@ -60,9 +55,6 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
-    "TestsFlextDecoratorsLegacy",
-    "TestsFlextFlextHandlers",
-    "TestsFlextResultExceptionCarrying",
     "TestsFlextUtilitiesContractsMixin",
     "TestsFlextUtilitiesDispatchMixin",
     "TestsFlextUtilitiesParserReliabilityMixin",
@@ -86,9 +78,6 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "TestsFlextDecoratorsLegacy": ".decorators",
-        "TestsFlextFlextHandlers": ".handlers",
-        "TestsFlextResultExceptionCarrying": ".result_exception_carrying",
         "TestsFlextUtilitiesContractsMixin": ".contracts",
         "TestsFlextUtilitiesDispatchMixin": ".dispatch",
         "TestsFlextUtilitiesParserReliabilityMixin": ".parser_reliability",

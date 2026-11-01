@@ -10,6 +10,7 @@
 - [Catalogs and layers](#catalogs-and-layers)
 - [Make verbs](#make-verbs)
 - [ast-grep rules](#ast-grep-rules)
+  - [Pyrefly strict-typing cures (campaign flext-osru9, census 2026-10-28)](#pyrefly-strict-typing-cures-campaign-flext-osru9-census-2026-10-28)
   - [One rule per law](#one-rule-per-law)
 - [Text rules](#text-rules)
 - [Tests and snapshots](#tests-and-snapshots)
@@ -23,6 +24,29 @@ consolidation) is the `codemod` skill. This guide covers the FLEXT engine:
 where rules live, the keys it reads, and the verbs that run it. Every value named here
 is declared by the flext-infra owner cited next to it; that owner wins over this guide.
 
+The exhaustive-enum migration is an accepted target, not a validated rollout.
+An exhaustive `Literal` of members from one `StrEnum` may become that enum's direct
+Pydantic field annotation only after native Rope identities prove its complete
+canonical domain and references prove that it is not a discriminator. Preserve
+`Annotated` metadata, defaults, aliases and proper subsets. Unresolved ownership,
+mixed domains or unproved safety fail before effects, rather than disappearing
+from the accounted migration. The current rule must complete that proof and
+public-boundary coverage before application can establish acceptance.
+
+Metadata protection follows the annotation's native declaring scope. A local
+binding in a function body must not shadow `Annotated` or `Literal` in that
+function's header. Imported aliases and generic declaration contexts retain
+their native identities; lexical spelling alone cannot authorize a rewrite.
+
+The latest operator revision elects `use_enum_values=False` for governed presets,
+superseding the intermediate primitive-storage contract (ADR-005 and ADR-028
+Decision 14).
+Validation retains the input domain and the effective preset's strictness;
+validated `StrEnum` attributes retain enum members and the enum type in generated
+protocols. Writable properties retain their accepted enum input type. Python construction,
+default validation, JSON ingress, output values and consumer migration are separate proofs;
+the annotation alone does not establish any of them.
+
 ## Catalogs and layers
 
 Layer-zero own-helper admission is derived from the same native candidate proof
@@ -31,7 +55,9 @@ producer captures the complete workspace sources and asks that owner to authenti
 each imported helper and its dependency closure, including type-checking imports.
 
 Only proven exact module identities enter the generated constraint; a regex does
-not establish ownership or acyclicity. Own root and family imports remain forbidden.
+not establish ownership or acyclicity. For those layer-zero owners, own root and
+family imports remain forbidden. Family declarations composing upstream same-letter
+facades follow ADR-028 Decision 10; they are not layer-zero self-imports.
 Generation and native-scan agreement require runtime validation after source changes.
 
 | Layer | ast-grep rules | Text rules |
@@ -56,24 +82,27 @@ its owned snapshot operation in `flext-infra/config/codegen.yaml`
 | Surface | Effect |
 |---|---|
 | `make mod` | Apply ast-grep, semantic and text rules to a proven fixed point; committed snapshots are verified, never rewritten. |
-| `flext-infra refactor mod-text` | Replay only the authenticated declarative text rules. |
-| `flext-infra refactor ast` | Scan report of the ast-grep and sed cascades over the governed corpus; `--apply` reaches the mechanical fixed point. |
-| `make mod-snapshots` (Infra root) | Regenerate every owned rule-test snapshot through the existing native refresh owner, for a reviewed commit. |
+| `make check` | Run the root's declared read-only admission and retain native findings. |
+| `make tests` | Exercise the public transformation and consumer contracts through the persistent incremental test owner. |
 
-`make mod-snapshots` is an Infra extension, not an implicit part of `make mod`.
-Its handler invokes the existing `flext-infra refactor mod-snapshots` operation
-with the repository root and apply flag. The source declaration requires native
-generation before the verb is available. No consumer owns another snapshot
-engine or edits the generated Makefile.
+Snapshot refresh has an existing Infra extension declaration, `mod-snapshots`,
+whose handler invokes the native refresh owner with the repository root and
+apply flag. In workspace mode, execution must be routed through the workspace
+root Make owner. Its composed public route requires generation and native
+verification before it becomes an instruction to execute. Missing routing is a
+defect in that owner, to repair using this same operation. Preserve snapshot
+acceptance while repairing it; no consumer owns another snapshot engine or
+edits the generated Makefile.
 Fixture refresh elects authored catalogs through the existing provider
 composition directly. Generated rules have no fixtures, so refresh does not
 build a source engine or render project-dependent rules to discover their
 authored owners.
 
 The catalog applies through ast-grep's own `scan --update-all`; the pipeline order,
-native tool use and validation in the real tree are ADR-028 Decisions 11-13. A draft
-rule is prototyped with `ast-grep scan --rule <draft> <scratch-copy>`, and its proof is
-the real tree under `make mod`.
+native tool use and validation in the real tree are ADR-028 Decisions 11-13.
+Authored fixtures exercise draft rules through the root's native test and
+refactoring owners; real consumer behavior and the completed root cycle prove
+the transformation.
 
 `make mod` runs the native cascade first. The owner is
 `flext_infra/_utilities/codemod_native_cascade.py`, called from
@@ -175,6 +204,42 @@ terminating public matcher without rebinding a referenced name or changing the
 exception category. Runtime comparisons against the original snippets validate
 these properties; snapshot text alone does not prove them.
 
+### Pyrefly strict-typing cures (campaign flext-osru9, census 2026-10-28)
+
+Fleet pyrefly findings reduce to a small set of root causes; each has one
+canonical cure, applied at the origin and never by suppression or rule change
+(the lint-rule SSOT stays frozen):
+
+- **`implicit-any-lambda`** — Pyrefly cannot infer a lambda parameter from a
+  generic `Callable[[SubjectT], bool]` parameter (`tm.that(..., where=...)`,
+  `tm.ok(..., where=...)`, `Result.map(...)`). Cure: replace the lambda with a
+  local typed function (`def pred(value: <concrete subject type>) -> bool`)
+  and pass it by name. Lambdas cannot carry parameter annotations in Python,
+  so no call-site annotation exists; the typed def is the strict form.
+- **`missing-attribute` / `missing-module-attribute` on consumed APIs** — a
+  consumer names an attribute that a refactor removed or moved (for example
+  `u.chk`, `cli.ensure_dir`). Cure: rewire the consumer to the current owner
+  found by source search; never recreate the removed attribute.
+- **`missing-module-attribute` / `missing-import` on generated packages** — a
+  stale generated lazy `__init__.py` re-exports modules or letters that moved.
+  Cure: regenerate at the owner (`make gen`); hand-editing a managed
+  projection is prohibited.
+- **`invalid-annotation` on test fixtures** — a fixture declares
+  `self: SomeSettings` while its test class does not subclass that settings
+  type. Cure: drop the false self-type and inject legitimate settings
+  (conftest fixture or the canonical settings constructor).
+- **Bare generic containers** (`list[dict]`, `dict` literals as data
+  contracts) — cure with a Pydantic model per payload shape (see the root
+  `scripts/modularize_*` FleetMove/ModularizationMove repair) plus explicit
+  element-type annotations on every empty container.
+- **AST optionality** — `node.end_lineno`, `node.end_col_offset` and friends
+  are `int | None`; guard with an explicit `if ... is None: continue` before
+  arithmetic instead of asserting or casting.
+
+The railway-result and rewire-test-assert families above remain the model for
+turning each cure into one generalized, budgeted rule once the census reaches
+zero; detection-only candidates first, with `expected` receipts.
+
 The universal `railroad-result.yml` rule family implements Railway-Oriented
 Programming (ROP) normalization over `FlextResult` (`r`): terminal `if res.failure:
 return ...` passthrough guards collapse to `return res`, single-argument transform
@@ -208,6 +273,14 @@ The engine reads these `metadata` keys, declared in
 | Workspace declaration | Accepted decision |
 | --- | --- |
 | This section, One rule per law; the generated Infra copy links back here. | FLEXT ADR-028 Decision 18 |
+
+Rope is the only accepted Python interpreter in FLEXT's own code ([ADR-028
+Decision 17, amendment
+2026-10-28](../../docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17)):
+the engine never parses, analyzes or rewrites Python source with the `ast`
+module, `libcst`, or `re` applied to code — analysis and transforms go through
+rope's PyModules from the single indexed project. ast-grep (declarative rules),
+sed (text) and the generator (projections) keep their canonical domains.
 
 Operator order of 2026-10-25, verbatim (tracker memory
 `operator-order-2026-10-25-rules-generalized-min-count`; ADR-028 Decision 18):
@@ -376,8 +449,11 @@ constants in `_constants/refactor.py`; any other key fails:
 | `capture_equals` | Required equality between captures. |
 
 The engine refuses findings in generated files (fix the generator instead), and a
-rewritten Python file must still parse (`codemod/text_gates.py`). Prefer an ast-grep
-rule whenever the target has syntax.
+rewritten Python file must still parse (`codemod/text_gates.py`). Select native
+Rope bindings, references and refactorings when a transformation depends on
+identity, scope, inheritance or coordinated consumer changes. Existing purely
+syntactic rules retain their ast-grep owner until their own complete migration;
+FLEXT-owned CPython AST and LibCST interpretation are being retired separately.
 
 ## Tests and snapshots
 
@@ -385,8 +461,9 @@ rule whenever the target has syntax.
   snapshot under `tests/__snapshots__/<id>-snapshot.yml` for each invalid case.
 - `make mod` verifies them and fails on a changed fix output, a missing snapshot, or a
   snapshot of a removed rule or case.
-- Infra's `make mod-snapshots` owns regeneration. Review its diff in the same
-  commit as the rule; snapshot refresh never proves behavioral acceptance.
+- The existing snapshot-refresh owner performs regeneration through its
+  verified root Make route. Review its diff in the same commit as the rule;
+  snapshot refresh never proves behavioral acceptance.
 - Invalid fixtures retain the rejected input, not its corrected output. For
   adapter construction, `m.TypeAdapter(...)` and `t.TypeAdapter(...)` exercise the
   rewrite, while `u.type_adapter(...)` is a valid fixed point. Regenerate snapshots
@@ -394,9 +471,13 @@ rule whenever the target has syntax.
 
 ## Workflow
 
-1. Search both catalogs and `utils/` for the law; widen an existing rule first.
-2. Write or widen the rule and its test. Prototype only on scratch copies.
-3. Run Infra's `make mod-snapshots` and review the snapshot diff.
-4. Run `flext-infra refactor ast` to see every occurrence across the fleet.
-5. Apply with `make mod`, then run `make tests`.
-6. Commit the rule, test, snapshot and rewrites together.
+1. Reconcile the owning ADR, existing Bead, plan and catalog before code.
+2. Extend the existing native owner and public-boundary fixtures, preserving
+   positive, negative, metadata and consumer cases.
+3. Refresh owned snapshots through the verified root Make route and review the
+   diff. Repair that route first if it is unavailable; preserve the same owner.
+4. Qualify the pattern on its admitted pilot and consumer closure before a
+   mutating workspace rollout.
+5. Complete the root cycle `gen → fmt → fix → mod → check → tests`, plus applicable
+   runtime and build proof, in the coordinated writer windows.
+6. Integrate the rule, fixtures, snapshots, rewrites and evidence together.
