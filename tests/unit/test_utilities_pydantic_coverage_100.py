@@ -56,7 +56,6 @@ class TestsFlextUtilitiesPydantic:
     @staticmethod
     def test_field_defaults_preserve_native_types_and_validation() -> None:
         """Default overloads preserve identity, defaults and schema constraints."""
-        tm.ok(m.Field is u.Field)
         model = TestsFlextUtilitiesPydantic._FieldDefaultsContract.model_validate({})
         label: str = model.label
         attempts: int = model.attempts

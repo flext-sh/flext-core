@@ -37,12 +37,12 @@ install_lazy_exports(
     globals(),
     MappingProxyType({
         "FlextHandlersCqrsBase": ".flexthandlers_cqrs_base",
-        "FlextHandlersSettings": ".flexthandlers_settings",
+        "FlextHandlersDiscovery": ".flexthandlers_discovery",
         "FlextHandlersDispatch": ".flexthandlers_dispatch",
         "FlextHandlersExecution": ".flexthandlers_execution",
-        "FlextHandlersPipeline": ".flexthandlers_pipeline",
         "FlextHandlersFactory": ".flexthandlers_factory",
-        "FlextHandlersDiscovery": ".flexthandlers_discovery",
+        "FlextHandlersPipeline": ".flexthandlers_pipeline",
+        "FlextHandlersSettings": ".flexthandlers_settings",
     }),
     public_exports=__all__,
 )

@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for models.
+"""Flext Core. Models package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -35,6 +35,7 @@ if TYPE_CHECKING:
     from flext_core._models.registry import FlextModelsRegistry
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsSettings
+
 
 __all__: tuple[str, ...] = (
     "FlextModelsBase",

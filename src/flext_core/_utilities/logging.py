@@ -19,9 +19,9 @@ from typing import Self
 import structlog
 
 from flext_core import c, p, t
-from flext_core._utilities import (
+from flext_core._utilities import FlextUtilitiesLoggingContext
+from flext_core._utilities._logging_context.bound_logger import (
     FlextUtilitiesLoggingBoundLogger,
-    FlextUtilitiesLoggingContext,
 )
 
 

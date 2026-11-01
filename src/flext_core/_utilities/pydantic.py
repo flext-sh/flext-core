@@ -10,7 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import warnings
 from collections.abc import Callable, Mapping, Sequence, Set as AbstractSet
 from pathlib import Path
 from types import EllipsisType
@@ -46,23 +45,10 @@ class FlextUtilitiesPydantic(
 
     # Re-exports inherited from FlextModelsPydantic (Field, SkipValidation,
     # AfterValidator, PlainValidator, WrapValidator, PlainSerializer,
-    # computed_field, model_serializer): single declaring root per pydantic
-    # name keeps the facade collision law green.
-
-    # Deprecated-signature window: consumers outside the upload line still read
-    # these from u; the pass-through warns at call time and dies at census zero.
-    field_validator = FlextTypingNativeExport(
-        warnings.deprecated(
-            "compat: u.field_validator -> m.field_validator; "
-            "fix: decorate with m.field_validator"
-        )(m.field_validator)
-    )
-    model_validator = FlextTypingNativeExport(
-        warnings.deprecated(
-            "compat: u.model_validator -> m.model_validator; "
-            "fix: decorate with m.model_validator"
-        )(m.model_validator)
-    )
+    # computed_field, model_serializer, field_validator, model_validator):
+    # single declaring root per pydantic name keeps the facade collision law
+    # green; the u.field_validator/u.model_validator pass-throughs retired at
+    # census zero (fleet, merges and ai-hub).
 
     validate_call = FlextTypingNativeExport(validate_call)
     with_config = FlextTypingNativeExport(with_config)
