@@ -51,6 +51,11 @@ class FlextModelsService:
             exclude=True,
             description="Logging destination elected by the composition root.",
         )
+        logger_injected: bool = FlextModelsPydantic.Field(
+            default=False,
+            exclude=True,
+            description="Keep an explicit logger when transport settings are rebound.",
+        )
 
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options a service base declares to build its runtime.
@@ -100,6 +105,11 @@ class FlextModelsService:
             default=None,
             exclude=True,
             description="Logging dependency; absent selects the runtime policy.",
+        )
+        logging_options: t.Port[p.StructlogOptions] | None = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="Programmatic logging extensions elected by the root.",
         )
 
     class ServiceOperation(FlextModelsBase.ContractModel):

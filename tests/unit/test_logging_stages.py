@@ -74,7 +74,7 @@ class TestsFlextLoggingStages:
         tm.that(observed[0].context["func_name"], eq=payload["func_name"])
 
     @staticmethod
-    def test_explicit_runtime_loggers_keep_sinks_and_thresholds() -> None:
+    def test_runtime_loggers_keep_sinks_and_thresholds() -> None:
         """Two real runtimes do not redirect each other's bound loggers."""
         streams = (io.StringIO(), io.StringIO())
         policies = (
@@ -85,12 +85,8 @@ class TestsFlextLoggingStages:
             FlextContainer.build_service_runtime(
                 m.RuntimeBootstrapOptions(
                     settings=policy,
-                    logger=u.create_module_logger(
-                        __name__,
-                        runtime_settings=policy,
-                        options=m.StructlogOptions(
-                            handlers=(u.create_logging_handler(stream=stream),),
-                        ),
+                    logging_options=m.StructlogOptions(
+                        handlers=(u.create_logging_handler(stream=stream),),
                     ),
                 )
             )

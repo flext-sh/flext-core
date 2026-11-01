@@ -546,7 +546,9 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             logger = u.create_module_logger(
                 f"{type(source).__module__}.{type(source).__qualname__}",
                 runtime_settings=settings,
-                options=u.logging_options(),
+                options=options.logging_options
+                if options.logging_options is not None
+                else u.logging_options(),
             )
         context = (
             options.context if options.context is not None else FlextContext.create()
@@ -565,6 +567,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             container=container,
             dispatcher=container.dispatcher().unwrap(),
             logger=logger,
+            logger_injected=options.logger is not None,
         )
 
     @classmethod

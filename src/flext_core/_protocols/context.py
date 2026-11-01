@@ -447,6 +447,9 @@ class FlextProtocolsContext:
         @property
         def logger(self) -> FlextProtocolsLogging.Logger: ...
 
+        @property
+        def logger_injected(self) -> bool: ...
+
     @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options a service base declares for its runtime."""
@@ -471,6 +474,9 @@ class FlextProtocolsContext:
 
         @property
         def logger(self) -> FlextProtocolsLogging.Logger | None: ...
+
+        @property
+        def logging_options(self) -> FlextProtocolsLogging.StructlogOptions | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsContext"]
