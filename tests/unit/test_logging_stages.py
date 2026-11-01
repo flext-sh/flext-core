@@ -27,6 +27,7 @@ import pytest
 import structlog
 from pydantic import ValidationError
 
+from flext_core import FlextContainer, FlextSettings
 from tests import c, m, p, t, tm, u
 
 if TYPE_CHECKING:
@@ -38,6 +39,97 @@ pytestmark = pytest.mark.usefixtures("restore_logging")
 
 class TestsFlextLoggingStages:
     """Observable contracts of typed event stages and terminal rendering."""
+
+    @staticmethod
+    def test_console_detail_does_not_erase_structured_destinations() -> None:
+        """Console projection leaves the observer and JSON event complete."""
+        console = io.StringIO()
+        structured = io.StringIO()
+        observed: list[p.LoggingRecord] = []
+        selected = FlextSettings(async_logging=False, debug=False, trace=False)
+        u.configure_structlog(
+            runtime_settings=selected,
+            settings=m.StructlogOptions(
+                log_level=logging.INFO,
+                observers=(observed.append,),
+                handlers=(
+                    u.create_logging_handler(
+                        stream=console, console_renderer=True, runtime_settings=selected
+                    ),
+                    u.create_logging_handler(stream=structured, console_renderer=False),
+                ),
+            ),
+        )
+        u.create_module_logger(__name__).info(
+            "logging.presentation", run_id="operation"
+        )
+        payload = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(structured.getvalue())))
+        tm.that(console.getvalue(), has="logging.presentation", lacks="func_name")
+        tm.that(console.getvalue(), has="operation", lacks="pathname")
+        tm.that(console.getvalue(), lacks="\x1b[")
+        tm.that(
+            payload["func_name"],
+            eq="test_console_detail_does_not_erase_structured_destinations",
+        )
+        tm.that(observed[0].context["func_name"], eq=payload["func_name"])
+
+    @staticmethod
+    def test_explicit_runtime_loggers_keep_sinks_and_thresholds() -> None:
+        """Two real runtimes do not redirect each other's bound loggers."""
+        streams = (io.StringIO(), io.StringIO())
+        policies = (
+            FlextSettings(log_level="ERROR", async_logging=False),
+            FlextSettings(log_level="DEBUG", async_logging=False),
+        )
+        runtimes = [
+            FlextContainer.build_service_runtime(
+                m.RuntimeBootstrapOptions(
+                    settings=policy,
+                    logger=u.create_module_logger(
+                        __name__,
+                        runtime_settings=policy,
+                        options=m.StructlogOptions(
+                            handlers=(u.create_logging_handler(stream=stream),),
+                        ),
+                    ),
+                )
+            )
+            for stream, policy in zip(streams, policies, strict=True)
+        ]
+        first = runtimes[0].logger.bind(operation="first")
+        runtimes[1].logger.info("second admitted")
+        u.configure_structlog(
+            settings=m.StructlogOptions(log_level=logging.CRITICAL, async_logging=False)
+        )
+        first.info("first filtered")
+        first.error("first admitted")
+        first.new(operation="replacement").error("replacement admitted")
+        first.unbind("operation").error("unbound admitted")
+        tm.that(streams[0].getvalue(), has="first admitted", lacks="first filtered")
+        tm.that(
+            streams[0].getvalue(), has="replacement admitted", lacks="second admitted"
+        )
+        tm.that(streams[0].getvalue(), has="unbound admitted")
+        tm.that(streams[1].getvalue(), has="second admitted", lacks="first admitted")
+
+    @staticmethod
+    def test_debug_console_retains_callsite() -> None:
+        """Detailed console policy still exposes the diagnostic callsite."""
+        stream = io.StringIO()
+        selected = FlextSettings(debug=True, async_logging=False)
+        logger = u.create_module_logger(
+            __name__,
+            runtime_settings=selected,
+            options=m.StructlogOptions(
+                handlers=(
+                    u.create_logging_handler(
+                        stream=stream, console_renderer=True, runtime_settings=selected
+                    ),
+                ),
+            ),
+        )
+        logger.info("debug callsite")
+        tm.that(stream.getvalue(), has="func_name", lacks="\x1b[")
 
     @staticmethod
     def _make_observe(observed: list[p.LoggingEvent]) -> p.LoggingStage:

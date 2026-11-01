@@ -532,9 +532,22 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         Returns:
             The component's service runtime.
 
+        Raises:
+            ValidationError: If neither logging policy nor an explicit logger is given.
+
         """
         options = u.resolve_runtime_options(source)
         settings = u.resolve_runtime_settings(options)
+        logger = options.logger
+        if logger is None:
+            if not isinstance(settings, p.LoggingSettings):
+                msg = "Runtime settings must declare logging policy or inject a logger"
+                raise e.ValidationError(msg)
+            logger = u.create_module_logger(
+                f"{type(source).__module__}.{type(source).__qualname__}",
+                runtime_settings=settings,
+                options=u.logging_options(),
+            )
         context = (
             options.context if options.context is not None else FlextContext.create()
         )
@@ -551,6 +564,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             context=container.context,
             container=container,
             dispatcher=container.dispatcher().unwrap(),
+            logger=logger,
         )
 
     @classmethod

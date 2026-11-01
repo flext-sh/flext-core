@@ -38,8 +38,9 @@ class FlextUtilitiesLoggingBoundLogger(
         name: str,
         *,
         owner: type[FlextUtilitiesLogging],
-        settings: p.Settings | None = None,
         context: Mapping[str, t.JsonPayload | None] | None = None,
+        runtime_settings: p.LoggingSettings | None = None,
+        native_logger: p.NativeLoggingWrapper | None = None,
     ) -> None:
         """Initialize the bound logger with name and optional context.
 
@@ -49,6 +50,7 @@ class FlextUtilitiesLoggingBoundLogger(
         """
         super().__init__()
         self._owner = owner
+        self._scoped_settings = runtime_settings
         if not name:
             msg = "logger name is required"
             raise ValueError(msg)
@@ -61,10 +63,14 @@ class FlextUtilitiesLoggingBoundLogger(
                     key: value for key, value in context.items() if value is not None
                 }),
             )
-        if settings is not None:
-            service_name = getattr(settings, c.ContextKey.SERVICE_NAME, None)
-            service_version = getattr(settings, c.ContextKey.SERVICE_VERSION, None)
-            correlation_id = getattr(settings, c.ContextKey.CORRELATION_ID, None)
+        if runtime_settings is not None:
+            service_name = getattr(runtime_settings, c.ContextKey.SERVICE_NAME, None)
+            service_version = getattr(
+                runtime_settings, c.ContextKey.SERVICE_VERSION, None
+            )
+            correlation_id = getattr(
+                runtime_settings, c.ContextKey.CORRELATION_ID, None
+            )
             if isinstance(service_name, str) and service_name:
                 resolved_context[c.ContextKey.SERVICE_NAME] = service_name
             if isinstance(service_version, str) and service_version:
@@ -72,15 +78,18 @@ class FlextUtilitiesLoggingBoundLogger(
             if isinstance(correlation_id, str) and correlation_id:
                 resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
         resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
-        self._native: p.NativeLoggingWrapper = self._owner.structlog().wrap_logger(
-            None,
-            processors=None,
-            wrapper_class=None,
-            context_class=None,
-            logger_factory_args=(name,),
-            cache_logger_on_first_use=False,
-            **resolved_context,
-        )
+        if native_logger is not None:
+            self._native = native_logger.bind(**resolved_context)
+        else:
+            self._native = self._owner.structlog().wrap_logger(
+                None,
+                processors=None,
+                wrapper_class=None,
+                context_class=None,
+                logger_factory_args=(name,),
+                cache_logger_on_first_use=False,
+                **resolved_context,
+            )
 
     def __call__(self) -> Self:
         """Return this logger for native factory-style DI registration."""
@@ -95,7 +104,8 @@ class FlextUtilitiesLoggingBoundLogger(
     @property
     def logger(self) -> p.NativeLoggingWrapper:
         """Native lazy composition, including the latest factory and processors."""
-        self._owner.ensure_structlog_configured()
+        if self._scoped_settings is None:
+            self._owner.ensure_structlog_configured()
         return self._native
 
     def bind(self, **context: t.JsonPayload) -> Self:
@@ -105,6 +115,8 @@ class FlextUtilitiesLoggingBoundLogger(
             self.name,
             owner=self._owner,
             context=self._owner.structlog().get_context(bound_logger),
+            runtime_settings=self._scoped_settings,
+            native_logger=bound_logger if self._scoped_settings is not None else None,
         )
 
     def new(self, **context: t.JsonPayload) -> Self:
@@ -114,7 +126,15 @@ class FlextUtilitiesLoggingBoundLogger(
             A logger bound to the replacement context.
 
         """
-        return self.__class__(self.name, owner=self._owner, context=context)
+        return self.__class__(
+            self.name,
+            owner=self._owner,
+            context=context,
+            runtime_settings=self._scoped_settings,
+            native_logger=(
+                self.logger.new() if self._scoped_settings is not None else None
+            ),
+        )
 
     def exception(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
         """Emit native exception context and preserve selected failures.
@@ -160,6 +180,8 @@ class FlextUtilitiesLoggingBoundLogger(
             self.name,
             owner=self._owner,
             context=self._owner.structlog().get_context(bound_logger),
+            runtime_settings=self._scoped_settings,
+            native_logger=bound_logger if self._scoped_settings is not None else None,
         )
 
     def try_unbind(self, *keys: str) -> Self:
@@ -306,7 +328,8 @@ class FlextUtilitiesLoggingBoundLogger(
             The logging result, including disabled-trace success.
 
         """
-        if self.logging_settings().trace:
+        selected = self._scoped_settings or self.logging_settings()
+        if selected.trace:
             return self._log(c.LogLevel.DEBUG, message, *args, **kwargs)
         return r[bool].ok(value=True)
 

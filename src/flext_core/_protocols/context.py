@@ -27,7 +27,11 @@ from contextvars import ContextVar
 from datetime import datetime
 
 from flext_core import t
-from flext_core._protocols import FlextProtocolsHandler, FlextProtocolsSettings
+from flext_core._protocols import (
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
+    FlextProtocolsSettings,
+)
 
 if TYPE_CHECKING:
     from flext_core._protocols import FlextProtocolsContainer
@@ -440,6 +444,9 @@ class FlextProtocolsContext:
         @property
         def dispatcher(self) -> FlextProtocolsHandler.Dispatcher: ...
 
+        @property
+        def logger(self) -> FlextProtocolsLogging.Logger: ...
+
     @runtime_checkable
     class RuntimeBootstrapOptions(Protocol):
         """Runtime bootstrap options a service base declares for its runtime."""
@@ -461,6 +468,9 @@ class FlextProtocolsContext:
 
         @property
         def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None: ...
+
+        @property
+        def logger(self) -> FlextProtocolsLogging.Logger | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsContext"]

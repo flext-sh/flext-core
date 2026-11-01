@@ -11,22 +11,13 @@ import logging
 import queue
 import sys
 import threading
+from collections.abc import MutableMapping, MutableSequence, Sequence
 from concurrent.futures import Future, ThreadPoolExecutor
+from functools import partial
 from types import TracebackType
 from typing import TYPE_CHECKING, ClassVar, override
 
 import structlog
-
-from flext_core import c, m, p, t
-from flext_core._utilities._logging_config.logging_stream import (
-    FlextUtilitiesLoggingStream,
-)
-
-if TYPE_CHECKING:
-    import types
-from collections.abc import MutableMapping, MutableSequence, Sequence
-from functools import partial
-
 from structlog.processors import (
     CallsiteParameterAdder,
     ExceptionRenderer,
@@ -38,8 +29,14 @@ from structlog.stdlib import PositionalArgumentsFormatter, add_log_level
 from structlog.tracebacks import ExceptionDictTransformer
 from structlog.typing import Processor
 
-from flext_core import FlextSettings
+from flext_core import FlextSettings, c, m, p, t
 from flext_core._utilities import FlextUtilitiesMetadata
+from flext_core._utilities._logging_config.logging_stream import (
+    FlextUtilitiesLoggingStream,
+)
+
+if TYPE_CHECKING:
+    import types
 
 
 class FlextUtilitiesLoggingConfig:
@@ -339,6 +336,8 @@ class FlextUtilitiesLoggingConfig:
         logger: p.OutputLogger | None,
         method_name: str,
         event_dict: p.LoggingEvent,
+        *,
+        threshold: int | None = None,
     ) -> p.LoggingEvent:
         """Apply the elected threshold before native enrichment and hooks.
 
@@ -351,9 +350,40 @@ class FlextUtilitiesLoggingConfig:
         """
         _ = logger, method_name
         level = logging.getLevelNamesMapping()[str(event_dict["level"]).upper()]
-        if level < FlextUtilitiesLoggingConfig.log_threshold():
+        admitted_level = (
+            FlextUtilitiesLoggingConfig.log_threshold()
+            if threshold is None
+            else threshold
+        )
+        if level < admitted_level:
             raise structlog.DropEvent
         return event_dict
+
+    @classmethod
+    def _console_event(
+        cls,
+        logger: p.OutputLogger | None,
+        method_name: str,
+        event: p.LoggingEvent,
+        *,
+        runtime_settings: p.LoggingSettings | None = None,
+    ) -> p.LoggingEvent:
+        """Select console detail without changing an observer or sibling sink.
+
+        Returns:
+            A presentation-only copy of the sanitized event.
+
+        """
+        _ = logger, method_name
+        selected = runtime_settings or cls.logging_settings()
+        hidden = (
+            frozenset()
+            if selected.debug or selected.trace
+            else frozenset(
+                item.value for item in structlog.processors.CallsiteParameter
+            )
+        )
+        return {key: value for key, value in event.items() if key not in hidden}
 
     @staticmethod
     def _exception_metadata(
@@ -441,6 +471,7 @@ class FlextUtilitiesLoggingConfig:
         console_renderer: bool,
         options: p.StructlogOptions,
         trace: bool,
+        runtime_settings: p.LoggingSettings | None = None,
     ) -> Sequence[Processor]:
         """Compose one shared event pipeline and a native terminal renderer.
 
@@ -451,7 +482,14 @@ class FlextUtilitiesLoggingConfig:
         processors: MutableSequence[Processor] = [
             structlog.contextvars.merge_contextvars,
             add_log_level,
-            cls.drop_below_threshold,
+            cls.drop_below_threshold
+            if runtime_settings is None
+            else partial(
+                cls.drop_below_threshold,
+                threshold=options.log_level
+                if options.log_level is not None
+                else cls.level_number(runtime_settings.log_level),
+            ),
             PositionalArgumentsFormatter(),
             cls.level_based_context_filter,
             TimeStamper(fmt="iso"),
@@ -476,6 +514,9 @@ class FlextUtilitiesLoggingConfig:
         if options.handlers:
             processors.append(structlog.stdlib.ProcessorFormatter.wrap_for_formatter)
         elif console_renderer:
+            processors.append(
+                partial(cls._console_event, runtime_settings=runtime_settings)
+            )
             processors.append(structlog.dev.ConsoleRenderer(colors=True))
         else:
             processors.append(JSONRenderer())
@@ -551,12 +592,82 @@ class FlextUtilitiesLoggingConfig:
         return selected.clone(log_level=level.value)
 
     @classmethod
+    def compose_native_logger(
+        cls,
+        name: str,
+        *,
+        runtime_settings: p.LoggingSettings,
+        options: p.StructlogOptions,
+    ) -> p.NativeLoggingWrapper:
+        """Compose a scoped logger without replacing the process configuration.
+
+        Returns:
+            A binding whose processors, threshold and sink remain runtime-owned.
+
+        Raises:
+            ValueError: If no output factory can be elected.
+
+        """
+        console = (
+            options.console_renderer
+            if options.console_renderer is not None
+            else runtime_settings.logging_profile == "console"
+        )
+        wrapper = (
+            options.wrapper_class_factory()
+            if options.wrapper_class_factory is not None
+            else structlog.make_filtering_bound_logger(logging.NOTSET)
+        )
+        factory = options.logger_factory
+        if options.handlers:
+            factory = cls._handler_factory(options)
+        if factory is None:
+            factory = cls._resolve_logger_factory(
+                logger_factory=None,
+                async_logging=runtime_settings.async_logging
+                if options.async_logging is None
+                else options.async_logging,
+            )
+        if factory is None:
+            msg = "Logging composition did not elect an output factory"
+            raise ValueError(msg)
+        return structlog.wrap_logger(
+            factory(name),
+            processors=cls._build_structlog_processors(
+                console_renderer=console,
+                options=options,
+                trace=runtime_settings.trace,
+                runtime_settings=runtime_settings,
+            ),
+            wrapper_class=wrapper,
+            cache_logger_on_first_use=options.cache_logger_on_first_use,
+        ).bind()
+
+    @classmethod
+    def _handler_factory(cls, options: p.StructlogOptions) -> p.OutputLoggerFactory:
+        """Own one native handler graph per composition.
+
+        Returns:
+            The factory bound to that graph's native manager.
+
+        """
+        root = logging.RootLogger(logging.NOTSET)
+        root.handlers = cls._validated_native_handlers(options)
+        manager = logging.Manager(root)
+
+        def factory(*names: str) -> p.OutputLogger:
+            return manager.getLogger(names[0] if names else c.LOGGER_NAME_FLEXT_CORE)
+
+        return factory
+
+    @classmethod
     def create_logging_handler(
         cls,
         *,
         stream: t.TextStream | None = None,
         console_renderer: bool = False,
         log_level: str | None = None,
+        runtime_settings: p.LoggingSettings | None = None,
     ) -> p.LoggingHandler:
         """Compose native per-destination presentation with fail-loud delivery.
 
@@ -565,14 +676,21 @@ class FlextUtilitiesLoggingConfig:
 
         """
         handler = cls._StreamHandler(stream)
+        processors: MutableSequence[Processor] = [
+            structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+        ]
+        if console_renderer:
+            processors.append(
+                partial(cls._console_event, runtime_settings=runtime_settings)
+            )
+        processors.append(
+            structlog.dev.ConsoleRenderer(colors=False)
+            if console_renderer
+            else structlog.processors.JSONRenderer()
+        )
         handler.setFormatter(
             structlog.stdlib.ProcessorFormatter(
-                processors=(
-                    structlog.stdlib.ProcessorFormatter.remove_processors_meta,
-                    structlog.dev.ConsoleRenderer(colors=False)
-                    if console_renderer
-                    else structlog.processors.JSONRenderer(),
-                )
+                processors=processors,
             )
         )
         if log_level is not None:
@@ -611,7 +729,6 @@ class FlextUtilitiesLoggingConfig:
                 runtime_settings=selected,
                 log_level=logging.getLevelName(options.log_level),
             )
-        native_handlers = cls._validated_native_handlers(options)
         threshold = cls.level_number(selected.log_level)
         processors = cls._build_structlog_processors(
             console_renderer=(
@@ -631,16 +748,7 @@ class FlextUtilitiesLoggingConfig:
         )
         logger_factory = options.logger_factory
         if options.handlers:
-            output_root = logging.RootLogger(logging.NOTSET)
-            output_root.handlers = native_handlers
-            manager = logging.Manager(output_root)
-
-            def native_factory(*names: str) -> p.OutputLogger:
-                return manager.getLogger(
-                    names[0] if names else c.LOGGER_NAME_FLEXT_CORE,
-                )
-
-            logger_factory = native_factory
+            logger_factory = cls._handler_factory(options)
         factory_to_use = cls._resolve_logger_factory(
             logger_factory=logger_factory,
             async_logging=(

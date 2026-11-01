@@ -28,7 +28,6 @@ from tests._utilities import (
     TestsFlextUtilitiesRailwayMixin,
     TestsFlextUtilitiesReliabilityScenariosMixin,
     TestsFlextUtilitiesResultCombinators,
-    TestsFlextUtilitiesServicesMixin,
     TestsFlextUtilitiesValidationFactoriesMixin,
     TestsFlextUtilitiesValidationNetworkScenarios,
     TestsFlextUtilitiesValidationNumericScenarios,
@@ -407,7 +406,6 @@ class TestsFlextUtilities(flext_tests_u):
         TestsFlextDecoratorsLegacy: TypeAlias = TestsFlextDecoratorsLegacy
         TestsFlextFlextHandlers: TypeAlias = TestsFlextFlextHandlers
         TestsFlextResultExceptionCarrying: TypeAlias = TestsFlextResultExceptionCarrying
-        TestsFlextUtilitiesServicesMixin: TypeAlias = TestsFlextUtilitiesServicesMixin
 
 
 u = TestsFlextUtilities

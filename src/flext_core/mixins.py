@@ -32,8 +32,8 @@ class FlextMixins(m.ServiceState):
 
     @property
     def logger(self) -> p.Logger:
-        """Reuse the kernel logger rather than bootstrap one per operation."""
-        return self._get_or_create_logger()
+        """Consume the logging dependency elected by this component's runtime."""
+        return self._get_runtime().logger
 
     @classmethod
     def _get_or_create_logger(cls) -> p.Logger:

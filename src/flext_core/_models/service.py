@@ -47,6 +47,10 @@ class FlextModelsService:
             exclude=True,
             description="Dispatcher resolved for CQRS routing in this runtime.",
         )
+        logger: t.Port[p.Logger] = FlextModelsPydantic.Field(
+            exclude=True,
+            description="Logging destination elected by the composition root.",
+        )
 
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options a service base declares to build its runtime.
@@ -91,6 +95,11 @@ class FlextModelsService:
             default=None,
             exclude=True,
             description="Pre-built dispatcher injected into the runtime.",
+        )
+        logger: t.Port[p.Logger] | None = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description="Logging dependency; absent selects the runtime policy.",
         )
 
     class ServiceOperation(FlextModelsBase.ContractModel):

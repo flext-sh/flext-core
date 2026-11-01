@@ -90,12 +90,13 @@ Run tests only through the dispatcher at the workspace root:
 make tests
 ```
 
-`make tests` executes the complete applicable suite once and retains the project's
-persistent Testmon database. It does not run an incremental suite first. The generated
-Make boundary fixes the target to the typed configuration's complete test directory;
-caller variables cannot replace it with a file or narrower directory. The runner
-accounts for collection, execution and declared exclusions through its existing typed
-receipts. Never clear or bypass the database, or invoke the underlying runner directly.
+`make tests` discovers the complete applicable inventory and executes native
+incremental Testmon selection once, retaining the project's persistent database.
+It does not add a full rerun. The generated Make boundary fixes the population
+to the typed project/workspace declarations; caller variables cannot replace it
+with a file or narrower directory. The runner accounts for collection, selection,
+execution and declared exclusions through its existing typed receipts. Never
+clear or replace the database, or invoke the underlying runner directly.
 
 The supported Testmon environment combines installed toolchain provenance with current
 `config/*.yaml` content. Declare additional template and resource directories in the
@@ -110,9 +111,25 @@ inventory contract: symbolic links and multiply linked files fail explicitly. Th
 not an unrestricted filesystem dependency scanner; declare physical source inputs and
 repair the inventory owner if a legitimate native consumer requires another shape.
 
-The approved Make consolidation contract supersedes the older incremental/full verb
-split. CI and pre-push also call `make tests`; pre-commit runs no tests. No compatibility
-aliases or file selectors belong to the common Make interface.
+For an explicitly requested complete execution, use:
+
+```bash
+make tests-full
+```
+
+`make tests-full` executes the complete applicable population once, without
+Testmon or a preliminary incremental run. It does not load the Testmon plugin,
+pass its options or database environment, acquire its lease, inspect or modify
+its database, or publish a cache receipt. The existing database remains untouched
+for later `make tests` runs. This is the latest operator clarification of
+2026-10-28, recorded in
+ADR-029.
+Both operations retain source admission, runtime/input identity, applicability,
+original failures and the complete invocation deadline. Full execution is not
+a coverage-mode substitute or a second runner.
+
+CI and pre-push retain their declared workflow; pre-commit runs no tests. No
+compatibility aliases or file selectors belong to either operation.
 
 The complete suite retains its declared services, network access and authentication
 requirements. Connectivity prerequisite skips follow root `AGENTS.md`; they never
@@ -120,17 +137,21 @@ prove the omitted service works. Marker applicability belongs to typed configura
 and the runner records every excluded item. An exclusion is never a passed test. A
 runner that violates this contract is repaired at its owner and rerun through Make.
 
-Each phase retains its mode, database, raw process outcome, collection manifest, and
+Each phase retains its mode, raw process outcome, collection manifest, and
 diagnostics. The latest receipt names the current attempt even when collection fails.
+Incremental phases retain their database and cache accounting. Full phases record
+no Testmon database, lease or cache publication and reconcile execution against
+their complete applicable inventory.
 Warning totals include selection, inventory, and suite occurrences, with blocking and
 explicitly suspended warnings reported separately. The existing non-strict MRO
 enforcement suspension remains visible in those receipts. Unexpected skips block
 acceptance; connectivity prerequisite skips retain their explicit unavailable reason
 and never establish production readiness.
 
-The persistent database remains available for impact analysis and later runs. A cache
-hit cannot replace the complete execution required by `make tests`. Empty collection
-or zero execution fails this verb.
+The persistent database remains available for impact analysis and later runs.
+An incremental cache hit requires integrity checks and complete deselection
+accounting; report it as selection evidence, never tests executed and passed.
+Empty collection or zero execution cannot admit `make tests-full`.
 
 A receipt used for acceptance must identify the exact source candidate, local changes,
 installed dependencies and checker policy, command, working directory, declared scope,

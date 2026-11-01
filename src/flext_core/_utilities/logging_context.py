@@ -6,7 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Generator, Mapping
+from contextlib import contextmanager
 from contextvars import ContextVar
 from types import MappingProxyType
 from typing import ClassVar
@@ -26,6 +27,26 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         "flext_logging_scope_keys",
         default=MappingProxyType({}),
     )
+
+    @classmethod
+    @contextmanager
+    def logging_scope(cls, scope: str, **context: t.JsonPayload) -> Generator[None]:
+        """Restore previous correlation values and ownership even on failure.
+
+        Yields:
+            Control within the operation's native logging context.
+
+        """
+        scopes = cls._scope_keys.get()
+        token = cls._scope_keys.set({
+            **scopes,
+            scope: scopes.get(scope, frozenset()) | context.keys(),
+        })
+        try:
+            with cls.structlog().contextvars.bound_contextvars(**context):
+                yield
+        finally:
+            cls._scope_keys.reset(token)
 
     @classmethod
     def bind_context(cls, scope: str, **context: t.JsonPayload) -> p.Result[bool]:

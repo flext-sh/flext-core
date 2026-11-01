@@ -185,6 +185,8 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         name: str,
         *,
         context: Mapping[str, t.JsonPayload | None] | None = None,
+        runtime_settings: p.LoggingSettings | None = None,
+        options: p.StructlogOptions | None = None,
     ) -> p.Logger:
         """Construct a lazy module logger without configuring a destination.
 
@@ -193,7 +195,19 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
         """
         # Foreign utility facades must construct the canonical logger, not `cls`.
-        return FlextUtilitiesLoggingBoundLogger(name, owner=cls, context=context)
+        return FlextUtilitiesLoggingBoundLogger(
+            name,
+            owner=cls,
+            context=context,
+            runtime_settings=runtime_settings,
+            native_logger=cls.compose_native_logger(
+                name,
+                runtime_settings=runtime_settings,
+                options=options if options is not None else cls.logging_options(),
+            )
+            if runtime_settings is not None
+            else None,
+        )
 
 
 __all__: tuple[str, ...] = ("FlextUtilitiesLogging",)
