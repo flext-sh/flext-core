@@ -528,7 +528,7 @@ class FlextUtilitiesLoggingConfig:
             processors.append(
                 partial(cls._console_event, runtime_settings=runtime_settings)
             )
-            processors.append(structlog.dev.ConsoleRenderer(colors=True))
+            processors.append(structlog.dev.ConsoleRenderer(colors=sys.stderr.isatty()))
         else:
             processors.append(JSONRenderer())
         return processors
