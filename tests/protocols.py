@@ -22,7 +22,7 @@ from flext_tests import FlextTestsProtocols
 from flext_core import c
 
 if TYPE_CHECKING:
-    from tests import c, t
+    from tests import t
     from tests._models import TestsFlextModelsMixins
 
 

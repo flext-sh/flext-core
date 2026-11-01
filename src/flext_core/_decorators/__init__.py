@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for decorators.
+"""Flext Core. Decorators package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from flext_core._decorators.logging import FlextDecoratorsLogging
     from flext_core._decorators.railway import FlextDecoratorsRailway
     from flext_core._decorators.runtime import FlextDecoratorsRuntime
+
 
 __all__: tuple[str, ...] = (
     "FlextDecoratorsBase",

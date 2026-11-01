@@ -255,7 +255,7 @@ class TestsFlextCorePublicApiContract:
         tm.that(repr(r[int].fail("z")), eq="r[T].fail('z')")
 
     @staticmethod
-    @pytest.mark.parametrize("exc_name", ["MroViolation", "SmellViolation"])
+    @pytest.mark.parametrize("exc_name", ["MroViolationError", "SmellViolationError"])
     def test_exception_family_members_are_raisable_and_catchable(
         exc_name: str,
     ) -> None:
@@ -291,12 +291,12 @@ class TestsFlextCoreFacadeLifecycle:
 
     @staticmethod
     def test_exceptions_violation_classes_are_warning_categories() -> None:
-        """``e.MroViolation``/``e.SmellViolation`` are warn-able categories.
+        """``e.MroViolationError``/``e.SmellViolationError`` are warn-able categories.
 
         The enforcement contract emits them through ``warnings.warn``, which
         only admits ``Warning`` subclasses; the smell class is its own category.
         """
-        for categoria in (e.MroViolation, e.SmellViolation):
+        for categoria in (e.MroViolationError, e.SmellViolationError):
             with pytest.warns(categoria, match="contrato"):
                 warnings.warn("contrato", categoria, stacklevel=1)
 

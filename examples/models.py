@@ -46,8 +46,8 @@ class ExamplesFlextModels(flext_core_m):
         ExamplesFlextModelsEx14,
         ExamplesFlextModelsHandle,
         ExamplesFlextModelsPerson,
-        ExamplesFlextModelsErrors.Examples,
-        ExamplesFlextModelsOutput.Examples,
+        ExamplesFlextModelsErrors,
+        ExamplesFlextModelsOutput,
     ):
         """Canonical namespace for all example domain models.
 

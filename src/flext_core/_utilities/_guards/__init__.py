@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for guards.
+"""Flext Core. Utilities. Guards package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from flext_core._utilities._guards.type_protocol_string import (
         FlextUtilitiesGuardsTypeProtocolString,
     )
+
 
 __all__: tuple[str, ...] = (
     "FlextUtilitiesGuardsTypeProtocolSpecs",

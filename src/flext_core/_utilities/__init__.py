@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for utilities.
+"""Flext Core. Utilities package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -13,9 +13,6 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._logging_context.bound_logger import (
-        FlextUtilitiesLoggingBoundLogger,
-    )
     from flext_core._utilities.args import FlextUtilitiesArgs
     from flext_core._utilities.base import FlextUtilitiesBase
     from flext_core._utilities.checker import FlextUtilitiesChecker
@@ -63,6 +60,7 @@ if TYPE_CHECKING:
         FlextUtilitiesTypingAdapterScalars,
     )
 
+
 __all__: tuple[str, ...] = (
     "FlextUtilitiesArgs",
     "FlextUtilitiesBase",
@@ -87,7 +85,6 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesGuardsTypeProtocol",
     "FlextUtilitiesHandler",
     "FlextUtilitiesLogging",
-    "FlextUtilitiesLoggingBoundLogger",
     "FlextUtilitiesLoggingConfig",
     "FlextUtilitiesLoggingContext",
     "FlextUtilitiesMapper",
@@ -113,7 +110,6 @@ install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "FlextUtilitiesLoggingBoundLogger": "._logging_context.bound_logger",
         "FlextUtilitiesArgs": ".args",
         "FlextUtilitiesBase": ".base",
         "FlextUtilitiesChecker": ".checker",
