@@ -18,18 +18,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
-from flext_core import (
-    FlextContext,
-    FlextSettings,
-    FlextUtilitiesLogging,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core import FlextContext, FlextDispatcher, FlextSettings, c, e, m, p, r, t, u
 from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
@@ -114,25 +103,6 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def context(self) -> p.Context:
         """Execution context bound to this container."""
         return self._context
-
-    @override
-    def logger(
-        self,
-        module_name: str,
-        *,
-        service_name: str | None = None,
-        service_version: str | None = None,
-        correlation_id: str | None = None,
-    ) -> p.Logger:
-        """Create a module logger for the specified runtime scope.
-
-        Returns:
-            The resulting ``p.Logger``.
-
-        """
-        _ = service_name, service_version, correlation_id
-        logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
-        return logger
 
     @staticmethod
     def _matches_service_type[T: p.RegisterableService](
@@ -426,9 +396,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 c.ServiceName.COMMAND_BUS,
                 lambda: m.ServiceRegistration(
                     name=c.ServiceName.COMMAND_BUS,
-                    service=dispatcher
-                    if dispatcher is not None
-                    else u.build_dispatcher(),
+                    service=dispatcher if dispatcher is not None else FlextDispatcher(),
                 ),
             ),
         )
@@ -544,6 +512,45 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 u.type_name(result.value),
                 result_type=r[p.Dispatcher],
             ),
+        )
+
+    @classmethod
+    def build_service_runtime(
+        cls,
+        source: p.RuntimeBootstrapProvider
+        | p.RuntimeBootstrapOptions
+        | p.MixinsInfrastructure
+        | None = None,
+    ) -> p.ServiceRuntime:
+        """Materialize settings, context, container and dispatcher for one component.
+
+        The container scopes the injected container, or the shared container,
+        preserving public DI registrations. Its settings are the runtime's
+        actual elected provider. A dispatcher the options do not inject is the
+        container's command bus; failing to resolve it raises with its cause.
+
+        Returns:
+            The component's service runtime.
+
+        """
+        options = u.resolve_runtime_options(source)
+        settings = u.resolve_runtime_settings(options)
+        context = (
+            options.context if options.context is not None else FlextContext.create()
+        )
+        source_container = options.container or cls.shared()
+        container = source_container.scope(
+            registration=m.ServiceRegistrationSpec(
+                settings=settings,
+                context=context,
+                dispatcher=options.dispatcher,
+            ),
+        )
+        return m.ServiceRuntime(
+            settings=container.settings,
+            context=container.context,
+            container=container,
+            dispatcher=container.dispatcher().unwrap(),
         )
 
     @classmethod

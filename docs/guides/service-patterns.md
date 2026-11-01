@@ -239,9 +239,10 @@ class FlextBillingServiceBase(s[m.Billing.Invoice]):
   seeds `runtime_settings`, `settings_type`, `settings_overrides` and `initial_context`;
   a seed set on the instance wins. It also accepts an `m.RuntimeBootstrapOptions`, which
   it returns unchanged; any other source raises `TypeError`.
-- `u.build_service_runtime(source)` builds the validated `m.ServiceRuntime`: injected or
-  loaded settings, the context, a scope of the shared container, and the container's
-  command bus as dispatcher. Failing to resolve the dispatcher raises with its cause.
+- `FlextContainer.build_service_runtime(source)` builds the validated
+  `m.ServiceRuntime`: settings elected by `u.resolve_runtime_settings`, the context, a
+  scope of the injected or shared container, and the container's command bus as
+  dispatcher. Failing to resolve the dispatcher raises with its cause.
 - Seeds and ports are validated: `runtime_settings` must satisfy `p.Settings` and
   `initial_context` must satisfy `p.Context`. Runtime seeds never enter the JSON Schema.
 - A service never reads a global `settings` or `config`; the root passes values through
@@ -366,9 +367,10 @@ behavior above is what runs.
 
 ## Registry composition
 
-`u.build_registry(dispatcher, discovery_module=module)` composes an explicitly supplied
-dispatcher and discovers only the supplied module. Omit `discovery_module` when no
-discovery is required. There is no creation/auto-discovery flag or implicit stack scan.
+`FlextRegistry.create(dispatcher, discovery_module=module)` composes an explicitly
+supplied dispatcher and discovers only the supplied module. Omit `discovery_module`
+when no discovery is required. There is no creation/auto-discovery flag or implicit
+stack scan.
 `h.Discovery.scan_module(module)` returns original decorated callables and metadata;
 it neither invokes them nor stringifies their results.
 

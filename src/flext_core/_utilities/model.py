@@ -9,12 +9,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from importlib import import_module
 from typing import overload
 
 from pydantic import TypeAdapter
 
-from flext_core import FlextExceptions, FlextResult, c, m, p, t
+from flext_core import FlextExceptions, FlextResult, FlextSettings, c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
@@ -60,39 +59,14 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def settings_base() -> p.SettingsType:
-        """Resolve FlextSettings lazily to avoid runtime import cycles.
+        """Return the canonical ``FlextSettings`` class (layer zero, static).
 
         Returns:
             The resulting ``p.SettingsType``.
 
         """
-        settings_module = import_module("flext_core")
-        settings_cls: p.SettingsType = settings_module.FlextSettings
+        settings_cls: p.SettingsType = FlextSettings
         return settings_cls
-
-    @staticmethod
-    def container_type() -> p.ContainerType:
-        """Resolve FlextContainer lazily to avoid runtime import cycles.
-
-        Returns:
-            The resulting ``p.ContainerType``.
-
-        """
-        container_module = import_module("flext_core")
-        container_cls: p.ContainerType = container_module.FlextContainer
-        return container_cls
-
-    @staticmethod
-    def context_type() -> p.ContextType:
-        """Resolve FlextContext lazily to avoid runtime import cycles.
-
-        Returns:
-            The resulting ``p.ContextType``.
-
-        """
-        context_module = import_module("flext_core")
-        context_cls: p.ContextType = context_module.FlextContext
-        return context_cls
 
     @overload
     @staticmethod

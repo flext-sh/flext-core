@@ -23,8 +23,6 @@ from flext_core import c, p, t
 from flext_core._models import FlextModelsContainers
 from flext_core._models._base import FlextModelsBasePart01
 
-_METADATA_MAPPING_VALIDATOR = TypeAdapter(t.JsonMapping)
-
 
 class FlextModelsBasePart02(FlextModelsBasePart01):
     class Metadata(BaseModel):
@@ -35,6 +33,11 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
             frozen=True,
             validate_assignment=True,
             populate_by_name=True,
+        )
+        # validador dos ``attributes`` (t.JsonMapping): forma explícita do alias,
+        # porque o objeto ``TypeAliasType`` não é uma forma de tipo para o checker
+        MAPPING_VALIDATOR: ClassVar[TypeAdapter[t.JsonMapping]] = TypeAdapter(
+            Mapping[str, t.JsonValue]
         )
         created_at: Annotated[
             datetime,
@@ -148,7 +151,7 @@ class FlextModelsBasePart02(FlextModelsBasePart01):
                         key=key
                     )
                     raise ValueError(message)
-            return _METADATA_MAPPING_VALIDATOR.validate_python(
+            return FlextModelsBasePart02.Metadata.MAPPING_VALIDATOR.validate_python(
                 {k: v for k, v in normalized.items() if v is not None}, strict=True
             )
 

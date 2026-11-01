@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from flext_core._protocols import (
         FlextProtocolsContext,
         FlextProtocolsHandler,
-        FlextProtocolsLogging,
         FlextProtocolsResult,
     )
 
@@ -112,17 +111,6 @@ class FlextProtocolsContainerPart02(FlextProtocolsContainerPart01):
 
         def drop(self, name: str) -> FlextProtocolsResult.Result[bool]:
             """Remove a service, factory, or resource by name."""
-            ...
-
-        def logger(
-            self,
-            module_name: str,
-            *,
-            service_name: str | None = None,
-            service_version: str | None = None,
-            correlation_id: str | None = None,
-        ) -> FlextProtocolsLogging.Logger:
-            """Create a logger bound to the current container runtime."""
             ...
 
         def dispatcher(

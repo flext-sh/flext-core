@@ -37,9 +37,7 @@ class FlextModelsCqrsPart01:
         )
         page: Annotated[
             t.PositiveInt,
-            Field(
-                description="Page number (1-based indexing)", examples=[1, 2, 10, ...]
-            ),
+            Field(description="Page number (1-based indexing)", examples=[1, 2, 10]),
         ] = c.FIRST_PAGE_INDEX
         size: Annotated[
             t.PositiveInt,

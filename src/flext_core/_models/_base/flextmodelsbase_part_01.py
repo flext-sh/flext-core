@@ -70,16 +70,12 @@ class FlextModelsBasePart01:
         model_config: ClassVar[ConfigDict] = ConfigDict(frozen=True)
 
     class ArbitraryTypesModel(ManagedModel):
-        """Base model with arbitrary types support.
+        """Managed preset for models carrying runtime collaborators.
 
-        Being retired: declare runtime objects as ``t.Port[X]`` fields on a
-        regular preset instead. Consumers migrate repository by repository;
-        flext-core itself no longer depends on the flag.
+        Every field is described to Pydantic: a runtime dependency is declared
+        ``t.Port[p.Protocol]`` (validated by the port schema), never accepted
+        through ``arbitrary_types_allowed``.
         """
-
-        model_config: ClassVar[ConfigDict] = ConfigDict(
-            arbitrary_types_allowed=True,
-        )
 
     class StrictBoundaryModel(FrozenModel):
         """Strict boundary model for API/external boundaries."""

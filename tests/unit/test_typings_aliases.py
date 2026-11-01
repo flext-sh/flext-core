@@ -18,10 +18,11 @@ import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pydantic
 import pytest
 
 import flext_core
-from tests import c, p, t, tm
+from tests import c, m, p, t, tm
 
 
 class TestsFlextCoreTypingsAliases:
@@ -149,3 +150,21 @@ class TestsFlextCoreTypingsAliases:
     ) -> None:
         """Every documented container/collection value is recognised by the tuple."""
         tm.ok(isinstance(value, c.CONTAINER_AND_COLLECTION_TYPES))
+
+    @staticmethod
+    def test_port_resolves_pydantic_json_value_alias() -> None:
+        """A port over ``pydantic.JsonValue`` validates through its alias.
+
+        ``JsonValue`` is a ``typing_extensions.TypeAliasType``, a different
+        class from ``typing.TypeAliasType`` on Python 3.13; declaring the port
+        must resolve the alias instead of handing it to ``isinstance``.
+        """
+
+        class Holder(m.BaseModel):
+            """Model declaring the port over pydantic's JSON alias."""
+
+            value: t.Port[pydantic.JsonValue]
+
+        tm.that(Holder(value="texto").value, eq="texto")
+        with pytest.raises(m.ValidationError):
+            Holder.model_validate({"value": object()})

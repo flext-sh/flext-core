@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from warnings import deprecated
-
 
 class FlextMroViolationError(UserWarning):
     """Raised when facade MRO composition violates the declared layer order.
@@ -30,16 +28,7 @@ class FlextSmellViolationError(UserWarning):
     """
 
 
-FlextMroViolation = deprecated(
-    "compat: FlextMroViolation -> FlextMroViolationError; fix: rewire"
-)(FlextMroViolationError)
-FlextSmellViolation = deprecated(
-    "compat: FlextSmellViolation -> FlextSmellViolationError; fix: rewire"
-)(FlextSmellViolationError)
-
 __all__: list[str] = [
-    "FlextMroViolation",
     "FlextMroViolationError",
-    "FlextSmellViolation",
     "FlextSmellViolationError",
 ]

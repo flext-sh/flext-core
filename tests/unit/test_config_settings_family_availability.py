@@ -12,17 +12,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from importlib import import_module
-from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
 import pytest
 
-from flext_core import config, settings
+from flext_core import config, lazy, settings
 from tests import tm
-
-if TYPE_CHECKING:
-    from types import ModuleType
 
 _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.constants",
@@ -42,27 +37,23 @@ class TestsConfigSettingsFamilyAvailability:
     """Prove the layer-0 SSOT reaches every family without reverse imports."""
 
     @staticmethod
-    def _load(module_name: str) -> ModuleType:
-        return import_module(module_name)
-
-    @staticmethod
     def test_singletons_are_stable_across_import_forms() -> None:
         """Root-letter access and owner-module access yield the same SSOT."""
-        owner_settings = import_module("flext_core._settings").settings
-        owner_config = import_module("flext_core._config").config
+        owner_settings = lazy.load("flext_core._settings").settings
+        owner_config = lazy.load("flext_core._config").config
         tm.that(settings, where=lambda current: current is owner_settings)
         tm.that(config, where=lambda current: current is owner_config)
 
+    @staticmethod
     @pytest.mark.parametrize("module_name", _FAMILY_SURFACES)
     def test_family_module_loads_alongside_config_settings(
-        self,
         module_name: str,
     ) -> None:
         """Each family surface imports and the SSOT stays functional."""
-        module = self._load(module_name)
-        tm.ok(module is not None)
-        tm.ok(isinstance(settings.model_dump(), dict))
-        tm.ok(isinstance(config.model_dump(), dict))
+        module = lazy.load(module_name)
+        tm.that(module.__name__, eq=module_name)
+        tm.that(len(settings.model_dump()), gt=0)
+        tm.that(len(config.model_dump()), gt=0)
 
     @staticmethod
     def test_settings_timezone_resolves_for_models_family() -> None:
@@ -72,11 +63,11 @@ class TestsConfigSettingsFamilyAvailability:
         the layer-0 settings; it must never import the utility layer for it.
 
         """
-        tm.ok(isinstance(ZoneInfo(settings.timezone), ZoneInfo))
+        tm.that(ZoneInfo(settings.timezone).key, eq=settings.timezone)
 
     @staticmethod
     def test_config_exposes_typed_namespace_mapping() -> None:
         """The config singleton exposes its business-rule namespaces."""
         namespaces = config.model_dump()
         tm.that(len(namespaces), gt=0)
-        tm.ok(all(isinstance(key, str) for key in namespaces))
+        tm.that(set(namespaces), eq=set(type(config).model_fields))

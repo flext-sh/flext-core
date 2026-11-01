@@ -13,6 +13,7 @@ from types import ModuleType
 
 import pytest
 
+from flext_core import FlextDispatcher
 from tests import c, h, m, p, r, t, tm, u
 
 
@@ -121,7 +122,7 @@ class TestsFlextHandlerDiscovery:
         found = h.Discovery.scan_module(module)[0][1]
         tm.that(found is operation)
         tm.that(received, empty=True)
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         report: p.HandlerRegistrationReport = tm.ok(
             dispatcher.register_handlers((
                 m.HandlerRegistration(

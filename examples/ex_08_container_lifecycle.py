@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import m, p
+from examples import m, p, u
 from examples.ex_08_container_scoped import ExamplesFlextContainerScoped
 from flext_core import FlextContainer
 
@@ -43,8 +43,8 @@ class ExamplesFlextContainerLifecycle(ExamplesFlextContainerScoped):
             "core_services.command_bus_internal",
             not container.has("command_bus") and container.dispatcher().success,
         )
-        logger_default = container.logger(f"examples.{self.rand_str(6)}")
-        logger_custom = container.logger(f"examples.{self.rand_str(6)}")
+        logger_default = u.fetch_logger(f"examples.{self.rand_str(6)}")
+        logger_custom = u.fetch_logger(f"examples.{self.rand_str(6)}")
         self.audit_check(
             "create_module_logger.explicit.type",
             type(logger_default).__name__,

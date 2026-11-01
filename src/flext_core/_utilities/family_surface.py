@@ -7,14 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import functools
-import importlib
 import importlib.metadata
 import sys
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import MappingProxyType
 from typing import cast
 
-from flext_core import c, normalize_lazy_imports, t
+from flext_core import c, lazy, normalize_lazy_imports, t
 from flext_core._utilities import FlextUtilitiesProjectMetadata
 
 
@@ -145,7 +144,7 @@ class FlextUtilitiesFamilySurface:
             module_name,
         ) in FlextUtilitiesFamilySurface.family_discovery_candidates():
             try:
-                module = importlib.import_module(module_name)
+                module = lazy.load(module_name)
             except ImportError:
                 # The requirement edge only nominates the member; the published
                 # contract is the structural proof. A member whose root package
@@ -302,9 +301,7 @@ class FlextUtilitiesFamilySurface:
             ``(alias, module_path, family_suffix)`` for every one-letter alias.
 
         """
-        package = sys.modules.get(package_name)
-        if package is None:
-            package = importlib.import_module(package_name)
+        package = lazy.load(package_name)
         published = vars(package).get("_LAZY_IMPORTS")
         if published is None:
             return ()

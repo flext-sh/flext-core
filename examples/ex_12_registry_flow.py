@@ -17,6 +17,7 @@ from examples import (
     t,
     u,
 )
+from flext_core import FlextDispatcher, FlextRegistry
 
 
 class ExamplesFlextRegistryFlow(ExamplesFlextShared):
@@ -24,8 +25,8 @@ class ExamplesFlextRegistryFlow(ExamplesFlextShared):
 
     def _exercise_discovery(self) -> p.Registry:
         self.section("explicit_discovery")
-        dispatcher = u.build_dispatcher()
-        registry = u.build_registry(dispatcher, discovery_module=support)
+        dispatcher = FlextDispatcher()
+        registry = FlextRegistry.create(dispatcher, discovery_module=support)
         self.audit_check("dispatcher.identity", registry.dispatcher is dispatcher)
         self.audit_check("execute.success", registry.execute().value)
         discovered = h.Discovery.scan_module(support)
@@ -71,7 +72,7 @@ class ExamplesFlextRegistryFlow(ExamplesFlextShared):
 
     def _exercise_atomic_bindings(self) -> None:
         self.section("atomic_bindings")
-        registry = u.build_registry()
+        registry = FlextRegistry.create()
         command = m.Examples.CommandA(value=self.rand_str(6))
         amount = m.Examples.CommandB(amount=self.rand_int(1, 100))
         first = registry.register_handler(support.discovered_handler)
@@ -137,7 +138,7 @@ class ExamplesFlextRegistryFlow(ExamplesFlextShared):
             """
             return r[t.JsonPayload].fail(str(cause), exception=cause)
 
-        failed_registry = u.build_registry()
+        failed_registry = FlextRegistry.create()
         failed_registry.register_bindings({
             m.Examples.CommandB: failed_handler
         }).unwrap()

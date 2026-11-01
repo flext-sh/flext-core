@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import ClassVar
 
 from flext_core._constants.violations import (
-    FlextMroViolation,
     FlextMroViolationError,
     FlextSmellViolationError,
 )
@@ -46,4 +45,4 @@ class FlextExceptions(
 
 e = FlextExceptions
 
-__all__: list[str] = ["FlextExceptions", "FlextMroViolation", "e"]
+__all__: list[str] = ["FlextExceptions", "e"]

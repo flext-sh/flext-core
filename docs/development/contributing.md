@@ -277,7 +277,7 @@ pytest tests/unit/test_result.py --cov=src/flext_core/result.py --cov-report=ter
 - Use CQRS patterns with `FlextDispatcher`
 - Implement handlers for commands/queries
 - Add middleware for cross-cutting concerns
-- Register components with `u.build_registry()`
+- Register components with `FlextRegistry.create()`
 
 #### 4. Infrastructure Layer Changes
 
