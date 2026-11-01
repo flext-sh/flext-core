@@ -130,7 +130,7 @@ Use `FlextCliCli.invoke_app` with the adapter-owned application, not Typer's `Cl
 directly. This independent example constructs and invokes a real model-backed command;
 handlers return their value but do not automatically print it.
 
-```{.python .notest}
+```python
 from flext_cli import FlextCliCli
 from tests import c, m, tm
 

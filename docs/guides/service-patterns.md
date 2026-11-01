@@ -183,7 +183,7 @@ services. Pure dependency injection through constructors is the definitive compo
 model: there is no protocol-keyed container binding and no `compose()` step. One adapter
 shared by two services is a variable passed to both constructors:
 
-```{.python .notest}
+```python
 from __future__ import annotations
 
 from collections.abc import (
@@ -214,7 +214,7 @@ audit = AuditService(clock=clock)
 The project base declares its settings class once, in a classmethod the core reads
 through `p.RuntimeBootstrapProvider`; `FlextService` itself declares no hook:
 
-```{.python .notest}
+```python
 from __future__ import annotations
 
 from collections.abc import (

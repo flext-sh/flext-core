@@ -112,6 +112,41 @@
   "git.repositoryScanMaxDepth": 2,
   "githubPullRequests.autoRepositoryDetection": true,
   "githubPullRequests.ignoreSubmodules": false,
+  "markdownlint.config": {
+    "MD001": false,
+    "MD013": {
+      "code_block_line_length": 200,
+      "heading_line_length": 200,
+      "line_length": 88,
+      "tables": false
+    },
+    "MD022": false,
+    "MD023": false,
+    "MD024": {
+      "siblings_only": true
+    },
+    "MD025": false,
+    "MD031": false,
+    "MD033": {
+      "allowed_elements": [
+        "br",
+        "details",
+        "summary",
+        "kbd"
+      ]
+    },
+    "MD036": false,
+    "MD040": false,
+    "MD041": false,
+    "MD042": false,
+    "MD046": false,
+    "MD050": {
+      "style": "consistent"
+    },
+    "MD051": false,
+    "MD060": false,
+    "default": true
+  },
   "markdownlint.configFile": ".markdownlint.json",
   "markdownlint.lintWorkspaceGlobs": [
     "!**/.git/**",
@@ -128,7 +163,16 @@
     "!**/vendor/**",
     "**/*.{md,mkd,mdwn,mdown,markdown,markdn,mdtxt,mdtext,workbook}"
   ],
-  "pyrefly.lspPath": "${workspaceFolder}/.venv/bin/pyrefly",
+  "mypy-type-checker.cwd": "${nearestConfig}",
+  "mypy-type-checker.interpreter": [
+    "${workspaceFolder}/../.venv/bin/python"
+  ],
+  "mypy-type-checker.path": [
+    "${interpreter}",
+    "-m",
+    "mypy"
+  ],
+  "pyrefly.lspPath": "${workspaceFolder}/../.venv/bin/pyrefly",
   "python-envs.workspaceSearchPaths": [
     "./.venv"
   ],
@@ -170,7 +214,7 @@
   "python.analysis.useNearestConfiguration": false,
   "python.analysis.usePerProjectEnvironments": false,
   "python.analysis.userFileIndexingLimit": -1,
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/../.venv/bin/python",
   "python.languageServer": "Pylance",
   "python.pyrefly.diagnosticMode": "workspace",
   "python.pyrefly.disableLanguageServices": true,
@@ -185,11 +229,11 @@
   "ruff.format.preview": true,
   "ruff.importStrategy": "fromEnvironment",
   "ruff.interpreter": [
-    "${workspaceFolder}/.venv/bin/python"
+    "${workspaceFolder}/../.venv/bin/python"
   ],
   "ruff.lint.preview": true,
   "ruff.path": [
-    "${workspaceFolder}/.venv/bin/ruff"
+    "${workspaceFolder}/../.venv/bin/ruff"
   ],
   "search.exclude": {
     "**/*.bak": true,
@@ -245,8 +289,8 @@
   "shellcheck.useWorkspaceRootAsCwd": true,
   "telemetry.feedback.enabled": false,
   "terminal.integrated.env.linux": {
-    "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
-    "VIRTUAL_ENV": "${workspaceFolder}/.venv"
+    "PATH": "${workspaceFolder}/../.venv/bin:${env:PATH}",
+    "VIRTUAL_ENV": "${workspaceFolder}/../.venv"
   },
   "yaml.disableSchemaDetection": [
     "**/.github/workflows/*.yml",

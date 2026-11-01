@@ -404,12 +404,10 @@ exclude = [
   "**/incoming/**",
   "**/legado/**",
   "**/node_modules/**",
-  "**/protos/**",
   "**/reports/**",
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
-  "**/tests/fixtures/**",
   "**/venv/**",
 ]
 extraPaths = ["src", "."]
@@ -433,16 +431,8 @@ reportUnusedImport = "error"
 reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = ["src", "."]
-reportPrivateUsage = "error"
-root = "src"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportPrivateUsage = "error"
-root = "tests"
+venv = ".venv"
+venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = [".", "src"]
@@ -453,6 +443,16 @@ root = "examples"
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
 root = "scripts"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = ["src", "."]
+reportPrivateUsage = "error"
+root = "src"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
+root = "tests"
 
 [tool.pytest.ini_options]
 addopts = [
