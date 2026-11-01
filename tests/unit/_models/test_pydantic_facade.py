@@ -23,14 +23,11 @@ class TestsFlextCorePydanticDeclarations:
     """Behavioral contract for the advanced pydantic facade exports."""
 
     @staticmethod
-    def test_field_preserves_shared_identity_and_required_metadata() -> None:
-        """Both public facades share the factory and preserve required fields."""
-        tm.ok(m.Field is u.Field)
+    def test_field_preserves_required_metadata() -> None:
+        """The models facade field factory preserves required-field metadata."""
         exported = m.Field(description="Native field metadata")
-        utility = u.Field(description=exported.description)
-        tm.that(utility.description, eq=exported.description)
+        tm.that(exported.description, eq="Native field metadata")
         tm.ok(exported.is_required())
-        tm.ok(utility.is_required())
 
     @staticmethod
     def test_field_required_defaults_factories_and_aliases() -> None:
@@ -256,7 +253,7 @@ class TestsFlextCorePydanticDeclarations:
             """
             return f"model:{value}"
 
-        @u.field_serializer("plain_utility", mode="plain")
+        @m.field_serializer("plain_utility", mode="plain")
         @classmethod
         def serialize_plain_utility(cls, value: int) -> str:
             """Replace the field's native representation through ``u``.
@@ -278,7 +275,7 @@ class TestsFlextCorePydanticDeclarations:
             """
             return handler(value) + 1
 
-        @u.field_serializer("wrapped_utility", mode="wrap", when_used="json")
+        @m.field_serializer("wrapped_utility", mode="wrap", when_used="json")
         @classmethod
         def serialize_wrapped_utility(
             cls, value: int, handler: Callable[[int], int]
@@ -342,7 +339,7 @@ class TestsFlextCorePydanticDeclarations:
             """
             return f"stream-{self.value}"
 
-        @u.computed_field(alias="scaled", repr=False)
+        @m.computed_field(alias="scaled", repr=False)
         @property
         def doubled(self) -> int:
             """Expose a configured computed field through the utility facade.

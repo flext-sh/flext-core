@@ -163,7 +163,7 @@ class TestsFlextUtilitiesPydanticEmpty:
             observed.append(value)
             return value
 
-        contract: TypeForm[list[int]] = Annotated[list[int], u.AfterValidator(record)]
+        contract: TypeForm[list[int]] = Annotated[list[int], m.AfterValidator(record)]
         factory = u.empty(contract)
         tm.that(observed, eq=[])
 
