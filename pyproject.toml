@@ -1,3 +1,8 @@
+# @flext-generated: continuous
+# @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
+# @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
+# @flext-regenerate: make gen
+# @flext-rendered-by: flext-infra 0.12.0
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
@@ -179,7 +184,7 @@ optional_dependencies_dev_groups = []
 allow_redefinition = true
 check_untyped_defs = true
 disable_error_code = ["call-arg", "prop-decorator"]
-exclude = "(?s:(?:.+/)?[^/]*\\.bak)\\Z|(?s:(?:.+/)?[^/]*\\.egg\\-info/.*)\\Z|(?s:(?:.+/)?[^/]*\\.orig)\\Z|(?s:(?:.+/)?[^/]*\\.rej)\\Z|(?s:(?:.+/)?[^/]*\\.swp)\\Z|(?s:(?:.+/)?\\.agents\\-sync\\-home/.*)\\Z|(?s:(?:.+/)?\\.agents/.*)\\Z|(?s:(?:.+/)?\\.archive/.*)\\Z|(?s:(?:.+/)?\\.beads/.*)\\Z|(?s:(?:.+/)?\\.benchmarks/.*)\\Z|(?s:(?:.+/)?\\.bkp/.*)\\Z|(?s:(?:.+/)?\\.cache/.*)\\Z|(?s:(?:.+/)?\\.claude/.*)\\Z|(?s:(?:.+/)?\\.codex/.*)\\Z|(?s:(?:.+/)?\\.cursor/.*)\\Z|(?s:(?:.+/)?\\.gemini/.*)\\Z|(?s:(?:.+/)?\\.git/.*)\\Z|(?s:(?:.+/)?\\.hypothesis/.*)\\Z|(?s:(?:.+/)?\\.kilo/.*)\\Z|(?s:(?:.+/)?\\.mypy_cache/.*)\\Z|(?s:(?:.+/)?\\.omo/.*)\\Z|(?s:(?:.+/)?\\.opencode/.*)\\Z|(?s:(?:.+/)?\\.pylance_cache/.*)\\Z|(?s:(?:.+/)?\\.pyrefly_cache/.*)\\Z|(?s:(?:.+/)?\\.pytest_cache/.*)\\Z|(?s:(?:.+/)?\\.reports/.*)\\Z|(?s:(?:.+/)?\\.ruff_cache/.*)\\Z|(?s:(?:.+/)?\\.serena/.*)\\Z|(?s:(?:.+/)?\\.snapshots/.*)\\Z|(?s:(?:.+/)?\\.test\\-tmp/.*)\\Z|(?s:(?:.+/)?\\.tmp/.*)\\Z|(?s:(?:.+/)?\\.tox/.*)\\Z|(?s:(?:.+/)?\\.venv\\.[^/]*/.*)\\Z|(?s:(?:.+/)?\\.venv/.*)\\Z|(?s:(?:.+/)?\\.vscode/.*)\\Z|(?s:(?:.+/)?\\.worktrees/.*)\\Z|(?s:(?:.+/)?__pycache__/.*)\\Z|(?s:(?:.+/)?__pyrefly_virtual__/.*)\\Z|(?s:(?:.+/)?_tmp_[^/]*/.*)\\Z|(?s:(?:.+/)?build/.*)\\Z|(?s:(?:.+/)?dist\\-packages/.*)\\Z|(?s:(?:.+/)?dist/.*)\\Z|(?s:(?:.+/)?htmlcov/.*)\\Z|(?s:(?:.+/)?incoming/.*)\\Z|(?s:(?:.+/)?legado/.*)\\Z|(?s:(?:.+/)?node_modules/.*)\\Z|(?s:(?:.+/)?protos/.*)\\Z|(?s:(?:.+/)?reports/.*)\\Z|(?s:(?:.+/)?site\\-packages/.*)\\Z|(?s:(?:.+/)?site/.*)\\Z|(?s:(?:.+/)?target/.*)\\Z|(?s:(?:.+/)?tests/fixtures/.*)\\Z|(?s:(?:.+/)?venv/.*)\\Z"
+exclude = "(?s:(?:.+/)?[^/]*\\.bak)\\Z|(?s:(?:.+/)?[^/]*\\.egg\\-info/.*)\\Z|(?s:(?:.+/)?[^/]*\\.orig)\\Z|(?s:(?:.+/)?[^/]*\\.rej)\\Z|(?s:(?:.+/)?[^/]*\\.swp)\\Z|(?s:(?:.+/)?\\.agents\\-sync\\-home/.*)\\Z|(?s:(?:.+/)?\\.agents/.*)\\Z|(?s:(?:.+/)?\\.archive/.*)\\Z|(?s:(?:.+/)?\\.beads/.*)\\Z|(?s:(?:.+/)?\\.benchmarks/.*)\\Z|(?s:(?:.+/)?\\.bkp/.*)\\Z|(?s:(?:.+/)?\\.cache/.*)\\Z|(?s:(?:.+/)?\\.claude/.*)\\Z|(?s:(?:.+/)?\\.codex/.*)\\Z|(?s:(?:.+/)?\\.cursor/.*)\\Z|(?s:(?:.+/)?\\.gemini/.*)\\Z|(?s:(?:.+/)?\\.git/.*)\\Z|(?s:(?:.+/)?\\.hypothesis/.*)\\Z|(?s:(?:.+/)?\\.kilo/.*)\\Z|(?s:(?:.+/)?\\.mypy_cache/.*)\\Z|(?s:(?:.+/)?\\.omo/.*)\\Z|(?s:(?:.+/)?\\.opencode/.*)\\Z|(?s:(?:.+/)?\\.pylance_cache/.*)\\Z|(?s:(?:.+/)?\\.pyrefly_cache/.*)\\Z|(?s:(?:.+/)?\\.pytest_cache/.*)\\Z|(?s:(?:.+/)?\\.reports/.*)\\Z|(?s:(?:.+/)?\\.ruff_cache/.*)\\Z|(?s:(?:.+/)?\\.serena/.*)\\Z|(?s:(?:.+/)?\\.snapshots/.*)\\Z|(?s:(?:.+/)?\\.test\\-tmp/.*)\\Z|(?s:(?:.+/)?\\.tmp/.*)\\Z|(?s:(?:.+/)?\\.tox/.*)\\Z|(?s:(?:.+/)?\\.venv\\.[^/]*/.*)\\Z|(?s:(?:.+/)?\\.venv/.*)\\Z|(?s:(?:.+/)?\\.vscode/.*)\\Z|(?s:(?:.+/)?\\.worktrees/.*)\\Z|(?s:(?:.+/)?__pycache__/.*)\\Z|(?s:(?:.+/)?__pyrefly_virtual__/.*)\\Z|(?s:(?:.+/)?_tmp_[^/]*/.*)\\Z|(?s:(?:.+/)?build/.*)\\Z|(?s:(?:.+/)?dist\\-packages/.*)\\Z|(?s:(?:.+/)?dist/.*)\\Z|(?s:(?:.+/)?htmlcov/.*)\\Z|(?s:(?:.+/)?incoming/.*)\\Z|(?s:(?:.+/)?legado/.*)\\Z|(?s:(?:.+/)?node_modules/.*)\\Z|(?s:(?:.+/)?reports/.*)\\Z|(?s:(?:.+/)?site\\-packages/.*)\\Z|(?s:(?:.+/)?site/.*)\\Z|(?s:(?:.+/)?target/.*)\\Z|(?s:(?:.+/)?venv/.*)\\Z"
 explicit_package_bases = true
 extra_checks = true
 follow_imports = "normal"
@@ -255,12 +260,10 @@ project-excludes = [
   "**/incoming/**",
   "**/legado/**",
   "**/node_modules/**",
-  "**/protos/**",
   "**/reports/**",
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
-  "**/tests/fixtures/**",
   "**/venv/**",
 ]
 project-includes = [
@@ -432,17 +435,7 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
 venv = ".venv"
-venvPath = ".."
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportPrivateUsage = "error"
-root = "examples"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportPrivateUsage = "error"
-root = "scripts"
+venvPath = "."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = ["src", "."]
@@ -453,6 +446,16 @@ root = "src"
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
 root = "tests"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
+root = "examples"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
+root = "scripts"
 
 [tool.pytest.ini_options]
 addopts = [
@@ -539,12 +542,10 @@ extend-exclude = [
   "**/incoming/**",
   "**/legado/**",
   "**/node_modules/**",
-  "**/protos/**",
   "**/reports/**",
   "**/site-packages/**",
   "**/site/**",
   "**/target/**",
-  "**/tests/fixtures/**",
   "**/venv/**",
 ]
 fix = false
@@ -620,13 +621,13 @@ runtime-evaluated-base-classes = [
   "examples.m.Examples.RegistryLookupOptions",
   "examples.s",
   "flext_core.FlextSettings",
-  "flext_core._handlers.flexthandlers_part_01.FlextHandlersPart01",
-  "flext_core._handlers.flexthandlers_part_02.FlextHandlersPart02",
-  "flext_core._handlers.flexthandlers_part_03.FlextHandlersPart03",
-  "flext_core._handlers.flexthandlers_part_04.FlextHandlersPart04",
-  "flext_core._handlers.flexthandlers_part_05.FlextHandlersPart05",
-  "flext_core._handlers.flexthandlers_part_06.FlextHandlersPart06",
-  "flext_core._handlers.flexthandlers_part_07.FlextHandlersPart07",
+  "flext_core._handlers.FlextHandlersCqrsBase",
+  "flext_core._handlers.FlextHandlersDispatch",
+  "flext_core._handlers.FlextHandlersExecution",
+  "flext_core._handlers.FlextHandlersFactory",
+  "flext_core._handlers.FlextHandlersPipeline",
+  "flext_core._handlers.FlextHandlersSettings",
+  "flext_core._handlers.flexthandlers_discovery.FlextHandlersDiscovery",
   "flext_core._models.FlextModelsBase.ArbitraryTypesModel",
   "flext_core._models.FlextModelsBase.ContractModel",
   "flext_core._models.FlextModelsBase.FlexibleInternalModel",
@@ -640,34 +641,27 @@ runtime-evaluated-base-classes = [
   "flext_core._models.FlextModelsEntity.Value",
   "flext_core._models.FlextModelsPydantic.BaseModel",
   "flext_core._models.FlextModelsPydantic.RootModel",
-  "flext_core._models._base.FlextModelsBasePart01.StrictModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.ArbitraryTypesModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.DynamicModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.EnforcedModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.EnumManagedModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.FlexibleModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.FrozenModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.ManagedModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.NormalizedModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.StrictManagedModel",
-  "flext_core._models._base.Flextmodelsbase_part_01.StrictModel",
-  "flext_core._models._base.Flextmodelsbase_part_02.ContractModel",
-  "flext_core._models._base.Flextmodelsbase_part_02.FlextModelsBasePart02.ArbitraryTypesModel",
-  "flext_core._models._container.Flextmodelscontainer_part_01.FlextModelsContainerPart01.RegistrationEnvelope",
-  "flext_core._models._container.Flextmodelscontainer_part_01.RegistrationEnvelope",
-  "flext_core._models._enforcement.FlextModelsEnforcementBase.Report",
-  "flext_core._models._enforcement.FlextModelsEnforcementModelBase",
-  "flext_core._models._enforcement._base.FlextModelsEnforcementModelBase",
-  "flext_core._models._exception_params.base.FlextModelsExceptionParamsBase.ExpectedActualTypeParams",
-  "flext_core._models._exception_params.base.FlextModelsExceptionParamsBase.ParamsModel",
-  "flext_core._models._exception_params.base.FlextModelsExceptionParamsBase.ResourceIdentityParams",
+  "flext_core._models._exception_params.FlextModelsExceptionParamsBase.ExpectedActualTypeParams",
+  "flext_core._models._exception_params.FlextModelsExceptionParamsBase.ParamsModel",
+  "flext_core._models._exception_params.FlextModelsExceptionParamsBase.ResourceIdentityParams",
   "flext_core._models._exception_params.base.ParamsModel",
-  "flext_core._models._project_metadata.contract.FlextModelsProjectMetadataContract",
-  "flext_core._models._project_metadata.pyproject_ingress.FlextModelsPyprojectIngressContract",
+  "flext_core._models._project_metadata.FlextModelsProjectMetadataContract",
+  "flext_core._models._project_metadata.FlextModelsPyprojectIngressContract",
+  "flext_core._models.base.ArbitraryTypesModel",
+  "flext_core._models.base.ContractModel",
+  "flext_core._models.base.DynamicModel",
+  "flext_core._models.base.EnforcedModel",
+  "flext_core._models.base.EnumManagedModel",
+  "flext_core._models.base.FlexibleModel",
+  "flext_core._models.base.FrozenModel",
+  "flext_core._models.base.ManagedModel",
+  "flext_core._models.base.NormalizedModel",
+  "flext_core._models.base.StrictManagedModel",
+  "flext_core._models.base.StrictModel",
+  "flext_core._models.container.RegistrationEnvelope",
   "flext_core._models.containers._MappingRootBase",
   "flext_core._models.entity.Entity",
   "flext_core._models.entity.Value",
-  "flext_core._models.pydantic.FlextModelsPydantic.BaseModel",
   "flext_core._result.FlextResultBase",
   "flext_core._result.FlextResultBehavior",
   "flext_core._result.FlextResultComposed",
@@ -675,6 +669,8 @@ runtime-evaluated-base-classes = [
   "flext_core._result.FlextResultConstruction",
   "flext_core._result.FlextResultTransforms",
   "flext_core._result.FlextResultUnwrap",
+  "flext_core._services.dispatcher.FlextServiceDispatcher",
+  "flext_core._services.registry.FlextServiceRegistry",
   "flext_core.h",
   "flext_core.m.ArbitraryTypesModel",
   "flext_core.m.BaseModel",
@@ -691,8 +687,6 @@ runtime-evaluated-base-classes = [
   "flext_core.m.ServiceState",
   "flext_core.m.Value",
   "flext_core.s",
-  "flext_core.services.dispatcher.FlextServiceDispatcher",
-  "flext_core.services.registry.FlextServiceRegistry",
   "flext_core.x",
   "flext_tests.FlextTestsServiceBase",
   "flext_tests.h",
@@ -712,13 +706,19 @@ runtime-evaluated-base-classes = [
   "tests.m.Entity",
   "tests.m.ExternalContractModel",
   "tests.m.FlexibleModel",
+  "tests.m.FrozenModel",
   "tests.m.FrozenValueModel",
+  "tests.m.ManagedModel",
+  "tests.m.ParamsModel",
+  "tests.m.SettingsValue",
+  "tests.m.StrictManagedModel",
   "tests.m.Tests.HandlerObservations",
   "tests.m.Tests.PublicPayload",
   "tests.m.Value",
   "tests.s",
   "tests.unit._models.test_pydantic_facade._Item",
   "tests.unit.test_service_bootstrap.ConcreteTestService",
+  "tests.unit.test_service_bootstrap.GenericPort",
   "tests.unit.test_service_operations.OperationService",
   "tests.unit.test_service_operations.ReadSide",
   "tests.unit.test_service_operations.WriteSide",
@@ -730,6 +730,9 @@ combine-as-imports = true
 force-single-line = false
 known-first-party = ["flext_core"]
 split-on-trailing-comma = false
+
+[tool.ruff.lint.pep8-naming]
+ignore-names = ["Ldif"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

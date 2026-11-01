@@ -48,12 +48,10 @@
 **/incoming/**
 **/legado/**
 **/node_modules/**
-**/protos/**
 **/reports/**
 **/site-packages/**
 **/site/**
 **/target/**
-**/tests/fixtures/**
 **/venv/**
 .zcode/**
 CHANGELOG.md
