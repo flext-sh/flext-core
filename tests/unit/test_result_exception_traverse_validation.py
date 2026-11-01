@@ -12,12 +12,11 @@ from __future__ import annotations
 
 import pytest
 
-import tests.utilities
-from tests import c, p, r, t, tm
+from tests import c, p, r, t, tm, u
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
-    tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying,
+    u.Tests.TestsFlextResultExceptionCarrying,
 ):
     """Tests for ``FlextCoreResultExceptionTraverseValidation``."""
 
@@ -143,11 +142,9 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         invalid = {"name": "Alice", "age": "not_an_int"}
 
         # Act
-        result = r[
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
-        ].from_validation(
+        result = r[u.Tests.TestsFlextResultExceptionCarrying.UserModel].from_validation(
             invalid,
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
+            u.Tests.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert
@@ -162,11 +159,9 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         valid: t.JsonDict = {"name": "Alice", "age": 30}
 
         # Act
-        result = r[
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
-        ].from_validation(
+        result = r[u.Tests.TestsFlextResultExceptionCarrying.UserModel].from_validation(
             valid,
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
+            u.Tests.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert

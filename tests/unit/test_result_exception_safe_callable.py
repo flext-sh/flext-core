@@ -14,12 +14,11 @@ from __future__ import annotations
 
 import pytest
 
-import tests.utilities
-from tests import p, r, tm
+from tests import p, r, tm, u
 
 
 class TestsFlextCoreResultExceptionSafeCallable(
-    tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying,
+    u.Tests.TestsFlextResultExceptionCarrying,
 ):
     """Public-contract behavior of ``r.safe`` and ``r[T].create_from_callable``."""
 
