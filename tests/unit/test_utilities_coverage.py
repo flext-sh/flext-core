@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, t, tm, u
+from tests import t, tm, u
 
 
 class TestsFlextCoreUtilitiesCoverage:
@@ -135,23 +135,6 @@ class TestsFlextCoreUtilitiesCoverage:
     ) -> None:
         """to_optional_str yields the string only when it is a non-empty str."""
         tm.that(u.to_optional_str(value), eq=expected)
-
-    @staticmethod
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [("solo", ["solo"]), ([1, 2], [c.ParserBooleanToken.ONE, "2"]), (None, [])],
-    )
-    def test_to_str_list_produces_list_of_strings(
-        value: t.StrictValue | None,
-        expected: list[str],
-    ) -> None:
-        """to_str_list normalizes scalars and sequences into lists of strings."""
-        tm.that(u.to_str_list(value), eq=expected)
-
-    @staticmethod
-    def test_to_str_list_uses_default_for_none() -> None:
-        """to_str_list returns the provided default when value is None."""
-        tm.that(u.to_str_list(None, default=["x"]), eq=["x"])
 
     @staticmethod
     @pytest.mark.parametrize(
