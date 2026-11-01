@@ -285,8 +285,9 @@ class FlextUtilitiesLoggingConfig:
         if (
             not async_logging or logger_factory is not None
         ) and FlextUtilitiesLoggingConfig._async_writer is not None:
-            FlextUtilitiesLoggingConfig._async_writer.shutdown()
-            FlextUtilitiesLoggingConfig._async_writer = None
+            # Existing runtime loggers still own bindings to this transport.
+            # A new composition drains it; process shutdown closes it.
+            FlextUtilitiesLoggingConfig._async_writer.flush()
         if logger_factory is not None:
             return logger_factory
         if not async_logging:
@@ -472,6 +473,7 @@ class FlextUtilitiesLoggingConfig:
         options: p.StructlogOptions,
         trace: bool,
         runtime_settings: p.LoggingSettings | None = None,
+        debug: bool = False,
     ) -> Sequence[Processor]:
         """Compose one shared event pipeline and a native terminal renderer.
 
@@ -491,15 +493,26 @@ class FlextUtilitiesLoggingConfig:
             PositionalArgumentsFormatter(),
             cls.level_based_context_filter,
             TimeStamper(fmt="iso"),
-            CallsiteParameterAdder(
-                additional_ignores=[
-                    "flext_core.bound_logger",
-                    "flext_core._utilities.logging",
-                ]
-            ),
             StackInfoRenderer(),
             cls._exception_metadata,
         ]
+        if (
+            debug
+            or trace
+            or not console_renderer
+            or options.handlers
+            or options.observers
+            or options.processing_stages
+        ):
+            processors.insert(
+                -2,
+                CallsiteParameterAdder(
+                    additional_ignores=[
+                        "flext_core._utilities._logging_context.bound_logger",
+                        "flext_core._utilities.logging",
+                    ]
+                ),
+            )
         processors.extend(options.processing_stages)
         processors.extend((
             ExceptionRenderer(
@@ -636,6 +649,7 @@ class FlextUtilitiesLoggingConfig:
                 options=options,
                 trace=runtime_settings.trace,
                 runtime_settings=runtime_settings,
+                debug=runtime_settings.debug,
             ),
             wrapper_class=wrapper,
             cache_logger_on_first_use=options.cache_logger_on_first_use,
@@ -736,6 +750,7 @@ class FlextUtilitiesLoggingConfig:
             ),
             options=options,
             trace=selected.trace,
+            debug=selected.debug,
         )
         # The threshold is enforced by ``drop_below_threshold`` at emit time,
         # so the bound logger itself must not filter statically.
