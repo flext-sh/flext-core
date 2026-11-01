@@ -18,14 +18,14 @@
   Topic :: Software Development :: Libraries :: Application Frameworks, Typing :: Typed
 - Project class: `domain`
 - Keywords: `clean-architecture`, `ddd`, `enterprise`, `flext`, `modern`, `solid`
-- Main facades: `FlextBase`, `FlextBoundLogger`, `FlextCli`, `FlextConfig`,
-  `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextCore` (+25 more)
+- Main facades: `FlextCli`, `FlextConfig`, `FlextConstants`, `FlextContainer`,
+  `FlextContext`, `FlextCore`, `FlextDecoratorsRuntime`, `FlextDispatcher` (+19 more)
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
-- Public symbol exports: `FlextBase`, `FlextBoundLogger`, `FlextCli`, `FlextConfig`,
-  `FlextConstants`, `FlextContainer`, `FlextContext`, `FlextCore`,
-  `FlextCoreBeartypeBootstrap`, `FlextDecorators` (+35 more)
+- Public symbol exports: `FlextCli`, `FlextConfig`, `FlextConstants`, `FlextContainer`,
+  `FlextContext`, `FlextCore`, `FlextDecoratorsRuntime`, `FlextDispatcher`,
+  `FlextExceptions`, `FlextHandlers` (+29 more)
 - Exported module shortcuts: `lazy`
-- Generated module pages: `27`
+- Generated module pages: `24`
 
 ## Next Pages
 
