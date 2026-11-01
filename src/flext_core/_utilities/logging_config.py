@@ -486,9 +486,7 @@ class FlextUtilitiesLoggingConfig:
             if runtime_settings is None
             else partial(
                 cls.drop_below_threshold,
-                threshold=options.log_level
-                if options.log_level is not None
-                else cls.level_number(runtime_settings.log_level),
+                threshold=cls.level_number(runtime_settings.log_level),
             ),
             PositionalArgumentsFormatter(),
             cls.level_based_context_filter,
