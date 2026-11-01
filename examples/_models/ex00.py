@@ -57,12 +57,12 @@ class ExamplesFlextModelsEx00:
             """
             if not isinstance(value, str):
                 raise TypeError(
-                    ExamplesFlextModelsErrors.ErrorMessages.EXPECTED_TEXT_INPUT
+                    ExamplesFlextModelsErrors.Examples.ErrorMessages.EXPECTED_TEXT_INPUT
                 )
             normalized = value.strip()
             if not normalized:
                 raise ValueError(
-                    ExamplesFlextModelsErrors.ErrorMessages.TEXT_INPUT_CANNOT_BE_EMPTY
+                    ExamplesFlextModelsErrors.Examples.ErrorMessages.TEXT_INPUT_CANNOT_BE_EMPTY
                 )
             return normalized
 

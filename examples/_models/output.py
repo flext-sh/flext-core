@@ -20,27 +20,32 @@ if TYPE_CHECKING:
 class ExamplesFlextModelsOutput:
     """Output namespace used by example scripts."""
 
-    class OutputKind(StrEnum):
-        """Supported output result kinds."""
+    class Examples:
+        """Examples output namespace."""
 
-        SUCCESS = "PASS"
-        FAIL = "FAIL"
-        GENERATED = "GENERATED"
+        class OutputKind(StrEnum):
+            """Supported output result kinds."""
 
-    class OutputTemplate(StrEnum):
-        """Canonical output templates for example verification."""
+            SUCCESS = "PASS"
+            FAIL = "FAIL"
+            GENERATED = "GENERATED"
 
-        SUCCESS = "{kind}: {stem} ({checks} checks)\\n"
-        FAIL = "{kind}: {stem} — diff {expected_name} {actual_name}\\n"
-        GENERATED = "{kind}: {expected_name} ({checks} checks)\\n"
+        class OutputTemplate(StrEnum):
+            """Canonical output templates for example verification."""
 
-    LABEL_VALUE_SEPARATOR: ClassVar[str] = ": "
-    RESULT_LINE_PATTERN: ClassVar[t.RegexPattern] = c.PATTERN_EXAMPLE_RESULT_LINE_RE
-    TEMPLATE_BY_KIND: ClassVar[Mapping[OutputKind, OutputTemplate]] = MappingProxyType({
-        OutputKind.SUCCESS: OutputTemplate.SUCCESS,
-        OutputKind.FAIL: OutputTemplate.FAIL,
-        OutputKind.GENERATED: OutputTemplate.GENERATED,
-    })
+            SUCCESS = "{kind}: {stem} ({checks} checks)\\n"
+            FAIL = "{kind}: {stem} — diff {expected_name} {actual_name}\\n"
+            GENERATED = "{kind}: {expected_name} ({checks} checks)\\n"
+
+        LABEL_VALUE_SEPARATOR: ClassVar[str] = ": "
+        RESULT_LINE_PATTERN: ClassVar[t.RegexPattern] = c.PATTERN_EXAMPLE_RESULT_LINE_RE
+        TEMPLATE_BY_KIND: ClassVar[Mapping[OutputKind, OutputTemplate]] = (
+            MappingProxyType({
+                OutputKind.SUCCESS: OutputTemplate.SUCCESS,
+                OutputKind.FAIL: OutputTemplate.FAIL,
+                OutputKind.GENERATED: OutputTemplate.GENERATED,
+            })
+        )
 
 
 __all__: list[str] = ["ExamplesFlextModelsOutput"]
