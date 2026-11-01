@@ -11,7 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
@@ -23,16 +22,6 @@ if TYPE_CHECKING:
 
 class FlextProtocolsConfig:
     """Protocols for declarative config loading and env override."""
-
-    class ConfigScalarResolver(Protocol):
-        """Register the scalar rules consumed by configuration ingress."""
-
-        @classmethod
-        def add_implicit_resolver(
-            cls, tag: str, regexp: t.RegexPattern, first: Sequence[str]
-        ) -> None:
-            """Register a scalar pattern for its possible initial characters."""
-            ...
 
     @runtime_checkable
     class ConfigLoader(Protocol):

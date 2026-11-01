@@ -259,7 +259,7 @@ class FlextTypesPydantic:
                 The original input or its source-decoded representation.
 
             """
-            # contexto vem do pydantic-core como Any: tipado uma vez na fronteira
+            # pydantic-core passes the context untyped; it is typed once here.
             context: Mapping[str, p.GuardInput] | None = info.context
             return (
                 decoder.validate_python(value, strict=True)

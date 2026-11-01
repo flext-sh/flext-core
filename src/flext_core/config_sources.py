@@ -21,7 +21,7 @@ import re
 from collections.abc import Callable, Mapping, Sequence, Sequence as _Sequence
 from importlib.resources.abc import Traversable
 from pathlib import Path, Path as _Path
-from typing import IO, TYPE_CHECKING, ClassVar, cast, override
+from typing import IO, ClassVar, cast, override
 
 from pydantic import JsonValue, TypeAdapter
 from pydantic.config import JsonDict
@@ -31,9 +31,6 @@ from pydantic_settings.sources.utils import InitState
 from yaml import CSafeLoader, MappingNode, ScalarNode
 from yaml.constructor import ConstructorError, SafeConstructor
 from yaml.resolver import BaseResolver
-
-if TYPE_CHECKING:
-    from flext_core import p
 
 
 class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
@@ -149,7 +146,7 @@ class FlextStrictYamlConfigSource(YamlConfigSettingsSource):
     )
 
     @staticmethod
-    def _register_scalar_rules(resolver: type[p.ConfigScalarResolver]) -> None:
+    def _register_scalar_rules(resolver: type[BaseResolver]) -> None:
         """Register YAML 1.2 scalars on the selected loader only."""
         resolver.add_implicit_resolver(
             "tag:yaml.org,2002:bool",
