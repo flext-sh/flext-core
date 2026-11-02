@@ -12,7 +12,7 @@ from typing import ClassVar
 from tests import m
 
 
-class TestsFlextUtilitiesReliabilityScenariosMixin:
+class TestsFlextUtilitiesReliabilityScenarios:
     """Reliability scenario helpers."""
 
     """Centralized reliability scenarios - single source of truth."""
@@ -75,4 +75,4 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
     ]
 
 
-__all__: list[str] = ["TestsFlextUtilitiesReliabilityScenariosMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesReliabilityScenarios"]

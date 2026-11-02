@@ -18,14 +18,14 @@ from flext_tests import u as flext_tests_u
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
-    TestsFlextUtilitiesContractsMixin,
-    TestsFlextUtilitiesDispatchMixin,
-    TestsFlextUtilitiesParserReliabilityMixin,
-    TestsFlextUtilitiesParserScenariosMixin,
-    TestsFlextUtilitiesRailwayMixin,
-    TestsFlextUtilitiesReliabilityScenariosMixin,
+    TestsFlextUtilitiesContracts,
+    TestsFlextUtilitiesDispatch,
+    TestsFlextUtilitiesParserReliability,
+    TestsFlextUtilitiesParserScenarios,
+    TestsFlextUtilitiesRailway,
+    TestsFlextUtilitiesReliabilityScenarios,
     TestsFlextUtilitiesResultCombinators,
-    TestsFlextUtilitiesValidationFactoriesMixin,
+    TestsFlextUtilitiesValidationFactories,
     TestsFlextUtilitiesValidationNetworkScenarios,
     TestsFlextUtilitiesValidationNumericScenarios,
     TestsFlextUtilitiesValidationPatternScenarios,
@@ -383,14 +383,14 @@ class TestsFlextUtilities(flext_tests_u):
             )
 
     class Tests(
-        TestsFlextUtilitiesContractsMixin,
-        TestsFlextUtilitiesDispatchMixin,
+        TestsFlextUtilitiesContracts,
+        TestsFlextUtilitiesDispatch,
         TestsFlextUtilitiesResultCombinators,
-        TestsFlextUtilitiesValidationFactoriesMixin,
-        TestsFlextUtilitiesParserReliabilityMixin,
-        TestsFlextUtilitiesParserScenariosMixin,
-        TestsFlextUtilitiesReliabilityScenariosMixin,
-        TestsFlextUtilitiesRailwayMixin,
+        TestsFlextUtilitiesValidationFactories,
+        TestsFlextUtilitiesParserReliability,
+        TestsFlextUtilitiesParserScenarios,
+        TestsFlextUtilitiesReliabilityScenarios,
+        TestsFlextUtilitiesRailway,
         TestsFlextUtilitiesValidationNetworkScenarios,
         TestsFlextUtilitiesValidationNumericScenarios,
         TestsFlextUtilitiesValidationPatternScenarios,

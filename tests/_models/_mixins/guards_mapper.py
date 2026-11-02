@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from collections.abc import ItemsView
 
 
-class TestsFlextModelsGuardsMapperMixin:
+class TestsFlextModelsGuardsMapper:
     """Guard mapper and event model helpers."""
 
     # --- from test_models_context_full_coverage.py ---
@@ -68,4 +68,4 @@ class TestsFlextModelsGuardsMapperMixin:
         ]
 
 
-__all__: list[str] = ["TestsFlextModelsGuardsMapperMixin"]
+__all__: list[str] = ["TestsFlextModelsGuardsMapper"]

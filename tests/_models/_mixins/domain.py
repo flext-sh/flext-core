@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class TestsFlextModelsDomainMixin:
+class TestsFlextModelsDomain:
     """Domain and parser model helpers."""
 
     class EmailResponse(m.BaseModel):
@@ -52,4 +52,4 @@ class TestsFlextModelsDomainMixin:
         validator: Callable[[str], bool] | None = None
 
 
-__all__: list[str] = ["TestsFlextModelsDomainMixin"]
+__all__: list[str] = ["TestsFlextModelsDomain"]

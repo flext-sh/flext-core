@@ -13,9 +13,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import api, core, td, tf, tk, tm
+    from flext_tests import api, td, tf, tk, tm
 
-    from flext_core import config, d, e, h, r, settings, x
+    from flext_core import config, core, d, e, h, r, settings, x
     from tests.base import TestsFlextServiceBase, s
     from tests.constants import TestsFlextConstants, c
     from tests.models import TestsFlextModels, m
@@ -65,7 +65,7 @@ install_lazy_exports(
         "api": "flext_tests",
         "c": ".constants",
         "config": "flext_core",
-        "core": "flext_tests",
+        "core": "flext_core",
         "d": "flext_core",
         "e": "flext_core",
         "h": "flext_core",

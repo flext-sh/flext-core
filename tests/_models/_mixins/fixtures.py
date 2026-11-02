@@ -7,16 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from tests._models._mixins import (
-    TestsFlextModelsFixturePayloadsMixin,
-    TestsFlextModelsFixtureSuiteMixin,
+    TestsFlextModelsFixturePayloads,
+    TestsFlextModelsFixtureSuite,
 )
 
 
-class TestsFlextModelsFixtureDictsMixin(
-    TestsFlextModelsFixturePayloadsMixin,
-    TestsFlextModelsFixtureSuiteMixin,
+class TestsFlextModelsFixtureDicts(
+    TestsFlextModelsFixturePayloads,
+    TestsFlextModelsFixtureSuite,
 ):
     """Fixture dictionary model helpers."""
 
 
-__all__: list[str] = ["TestsFlextModelsFixtureDictsMixin"]
+__all__: list[str] = ["TestsFlextModelsFixtureDicts"]

@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class TestsFlextUtilitiesDispatchMixin:
+class TestsFlextUtilitiesDispatch:
     """Dispatcher test helpers."""
 
     @staticmethod
@@ -129,4 +129,4 @@ class TestsFlextUtilitiesDispatchMixin:
             return next_handler(command)
 
 
-__all__: list[str] = ["TestsFlextUtilitiesDispatchMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesDispatch"]

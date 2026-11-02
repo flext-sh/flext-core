@@ -7,18 +7,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from tests._models._mixins import (
-    TestsFlextModelsServiceCaseCoreMixin,
-    TestsFlextModelsServiceCaseReliabilityMixin,
-    TestsFlextModelsServiceCaseValidationMixin,
+    TestsFlextModelsServiceCaseCore,
+    TestsFlextModelsServiceCaseReliability,
+    TestsFlextModelsServiceCaseValidation,
 )
 
 
-class TestsFlextModelsServiceCasesMixin(
-    TestsFlextModelsServiceCaseReliabilityMixin,
-    TestsFlextModelsServiceCaseValidationMixin,
-    TestsFlextModelsServiceCaseCoreMixin,
+class TestsFlextModelsServiceCases(
+    TestsFlextModelsServiceCaseReliability,
+    TestsFlextModelsServiceCaseValidation,
+    TestsFlextModelsServiceCaseCore,
 ):
     """Service and validation case model helpers."""
 
 
-__all__: list[str] = ["TestsFlextModelsServiceCasesMixin"]
+__all__: list[str] = ["TestsFlextModelsServiceCases"]

@@ -13,78 +13,72 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests._models._mixins.container import TestsFlextModelsContainerMixin
-    from tests._models._mixins.core import TestsFlextModelsCoreMixin
-    from tests._models._mixins.core_errors import TestsFlextModelsCoreErrorsMixin
-    from tests._models._mixins.core_public import TestsFlextModelsCorePublicMixin
-    from tests._models._mixins.core_state import TestsFlextModelsCoreStateMixin
-    from tests._models._mixins.domain import TestsFlextModelsDomainMixin
-    from tests._models._mixins.fixture_payloads import (
-        TestsFlextModelsFixturePayloadsMixin,
-    )
-    from tests._models._mixins.fixture_suite import TestsFlextModelsFixtureSuiteMixin
-    from tests._models._mixins.fixtures import TestsFlextModelsFixtureDictsMixin
-    from tests._models._mixins.guards_mapper import TestsFlextModelsGuardsMapperMixin
-    from tests._models._mixins.service_case_core import (
-        TestsFlextModelsServiceCaseCoreMixin,
-    )
+    from tests._models._mixins.container import TestsFlextModelsContainer
+    from tests._models._mixins.core import TestsFlextModelsCore
+    from tests._models._mixins.core_errors import TestsFlextModelsCoreErrors
+    from tests._models._mixins.core_public import TestsFlextModelsCorePublic
+    from tests._models._mixins.core_state import TestsFlextModelsCoreState
+    from tests._models._mixins.domain import TestsFlextModelsDomain
+    from tests._models._mixins.fixture_payloads import TestsFlextModelsFixturePayloads
+    from tests._models._mixins.fixture_suite import TestsFlextModelsFixtureSuite
+    from tests._models._mixins.fixtures import TestsFlextModelsFixtureDicts
+    from tests._models._mixins.guards_mapper import TestsFlextModelsGuardsMapper
+    from tests._models._mixins.service_case_core import TestsFlextModelsServiceCaseCore
     from tests._models._mixins.service_case_reliability import (
-        TestsFlextModelsServiceCaseReliabilityMixin,
+        TestsFlextModelsServiceCaseReliability,
     )
     from tests._models._mixins.service_case_validation import (
-        TestsFlextModelsServiceCaseValidationMixin,
+        TestsFlextModelsServiceCaseValidation,
     )
-    from tests._models._mixins.service_cases import TestsFlextModelsServiceCasesMixin
-    from tests._models._mixins.test_data import TestsFlextModelsTestDataMixin
+    from tests._models._mixins.service_cases import TestsFlextModelsServiceCases
+    from tests._models._mixins.test_data import TestsFlextModelsTestData
     from tests._models._mixins.test_data_identity import (
-        TestsFlextModelsTestDataIdentityMixin,
+        TestsFlextModelsTestDataIdentity,
     )
-    from tests._models._mixins.test_data_values import (
-        TestsFlextModelsTestDataValuesMixin,
-    )
+    from tests._models._mixins.test_data_values import TestsFlextModelsTestDataValues
 
 
 __all__: tuple[str, ...] = (
-    "TestsFlextModelsContainerMixin",
-    "TestsFlextModelsCoreErrorsMixin",
-    "TestsFlextModelsCoreMixin",
-    "TestsFlextModelsCorePublicMixin",
-    "TestsFlextModelsCoreStateMixin",
-    "TestsFlextModelsDomainMixin",
-    "TestsFlextModelsFixtureDictsMixin",
-    "TestsFlextModelsFixturePayloadsMixin",
-    "TestsFlextModelsFixtureSuiteMixin",
-    "TestsFlextModelsGuardsMapperMixin",
-    "TestsFlextModelsServiceCaseCoreMixin",
-    "TestsFlextModelsServiceCaseReliabilityMixin",
-    "TestsFlextModelsServiceCaseValidationMixin",
-    "TestsFlextModelsServiceCasesMixin",
-    "TestsFlextModelsTestDataIdentityMixin",
-    "TestsFlextModelsTestDataMixin",
-    "TestsFlextModelsTestDataValuesMixin",
+    "TestsFlextModelsContainer",
+    "TestsFlextModelsCore",
+    "TestsFlextModelsCoreErrors",
+    "TestsFlextModelsCorePublic",
+    "TestsFlextModelsCoreState",
+    "TestsFlextModelsDomain",
+    "TestsFlextModelsFixtureDicts",
+    "TestsFlextModelsFixturePayloads",
+    "TestsFlextModelsFixtureSuite",
+    "TestsFlextModelsGuardsMapper",
+    "TestsFlextModelsServiceCaseCore",
+    "TestsFlextModelsServiceCaseReliability",
+    "TestsFlextModelsServiceCaseValidation",
+    "TestsFlextModelsServiceCases",
+    "TestsFlextModelsTestData",
+    "TestsFlextModelsTestDataIdentity",
+    "TestsFlextModelsTestDataValues",
 )
 
 install_lazy_exports(
     __name__,
     globals(),
     MappingProxyType({
-        "TestsFlextModelsContainerMixin": ".container",
-        "TestsFlextModelsCoreErrorsMixin": ".core_errors",
-        "TestsFlextModelsCoreMixin": ".core",
-        "TestsFlextModelsCorePublicMixin": ".core_public",
-        "TestsFlextModelsCoreStateMixin": ".core_state",
-        "TestsFlextModelsDomainMixin": ".domain",
-        "TestsFlextModelsFixtureDictsMixin": ".fixtures",
-        "TestsFlextModelsFixturePayloadsMixin": ".fixture_payloads",
-        "TestsFlextModelsFixtureSuiteMixin": ".fixture_suite",
-        "TestsFlextModelsGuardsMapperMixin": ".guards_mapper",
-        "TestsFlextModelsServiceCaseCoreMixin": ".service_case_core",
-        "TestsFlextModelsServiceCaseReliabilityMixin": ".service_case_reliability",
-        "TestsFlextModelsServiceCaseValidationMixin": ".service_case_validation",
-        "TestsFlextModelsServiceCasesMixin": ".service_cases",
-        "TestsFlextModelsTestDataIdentityMixin": ".test_data_identity",
-        "TestsFlextModelsTestDataMixin": ".test_data",
-        "TestsFlextModelsTestDataValuesMixin": ".test_data_values",
+        "TestsFlextModelsContainer": ".container",
+        "TestsFlextModelsCoreErrors": ".core_errors",
+        "TestsFlextModelsCore": ".core",
+        "TestsFlextModelsCorePublic": ".core_public",
+        "TestsFlextModelsCoreState": ".core_state",
+        "TestsFlextModelsDomain": ".domain",
+        "TestsFlextModelsFixtureDicts": ".fixtures",
+        "TestsFlextModelsFixturePayloads": ".fixture_payloads",
+        "TestsFlextModelsFixtureSuite": ".fixture_suite",
+        "TestsFlextModelsGuardsMapper": ".guards_mapper",
+        "TestsFlextModelsServiceCaseCore": ".service_case_core",
+        "TestsFlextModelsServiceCaseReliability": ".service_case_reliability",
+        "TestsFlextModelsServiceCaseValidation": ".service_case_validation",
+        "TestsFlextModelsServiceCases": ".service_cases",
+        "TestsFlextModelsTestDataIdentity": ".test_data_identity",
+        "TestsFlextModelsTestData": ".test_data",
+        "TestsFlextModelsTestDataValues": ".test_data_values",
     }),
     public_exports=__all__,
 )

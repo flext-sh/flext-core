@@ -13,7 +13,7 @@ from typing import Annotated, ClassVar, Self
 from flext_core import m
 
 
-class TestsFlextModelsCorePublicMixin:
+class TestsFlextModelsCorePublic:
     """Core public model helpers."""
 
     class RegistryQuery(m.Query):
@@ -157,4 +157,4 @@ class TestsFlextModelsCorePublicMixin:
             return self.name
 
 
-__all__: list[str] = ["TestsFlextModelsCorePublicMixin"]
+__all__: list[str] = ["TestsFlextModelsCorePublic"]

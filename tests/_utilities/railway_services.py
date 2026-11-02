@@ -14,7 +14,7 @@ from tests import c, m, p, s, t
 from tests._models import TestsFlextModelsMixins
 
 
-class TestsFlextUtilitiesRailwayServicesMixin:
+class TestsFlextUtilitiesRailwayServices:
     """Railway service helpers."""
 
     class GetUserService(s[m.Tests.User]):
@@ -69,17 +69,17 @@ class TestsFlextUtilitiesRailwayServicesMixin:
     @staticmethod
     def create_user_service(
         case: m.Tests.ServiceTestCase,
-    ) -> TestsFlextUtilitiesRailwayServicesMixin.GetUserService:
+    ) -> TestsFlextUtilitiesRailwayServices.GetUserService:
         """Create a user service from a documented service case.
 
         Returns:
-            The resulting ``TestsFlextUtilitiesRailwayServicesMixin.GetUserService``.
+            The resulting ``TestsFlextUtilitiesRailwayServices.GetUserService``.
 
         """
-        return TestsFlextUtilitiesRailwayServicesMixin.make(
-            TestsFlextUtilitiesRailwayServicesMixin.GetUserService,
+        return TestsFlextUtilitiesRailwayServices.make(
+            TestsFlextUtilitiesRailwayServices.GetUserService,
             user_id=case.user_id or case.input_value or "",
         )
 
 
-__all__: list[str] = ["TestsFlextUtilitiesRailwayServicesMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesRailwayServices"]

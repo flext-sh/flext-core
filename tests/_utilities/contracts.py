@@ -13,7 +13,7 @@ from flext_core import u
 from tests import c, tm
 
 
-class TestsFlextUtilitiesContractsMixin:
+class TestsFlextUtilitiesContracts:
     """Text and external-service contract helpers."""
 
     class Contract:
@@ -42,7 +42,7 @@ class TestsFlextUtilitiesContractsMixin:
     @staticmethod
     def assert_safe_string_valid(raw: str, expected: str) -> None:
         """Assert safe string normalization for valid input."""
-        TestsFlextUtilitiesContractsMixin.Contract.assert_safe_string_valid(
+        TestsFlextUtilitiesContracts.Contract.assert_safe_string_valid(
             raw,
             expected,
         )
@@ -53,4 +53,4 @@ class TestsFlextUtilitiesContractsMixin:
         tm.that(u.format_app_id(raw), eq=expected)
 
 
-__all__: list[str] = ["TestsFlextUtilitiesContractsMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesContracts"]

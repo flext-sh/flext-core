@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar
 from flext_core import m
 
 
-class TestsFlextModelsTestDataIdentityMixin:
+class TestsFlextModelsTestDataIdentity:
     """Static identity test data helpers."""
 
     class Names(m.BaseModel):
@@ -53,4 +53,4 @@ class TestsFlextModelsTestDataIdentityMixin:
         ] = "test_service"
 
 
-__all__: list[str] = ["TestsFlextModelsTestDataIdentityMixin"]
+__all__: list[str] = ["TestsFlextModelsTestDataIdentity"]

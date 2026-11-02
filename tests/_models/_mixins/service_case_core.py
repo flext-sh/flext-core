@@ -13,7 +13,7 @@ from flext_core import m, u
 from tests import p, r, s, t
 
 
-class TestsFlextModelsServiceCaseCoreMixin:
+class TestsFlextModelsServiceCaseCore:
     """Service case core model helpers."""
 
     class ServiceUserData(m.Value):
@@ -28,9 +28,9 @@ class TestsFlextModelsServiceCaseCoreMixin:
         @override
         def execute(
             self,
-        ) -> p.Result[TestsFlextModelsServiceCaseCoreMixin.ServiceUserData]:
-            return r[TestsFlextModelsServiceCaseCoreMixin.ServiceUserData].ok(
-                TestsFlextModelsServiceCaseCoreMixin.ServiceUserData(
+        ) -> p.Result[TestsFlextModelsServiceCaseCore.ServiceUserData]:
+            return r[TestsFlextModelsServiceCaseCore.ServiceUserData].ok(
+                TestsFlextModelsServiceCaseCore.ServiceUserData(
                     user_id=1,
                     name="test_user",
                 ),
@@ -97,4 +97,4 @@ class TestsFlextModelsServiceCaseCoreMixin:
         ] = ""
 
 
-__all__: list[str] = ["TestsFlextModelsServiceCaseCoreMixin"]
+__all__: list[str] = ["TestsFlextModelsServiceCaseCore"]

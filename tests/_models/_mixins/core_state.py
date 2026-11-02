@@ -11,7 +11,7 @@ from typing import ClassVar
 from flext_core import m
 
 
-class TestsFlextModelsCoreStateMixin:
+class TestsFlextModelsCoreState:
     """Core state model helpers."""
 
     class SingletonClassForTest(m.BaseModel):
@@ -22,19 +22,19 @@ class TestsFlextModelsCoreStateMixin:
             extra="forbid",
         )
 
-        _instance: ClassVar[
-            TestsFlextModelsCoreStateMixin.SingletonClassForTest | None
-        ] = None
+        _instance: ClassVar[TestsFlextModelsCoreState.SingletonClassForTest | None] = (
+            None
+        )
 
         name: str = "default"
         timeout: int = 30
 
         @classmethod
-        def fetch_global(cls) -> TestsFlextModelsCoreStateMixin.SingletonClassForTest:
+        def fetch_global(cls) -> TestsFlextModelsCoreState.SingletonClassForTest:
             """Get global singleton instance.
 
             Returns:
-                The resulting ``TestsFlextModelsCoreStateMixin.SingletonClassForTest``.
+                The resulting ``TestsFlextModelsCoreState.SingletonClassForTest``.
 
             """
             if cls._instance is None:
@@ -55,4 +55,4 @@ class TestsFlextModelsCoreStateMixin:
         name: str = "test"
 
 
-__all__: list[str] = ["TestsFlextModelsCoreStateMixin"]
+__all__: list[str] = ["TestsFlextModelsCoreState"]

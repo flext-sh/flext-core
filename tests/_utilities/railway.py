@@ -7,18 +7,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from tests._utilities import (
-    TestsFlextUtilitiesRailwayCasesMixin,
-    TestsFlextUtilitiesRailwayPipelinesMixin,
-    TestsFlextUtilitiesRailwayServicesMixin,
+    TestsFlextUtilitiesRailwayCases,
+    TestsFlextUtilitiesRailwayPipelines,
+    TestsFlextUtilitiesRailwayServices,
 )
 
 
-class TestsFlextUtilitiesRailwayMixin(
-    TestsFlextUtilitiesRailwayPipelinesMixin,
-    TestsFlextUtilitiesRailwayServicesMixin,
-    TestsFlextUtilitiesRailwayCasesMixin,
+class TestsFlextUtilitiesRailway(
+    TestsFlextUtilitiesRailwayPipelines,
+    TestsFlextUtilitiesRailwayServices,
+    TestsFlextUtilitiesRailwayCases,
 ):
     """Railway helpers."""
 
 
-__all__: list[str] = ["TestsFlextUtilitiesRailwayMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesRailway"]

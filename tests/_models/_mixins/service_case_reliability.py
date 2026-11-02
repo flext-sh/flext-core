@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar
 from flext_core import m
 
 
-class TestsFlextModelsServiceCaseReliabilityMixin:
+class TestsFlextModelsServiceCaseReliability:
     """Service case reliability model helpers."""
 
     class ReliabilityScenario(m.BaseModel):
@@ -43,4 +43,4 @@ class TestsFlextModelsServiceCaseReliabilityMixin:
         ] = None
 
 
-__all__: list[str] = ["TestsFlextModelsServiceCaseReliabilityMixin"]
+__all__: list[str] = ["TestsFlextModelsServiceCaseReliability"]

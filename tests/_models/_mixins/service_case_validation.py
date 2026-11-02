@@ -13,7 +13,7 @@ from flext_core import m, u
 from tests import t
 
 
-class TestsFlextModelsServiceCaseValidationMixin:
+class TestsFlextModelsServiceCaseValidation:
     """Service case validation model helpers."""
 
     class ValidationScenario(m.BaseModel):
@@ -152,4 +152,4 @@ class TestsFlextModelsServiceCaseValidationMixin:
         ] = None
 
 
-__all__: list[str] = ["TestsFlextModelsServiceCaseValidationMixin"]
+__all__: list[str] = ["TestsFlextModelsServiceCaseValidation"]

@@ -32,7 +32,7 @@ def _field_name_options() -> m.ParseOptions[bool]:
     return cast("m.ParseOptions[bool]", m.ParseOptions(field_name="flag"))
 
 
-class TestsFlextUtilitiesParserScenariosMixin:
+class TestsFlextUtilitiesParserScenarios:
     """Parser scenario helpers."""
 
     """Centralized parser scenarios - single source of truth."""
@@ -171,4 +171,4 @@ class TestsFlextUtilitiesParserScenariosMixin:
     ]
 
 
-__all__: list[str] = ["TestsFlextUtilitiesParserScenariosMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesParserScenarios"]

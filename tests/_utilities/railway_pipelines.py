@@ -11,12 +11,12 @@ from typing import cast
 from flext_tests import e, r
 
 from tests import c, m, p
-from tests._utilities import TestsFlextUtilitiesRailwayServicesMixin
+from tests._utilities import TestsFlextUtilitiesRailwayServices
 
 type _V1Payload = str | m.Tests.User | m.Tests.EmailResponse
 
 
-class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayServicesMixin):
+class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
     """Railway pipeline helpers."""
 
     @staticmethod
@@ -38,8 +38,8 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
 
         """
         to = value if isinstance(value, str) else str(value)
-        return TestsFlextUtilitiesRailwayPipelinesMixin.make(
-            TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
+        return TestsFlextUtilitiesRailwayPipelines.make(
+            TestsFlextUtilitiesRailwayPipelines.SendEmailService,
             to=to,
             subject="Test",
         ).execute()
@@ -78,28 +78,22 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                     c.Tests.NO_USER_IDS_PROVIDED,
                 ),
             )
-        user_result: p.Result[m.Tests.User] = (
-            TestsFlextUtilitiesRailwayPipelinesMixin.make(
-                TestsFlextUtilitiesRailwayPipelinesMixin.GetUserService,
-                user_id=case.user_ids[0],
-            ).execute()
-        )
+        user_result: p.Result[m.Tests.User] = TestsFlextUtilitiesRailwayPipelines.make(
+            TestsFlextUtilitiesRailwayPipelines.GetUserService,
+            user_id=case.user_ids[0],
+        ).execute()
         result: p.Result[str | m.Tests.User | m.Tests.EmailResponse] = user_result.map(
             lambda user: user,
         )
         for operation in case.operations:
             if operation == "get_email":
-                result = result.map(
-                    TestsFlextUtilitiesRailwayPipelinesMixin._v1_email_view
-                )
+                result = result.map(TestsFlextUtilitiesRailwayPipelines._v1_email_view)
             elif operation == "send_email":
                 result = result.flat_map(
-                    TestsFlextUtilitiesRailwayPipelinesMixin._v1_send_email
-                ).map(TestsFlextUtilitiesRailwayPipelinesMixin._v1_identity_response)
+                    TestsFlextUtilitiesRailwayPipelines._v1_send_email
+                ).map(TestsFlextUtilitiesRailwayPipelines._v1_identity_response)
             elif operation == "get_status":
-                result = result.map(
-                    TestsFlextUtilitiesRailwayPipelinesMixin._v1_status_view
-                )
+                result = result.map(TestsFlextUtilitiesRailwayPipelines._v1_status_view)
         return cast("p.ResultView[str | m.Tests.User | m.Tests.EmailResponse]", result)
 
     @staticmethod
@@ -117,8 +111,8 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         if not case.user_ids:
             msg = c.Tests.NO_USER_IDS_PROVIDED
             raise e.BaseError(msg)
-        raw_user_result = TestsFlextUtilitiesRailwayPipelinesMixin.make(
-            TestsFlextUtilitiesRailwayPipelinesMixin.GetUserService,
+        raw_user_result = TestsFlextUtilitiesRailwayPipelines.make(
+            TestsFlextUtilitiesRailwayPipelines.GetUserService,
             user_id=case.user_ids[0],
         ).execute()
         if raw_user_result.failure:
@@ -130,8 +124,8 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
                 user = user.email if isinstance(user, m.Tests.User) else user
             elif operation == "send_email":
                 email_to = user if isinstance(user, str) else str(user)
-                raw_response_result = TestsFlextUtilitiesRailwayPipelinesMixin.make(
-                    TestsFlextUtilitiesRailwayPipelinesMixin.SendEmailService,
+                raw_response_result = TestsFlextUtilitiesRailwayPipelines.make(
+                    TestsFlextUtilitiesRailwayPipelines.SendEmailService,
                     to=email_to,
                     subject="Test",
                 ).execute()
@@ -145,4 +139,4 @@ class TestsFlextUtilitiesRailwayPipelinesMixin(TestsFlextUtilitiesRailwayService
         return user
 
 
-__all__: list[str] = ["TestsFlextUtilitiesRailwayPipelinesMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesRailwayPipelines"]

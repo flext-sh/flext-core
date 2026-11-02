@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar
 from flext_core import m
 
 
-class TestsFlextModelsTestDataValuesMixin:
+class TestsFlextModelsTestDataValues:
     """Static value test data helpers."""
 
     class Data(m.BaseModel):
@@ -52,4 +52,4 @@ class TestsFlextModelsTestDataValuesMixin:
     # --- from test_container.py ---
 
 
-__all__: list[str] = ["TestsFlextModelsTestDataValuesMixin"]
+__all__: list[str] = ["TestsFlextModelsTestDataValues"]

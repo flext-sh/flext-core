@@ -7,16 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from tests._models._mixins import (
-    TestsFlextModelsTestDataIdentityMixin,
-    TestsFlextModelsTestDataValuesMixin,
+    TestsFlextModelsTestDataIdentity,
+    TestsFlextModelsTestDataValues,
 )
 
 
-class TestsFlextModelsTestDataMixin(
-    TestsFlextModelsTestDataValuesMixin,
-    TestsFlextModelsTestDataIdentityMixin,
+class TestsFlextModelsTestData(
+    TestsFlextModelsTestDataValues,
+    TestsFlextModelsTestDataIdentity,
 ):
     """Static test data model helpers."""
 
 
-__all__: list[str] = ["TestsFlextModelsTestDataMixin"]
+__all__: list[str] = ["TestsFlextModelsTestData"]

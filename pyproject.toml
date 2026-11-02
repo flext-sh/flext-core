@@ -698,7 +698,7 @@ runtime-evaluated-base-classes = [
   "pydantic.BaseModel",
   "pydantic.RootModel",
   "pydantic_settings.BaseSettings",
-  "tests._utilities.TestsFlextUtilitiesRailwayServicesMixin.GetUserService",
+  "tests._utilities.TestsFlext#1.GetUserService",
   "tests._utilities.dispatch.HandlerService",
   "tests._utilities.services.ValidatingService",
   "tests.h",
