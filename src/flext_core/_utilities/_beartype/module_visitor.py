@@ -146,7 +146,6 @@ class FlextUtilitiesBeartypeModuleVisitor:
         package = module.__name__.split(".")[0]
         if (
             not package.startswith("flext_")
-            or filename.startswith("_")
             or filename in c.ENFORCEMENT_CANONICAL_FILES
             or filename in _MODULE_EXEMPT_FILES
         ):

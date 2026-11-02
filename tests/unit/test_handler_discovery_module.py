@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from re import escape
 from time import monotonic
 from typing import TYPE_CHECKING
 
@@ -232,7 +233,7 @@ class TestsFlextHandlerDiscovery:
         setattr(
             operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command, timeout=1.0)
         )
-        with pytest.raises(ValueError, match="timeout execution is not supported"):
+        with pytest.raises(ValueError, match=escape(c.ERR_HANDLER_POLICY_UNSUPPORTED)):
             h.Discovery.scan_module(
                 u.Tests.handler_module("unsupported_handlers", operation=operation)
             )
