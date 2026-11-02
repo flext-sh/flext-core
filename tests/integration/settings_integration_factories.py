@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_tests.models import m, p
+from flext_tests.models import m
 from flext_tests.typings import t
 from flext_tests.utilities import u
 
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class TestsFlextSettingsConfigTestCase(m.BaseModel):
     """Factory for configuration test cases."""
 
-    model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
     test_name: Annotated[str, m.Field(description="Configuration test case name")]
     config_data: Annotated[
@@ -64,7 +64,7 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
 class TestsFlextSettingsThreadSafetyTest(m.BaseModel):
     """Factory for thread safety test configurations."""
 
-    model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
     thread_count: Annotated[
         int,

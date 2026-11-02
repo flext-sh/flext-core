@@ -235,7 +235,7 @@ class TestsFlextUtilities(flext_tests_u):
         class DecoratorTestCase(m.BaseModel):
             """Test case for decorator."""
 
-            model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
             name: Annotated[str, m.Field(description="Decorator test case name")]
             operation: Annotated[
                 str,

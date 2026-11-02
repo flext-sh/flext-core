@@ -43,7 +43,7 @@ class ExamplesFlextModelsEx05:
 
     class HandlerLike(m.Value):
         data: p.ConfigMap = m.Field(
-            default_factory=lambda: p.ConfigMap(root={}),
+            default_factory=lambda: m.ConfigMap(root={}),
             description="Handler payload map",
         )
 

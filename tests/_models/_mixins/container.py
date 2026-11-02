@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Annotated, ClassVar
 
-from flext_core import m, p
+from flext_core import m
 from tests import t
 
 
@@ -19,7 +19,7 @@ class TestsFlextModelsContainer:
     class ServiceScenario(m.BaseModel):
         """Test scenario for service registration and retrieval."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Service scenario name")]
         service: Annotated[
             t.Primitives,
@@ -30,7 +30,7 @@ class TestsFlextModelsContainer:
     class TypedRetrievalScenario(m.BaseModel):
         """Test scenario for typed service retrieval."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Typed retrieval scenario name")]
         service: Annotated[str | int, m.Field(description="Registered service value")]
         expected_type: Annotated[

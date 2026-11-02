@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
-from flext_core import m, p
+from flext_core import m, t
 
 
 class TestsFlextModelsCorePublic:
@@ -34,7 +34,7 @@ class TestsFlextModelsCorePublic:
     class DispatchRequest(m.BaseModel):
         """Request shape used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         command_name: str
         tenant: str
@@ -43,7 +43,7 @@ class TestsFlextModelsCorePublic:
     class DispatchAudit(m.BaseModel):
         """Dispatch audit payload used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         correlation_id: str
         command_id: str
@@ -57,7 +57,7 @@ class TestsFlextModelsCorePublic:
     class QueryAudit(m.BaseModel):
         """Query audit payload used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         request_id: str
         explicit_id: str
@@ -71,7 +71,7 @@ class TestsFlextModelsCorePublic:
     class OrchestrationAudit(m.BaseModel):
         """Orchestration audit payload used by generator behavior tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         entity_id: str
         batch_id: str
@@ -83,7 +83,7 @@ class TestsFlextModelsCorePublic:
     class DispatchEnvelope(m.BaseModel):
         """Normalized dispatch metadata payload used by type-guard tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         command_name: str
         correlation_id: str
@@ -94,7 +94,7 @@ class TestsFlextModelsCorePublic:
     class ManifestSnapshot(m.BaseModel):
         """Manifest snapshot used by public text-helper tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         app_id: str
         normalized_key: str
@@ -104,7 +104,7 @@ class TestsFlextModelsCorePublic:
     class BootstrapSnapshot(m.BaseModel):
         """Bootstrap snapshot used by public settings-helper tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         env_file: str
         process_environment: Mapping[str, str]
@@ -113,7 +113,7 @@ class TestsFlextModelsCorePublic:
     class PublicPayload(m.BaseModel):
         """Payload model used to exercise the public Pydantic facade."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(populate_by_name=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(populate_by_name=True)
 
         raw_name: Annotated[str, m.Field(alias="rawName")]
         visits: int = 0

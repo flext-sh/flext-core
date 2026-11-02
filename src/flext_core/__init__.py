@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
@@ -126,7 +125,7 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "FlextCli": ".cli",
         "FlextConfig": "._config",
         "FlextConstants": ".constants",
@@ -183,7 +182,7 @@ install_lazy_exports(
         "t": ".typings",
         "u": ".utilities",
         "x": ".mixins",
-    }),
+    },
     public_exports=__all__,
 )
 

@@ -230,7 +230,7 @@ class TestsFlextCorePydanticDeclarations:
     class _Credentials(m.BaseModel):
         """Model whose secret field is declared through the typings facade."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         token: t.SecretStr
 

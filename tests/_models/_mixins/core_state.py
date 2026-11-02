@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import m, p
+from flext_core import m, t
 
 
 class TestsFlextModelsCoreState:
@@ -17,7 +17,7 @@ class TestsFlextModelsCoreState:
     class SingletonClassForTest(m.BaseModel):
         """Test singleton class with Pydantic validation."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )
@@ -49,7 +49,7 @@ class TestsFlextModelsCoreState:
     class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         unique_id: str = "test-123"
         name: str = "test"

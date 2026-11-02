@@ -17,7 +17,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 
-from tests import c, m, p, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreHandlersValidationContext(
@@ -155,7 +155,7 @@ class TestsFlextCoreHandlersValidationContext(
         """Test validate message accepts frozen model message."""
 
         class FrozenMessage(m.Value):
-            model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
             value: str
             number: int
 

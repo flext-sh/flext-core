@@ -39,7 +39,7 @@ class TestsFlextModelsServiceCaseCore:
     class ServiceTestCase(m.BaseModel):
         """Test case for service."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         service_type: Annotated[
             str | None,
@@ -73,7 +73,7 @@ class TestsFlextModelsServiceCaseCore:
     class RailwayTestCase(m.BaseModel):
         """Test case for railway pattern."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_ids: Annotated[
             Sequence[str],

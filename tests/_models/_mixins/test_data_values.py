@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-from flext_core import m, p
+from flext_core import m, t
 
 
 class TestsFlextModelsTestDataValues:
@@ -17,7 +17,7 @@ class TestsFlextModelsTestDataValues:
     class Data(m.BaseModel):
         """Test field names and data values."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         field_name: Annotated[str, m.Field(description="Default test field name")] = (
             "test_field"

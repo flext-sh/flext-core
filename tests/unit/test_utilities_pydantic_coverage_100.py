@@ -11,7 +11,7 @@ from typing import Annotated, ClassVar
 
 import pytest
 
-from tests import m, p, t, tm, u
+from tests import m, t, tm, u
 
 
 class TestsFlextUtilitiesPydantic:
@@ -29,7 +29,7 @@ class TestsFlextUtilitiesPydantic:
     class _FieldFactoryContract(m.BaseModel):
         """Required fields and typed factories through both public facades."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(str_strip_whitespace=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(str_strip_whitespace=True)
 
         label: str = m.Field(min_length=1)
         echo: str = m.Field(default_factory=u.Tests.validated_label)
@@ -201,7 +201,7 @@ class TestsFlextUtilitiesPydantic:
     class _PrivateAttrContract(m.BaseModel):
         label: str
         _model_values: list[str] = m.PrivateAttr(
-            default_factory=list[str],
+            default_factory=list,
         )
         _utility_values: list[str] = m.PrivateAttr(
             default_factory=u.empty(t.TypeForm(list[str])),

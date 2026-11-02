@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
@@ -77,7 +76,7 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "TestsFlextDecoratorsLegacy": ".decorators",
         "TestsFlextFlextHandlers": ".handlers",
         "TestsFlextResultExceptionCarrying": ".result_exception_carrying",
@@ -85,8 +84,8 @@ install_lazy_exports(
         "TestsFlextUtilitiesDispatch": ".dispatch",
         "TestsFlextUtilitiesParserReliability": ".parser_reliability",
         "TestsFlextUtilitiesParserScenarios": ".parser_scenarios",
-        "TestsFlextUtilitiesRailwayCases": ".railway_cases",
         "TestsFlextUtilitiesRailway": ".railway",
+        "TestsFlextUtilitiesRailwayCases": ".railway_cases",
         "TestsFlextUtilitiesRailwayPipelines": ".railway_pipelines",
         "TestsFlextUtilitiesRailwayServices": ".railway_services",
         "TestsFlextUtilitiesReliabilityScenarios": ".reliability_scenarios",
@@ -98,6 +97,6 @@ install_lazy_exports(
         "TestsFlextUtilitiesValidationPatternScenarios": ".validation_pattern",
         "TestsFlextUtilitiesValidationStringScenarios": ".validation_string",
         "TestsFlextUtilitiesValidationUriScenarios": ".validation_uri",
-    }),
+    },
     public_exports=__all__,
 )

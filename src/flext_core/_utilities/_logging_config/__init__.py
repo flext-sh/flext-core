@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
@@ -23,6 +22,6 @@ __all__: tuple[str, ...] = ("FlextUtilitiesLoggingStream",)
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({"FlextUtilitiesLoggingStream": ".logging_stream"}),
+    {"FlextUtilitiesLoggingStream": ".logging_stream"},
     public_exports=__all__,
 )

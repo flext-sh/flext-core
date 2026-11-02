@@ -46,7 +46,7 @@ class FlextModelsServiceState:
         _runtime: p.ServiceRuntime | None = FlextModelsPydantic.PrivateAttr(None)
         _operation_stats: MutableMapping[str, p.MutableRootDict[t.JsonPayload]] = (
             FlextModelsPydantic.PrivateAttr(
-                default_factory=dict[str, p.MutableRootDict[t.JsonPayload]],
+                default_factory=dict,
             )
         )
         _auto_context_scope: ClassVar[bool] = True

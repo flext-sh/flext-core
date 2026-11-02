@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from importlib.metadata import Distribution, DistributionFinder
     from pathlib import Path, PurePosixPath
 
+    from flext_core import p
+
 
 class FlextProtocolsProjectMetadata(FlextProtocolsProjectMetadataFields):
     """Protocols for project metadata consumed across FLEXT layers."""
@@ -136,6 +138,19 @@ class FlextProtocolsProjectMetadata(FlextProtocolsProjectMetadataFields):
 
         @property
         def attached(self) -> bool: ...
+
+    @runtime_checkable
+    class ProjectToolFlextNamespace(FlextProtocolsBase.Model, Protocol):
+        """Namespace enforcement policy."""
+
+        @property
+        def enabled(self) -> bool | None: ...
+
+        @property
+        def scan_dirs(self) -> t.StrTuple: ...
+
+        @property
+        def include_dynamic_dirs(self) -> bool | None: ...
 
     @runtime_checkable
     class ProjectToolFlext(FlextProtocolsBase.Model, Protocol):

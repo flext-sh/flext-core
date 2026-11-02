@@ -55,7 +55,7 @@ class TestsFlextCoreSettingsStateValidation:
             port: int = m.Field(default=389, ge=1, le=65535)
 
         class Connections(m.BaseModel):
-            entries: list[Connection] = m.Field(default_factory=list[Connection])
+            entries: list[Connection] = m.Field(default_factory=list)
 
         class Owner(FlextSettings):
             connections: Connections = m.Field(default_factory=Connections)

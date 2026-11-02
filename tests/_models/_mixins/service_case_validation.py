@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import m, u
-from tests import p, t
+from tests import t
 
 
 class TestsFlextModelsServiceCaseValidation:
@@ -19,7 +19,7 @@ class TestsFlextModelsServiceCaseValidation:
     class ValidationScenario(m.BaseModel):
         """Single scenario for validation testing."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
         validator_type: Annotated[
@@ -54,7 +54,7 @@ class TestsFlextModelsServiceCaseValidation:
     class Operation(m.BaseModel):
         """Generic operation progress model used by tests utilities."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         success_count: Annotated[int, m.Field(description="Successful operations")]
         failure_count: Annotated[int, m.Field(description="Failed operations")]
@@ -67,7 +67,7 @@ class TestsFlextModelsServiceCaseValidation:
     class Conversion(m.BaseModel):
         """Generic conversion progress model used by tests utilities."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         converted: Annotated[t.JsonList, m.Field(description="Converted records")] = (
             m.Field(default_factory=u.empty(t.TypeForm(t.JsonList)))
@@ -90,7 +90,7 @@ class TestsFlextModelsServiceCaseValidation:
     class ParserScenario(m.BaseModel):
         """Single scenario for parser testing."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         name: Annotated[str, m.Field(description="Unique parser scenario name")]
         parser_method: Annotated[str, m.Field(description="Parser method to execute")]
@@ -115,7 +115,7 @@ class TestsFlextModelsServiceCaseValidation:
     class PublicParseCase(m.BaseModel):
         """Data-driven public parser contract scenario."""
 
-        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         name: Annotated[str, m.Field(description="Unique scenario name")]
         input_value: Annotated[

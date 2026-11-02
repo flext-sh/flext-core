@@ -61,7 +61,7 @@ em `.snyk`) / `risco-aceito` (com prazo).
 ```text
        39          """Test identifiers and IDs."""
        40
-       41          model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
+       41          model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
        42
 >>>    43          user_id: Annotated[str, m.Field(
                       description="Default test user identifier")] = (

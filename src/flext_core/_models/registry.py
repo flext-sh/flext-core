@@ -36,7 +36,7 @@ class FlextModelsRegistry:
             description="Explicit runtime shared by registration and execution.",
         )
         _registered_keys: set[str] = FlextModelsPydantic.PrivateAttr(
-            default_factory=set[str],
+            default_factory=set,
         )
         _class_plugin_storage: ClassVar[MutableMapping[str, p.RegisterableService]] = {}
 
@@ -51,7 +51,7 @@ class FlextModelsRegistry:
                 ),
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=list[FlextModelsHandler.RegistrationDetails],
+            default_factory=list,
             validate_default=True,
         )
         skipped: Annotated[
@@ -73,7 +73,7 @@ class FlextModelsRegistry:
                 examples=[["Handler validation failed", "Duplicate registration"]],
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=list[str],
+            default_factory=list,
             validate_default=True,
         )
 
