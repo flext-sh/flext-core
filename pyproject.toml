@@ -568,11 +568,7 @@ quote-style = "double"
 skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
-extend-safe-fixes = [
-  "relative-imports",
-  "typing-only-first-party-import",
-  "camelcase-imported-as-lowercase",
-]
+extend-safe-fixes = ["relative-imports", "camelcase-imported-as-lowercase"]
 extend-select = ["missing-blank-line-after-last-section"]
 ignore = [
   "missing-trailing-comma",
@@ -698,7 +694,7 @@ runtime-evaluated-base-classes = [
   "pydantic.BaseModel",
   "pydantic.RootModel",
   "pydantic_settings.BaseSettings",
-  "tests._utilities.TestsFlext#1.GetUserService",
+  "tests._utilities.TestsFlextUtilitiesRailwayServices.GetUserService",
   "tests._utilities.dispatch.HandlerService",
   "tests._utilities.services.ValidatingService",
   "tests.h",
@@ -733,9 +729,6 @@ combine-as-imports = true
 force-single-line = false
 known-first-party = ["flext_core"]
 split-on-trailing-comma = false
-
-[tool.ruff.lint.pep8-naming]
-ignore-names = ["Ldif"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

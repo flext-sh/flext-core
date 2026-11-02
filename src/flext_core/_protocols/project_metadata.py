@@ -9,187 +9,23 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._protocols._project_metadata import FlextProtocolsProjectMetadataFields
+from flext_core._protocols._project_metadata import (
+    FlextProtocolsProjectMetadataAggregates,
+    FlextProtocolsProjectMetadataDocument,
+    FlextProtocolsProjectMetadataFields,
+)
 
 if TYPE_CHECKING:
     from importlib.metadata import Distribution, DistributionFinder
-    from pathlib import Path, PurePosixPath
-
-    from flext_core import p
 
 
-class FlextProtocolsProjectMetadata(FlextProtocolsProjectMetadataFields):
+class FlextProtocolsProjectMetadata(
+    FlextProtocolsProjectMetadataDocument,
+    FlextProtocolsProjectMetadataAggregates,
+    FlextProtocolsProjectMetadataFields,
+):
     """Protocols for project metadata consumed across FLEXT layers."""
-
-    @runtime_checkable
-    class ProjectAuthor(FlextProtocolsBase.Model, Protocol):
-        """PEP 621 author fields."""
-
-        @property
-        def name(self) -> str: ...
-
-        @property
-        def email(self) -> str: ...
-
-    @runtime_checkable
-    class ProjectUrls(FlextProtocolsBase.Model, Protocol):
-        """Canonical PEP 621 URL fields."""
-
-        @property
-        def homepage(self) -> str: ...
-
-        @property
-        def documentation(self) -> str: ...
-
-        @property
-        def repository(self) -> str: ...
-
-    @runtime_checkable
-    class Project(FlextProtocolsBase.Model, Protocol):
-        """PEP 621 project fields consumed by services."""
-
-        @property
-        def name(self) -> str: ...
-
-        @property
-        def version(self) -> str: ...
-
-        @property
-        def description(self) -> str: ...
-
-        @property
-        def requires_python(self) -> str: ...
-
-        @property
-        def dependencies(self) -> t.StrTuple: ...
-
-        @property
-        def authors(
-            self,
-        ) -> tuple[FlextProtocolsProjectMetadata.ProjectAuthor, ...]: ...
-
-        @property
-        def urls(self) -> FlextProtocolsProjectMetadata.ProjectUrls: ...
-
-        @property
-        def classifiers(self) -> t.StrTuple: ...
-
-        @property
-        def keywords(self) -> t.StrTuple: ...
-
-    @runtime_checkable
-    class ProjectToolFlextProject(FlextProtocolsBase.Model, Protocol):
-        """Project naming policy fields."""
-
-        @property
-        def class_stem_override(self) -> str | None: ...
-
-        @property
-        def budget(self) -> t.JsonMapping | None: ...
-
-        @property
-        def duplication(self) -> t.JsonMapping | None: ...
-
-    @runtime_checkable
-    class ProjectToolFlextReadmeSection(FlextProtocolsBase.Model, Protocol):
-        """One ordered project README section declaration."""
-
-        @property
-        def id(self) -> str: ...
-
-        @property
-        def title(self) -> str: ...
-
-        @property
-        def content(self) -> str | None: ...
-
-        @property
-        def include(self) -> PurePosixPath | None: ...
-
-    @runtime_checkable
-    class ProjectToolFlextDocs(FlextProtocolsBase.Model, Protocol):
-        """Documentation policy fields."""
-
-        @property
-        def documentation_language(self) -> t.DocumentationLanguage: ...
-
-        @property
-        def package_name(self) -> str | None: ...
-
-        @property
-        def project_class(self) -> str: ...
-
-        @property
-        def site_title(self) -> str | None: ...
-
-        @property
-        def readme_sections(
-            self,
-        ) -> tuple[
-            FlextProtocolsProjectMetadata.ProjectToolFlextReadmeSection,
-            ...,
-        ]: ...
-
-    @runtime_checkable
-    class ProjectToolFlextWorkspace(FlextProtocolsBase.Model, Protocol):
-        """Workspace attachment policy fields."""
-
-        @property
-        def attached(self) -> bool: ...
-
-    @runtime_checkable
-    class ProjectToolFlextNamespace(FlextProtocolsBase.Model, Protocol):
-        """Namespace enforcement policy."""
-
-        @property
-        def enabled(self) -> bool | None: ...
-
-        @property
-        def scan_dirs(self) -> t.StrTuple: ...
-
-        @property
-        def include_dynamic_dirs(self) -> bool | None: ...
-
-    @runtime_checkable
-    class ProjectToolFlext(FlextProtocolsBase.Model, Protocol):
-        """Validated FLEXT project policy."""
-
-        @property
-        def project(self) -> FlextProtocolsProjectMetadata.ProjectToolFlextProject: ...
-
-        @property
-        def docs(self) -> FlextProtocolsProjectMetadata.ProjectToolFlextDocs: ...
-
-        @property
-        def workspace(
-            self,
-        ) -> FlextProtocolsProjectMetadata.ProjectToolFlextWorkspace: ...
-
-        @property
-        def namespace(
-            self,
-        ) -> FlextProtocolsProjectMetadata.ProjectToolFlextNamespace: ...
-
-    @runtime_checkable
-    class ProjectMetadata(FlextProtocolsBase.Model, Protocol):
-        """Canonical retained project metadata aggregate."""
-
-        @property
-        def root(self) -> Path: ...
-
-        @property
-        def package_name(self) -> str: ...
-
-        @property
-        def class_stem(self) -> str: ...
-
-        @property
-        def project(self) -> FlextProtocolsProjectMetadata.Project: ...
-
-        @property
-        def flext(self) -> FlextProtocolsProjectMetadata.ProjectToolFlext: ...
 
     @runtime_checkable
     class DistributionSource(Protocol):
@@ -207,13 +43,18 @@ class FlextProtocolsProjectMetadata(FlextProtocolsProjectMetadataFields):
         ) -> Iterable[Distribution]: ...
 
     @runtime_checkable
-    class PyprojectDocument(Protocol):
+    class PyprojectDocument(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def project(self) -> p.Project | None: ...
+        def project(self) -> FlextProtocolsProjectMetadataAggregates.Project | None:
+            """Optional PEP 621 project table."""
+            ...
+
         @property
-        def tool(self) -> p.PyprojectTool: ...
+        def tool(self) -> FlextProtocolsProjectMetadataDocument.PyprojectTool:
+            """Owned tool tables."""
+            ...
 
 
 __all__: list[str] = ["FlextProtocolsProjectMetadata"]

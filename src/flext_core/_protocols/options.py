@@ -8,23 +8,45 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core._protocols import FlextProtocolsBase
+
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypesPydantic
 
 
 class FlextProtocolsOptions:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class GenerateOptions(Protocol):
+    class GenerateOptions(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        prefix: str | None
-        parts: tuple[t.JsonValue, ...] | None
-        length: int | None
-        include_timestamp: bool
-        separator: str
+        @property
+        def prefix(self) -> str | None:
+            """Custom ID prefix."""
+            ...
+
+        @property
+        def parts(self) -> tuple[FlextTypesPydantic.JsonValue, ...] | None:
+            """Optional parts inserted between prefix and random suffix."""
+            ...
+
+        @property
+        def length(self) -> int | None:
+            """Optional random suffix length override."""
+            ...
+
+        @property
+        def include_timestamp(self) -> bool:
+            """Whether to prepend a UTC timestamp to parts."""
+            ...
+
+        @property
+        def separator(self) -> str:
+            """Separator used for custom formatted IDs."""
+            ...
 
 
 __all__: list[str] = [

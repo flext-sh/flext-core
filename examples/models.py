@@ -32,6 +32,7 @@ class ExamplesFlextModels(flext_core_m):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(
+        ExamplesFlextModelsErrors,
         ExamplesFlextModelsEx00,
         ExamplesFlextModelsEx01,
         ExamplesFlextModelsEx02,
@@ -45,9 +46,8 @@ class ExamplesFlextModels(flext_core_m):
         ExamplesFlextModelsEx12,
         ExamplesFlextModelsEx14,
         ExamplesFlextModelsHandle,
-        ExamplesFlextModelsPerson,
-        ExamplesFlextModelsErrors,
         ExamplesFlextModelsOutput,
+        ExamplesFlextModelsPerson,
     ):
         """Canonical namespace for all example domain models.
 

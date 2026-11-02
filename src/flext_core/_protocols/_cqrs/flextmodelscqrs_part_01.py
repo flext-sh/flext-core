@@ -8,25 +8,40 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core._protocols import FlextProtocolsBase
+
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypesPydantic
 
 
 class FlextProtocolsCqrsFlextmodelscqrsPart01:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Pagination(Protocol):
+    class Pagination(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        page: t.PositiveInt
-        size: t.PositiveInt
+        @property
+        def page(self) -> FlextTypesPydantic.PositiveInt:
+            """Page number (1-based indexing)."""
+            ...
 
         @property
-        def limit(self) -> int: ...
+        def size(self) -> FlextTypesPydantic.PositiveInt:
+            """Number of items per page within the configured bounds."""
+            ...
+
         @property
-        def offset(self) -> int: ...
+        def limit(self) -> int:
+            """Limit alias for size."""
+            ...
+
+        @property
+        def offset(self) -> int:
+            """Offset from page and size."""
+            ...
 
 
 __all__: list[str] = [

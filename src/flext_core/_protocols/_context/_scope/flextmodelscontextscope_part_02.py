@@ -12,25 +12,62 @@ from collections.abc import Mapping
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core._protocols import FlextProtocolsContainer
+    from flext_core._protocols._context._scope import (
+        FlextProtocolsContextScopeFlextmodelscontextscopePart01,
+    )
+    from flext_core._typings import FlextTypesServices
 
 
 class FlextProtocolsContextScopeFlextmodelscontextscopePart02:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ContextRuntimeState(Protocol):
+    class ContextRuntimeState(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        metadata: p.Metadata
-        hooks: t.ContextHookMap
-        statistics: p.ContextStatistics
-        active: bool
-        suspended: bool
-        scope_vars: Mapping[str, ContextVar[p.MutableRootDict[t.JsonPayload] | None]]
+        @property
+        def metadata(self) -> FlextProtocolsBase.Metadata:
+            """Normalized metadata bound to the active context."""
+            ...
+
+        @property
+        def hooks(self) -> FlextTypesServices.ContextHookMap:
+            """Lifecycle hooks keyed by event name."""
+            ...
+
+        @property
+        def statistics(
+            self,
+        ) -> FlextProtocolsContextScopeFlextmodelscontextscopePart01.ContextStatistics:
+            """Operation counters for this context instance."""
+            ...
+
+        @property
+        def active(self) -> bool:
+            """Whether the context accepts operations."""
+            ...
+
+        @property
+        def suspended(self) -> bool:
+            """Whether the context is temporarily suspended."""
+            ...
+
+        @property
+        def scope_vars(
+            self,
+        ) -> Mapping[
+            str,
+            ContextVar[
+                FlextProtocolsContainer.MutableRootDict[FlextTypesServices.JsonPayload]
+                | None
+            ],
+        ]:
+            """ContextVar registry keyed by scope name."""
+            ...
 
 
 __all__: list[str] = [

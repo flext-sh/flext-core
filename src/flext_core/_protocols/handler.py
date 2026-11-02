@@ -20,7 +20,13 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from flext_core import c
+    from flext_core._constants import FlextConstantsCqrs, FlextConstantsStatus
     from flext_core._protocols import FlextProtocolsContainer
+    from flext_core._typings import (
+        FlextTypesAnnotateds,
+        FlextTypesCore,
+        FlextTypesPydantic,
+    )
 
 
 class FlextProtocolsHandler:
@@ -73,33 +79,41 @@ class FlextProtocolsHandler:
 
     @runtime_checkable
     class HandlerRuntimeState(FlextProtocolsBase.Model, Protocol):
-        """Field-level contract for copy-on-write handler pipeline state."""
+        """Structural data contract projected from the owning model."""
 
         @property
-        def execution_context(self) -> FlextProtocolsHandler.ExecutionContext: ...
+        def execution_context(self) -> FlextProtocolsHandler.ExecutionContext:
+            """Execution context for the active handler."""
+            ...
 
         @property
-        def context_stack(
-            self,
-        ) -> Sequence[FlextProtocolsHandler.ExecutionContext]: ...
+        def context_stack(self) -> Sequence[FlextProtocolsHandler.ExecutionContext]:
+            """Stack of nested execution contexts."""
+            ...
 
     @runtime_checkable
     class DecoratorConfig(FlextProtocolsBase.Model, Protocol):
-        """Handler decorator metadata consumed by discovery."""
+        """Structural data contract projected from the owning model."""
 
         @property
-        def command(self) -> type: ...
+        def command(self) -> type:
+            """Command type this handler processes."""
+            ...
 
         @property
-        def priority(self) -> int: ...
+        def priority(self) -> FlextTypesPydantic.NonNegativeInt:
+            """Handler priority (higher = processed first)."""
+            ...
 
         @property
-        def timeout(self) -> float | None: ...
+        def timeout(self) -> float | None:
+            """Handler execution timeout in seconds."""
+            ...
 
         @property
-        def middleware(
-            self,
-        ) -> Sequence[type[FlextProtocolsHandler.Middleware]]: ...
+        def middleware(self) -> Sequence[type[FlextProtocolsHandler.Middleware]]:
+            """Middleware types to apply to this handler."""
+            ...
 
     # ------------------------------------------------------------------
     # Handler — mirrors FlextHandlers public instance surface
@@ -228,29 +242,37 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class HandlerRegistration(Protocol):
-        """Immutable registration capability accepted by the dispatcher."""
+    class HandlerRegistration(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
-        def handler(self) -> FlextProtocolsHandler.DispatchableHandler: ...
+        def handler(self) -> FlextProtocolsHandler.DispatchableHandler:
+            """Original handler whose identity owns the binding."""
+            ...
 
         @property
-        def message_type(self) -> t.RegistryBindingKey | None: ...
+        def message_type(self) -> FlextTypesCore.RegistryBindingKey | None:
+            """Explicit message type or route name."""
+            ...
 
         @property
-        def is_event(self) -> bool: ...
+        def is_event(self) -> bool:
+            """Whether this binding subscribes to events."""
+            ...
 
     @runtime_checkable
-    class HandlerRegistrationReport(Protocol):
-        """Precise outcome of one atomic registration batch."""
+    class HandlerRegistrationReport(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
-        def registered(
-            self,
-        ) -> tuple[FlextProtocolsHandler.HandlerRegistration, ...]: ...
+        def registered(self) -> tuple[FlextProtocolsHandler.HandlerRegistration, ...]:
+            """Bindings newly published by the batch."""
+            ...
 
         @property
-        def skipped(self) -> tuple[FlextProtocolsHandler.HandlerRegistration, ...]: ...
+        def skipped(self) -> tuple[FlextProtocolsHandler.HandlerRegistration, ...]:
+            """Bindings already owned by the same handler."""
+            ...
 
     @runtime_checkable
     class Dispatcher(FlextProtocolsBase.Base, Protocol):
@@ -345,22 +367,42 @@ class FlextProtocolsHandler:
         ) -> FlextProtocolsResult.Result[TResult]: ...
 
     @runtime_checkable
-    class RegistrationDetails(Protocol):
+    class RegistrationDetails(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        registration_id: t.NonEmptyStr
-        handler_mode: c.HandlerType
-        timestamp: str
-        status: c.Status
+        @property
+        def registration_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Unique registration identifier."""
+            ...
+
+        @property
+        def handler_mode(self) -> FlextConstantsCqrs.HandlerType:
+            """Handler mode (command, query, or event)."""
+            ...
+
+        @property
+        def timestamp(self) -> str:
+            """ISO 8601 timestamp recording when the registration entry was created."""
+            ...
+
+        @property
+        def status(self) -> FlextConstantsStatus.Status:
+            """Current registration status."""
+            ...
 
     @runtime_checkable
-    class CombinedRailwayOptions(Protocol):
+    class CombinedRailwayOptions(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def enabled(self) -> bool: ...
+        def enabled(self) -> bool:
+            """Whether combined() applies railway wrapping."""
+            ...
+
         @property
-        def error_code(self) -> str | None: ...
+        def error_code(self) -> str | None:
+            """Error code passed to railway() when railway wrapping is enabled."""
+            ...
 
 
 __all__: list[str] = ["FlextProtocolsHandler"]

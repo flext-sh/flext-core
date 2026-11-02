@@ -20,7 +20,7 @@ from flext_core._protocols import (
 )
 
 if TYPE_CHECKING:
-    from datetime import datetime
+    from flext_core._protocols import FlextProtocolsConfig
 
 
 class FlextProtocolsLogging:
@@ -32,16 +32,6 @@ class FlextProtocolsLogging:
     type LoggingEvent = t.LoggingEvent[FlextProtocolsBase.Model]
     type LoggingContext = t.LoggingContext[FlextProtocolsBase.Model]
     type LogResult = FlextProtocolsResult.Result[bool]
-
-    @runtime_checkable
-    class AsyncLogJob(Protocol):
-        """Immutable work submitted to the native asynchronous stream."""
-
-        @property
-        def text(self) -> str | None: ...
-
-        @property
-        def completion(self) -> t.LoggingWriteCompletion: ...
 
     @runtime_checkable
     class Logger(BindableLogger, Protocol):
@@ -258,27 +248,6 @@ class FlextProtocolsLogging:
         ) -> type[FlextProtocolsLogging.NativeLoggingWrapper]: ...
 
     @runtime_checkable
-    class StructlogOptions(Protocol):
-        """Declared options consumed by the logging composition owner."""
-
-        log_level: int | None
-
-        console_renderer: bool | None
-
-        processing_stages: Sequence[FlextProtocolsLogging.LoggingStage]
-        observers: Sequence[FlextProtocolsLogging.LoggingObserver]
-        handlers: Sequence[FlextProtocolsLogging.LoggingHandler]
-        redacted_keys: Sequence[str]
-
-        redacted_values: Sequence[str]
-
-        wrapper_class_factory: FlextProtocolsLogging.LoggerWrapperFactory | None
-        logger_factory: FlextProtocolsLogging.OutputLoggerFactory | None
-        cache_logger_on_first_use: bool
-
-        async_logging: bool | None
-
-    @runtime_checkable
     class LoggingSettings(FlextProtocolsSettings.Settings, Protocol):
         """Actual application settings elected by the Core composition root."""
 
@@ -298,26 +267,10 @@ class FlextProtocolsLogging:
         def model_fields_set(self) -> set[str]: ...
 
     @runtime_checkable
-    class LoggingRecord(Protocol):
-        """Sanitized event snapshot, independent of destination presentation."""
-
-        @property
-        def message(self) -> str: ...
-
-        @property
-        def level(self) -> str: ...
-
-        @property
-        def context(self) -> t.JsonMapping: ...
-
-        @property
-        def exception(self) -> BaseException | None: ...
-
-    @runtime_checkable
     class LoggingObserver(Protocol):
         """Receive one sanitized snapshot before native output fanout."""
 
-        def __call__(self, event: FlextProtocolsLogging.LoggingRecord, /) -> None: ...
+        def __call__(self, event: FlextProtocolsConfig.LoggingRecord, /) -> None: ...
 
     @runtime_checkable
     class LoggingHandler(Protocol):
@@ -336,69 +289,6 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
         def close(self) -> None: ...
-
-    @runtime_checkable
-    class Metadata(Protocol):
-        """Metadata protocol."""
-
-        @property
-        def attributes(self) -> t.JsonMapping:
-            """JSON attributes validated by the canonical metadata model."""
-            ...
-
-        @property
-        def created_at(self) -> datetime:
-            """Creation timestamp."""
-            ...
-
-        @property
-        def updated_at(self) -> datetime:
-            """Update timestamp."""
-            ...
-
-        @property
-        def version(self) -> str:
-            """Version string."""
-            ...
-
-        @property
-        def created_by(self) -> str | None:
-            """Identifier of the actor that originally created this metadata."""
-            ...
-
-        @property
-        def modified_by(self) -> str | None:
-            """Identifier of the actor that last modified this metadata."""
-            ...
-
-        @property
-        def tags(self) -> Sequence[str]:
-            """Normalized labels used to classify and filter this metadata."""
-            ...
-
-        @property
-        def metadata_value(self) -> t.Scalar | None:
-            """Scalar metadata value."""
-            ...
-
-        @classmethod
-        def model_validate(
-            cls,
-            obj: Mapping[
-                str,
-                t.Scalar
-                | Mapping[str, t.Scalar | Sequence[t.Scalar]]
-                | Sequence[t.Scalar]
-                | None,
-            ]
-            | Self,
-            *,
-            strict: bool | None = None,
-            from_attributes: bool | None = None,
-            context: Mapping[str, t.Scalar] | None = None,
-        ) -> Self:
-            """Validate and create metadata from input data."""
-            ...
 
     @runtime_checkable
     class Connection(FlextProtocolsBase.Base, Protocol):

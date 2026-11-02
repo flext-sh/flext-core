@@ -12,6 +12,12 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from flext_core import p
+    from flext_core._protocols import FlextProtocolsContainers
+    from flext_core._typings import (
+        FlextTypesAnnotateds,
+        FlextTypesPydantic,
+        FlextTypesServices,
+    )
 
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
@@ -49,36 +55,84 @@ class FlextProtocolsContainer:
     type ResourceMap = t.ResourceMap[RegistryCollaborator]
 
     @runtime_checkable
-    class ServiceRegistrationSpec(Protocol):
-        """Complete typed input validated by the canonical registration model."""
+    class ServiceRegistrationSpec(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
-        settings: FlextProtocolsSettings.Settings | None
-        context: FlextProtocolsContext.Context | None
-        dispatcher: FlextProtocolsHandler.Dispatcher | None
-        services: FlextProtocolsContainer.ServiceMap | None
-        factories: FlextProtocolsContainer.FactoryMap | None
-        resources: FlextProtocolsContainer.ResourceMap | None
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings | None:
+            """Settings instance bound to the container runtime."""
+            ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context | None:
+            """Execution context attached to the container."""
+            ...
+
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None:
+            """Structural member projected from the owning model.
+
+            Explicit command bus retained by this scope; otherwise a fresh bus is built.
+            """
+            ...
+
+        @property
+        def services(self) -> FlextProtocolsContainer.ServiceMap | None:
+            """Pre-registered service instances for bootstrap."""
+            ...
+
+        @property
+        def factories(self) -> FlextProtocolsContainer.FactoryMap | None:
+            """Pre-registered factory callables for bootstrap."""
+            ...
+
+        @property
+        def resources(self) -> FlextProtocolsContainer.ResourceMap | None:
+            """Pre-registered resource factories for bootstrap."""
+            ...
 
         @property
         def user_overrides(
             self,
-        ) -> FlextProtocolsBase.Model | t.UserOverridesMapping | None: ...
+        ) -> FlextProtocolsBase.Model | FlextTypesServices.UserOverridesMapping | None:
+            """User-level configuration overrides applied after defaults."""
+            ...
 
         @property
-        def container_config(self) -> FlextProtocolsBase.Model | None: ...
+        def container_config(self) -> FlextProtocolsBase.Model | None:
+            """Container configuration model controlling DI behavior."""
+            ...
 
     @runtime_checkable
-    class ServiceRegistration(Protocol):
-        """Read-only registration record returned by the service container."""
+    class ServiceRegistration(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
-        def name(self) -> str: ...
+        def registration_time(self) -> datetime:
+            """Timestamp when service was registered (configured timezone)."""
+            ...
 
         @property
-        def service(self) -> FlextProtocolsContainer.RegisterableService: ...
+        def metadata(
+            self,
+        ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
+            """Additional service metadata (JSON-serializable)."""
+            ...
 
         @property
-        def tags(self) -> Sequence[str]: ...
+        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Service identifier/name."""
+            ...
+
+        @property
+        def service(self) -> FlextProtocolsContainer.RegisterableService:
+            """Service instance (protocols, models, callables)."""
+            ...
+
+        @property
+        def tags(self) -> Sequence[str]:
+            """Service tags for categorization."""
+            ...
 
     @runtime_checkable
     class RootDict[RootValueT](Protocol):
@@ -283,52 +337,130 @@ class FlextProtocolsContainer:
     ]
 
     @runtime_checkable
-    class RegistrationEnvelope(Protocol):
-        """Structural data contract projected from the owning model."""
-
-        registration_time: datetime
-        metadata: p.Metadata | p.ConfigMap | None
-
-    @runtime_checkable
-    class FactoryRegistration(Protocol):
-        """Structural data contract projected from the owning model."""
-
-        registration_time: datetime
-        metadata: p.Metadata | p.ConfigMap | None
-        name: t.NonEmptyStr
-        factory: p.FactoryCallable
-
-    @runtime_checkable
-    class ResourceRegistration(Protocol):
-        """Structural data contract projected from the owning model."""
-
-        registration_time: datetime
-        metadata: p.Metadata | p.ConfigMap | None
-        name: t.NonEmptyStr
-        factory: p.ResourceCallable
-
-    @runtime_checkable
-    class ContainerConfig(Protocol):
-        """Structural data contract projected from the owning model."""
-
-        enable_singleton: bool
-        enable_factory_caching: bool
-        max_services: t.PositiveInt
-        max_factories: t.PositiveInt
-        enable_auto_registration: bool
-        enable_lifecycle_hooks: bool
-        lazy_loading: bool
-
-    @runtime_checkable
-    class FactoryDecoratorConfig(Protocol):
+    class RegistrationEnvelope(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def name(self) -> t.NonEmptyStr: ...
+        def registration_time(self) -> datetime:
+            """Timestamp when service was registered (configured timezone)."""
+            ...
+
         @property
-        def singleton(self) -> bool: ...
+        def metadata(
+            self,
+        ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
+            """Additional service metadata (JSON-serializable)."""
+            ...
+
+    @runtime_checkable
+    class FactoryRegistration(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
         @property
-        def lazy(self) -> bool: ...
+        def registration_time(self) -> datetime:
+            """Timestamp when service was registered (configured timezone)."""
+            ...
+
+        @property
+        def metadata(
+            self,
+        ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
+            """Additional service metadata (JSON-serializable)."""
+            ...
+
+        @property
+        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Factory identifier/name."""
+            ...
+
+        @property
+        def factory(self) -> FlextProtocolsContainer.FactoryCallable:
+            """Factory function that creates service instances."""
+            ...
+
+    @runtime_checkable
+    class ResourceRegistration(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def registration_time(self) -> datetime:
+            """Timestamp when service was registered (configured timezone)."""
+            ...
+
+        @property
+        def metadata(
+            self,
+        ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
+            """Additional service metadata (JSON-serializable)."""
+            ...
+
+        @property
+        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Resource identifier/name."""
+            ...
+
+        @property
+        def factory(self) -> FlextProtocolsContainer.ResourceCallable:
+            """Factory returning the lifecycle-managed resource."""
+            ...
+
+    @runtime_checkable
+    class ContainerConfig(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def enable_singleton(self) -> bool:
+            """Enable singleton pattern for factories."""
+            ...
+
+        @property
+        def enable_factory_caching(self) -> bool:
+            """Enable caching of factory-created instances."""
+            ...
+
+        @property
+        def max_services(self) -> FlextTypesPydantic.PositiveInt:
+            """Maximum number of services allowed in registry."""
+            ...
+
+        @property
+        def max_factories(self) -> FlextTypesPydantic.PositiveInt:
+            """Maximum number of factories allowed in registry."""
+            ...
+
+        @property
+        def enable_auto_registration(self) -> bool:
+            """Enable automatic service registration from decorators."""
+            ...
+
+        @property
+        def enable_lifecycle_hooks(self) -> bool:
+            """Enable lifecycle hooks (on_register, on_get, etc.)."""
+            ...
+
+        @property
+        def lazy_loading(self) -> bool:
+            """Enable lazy loading of services."""
+            ...
+
+    @runtime_checkable
+    class FactoryDecoratorConfig(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Name to register this factory under in the container."""
+            ...
+
+        @property
+        def singleton(self) -> bool:
+            """Whether factory creates singleton instances."""
+            ...
+
+        @property
+        def lazy(self) -> bool:
+            """Whether to defer factory invocation until first use."""
+            ...
 
 
 __all__: list[str] = ["FlextProtocolsContainer"]

@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Protocol definitions for flext-core tests.
 
 Provides TestsFlextProtocols, extending TestsFlextProtocols with flext-core-specific
@@ -20,13 +21,14 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_tests import FlextTestsProtocols
 
 from flext_core import c
+from tests._protocols import TestsFlextProtocolsMixins
 
 if TYPE_CHECKING:
     from tests import p, t
     from tests._models import TestsFlextModelsMixins
 
 
-class TestsFlextProtocols(FlextTestsProtocols):
+class TestsFlextProtocols(FlextTestsProtocols, TestsFlextProtocolsMixins):
     """Protocol definitions for flext-core tests - extends TestsFlextProtocols.
 
     Architecture: Extends TestsFlextProtocols with flext-core-specific protocol
@@ -39,7 +41,10 @@ class TestsFlextProtocols(FlextTestsProtocols):
     - All generic protocols come from TestsFlextProtocols
     """
 
-    class Tests(FlextTestsProtocols.Tests):
+    class Tests(
+        FlextTestsProtocols.Tests,
+        TestsFlextProtocolsMixins,
+    ):
         """flext-core test protocols namespace."""
 
         class InferredCommand(Protocol):

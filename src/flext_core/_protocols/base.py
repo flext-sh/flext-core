@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from flext_core import p
+    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 from collections.abc import Callable, Iterable, Mapping, MutableSequence
@@ -274,59 +275,59 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ManagedModel(EnforcedModel, Protocol):
+    class ManagedModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class EnumManagedModel(ManagedModel, Protocol):
+    class EnumManagedModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class NormalizedModel(EnumManagedModel, Protocol):
+    class NormalizedModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class StrictManagedModel(NormalizedModel, Protocol):
+    class StrictManagedModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class StrictModel(StrictManagedModel, Protocol):
+    class StrictModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FrozenModel(StrictModel, Protocol):
+    class FrozenModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ArbitraryTypesModel(ManagedModel, Protocol):
+    class ArbitraryTypesModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class StrictBoundaryModel(FrozenModel, Protocol):
+    class StrictBoundaryModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FlexibleInternalModel(NormalizedModel, Protocol):
+    class FlexibleInternalModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ImmutableValueModel(ManagedModel, Protocol):
+    class ImmutableValueModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class TaggedModel(EnforcedModel, Protocol):
+    class TaggedModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FlexibleModel(ArbitraryTypesModel, Protocol):
+    class FlexibleModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class DynamicModel(FlexibleModel, Protocol):
+    class DynamicModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FrozenDynamicModel(DynamicModel, Protocol):
+    class FrozenDynamicModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
@@ -334,44 +335,81 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
         @property
-        def created_at(self) -> datetime: ...
+        def created_at(self) -> datetime:
+            """Structural member projected from the owning model.
+
+            Timestamp when the metadata record was first created (configured timezone).
+            """
+            ...
+
         @property
-        def updated_at(self) -> datetime: ...
+        def updated_at(self) -> datetime:
+            """Timestamp of the most recent metadata update (configured timezone)."""
+            ...
+
         @property
-        def version(self) -> str: ...
+        def version(self) -> str:
+            """Semantic version string representing the metadata schema revision."""
+            ...
+
         @property
-        def created_by(self) -> str | None: ...
+        def created_by(self) -> str | None:
+            """Identifier of the actor that originally created this metadata."""
+            ...
+
         @property
-        def modified_by(self) -> str | None: ...
+        def modified_by(self) -> str | None:
+            """Identifier of the actor that last modified this metadata."""
+            ...
+
         @property
-        def tags(self) -> Sequence[str]: ...
+        def tags(self) -> Sequence[str]:
+            """Normalized labels used to classify and filter this metadata."""
+            ...
+
         @property
-        def attributes(self) -> t.JsonMapping: ...
+        def attributes(self) -> FlextTypingBase.JsonMapping:
+            """Arbitrary metadata attributes stored as key-value pairs."""
+            ...
+
         @property
-        def metadata_value(self) -> t.Scalar | None: ...
+        def metadata_value(self) -> FlextTypingBase.Scalar | None:
+            """Scalar metadata value."""
+            ...
 
     @runtime_checkable
-    class ContractModel(StrictModel, Protocol):
+    class ContractModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ExternalContractModel(ContractModel, Protocol):
+    class ExternalContractModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FrozenValueModel(ContractModel, Protocol):
+    class FrozenValueModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
     class RetryConfigurationMixin(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        max_retries: t.NonNegativeInt
-        initial_delay_seconds: t.PositiveFloat
-        max_delay_seconds: t.PositiveFloat
+        @property
+        def max_retries(self) -> FlextTypesPydantic.NonNegativeInt:
+            """Maximum retry attempts."""
+            ...
+
+        @property
+        def initial_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
+            """Initial delay between retries."""
+            ...
+
+        @property
+        def max_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
+            """Maximum delay between retries."""
+            ...
 
     @runtime_checkable
-    class TimestampedModel(ArbitraryTypesModel, Protocol):
+    class TimestampedModel(Model, Protocol):
         """Structural data contract projected from the owning model."""
 
 

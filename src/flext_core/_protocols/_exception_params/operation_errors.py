@@ -8,43 +8,82 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core._protocols import FlextProtocolsBase
+
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 class FlextProtocolsExceptionParamsOperationErrors:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class OperationErrorParams(Protocol):
+    class OperationErrorParams(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        operation: str | None
-        reason: str | None
+        @property
+        def operation(self) -> str | None:
+            """Operation name associated with the failure."""
+            ...
+
+        @property
+        def reason(self) -> str | None:
+            """Short reason explaining the operation failure."""
+            ...
 
     @runtime_checkable
-    class ServiceLookupParams(Protocol):
+    class ServiceLookupParams(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        expected_type: t.StrictStr | None
-        actual_type: t.StrictStr | None
-        service_name: str | None
+        @property
+        def expected_type(self) -> FlextTypesPydantic.StrictStr | None:
+            """Expected runtime type name for the failing value."""
+            ...
+
+        @property
+        def actual_type(self) -> FlextTypesPydantic.StrictStr | None:
+            """Actual runtime type name received at runtime."""
+            ...
+
+        @property
+        def service_name(self) -> str | None:
+            """Service identifier requested from the container/registry."""
+            ...
 
     @runtime_checkable
-    class RegistryPluginParams(Protocol):
+    class RegistryPluginParams(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        category: str | None
-        name: str | None
-        scope: str | None
+        @property
+        def category(self) -> str | None:
+            """Registry category for plugin registration."""
+            ...
+
+        @property
+        def name(self) -> str | None:
+            """Plugin name within a category."""
+            ...
+
+        @property
+        def scope(self) -> str | None:
+            """Registration scope used by registry operations."""
+            ...
 
     @runtime_checkable
-    class AttributeAccessErrorParams(Protocol):
+    class AttributeAccessErrorParams(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        attribute_name: str | None
-        attribute_context: t.RuntimeData | None
+        @property
+        def attribute_name(self) -> str | None:
+            """Attribute name that could not be accessed safely."""
+            ...
+
+        @property
+        def attribute_context(self) -> FlextTypingBase.RuntimeData | None:
+            """Context payload describing the state during access failure."""
+            ...
 
 
 __all__: list[str] = [

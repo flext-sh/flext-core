@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core._protocols import FlextProtocolsService
 
 
 from collections.abc import Mapping, Sequence
@@ -36,29 +36,13 @@ class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
 
     @runtime_checkable
-    class RegistrationDetails(FlextProtocolsBase.Base, Protocol):
-        """Observable registration identity and routing metadata."""
-
-        @property
-        def registration_id(self) -> t.NonEmptyStr: ...
-
-        @property
-        def handler_mode(self) -> c.HandlerType: ...
-
-        @property
-        def status(self) -> c.Status: ...
-
-        @property
-        def timestamp(self) -> str: ...
-
-    @runtime_checkable
     class RegistrySummary(FlextProtocolsBase.Base, Protocol):
         """Observable outcome of one atomic registration batch."""
 
         @property
         def registered(
             self,
-        ) -> Sequence[FlextProtocolsRegistry.RegistrationDetails]: ...
+        ) -> Sequence[FlextProtocolsHandler.RegistrationDetails]: ...
 
         @property
         def skipped(self) -> Sequence[str]: ...
@@ -104,7 +88,7 @@ class FlextProtocolsRegistry:
         def register_handler(
             self,
             handler: FlextProtocolsHandler.DispatchableHandler,
-        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrationDetails]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsHandler.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
@@ -172,14 +156,17 @@ class FlextProtocolsRegistry:
             ...
 
     @runtime_checkable
-    class RegistryServiceState(Protocol):
+    class RegistryServiceState(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class RegistryOptions(Protocol):
+    class RegistryOptions(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        registry_runtime: p.ServiceRuntime
+        @property
+        def registry_runtime(self) -> FlextProtocolsService.ServiceRuntime:
+            """Explicit runtime shared by registration and execution."""
+            ...
 
 
 __all__: list[str] = ["FlextProtocolsRegistry"]

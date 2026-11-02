@@ -18,6 +18,7 @@ from flext_core._protocols import (
     FlextProtocolsDomainEvent,
     FlextProtocolsEntity,
     FlextProtocolsErrors,
+    FlextProtocolsExceptionParams,
     FlextProtocolsFlextContext,
     FlextProtocolsFlextMixins,
     FlextProtocolsHandler,
@@ -30,32 +31,31 @@ from flext_core._protocols import (
     FlextProtocolsService,
     FlextProtocolsSettings,
 )
-from flext_core._protocols.exception_params import FlextProtocolsExceptionParams
 
 
 class FlextProtocols(
     FlextProtocolsBase,
-    FlextProtocolsConfig,
-    FlextProtocolsContext,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
-    FlextProtocolsContainer,
-    FlextProtocolsService,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsProjectMetadata,
-    FlextProtocolsPydantic,
-    FlextProtocolsRegistry,
     FlextProtocolsCollectionModels,
+    FlextProtocolsConfig,
+    FlextProtocolsContainer,
     FlextProtocolsContainers,
+    FlextProtocolsContext,
     FlextProtocolsCqrs,
     FlextProtocolsDomainEvent,
     FlextProtocolsEntity,
     FlextProtocolsErrors,
+    FlextProtocolsExceptionParams,
     FlextProtocolsFlextContext,
     FlextProtocolsFlextMixins,
+    FlextProtocolsHandler,
+    FlextProtocolsLogging,
     FlextProtocolsOptions,
-    FlextProtocolsExceptionParams,
+    FlextProtocolsProjectMetadata,
+    FlextProtocolsPydantic,
+    FlextProtocolsRegistry,
+    FlextProtocolsResult,
+    FlextProtocolsService,
+    FlextProtocolsSettings,
 ):
     """Runtime-checkable structural typing protocols for FLEXT framework.
 

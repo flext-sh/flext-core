@@ -9,31 +9,44 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core._protocols import FlextProtocolsBase
+
+if TYPE_CHECKING:
+    from flext_core._typings import FlextTypesAnnotateds, FlextTypesServices
 
 
 class FlextProtocolsContextTokens:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class StructlogProxyToken(Protocol):
+    class StructlogProxyToken(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def key(self) -> t.NonEmptyStr: ...
+        def key(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Context variable key (alphanumeric, underscore)."""
+            ...
+
         @property
-        def previous_value(self) -> t.JsonPayload | datetime | None: ...
+        def previous_value(self) -> FlextTypesServices.JsonPayload | datetime | None:
+            """Previous value before set operation."""
+            ...
 
     @runtime_checkable
-    class Token(Protocol):
+    class Token(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def key(self) -> t.NonEmptyStr: ...
+        def key(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Unique key for the context variable."""
+            ...
+
         @property
-        def old_value(self) -> t.JsonPayload | None: ...
+        def old_value(self) -> FlextTypesServices.JsonPayload | None:
+            """Previous value before set operation."""
+            ...
 
 
 __all__: list[str] = [

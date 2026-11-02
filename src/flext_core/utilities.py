@@ -47,6 +47,7 @@ from flext_core._utilities import (
 
 class FlextUtilities(
     FlextUtilitiesArgs,
+    FlextUtilitiesChecker,
     FlextUtilitiesCollection,
     FlextUtilitiesConfig,
     FlextUtilitiesConsole,
@@ -67,15 +68,14 @@ class FlextUtilities(
     FlextUtilitiesLogging,
     FlextUtilitiesMapper,
     FlextUtilitiesMetadata,
-    FlextUtilitiesModelRuntime,
     FlextUtilitiesModel,
+    FlextUtilitiesModelRuntime,
     FlextUtilitiesParser,
     FlextUtilitiesProjectMetadata,
     FlextUtilitiesPydantic,
     FlextUtilitiesReliability,
     FlextUtilitiesSettings,
     FlextUtilitiesText,
-    FlextUtilitiesChecker,
 ):
     """Unified facade for all FLEXT utility functionality.
 

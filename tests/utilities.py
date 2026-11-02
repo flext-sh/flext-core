@@ -20,18 +20,31 @@ from tests import c, h, m, p, r, t
 from tests._utilities import (
     TestsFlextUtilitiesContracts,
     TestsFlextUtilitiesDispatch,
-    TestsFlextUtilitiesParserReliability,
-    TestsFlextUtilitiesParserScenarios,
     TestsFlextUtilitiesRailway,
-    TestsFlextUtilitiesReliabilityScenarios,
     TestsFlextUtilitiesResultCombinators,
     TestsFlextUtilitiesValidationFactories,
-    TestsFlextUtilitiesValidationNetworkScenarios,
-    TestsFlextUtilitiesValidationNumericScenarios,
-    TestsFlextUtilitiesValidationPatternScenarios,
-    TestsFlextUtilitiesValidationStringScenarios,
-    TestsFlextUtilitiesValidationUriScenarios,
 )
+from tests._utilities.decorators import TestsFlextDecoratorsLegacy
+from tests._utilities.handlers import TestsFlextFlextHandlers
+from tests._utilities.parser_reliability import TestsFlextUtilitiesParserReliability
+from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenarios
+from tests._utilities.reliability_scenarios import (
+    TestsFlextUtilitiesReliabilityScenarios,
+)
+from tests._utilities.result_exception_carrying import TestsFlextResultExceptionCarrying
+from tests._utilities.validation_network import (
+    TestsFlextUtilitiesValidationNetworkScenarios,
+)
+from tests._utilities.validation_numeric import (
+    TestsFlextUtilitiesValidationNumericScenarios,
+)
+from tests._utilities.validation_pattern import (
+    TestsFlextUtilitiesValidationPatternScenarios,
+)
+from tests._utilities.validation_string import (
+    TestsFlextUtilitiesValidationStringScenarios,
+)
+from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
 
 
 class TestsFlextUtilities(flext_tests_u):
@@ -383,22 +396,38 @@ class TestsFlextUtilities(flext_tests_u):
             )
 
     class Tests(
+        flext_tests_u.Tests,
         TestsFlextUtilitiesContracts,
         TestsFlextUtilitiesDispatch,
+        TestsFlextUtilitiesRailway,
         TestsFlextUtilitiesResultCombinators,
         TestsFlextUtilitiesValidationFactories,
-        TestsFlextUtilitiesParserReliability,
-        TestsFlextUtilitiesParserScenarios,
-        TestsFlextUtilitiesReliabilityScenarios,
-        TestsFlextUtilitiesRailway,
-        TestsFlextUtilitiesValidationNetworkScenarios,
-        TestsFlextUtilitiesValidationNumericScenarios,
-        TestsFlextUtilitiesValidationPatternScenarios,
-        TestsFlextUtilitiesValidationStringScenarios,
-        TestsFlextUtilitiesValidationUriScenarios,
-        flext_tests_u.Tests,
     ):
         """flext-core test utilities namespace."""
+
+        TestsFlextDecoratorsLegacy = TestsFlextDecoratorsLegacy
+        TestsFlextFlextHandlers = TestsFlextFlextHandlers
+        TestsFlextUtilitiesParserReliability = TestsFlextUtilitiesParserReliability
+        TestsFlextUtilitiesParserScenarios = TestsFlextUtilitiesParserScenarios
+        TestsFlextUtilitiesReliabilityScenarios = (
+            TestsFlextUtilitiesReliabilityScenarios
+        )
+        TestsFlextResultExceptionCarrying = TestsFlextResultExceptionCarrying
+        TestsFlextUtilitiesValidationNetworkScenarios = (
+            TestsFlextUtilitiesValidationNetworkScenarios
+        )
+        TestsFlextUtilitiesValidationNumericScenarios = (
+            TestsFlextUtilitiesValidationNumericScenarios
+        )
+        TestsFlextUtilitiesValidationPatternScenarios = (
+            TestsFlextUtilitiesValidationPatternScenarios
+        )
+        TestsFlextUtilitiesValidationStringScenarios = (
+            TestsFlextUtilitiesValidationStringScenarios
+        )
+        TestsFlextUtilitiesValidationUriScenarios = (
+            TestsFlextUtilitiesValidationUriScenarios
+        )
 
 
 u = TestsFlextUtilities

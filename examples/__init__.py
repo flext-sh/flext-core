@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from examples.ex_05_flext_mixins import ExamplesFlextMixins
     from examples.ex_06_flext_context import ExamplesFlextContext
     from examples.models import ExamplesFlextModels, m
-    from examples.protocols import p
+    from examples.protocols import ExamplesFlextProtocols, p
     from examples.shared import ExamplesFlextShared
     from examples.typings import t
     from examples.utilities import u
@@ -27,6 +27,7 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextContext",
     "ExamplesFlextMixins",
     "ExamplesFlextModels",
+    "ExamplesFlextProtocols",
     "ExamplesFlextShared",
     "c",
     "config",
@@ -51,6 +52,7 @@ install_lazy_exports(
         "ExamplesFlextContext": ".ex_06_flext_context",
         "ExamplesFlextMixins": ".ex_05_flext_mixins",
         "ExamplesFlextModels": ".models",
+        "ExamplesFlextProtocols": ".protocols",
         "ExamplesFlextShared": ".shared",
         "c": ".constants",
         "config": "flext_core",

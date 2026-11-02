@@ -7,27 +7,38 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from contextvars import ContextVar
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
-from flext_core._protocols import (
-    FlextProtocolsConfig,
-    FlextProtocolsHandler,
-    FlextProtocolsLogging,
-    FlextProtocolsResult,
-    FlextProtocolsSettings,
+from flext_core._protocols import FlextProtocolsResult
+from flext_core._protocols._context import (
+    FlextProtocolsContextData,
+    FlextProtocolsContextExport,
+    FlextProtocolsContextScope,
+    FlextProtocolsContextTokens,
+)
+from flext_core._protocols._context._scope import (
+    FlextProtocolsContextScopeFlextmodelscontextscopePart01,
+    FlextProtocolsContextScopeFlextmodelscontextscopePart02,
+    FlextProtocolsContextScopeFlextmodelscontextscopePart03,
 )
 
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import p
     from flext_core._protocols import FlextProtocolsContainer
 
 
-class FlextProtocolsContext:
+class FlextProtocolsContext(
+    FlextProtocolsContextData,
+    FlextProtocolsContextExport,
+    FlextProtocolsContextScope,
+    FlextProtocolsContextScopeFlextmodelscontextscopePart03,
+    FlextProtocolsContextScopeFlextmodelscontextscopePart02,
+    FlextProtocolsContextScopeFlextmodelscontextscopePart01,
+    FlextProtocolsContextTokens,
+):
     """Public facade for FlextProtocolsContext."""
 
     @runtime_checkable
@@ -347,126 +358,6 @@ class FlextProtocolsContext:
         def attributes(self) -> t.JsonMapping: ...
 
         def model_copy(self, *, deep: bool = False) -> Self: ...
-
-    @runtime_checkable
-    class ContextStatistics(Protocol):
-        """Validated counters and operation metrics."""
-
-        @property
-        def sets(self) -> t.NonNegativeInt: ...
-
-        @property
-        def gets(self) -> t.NonNegativeInt: ...
-
-        @property
-        def removes(self) -> t.NonNegativeInt: ...
-
-        @property
-        def clears(self) -> t.NonNegativeInt: ...
-
-        @property
-        def operations(self) -> t.JsonMapping: ...
-
-        def model_copy(
-            self,
-            *,
-            update: Mapping[str, t.JsonPayload] | None = None,
-            deep: bool = False,
-        ) -> Self: ...
-
-    @runtime_checkable
-    class ContextRuntimeState(Protocol):
-        """Data capabilities consumed by context runtime helpers."""
-
-        @property
-        def metadata(self) -> p.Metadata: ...
-
-        @property
-        def hooks(self) -> t.ContextHookMap: ...
-
-        @property
-        def statistics(self) -> FlextProtocolsContext.ContextStatistics: ...
-
-        @property
-        def active(self) -> bool: ...
-
-        @property
-        def suspended(self) -> bool: ...
-
-        @property
-        def scope_vars(
-            self,
-        ) -> Mapping[
-            str,
-            ContextVar[FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None],
-        ]: ...
-
-        def model_copy(
-            self,
-            *,
-            update: Mapping[
-                str,
-                FlextProtocolsContext.ContextStatistics
-                | Mapping[
-                    str,
-                    ContextVar[
-                        FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None
-                    ],
-                ],
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> Self: ...
-
-    @runtime_checkable
-    class ServiceRuntime(Protocol):
-        """Actual scoped runtime selected by a component's composition root."""
-
-        @property
-        def settings(self) -> FlextProtocolsSettings.Settings: ...
-
-        @property
-        def context(self) -> FlextProtocolsContext.Context: ...
-
-        @property
-        def container(self) -> FlextProtocolsContainer.Container: ...
-
-        @property
-        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher: ...
-
-        @property
-        def logger(self) -> FlextProtocolsLogging.Logger: ...
-
-        @property
-        def logger_injected(self) -> bool: ...
-
-    @runtime_checkable
-    class RuntimeBootstrapOptions(Protocol):
-        """Runtime bootstrap options a service base declares for its runtime."""
-
-        @property
-        def settings(self) -> FlextProtocolsSettings.Settings | None: ...
-
-        @property
-        def settings_type(self) -> FlextProtocolsSettings.SettingsType | None: ...
-
-        @property
-        def settings_overrides(self) -> t.JsonMapping | None: ...
-
-        @property
-        def context(self) -> FlextProtocolsContext.Context | None: ...
-
-        @property
-        def container(self) -> FlextProtocolsContainer.Container | None: ...
-
-        @property
-        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None: ...
-
-        @property
-        def logger(self) -> FlextProtocolsLogging.Logger | None: ...
-
-        @property
-        def logging_options(self) -> FlextProtocolsConfig.StructlogOptions | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsContext"]

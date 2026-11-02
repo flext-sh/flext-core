@@ -13,7 +13,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core._protocols import FlextProtocolsConfig, FlextProtocolsHandler
+    from flext_core._typings import (
+        FlextTypesPydantic,
+        FlextTypesServices,
+        FlextTypingBase,
+    )
 
 
 from collections.abc import Mapping
@@ -47,22 +52,30 @@ class FlextProtocolsService:
         ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
 
     @runtime_checkable
-    class ServiceOperation(Protocol):
-        """One discovered operation and its sole request-schema association."""
+    class ServiceOperation(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
-        def name(self) -> str: ...
+        def name(self) -> str:
+            """Method name that implements the operation."""
+            ...
 
         @property
-        def summary(self) -> str: ...
+        def summary(self) -> str:
+            """First docstring line of the operation."""
+            ...
 
         @property
         def request(
             self,
-        ) -> t.ModelClass[t.BaseModelType] | None: ...
+        ) -> FlextTypesServices.ModelClass[FlextTypesPydantic.BaseModelType] | None:
+            """Pydantic request model, or None for an input-less operation."""
+            ...
 
         @property
-        def handler(self) -> FlextProtocolsService.ServiceOperationHandler: ...
+        def handler(self) -> FlextProtocolsService.ServiceOperationHandler:
+            """Original unbound operation, invoked with the provided service."""
+            ...
 
     # ------------------------------------------------------------------
     # RuntimeBootstrapProvider — a service base that declares its runtime
@@ -81,7 +94,7 @@ class FlextProtocolsService:
         @classmethod
         def runtime_bootstrap_options(
             cls,
-        ) -> FlextProtocolsContext.RuntimeBootstrapOptions:
+        ) -> FlextProtocolsService.RuntimeBootstrapOptions:
             """Return the runtime bootstrap options this service base declares."""
             ...
 
@@ -168,28 +181,85 @@ class FlextProtocolsService:
             ...
 
     @runtime_checkable
-    class ServiceRuntime(Protocol):
+    class ServiceRuntime(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        settings: p.Settings
-        context: p.Context
-        container: p.Container
-        dispatcher: p.Dispatcher
-        logger: p.Logger
-        logger_injected: bool
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings:
+            """Service configuration settings for runtime behavior."""
+            ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context:
+            """Execution context carrying correlation and tracing metadata."""
+            ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container:
+            """Dependency injection container scoped to this runtime."""
+            ...
+
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher:
+            """Dispatcher resolved for CQRS routing in this runtime."""
+            ...
+
+        @property
+        def logger(self) -> FlextProtocolsLogging.Logger:
+            """Logging destination elected by the composition root."""
+            ...
+
+        @property
+        def logger_injected(self) -> bool:
+            """Keep an explicit logger when transport settings are rebound."""
+            ...
 
     @runtime_checkable
-    class RuntimeBootstrapOptions(Protocol):
+    class RuntimeBootstrapOptions(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        settings: p.Settings | None
-        settings_type: p.SettingsType | None
-        settings_overrides: t.JsonMapping | None
-        context: p.Context | None
-        container: p.Container | None
-        dispatcher: p.Dispatcher | None
-        logger: p.Logger | None
-        logging_options: p.StructlogOptions | None
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings | None:
+            """Settings source cloned once into the elected container scope."""
+            ...
+
+        @property
+        def settings_type(self) -> FlextProtocolsSettings.SettingsType | None:
+            """FlextSettings class used to load runtime settings."""
+            ...
+
+        @property
+        def settings_overrides(self) -> FlextTypingBase.JsonMapping | None:
+            """Key-value overrides applied on top of the loaded configuration."""
+            ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context | None:
+            """Pre-built execution context to inject into the runtime."""
+            ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container | None:
+            """Structural member projected from the owning model.
+
+            Existing container whose public DI registrations the runtime preserves.
+            """
+            ...
+
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None:
+            """Pre-built dispatcher injected into the runtime."""
+            ...
+
+        @property
+        def logger(self) -> FlextProtocolsLogging.Logger | None:
+            """Logging dependency; absent selects the runtime policy."""
+            ...
+
+        @property
+        def logging_options(self) -> FlextProtocolsConfig.StructlogOptions | None:
+            """Programmatic logging extensions elected by the root."""
+            ...
 
 
 __all__: list[str] = ["FlextProtocolsService"]

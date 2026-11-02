@@ -10,50 +10,98 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core._protocols._project_metadata import (
+        FlextProtocolsProjectMetadataFields,
+    )
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsProjectMetadataAggregates:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Project(Protocol):
+    class Project(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def name(self) -> str: ...
+        def name(self) -> str:
+            """Structural member projected from the owning model."""
+            ...
+
         @property
-        def version(self) -> str: ...
+        def version(self) -> str:
+            """Structural member projected from the owning model."""
+            ...
+
         @property
-        def description(self) -> str: ...
+        def description(self) -> str:
+            """Structural member projected from the owning model."""
+            ...
+
         @property
-        def authors(self) -> tuple[p.ProjectAuthor, ...]: ...
+        def authors(
+            self,
+        ) -> tuple[FlextProtocolsProjectMetadataFields.ProjectAuthor, ...]:
+            """Project authors."""
+            ...
+
         @property
-        def urls(self) -> p.ProjectUrls: ...
+        def urls(self) -> FlextProtocolsProjectMetadataFields.ProjectUrls:
+            """Project URLs."""
+            ...
+
         @property
-        def requires_python(self) -> str: ...
+        def requires_python(self) -> str:
+            """Python constraint."""
+            ...
+
         @property
-        def dependencies(self) -> t.StrTuple: ...
+        def dependencies(self) -> FlextTypingBase.StrTuple:
+            """PEP 508 runtime dependency declarations."""
+            ...
+
         @property
-        def classifiers(self) -> t.StrTuple: ...
+        def classifiers(self) -> FlextTypingBase.StrTuple:
+            """Trove classifiers."""
+            ...
+
         @property
-        def keywords(self) -> t.StrTuple: ...
+        def keywords(self) -> FlextTypingBase.StrTuple:
+            """Project search keywords."""
+            ...
 
     @runtime_checkable
-    class ProjectToolFlext(Protocol):
+    class ProjectToolFlext(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def project(self) -> p.ProjectToolFlextProject: ...
+        def project(
+            self,
+        ) -> FlextProtocolsProjectMetadataFields.ProjectToolFlextProject:
+            """Project naming policy."""
+            ...
+
         @property
-        def docs(self) -> p.ProjectToolFlextDocs: ...
+        def docs(self) -> FlextProtocolsProjectMetadataFields.ProjectToolFlextDocs:
+            """Documentation policy."""
+            ...
+
         @property
-        def workspace(self) -> p.ProjectToolFlextWorkspace: ...
+        def workspace(
+            self,
+        ) -> FlextProtocolsProjectMetadataFields.ProjectToolFlextWorkspace:
+            """Workspace attachment policy."""
+            ...
+
         @property
-        def namespace(self) -> p.ProjectToolFlextNamespace: ...
+        def namespace(
+            self,
+        ) -> FlextProtocolsProjectMetadataFields.ProjectToolFlextNamespace:
+            """Namespace enforcement policy."""
+            ...
 
 
 __all__: list[str] = [

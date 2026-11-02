@@ -12,6 +12,8 @@ from flext_core import t
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from flext_core._typings import FlextTypesAnnotateds, FlextTypesPydantic
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 
@@ -125,20 +127,47 @@ class FlextProtocolsSettings:
             ...
 
     @runtime_checkable
-    class SettingsValue(Protocol):
+    class SettingsValue(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class RetryConfiguration(Protocol):
+    class RetryConfiguration(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        max_retries: t.PositiveInt
-        initial_delay_seconds: t.PositiveFloat
-        max_delay_seconds: t.PositiveFloat
-        exponential_backoff: bool
-        backoff_multiplier: t.BackoffMultiplier
-        retry_on_exceptions: Sequence[type[BaseException]]
-        retry_on_status_codes: Sequence[int]
+        @property
+        def max_retries(self) -> FlextTypesPydantic.PositiveInt:
+            """Maximum retry attempts from c (Constants default)."""
+            ...
+
+        @property
+        def initial_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
+            """Initial delay between retries."""
+            ...
+
+        @property
+        def max_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
+            """Maximum delay between retries."""
+            ...
+
+        @property
+        def exponential_backoff(self) -> bool:
+            """Whether to use exponential backoff between retry attempts."""
+            ...
+
+        @property
+        def backoff_multiplier(self) -> FlextTypesAnnotateds.BackoffMultiplier:
+            """Backoff multiplier for exponential backoff."""
+            ...
+
+        @property
+        def retry_on_exceptions(self) -> Sequence[type[BaseException]]:
+            """Exception types to retry on."""
+            ...
+
+        @property
+        def retry_on_status_codes(self) -> Sequence[int]:
+            """HTTP status codes to retry on."""
+            ...
 
 
 __all__: list[str] = ["FlextProtocolsSettings"]

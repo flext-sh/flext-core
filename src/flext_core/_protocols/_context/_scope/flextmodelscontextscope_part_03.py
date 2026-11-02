@@ -10,18 +10,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from flext_core._protocols import FlextProtocolsBase
+
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core._protocols import FlextProtocolsContainer
 
 
 class FlextProtocolsContextScopeFlextmodelscontextscopePart03:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ContextContainerState(Protocol):
+    class ContextContainerState(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        container: p.Container | None
+        @property
+        def container(self) -> FlextProtocolsContainer.Container | None:
+            """Container configured for service namespace resolution."""
+            ...
 
 
 __all__: list[str] = [

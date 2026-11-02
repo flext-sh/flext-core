@@ -11,21 +11,30 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import p
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsContextData:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ContextData(Protocol):
+    class ContextData(FlextProtocolsBase.Model, Protocol):
         """Structural data contract projected from the owning model."""
 
-        data: Mapping[str, t.Scalar]
-        metadata: p.Metadata | Mapping[str, t.Scalar] | None
+        @property
+        def data(self) -> Mapping[str, FlextTypingBase.Scalar]:
+            """Initial context data as key-value pairs."""
+            ...
+
+        @property
+        def metadata(
+            self,
+        ) -> FlextProtocolsBase.Metadata | Mapping[str, FlextTypingBase.Scalar] | None:
+            """Context metadata (creation info, source, etc.)."""
+            ...
 
 
 __all__: list[str] = [

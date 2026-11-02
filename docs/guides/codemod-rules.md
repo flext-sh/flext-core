@@ -287,6 +287,8 @@ The engine reads these `metadata` keys, declared in
 | `owner` | The distribution that owns the law; that project's own plan drops the rule. |
 | `consumers_of` | The rule applies only to projects whose runtime closure includes that distribution. |
 | `relocation` | A detection-only rule names the Rope relocation that repairs it and captures the symbol as `$NAME`. `family-declaration` also captures the owning facade letter as `$FAMILY` (see below). |
+| `expected` | The exact finding count receipt; any other count fails. |
+| `owned_path_suffix` | Reject owned `.pyi` paths from discovery even without a syntax tree; detection-only, with no exemption. |
 
 ### One relocation law: every declaration lives in its family
 
@@ -323,8 +325,6 @@ aliases, `TypeVar`s and other typing declarations in `t`, constants in `c`,
 - **Nesting yields.** Class nesting leaves a typing declaration outside the
   typings family, and a function in a constants, typings or models module,
   at module level so this relocation finds it.
-| `expected` | The exact finding count receipt; any other count fails. |
-| `owned_path_suffix` | Reject owned `.pyi` paths from discovery even without a syntax tree; detection-only, with no exemption. |
 
 ### One construction owner: the model, never the protocol
 
@@ -379,6 +379,31 @@ tool's standard functionality as possible, and keep the number of executed rules
 as small as possible. Renames and moves that Rope's refactorings express run
 through them, not through a custom planner (ADR-028 Decision 17), and a rename of
 library-named exports to capability names follows ADR-028 Decision 15.
+
+#### Theme-rule convergence
+
+ADR-028 Decision 18 item 2
+(operator orders 2026-11-02) makes the theme the unit of correction. A theme is one law
+set fixed by one generalized rule. Each theme is checked and applied globally, over
+every governed repository, with its selection
+(`refactor mod --projects <every repo> --laws <set> [--check]`). Then it is verified with
+direct `ruff` and `pyrefly`, committed everywhere, and the next theme starts. A run
+without a selection is refused, and violating sources are never edited by hand. Theme
+execution is tracked under bead `flext-brr3y`:
+
+| Theme | Rules (unified into one law) | Bead |
+| --- | --- | --- |
+| T0 law selector | engine: `--laws`, per-repo expansion by `enforce`, theme purity | `flext-brr3y.4` |
+| TH1 protocol construction | `ban-protocol-constructor` | `flext-brr3y.5` |
+| TH2 letter binding, import header | generated `import-header--*` documents; `add-facade-module-*-alias`; missing-import companions | `flext-brr3y.6` |
+| TH3 protocol projection | model-to-protocol generator; holder composition; duplicate retirement | `flext-brr3y.7` |
+| TH4 Pydantic ConfigDict | `config-dict-type-from-typings`, `rewire-relaxed-*` | `flext-brr3y.8` |
+| TH5 deep import | `rewire-deep-import-to-package`, `ban-consumer-submodule-import`, `ban-test-deep-module-import` | `flext-brr3y.9` |
+| TH6 private import | `ban-private-import`, `ban-own-family-internal-import`, `ban-test-own-private-import` | `flext-brr3y.10` |
+| TH7 pytest to tests facade | `rewire-pytest-*`, `rewire-test-monkeypatch-*`, `rewire-test-assert-*` | `flext-brr3y.11` |
+| TH8 family placement | `namespace-law`, `namespace-structure`, layer and placement bans, `relocate-facade-*` | `flext-brr3y.12` |
+| TH9 `m.` in type positions | `rewire-model-protocol-field-to-port`, `ban-model-typing-in-protocol-projection` | `flext-brr3y.13` |
+| TH10 exceptions to axioms | exemption and ignore owners | `flext-brr3y.14` |
 
 - **One document per law.** Facts that vary per package, letter or namespace
   are rendered into the values of a single document, never into one document
