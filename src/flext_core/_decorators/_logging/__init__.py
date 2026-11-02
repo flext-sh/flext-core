@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for logging.
+"""Flext Core. Decorators. Logging package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -15,13 +15,12 @@ from flext_core.lazy import install_lazy_exports
 if TYPE_CHECKING:
     from flext_core._decorators._logging.payloads import FlextDecoratorsLoggingPayloads
 
+
 __all__: tuple[str, ...] = ("FlextDecoratorsLoggingPayloads",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextDecoratorsLoggingPayloads": ".payloads",
-    }),
+    MappingProxyType({"FlextDecoratorsLoggingPayloads": ".payloads"}),
     public_exports=__all__,
 )

@@ -13,25 +13,16 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._utilities._logging_context.logging_context_part_01 import (
-        FlextUtilitiesLoggingContextPart01,
-    )
-    from flext_core._utilities._logging_context.logging_context_part_02 import (
-        FlextUtilitiesLoggingContextPart02,
+    from flext_core._utilities._logging_context.bound_logger import (
+        FlextUtilitiesLoggingBoundLogger,
     )
 
 
-__all__: tuple[str, ...] = (
-    "FlextUtilitiesLoggingContextPart01",
-    "FlextUtilitiesLoggingContextPart02",
-)
+__all__: tuple[str, ...] = ("FlextUtilitiesLoggingBoundLogger",)
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextUtilitiesLoggingContextPart01": ".logging_context_part_01",
-        "FlextUtilitiesLoggingContextPart02": ".logging_context_part_02",
-    }),
+    MappingProxyType({"FlextUtilitiesLoggingBoundLogger": ".bound_logger"}),
     public_exports=__all__,
 )

@@ -12,20 +12,20 @@ import sys
 from collections.abc import Sequence
 from enum import StrEnum, unique
 from pathlib import Path
-from typing import Annotated, ClassVar, override
+from typing import Annotated, ClassVar, TypeAlias, override
 
 from flext_tests import u as flext_tests_u
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
+    TestsFlextDecoratorsLegacy,
+    TestsFlextFlextHandlers,
+    TestsFlextResultExceptionCarrying,
     TestsFlextUtilitiesContractsMixin,
     TestsFlextUtilitiesDispatchMixin,
     TestsFlextUtilitiesParserReliabilityMixin,
     TestsFlextUtilitiesParserScenariosMixin,
-    TestsFlextUtilitiesRailwayCasesMixin,
     TestsFlextUtilitiesRailwayMixin,
-    TestsFlextUtilitiesRailwayPipelinesMixin,
-    TestsFlextUtilitiesRailwayServicesMixin,
     TestsFlextUtilitiesReliabilityScenariosMixin,
     TestsFlextUtilitiesResultCombinators,
     TestsFlextUtilitiesServicesMixin,
@@ -391,14 +391,10 @@ class TestsFlextUtilities(flext_tests_u):
         TestsFlextUtilitiesDispatchMixin,
         TestsFlextUtilitiesResultCombinators,
         TestsFlextUtilitiesValidationFactoriesMixin,
-        TestsFlextUtilitiesServicesMixin,
         TestsFlextUtilitiesParserReliabilityMixin,
         TestsFlextUtilitiesParserScenariosMixin,
         TestsFlextUtilitiesReliabilityScenariosMixin,
         TestsFlextUtilitiesRailwayMixin,
-        TestsFlextUtilitiesRailwayPipelinesMixin,
-        TestsFlextUtilitiesRailwayServicesMixin,
-        TestsFlextUtilitiesRailwayCasesMixin,
         TestsFlextUtilitiesValidationNetworkScenarios,
         TestsFlextUtilitiesValidationNumericScenarios,
         TestsFlextUtilitiesValidationPatternScenarios,
@@ -407,6 +403,11 @@ class TestsFlextUtilities(flext_tests_u):
         flext_tests_u.Tests,
     ):
         """flext-core test utilities namespace."""
+
+        TestsFlextDecoratorsLegacy: TypeAlias = TestsFlextDecoratorsLegacy
+        TestsFlextFlextHandlers: TypeAlias = TestsFlextFlextHandlers
+        TestsFlextResultExceptionCarrying: TypeAlias = TestsFlextResultExceptionCarrying
+        TestsFlextUtilitiesServicesMixin: TypeAlias = TestsFlextUtilitiesServicesMixin
 
 
 u = TestsFlextUtilities

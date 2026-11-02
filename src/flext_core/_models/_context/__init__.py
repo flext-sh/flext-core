@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for context.
+"""Flext Core. Models. Context package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,6 +18,7 @@ if TYPE_CHECKING:
     from flext_core._models._context.metadata import FlextModelsContextMetadata
     from flext_core._models._context.scope import FlextModelsContextScope
     from flext_core._models._context.tokens import FlextModelsContextTokens
+
 
 __all__: tuple[str, ...] = (
     "FlextModelsContextData",
