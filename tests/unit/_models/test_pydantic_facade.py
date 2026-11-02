@@ -29,8 +29,10 @@ class TestsFlextCorePydanticDeclarations:
 
         class Defaults(m.BaseModel):
             required: str = m.Field(description="Required value")
+            annotated: Annotated[str, m.Field(description="Required metadata")]
             defaulted: int = m.Field(default=3, description="Default value")
             nullable: str | None = m.Field(default=None, description="Nullable value")
+            empty: tuple[str, ...] = m.Field(default=(), description="Empty tuple")
             generated: t.VariadicTuple[str] = m.Field(
                 default_factory=tuple, description="Factory value"
             )
@@ -44,22 +46,35 @@ class TestsFlextCorePydanticDeclarations:
 
         payload = Payload.model_validate({
             "required": "present",
+            "annotated": "metadata",
             "input": {"value": "alias"},
         })
         tm.that(payload.required, eq="present")
+        tm.that(payload.annotated, eq="metadata")
         tm.that(payload.defaulted, eq=3)
         tm.that(payload.nullable is None, eq=True)
+        tm.that(payload.empty, eq=())
         tm.that(payload.generated, eq=())
         tm.that(payload.aliased, eq="alias")
         tm.that(payload.model_dump(by_alias=True)["output"], eq="alias")
-        constructed = Defaults(required="constructor")
+        constructed = Defaults(required="constructor", annotated="metadata")
         tm.that(constructed.defaulted, eq=3)
         tm.that(constructed.nullable is None, eq=True)
+        tm.that(constructed.empty, eq=())
         tm.that(constructed.generated, eq=())
         with pytest.raises(m.ValidationError):
-            Payload.model_validate({"input": {"value": "alias"}})
+            Payload.model_validate({
+                "annotated": "metadata",
+                "input": {"value": "alias"},
+            })
         with pytest.raises(m.ValidationError):
-            Payload.model_validate({"required": "present", "aliased": "wrong route"})
+            Payload.model_validate({
+                "required": "present",
+                "annotated": "metadata",
+                "aliased": "wrong route",
+            })
+        with pytest.raises(m.ValidationError):
+            Defaults.model_validate({"required": "present"})
 
     class _DetailedPayload(m.Tests.PublicPayload):
         """Subclass-only data must respect the declared serialization boundary."""
