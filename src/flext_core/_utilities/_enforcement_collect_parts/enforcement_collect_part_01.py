@@ -21,16 +21,6 @@ from flext_core._utilities import (
     FlextUtilitiesProjectMetadata,
 )
 
-_ERR_ENFORCEMENT_NAMESPACE_METADATA = (
-    "Cannot read project metadata for enforcement namespace resolution"
-)
-_ERR_ENFORCEMENT_CLASS_STEM_METADATA = (
-    "Cannot read project metadata for enforcement class stem override"
-)
-_ERR_ENFORCEMENT_NAMESPACE_SOURCE = (
-    "Cannot inspect target source module for namespace resolution"
-)
-
 
 class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
     """Project resolution + rule-input iterators."""
@@ -55,10 +45,7 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         for parent in source.parents:
             if not (parent / "pyproject.toml").is_file():
                 continue
-            try:
-                relative = source.relative_to(parent)
-            except ValueError:
-                continue
+            relative = source.relative_to(parent)
             if relative.is_relative_to(Path("src") / top) or relative.is_relative_to(
                 top,
             ):
@@ -81,7 +68,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         try:
             src_file = inspect.getsourcefile(target)
         except (OSError, TypeError) as exc:
-            raise RuntimeError(_ERR_ENFORCEMENT_NAMESPACE_SOURCE) from exc
+            msg = "Cannot inspect target source module for namespace resolution"
+            raise RuntimeError(msg) from exc
         if src_file is None:
             return None
         return Path(src_file)
@@ -116,7 +104,8 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                 project_root,
             )
         except (OSError, ValueError) as exc:
-            raise RuntimeError(_ERR_ENFORCEMENT_NAMESPACE_METADATA) from exc
+            msg = "Cannot read project metadata for enforcement namespace resolution"
+            raise RuntimeError(msg) from exc
         if document.project is None:
             return None
         return FlextUtilitiesProjectMetadata.build_project_metadata(
@@ -155,7 +144,11 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
                         )
                     )
                 except (OSError, ValueError) as exc:
-                    raise RuntimeError(_ERR_ENFORCEMENT_CLASS_STEM_METADATA) from exc
+                    msg = (
+                        "Cannot read project metadata for enforcement "
+                        "class stem override"
+                    )
+                    raise RuntimeError(msg) from exc
                 metadata = FlextUtilitiesProjectMetadata.build_project_metadata(
                     project_root,
                     document,
@@ -218,16 +211,16 @@ class FlextUtilitiesEnforcementCollect(FlextUtilitiesEnforcementEmit):
         # ``model_fields`` resolves through ``BaseModel``; settings classes
         # subclass it, so the bare model base is the canonical collector type.
         model_type: type[FlextModelsPydantic.BaseModel],
-        tag: str,
+        _tag: str,
     ) -> Iterator[tuple[str, tuple[FlextProtocolsBase.AttributeProbe, ...]]]:
         own_ann = set(vars(model_type).get("__annotations__", {}))
         for name, info in model_type.model_fields.items():
             if name not in own_ann:
                 continue
             args: tuple[FlextProtocolsBase.AttributeProbe, ...] = (
-                (model_type, name, info)
-                if tag in {"missing_description", "no_inline_union"}
-                else (info,)
+                model_type,
+                name,
+                info,
             )
             yield f'Field "{name}"', args
 

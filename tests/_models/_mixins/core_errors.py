@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections import UserDict
-from typing import TYPE_CHECKING, Annotated, override
+from typing import TYPE_CHECKING, Annotated, Literal, override
 
 from flext_core import m
 from tests import t
@@ -18,6 +18,26 @@ if TYPE_CHECKING:
 
 class TestsFlextModelsCoreErrorsMixin:
     """Core error model helpers."""
+
+    class FailureEnvelope(m.ArbitraryTypesModel):
+        """Data-only foreign failure admitted through the failure-view contract."""
+
+        error: Annotated[str, m.Field(description="Original failure message.")]
+        error_code: Annotated[
+            str | None, m.Field(description="Original failure code.")
+        ] = None
+        error_data: Annotated[
+            t.JsonMapping | None, m.Field(description="Original failure metadata.")
+        ] = None
+        exception: Annotated[
+            BaseException | None, m.Field(description="Original failure cause.")
+        ] = None
+        success: Annotated[
+            Literal[False], m.Field(description="Failed disposition.")
+        ] = False
+        failure: Annotated[
+            Literal[True], m.Field(description="Failed disposition.")
+        ] = True
 
     class AttrObject(m.BaseModel):
         """Simple model with name/value attributes for mapper tests."""

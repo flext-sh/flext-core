@@ -55,11 +55,6 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         """The exception that produced this failure, if any."""
         return self._exception
 
-    @classmethod
-    def _factory(cls) -> type[Self]:
-        """Expose the original class identity to the native contract cutover."""
-        return cls
-
     def __enter__(self) -> Self:
         return self
 

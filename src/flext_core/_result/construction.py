@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Self
 
 from pydantic import BaseModel
 
+import flext_core
 from flext_core import c, p
 from flext_core._result import FlextResultBase, FlextResultBehavior
 from flext_core._utilities import FlextUtilitiesMetadata
@@ -49,6 +50,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
+        cls.reject_banned_result_parameterization()
         return ok_result(value)
 
     @classmethod
@@ -130,6 +132,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
+        cls.reject_banned_result_parameterization()
         return copy_result(source)
 
     @classmethod
@@ -148,15 +151,16 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[V]``.
 
         """
-        from flext_core import r
-
+        cls.reject_banned_result_parameterization()
         try:
             value = func()
             if value is None:
-                return r[V].fail("Callable returned None", error_code=error_code)
+                return flext_core.r[V].fail(
+                    "Callable returned None", error_code=error_code
+                )
             return ok_result(value)
         except c.EXC_BROAD_RUNTIME as exc:
-            return r[V].fail(str(exc), error_code=error_code, exception=exc)
+            return flext_core.r[V].fail(str(exc), error_code=error_code, exception=exc)
 
     @classmethod
     def _filter_sensitive_error_data(
@@ -205,8 +209,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[T]``.
 
         """
-        from flext_core import r
-
+        cls.reject_banned_result_parameterization()
         error_msg = error if error is not None else ""
         resolved_error_code = error_code or cls._extract_exception_error_code(exception)
         # Why: redact caller-supplied AND auto-extracted error_data (security mro-8taj)
@@ -216,7 +219,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             else cls._extract_exception_error_data(exception),
             exception,
         )
-        return r[T].create_failure(
+        return flext_core.r[T].create_failure(
             error_msg,
             resolved_error_code,
             resolved_error_data,
@@ -262,16 +265,14 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
             The resulting ``p.Result[ModelT]``.
 
         """
-        from flext_core import r
-
         try:
             validated: ModelT = model.model_validate(data)
             return ok_result(validated)
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return r[ModelT].fail(str(exc), exception=exc)
+            return flext_core.r[ModelT].fail(str(exc), exception=exc)
 
     @staticmethod
-    def successful_result[ValueT](obj: ValueT) -> bool:
+    def successful_result(obj: p.AttributeProbe) -> bool:
         """Check whether an object is a successful result instance.
 
         Returns:
@@ -281,7 +282,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T]):
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
-    def failed_result[ValueT](obj: ValueT) -> bool:
+    def failed_result(obj: p.AttributeProbe) -> bool:
         """Check whether an object is a failed result instance.
 
         Returns:
@@ -298,9 +299,7 @@ def ok_result[V](value: V) -> p.Result[V]:
         The resulting ``p.Result[V]``.
 
     """
-    from flext_core import r
-
-    return r[V].create_success(value)
+    return flext_core.r[V].create_success(value)
 
 
 def copy_result[V](source: p.Result[V]) -> p.Result[V]:
@@ -310,14 +309,12 @@ def copy_result[V](source: p.Result[V]) -> p.Result[V]:
         The resulting ``p.Result[V]``.
 
     """
-    from flext_core import r
-
     if source.success:
         try:
             return ok_result(source.value)
         except ValueError as exc:
-            return r[V].fail(str(exc), exception=exc)
-    return r[V].fail(
+            return flext_core.r[V].fail(str(exc), exception=exc)
+    return flext_core.r[V].fail(
         source.error or "",
         error_code=source.error_code,
         error_data=source.error_data,

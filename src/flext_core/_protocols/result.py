@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_checkable
 
+from flext_core import t
+
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
 
-    from flext_core import m, t
+    from flext_core import m
 
 
 _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
@@ -115,10 +117,16 @@ class FlextProtocolsResult:
 
         def map[U](self, func: Callable[[T], U]) -> FlextProtocolsResult.Result[U]: ...
 
-        def flow_through(
+        @overload
+        def flow_through(self) -> FlextProtocolsResult.Result[T]: ...
+
+        @overload
+        def flow_through[U](
             self,
-            *funcs: Callable[[T], FlextProtocolsResult.Result[T]],
-        ) -> FlextProtocolsResult.Result[T]: ...
+            first: Callable[[T | U], FlextProtocolsResult.Result[U]],
+            /,
+            *funcs: Callable[[T | U], FlextProtocolsResult.Result[U]],
+        ) -> FlextProtocolsResult.Result[T | U]: ...
 
         def map_error(
             self,
@@ -163,7 +171,7 @@ class FlextProtocolsResult:
 
     @runtime_checkable
     class Result[T](ResultState[T], ResultOps[T], Protocol):
-        """Structural railway result contract; invariant payload."""
+        """Covariant structural railway interface over result operations and state."""
 
     @runtime_checkable
     class SuccessCheckable(Protocol):

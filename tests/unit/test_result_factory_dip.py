@@ -10,12 +10,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
 import pytest
 
 from flext_core import FlextResult
-from tests import e, m, p, r, t, tm
+from tests import e, m, p, r, tm
 
 
 class TestsFlextCoreResultFactoryDip:
@@ -27,7 +25,7 @@ class TestsFlextCoreResultFactoryDip:
         source: p.Result[str] = r[str].ok("payload")
         copied: p.Result[str] = r.from_result(source)
         tm.ok(copied, eq="payload")
-        assert isinstance(copied, FlextResult)
+        tm.that(isinstance(copied, FlextResult), eq=True)
 
     @staticmethod
     def test_from_result_copies_failure_metadata() -> None:
@@ -43,7 +41,7 @@ class TestsFlextCoreResultFactoryDip:
         tm.fail(copied, has="broken")
         tm.that(copied.error_code, eq="E_BROKEN")
         tm.that(copied.error_data, eq={"k": "v"})
-        assert copied.exception is cause
+        tm.that(copied.exception is cause, eq=True)
 
     @staticmethod
     def test_from_failure_rebuilds_failed_result() -> None:
@@ -59,7 +57,7 @@ class TestsFlextCoreResultFactoryDip:
         tm.fail(rebuilt, has="nope")
         tm.that(rebuilt.error_code, eq="E_NOPE")
         tm.that(rebuilt.error_data, eq={"a": 1})
-        assert rebuilt.exception is cause
+        tm.that(rebuilt.exception is cause, eq=True)
 
     @staticmethod
     def test_from_failure_rejects_successful_source() -> None:
@@ -87,42 +85,97 @@ class TestsFlextCoreResultFactoryDip:
         """Test concrete results satisfy result protocol at runtime."""
         ok_result: p.Result[str] = r[str].ok("value")
         fail_result: p.Result[str] = r[str].fail("boom")
-        assert isinstance(ok_result, p.Result)
-        assert isinstance(fail_result, p.Result)
-        assert isinstance(ok_result, p.SuccessCheckable)
-        assert isinstance(fail_result, p.SuccessCheckable)
+        tm.that(ok_result, is_=p.Result)
+        tm.that(fail_result, is_=p.Result)
+        tm.that(ok_result, is_=p.SuccessCheckable)
+        tm.that(fail_result, is_=p.SuccessCheckable)
 
     @staticmethod
-    def test_flow_through_normalizes_foreign_success_onto_facade() -> None:
-        """Test flow through normalizes foreign success onto facade."""
+    def test_flow_through_normalizes_returned_success_onto_facade() -> None:
+        """Normalize actual Result callbacks without claiming a partial interface."""
 
-        def foreign_step(value: int) -> p.Result[int]:
-            return cast("p.Result[int]", _ForeignResult(value=value + 1))
+        def first_step(value: int) -> p.Result[int]:
+            return r[int].ok(value + 1)
 
         def facade_step(value: int) -> p.Result[int]:
             return r[int].ok(value * 10)
 
-        final: p.Result[int] = r[int].ok(3).flow_through(foreign_step, facade_step)
+        final: p.Result[int] = r[int].ok(3).flow_through(first_step, facade_step)
         tm.ok(final, eq=40)
-        assert isinstance(final, FlextResult)
+        tm.that(isinstance(final, FlextResult), eq=True)
 
     @staticmethod
-    def test_flow_through_normalizes_foreign_failure_onto_facade() -> None:
-        """Test flow through normalizes foreign failure onto facade."""
+    def test_flow_through_normalizes_returned_failure_onto_facade() -> None:
+        """Copy failure metadata and stop before invoking another actual step."""
 
-        def foreign_fail(_value: int) -> p.Result[int]:
-            return cast(
-                "p.Result[int]",
-                _ForeignResult(error="foreign-stop", error_code="E_FOREIGN"),
-            )
+        def first_fail(_value: int) -> p.Result[int]:
+            return r[int].fail("step-stop", error_code="E_STEP")
 
         def unreachable(_value: int) -> p.Result[int]:
-            return r[int].ok(999)
+            pytest.fail("A failed flow must not invoke another step")
 
-        final: p.Result[int] = r[int].ok(1).flow_through(foreign_fail, unreachable)
-        tm.fail(final, has="foreign-stop")
-        tm.that(final.error_code, eq="E_FOREIGN")
-        assert isinstance(final, FlextResult)
+        final: p.Result[int] = r[int].ok(1).flow_through(first_fail, unreachable)
+        tm.fail(final, has="step-stop")
+        tm.that(final.error_code, eq="E_STEP")
+        tm.that(isinstance(final, FlextResult), eq=True)
+
+    @staticmethod
+    @pytest.mark.parametrize("failed", [False, True])
+    def test_empty_flow_preserves_original_identity(failed: bool) -> None:
+        """A zero-step flow neither reconstructs state nor invokes a callback."""
+        source: p.Result[int] = r[int].fail("stopped") if failed else r[int].ok(3)
+        result: p.Result[int] = source.flow_through()
+        tm.that(result is source, eq=True)
+
+    @staticmethod
+    def test_union_aware_flow_can_transform_the_payload() -> None:
+        """Every step accepts both the initial and subsequent payload domain."""
+
+        def to_text(value: int | str) -> p.Result[str]:
+            return r[str].ok(str(value))
+
+        def decorate(value: int | str) -> p.Result[str]:
+            return r[str].ok(f"[{value}]")
+
+        result: p.Result[int | str] = r[int].ok(3).flow_through(to_text, decorate)
+        tm.ok(result, eq="[3]")
+
+    @staticmethod
+    def test_widening_recovery_preserves_success_identity() -> None:
+        """Union returns need no reconstruction or cast of successful state."""
+
+        def recover(_message: str) -> str:
+            pytest.fail("A successful result must not run its recovery callback")
+
+        def lash(_message: str) -> p.Result[str]:
+            pytest.fail("A successful result must not run its lash callback")
+
+        source: p.Result[int] = r[int].ok(3)
+        recovered: p.Result[int | str] = source.recover(recover)
+        lashed: p.Result[int | str] = source.lash(lash)
+        tm.that(recovered is source, eq=True)
+        tm.that(lashed is source, eq=True)
+
+    @staticmethod
+    def test_widening_lash_keeps_callback_normalization_and_failure_metadata() -> None:
+        """Changing the observed domain preserves the existing normalization."""
+        cause = ValueError("original")
+        callback_result: p.Result[str] = r[str].fail(
+            "mapped",
+            error_code="E_MAPPED",
+            error_data={"kind": "step"},
+            exception=cause,
+        )
+
+        def callback(_message: str) -> p.Result[str]:
+            return callback_result
+
+        result: p.Result[int | str] = r[int].fail("input").lash(callback)
+        tm.fail(result, has="mapped")
+        tm.that(result is not callback_result, eq=True)
+        tm.that(result.error_code, eq=callback_result.error_code)
+        tm.that(result.error_data, eq=callback_result.error_data)
+        tm.that(result.exception is cause, eq=True)
 
     @staticmethod
     def test_empty_fail_combinators_stay_failed_results() -> None:
@@ -138,14 +191,14 @@ class TestsFlextCoreResultFactoryDip:
             tm.that(flat.error, eq="")
             tm.fail(copied, has="")
             tm.that(copied.error, eq="")
-            assert isinstance(mapped, FlextResult)
-            assert isinstance(flat, FlextResult)
-            assert isinstance(copied, FlextResult)
+            tm.that(isinstance(mapped, FlextResult), eq=True)
+            tm.that(isinstance(flat, FlextResult), eq=True)
+            tm.that(isinstance(copied, FlextResult), eq=True)
 
     @staticmethod
     def test_from_failure_rebuilds_foreign_failure_like() -> None:
         """Test from failure rebuilds foreign failure like."""
-        foreign = _ForeignResult(
+        foreign = m.Tests.FailureEnvelope(
             error="foreign-fail",
             error_code="E_FOREIGN",
             error_data={"k": 1},
@@ -154,7 +207,7 @@ class TestsFlextCoreResultFactoryDip:
         tm.fail(rebuilt, has="foreign-fail")
         tm.that(rebuilt.error_code, eq="E_FOREIGN")
         tm.that(rebuilt.error_data, eq={"k": 1})
-        assert isinstance(rebuilt, FlextResult)
+        tm.that(isinstance(rebuilt, FlextResult), eq=True)
 
     @staticmethod
     def test_from_result_preserves_exception_identity_on_flext_result() -> None:
@@ -168,8 +221,8 @@ class TestsFlextCoreResultFactoryDip:
         copied: p.Result[int] = r.from_result(source)
         tm.fail(copied, has="copy-exc")
         tm.that(copied.error_code, eq="E_EXC")
-        assert copied.exception is cause
-        assert isinstance(copied, FlextResult)
+        tm.that(copied.exception is cause, eq=True)
+        tm.that(isinstance(copied, FlextResult), eq=True)
 
     @staticmethod
     def test_fail_from_exception_redacts_sensitive_error_data_keys() -> None:
@@ -180,12 +233,12 @@ class TestsFlextCoreResultFactoryDip:
         )
         result: p.Result[int] = r[int].fail(None, exception=exc)
         tm.fail(result, has="")
-        assert result.error_data is not None
-        tm.that(result.error_data.get("host"), eq="db.example")
-        assert "password" not in result.error_data
-        assert "token" not in result.error_data
-        assert "s3cret" not in str(result.error_data)
-        assert "t0k" not in str(result.error_data)
+        metadata = tm.not_none(result.error_data)
+        tm.that(metadata.get("host"), eq="db.example")
+        tm.that("password" not in metadata, eq=True)
+        tm.that("token" not in metadata, eq=True)
+        tm.that("s3cret" not in str(metadata), eq=True)
+        tm.that("t0k" not in str(metadata), eq=True)
 
     @staticmethod
     def test_fail_op_wraps_exception_and_stays_concrete_result() -> None:
@@ -194,10 +247,10 @@ class TestsFlextCoreResultFactoryDip:
         failed: p.Result[int] = r[int].fail_op("connect", cause)
         tm.fail(failed, has="connect failed")
         tm.fail(failed, has="db down")
-        assert failed.exception is cause
-        assert isinstance(failed, FlextResult)
-        assert r.failed_result(failed)
-        assert not r.successful_result(failed)
+        tm.that(failed.exception is cause, eq=True)
+        tm.that(isinstance(failed, FlextResult), eq=True)
+        tm.that(r.failed_result(failed), eq=True)
+        tm.that(r.successful_result(failed), eq=False)
 
     @staticmethod
     def test_fail_op_with_string_reason_has_no_exception() -> None:
@@ -205,7 +258,7 @@ class TestsFlextCoreResultFactoryDip:
         failed: p.Result[str] = r[str].fail_op("parse", "bad token")
         tm.fail(failed, has="parse failed: bad token")
         tm.that(failed.exception, eq=None)
-        assert isinstance(failed, FlextResult)
+        tm.that(isinstance(failed, FlextResult), eq=True)
 
     @staticmethod
     def test_from_validation_ok_and_fail_paths() -> None:
@@ -217,14 +270,14 @@ class TestsFlextCoreResultFactoryDip:
         ok_result: p.Result[_Sample] = r.from_validation({"name": "ada"}, _Sample)
         tm.ok(ok_result)
         tm.that(ok_result.unwrap().name, eq="ada")
-        assert isinstance(ok_result, FlextResult)
-        assert r.successful_result(ok_result)
+        tm.that(isinstance(ok_result, FlextResult), eq=True)
+        tm.that(r.successful_result(ok_result), eq=True)
 
         bad: p.Result[_Sample] = r.from_validation({"name": 1}, _Sample)
         tm.fail(bad)
-        assert bad.exception is not None
-        assert isinstance(bad, FlextResult)
-        assert r.failed_result(bad)
+        tm.not_none(bad.exception)
+        tm.that(isinstance(bad, FlextResult), eq=True)
+        tm.that(r.failed_result(bad), eq=True)
 
     @staticmethod
     def test_fail_explicit_error_data_redacts_sensitive_keys() -> None:
@@ -234,10 +287,10 @@ class TestsFlextCoreResultFactoryDip:
             error_data={"password": "s3cret", "host": "db.example", "token": "t0k"},
         )
         tm.fail(result, has="denied")
-        assert result.error_data is not None
-        tm.that(result.error_data.get("host"), eq="db.example")
-        assert "password" not in result.error_data
-        assert "token" not in result.error_data
+        metadata = tm.not_none(result.error_data)
+        tm.that(metadata.get("host"), eq="db.example")
+        tm.that("password" not in metadata, eq=True)
+        tm.that("token" not in metadata, eq=True)
 
     @staticmethod
     def test_fail_explicit_error_data_wins_but_still_redacts_with_exception() -> None:
@@ -249,30 +302,7 @@ class TestsFlextCoreResultFactoryDip:
             exception=exc,
         )
         tm.fail(result, has="denied")
-        assert result.error_data is not None
-        tm.that(result.error_data.get("host"), eq="kept")
-        assert "password" not in result.error_data
-        assert "api_key" not in result.error_data
-
-
-class _ForeignResult(m.ArbitraryTypesModel):
-    """Foreign result-like shape returned by a ``flow_through`` step."""
-
-    value: int | None = m.Field(default=None, description="Success payload.")
-    error: str | None = m.Field(default=None, description="Failure message.")
-    error_code: str | None = m.Field(default=None, description="Failure code.")
-    error_data: t.JsonMapping | None = m.Field(
-        default=None,
-        description="Failure metadata.",
-    )
-    exception: Exception | None = m.Field(default=None, description="Failure cause.")
-
-    @property
-    def success(self) -> bool:
-        """Success iff no failure message is carried."""
-        return self.error is None
-
-    @property
-    def failure(self) -> bool:
-        """Failure iff a failure message is carried."""
-        return self.error is not None
+        metadata = tm.not_none(result.error_data)
+        tm.that(metadata.get("host"), eq="kept")
+        tm.that("password" not in metadata, eq=True)
+        tm.that("api_key" not in metadata, eq=True)
