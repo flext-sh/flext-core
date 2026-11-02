@@ -19,7 +19,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
 
     @staticmethod
     def _command_settings(handler_id: str) -> m.Handler:
-        return u.Tests.create_handler_config(
+        return u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             handler_id,
             handler_id.replace("_", " ").title(),
             m.Tests.HandlerConfigParams(

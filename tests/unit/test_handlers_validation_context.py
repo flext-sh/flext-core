@@ -40,7 +40,7 @@ class TestsFlextCoreHandlersValidationContext(
     ) -> None:
         # Arrange
         """Test validate message accepts message for every handler type."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             f"validate_generic_{handler_type}",
             f"Validate Generic {handler_type.title()}",
             m.Tests.HandlerConfigParams(
@@ -68,7 +68,7 @@ class TestsFlextCoreHandlersValidationContext(
     ) -> None:
         # Arrange
         """Test validate message accepts supported payload types."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             f"payload_{type_name}",
             f"Payload {type_name.title()}",
         )
@@ -83,7 +83,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_validate_message_rejects_none_with_specific_error(self) -> None:
         # Arrange
         """Test validate message rejects none with specific error."""
-        settings = u.Tests.create_handler_config("reject_none", "Reject None")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "reject_none", "Reject None"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act
@@ -100,7 +102,9 @@ class TestsFlextCoreHandlersValidationContext(
     ) -> None:
         # Arrange
         """Test validation handler rejects falsy message."""
-        settings = u.Tests.create_handler_config("reject_falsy", "Reject Falsy")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "reject_falsy", "Reject Falsy"
+        )
         handler = self.ValidationTestHandler(settings=settings)
 
         # Act
@@ -116,7 +120,9 @@ class TestsFlextCoreHandlersValidationContext(
         class PydanticMessage(m.Value):
             value: str
 
-        settings = u.Tests.create_handler_config("pydantic_msg", "Pydantic Message")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "pydantic_msg", "Pydantic Message"
+        )
         handler = self.ValidationTestHandler(settings=settings)
 
         # Act
@@ -133,7 +139,9 @@ class TestsFlextCoreHandlersValidationContext(
             value: Annotated[str, m.Field(description="Message value")]
             number: Annotated[int, m.Field(description="Message number")]
 
-        settings = u.Tests.create_handler_config("multi_field", "Multi Field")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "multi_field", "Multi Field"
+        )
         handler = self.ValidationTestHandler(settings=settings)
 
         # Act
@@ -151,7 +159,9 @@ class TestsFlextCoreHandlersValidationContext(
             value: str
             number: int
 
-        settings = u.Tests.create_handler_config("frozen_msg", "Frozen Message")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "frozen_msg", "Frozen Message"
+        )
         handler = self.ValidationTestHandler(settings=settings)
 
         # Act
@@ -163,7 +173,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_record_metric_succeeds(self) -> None:
         # Arrange
         """Test record metric succeeds."""
-        settings = u.Tests.create_handler_config("record_metric", "Record Metric")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "record_metric", "Record Metric"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act
@@ -175,7 +187,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_push_context_succeeds(self) -> None:
         # Arrange
         """Test push context succeeds."""
-        settings = u.Tests.create_handler_config("push_context", "Push Context")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "push_context", "Push Context"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
         context: t.JsonMapping = u.json_mapping_adapter().validate_python({
             "handler_name": "push_context",
@@ -191,7 +205,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_pop_context_after_push_returns_config_map(self) -> None:
         # Arrange
         """Test pop context after push returns config map."""
-        settings = u.Tests.create_handler_config("pop_context", "Pop Context")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "pop_context", "Pop Context"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
         _ = u.Tests.assert_success(
             handler.push_context({
@@ -210,7 +226,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_pop_context_on_empty_stack_returns_empty_config_map(self) -> None:
         # Arrange
         """Test pop context on empty stack returns empty config map."""
-        settings = u.Tests.create_handler_config("pop_empty", "Pop Empty")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "pop_empty", "Pop Empty"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act
@@ -225,7 +243,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_can_handle_accepts_arbitrary_type_for_flexible_handler(self) -> None:
         # Arrange
         """Test can handle accepts arbitrary type for flexible handler."""
-        settings = u.Tests.create_handler_config("can_handle", "Can Handle")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "can_handle", "Can Handle"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act & Assert
@@ -243,7 +263,7 @@ class TestsFlextCoreHandlersValidationContext(
     ) -> None:
         # Arrange
         """Test handler properties reflect configuration."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             f"props_{handler_type}",
             f"Props {handler_type.title()}",
             m.Tests.HandlerConfigParams(
@@ -260,7 +280,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_execute_validates_then_produces_processed_result(self) -> None:
         # Arrange
         """Test execute validates then produces processed result."""
-        settings = u.Tests.create_handler_config("execute", "Execute")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "execute", "Execute"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act
@@ -272,7 +294,9 @@ class TestsFlextCoreHandlersValidationContext(
     def test_dispatch_message_runs_full_pipeline_for_matching_mode(self) -> None:
         # Arrange
         """Test dispatch message runs full pipeline for matching mode."""
-        settings = u.Tests.create_handler_config("dispatch", "Dispatch")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "dispatch", "Dispatch"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
 
         # Act
@@ -284,7 +308,7 @@ class TestsFlextCoreHandlersValidationContext(
     def test_dispatch_message_rejects_incompatible_pipeline_mode(self) -> None:
         # Arrange
         """Test dispatch message rejects incompatible pipeline mode."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             "dispatch_query",
             "Dispatch Query",
             m.Tests.HandlerConfigParams(

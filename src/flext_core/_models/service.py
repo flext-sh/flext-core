@@ -48,12 +48,10 @@ class FlextModelsService:
             description="Dispatcher resolved for CQRS routing in this runtime.",
         )
         logger: t.Port[p.Logger] = FlextModelsPydantic.Field(
-            exclude=True,
             description="Logging destination elected by the composition root.",
         )
         logger_injected: bool = FlextModelsPydantic.Field(
             default=False,
-            exclude=True,
             description="Keep an explicit logger when transport settings are rebound.",
         )
 
@@ -103,12 +101,10 @@ class FlextModelsService:
         )
         logger: t.Port[p.Logger] | None = FlextModelsPydantic.Field(
             default=None,
-            exclude=True,
             description="Logging dependency; absent selects the runtime policy.",
         )
         logging_options: t.Port[p.StructlogOptions] | None = FlextModelsPydantic.Field(
             default=None,
-            exclude=True,
             description="Programmatic logging extensions elected by the root.",
         )
 
