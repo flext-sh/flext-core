@@ -23,14 +23,24 @@ class TestsFlextLoggingScopes:
         )
         tm.ok(u.clear_global_context())
         logger = u.create_module_logger(__name__)
+
+        def inner_operation() -> None:
+            """Emit and fail inside a nested correlation scope.
+
+            Raises:
+                ValueError: To exercise exception-safe scope restoration.
+
+            """
+            with u.logging_scope("operation", run_id="inner"):
+                logger.info("inner")
+                msg = "inner failed"
+                raise ValueError(msg)
+
         try:
             with u.logging_scope("operation", run_id="outer"):
                 logger.info("outer")
                 with pytest.raises(ValueError, match="inner failed"):
-                    with u.logging_scope("operation", run_id="inner"):
-                        logger.info("inner")
-                        msg = "inner failed"
-                        raise ValueError(msg)
+                    inner_operation()
                 logger.info("restored")
             logger.info("outside")
             tm.that(

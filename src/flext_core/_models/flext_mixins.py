@@ -6,7 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import threading
 from collections.abc import MutableMapping, Sequence
 from typing import ClassVar
 
@@ -50,8 +49,6 @@ class FlextModelsServiceState:
                 default_factory=dict[str, p.MutableRootDict[t.JsonPayload]],
             )
         )
-        _logger_cache: ClassVar[MutableMapping[str, p.Logger]] = {}
-        _cache_lock: ClassVar[p.Lock] = threading.Lock()
         _auto_context_scope: ClassVar[bool] = True
 
 

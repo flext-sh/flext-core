@@ -15,8 +15,8 @@ from typing import cast
 import pytest
 from hypothesis import given, strategies as st
 
-import tests.utilities
 from tests import c, h, r, t, tm
+from tests.utilities import TestsFlextUtilities
 
 _TOKENS: st.SearchStrategy[str] = st.text(
     alphabet=st.characters(min_codepoint=33, max_codepoint=126),
@@ -25,7 +25,7 @@ _TOKENS: st.SearchStrategy[str] = st.text(
 
 
 class TestsFlextCoreHandlersProperties(
-    tests.utilities.TestsFlextUtilities.TestsFlextFlextHandlers,
+    TestsFlextUtilities.TestsFlextFlextHandlers,
 ):
     """Public-contract behavior of the callable handler factory."""
 

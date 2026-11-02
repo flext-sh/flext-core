@@ -35,23 +35,6 @@ class FlextMixins(m.ServiceState):
         """Consume the logging dependency elected by this component's runtime."""
         return self._get_runtime().logger
 
-    @classmethod
-    def _get_or_create_logger(cls) -> p.Logger:
-        """Reuse one logger per concrete component class.
-
-        Returns:
-            The component's cached logger.
-
-        """
-        logger_name = f"{cls.__module__}.{cls.__name__}"
-        with cls._cache_lock:
-            if logger_name in cls._logger_cache:
-                return cls._logger_cache[logger_name]
-        logger = u.fetch_logger(logger_name)
-        with cls._cache_lock:
-            cls._logger_cache[logger_name] = logger
-        return logger
-
     @contextmanager
     def track(self, operation_name: str) -> t.OperationMetricsStream:
         """Track operation effects and always release the operation context.

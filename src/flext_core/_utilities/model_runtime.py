@@ -6,6 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from inspect import getattr_static
 from types import MethodType
 
 from flext_core import FlextModels, c, m, p, r
@@ -102,7 +103,8 @@ class FlextUtilitiesModelRuntime(
             ValueError: If metadata requests an unsupported timeout or middleware.
 
         """
-        metadata = getattr(candidate, c.HANDLER_ATTR, None)
+        target = candidate.__func__ if isinstance(candidate, MethodType) else candidate
+        metadata = getattr_static(target, c.HANDLER_ATTR, None)
         if metadata is None:
             return None
         if not isinstance(metadata, m.DecoratorConfig):

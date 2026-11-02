@@ -644,8 +644,17 @@ RECREATE_DIVERGENT_ENVIRONMENT = identity_file="$(1)/pyvenv.cfg"; \
 			$(UV) venv --clear --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads "$(1)"; \
 		fi; \
 	fi
-# The runtime environment and the upgrade executor share that one rule.
-RECREATE_DIVERGENT_RUNTIME = $(call RECREATE_DIVERGENT_ENVIRONMENT,$(RUNTIME_VENV))
+# Explicit recovery uses the same native creator when artifact ownership is
+# invalid despite matching interpreter identity. It never patches site-packages.
+# The upgrade executor retains automatic identity-based recreation only.
+RECREATE_DIVERGENT_RUNTIME = case "$(strip $(RECREATE))" in \
+    ("") $(call RECREATE_DIVERGENT_ENVIRONMENT,$(RUNTIME_VENV)) ;; \
+    (Y) \
+        if [ -L "$(RUNTIME_VENV)" ]; then printf 'ERROR[setup] runtime environment must not be a symlink\n' >&2; exit 2; fi; \
+        printf 'setup: explicitly recreating %s through native uv\n' "$(RUNTIME_VENV)"; \
+        $(UV) venv --clear --force --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads "$(RUNTIME_VENV)" ;; \
+    (*) printf 'ERROR[setup] RECREATE must be empty or Y\n' >&2; exit 2 ;; \
+    esac
 INSTALL_RUNTIME_RECIPE = set -eu; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
 	$(RESOLVE_DESIRED_PYTHON); \
@@ -844,7 +853,7 @@ endef
 
 
 VERB_DESCRIPTION_setup := Install the declared frozen locks, synchronize the physical environment and configure local integrations; FLEXT=<path> reinstalls the FLEXT distributions that workspace provides as editable (local only).
-VERB_ARGUMENTS_setup := FLEXT
+VERB_ARGUMENTS_setup := FLEXT RECREATE
 
 VERB_DESCRIPTION_upg := Resolve declared dependency and tool updates and publish their resolution metadata and locks.
 VERB_ARGUMENTS_upg :=
@@ -1310,7 +1319,7 @@ _builtin_build_artifacts:
 # make.pre_commit_check_gates, CI=N runs
 # make.check_gates_local, and an absent CI token runs every active gate.
 _builtin_check_all: _builtin_require_environment
-	@FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/check/route.pstats" $(PROJECT_FLEXT_INFRA) workspace check --repository-root "$(if $(filter primary,$(CHECK_PHASE)),$(RUNTIME_ROOT),$(PROJECT_ROOT))"$(if $(CHECK_PHASE), --phase "$$CHECK_PHASE")
+	@FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/check/route.pstats" $(PROJECT_FLEXT_INFRA) workspace check --repository-root "$(if $(filter Y,$(CI)),$(PROJECT_ROOT),$(if $(filter primary,$(CHECK_PHASE)),$(RUNTIME_ROOT),$(PROJECT_ROOT)))"$(if $(CHECK_PHASE), --phase "$$CHECK_PHASE")
 
 _builtin_tests_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) workspace tests --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"

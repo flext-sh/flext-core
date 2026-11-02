@@ -57,3 +57,19 @@ adapter.warning.ok: True
 adapter.error.ok: True
 adapter.critical.ok: True
 adapter.exception.ok: True
+
+[runtime_policy]
+runtime.first.logger.port: True
+runtime.first.filtered: True
+runtime.first.isolated: True
+runtime.second.isolated: True
+runtime.scopes.restored: True
+
+[sink_presentation]
+console.compact: True
+console.no_ansi: True
+console.business_context: True
+json.callsite: True
+observer.complete: True
+debug.callsite: True
+debug.no_ansi: True

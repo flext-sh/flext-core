@@ -374,6 +374,15 @@ stack scan.
 `h.Discovery.scan_module(module)` returns original decorated callables and metadata;
 it neither invokes them nor stringifies their results.
 
+Handler discovery reads attached declaration metadata without invoking a candidate's
+dynamic attribute lookup. Bound instance and class methods retain the metadata of
+their original function; static methods retain their function metadata directly.
+Missing metadata means no handler declaration, while genuinely attached malformed
+metadata remains an error.
+Discovery inspects callable declarations without imposing the dispatcher's request
+signature: a handler accepting its declared command remains discoverable even when
+its input is narrower than the general routable protocol.
+
 `register_handlers` and `register_bindings` publish atomically: an invalid or conflicting
 entry leaves every route unchanged. Their summary distinguishes exact new `registered`
 entries from idempotent `skipped` entries. The same callable is idempotent; another

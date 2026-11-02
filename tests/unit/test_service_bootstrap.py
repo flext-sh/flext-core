@@ -68,21 +68,6 @@ class TestsFlextCoreServiceBootstrap:
         tm.ok(result.success)
         tm.ok(result.value)
 
-    @staticmethod
-    def test_service_consumes_its_explicit_runtime_logger() -> None:
-        """The service logger is the injected port, not a shared class cache."""
-        selected = u.create_module_logger(__name__)
-
-        class LoggedService(TestsFlextCoreServiceBootstrap.ConcreteTestService):
-            @classmethod
-            @override
-            def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
-                return m.RuntimeBootstrapOptions(logger=selected)
-
-        service = LoggedService()
-        tm.ok(service.logger is selected)
-        tm.ok(service.execute().success)
-
     def test_execute_result_unwraps_to_payload(self) -> None:
         """The service result unwraps to its public payload."""
         result = self.ConcreteTestService().execute()
@@ -390,3 +375,22 @@ class TestsFlextCoreServiceBootstrap:
         )
         with pytest.raises(m.ValidationError):
             model.model_validate({"counter": c.Tests.DEFAULT_ERROR_MESSAGE})
+
+
+class TestsFlextRuntimeLoggingInjection:
+    """The runtime exposes the original explicitly injected logging port."""
+
+    @staticmethod
+    def test_service_consumes_its_explicit_runtime_logger() -> None:
+        """The service logger is the injected port, not a shared class cache."""
+        selected = u.create_module_logger(__name__)
+
+        class LoggedService(TestsFlextCoreServiceBootstrap.ConcreteTestService):
+            @classmethod
+            @override
+            def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+                return m.RuntimeBootstrapOptions(logger=selected)
+
+        service = LoggedService()
+        tm.ok(service.logger is selected)
+        tm.ok(service.execute().success)

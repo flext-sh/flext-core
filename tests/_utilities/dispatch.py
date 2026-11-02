@@ -23,9 +23,9 @@ class TestsFlextUtilitiesDispatchMixin:
     @staticmethod
     def handler_module(
         name: str,
-        **members: p.RegisterableService | p.DispatchableHandler,
+        **members: p.RegisterableService | p.DispatchableHandler | p.HandlerCallable,
     ) -> t.RegistryModule:
-        """Build an actual module for the public discovery API.
+        """Build a discovery module, retaining command-specific handler signatures.
 
         Returns:
             A module exposing the supplied members without import patches.

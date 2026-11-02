@@ -30,6 +30,7 @@ from typing import (
 
 import pydantic
 import pydantic_core
+import pydantic_settings
 import typing_extensions
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
@@ -49,6 +50,7 @@ class FlextTypesPydantic:
 
     # String constraints
     type ConfigDict = pydantic.ConfigDict
+    type SettingsConfigDict = pydantic_settings.SettingsConfigDict
     type ComputedFieldInfo = pydantic.fields.ComputedFieldInfo
     type FieldInfo = pydantic.fields.FieldInfo
     type StrictStr = pydantic.StrictStr

@@ -46,12 +46,12 @@ class ExamplesFlextContainerLifecycle(ExamplesFlextContainerScoped):
         logger_default = u.fetch_logger(f"examples.{self.rand_str(6)}")
         logger_custom = u.fetch_logger(f"examples.{self.rand_str(6)}")
         self.audit_check(
-            "create_module_logger.explicit.type",
-            type(logger_default).__name__,
+            "create_module_logger.explicit.port",
+            isinstance(logger_default, p.Logger),
         )
         self.audit_check(
-            "create_module_logger.explicit_custom.type",
-            type(logger_custom).__name__,
+            "create_module_logger.explicit_custom.port",
+            isinstance(logger_custom, p.Logger),
         )
         removable_name = f"svc.{self.rand_str(6)}"
         missing_remove_name = f"svc.{self.rand_str(6)}"

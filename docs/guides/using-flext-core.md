@@ -264,17 +264,6 @@ dispatcher migration is complete merely because this guide describes its contrac
 
 ## Logging
 
-Logging policy belongs to the application's composition root, not to individual
-services. A service consumes its runtime's `p.Logger` through `self.logger`; a
-function without a runtime receives the same port as an argument. Runtime bootstrap
-accepts an explicit logger for applications that select their own sinks. No service
-needs a logger factory, class-level cache or logging setup of its own.
-
-The console profile presents business context without repeating callsite, process
-and thread metadata on every line. Debug/trace retains that diagnostic detail.
-JSON destinations and observers keep the complete sanitized event. Results and
-progress remain CLI presentation, not automatic logging rewrites.
-
 ```python
 from __future__ import annotations
 

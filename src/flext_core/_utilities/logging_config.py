@@ -12,7 +12,7 @@ import queue
 import sys
 import threading
 from collections.abc import MutableMapping, MutableSequence, Sequence
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import Future
 from functools import partial
 from types import TracebackType
 from typing import TYPE_CHECKING, ClassVar, override
@@ -48,6 +48,8 @@ class FlextUtilitiesLoggingConfig:
 
     class _StreamHandler(logging.StreamHandler[t.TextStream]):
         """Retain native rendering/locking while surfacing the native sink error."""
+
+        include_callsite: bool = True
 
         @override
         def handleError(self, record: t.LoggingNativeRecord) -> None:
@@ -206,37 +208,38 @@ class FlextUtilitiesLoggingConfig:
                 raise failure
 
         def _worker(self) -> None:
-            """Transfer failures to awaiting callers without replacing them."""
-            with ThreadPoolExecutor(max_workers=1) as writer:
-                while True:
-                    try:
-                        job = self.queue.get(
-                            timeout=c.LOG_WORKER_POLL_SECONDS,
-                        )
-                    except queue.Empty:
-                        with self._admission:
-                            if self.stop_event.is_set() and self.queue.empty():
-                                break
-                        continue
+            """Write serially and transfer the original failure to each Future."""
+            while True:
+                try:
+                    job = self.queue.get(
+                        timeout=c.LOG_WORKER_POLL_SECONDS,
+                    )
+                except queue.Empty:
                     with self._admission:
-                        failure = self._failure
-                        self._admission.notify_all()
-                    if failure is not None:
-                        job.completion.set_exception(failure)
-                        self.queue.task_done()
-                        continue
-                    operation = writer.submit(self._write_job, job)
-                    failure = operation.exception()
-                    if failure is not None:
-                        with self._admission:
-                            self._failure = failure
-                            self.stop_event.set()
-                            self._admission.notify_all()
-                        atexit.unregister(self.shutdown)
-                        job.completion.set_exception(failure)
-                    else:
-                        job.completion.set_result(operation.result())
+                        if self.stop_event.is_set() and self.queue.empty():
+                            break
+                    continue
+                with self._admission:
+                    failure = self._failure
+                    self._admission.notify_all()
+                if failure is not None:
+                    job.completion.set_exception(failure)
                     self.queue.task_done()
+                    continue
+                try:
+                    written = self._write_job(job)
+                # A user-owned sink can raise any Exception. Deliver that exact
+                # object to the caller's Future, rather than logging or hiding it.
+                except Exception as failure:  # ruff: ignore[blind-except]
+                    with self._admission:
+                        self._failure = failure
+                        self.stop_event.set()
+                        self._admission.notify_all()
+                    atexit.unregister(self.shutdown)
+                    job.completion.set_exception(failure)
+                else:
+                    job.completion.set_result(written)
+                self.queue.task_done()
 
         def _write_job(self, job: p.AsyncLogJob) -> int:
             """Let a native Future retain every sink failure for the caller.
@@ -496,14 +499,17 @@ class FlextUtilitiesLoggingConfig:
             StackInfoRenderer(),
             cls._exception_metadata,
         ]
-        if (
-            debug
-            or trace
-            or not console_renderer
-            or options.handlers
-            or options.observers
-            or options.processing_stages
-        ):
+        if any((
+            debug,
+            trace,
+            not console_renderer,
+            any(
+                not isinstance(handler, cls._StreamHandler) or handler.include_callsite
+                for handler in options.handlers
+            ),
+            options.observers,
+            options.processing_stages,
+        )):
             processors.insert(
                 -2,
                 CallsiteParameterAdder(
@@ -688,6 +694,7 @@ class FlextUtilitiesLoggingConfig:
 
         """
         handler = cls._StreamHandler(stream)
+        handler.include_callsite = not console_renderer
         processors: MutableSequence[Processor] = [
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
         ]
