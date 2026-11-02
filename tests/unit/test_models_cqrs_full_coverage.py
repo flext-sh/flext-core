@@ -107,16 +107,13 @@ class TestsFlextCoreModelsCqrs:
         assert query.pagination.page == c.DEFAULT_RETRY_DELAY_SECONDS
 
     @staticmethod
-    def test_query_falls_back_to_default_pagination_on_invalid_input() -> None:
-        """Test query falls back to default pagination on invalid input."""
-        query = m.Query.model_validate({
-            "pagination": {"size": c.MAX_PAGE_SIZE + 1},
-            "filters": {},
-        })
-
-        # Invalid pagination is a recoverable condition: the query keeps a
-        # valid default Pagination rather than propagating the error.
-        assert query.pagination.size == c.DEFAULT_PAGE_SIZE
+    def test_query_rejects_pagination_above_the_declared_limit() -> None:
+        """Invalid pagination retains the canonical model validation failure."""
+        with pytest.raises(m.ValidationError):
+            m.Query.model_validate({
+                "pagination": {"size": c.MAX_PAGE_SIZE + 1},
+                "filters": {},
+            })
 
     @staticmethod
     def test_query_subclass_pagination_override_is_honored() -> None:

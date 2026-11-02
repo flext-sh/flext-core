@@ -564,7 +564,7 @@ class FlextSettings(BaseSettings):
             msg = f"Invalid log level: {self.log_level}"
             raise ValueError(msg)
         TypeAdapter(
-            type(self).model_fields["logging_profile"].annotation
+            type(self).model_fields["logging_profile"].rebuild_annotation()
         ).validate_python(self.logging_profile, strict=True)
         return self
 

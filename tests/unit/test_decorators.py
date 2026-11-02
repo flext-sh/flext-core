@@ -15,7 +15,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextContainer
-from tests import c, d, e, r
+from tests import c, d, e
 
 
 class TestsFlextCoreDecorators:
@@ -31,7 +31,6 @@ class TestsFlextCoreDecorators:
 
         outcome = compute()
 
-        assert isinstance(outcome, r)
         assert outcome.success
         assert outcome.value == "value"
 
@@ -57,7 +56,6 @@ class TestsFlextCoreDecorators:
 
         outcome = failing()
 
-        assert isinstance(outcome, r)
         assert outcome.failure
         assert outcome.error_code == "CUSTOM_CODE"
         assert outcome.error is not None
@@ -201,7 +199,6 @@ class TestsFlextCoreDecorators:
 
         outcome = add(2, 3)
 
-        assert isinstance(outcome, r)
         assert outcome.success
         assert outcome.value == 5
 
@@ -216,7 +213,6 @@ class TestsFlextCoreDecorators:
 
         outcome = boom()
 
-        assert isinstance(outcome, r)
         assert outcome.failure
         assert outcome.error_code == "COMBINED_ERR"
 

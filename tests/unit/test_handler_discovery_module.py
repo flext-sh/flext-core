@@ -85,7 +85,7 @@ class TestsFlextHandlerDiscovery:
     def test_unsupported_middleware_fails_before_application() -> None:
         """Requested middleware requires an actual executor capability."""
         with pytest.raises(ValueError, match="middleware execution is not supported"):
-            h.handler(command=m.Command, middleware=(p.Middleware,))
+            h.handler(command=m.Command, middleware=(u.Tests.ForwardingMiddleware,))
 
     @staticmethod
     def test_negative_priority_fails_at_the_pydantic_boundary() -> None:
@@ -197,9 +197,9 @@ class TestsFlextHandlerDiscovery:
 
         module = u.Tests.handler_module("unimported_handlers", operation=operation)
         saved = h.Discovery.scan_module(module)[0][1]
-        module.operation = replacement
+        setattr(module, "operation", replacement)
         tm.that(h.Discovery.scan_module(module)[0][1] is replacement)
-        del module.operation
+        delattr(module, "operation")
         tm.that(h.Discovery.scan_module(module), empty=True)
         tm.that(saved is operation)
         tm.that(saved(m.Command()) is outcome)

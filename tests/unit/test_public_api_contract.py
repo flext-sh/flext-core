@@ -318,7 +318,7 @@ class TestsFlextCorePublicApiContract:
         tm.ok(facade.registry.register(binding, "registered-value"))
         tm.that(facade.container.resolve(binding).unwrap(), eq="registered-value")
         tm.that(sibling.container.has(binding), eq=False)
-        tm.that(facade.settings.debug, eq=custom_settings.debug)
+        tm.that(facade.settings is custom_settings, eq=True)
         tm.that(facade.registry.dispatcher is facade.dispatcher, eq=True)
 
     @staticmethod

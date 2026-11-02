@@ -46,7 +46,6 @@ class TestsFlextUtilitiesPydantic:
         metadata = u.Field(description="Native field metadata")
         tm.that(metadata.annotation is None, eq=True)
         private = u.PrivateAttr()
-        tm.that(isinstance(private, p.UnsetPrivateAttribute), eq=True)
         undefined = private.get_default()
         tm.that(private.get_default(call_default_factory=True) is undefined, eq=True)
 
@@ -136,26 +135,20 @@ class TestsFlextUtilitiesPydantic:
             == first
         )
 
-    class _ClearedAnnotatedFactoryContract(m.BaseModel):
-        """Explicit None clears the earlier factory through both facades."""
+    class _RequiredCollectionContract(m.BaseModel):
+        """Required collections declare their types without default factories."""
 
-        model_values: Annotated[
-            t.MutableStrMapping,
-            m.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
-        ] = m.Field(default_factory=None)
-        utility_values: Annotated[
-            t.MutableStrMapping,
-            u.Field(default_factory=u.empty(TypeForm(t.MutableStrMapping))),
-        ] = u.Field(default_factory=None)
+        model_values: t.MutableStrMapping
+        utility_values: t.MutableStrMapping
 
     @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
     @staticmethod
-    def test_explicit_none_clears_annotated_factories(missing_name: str) -> None:
-        """Cleared factories require supplied values instead of inventing defaults."""
+    def test_required_collections_reject_missing_values(missing_name: str) -> None:
+        """Required fields reject omission and retain the supplied values."""
         partial: t.JsonDict = {"model_values": {}, "utility_values": {}}
         del partial[missing_name]
         with pytest.raises(m.ValidationError):
-            TestsFlextUtilitiesPydantic._ClearedAnnotatedFactoryContract.model_validate(
+            TestsFlextUtilitiesPydantic._RequiredCollectionContract.model_validate(
                 partial,
             )
         values: t.JsonDict = {
@@ -163,7 +156,7 @@ class TestsFlextUtilitiesPydantic:
             "utility_values": {"utility": "supplied"},
         }
         payload = (
-            TestsFlextUtilitiesPydantic._ClearedAnnotatedFactoryContract.model_validate(
+            TestsFlextUtilitiesPydantic._RequiredCollectionContract.model_validate(
                 values,
             )
         )

@@ -43,7 +43,7 @@ class TestsFlextContainerResolution:
     @staticmethod
     def test_get_factory_service(clean_container: p.Container) -> None:
         """Test retrieving service created by factory using fixtures."""
-        factory_result = {"created": "by_factory"}
+        factory_result = m.ConfigMap(root={"created": "by_factory"})
         factory = u.Tests.create_factory(factory_result)
         clean_container.factory("factory_service", factory)
         result: p.Result[p.RegisterableService] = clean_container.resolve(

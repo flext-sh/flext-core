@@ -126,8 +126,8 @@ class TestsFlextCoreEnforcementLayers:
     def _utilities_instance_method() -> type:
         # Built dynamically: the offending shape is an instance method, which a
         # ``class`` body would see rewritten to ``@staticmethod`` by ``make fix``.
-        def _run[SelfT](_self: SelfT) -> None:
-            return None
+        def _run[SelfT](_self: SelfT) -> SelfT:
+            return _self
 
         return type("_UUtilities", (), {"run": _run})
 

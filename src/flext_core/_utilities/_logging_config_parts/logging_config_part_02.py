@@ -187,7 +187,7 @@ class FlextUtilitiesLoggingConfig(logging_config_part_01.FlextUtilitiesLoggingCo
             ExceptionRenderer(
                 ExceptionDictTransformer(show_locals=False, max_frames=sys.maxsize)
                 if trace
-                else lambda info: f"{info[0].__name__}: {info[1]}"
+                else lambda exc_info: f"{exc_info[0].__name__}: {exc_info[1]}"
             ),
             partial(cls._observe_event, options=options),
         ))

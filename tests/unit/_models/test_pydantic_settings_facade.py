@@ -12,6 +12,8 @@ from __future__ import annotations
 
 from typing import override
 
+from typing_extensions import TypeForm
+
 from flext_core import FlextModels
 from tests import m, tm, u
 
@@ -32,7 +34,7 @@ class TestsFlextCorePydanticSettingsFacade:
     def test_native_settings_alias_accepts_the_public_preset() -> None:
         """The native annotation accepts the original settings instance."""
         instance = FlextModels.BaseSettings()
-        adapter = u.type_adapter(FlextModels.PydanticBaseSettings)
+        adapter = u.type_adapter(TypeForm(FlextModels.PydanticBaseSettings))
         tm.that(adapter.validate_python(instance) is instance, eq=True)
 
     class _TopicSettings(m.BaseSettings):

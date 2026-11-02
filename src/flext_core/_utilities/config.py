@@ -135,7 +135,7 @@ class FlextUtilitiesConfig:
                     f"YAML read error: {exc}",
                     exception=exc,
                 )
-            if not FlextUtilitiesGuardsTypeCore.mapping(loaded):
+            if not isinstance(loaded, Mapping):
                 return r[FlextTypingBase.JsonMapping].fail(
                     f"YAML top level is not a mapping: {path}",
                 )

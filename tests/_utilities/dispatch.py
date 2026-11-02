@@ -7,15 +7,28 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import ModuleType
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from flext_tests import h, r, s, u
 
 from tests import m, p, t
 
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
 
 class TestsFlextUtilitiesDispatchMixin:
     """Dispatcher test helpers."""
+
+    class ForwardingMiddleware:
+        """Delegate the original command to the supplied next handler."""
+
+        def process[TResult](
+            self,
+            command: p.Model,
+            next_handler: Callable[[p.Model], p.Result[TResult]],
+        ) -> p.Result[TResult]:
+            return next_handler(command)
 
     @staticmethod
     def handler_module(
@@ -56,7 +69,7 @@ class TestsFlextUtilitiesDispatchMixin:
 
         @override
         @h.handler(command=m.Command, priority=200)
-        def create(self, _request: p.Routable) -> p.Result[str]:
+        def create(self, request: p.CommandRoutable) -> p.Result[str]:
             return r[str].ok("overridden")
 
     class PrivateHandlerService(s):
@@ -92,8 +105,8 @@ class TestsFlextUtilitiesDispatchMixin:
     class AutoSubscriber(m.Tests.HandlerObservations):
         """Observe any routable publication through the existing capability protocol."""
 
-        def can_handle(self, message_type: type) -> bool:
-            return isinstance(message_type, type)
+        def can_handle(self, _message_type: type) -> bool:
+            return True
 
         def handle(self, message: p.Routable) -> p.Result[t.JsonPayload]:
             self.handled.append(u.resolve_message_route(message))

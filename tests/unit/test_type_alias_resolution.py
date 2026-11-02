@@ -100,8 +100,8 @@ class TestsFlextTypeAliasResolution:
         assert not u.alias_contains_any(alias)
 
     @staticmethod
-    def test_declared_static_only_alias_propagates_missing_runtime_dependency() -> None:
-        """Alias inspection cannot resolve a dependency absent from runtime."""
+    def test_declared_static_only_alias_stays_lazy() -> None:
+        """Authenticated static-only aliases retain their explicit deferred contract."""
         alias = TestsFlextTypeAliasDeclarations.LegalTypes.Deferred
 
         with pytest.raises(NameError) as raised:
@@ -109,12 +109,9 @@ class TestsFlextTypeAliasResolution:
 
         assert raised.value.name == "DeferredPath"
         owner = TestsFlextTypeAliasDeclarations.LegalTypes
-        with pytest.raises(NameError, match="DeferredPath"):
-            u.resolve_type_alias_value(alias, owner=owner)
-        with pytest.raises(NameError, match="DeferredPath"):
-            u.alias_contains_any(alias, owner=owner)
-        with pytest.raises(NameError, match="DeferredPath"):
-            u.unwrap_type_alias(alias, owner=owner)
+        assert u.resolve_type_alias_value(alias, owner=owner) is None
+        assert not u.alias_contains_any(alias, owner=owner)
+        assert u.unwrap_type_alias(alias, owner=owner) is alias
 
     @staticmethod
     def test_report_accounts_for_each_deferred_alias_rule() -> None:
@@ -199,8 +196,7 @@ class TestsFlextTypeAliasResolution:
         )
         assert deferred.unavailable_imports == ("DeferredPath",)
         assert u.deferred(alias, owner=Consumer) == (deferred,)
-        with pytest.raises(NameError, match="DeferredPath"):
-            u.resolve_type_alias_value(alias, owner=Consumer)
+        assert u.resolve_type_alias_value(alias, owner=Consumer) is None
         assert Consumer(value=1).value == 1
         report = u.check(Consumer)
         assert not report.complete

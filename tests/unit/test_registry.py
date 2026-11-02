@@ -45,7 +45,7 @@ class TestsFlextCoreRegistry:
         runtime = u.build_service_runtime()
         registry = FlextRegistry(registry_runtime=runtime)
         with pytest.raises((TypeError, ValueError)):
-            registry.registry_runtime = "invalid"
+            setattr(registry, "registry_runtime", "invalid")
         assert registry.registry_runtime is runtime
 
     @staticmethod
