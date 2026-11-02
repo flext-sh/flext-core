@@ -45,10 +45,10 @@ class TestsFlextCorePydanticSettingsFacade:
         def settings_customise_sources(
             cls,
             settings_cls: type[p.PydanticBaseSettings],
-            init_settings: m.PydanticBaseSettingsSource,
-            env_settings: m.PydanticBaseSettingsSource,
-            dotenv_settings: m.PydanticBaseSettingsSource,
-            file_secret_settings: m.PydanticBaseSettingsSource,
+            init_settings: p.PydanticBaseSettingsSource,
+            env_settings: p.PydanticBaseSettingsSource,
+            dotenv_settings: p.PydanticBaseSettingsSource,
+            file_secret_settings: p.PydanticBaseSettingsSource,
         ) -> tuple[p.PydanticBaseSettingsSource, ...]:
             """Init-only resolution proves the override is consulted.
 

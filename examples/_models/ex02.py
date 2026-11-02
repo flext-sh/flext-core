@@ -15,7 +15,7 @@ class ExamplesFlextModelsEx02:
     class DatabaseService(m.Value):
         """Database service model used in example 02 settings integration."""
 
-        settings: m.ConfigMap = m.Field(description="Database connection settings")
+        settings: p.ConfigMap = m.Field(description="Database connection settings")
         status: c.Status = m.Field(
             c.Status.PENDING,
             description="Service connection status",
@@ -35,7 +35,7 @@ class ExamplesFlextModelsEx02:
     class CacheService(m.Value):
         """Cache service model used in example 02 settings integration."""
 
-        settings: m.ConfigMap = m.Field(description="Cache connection settings")
+        settings: p.ConfigMap = m.Field(description="Cache connection settings")
         status: c.Status = m.Field(
             c.Status.PENDING,
             description="Service connection status",
@@ -53,7 +53,7 @@ class ExamplesFlextModelsEx02:
     class EmailService(m.Value):
         """Email service model used in example 02 settings integration."""
 
-        settings: m.ConfigMap = m.Field(description="Email service settings")
+        settings: p.ConfigMap = m.Field(description="Email service settings")
         status: c.Status = m.Field(
             c.Status.PENDING,
             description="Service connection status",

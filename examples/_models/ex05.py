@@ -42,8 +42,8 @@ class ExamplesFlextModelsEx05:
         """Marker model that is not a valid handler."""
 
     class HandlerLike(m.Value):
-        data: m.ConfigMap = m.Field(
-            default_factory=lambda: m.ConfigMap(root={}),
+        data: p.ConfigMap = m.Field(
+            default_factory=lambda: p.ConfigMap(root={}),
             description="Handler payload map",
         )
 
@@ -54,7 +54,7 @@ class ExamplesFlextModelsEx05:
 
         @override
         @classmethod
-        def validate(cls, value: m.ConfigMap) -> ExamplesFlextModelsEx05.GoodProcessor:
+        def validate(cls, value: p.ConfigMap) -> ExamplesFlextModelsEx05.GoodProcessor:
             return cls.model_validate(value)
 
     class BadProcessor(m.Value):

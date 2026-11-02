@@ -103,7 +103,7 @@ class FlextModelsContainer:
         """Model for factory registry entries.
 
         Implements metadata for registered factory functions in the DI container.
-        Replaces: m.ConfigMap for factory tracking.
+        Replaces: p.ConfigMap for factory tracking.
         """
 
         name: Annotated[
@@ -142,7 +142,7 @@ class FlextModelsContainer:
     class ContainerConfig(FlextModelsBase.FlexibleInternalModel):
         """Model for container configuration.
 
-        Replaces: m.ConfigMap for container configuration storage.
+        Replaces: p.ConfigMap for container configuration storage.
         Provides type-safe configuration for DI container behavior.
         """
 
