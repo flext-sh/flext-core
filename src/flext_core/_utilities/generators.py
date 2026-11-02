@@ -17,7 +17,7 @@ from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, tzinfo
 from zoneinfo import ZoneInfo
 
-from flext_core import FlextSettings, c, m, t
+from flext_core import FlextSettings, c, m, p, t
 
 
 class FlextUtilitiesGenerators:

@@ -60,6 +60,19 @@ class FlextProtocolsContainer:
         def container_config(self) -> FlextProtocolsBase.Model | None: ...
 
     @runtime_checkable
+    class ServiceRegistration(Protocol):
+        """Read-only registration record returned by the service container."""
+
+        @property
+        def name(self) -> str: ...
+
+        @property
+        def service(self) -> FlextProtocolsContainer.RegisterableService: ...
+
+        @property
+        def tags(self) -> Sequence[str]: ...
+
+    @runtime_checkable
     class RootDict[RootValueT](Protocol):
         """Protocol for dict-like root model objects.
 

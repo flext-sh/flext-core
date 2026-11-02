@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, m, t, tm
+from tests import c, m, p, t, tm
 from tests.unit._models._exception_params_support import (
     TestsFlextModelsExceptionParamsSupport,
 )

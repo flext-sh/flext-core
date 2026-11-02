@@ -27,7 +27,7 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_core import m
+from flext_core import m, p
 
 
 class AuditModel(m.BaseModel):
@@ -58,7 +58,7 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_core import m
+from flext_core import m, p
 
 
 class AuditSettings(m.BaseModel):

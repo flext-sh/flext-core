@@ -57,7 +57,7 @@ from collections.abc import (
 
 from typing import Annotated
 
-from flext_core import m
+from flext_core import m, p
 
 
 class UserModel(m.BaseModel):
@@ -88,7 +88,7 @@ from collections.abc import (
     Sequence,
 )
 
-from flext_core import m
+from flext_core import m, p
 
 
 class SettingsModel(m.BaseModel):

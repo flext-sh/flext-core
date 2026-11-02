@@ -13,7 +13,7 @@ from __future__ import annotations
 from typing import override
 
 from flext_core import FlextModels
-from tests import m, t, tm, u
+from tests import m, p, t, tm, u
 
 
 class TestsFlextCorePydanticSettingsFacade:

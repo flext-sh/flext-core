@@ -10,7 +10,7 @@ from collections.abc import Mapping, MutableSequence, Sequence
 from datetime import datetime
 from typing import Annotated, ClassVar, Self
 
-from flext_core import m
+from flext_core import m, p
 
 
 class TestsFlextModelsCorePublic:

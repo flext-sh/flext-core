@@ -9,7 +9,7 @@ from __future__ import annotations
 from enum import StrEnum, unique
 from typing import override
 
-from flext_core import m
+from flext_core import m, p
 
 
 class ExamplesFlextModelsEx05:
