@@ -18,7 +18,7 @@ from tests import p, r, tm, u
 
 
 class TestsFlextCoreResultExceptionSafeCallable(
-    u.Tests.TestsFlextResultExceptionCarrying,
+    u.TestsFlextResultExceptionCarrying,
 ):
     """Public-contract behavior of ``r.safe`` and ``r[T].create_from_callable``."""
 

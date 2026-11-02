@@ -16,7 +16,7 @@ from tests import c, p, r, t, tm, u
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
-    u.Tests.TestsFlextResultExceptionCarrying,
+    u.TestsFlextResultExceptionCarrying,
 ):
     """Tests for ``FlextCoreResultExceptionTraverseValidation``."""
 
@@ -142,9 +142,9 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         invalid = {"name": "Alice", "age": "not_an_int"}
 
         # Act
-        result = r[u.Tests.TestsFlextResultExceptionCarrying.UserModel].from_validation(
+        result = r[u.TestsFlextResultExceptionCarrying.UserModel].from_validation(
             invalid,
-            u.Tests.TestsFlextResultExceptionCarrying.UserModel,
+            u.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert
@@ -159,9 +159,9 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         valid: t.JsonDict = {"name": "Alice", "age": 30}
 
         # Act
-        result = r[u.Tests.TestsFlextResultExceptionCarrying.UserModel].from_validation(
+        result = r[u.TestsFlextResultExceptionCarrying.UserModel].from_validation(
             valid,
-            u.Tests.TestsFlextResultExceptionCarrying.UserModel,
+            u.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert
