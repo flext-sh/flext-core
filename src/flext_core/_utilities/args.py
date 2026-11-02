@@ -10,14 +10,14 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_core import FlextResult, c, m, p, t
+from flext_core import FlextResult, c, p, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: m.BaseModel](
+    def parse_model[M: p.BaseModel](
         kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
@@ -45,7 +45,7 @@ class FlextUtilitiesArgs:
             return FlextResult[M].fail_op("parse options model", exc)
 
     @staticmethod
-    def resolve_options[M: m.BaseModel](
+    def resolve_options[M: p.BaseModel](
         options: M | None,
         kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],

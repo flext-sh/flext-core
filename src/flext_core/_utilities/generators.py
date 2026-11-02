@@ -126,7 +126,7 @@ class FlextUtilitiesGenerators:
     def generate(
         kind: str | None = None,
         *,
-        options: m.GenerateOptions | None = None,
+        options: p.GenerateOptions | None = None,
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method).
 

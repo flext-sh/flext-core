@@ -152,7 +152,7 @@ class TestsFlextLoggingStages:
         """A failed sink terminates without logging back into its own writer."""
         consumer = (
             "import contextlib, io, logging, sys, structlog\n"
-            "from flext_core import m, u\n"
+            "from flext_core import m, p, u\n"
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=True, log_level=logging.INFO))\n"
             "stream = io.StringIO()\n"
@@ -178,7 +178,7 @@ class TestsFlextLoggingStages:
         )
         consumer = (
             "import logging, sys\n"
-            "from flext_core import m, u\n"
+            "from flext_core import m, p, u\n"
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=True, console_renderer=False, log_level=logging.INFO))\n"
             "logger = u.create_module_logger('tests.logging.native.consumer')\n"
@@ -204,7 +204,7 @@ class TestsFlextLoggingStages:
         """Subsequent public writes preserve the first native stream exception."""
         consumer = (
             "import contextlib, io, logging, sys\n"
-            "from flext_core import m, u\n"
+            "from flext_core import m, p, u\n"
             "from flext_tests import tm\n"
             "u.configure_structlog(settings=m.StructlogOptions("
             "async_logging=True, log_level=logging.INFO))\n"

@@ -224,7 +224,7 @@ class FlextUtilitiesContext:
     @contextmanager
     def timed_operation(
         operation_name: str | None = None,
-    ) -> Generator[m.ConfigMap]:
+    ) -> Generator[p.ConfigMap]:
         """Scope operation timing and finalize the yielded metadata on exit.
 
         Yields:

@@ -166,7 +166,7 @@ class TestsFlextCoreResultExceptionFailures:
         """Test fail enriches error data from exception metadata."""
 
         class MetadataError(ValueError):
-            metadata: m.Metadata
+            metadata: p.Metadata
             correlation_id: str
 
             def __init__(self) -> None:

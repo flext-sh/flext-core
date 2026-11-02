@@ -25,7 +25,7 @@ class ExamplesFlextModelsEx11:
 
     class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type[m.Value],
+            type[p.Value],
             m.Field(description="Message type handled by this handler"),
         ] = m.Value
 

@@ -17,7 +17,7 @@ from typing import Annotated
 
 import pytest
 
-from tests import c, m, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 def _is_same(expected: object) -> Callable[[object], bool]:
@@ -68,7 +68,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
     @staticmethod
     def test_metadata_attributes_accepts_t_dict_and_kwargs_mapping() -> None:
         """Test metadata attributes accepts t dict and kwargs mapping."""
-        from_root = m.Metadata.model_validate({"attributes": m.Dict(root={"a": 1})})
+        from_root = m.Metadata.model_validate({"attributes": p.Dict(root={"a": 1})})
         from_kwargs = m.Metadata(attributes={"b": 2})
         tm.that(from_root.attributes, eq={"a": 1})
         tm.that(from_kwargs.attributes, eq={"b": 2})
@@ -97,7 +97,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
     def test_metadata_attributes_broken_dump_object_rejected() -> None:
         """Test metadata attributes broken dump object rejected."""
         with pytest.raises(TypeError):
-            m.Metadata.model_validate({"attributes": m.Tests.BrokenDumpModel()})
+            m.Metadata.model_validate({"attributes": p.Tests.BrokenDumpModel()})
 
     # --- Metadata defaults and immutability ------------------------------
 

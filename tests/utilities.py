@@ -65,7 +65,7 @@ class TestsFlextUtilities(flext_tests_u):
         class ConcreteTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for string messages."""
 
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.Handler | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -140,7 +140,7 @@ class TestsFlextUtilities(flext_tests_u):
         class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for validation."""
 
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.Handler | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -160,7 +160,7 @@ class TestsFlextUtilities(flext_tests_u):
         class FailingTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler that fails."""
 
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.Handler | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -235,7 +235,7 @@ class TestsFlextUtilities(flext_tests_u):
         class DecoratorTestCase(m.BaseModel):
             """Test case for decorator."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
             name: Annotated[str, m.Field(description="Decorator test case name")]
             operation: Annotated[
                 str,

@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
+from typing import Protocol, Self, overload, override, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols import (
@@ -20,10 +20,6 @@ from flext_core._protocols import (
     FlextProtocolsService,
     FlextProtocolsSettings,
 )
-
-if TYPE_CHECKING:
-    from flext_core import m
-from typing import TYPE_CHECKING
 
 
 class FlextProtocolsContainer:
@@ -138,7 +134,7 @@ class FlextProtocolsContainer:
             FlextProtocolsContainer.RegisterableService
         ]: ...
 
-        def snapshot(self) -> m.ConfigMap:
+        def snapshot(self) -> p.ConfigMap:
             """Return the merged settings exposed by this container."""
             ...
 

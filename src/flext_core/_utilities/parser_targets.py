@@ -26,16 +26,16 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
 
     @staticmethod
     def _resolve_opts[T](
-        options: m.ParseOptions[T] | None,
+        options: p.ParseOptions[T] | None,
         kwargs: Mapping[str, t.JsonPayload],
-    ) -> tuple[m.ParseOptions[T], str]:
+    ) -> tuple[p.ParseOptions[T], str]:
         """Resolve options + field-prefix string used by every ``_parse_try_*``.
 
         Returns:
-            The resulting ``tuple[m.ParseOptions[T], str]``.
+            The resulting ``tuple[p.ParseOptions[T], str]``.
 
         """
-        opts: m.ParseOptions[T]
+        opts: p.ParseOptions[T]
         if options is not None:
             opts = options
         else:
@@ -49,7 +49,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
     def _parse_try_direct[T](
         value: t.JsonPayload,
         target: type[T],
-        options: m.ParseOptions[T] | None = None,
+        options: p.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Try a direct type call.
@@ -96,7 +96,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
     def _parse_try_enum[T](
         value: t.JsonPayload,
         target: type[T],
-        options: m.ParseOptions[T] | None = None,
+        options: p.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Try enum parsing, raising ValueError if not enum or invalid.
@@ -162,7 +162,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
     def _parse_try_model[T](
         value: t.JsonPayload,
         target: type[T],
-        options: m.ParseOptions[T] | None = None,
+        options: p.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T:
         """Try model parsing, raising ValueError if not model or invalid.
@@ -206,7 +206,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
     def _parse_try_primitive[T](
         value: t.JsonPayload,
         target: type[T],
-        options: m.ParseOptions[T] | None = None,
+        options: p.ParseOptions[T] | None = None,
         **kwargs: t.JsonPayload,
     ) -> T | None:
         """Fall back to primitive type parsing.

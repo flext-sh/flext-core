@@ -15,7 +15,7 @@ from tests import m
 class TestsFlextUtilitiesValidationNumericScenarios:
     """Numeric validation scenarios."""
 
-    NON_NEGATIVE_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    NON_NEGATIVE_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="non_negative_zero",
             validator_type="numeric",
@@ -57,7 +57,7 @@ class TestsFlextUtilitiesValidationNumericScenarios:
             description="None rejection",
         ),
     ]
-    POSITIVE_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    POSITIVE_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="positive_one",
             validator_type="numeric",
@@ -107,7 +107,7 @@ class TestsFlextUtilitiesValidationNumericScenarios:
             description="None rejection",
         ),
     ]
-    RANGE_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    RANGE_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="range_within_bounds",
             validator_type="numeric",

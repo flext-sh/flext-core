@@ -20,7 +20,7 @@ class TestsFlextModelsDomain:
     class EmailResponse(m.BaseModel):
         """Shared email response model for tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
 
         status: str
         message_id: str
@@ -28,7 +28,7 @@ class TestsFlextModelsDomain:
     class NoDict(m.BaseModel):
         """Model for testing value-comparison fallback paths in domain utilities."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=False)
 
         value: int = 0
 
@@ -45,7 +45,7 @@ class TestsFlextModelsDomain:
     class ParseOptions(m.BaseModel):
         """Test-local parse options after production model removal."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
 
         strip: bool = True
         remove_empty: bool = True

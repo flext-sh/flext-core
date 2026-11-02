@@ -17,7 +17,7 @@ from tests._models import TestsFlextModelsMixins
 class TestsFlextUtilitiesRailwayServices:
     """Railway service helpers."""
 
-    class GetUserService(s[m.Tests.User]):
+    class GetUserService(s[p.Tests.User]):
         """Service to get user."""
 
         user_id: Annotated[
@@ -26,10 +26,10 @@ class TestsFlextUtilitiesRailwayServices:
         ] = ""
 
         @override
-        def execute(self) -> p.Result[m.Tests.User]:
+        def execute(self) -> p.Result[p.Tests.User]:
             if self.user_id in c.Tests.USER_IDS_INVALID:
-                return r[m.Tests.User].fail(c.Tests.USER_NOT_FOUND)
-            return r[m.Tests.User].ok(
+                return r[p.Tests.User].fail(c.Tests.USER_NOT_FOUND)
+            return r[p.Tests.User].ok(
                 m.Tests.User(
                     id=self.user_id,
                     unique_id=self.user_id,
@@ -38,17 +38,17 @@ class TestsFlextUtilitiesRailwayServices:
                 ),
             )
 
-    class SendEmailService(s[m.Tests.EmailResponse]):
+    class SendEmailService(s[p.Tests.EmailResponse]):
         """Service to send email."""
 
         to: Annotated[str, m.Field(description="Destination email address.")] = ""
         subject: Annotated[str, m.Field(description="Email subject line.")] = ""
 
         @override
-        def execute(self) -> p.Result[m.Tests.EmailResponse]:
+        def execute(self) -> p.Result[p.Tests.EmailResponse]:
             if "@" not in self.to:
-                return r[m.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
-            return r[m.Tests.EmailResponse].ok(
+                return r[p.Tests.EmailResponse].fail(c.Tests.INVALID_EMAIL)
+            return r[p.Tests.EmailResponse].ok(
                 m.Tests.EmailResponse(status="sent", message_id=f"msg-{self.to}"),
             )
 
@@ -68,7 +68,7 @@ class TestsFlextUtilitiesRailwayServices:
 
     @staticmethod
     def create_user_service(
-        case: m.Tests.ServiceTestCase,
+        case: p.Tests.ServiceTestCase,
     ) -> TestsFlextUtilitiesRailwayServices.GetUserService:
         """Create a user service from a documented service case.
 

@@ -166,7 +166,7 @@ class TestsFlextCoreNormalizationBoundaries:
         """Schema validation admits readonly metadata and retains model identity."""
         attributes: t.JsonMapping = MappingProxyType({"source": "native"})
         payload = {"attributes": attributes}
-        metadata: m.Metadata = tm.ok(u.validate_value(m.Metadata, payload))
+        metadata: p.Metadata = tm.ok(u.validate_value(m.Metadata, payload))
         tm.that(metadata.attributes, eq=attributes)
         model: p.Model = metadata
         tm.ok(tm.ok(u.validate_value(m.Metadata, model)) is metadata)
@@ -174,8 +174,8 @@ class TestsFlextCoreNormalizationBoundaries:
             model,
             MappingProxyType({"attributes": attributes}),
         ]
-        adapter = u.type_adapter(t.TypeForm(MutableSequence[m.Metadata]))
-        validated: MutableSequence[m.Metadata] = tm.ok(
+        adapter = u.type_adapter(t.TypeForm(MutableSequence[p.Metadata]))
+        validated: MutableSequence[p.Metadata] = tm.ok(
             u.validate_value(adapter, inputs)
         )
         tm.ok(validated[0] is metadata)

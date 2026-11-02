@@ -30,11 +30,11 @@ class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
         return value.email if isinstance(value, m.Tests.User) else str(value)
 
     @staticmethod
-    def _v1_send_email(value: _V1Payload) -> p.Result[m.Tests.EmailResponse]:
+    def _v1_send_email(value: _V1Payload) -> p.Result[p.Tests.EmailResponse]:
         """Send one V1 pipeline email for the current payload.
 
         Returns:
-            The resulting ``p.Result[m.Tests.EmailResponse]``.
+            The resulting ``p.Result[p.Tests.EmailResponse]``.
 
         """
         to = value if isinstance(value, str) else str(value)
@@ -46,8 +46,8 @@ class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
 
     @staticmethod
     def _v1_identity_response(
-        response: m.Tests.EmailResponse,
-    ) -> m.Tests.EmailResponse:
+        response: p.Tests.EmailResponse,
+    ) -> p.Tests.EmailResponse:
         """Return one V1 pipeline email response unchanged."""
         return response
 
@@ -63,7 +63,7 @@ class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
 
     @staticmethod
     def execute_v1_pipeline(
-        case: m.Tests.RailwayTestCase,
+        case: p.Tests.RailwayTestCase,
     ) -> p.ResultView[str | m.Tests.User | m.Tests.EmailResponse]:
         """Execute the documented V1 railway pipeline.
 
@@ -78,7 +78,7 @@ class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
                     c.Tests.NO_USER_IDS_PROVIDED,
                 ),
             )
-        user_result: p.Result[m.Tests.User] = TestsFlextUtilitiesRailwayPipelines.make(
+        user_result: p.Result[p.Tests.User] = TestsFlextUtilitiesRailwayPipelines.make(
             TestsFlextUtilitiesRailwayPipelines.GetUserService,
             user_id=case.user_ids[0],
         ).execute()
@@ -97,7 +97,7 @@ class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
         return cast("p.ResultView[str | m.Tests.User | m.Tests.EmailResponse]", result)
 
     @staticmethod
-    def execute_v2_pipeline(case: m.Tests.RailwayTestCase) -> m.Tests.User | str:
+    def execute_v2_pipeline(case: p.Tests.RailwayTestCase) -> p.Tests.User | str:
         """Execute the documented V2 railway pipeline.
 
         Returns:
@@ -118,7 +118,7 @@ class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
         if raw_user_result.failure:
             msg = raw_user_result.error or c.Tests.USER_NOT_FOUND
             raise e.BaseError(msg)
-        user: m.Tests.User | str = raw_user_result.value
+        user: p.Tests.User | str = raw_user_result.value
         for operation in case.operations:
             if operation == "get_email":
                 user = user.email if isinstance(user, m.Tests.User) else user
@@ -134,7 +134,7 @@ class TestsFlextUtilitiesRailwayPipelines(TestsFlextUtilitiesRailwayServices):
                     raise e.BaseError(msg)
                 # The service's result payload is EmailResponse by contract;
                 # pyright proves the isinstance guard redundant here.
-                response_obj: m.Tests.EmailResponse = raw_response_result.value
+                response_obj: p.Tests.EmailResponse = raw_response_result.value
                 user = response_obj.status
         return user
 

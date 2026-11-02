@@ -15,7 +15,7 @@ from tests import m
 class TestsFlextUtilitiesValidationUriScenarios:
     """URI validation scenarios."""
 
-    URI_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    URI_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="uri_valid_http",
             validator_type="network",

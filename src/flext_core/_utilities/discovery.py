@@ -40,7 +40,7 @@ class FlextUtilitiesDiscovery:
     def _factory_config_for(
         module: ModuleType,
         name: str,
-    ) -> m.FactoryDecoratorConfig | None:
+    ) -> p.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
             return None

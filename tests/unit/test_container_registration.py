@@ -49,7 +49,7 @@ class TestsFlextCoreContainerRegistration:
         ids=lambda s: s.name,
     )
     def test_bind_registers_and_resolves_service(
-        scenario: m.Tests.ServiceScenario,
+        scenario: p.Tests.ServiceScenario,
         clean_container: p.Container,
     ) -> None:
         """Bind makes a service discoverable and resolvable to its value."""

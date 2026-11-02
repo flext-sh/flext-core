@@ -25,7 +25,7 @@ class FlextExceptionsBase:
         def normalize_metadata(
             metadata: p.HasModelDump | t.JsonValue | None,
             merged_kwargs: Mapping[str, t.JsonPayload],
-        ) -> m.Metadata:
+        ) -> p.Metadata:
             """Normalize metadata from various input types to m.Metadata model.
 
             Returns:
@@ -50,7 +50,7 @@ class FlextExceptionsBase:
         message: str
         error_code: str
         correlation_id: str | None
-        metadata: m.Metadata
+        metadata: p.Metadata
         timestamp: float
         auto_log: bool
         args: tuple[str, ...]
@@ -102,7 +102,7 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            options: m.ExceptionInitOptions,
+            options: p.ExceptionInitOptions,
             extra_kwargs: Mapping[str, t.JsonPayload | None],
         ) -> None:
             """Initialize the shared base error state without metaprogramming."""
@@ -140,7 +140,7 @@ class FlextExceptionsBase:
                 return f"[{self.error_code}] {self.message}"
             return self.message
 
-        params_cls: ClassVar[t.ModelClass[m.BaseModel] | None] = None
+        params_cls: ClassVar[t.ModelClass[p.BaseModel] | None] = None
         excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
         _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
 
@@ -148,8 +148,8 @@ class FlextExceptionsBase:
             self,
             message: str,
             *format_args: t.JsonPayload,
-            options: m.ExceptionInitOptions | None = None,
-            params: m.BaseModel | None = None,
+            options: p.ExceptionInitOptions | None = None,
+            params: p.BaseModel | None = None,
             metadata: p.HasModelDump | t.JsonValue | None = None,
             **extra_kwargs: t.JsonValue,
         ) -> None:
@@ -311,8 +311,8 @@ class FlextExceptionsBase:
         @staticmethod
         def _attach_declared_field_context(
             ctx: t.MutableJsonMapping,
-            declaredparams_cls: t.ModelClass[m.BaseModel],
-            resolved: m.BaseModel,
+            declaredparams_cls: t.ModelClass[p.BaseModel],
+            resolved: p.BaseModel,
             declared_param_keys: frozenset[str],
         ) -> None:
             """Attach declared field values and help text to the context map."""
@@ -332,11 +332,11 @@ class FlextExceptionsBase:
 
         def _resolve_declared_params(
             self,
-            declaredparams_cls: t.ModelClass[m.BaseModel],
+            declaredparams_cls: t.ModelClass[p.BaseModel],
             context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
             remaining_extra: t.MutableJsonMapping,
-            params: m.BaseModel | None,
-        ) -> tuple[m.BaseModel, t.MutableJsonMapping]:
+            params: p.BaseModel | None,
+        ) -> tuple[p.BaseModel, t.MutableJsonMapping]:
             """Validate declared params and build the structured context mapping.
 
             Returns:
@@ -373,11 +373,11 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _resolve_declared_options(
-            options: m.ExceptionInitOptions,
+            options: p.ExceptionInitOptions,
             ctx: t.MutableJsonMapping,
             preserved_metadata: t.JsonValue | None,
             declared_correlation_id: str | None,
-        ) -> m.ExceptionInitOptions:
+        ) -> p.ExceptionInitOptions:
             """Fold declared-params resolutions back into the init options.
 
             Returns:

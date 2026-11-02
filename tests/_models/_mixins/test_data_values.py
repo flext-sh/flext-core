@@ -17,7 +17,7 @@ class TestsFlextModelsTestDataValues:
     class Data(m.BaseModel):
         """Test field names and data values."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
 
         field_name: Annotated[str, m.Field(description="Default test field name")] = (
             "test_field"

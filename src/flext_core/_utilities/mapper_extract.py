@@ -66,7 +66,7 @@ class FlextUtilitiesMapperExtract(FlextUtilitiesMapperAccess):
         | None,
         part: str,
         *,
-        context: m.ExtractResolvePathPartContext,
+        context: p.ExtractResolvePathPartContext,
     ) -> tuple[t.JsonPayload | None, p.Result[t.JsonPayload] | None]:
         """Resolve one path segment and return its cursor or an early result.
 

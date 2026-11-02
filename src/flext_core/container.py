@@ -44,7 +44,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _config: p.Settings
 
-    _user_overrides: m.ConfigMap
+    _user_overrides: p.ConfigMap
 
     _initialized: bool = False
 
@@ -53,14 +53,12 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         m.ServiceRegistration | m.FactoryRegistration | m.ResourceRegistration,
     ]
 
-    _global_config: m.ContainerConfig
+    _global_config: p.ContainerConfig
 
     def __new__(
         cls,
         *,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -78,9 +76,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def __init__(
         self,
         *,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize the singleton once; later calls apply the explicit spec."""
         if not self._initialized:
@@ -291,7 +287,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         )
 
     @override
-    def snapshot(self) -> m.ConfigMap:
+    def snapshot(self) -> p.ConfigMap:
         """Return the merged settings exposed by this container.
 
         Returns:
@@ -323,9 +319,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def initialize_registrations(
         self,
         *,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Reset the registrations from a spec and register the core services.
 
@@ -411,9 +405,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         self,
         *,
         subproject: str | None = None,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create an isolated scope inheriting the public registrations.
 
@@ -634,7 +626,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     def _apply_explicit_bootstrap(
         self,
-        registration: m.ServiceRegistrationSpec | p.ServiceRegistrationSpec,
+        registration: p.ServiceRegistrationSpec,
     ) -> None:
         """Rebind explicitly selected core collaborators of an existing container."""
         if registration.settings is not None:

@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from flext_core import m, p, t
+from flext_core import p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -36,7 +36,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def model_type(
         value: t.TypeHintSpecifier,
-    ) -> TypeIs[t.ModelClass[m.BaseModel]]:
+    ) -> TypeIs[t.ModelClass[p.BaseModel]]:
         """Narrow a runtime value to a canonical Pydantic model class.
 
         Returns:
@@ -60,7 +60,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def pydantic_model(
         value: p.GuardInput | p.Model | t.JsonValue | PydanticBaseModel | None,
-    ) -> TypeIs[m.BaseModel]:
+    ) -> TypeIs[p.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier.
 
         Accepts both ``m.BaseModel`` and

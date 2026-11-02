@@ -237,7 +237,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
     def transform(
         source: t.JsonMapping | m.ConfigMap,
         *,
-        options: m.TransformOptions | None = None,
+        options: p.TransformOptions | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
     ) -> p.Result[t.JsonMapping]:

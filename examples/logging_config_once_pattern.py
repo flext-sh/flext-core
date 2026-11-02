@@ -21,7 +21,7 @@ from typing import Annotated, override
 from examples import c, d, m, p, r, s, t, u
 
 
-class ExamplesFlextDatabaseService(s[m.ConfigMap]):
+class ExamplesFlextDatabaseService(s[p.ConfigMap]):
     """Example service showing settings log-once pattern."""
 
     db_config: Annotated[
@@ -31,7 +31,7 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
 
     @d.log_operation("database_query")
     @override
-    def execute(self) -> p.Result[m.ConfigMap]:
+    def execute(self) -> p.Result[p.ConfigMap]:
         """Execute database operations.
 
         Returns:
@@ -44,7 +44,7 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
             table="users",
         )
         results = m.ConfigMap(root={"users": [{"id": 1, "name": "Alice"}]})
-        return r[m.ConfigMap].ok(results)
+        return r[p.ConfigMap].ok(results)
 
     @override
     def model_post_init(self, /, __context: Mapping[str, t.Scalar] | None) -> None:
@@ -62,7 +62,7 @@ class ExamplesFlextDatabaseService(s[m.ConfigMap]):
         self.logger.info("Database configuration loaded", **normalized_db_config)
 
 
-class ExamplesFlextMigrationService(s[m.ConfigMap]):
+class ExamplesFlextMigrationService(s[p.ConfigMap]):
     """Example migration service with settings log-once pattern."""
 
     input_dir: Annotated[str, m.Field(description="Source migration directory.")]
@@ -98,7 +98,7 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
 
     @d.log_operation("migration_process")
     @override
-    def execute(self) -> p.Result[m.ConfigMap]:
+    def execute(self) -> p.Result[p.ConfigMap]:
         """Execute migration.
 
         Returns:
@@ -112,7 +112,7 @@ class ExamplesFlextMigrationService(s[m.ConfigMap]):
         )
         self.logger.info("Processing batch 1 of 10")
         self.logger.info("Processing batch 2 of 10")
-        return r[m.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
+        return r[p.ConfigMap].ok(m.ConfigMap(root={"migrated": 1000, "failed": 0}))
 
 
 def main() -> None:

@@ -42,7 +42,7 @@ class TestsFlextContainerResolution:
         ids=lambda s: s.name,
     )
     def test_get_typed_correct(
-        scenario: m.Tests.TypedRetrievalScenario,
+        scenario: p.Tests.TypedRetrievalScenario,
         clean_container: p.Container,
     ) -> None:
         """Test typed retrieval with correct types using fixtures."""

@@ -162,7 +162,7 @@ class TestsFlextCoreLazyExports:
             f"sys.path.insert(0, {str(tmp_path)!r})\n"
             "import flext_core\n"
             f"print(flext_core.__file__ == {str(candidate / '__init__.py')!r})\n"
-            "from flext_core import c, t, m, u\n"
+            "from flext_core import c, p, t, m, u\n"
             "print(c is flext_core.FlextConstants, t is flext_core.FlextTypes, "
             "m is flext_core.FlextModels, u is flext_core.FlextUtilities)\n"
             "from flext_cli import FlextCli\n"

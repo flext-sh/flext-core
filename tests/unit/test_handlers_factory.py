@@ -207,7 +207,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         u.Tests.assert_failure(result, expected_error=c.Tests.UNEXPECTED_MESSAGE_TYPE)
 
     @staticmethod
-    def _dispatch_settings() -> m.Handler:
+    def _dispatch_settings() -> p.Handler:
         """Build the command-dispatch handler configuration for dispatch tests.
 
         Returns:

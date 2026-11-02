@@ -17,7 +17,7 @@ class TestsFlextModelsCoreState:
     class SingletonClassForTest(m.BaseModel):
         """Test singleton class with Pydantic validation."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )
@@ -49,7 +49,7 @@ class TestsFlextModelsCoreState:
     class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=False)
 
         unique_id: str = "test-123"
         name: str = "test"

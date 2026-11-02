@@ -161,7 +161,7 @@ class TestsFlextHandlerDiscovery:
             h.handler(command=m.Command, priority=-1)(operation)
 
     @staticmethod
-    @pytest.mark.parametrize(c.HandlerMode.COMMAND, [m.Command, m.Event])
+    @pytest.mark.parametrize(c.HandlerMode.COMMAND, [p.Command, m.Event])
     def test_stacked_declarations_leave_original_metadata_unchanged(
         command: type,
     ) -> None:

@@ -29,6 +29,7 @@ class FlextProtocolsPydantic:
     Use p.* instead. Each name is a type for annotations.
     """
 
+    type ConfigDict = pydantic.ConfigDict
     type EncoderProtocol = pydantic.EncoderProtocol
     type ModelWrapValidatorHandler[T] = pydantic.ModelWrapValidatorHandler[T]
     type ValidationInfo = pydantic.ValidationInfo

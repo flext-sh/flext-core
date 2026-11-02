@@ -17,7 +17,7 @@ class TestsFlextModelsTestDataIdentity:
     class Names(m.BaseModel):
         """Test module and component names."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
 
         module_name: Annotated[str, m.Field(description="Default test module name")] = (
             "test_module"

@@ -26,8 +26,6 @@ if TYPE_CHECKING:
     )
     from pydantic_core.core_schema import WhenUsed
 
-    from flext_core import m
-
 
 class FlextProtocolsBase:
     """Hierarchical protocol namespace organized by Interface Segregation Principle."""
@@ -239,7 +237,7 @@ class FlextProtocolsBase:
         """
 
         unique_id: str
-        domain_events: MutableSequence[m.DomainEvent]
+        domain_events: MutableSequence[p.DomainEvent]
 
 
 __all__: list[str] = ["FlextProtocolsBase"]

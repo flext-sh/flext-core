@@ -88,7 +88,7 @@ class TestsFlextModelsProjectMetadata:
     def _metadata(
         tmp_path: Path,
         **overrides: p.AttributeProbe,
-    ) -> m.ProjectMetadata:
+    ) -> p.ProjectMetadata:
         payload: MutableMapping[str, p.AttributeProbe] = {
             "root": tmp_path,
             "package_name": "flext_ldif",

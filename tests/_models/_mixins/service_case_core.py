@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, ClassVar, override
 
-from flext_core import m, u
+from flext_core import m, p, u
 from tests import p, r, s, t
 
 
@@ -39,7 +39,7 @@ class TestsFlextModelsServiceCaseCore:
     class ServiceTestCase(m.BaseModel):
         """Test case for service."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
 
         service_type: Annotated[
             str | None,
@@ -73,7 +73,7 @@ class TestsFlextModelsServiceCaseCore:
     class RailwayTestCase(m.BaseModel):
         """Test case for railway pattern."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[p.ConfigDict] = m.ConfigDict(frozen=True)
 
         user_ids: Annotated[
             Sequence[str],

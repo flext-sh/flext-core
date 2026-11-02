@@ -51,7 +51,7 @@ class FlextExceptionsHelpers:
     @staticmethod
     def safe_metadata(
         value: p.HasModelDump | Mapping[str, t.JsonPayload | None] | t.JsonValue | None,
-    ) -> m.Metadata | None:
+    ) -> p.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model.
 
         Returns:

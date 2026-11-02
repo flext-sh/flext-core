@@ -227,11 +227,11 @@ from collections.abc import (
 )
 
 
-class FlextBillingServiceBase(s[m.Billing.Invoice]):
+class FlextBillingServiceBase(s[p.Billing.Invoice]):
     """Service base of the billing project."""
 
     @classmethod
-    def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
+    def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
         return m.RuntimeBootstrapOptions(settings_type=FlextBillingSettings)
 ```
 

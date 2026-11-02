@@ -12,7 +12,7 @@ from typing import ClassVar, cast
 from tests import c, m
 
 
-def _case_insensitive_options() -> m.ParseOptions[bool]:
+def _case_insensitive_options() -> p.ParseOptions[bool]:
     """Build case-insensitive parse options for the public parser scenario.
 
     Returns:
@@ -22,7 +22,7 @@ def _case_insensitive_options() -> m.ParseOptions[bool]:
     return cast("m.ParseOptions[bool]", m.ParseOptions(case_insensitive=True))
 
 
-def _field_name_options() -> m.ParseOptions[bool]:
+def _field_name_options() -> p.ParseOptions[bool]:
     """Build field-name parse options for the public parser context scenario.
 
     Returns:
@@ -37,7 +37,7 @@ class TestsFlextUtilitiesParserScenarios:
 
     """Centralized parser scenarios - single source of truth."""
 
-    PUBLIC_PARSE_CASES: ClassVar[Sequence[m.Tests.PublicParseCase]] = [
+    PUBLIC_PARSE_CASES: ClassVar[Sequence[p.Tests.PublicParseCase]] = [
         m.Tests.PublicParseCase(
             name="string-to-int",
             input_value="42",
@@ -145,7 +145,7 @@ class TestsFlextUtilitiesParserScenarios:
         ),
     ]
 
-    LDIF_PARSE_SCENARIOS: ClassVar[Sequence[m.Tests.ParserScenario]] = [
+    LDIF_PARSE_SCENARIOS: ClassVar[Sequence[p.Tests.ParserScenario]] = [
         m.Tests.ParserScenario(
             name="parse_simple_dn",
             parser_method="parse",

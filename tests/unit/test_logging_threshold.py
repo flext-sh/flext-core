@@ -13,12 +13,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_core import FlextSettings
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
-
-from tests import p
 
 
 class TestsFlextCoreLoggingThreshold:

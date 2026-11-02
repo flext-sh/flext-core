@@ -26,8 +26,8 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def dump(
-        model: m.BaseModel,
-        options: m.ModelDumpOptions | None = None,
+        model: p.BaseModel,
+        options: p.ModelDumpOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> Mapping[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.

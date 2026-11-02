@@ -34,6 +34,7 @@ from pydantic.warnings import (
     PydanticDeprecatedSince212,
     PydanticDeprecationWarning,
     PydanticExperimentalWarning,
+    UnsupportedFieldAttributeWarning,
 )
 from pydantic_core import (
     MISSING,
@@ -70,6 +71,7 @@ class FlextConstantsPydantic:
     # Warnings
     PydanticDeprecationWarning = PydanticDeprecationWarning
     PydanticExperimentalWarning = PydanticExperimentalWarning
+    UnsupportedFieldAttributeWarning = UnsupportedFieldAttributeWarning
 
     # Deprecation markers
     PydanticDeprecatedSince20 = PydanticDeprecatedSince20
