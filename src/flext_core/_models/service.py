@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from typing import ClassVar
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
@@ -30,6 +31,10 @@ class FlextModelsService:
         does not satisfy its protocol, so a runtime can never carry a fake
         settings, context, container or dispatcher.
         """
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
 
         settings: t.Port[p.Settings] = FlextModelsPydantic.Field(
             exclude=True,
@@ -62,6 +67,10 @@ class FlextModelsService:
         from its canonical owner (the settings class, a fresh context, the
         container's command bus).
         """
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
 
         settings: t.Port[p.Settings] | None = FlextModelsPydantic.Field(
             default=None,

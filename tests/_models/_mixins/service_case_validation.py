@@ -10,7 +10,7 @@ from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
 from flext_core import m, u
-from tests import t
+from tests import p, t
 
 
 class TestsFlextModelsServiceCaseValidation:

@@ -10,7 +10,7 @@ from typing import cast
 
 import pytest
 
-from tests import c, h, m, r, t, tm, u
+from tests import c, h, m, p, r, t, tm, u
 
 
 class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
@@ -207,11 +207,11 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         u.Tests.assert_failure(result, expected_error=c.Tests.UNEXPECTED_MESSAGE_TYPE)
 
     @staticmethod
-    def _dispatch_settings() -> p.Handler:
+    def _dispatch_settings() -> p.HandlerConfig:
         """Build the command-dispatch handler configuration for dispatch tests.
 
         Returns:
-            The configured ``m.Handler`` settings.
+            The configured ``m.HandlerConfig`` settings.
 
         """
         return u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(

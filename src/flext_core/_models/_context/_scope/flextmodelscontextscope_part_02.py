@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from contextvars import ContextVar
 from types import MappingProxyType
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
@@ -19,6 +19,10 @@ from flext_core._models._context._scope import FlextModelsContextScopePart01
 class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Mutable context metadata, hooks, statistics and scope-variable registry."""
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
 
         metadata: FlextModelsBase.Metadata = FlextModelsPydantic.Field(
             default_factory=FlextModelsBase.Metadata,

@@ -15,7 +15,11 @@ if TYPE_CHECKING:
 from collections.abc import Iterable
 from typing import Protocol, runtime_checkable
 
+from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols._project_metadata.fields import (
+    FlextProtocolsProjectMetadataFields,
+)
 
 if TYPE_CHECKING:
     from importlib.metadata import Distribution, DistributionFinder
@@ -65,7 +69,7 @@ class FlextProtocolsProjectMetadata:
         def requires_python(self) -> str: ...
 
         @property
-        def dependencies(self) -> tuple[str, ...]: ...
+        def dependencies(self) -> t.StrTuple: ...
 
         @property
         def authors(
@@ -76,10 +80,10 @@ class FlextProtocolsProjectMetadata:
         def urls(self) -> FlextProtocolsProjectMetadata.ProjectUrls: ...
 
         @property
-        def classifiers(self) -> tuple[str, ...]: ...
+        def classifiers(self) -> t.StrTuple: ...
 
         @property
-        def keywords(self) -> tuple[str, ...]: ...
+        def keywords(self) -> t.StrTuple: ...
 
     @runtime_checkable
     class ProjectToolFlextProject(FlextProtocolsBase.Model, Protocol):
@@ -87,6 +91,12 @@ class FlextProtocolsProjectMetadata:
 
         @property
         def class_stem_override(self) -> str | None: ...
+
+        @property
+        def budget(self) -> t.JsonMapping | None: ...
+
+        @property
+        def duplication(self) -> t.JsonMapping | None: ...
 
     @runtime_checkable
     class ProjectToolFlextReadmeSection(FlextProtocolsBase.Model, Protocol):
@@ -107,6 +117,9 @@ class FlextProtocolsProjectMetadata:
     @runtime_checkable
     class ProjectToolFlextDocs(FlextProtocolsBase.Model, Protocol):
         """Documentation policy fields."""
+
+        @property
+        def documentation_language(self) -> t.DocumentationLanguage: ...
 
         @property
         def package_name(self) -> str | None: ...
@@ -133,6 +146,13 @@ class FlextProtocolsProjectMetadata:
         def attached(self) -> bool: ...
 
     @runtime_checkable
+    class ProjectToolFlextNamespace(
+        FlextProtocolsProjectMetadataFields.ProjectToolFlextNamespace,
+        Protocol,
+    ):
+        """Namespace enforcement policy."""
+
+    @runtime_checkable
     class ProjectToolFlext(FlextProtocolsBase.Model, Protocol):
         """Validated FLEXT project policy."""
 
@@ -146,6 +166,11 @@ class FlextProtocolsProjectMetadata:
         def workspace(
             self,
         ) -> FlextProtocolsProjectMetadata.ProjectToolFlextWorkspace: ...
+
+        @property
+        def namespace(
+            self,
+        ) -> FlextProtocolsProjectMetadata.ProjectToolFlextNamespace: ...
 
     @runtime_checkable
     class ProjectMetadata(FlextProtocolsBase.Model, Protocol):

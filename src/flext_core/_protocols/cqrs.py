@@ -40,7 +40,7 @@ class FlextProtocolsCqrs:
         query_type: str | None
 
     @runtime_checkable
-    class Handler(Protocol):
+    class HandlerConfig(Protocol):
         """Structural data contract projected from the owning model."""
 
         handler_id: t.NonEmptyStr

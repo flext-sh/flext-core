@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import Annotated
+from typing import Annotated, ClassVar
 
 from flext_core import c, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
@@ -23,6 +23,10 @@ class FlextModelsContextScopePart01:
         Enforcement exemption: counters and the ``operations`` map are
         incremented throughout the context lifecycle; fresh per-instance.
         """
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
 
         sets: Annotated[
             t.NonNegativeInt,

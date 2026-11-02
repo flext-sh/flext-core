@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, ClassVar, override
 
-from flext_core import m, p, u
+from flext_core import m, u
 from tests import p, r, s, t
 
 

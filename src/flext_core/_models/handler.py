@@ -67,6 +67,7 @@ class FlextModelsHandler:
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(
+                frozen=True,
                 json_schema_extra={
                     "title": "RegistrationDetails",
                     "description": "Handler registration tracking details",

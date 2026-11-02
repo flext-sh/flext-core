@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import t
+    from flext_core import p, t
     from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsResult
 
 
@@ -21,13 +21,14 @@ from flext_core._protocols import FlextProtocolsResult
 if TYPE_CHECKING:
     from contextlib import AbstractContextManager
 
-    from flext_core import t
+    from flext_core import p, t
     from flext_core._protocols import FlextProtocolsContainer
 from contextvars import ContextVar
 from datetime import datetime
 
 from flext_core import t
 from flext_core._protocols import (
+    FlextProtocolsConfig,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
     FlextProtocolsSettings,
@@ -363,16 +364,16 @@ class FlextProtocolsContext:
         """Validated counters and operation metrics."""
 
         @property
-        def sets(self) -> int: ...
+        def sets(self) -> t.NonNegativeInt: ...
 
         @property
-        def gets(self) -> int: ...
+        def gets(self) -> t.NonNegativeInt: ...
 
         @property
-        def removes(self) -> int: ...
+        def removes(self) -> t.NonNegativeInt: ...
 
         @property
-        def clears(self) -> int: ...
+        def clears(self) -> t.NonNegativeInt: ...
 
         @property
         def operations(self) -> t.JsonMapping: ...
@@ -389,7 +390,7 @@ class FlextProtocolsContext:
         """Data capabilities consumed by context runtime helpers."""
 
         @property
-        def metadata(self) -> FlextProtocolsContext.ContextMetadata: ...
+        def metadata(self) -> p.Metadata: ...
 
         @property
         def hooks(self) -> t.ContextHookMap: ...
@@ -461,7 +462,7 @@ class FlextProtocolsContext:
         def settings_type(self) -> FlextProtocolsSettings.SettingsType | None: ...
 
         @property
-        def settings_overrides(self) -> Mapping[str, t.JsonValue] | None: ...
+        def settings_overrides(self) -> t.JsonMapping | None: ...
 
         @property
         def context(self) -> FlextProtocolsContext.Context | None: ...
@@ -476,7 +477,7 @@ class FlextProtocolsContext:
         def logger(self) -> FlextProtocolsLogging.Logger | None: ...
 
         @property
-        def logging_options(self) -> FlextProtocolsLogging.StructlogOptions | None: ...
+        def logging_options(self) -> FlextProtocolsConfig.StructlogOptions | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsContext"]

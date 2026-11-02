@@ -261,48 +261,22 @@ class FlextProtocolsLogging:
     class StructlogOptions(Protocol):
         """Declared options consumed by the logging composition owner."""
 
-        @property
-        def log_level(self) -> int | None: ...
+        log_level: int | None
 
-        @property
-        def console_renderer(self) -> bool | None: ...
+        console_renderer: bool | None
 
-        @property
-        def processing_stages(
-            self,
-        ) -> Sequence[FlextProtocolsLogging.LoggingStage]: ...
+        processing_stages: Sequence[FlextProtocolsLogging.LoggingStage]
+        observers: Sequence[FlextProtocolsLogging.LoggingObserver]
+        handlers: Sequence[FlextProtocolsLogging.LoggingHandler]
+        redacted_keys: Sequence[str]
 
-        @property
-        def observers(
-            self,
-        ) -> Sequence[FlextProtocolsLogging.LoggingObserver]: ...
+        redacted_values: Sequence[str]
 
-        @property
-        def handlers(
-            self,
-        ) -> Sequence[FlextProtocolsLogging.LoggingHandler]: ...
+        wrapper_class_factory: FlextProtocolsLogging.LoggerWrapperFactory | None
+        logger_factory: FlextProtocolsLogging.OutputLoggerFactory | None
+        cache_logger_on_first_use: bool
 
-        @property
-        def redacted_keys(self) -> Sequence[str]: ...
-
-        @property
-        def redacted_values(self) -> Sequence[str]: ...
-
-        @property
-        def wrapper_class_factory(
-            self,
-        ) -> FlextProtocolsLogging.LoggerWrapperFactory | None: ...
-
-        @property
-        def logger_factory(
-            self,
-        ) -> FlextProtocolsLogging.OutputLoggerFactory | None: ...
-
-        @property
-        def cache_logger_on_first_use(self) -> bool: ...
-
-        @property
-        def async_logging(self) -> bool | None: ...
+        async_logging: bool | None
 
     @runtime_checkable
     class LoggingSettings(FlextProtocolsSettings.Settings, Protocol):
@@ -385,6 +359,26 @@ class FlextProtocolsLogging:
         @property
         def version(self) -> str:
             """Version string."""
+            ...
+
+        @property
+        def created_by(self) -> str | None:
+            """Identifier of the actor that originally created this metadata."""
+            ...
+
+        @property
+        def modified_by(self) -> str | None:
+            """Identifier of the actor that last modified this metadata."""
+            ...
+
+        @property
+        def tags(self) -> Sequence[str]:
+            """Normalized labels used to classify and filter this metadata."""
+            ...
+
+        @property
+        def metadata_value(self) -> t.Scalar | None:
+            """Scalar metadata value."""
             ...
 
         @classmethod

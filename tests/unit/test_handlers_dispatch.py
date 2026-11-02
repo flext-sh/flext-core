@@ -18,7 +18,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
     """Assert observable dispatch/execute behavior, not implementation details."""
 
     @staticmethod
-    def _command_settings(handler_id: str) -> p.Handler:
+    def _command_settings(handler_id: str) -> p.HandlerConfig:
         return u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             handler_id,
             handler_id.replace("_", " ").title(),
@@ -32,7 +32,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         """Test execute returns processed payload for dict message."""
 
         class DictHandler(h[t.JsonMapping, t.JsonPayload]):
-            def __init__(self, *, settings: p.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize the dict-message handler with optional settings."""
                 super().__init__(settings=settings)
 
@@ -121,7 +121,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         class RestrictiveHandler(
             u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
-            def __init__(self, *, settings: p.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize the restrictive handler with optional settings."""
                 super().__init__(settings=settings)
 
@@ -149,7 +149,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         class ValidationFailingHandler(
             u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
-            def __init__(self, *, settings: p.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize the validation-failing handler with optional settings."""
                 super().__init__(settings=settings)
 
@@ -178,7 +178,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
         class ExceptionHandler(
             u.TestsFlextFlextHandlers.ConcreteTestHandler,
         ):
-            def __init__(self, *, settings: p.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize the exception-raising handler with optional settings."""
                 super().__init__(settings=settings)
 

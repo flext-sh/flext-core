@@ -56,7 +56,7 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
         if settings is not None:
             self._config_model = settings
         else:
-            self._config_model = m.Handler(
+            self._config_model = m.HandlerConfig(
                 handler_id=f"handler_{id(self)}",
                 handler_name=self.__class__.__name__,
             )

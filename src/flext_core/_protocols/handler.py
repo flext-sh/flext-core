@@ -51,19 +51,6 @@ class FlextProtocolsHandler:
 
     # FLEXT: annotations remain structural; concrete models are construction-only.
     @runtime_checkable
-    class HandlerConfig(FlextProtocolsBase.Model, Protocol):
-        """Validated handler configuration consumed by the runtime pipeline."""
-
-        @property
-        def handler_id(self) -> str: ...
-
-        @property
-        def handler_name(self) -> str: ...
-
-        @property
-        def handler_mode(self) -> c.HandlerType: ...
-
-    @runtime_checkable
     class ExecutionContext(FlextProtocolsBase.Model, Protocol):
         """Field-level contract for active handler execution state."""
 

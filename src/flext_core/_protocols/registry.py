@@ -40,13 +40,16 @@ class FlextProtocolsRegistry:
         """Observable registration identity and routing metadata."""
 
         @property
-        def registration_id(self) -> str: ...
+        def registration_id(self) -> t.NonEmptyStr: ...
 
         @property
         def handler_mode(self) -> c.HandlerType: ...
 
         @property
         def status(self) -> c.Status: ...
+
+        @property
+        def timestamp(self) -> str: ...
 
     @runtime_checkable
     class RegistrySummary(FlextProtocolsBase.Base, Protocol):

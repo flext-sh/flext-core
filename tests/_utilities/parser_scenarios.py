@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar, cast
 
-from tests import c, m
+from tests import c, m, p
 
 
 def _case_insensitive_options() -> p.ParseOptions[bool]:

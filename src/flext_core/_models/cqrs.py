@@ -144,10 +144,11 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 v.model_dump(mode="json") if isinstance(v, BaseModel) else v
             )
 
-    class Handler(FlextModelsBase.ArbitraryTypesModel):
+    class HandlerConfig(FlextModelsBase.ArbitraryTypesModel):
         """Handler configuration model."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
+            frozen=True,
             json_schema_extra={
                 "title": "Handler",
                 "description": "CQRS handler configuration",
@@ -155,11 +156,11 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         )
         handler_id: Annotated[
             t.NonEmptyStr,
-            Field(description="Unique handler identifier"),
+            Field(frozen=True, description="Unique handler identifier"),
         ]
         handler_name: Annotated[
             t.NonEmptyStr,
-            Field(description="Human-readable handler name"),
+            Field(frozen=True, description="Human-readable handler name"),
         ]
         handler_type: Annotated[c.HandlerType, Field(description="Handler type")] = (
             c.HandlerType.COMMAND

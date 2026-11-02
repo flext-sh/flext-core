@@ -65,7 +65,7 @@ class TestsFlextUtilities(flext_tests_u):
         class ConcreteTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for string messages."""
 
-            def __init__(self, *, settings: p.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -140,7 +140,7 @@ class TestsFlextUtilities(flext_tests_u):
         class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for validation."""
 
-            def __init__(self, *, settings: p.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -160,7 +160,7 @@ class TestsFlextUtilities(flext_tests_u):
         class FailingTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler that fails."""
 
-            def __init__(self, *, settings: p.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
