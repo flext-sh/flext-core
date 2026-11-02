@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 
     from flext_core import t
     from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsResult
-from typing import TYPE_CHECKING
+
 
 from flext_core._protocols import FlextProtocolsResult
 

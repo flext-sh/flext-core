@@ -289,6 +289,17 @@ emits JSON. Use the mode required by the outward adapter, preserving aliases and
 omission rules. Do not replace nested serialization with `dict(model)` or a
 handwritten recursive walk. See [native serialization](https://github.com/pydantic/pydantic/blob/v2.14.1/docs/concepts/serialization.md).
 
+`p.Model` declares the JSON options required by structural consumers: `indent`,
+`exclude` for named fields, `by_alias`, `exclude_none`, and `round_trip`. The
+underlying Pydantic method retains its complete native signature; this narrow
+port neither wraps it nor removes options from concrete models.
+
+The same port preserves Pydantic's native `model_copy(update=..., deep=...)`
+signature. Handler context contracts inherit its `Self` return rather than
+duplicating narrower update mappings. Signature compatibility does not authorize
+unvalidated updates to owned domain data: the consumer prohibition below still
+applies, and existing violations require repair at the validation boundary.
+
 Keep monetary precision in its declared decimal contract and validate its bounds;
 timestamps follow the domain's timezone policy, using aware UTC where the Core
 identity contract requires it. Do not normalize every datetime or string merely

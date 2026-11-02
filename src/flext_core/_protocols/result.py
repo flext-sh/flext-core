@@ -6,7 +6,13 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_checkable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import p
+
+
+from typing import Protocol, Self, TypeVar, overload, runtime_checkable
 
 from flext_core import t
 

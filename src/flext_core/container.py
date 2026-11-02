@@ -388,7 +388,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
             ),
             (
                 c.ServiceName.COMMAND_BUS,
-                lambda: p.ServiceRegistration(
+                lambda: m.ServiceRegistration(
                     name=c.ServiceName.COMMAND_BUS,
                     service=dispatcher if dispatcher is not None else FlextDispatcher(),
                 ),

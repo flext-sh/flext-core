@@ -10,9 +10,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import p
+
+
 from collections.abc import Mapping
 from contextlib import AbstractContextManager
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsSettings
 
@@ -160,6 +166,30 @@ class FlextProtocolsService:
         ) -> FlextProtocolsBase.Model:
             """Dispatch a message and return the result."""
             ...
+
+    @runtime_checkable
+    class ServiceRuntime(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        settings: p.Settings
+        context: p.Context
+        container: p.Container
+        dispatcher: p.Dispatcher
+        logger: p.Logger
+        logger_injected: bool
+
+    @runtime_checkable
+    class RuntimeBootstrapOptions(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        settings: p.Settings | None
+        settings_type: p.SettingsType | None
+        settings_overrides: t.JsonMapping | None
+        context: p.Context | None
+        container: p.Container | None
+        dispatcher: p.Dispatcher | None
+        logger: p.Logger | None
+        logging_options: p.StructlogOptions | None
 
 
 __all__: list[str] = ["FlextProtocolsService"]

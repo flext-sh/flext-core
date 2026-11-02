@@ -6,6 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from datetime import datetime
+
+    from flext_core import p
+
+
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Protocol, Self, overload, override, runtime_checkable
 
@@ -273,6 +281,54 @@ class FlextProtocolsContainer:
         | FlextProtocolsRegistry.Registry
         | FlextProtocolsResult.Result[FlextProtocolsContainer.ServiceValue]
     ]
+
+    @runtime_checkable
+    class RegistrationEnvelope(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        registration_time: datetime
+        metadata: p.Metadata | p.ConfigMap | None
+
+    @runtime_checkable
+    class FactoryRegistration(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        registration_time: datetime
+        metadata: p.Metadata | p.ConfigMap | None
+        name: t.NonEmptyStr
+        factory: p.FactoryCallable
+
+    @runtime_checkable
+    class ResourceRegistration(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        registration_time: datetime
+        metadata: p.Metadata | p.ConfigMap | None
+        name: t.NonEmptyStr
+        factory: p.ResourceCallable
+
+    @runtime_checkable
+    class ContainerConfig(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        enable_singleton: bool
+        enable_factory_caching: bool
+        max_services: t.PositiveInt
+        max_factories: t.PositiveInt
+        enable_auto_registration: bool
+        enable_lifecycle_hooks: bool
+        lazy_loading: bool
+
+    @runtime_checkable
+    class FactoryDecoratorConfig(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def name(self) -> t.NonEmptyStr: ...
+        @property
+        def singleton(self) -> bool: ...
+        @property
+        def lazy(self) -> bool: ...
 
 
 __all__: list[str] = ["FlextProtocolsContainer"]

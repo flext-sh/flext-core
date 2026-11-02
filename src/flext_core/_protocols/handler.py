@@ -10,8 +10,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, override, runtime_checkable
+from collections.abc import Sequence
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
@@ -84,20 +84,6 @@ class FlextProtocolsHandler:
         @property
         def execution_time_ms(self) -> float: ...
 
-        @override
-        def model_copy(
-            self,
-            *,
-            update: Mapping[
-                str,
-                t.JsonPayload
-                | FlextProtocolsBase.Model
-                | Sequence[FlextProtocolsBase.Model],
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> FlextProtocolsHandler.ExecutionContext: ...
-
     @runtime_checkable
     class HandlerRuntimeState(FlextProtocolsBase.Model, Protocol):
         """Field-level contract for copy-on-write handler pipeline state."""
@@ -109,20 +95,6 @@ class FlextProtocolsHandler:
         def context_stack(
             self,
         ) -> Sequence[FlextProtocolsHandler.ExecutionContext]: ...
-
-        @override
-        def model_copy(
-            self,
-            *,
-            update: Mapping[
-                str,
-                t.JsonPayload
-                | FlextProtocolsBase.Model
-                | Sequence[FlextProtocolsBase.Model],
-            ]
-            | None = None,
-            deep: bool = False,
-        ) -> FlextProtocolsHandler.HandlerRuntimeState: ...
 
     @runtime_checkable
     class DecoratorConfig(FlextProtocolsBase.Model, Protocol):
@@ -384,6 +356,24 @@ class FlextProtocolsHandler:
                 FlextProtocolsResult.Result[TResult],
             ],
         ) -> FlextProtocolsResult.Result[TResult]: ...
+
+    @runtime_checkable
+    class RegistrationDetails(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        registration_id: t.NonEmptyStr
+        handler_mode: c.HandlerType
+        timestamp: str
+        status: c.Status
+
+    @runtime_checkable
+    class CombinedRailwayOptions(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def enabled(self) -> bool: ...
+        @property
+        def error_code(self) -> str | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsHandler"]

@@ -129,5 +129,19 @@ class FlextProtocolsPydantic:
             init: Literal[False] = ...,
         ) -> FlextProtocolsPydantic.UnsetPrivateAttribute: ...
 
+    @runtime_checkable
+    class BaseModel(Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class BaseSettings(Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class RootModel[RootValueT](Protocol):
+        """Structural data contract projected from the owning model."""
+
+        root: RootValueT
+
 
 __all__: tuple[str, ...] = ("FlextProtocolsPydantic",)

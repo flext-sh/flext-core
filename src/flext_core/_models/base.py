@@ -123,8 +123,8 @@ class FlextModelsBase:
             validate_assignment=True,
             populate_by_name=True,
         )
-        # validador dos ``attributes`` (t.JsonMapping): forma explícita do alias,
-        # porque o objeto ``TypeAliasType`` não é uma forma de tipo para o checker
+        # Validate attributes with the explicit mapping type because
+        # the checker does not accept TypeAliasType as a type form.
         MAPPING_VALIDATOR: ClassVar[TypeAdapter[t.JsonMapping]] = TypeAdapter(
             Mapping[str, t.JsonValue]
         )

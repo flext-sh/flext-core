@@ -9,11 +9,20 @@ from __future__ import annotations
 
 from flext_core._protocols import (
     FlextProtocolsBase,
+    FlextProtocolsCollectionModels,
     FlextProtocolsConfig,
     FlextProtocolsContainer,
+    FlextProtocolsContainers,
     FlextProtocolsContext,
+    FlextProtocolsCqrs,
+    FlextProtocolsDomainEvent,
+    FlextProtocolsEntity,
+    FlextProtocolsErrors,
+    FlextProtocolsFlextContext,
+    FlextProtocolsFlextMixins,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
+    FlextProtocolsOptions,
     FlextProtocolsProjectMetadata,
     FlextProtocolsPydantic,
     FlextProtocolsRegistry,
@@ -21,6 +30,7 @@ from flext_core._protocols import (
     FlextProtocolsService,
     FlextProtocolsSettings,
 )
+from flext_core._protocols.exception_params import FlextProtocolsExceptionParams
 
 
 class FlextProtocols(
@@ -36,6 +46,16 @@ class FlextProtocols(
     FlextProtocolsProjectMetadata,
     FlextProtocolsPydantic,
     FlextProtocolsRegistry,
+    FlextProtocolsCollectionModels,
+    FlextProtocolsContainers,
+    FlextProtocolsCqrs,
+    FlextProtocolsDomainEvent,
+    FlextProtocolsEntity,
+    FlextProtocolsErrors,
+    FlextProtocolsFlextContext,
+    FlextProtocolsFlextMixins,
+    FlextProtocolsOptions,
+    FlextProtocolsExceptionParams,
 ):
     """Runtime-checkable structural typing protocols for FLEXT framework.
 

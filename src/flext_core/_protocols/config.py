@@ -11,7 +11,15 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Sequence
+
+    from flext_core import p
+
+
+from typing import Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -38,6 +46,83 @@ class FlextProtocolsConfig:
         ) -> t.JsonMapping:
             """Deep-merge ``override`` onto ``base``, returning a new mapping."""
             ...
+
+    @runtime_checkable
+    class AsyncLogJob(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def text(self) -> str | None: ...
+        @property
+        def completion(self) -> t.LoggingWriteCompletion: ...
+
+    @runtime_checkable
+    class StructlogOptions(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        log_level: int | None
+        console_renderer: bool | None
+        processing_stages: Sequence[p.LoggingStage]
+        observers: Sequence[p.LoggingObserver]
+        handlers: Sequence[p.LoggingHandler]
+        redacted_keys: Sequence[str]
+        redacted_values: Sequence[str]
+        wrapper_class_factory: p.LoggerWrapperFactory | None
+        logger_factory: p.OutputLoggerFactory | None
+        cache_logger_on_first_use: bool
+        async_logging: bool | None
+
+    @runtime_checkable
+    class ConfigDocument(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def data(self) -> t.JsonMapping: ...
+        @property
+        def source_path(self) -> str | None: ...
+        @property
+        def schema_ref(self) -> str | None: ...
+
+    @runtime_checkable
+    class ModelDumpOptions(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        by_alias: bool | None
+        exclude_none: bool | None
+        exclude_unset: bool | None
+        exclude_defaults: bool | None
+        include: set[str] | None
+        exclude: set[str] | None
+
+    @runtime_checkable
+    class ParseOptions[T](Protocol):
+        """Structural data contract projected from the owning model."""
+
+        strict: bool | None
+        case_insensitive: bool | None
+        default: T | None
+        default_factory: Callable[[], T] | None
+        field_name: str | None
+
+    @runtime_checkable
+    class RetryOptions(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        max_attempts: int | None
+        delay_seconds: float | None
+
+    @runtime_checkable
+    class LoggingRecord(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def message(self) -> str: ...
+        @property
+        def level(self) -> str: ...
+        @property
+        def context(self) -> t.JsonMapping: ...
+        @property
+        def exception(self) -> BaseException | None: ...
 
 
 __all__: list[str] = ["FlextProtocolsConfig"]

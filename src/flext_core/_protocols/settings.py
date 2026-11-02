@@ -6,9 +6,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
 
 
@@ -120,6 +123,22 @@ class FlextProtocolsSettings:
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...
+
+    @runtime_checkable
+    class SettingsValue(Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class RetryConfiguration(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        max_retries: t.PositiveInt
+        initial_delay_seconds: t.PositiveFloat
+        max_delay_seconds: t.PositiveFloat
+        exponential_backoff: bool
+        backoff_multiplier: t.BackoffMultiplier
+        retry_on_exceptions: Sequence[type[BaseException]]
+        retry_on_status_codes: Sequence[int]
 
 
 __all__: list[str] = ["FlextProtocolsSettings"]

@@ -13,6 +13,12 @@
 
 These patterns are executable references for core runtime behavior.
 
+Model classes injected into configuration or file readers are consumed through
+the runtime-checkable `p.ModelReader` capability. The port owns validation and
+class-name access; callers retain the supplied class by reference and construct
+concrete payloads through `m`. Document decoding passes its existing typed
+context unchanged, and native validation errors remain visible.
+
 ## Result Composition Pattern
 
 ```python

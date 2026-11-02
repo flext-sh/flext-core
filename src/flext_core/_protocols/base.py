@@ -6,8 +6,17 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, MutableSequence
-from typing import TYPE_CHECKING, Literal, Protocol, Self, overload, runtime_checkable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+    from datetime import datetime
+
+    from flext_core import p
+
+
+from collections.abc import Callable, Iterable, Mapping, MutableSequence
+from typing import Literal, Protocol, Self, overload, runtime_checkable
 
 from typing_extensions import TypeForm
 
@@ -132,7 +141,20 @@ class FlextProtocolsBase:
         __module__: str
 
     @runtime_checkable
-    class Model[DumpT: t.JsonPayload = t.JsonDict](Base, Protocol):
+    class ModelCopy(Protocol):
+        """Copy a validated model without constraining its serialized payload."""
+
+        def model_copy(
+            self,
+            *,
+            update: Mapping[str, object] | None = None,
+            deep: bool = False,
+        ) -> Self:
+            """Copy through the native model's update and depth contract."""
+            ...
+
+    @runtime_checkable
+    class Model[DumpT: t.JsonPayload = t.JsonDict](Base, ModelCopy, Protocol):
         """Structural typing protocol for Pydantic v2 models.
 
         Ensures types have Pydantic signatures without importing BaseModel directly
@@ -155,8 +177,16 @@ class FlextProtocolsBase:
             """Dump the validated model at an external serialization boundary."""
             ...
 
-        def model_copy(self, *, deep: bool = False) -> Self:
-            """Copy a Pydantic-compatible model instance."""
+        def model_dump_json(
+            self,
+            *,
+            indent: int | None = None,
+            exclude: set[str] | None = None,
+            by_alias: bool | None = None,
+            exclude_none: bool = False,
+            round_trip: bool = False,
+        ) -> str:
+            """Serialize through the native JSON options structural consumers use."""
             ...
 
     @runtime_checkable
@@ -238,6 +268,111 @@ class FlextProtocolsBase:
 
         unique_id: str
         domain_events: MutableSequence[p.DomainEvent]
+
+    @runtime_checkable
+    class EnforcedModel(Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class ManagedModel(EnforcedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class EnumManagedModel(ManagedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class NormalizedModel(EnumManagedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class StrictManagedModel(NormalizedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class StrictModel(StrictManagedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class FrozenModel(StrictModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class ArbitraryTypesModel(ManagedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class StrictBoundaryModel(FrozenModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class FlexibleInternalModel(NormalizedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class ImmutableValueModel(ManagedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class TaggedModel(EnforcedModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class FlexibleModel(ArbitraryTypesModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class DynamicModel(FlexibleModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class FrozenDynamicModel(DynamicModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class Metadata(Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def created_at(self) -> datetime: ...
+        @property
+        def updated_at(self) -> datetime: ...
+        @property
+        def version(self) -> str: ...
+        @property
+        def created_by(self) -> str | None: ...
+        @property
+        def modified_by(self) -> str | None: ...
+        @property
+        def tags(self) -> Sequence[str]: ...
+        @property
+        def attributes(self) -> t.JsonMapping: ...
+        @property
+        def metadata_value(self) -> t.Scalar | None: ...
+
+    @runtime_checkable
+    class ContractModel(StrictModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class ExternalContractModel(ContractModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class FrozenValueModel(ContractModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class RetryConfigurationMixin(Model, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        max_retries: t.NonNegativeInt
+        initial_delay_seconds: t.PositiveFloat
+        max_delay_seconds: t.PositiveFloat
+
+    @runtime_checkable
+    class TimestampedModel(ArbitraryTypesModel, Protocol):
+        """Structural data contract projected from the owning model."""
 
 
 __all__: list[str] = ["FlextProtocolsBase"]

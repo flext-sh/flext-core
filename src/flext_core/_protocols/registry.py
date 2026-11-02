@@ -9,8 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core import p
+
+
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import c
 from flext_core._protocols import FlextProtocolsBase
@@ -161,6 +167,16 @@ class FlextProtocolsRegistry:
         ) -> FlextProtocolsResult.Result[Sequence[str]]:
             """List all plugins in a category."""
             ...
+
+    @runtime_checkable
+    class RegistryServiceState(Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class RegistryOptions(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        registry_runtime: p.ServiceRuntime
 
 
 __all__: list[str] = ["FlextProtocolsRegistry"]

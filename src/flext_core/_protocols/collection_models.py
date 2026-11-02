@@ -1,0 +1,54 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
+"""Source-derived structural model contracts.
+
+Copyright (c) 2026 FLEXT Team. All rights reserved.
+src/flext_core/_protocols/collection_models
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import Protocol, runtime_checkable
+
+from flext_core import t
+
+
+class FlextProtocolsCollectionModels:
+    """Own the structural contracts declared by its model source."""
+
+    @runtime_checkable
+    class TransformSpec(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        normalize: bool
+        strip_none: bool
+        strip_empty: bool
+        map_keys: Mapping[str, str] | None
+        filter_keys: set[str] | None
+        exclude_keys: set[str] | None
+
+    @runtime_checkable
+    class GuardCheckSpec(Protocol):
+        """Structural data contract projected from the owning model."""
+
+        eq: t.JsonValue | None
+        ne: t.JsonValue | None
+        gt: float | str | None
+        gte: float | str | None
+        lt: float | str | None
+        lte: float | str | None
+        is_: type | None
+        not_: type | None
+        in_: t.JsonList | None
+        not_in: t.JsonList | None
+        none: bool | None
+        empty: bool | None
+        contains: str | None
+        starts: str | None
+        ends: str | None
+
+
+__all__: list[str] = [
+    "FlextProtocolsCollectionModels",
+]

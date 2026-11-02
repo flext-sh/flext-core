@@ -51,6 +51,8 @@ class FlextTypesPydantic:
     # String constraints
     type ConfigDict = pydantic.ConfigDict
     type SettingsConfigDict = pydantic_settings.SettingsConfigDict
+    type PydanticBaseSettings = pydantic_settings.BaseSettings
+    type PydanticBaseSettingsSource = pydantic_settings.PydanticBaseSettingsSource
     type ComputedFieldInfo = pydantic.fields.ComputedFieldInfo
     type FieldInfo = pydantic.fields.FieldInfo
     type StrictStr = pydantic.StrictStr
@@ -378,6 +380,26 @@ class FlextTypesPydantic:
         else:
             schema = core_schema.is_instance_schema(origin or target)
         return schema
+
+    @staticmethod
+    def schema_for_model(
+        model: type[p.Model],
+    ) -> FlextTypesPydantic.GetPydanticSchema:
+        """Delegate a protocol payload to its authenticated native model schema.
+
+        Returns:
+            Native metadata preserving the model's validation and serialization.
+
+        Raises:
+            TypeError: The supplied schema owner is not a Pydantic model class.
+
+        """
+        if not issubclass(model, pydantic.BaseModel):
+            message = "payload schema owner must be a Pydantic model class"
+            raise TypeError(message)
+        return pydantic.GetPydanticSchema(
+            lambda _source, handler: handler.generate_schema(model)
+        )
 
     # Dependency port: a field typed by a class, normally a
     # ``@runtime_checkable`` Protocol from ``p``, or an alias over such classes.
