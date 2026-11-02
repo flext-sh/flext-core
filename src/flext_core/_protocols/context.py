@@ -7,34 +7,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
-
-if TYPE_CHECKING:
-    from contextlib import AbstractContextManager
-
-    from flext_core import p, t
-    from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsResult
-
-
-from flext_core._protocols import FlextProtocolsResult
-
-if TYPE_CHECKING:
-    from contextlib import AbstractContextManager
-
-    from flext_core import p, t
-    from flext_core._protocols import FlextProtocolsContainer
 from contextvars import ContextVar
 from datetime import datetime
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols import (
     FlextProtocolsConfig,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
+    FlextProtocolsResult,
     FlextProtocolsSettings,
 )
 
 if TYPE_CHECKING:
+    from contextlib import AbstractContextManager
+
+    from flext_core import p
     from flext_core._protocols import FlextProtocolsContainer
 
 
@@ -96,7 +85,7 @@ class FlextProtocolsContext:
             ...
 
     @runtime_checkable
-    class ContextExport(Protocol):
+    class ContextExporter(Protocol):
         """Context export/serialization operations."""
 
         def export(
@@ -126,7 +115,7 @@ class FlextProtocolsContext:
         ContextRead,
         ContextWrite,
         ContextLifecycle,
-        ContextExport,
+        ContextExporter,
         ContextMetadataAccess,
         Protocol,
     ):
@@ -136,7 +125,7 @@ class FlextProtocolsContext:
         - ContextRead: read-only access (get/has/keys/values/items)
         - ContextWrite: mutation (set/remove/clear)
         - ContextLifecycle: clone/merge/validate
-        - ContextExport: serialization
+        - ContextExporter: serialization
         - ContextMetadataAccess: metadata operations
         """
 

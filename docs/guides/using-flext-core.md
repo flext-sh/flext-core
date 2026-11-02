@@ -264,23 +264,37 @@ dispatcher migration is complete merely because this guide describes its contrac
 
 ## Logging
 
+An application elects logging policy once at its composition root. Services consume
+the runtime's `p.Logger` through `self.logger`; a function without a runtime receives
+the same port explicitly. `RuntimeBootstrapOptions.logger` retains an existing
+application logger, while `logging_options` supplies the existing structlog
+extensions without setup or a factory in each service. Settings remain the owner
+of severity, debug/trace and the `console` or `json` profile.
+
+The ordinary console shows business context without repeating callsite, thread and
+process metadata. Debug/trace retains that detail. JSON sinks and observers receive
+the complete sanitized event; console presentation never removes their fields.
+Callsite collection is skipped when no selected destination requires it. Results
+and progress remain CLI presentation rather than automatic logging rewrites.
+
+Direct bindings remain useful at application boundaries. Operation scopes restore
+prior correlation values, including when an inner operation fails:
+
 ```python
-from __future__ import annotations
-
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from flext_core import u
 
 logger = u.fetch_logger(__name__)
-logger.info("user.created", user_id=42)
+with u.logging_scope("operation", correlation_id="request"):
+    logger.info("user.created", user_id=42)
 ```
+
+For custom destinations, the root passes
+`m.RuntimeBootstrapOptions(settings=application_settings,
+logging_options=m.StructlogOptions(handlers=(application_handler,)))` when building
+the runtime. A supplied `logger=application_logger` is preserved when the CLI
+rebinds settings. The native CLI pipeline copies the operation context at each
+thread submission; an application-owned executor needs the same per-submission
+`copy_context().run` boundary, not a shared mutable context.
 
 ## Service runtime
 

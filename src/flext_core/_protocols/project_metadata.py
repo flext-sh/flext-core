@@ -6,27 +6,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core import p
-
-
 from collections.abc import Iterable
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
-from flext_core._protocols._project_metadata.fields import (
-    FlextProtocolsProjectMetadataFields,
-)
+from flext_core._protocols._project_metadata import FlextProtocolsProjectMetadataFields
 
 if TYPE_CHECKING:
     from importlib.metadata import Distribution, DistributionFinder
     from pathlib import Path, PurePosixPath
 
 
-class FlextProtocolsProjectMetadata:
+class FlextProtocolsProjectMetadata(FlextProtocolsProjectMetadataFields):
     """Protocols for project metadata consumed across FLEXT layers."""
 
     @runtime_checkable
@@ -144,13 +136,6 @@ class FlextProtocolsProjectMetadata:
 
         @property
         def attached(self) -> bool: ...
-
-    @runtime_checkable
-    class ProjectToolFlextNamespace(
-        FlextProtocolsProjectMetadataFields.ProjectToolFlextNamespace,
-        Protocol,
-    ):
-        """Namespace enforcement policy."""
 
     @runtime_checkable
     class ProjectToolFlext(FlextProtocolsBase.Model, Protocol):

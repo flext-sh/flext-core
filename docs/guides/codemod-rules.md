@@ -11,6 +11,8 @@
 - [Make verbs](#make-verbs)
 - [ast-grep rules](#ast-grep-rules)
   - [Pyrefly strict-typing cures (campaign flext-osru9, census 2026-10-28)](#pyrefly-strict-typing-cures-campaign-flext-osru9-census-2026-10-28)
+  - [One relocation law: every declaration lives in its family](#one-relocation-law-every-declaration-lives-in-its-family)
+  - [One construction owner: the model, never the protocol](#one-construction-owner-the-model-never-the-protocol)
   - [One rule per law](#one-rule-per-law)
 - [Text rules](#text-rules)
 - [Tests and snapshots](#tests-and-snapshots)
@@ -73,6 +75,16 @@ every loaded provider. A text rule may also name the projects it targets in
 `_selected_rules`). Put a rule at the highest layer where its law holds.
 
 ## Make verbs
+
+Declared signature additions use native Rope `ChangeSignature` through the
+existing contract planner and guarded publisher. Their source changes are not
+accepted until the native lifecycle verifies the declaration and every caller.
+
+Distribution-name normalization belongs to `u.Infra.distribution_identity`.
+The declared Rope migration targets proven one-argument calls and single-iterable
+`map` callbacks while retaining the native backend in its implementation owner.
+Calls with other arguments, including `validate=True`, retain their contracts and
+require their own evidence before migration.
 
 Common verbs are declared in
 `flext-infra/src/flext_infra/config/codegen.yaml` (`make.verbs`). Infra declares
@@ -163,17 +175,27 @@ declared at the generation owner; authored files are never retired by that decla
 
 | Workspace declaration | Infra implementation |
 | --- | --- |
-| ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/_codemod/codemod_native_utilities.py) |
+| ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/40ec9df58cd4170f70227e91cee4483f1250d221/src/flext_infra/_utilities/_codemod/native_utilities.py) |
 | ADR-028 Decision 18 owns one generalized source rule per law. | Repository plans preserve renderer IDs; the source catalog remains the single rule owner. |
 
 Every finding is the native match; no Python admission runs after the scan. A
 project fact a catalog rule needs is a stable generated utility (`own-package`,
 `stdlib-module`, `runtime-package`, `facade-package`, `local-alias`,
-`runtime-alias`, `package-export`, `compose-module`, ...) that the rule references
+`runtime-alias`, `package-published-import`, `compose-module`, ...) that the rule references
 through `matches:`, or a file scope the generated provider publishes in its
 `scopes.json`. Catalog fixtures resolve those identities through
 `config/rules/ast-grep/fixture-utils/`, which only the fixture stage reads. A native
 rule that still reports an actionable finding after the cascade fails `make mod`.
+
+The deep-import law has one rewrite rule, `rewire-deep-import-to-package`: a
+`from <package>.<module> import ...` moves to `from <package> import ...` only
+when the `package-published-import` utility proves that the package's initializer
+publishes every imported name and that no sibling import of the package's modules
+in the file imports an unpublished name. The header of a package's members moves
+together or stays untouched; a package without an initializer publishes nothing
+and never rewrites. The detection rules `ban-test-deep-module-import`,
+`ban-consumer-submodule-import` and `ban-own-family-internal-import` report what
+the rewrite cannot repair.
 
 ## ast-grep rules
 
@@ -264,9 +286,74 @@ The engine reads these `metadata` keys, declared in
 | `scope` | File scopes the generated provider publishes: `{in: [selector], not-in: [selector]}` narrows the rule's `files`/`ignores`; `partition` renders one generated rule `<id>--<package>[--<key>]` per file group, and selecting the catalog id selects every partition. |
 | `owner` | The distribution that owns the law; that project's own plan drops the rule. |
 | `consumers_of` | The rule applies only to projects whose runtime closure includes that distribution. |
-| `relocation` | A detection-only rule names the Rope relocation that repairs it and captures the symbol as `$NAME`. |
+| `relocation` | A detection-only rule names the Rope relocation that repairs it and captures the symbol as `$NAME`. `family-declaration` also captures the owning facade letter as `$FAMILY` (see below). |
+
+### One relocation law: every declaration lives in its family
+
+ADR-028 Decisions 3-4 give each kind of declaration one owner family: type
+aliases, `TypeVar`s and other typing declarations in `t`, constants in `c`,
+`Protocol` classes in `p`, models in `m`, reusable behavior in `u`. The
+`family-declaration` relocation is the single executor of that law
+(`refactor/namespace_relocations.py`); a rule only declares the kind, its
+`$NAME`, and the owning letter as `$FAMILY`. The rules that name it are
+`ban-manual-typing-alias-outside-typings` (`t`),
+`ban-manual-protocol-outside-protocols` (`p`),
+`ban-class-wrong-facade-layer` (`c`, `m`, `u` by the class kind) and
+`ban-behavior-in-declaration-layer` (`u`).
+
+- **Destination.** The module of the owning family named after the declaring
+  module, inside the namespace root that hosts the family directories:
+  `_models/matchers.py` relocates a typing to `_typings/matchers.py`
+  (`u.Infra.family_declaration_target_file`; the directory and the letter come
+  from the facade-family census). An absent destination is scaffolded; the
+  class-nesting cutover then nests the moved declaration in the module's single
+  family class and the facade composition publishes it by MRO
+  (`t.Tests.MatchExpectedValue`).
+- **Consumers.** The native Rope move rewires every consumer, in other members
+  and external consumers included.
+- **Private names.** The family namespace has no privacy, so `_Name` is
+  renamed to `Name` through the native Rename before the move. A collision at
+  the source or the destination, or a quoted forward reference to the name,
+  stops the relocation with the first failure.
+- **Behavior.** A module-level function moves whole. A static or class method
+  is transferred into the destination owner class by the native class transfer
+  and rejected whole when a reference is unproven (the rejection is logged and
+  the finding stays). Instance methods, properties and dunders need a receiver
+  rewrite that no derivation supplies and stay findings.
+- **Nesting yields.** Class nesting leaves a typing declaration outside the
+  typings family, and a function in a constants, typings or models module,
+  at module level so this relocation finds it.
 | `expected` | The exact finding count receipt; any other count fails. |
 | `owned_path_suffix` | Reject owned `.pyi` paths from discovery even without a syntax tree; detection-only, with no exemption. |
+
+### One construction owner: the model, never the protocol
+
+A `p` member is a structural Protocol: it describes a contract and never builds
+or validates data. `ban-protocol-constructor` is the single rule of this law and
+covers every form at any namespace depth: `p.X(...)`, `p.NS.X(...)` and the
+model classmethods `.model_validate`, `.model_validate_json`,
+`.model_validate_strings` and `.model_construct` on a `p` path. A protocol
+read in an annotation, `isinstance` check or `match` class pattern is the
+intended use and never fires; only a call whose callee is the `p` path does,
+and only in a module that binds `p` from a FLEXT package. The runtime failure
+this prevents is real: a protocol class has no `model_validate`.
+
+The rewrite is exact and derived, never listed. The generated utility
+`protocol-model-path` (producer `codemod_requested_utilities`, the same
+request mechanism as `generic-specialization`) holds the dotted `p` paths that
+a reached facade package publishes as a model (`FacadeMemberKind.MODEL`) at the
+same path in `m`, read from the native source of both letters. A path that any
+reached package publishes without a model twin is excluded. The rule's
+rewriter retargets only that path from `p` to `m`, so a protocol without a model
+at its path keeps its text and stays a finding for its owner: the rule reports
+it and never guesses. The unbound `m` the rewrite introduces is bound by the
+generated `import-header` stage of the same `make mod` fixed point. The
+fixture value of the utility is `fixture-utils/protocol-model-path.yml`; the
+rule test covers the constructor, validation, nested-path, no-model, annotation,
+`isinstance` and unbound-facade cases.
+
+See using-pydantic for the
+protocol contract this rule enforces.
 
 ### One rule per law
 
@@ -274,13 +361,12 @@ The engine reads these `metadata` keys, declared in
 | --- | --- |
 | This section, One rule per law; the generated Infra copy links back here. | FLEXT ADR-028 Decision 18 |
 
-Rope is the only accepted Python interpreter in FLEXT's own code ([ADR-028
-Decision 17, amendment
-2026-10-28](../../docs/architecture/adr/028-facade-boundary-orchestrators-declarative-enforcement.md#decision-17)):
-the engine never parses, analyzes or rewrites Python source with the `ast`
-module, `libcst`, or `re` applied to code — analysis and transforms go through
-rope's PyModules from the single indexed project. ast-grep (declarative rules),
-sed (text) and the generator (projections) keep their canonical domains.
+For semantic discovery and refactoring, ADR-028 Decision 17
+uses Rope's native workspace and refactorings. The later
+ADR-018 projection correction
+assigns declaration-only generation to one typed AST inventory; generation does
+not perform semantic moves or consumer rewrites. ast-grep rules, text operations
+and generated projections retain their declared owners.
 
 Operator order of 2026-10-25, verbatim (tracker memory
 `operator-order-2026-10-25-rules-generalized-min-count`; ADR-028 Decision 18):
@@ -305,10 +391,9 @@ library-named exports to capability names follows ADR-028 Decision 15.
   `partition` is used only when the verdict depends on which file group holds
   the match. When the law can be stated from the code itself, state it there
   and use `scope: {not-in: [...]}`, which renders as plain native `ignores`.
-  `ban-foreign-namespace-source`, `ban-foreign-canonical-alias-import` and
-  `ban-foreign-namespace-annotation-source` are single documents that way:
-  facade modules compose upstream letters by design, so they are scoped out
-  rather than partitioned per letter.
+  The generated `foreign-origin` letter-binding document is one document per
+  package that way: the family modules compose upstream letters by design, so
+  they are listed in its native `ignores` rather than partitioned per letter.
 - **One law, one rule, every library.** A law that applies to many libraries,
   packages or letters derives the set from its facts (installed distributions,
   facade exports, the import law). It never ships one clone per member.
@@ -468,6 +553,8 @@ FLEXT-owned CPython AST and LibCST interpretation are being retired separately.
   adapter construction, `m.TypeAdapter(...)` and `t.TypeAdapter(...)` exercise the
   rewrite, while `u.type_adapter(...)` is a valid fixed point. Regenerate snapshots
   from those authored inputs; never repair stale labels by editing generated output.
+- A fixture asserting a semantic class match must contain valid Python; malformed
+  source belongs to a separate parser-boundary case.
 
 ## Workflow
 

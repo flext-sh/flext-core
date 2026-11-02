@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from flext_core import c, t
 
 if TYPE_CHECKING:
-    from flext_core.protocols import p
+    from flext_core import p
 
 
 class FlextProtocolsDomainEvent:

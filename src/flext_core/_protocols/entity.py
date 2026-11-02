@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core import t
 
 if TYPE_CHECKING:
-    from flext_core.protocols import p
+    from flext_core import p
 
 
 class FlextProtocolsEntity:

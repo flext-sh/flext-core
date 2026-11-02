@@ -567,7 +567,7 @@ class FlextConstantsErrors:
         "h.handler(command=m.Request)."
     )
     ERR_SERVICE_OPERATION_RESULT: Final[str] = (
-        "must return p.Result. Fix: annotate the return as p.Result[...]."
+        "must return m.Result. Fix: annotate the return as p.Result[...]."
     )
     ERR_SERVICE_OPERATION_COLLISION: Final[str] = (
         "is declared by sibling classes {owners}. Fix: rename one of them."
