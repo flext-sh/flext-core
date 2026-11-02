@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping
-from typing import ClassVar, override
+from typing import ClassVar, cast, override
 
 from flext_core import c, m, p, t
 from flext_core._exceptions import FlextExceptionsHelpers
@@ -162,7 +162,9 @@ class FlextExceptionsBase:
             JSON payload, mirroring ``ExceptionInitOptions.metadata``.
             """
             resolved_message = message % format_args if format_args else message
-            opts = options
+            opts = (
+                cast("m.ExceptionInitOptions", options) if options is not None else None
+            )
             if opts is None:
                 # Keyword-form construction: the tested public contract accepts
                 # the ExceptionInitOptions fields as direct keywords (e.g.
@@ -384,7 +386,7 @@ class FlextExceptionsBase:
                 The resulting ``m.ExceptionInitOptions``.
 
             """
-            return options.model_copy(
+            return cast("m.ExceptionInitOptions", options).model_copy(
                 update={
                     "context": ctx or None,
                     "metadata": (

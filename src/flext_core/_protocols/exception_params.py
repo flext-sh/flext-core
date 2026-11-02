@@ -8,12 +8,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from flext_core._protocols._exception_params.base import (
+    FlextProtocolsExceptionParamsBase,
+)
 from flext_core._protocols._exception_params.operation_errors import (
     FlextProtocolsExceptionParamsOperationErrors,
 )
 
 
-class FlextProtocolsExceptionParams(FlextProtocolsExceptionParamsOperationErrors):
+class FlextProtocolsExceptionParams(
+    FlextProtocolsExceptionParamsBase,
+    FlextProtocolsExceptionParamsOperationErrors,
+):
     """Own the structural contracts declared by its model source."""
 
 
