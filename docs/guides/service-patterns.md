@@ -37,15 +37,6 @@ covers what the kernel provides today.
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from typing import Annotated
 
 from flext_core import m, p, r, s
@@ -90,15 +81,6 @@ declares it with `t.Port`:
 
 ```python
 from __future__ import annotations
-
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
 
 from typing import Protocol, runtime_checkable
 
@@ -186,18 +168,75 @@ shared by two services is a variable passed to both constructors:
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
+from typing import Protocol, runtime_checkable
+
+from flext_core import m, p, r, s, t
+
+
+@runtime_checkable
+class Clock(p.Base, Protocol):
+    """Current time in seconds."""
+
+    def now(self) -> int:
+        """Read the current instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        ...
+
+
+class SystemClock:
+    """Adapter reading a fixed instant for the example."""
+
+    @staticmethod
+    def now() -> int:
+        """Return the instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        return 7
+
+
+class StampService(s[int]):
+    """Stamp an event with the time its clock reads."""
+
+    clock: t.Port[Clock] = m.Field(exclude=True, description="Clock the stamp reads.")
+
+    def execute(self) -> p.Result[int]:
+        """Stamp the event with the clock reading.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+
+        """
+        return r[int].ok(self.clock.now())
+
+
+class AuditService(s[int]):
+    """Audit an event with the time its clock reads."""
+
+    clock: t.Port[Clock] = m.Field(exclude=True, description="Clock the audit reads.")
+
+    def execute(self) -> p.Result[int]:
+        """Audit the event with the clock reading.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+
+        """
+        return r[int].ok(self.clock.now())
+
 
 clock = SystemClock()
 stamps = StampService(clock=clock)
 audit = AuditService(clock=clock)
+if stamps.execute().value != audit.execute().value:
+    message = "Both services must read the shared clock"
+    raise RuntimeError(message)
 ```
 
 - Constructing an adapter performs no I/O; it connects on first use, so importing
@@ -217,21 +256,24 @@ through `p.RuntimeBootstrapProvider`; `FlextService` itself declares no hook:
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
+from flext_core import FlextSettings, m, p, s
 
 
-class FlextBillingServiceBase(s[p.Billing.Invoice]):
+class FlextBillingSettings(FlextSettings):
+    """Settings of the billing project."""
+
+
+class FlextBillingServiceBase(s[int]):
     """Service base of the billing project."""
 
     @classmethod
     def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+        """Declare the project settings type for the core runtime.
+
+        Returns:
+            The resulting ``p.RuntimeBootstrapOptions``.
+
+        """
         return m.RuntimeBootstrapOptions(settings_type=FlextBillingSettings)
 ```
 
@@ -264,15 +306,6 @@ owner alignment with the fleet typing rule, rather than a protocol or alias work
 
 ```python
 from __future__ import annotations
-
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
 
 from flext_core import m, p, r, s, u
 
@@ -406,21 +439,12 @@ The first failure propagates with its cause: inside a result boundary as
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from flext_core import r
 
 failure = r[int].fail("lookup failed", exception=KeyError("user-7"))
 try:
     failure.unwrap()
-except KeyError as exc:
+except KeyError:
     pass
 else:
     message = "Expected unwrap to raise on failure"

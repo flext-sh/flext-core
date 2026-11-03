@@ -10,7 +10,9 @@ from __future__ import annotations
 
 from typing import Literal, Protocol, runtime_checkable
 
-from flext_tests import FlextTestsProtocols, t
+from flext_tests import FlextTestsProtocols
+
+from tests import t
 
 
 class TestsFlextProtocolsMixinsCoreErrors:

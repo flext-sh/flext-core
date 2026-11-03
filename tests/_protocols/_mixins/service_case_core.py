@@ -11,7 +11,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_tests import FlextTestsProtocols, t
+from flext_tests import FlextTestsProtocols
+
+from tests import t
 
 if TYPE_CHECKING:
     from flext_tests import p
@@ -57,43 +59,6 @@ class TestsFlextProtocolsMixinsServiceCaseCore:
         def initial_context(self) -> p.Context | None:
             """Initial context for the service scope."""
             ...
-
-        @property
-        def settings(self) -> p.Settings:
-            """Settings from this component's scoped runtime."""
-
-        @property
-        def container(self) -> p.Container:
-            """Container from the same runtime as context and settings."""
-
-        @property
-        def context(self) -> p.Context:
-            """Context associated with this component."""
-
-        @property
-        def logger(self) -> p.Logger:
-            """Structural member projected from the owning model.
-
-            Consume the logging dependency elected by this component's runtime.
-            """
-
-        @classmethod
-        def fetch_global(cls) -> Self:
-            """Return the per-class shared singleton."""
-
-        @classmethod
-        def reset_for_testing(cls) -> None:
-            """Drop the per-class singleton slot for test isolation."""
-
-        @classmethod
-        def with_settings(cls, settings: p.Settings) -> Self:
-            """Structural member projected from the owning model.
-
-            Return an isolated service snapshot with one runtime settings clone.
-            """
-
-        def execute(self) -> p.Result[TDomainResult]:
-            """Execute the service domain logic."""
 
     @runtime_checkable
     class ServiceTestCase(FlextTestsProtocols.Model, Protocol):

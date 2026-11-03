@@ -8,9 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, c, t
+from examples import c, t
+from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p

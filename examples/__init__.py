@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from examples.constants import c
+    from examples.constants import ExamplesFlextConstants, c
     from examples.ex_05_flext_mixins import ExamplesFlextMixins
     from examples.ex_06_flext_context import ExamplesFlextContext
     from examples.models import ExamplesFlextModels, m
@@ -24,6 +24,7 @@ if TYPE_CHECKING:
 
 
 __all__: tuple[str, ...] = (
+    "ExamplesFlextConstants",
     "ExamplesFlextContext",
     "ExamplesFlextMixins",
     "ExamplesFlextModels",
@@ -49,6 +50,7 @@ install_lazy_exports(
     __name__,
     globals(),
     {
+        "ExamplesFlextConstants": ".constants",
         "ExamplesFlextContext": ".ex_06_flext_context",
         "ExamplesFlextMixins": ".ex_05_flext_mixins",
         "ExamplesFlextModels": ".models",

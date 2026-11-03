@@ -46,18 +46,9 @@ subclass serialization and validation remain governed by the selected model pres
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from typing import Annotated
 
-from flext_core import m, p
+from flext_core import m
 
 
 class UserModel(m.BaseModel):
@@ -79,16 +70,7 @@ if user.name != expected_name:
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
-from flext_core import m, p
+from flext_core import m
 
 
 class SettingsModel(m.BaseModel):
@@ -109,15 +91,6 @@ if data["debug"] is not True:
 
 ```python
 from __future__ import annotations
-
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
 
 from typing import Annotated
 

@@ -11,7 +11,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, c
+from examples import c
+from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -46,6 +47,7 @@ class ExamplesFlextProtocolsEx00:
 
         def activate(self) -> p.Result[bool]:
             """Activate user once."""
+            ...
 
     @runtime_checkable
     class UserInput(FlextProtocols.Model, Protocol):

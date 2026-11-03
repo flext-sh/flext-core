@@ -104,8 +104,14 @@ class FlextProtocolsErrors:
             """Number of unique exception types recorded."""
             ...
 
+        @property
+        def has_exceptions(self) -> bool:
+            """Whether the metrics snapshot contains recorded exceptions."""
+            ...
+
         def to_config_map(self) -> FlextTypingBase.JsonMapping:
             """Expose the snapshot through the canonical flat config contract."""
+            ...
 
     @runtime_checkable
     class ExceptionMetricsState(FlextProtocolsBase.Model, Protocol):
@@ -116,14 +122,32 @@ class FlextProtocolsErrors:
             """Recorded counts keyed by exception type name."""
             ...
 
+        @property
+        def total_exceptions(self) -> int:
+            """Total recorded exception occurrences."""
+            ...
+
+        @property
+        def unique_exception_types(self) -> int:
+            """Number of unique exception types recorded."""
+            ...
+
+        @property
+        def exception_counts_summary(self) -> str:
+            """Human-readable summary for logs and diagnostics."""
+            ...
+
         def record_exception(self, exception_type: type[BaseException]) -> Self:
             """Return a new state with one additional recorded exception."""
+            ...
 
         def clear(self) -> Self:
             """Return a cleared metrics state."""
+            ...
 
         def snapshot(self) -> FlextProtocolsErrors.ExceptionMetricsSnapshot:
             """Build the validated public metrics snapshot."""
+            ...
 
 
 __all__: list[str] = [

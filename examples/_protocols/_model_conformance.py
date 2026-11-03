@@ -11,203 +11,279 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from examples import m, p
+    from examples import ExamplesFlextModels, ExamplesFlextProtocols
 
-    def model_protocol_1(value: m.Examples.AutoCommand) -> p.Examples.AutoCommand:
+    def model_protocol_1(
+        value: (ExamplesFlextModels.Examples.AutoCommand),
+    ) -> ExamplesFlextProtocols.Examples.AutoCommand:
         return value
 
-    def model_protocol_2(value: m.Examples.BadProcessor) -> p.Examples.BadProcessor:
+    def model_protocol_2(
+        value: (ExamplesFlextModels.Examples.BadProcessor),
+    ) -> ExamplesFlextProtocols.Examples.BadProcessor:
         return value
 
-    def model_protocol_3(value: m.Examples.CacheService) -> p.Examples.CacheService:
+    def model_protocol_3(
+        value: (ExamplesFlextModels.Examples.CacheService),
+    ) -> ExamplesFlextProtocols.Examples.CacheService:
         return value
 
-    def model_protocol_4(value: m.Examples.CommandA) -> p.Examples.CommandA:
+    def model_protocol_4(
+        value: (ExamplesFlextModels.Examples.CommandA),
+    ) -> ExamplesFlextProtocols.Examples.CommandA:
         return value
 
-    def model_protocol_5(value: m.Examples.CommandB) -> p.Examples.CommandB:
+    def model_protocol_5(
+        value: (ExamplesFlextModels.Examples.CommandB),
+    ) -> ExamplesFlextProtocols.Examples.CommandB:
         return value
 
-    def model_protocol_6(value: m.Examples.ContextPayload) -> p.Examples.ContextPayload:
+    def model_protocol_6(
+        value: (ExamplesFlextModels.Examples.ContextPayload),
+    ) -> ExamplesFlextProtocols.Examples.ContextPayload:
         return value
 
-    def model_protocol_7(value: m.Examples.CreateUser) -> p.Examples.CreateUser:
+    def model_protocol_7(
+        value: (ExamplesFlextModels.Examples.CreateUser),
+    ) -> ExamplesFlextProtocols.Examples.CreateUser:
         return value
 
     def model_protocol_8(
-        value: m.Examples.CreateUserCommand,
-    ) -> p.Examples.CreateUserCommand:
+        value: (ExamplesFlextModels.Examples.CreateUserCommand),
+    ) -> ExamplesFlextProtocols.Examples.CreateUserCommand:
         return value
 
     def model_protocol_9(
-        value: m.Examples.DatabaseService,
-    ) -> p.Examples.DatabaseService:
+        value: (ExamplesFlextModels.Examples.DatabaseService),
+    ) -> ExamplesFlextProtocols.Examples.DatabaseService:
         return value
 
-    def model_protocol_10(value: m.Examples.DeleteUser) -> p.Examples.DeleteUser:
+    def model_protocol_10(
+        value: (ExamplesFlextModels.Examples.DeleteUser),
+    ) -> ExamplesFlextProtocols.Examples.DeleteUser:
         return value
 
-    def model_protocol_11(value: m.Examples.DemoPlugin) -> p.Examples.DemoPlugin:
+    def model_protocol_11(
+        value: (ExamplesFlextModels.Examples.DemoPlugin),
+    ) -> ExamplesFlextProtocols.Examples.DemoPlugin:
         return value
 
     def model_protocol_12(
-        value: m.Examples.DemonstrationResult,
-    ) -> p.Examples.DemonstrationResult:
+        value: (ExamplesFlextModels.Examples.DemonstrationResult),
+    ) -> ExamplesFlextProtocols.Examples.DemonstrationResult:
         return value
 
     def model_protocol_13(
-        value: m.Examples.DerivedMessage,
-    ) -> p.Examples.DerivedMessage:
+        value: (ExamplesFlextModels.Examples.DerivedMessage),
+    ) -> ExamplesFlextProtocols.Examples.DerivedMessage:
         return value
 
-    def model_protocol_14(value: m.Examples.Email) -> p.Examples.Email:
+    def model_protocol_14(
+        value: (ExamplesFlextModels.Examples.Email),
+    ) -> ExamplesFlextProtocols.Examples.Email:
         return value
 
-    def model_protocol_15(value: m.Examples.EmailService) -> p.Examples.EmailService:
+    def model_protocol_15(
+        value: (ExamplesFlextModels.Examples.EmailService),
+    ) -> ExamplesFlextProtocols.Examples.EmailService:
         return value
 
-    def model_protocol_16(value: m.Examples.EmailUser) -> p.Examples.EmailUser:
+    def model_protocol_16(
+        value: (ExamplesFlextModels.Examples.EmailUser),
+    ) -> ExamplesFlextProtocols.Examples.EmailUser:
         return value
 
-    def model_protocol_17(value: m.Examples.Entity) -> p.Examples.Entity:
+    def model_protocol_17(
+        value: (ExamplesFlextModels.Examples.Entity),
+    ) -> ExamplesFlextProtocols.Examples.Entity:
         return value
 
-    def model_protocol_18(value: m.Examples.FailingDelete) -> p.Examples.FailingDelete:
+    def model_protocol_18(
+        value: (ExamplesFlextModels.Examples.FailingDelete),
+    ) -> ExamplesFlextProtocols.Examples.FailingDelete:
         return value
 
-    def model_protocol_19(value: m.Examples.GetUser) -> p.Examples.GetUser:
+    def model_protocol_19(
+        value: (ExamplesFlextModels.Examples.GetUser),
+    ) -> ExamplesFlextProtocols.Examples.GetUser:
         return value
 
-    def model_protocol_20(value: m.Examples.GetUserQuery) -> p.Examples.GetUserQuery:
+    def model_protocol_20(
+        value: (ExamplesFlextModels.Examples.GetUserQuery),
+    ) -> ExamplesFlextProtocols.Examples.GetUserQuery:
         return value
 
-    def model_protocol_21(value: m.Examples.GoodProcessor) -> p.Examples.GoodProcessor:
+    def model_protocol_21(
+        value: (ExamplesFlextModels.Examples.GoodProcessor),
+    ) -> ExamplesFlextProtocols.Examples.GoodProcessor:
         return value
 
-    def model_protocol_22(value: m.Examples.Handle) -> p.Examples.Handle:
+    def model_protocol_22(
+        value: (ExamplesFlextModels.Examples.Handle),
+    ) -> ExamplesFlextProtocols.Examples.Handle:
         return value
 
-    def model_protocol_23(value: m.Examples.HandlerBad) -> p.Examples.HandlerBad:
+    def model_protocol_23(
+        value: (ExamplesFlextModels.Examples.HandlerBad),
+    ) -> ExamplesFlextProtocols.Examples.HandlerBad:
         return value
 
     def model_protocol_24(
-        value: m.Examples.HandlerCreateUserCommand,
-    ) -> p.Examples.HandlerCreateUserCommand:
+        value: (ExamplesFlextModels.Examples.HandlerCreateUserCommand),
+    ) -> ExamplesFlextProtocols.Examples.HandlerCreateUserCommand:
         return value
 
     def model_protocol_25(
-        value: m.Examples.HandlerGetUserQuery,
-    ) -> p.Examples.HandlerGetUserQuery:
+        value: (ExamplesFlextModels.Examples.HandlerGetUserQuery),
+    ) -> ExamplesFlextProtocols.Examples.HandlerGetUserQuery:
         return value
 
-    def model_protocol_26(value: m.Examples.HandlerLike) -> p.Examples.HandlerLike:
+    def model_protocol_26(
+        value: (ExamplesFlextModels.Examples.HandlerLike),
+    ) -> ExamplesFlextProtocols.Examples.HandlerLike:
         return value
 
     def model_protocol_27(
-        value: m.Examples.InvalidPersonPayload,
-    ) -> p.Examples.InvalidPersonPayload:
+        value: (ExamplesFlextModels.Examples.InvalidPersonPayload),
+    ) -> ExamplesFlextProtocols.Examples.InvalidPersonPayload:
         return value
 
-    def model_protocol_28(value: m.Examples.Message) -> p.Examples.Message:
+    def model_protocol_28(
+        value: (ExamplesFlextModels.Examples.Message),
+    ) -> ExamplesFlextProtocols.Examples.Message:
         return value
 
-    def model_protocol_29(value: m.Examples.Money) -> p.Examples.Money:
+    def model_protocol_29(
+        value: (ExamplesFlextModels.Examples.Money),
+    ) -> ExamplesFlextProtocols.Examples.Money:
         return value
 
     def model_protocol_30(
-        value: m.Examples.NoSubscriberEvent,
-    ) -> p.Examples.NoSubscriberEvent:
+        value: (ExamplesFlextModels.Examples.NoSubscriberEvent),
+    ) -> ExamplesFlextProtocols.Examples.NoSubscriberEvent:
         return value
 
-    def model_protocol_31(value: m.Examples.Order) -> p.Examples.Order:
+    def model_protocol_31(
+        value: (ExamplesFlextModels.Examples.Order),
+    ) -> ExamplesFlextProtocols.Examples.Order:
         return value
 
-    def model_protocol_32(value: m.Examples.OrderEntity) -> p.Examples.OrderEntity:
+    def model_protocol_32(
+        value: (ExamplesFlextModels.Examples.OrderEntity),
+    ) -> ExamplesFlextProtocols.Examples.OrderEntity:
         return value
 
-    def model_protocol_33(value: m.Examples.OrderItem) -> p.Examples.OrderItem:
+    def model_protocol_33(
+        value: (ExamplesFlextModels.Examples.OrderItem),
+    ) -> ExamplesFlextProtocols.Examples.OrderItem:
         return value
 
-    def model_protocol_34(value: m.Examples.Payload) -> p.Examples.Payload:
+    def model_protocol_34(
+        value: (ExamplesFlextModels.Examples.Payload),
+    ) -> ExamplesFlextProtocols.Examples.Payload:
         return value
 
-    def model_protocol_35(value: m.Examples.Person) -> p.Examples.Person:
+    def model_protocol_35(
+        value: (ExamplesFlextModels.Examples.Person),
+    ) -> ExamplesFlextProtocols.Examples.Person:
         return value
 
-    def model_protocol_36(value: m.Examples.Ping) -> p.Examples.Ping:
+    def model_protocol_36(
+        value: (ExamplesFlextModels.Examples.Ping),
+    ) -> ExamplesFlextProtocols.Examples.Ping:
         return value
 
-    def model_protocol_37(value: m.Examples.ProcessorBad) -> p.Examples.ProcessorBad:
+    def model_protocol_37(
+        value: (ExamplesFlextModels.Examples.ProcessorBad),
+    ) -> ExamplesFlextProtocols.Examples.ProcessorBad:
         return value
 
-    def model_protocol_38(value: m.Examples.ProcessorGood) -> p.Examples.ProcessorGood:
+    def model_protocol_38(
+        value: (ExamplesFlextModels.Examples.ProcessorGood),
+    ) -> ExamplesFlextProtocols.Examples.ProcessorGood:
         return value
 
     def model_protocol_39(
-        value: m.Examples.ProcessorProtocolBad,
-    ) -> p.Examples.ProcessorProtocolBad:
+        value: (ExamplesFlextModels.Examples.ProcessorProtocolBad),
+    ) -> ExamplesFlextProtocols.Examples.ProcessorProtocolBad:
         return value
 
     def model_protocol_40(
-        value: m.Examples.ProcessorProtocolGood,
-    ) -> p.Examples.ProcessorProtocolGood:
+        value: (ExamplesFlextModels.Examples.ProcessorProtocolGood),
+    ) -> ExamplesFlextProtocols.Examples.ProcessorProtocolGood:
         return value
 
     def model_protocol_41(
-        value: m.Examples.ProtocolHandler,
-    ) -> p.Examples.ProtocolHandler:
+        value: (ExamplesFlextModels.Examples.ProtocolHandler),
+    ) -> ExamplesFlextProtocols.Examples.ProtocolHandler:
         return value
 
     def model_protocol_42(
-        value: m.Examples.RegistryLookupOptions,
-    ) -> p.Examples.RegistryLookupOptions:
+        value: (ExamplesFlextModels.Examples.RegistryLookupOptions),
+    ) -> ExamplesFlextProtocols.Examples.RegistryLookupOptions:
         return value
 
     def model_protocol_43(
-        value: m.Examples.RunDemonstrationCommand,
-    ) -> p.Examples.RunDemonstrationCommand:
+        value: (ExamplesFlextModels.Examples.RunDemonstrationCommand),
+    ) -> ExamplesFlextProtocols.Examples.RunDemonstrationCommand:
         return value
 
     def model_protocol_44(
-        value: m.Examples.ServiceHandlerConfig,
-    ) -> p.Examples.ServiceHandlerConfig:
+        value: (ExamplesFlextModels.Examples.ServiceHandlerConfig),
+    ) -> ExamplesFlextProtocols.Examples.ServiceHandlerConfig:
         return value
 
     def model_protocol_45(
-        value: m.Examples.ServiceHandlerLike,
-    ) -> p.Examples.ServiceHandlerLike:
+        value: (ExamplesFlextModels.Examples.ServiceHandlerLike),
+    ) -> ExamplesFlextProtocols.Examples.ServiceHandlerLike:
         return value
 
-    def model_protocol_46(value: m.Examples.UnknownQuery) -> p.Examples.UnknownQuery:
+    def model_protocol_46(
+        value: (ExamplesFlextModels.Examples.UnknownQuery),
+    ) -> ExamplesFlextProtocols.Examples.UnknownQuery:
         return value
 
-    def model_protocol_47(value: m.Examples.User) -> p.Examples.User:
+    def model_protocol_47(
+        value: (ExamplesFlextModels.Examples.User),
+    ) -> ExamplesFlextProtocols.Examples.User:
         return value
 
-    def model_protocol_48(value: m.Examples.UserCreated) -> p.Examples.UserCreated:
+    def model_protocol_48(
+        value: (ExamplesFlextModels.Examples.UserCreated),
+    ) -> ExamplesFlextProtocols.Examples.UserCreated:
         return value
 
     def model_protocol_49(
-        value: m.Examples.UserCreatedEvent,
-    ) -> p.Examples.UserCreatedEvent:
+        value: (ExamplesFlextModels.Examples.UserCreatedEvent),
+    ) -> ExamplesFlextProtocols.Examples.UserCreatedEvent:
         return value
 
-    def model_protocol_50(value: m.Examples.UserDTO) -> p.Examples.UserDTO:
+    def model_protocol_50(
+        value: (ExamplesFlextModels.Examples.UserDTO),
+    ) -> ExamplesFlextProtocols.Examples.UserDTO:
         return value
 
-    def model_protocol_51(value: m.Examples.UserEntity) -> p.Examples.UserEntity:
+    def model_protocol_51(
+        value: (ExamplesFlextModels.Examples.UserEntity),
+    ) -> ExamplesFlextProtocols.Examples.UserEntity:
         return value
 
-    def model_protocol_52(value: m.Examples.UserInput) -> p.Examples.UserInput:
+    def model_protocol_52(
+        value: (ExamplesFlextModels.Examples.UserInput),
+    ) -> ExamplesFlextProtocols.Examples.UserInput:
         return value
 
-    def model_protocol_53(value: m.Examples.UserModel) -> p.Examples.UserModel:
+    def model_protocol_53(
+        value: (ExamplesFlextModels.Examples.UserModel),
+    ) -> ExamplesFlextProtocols.Examples.UserModel:
         return value
 
-    def model_protocol_54(value: m.Examples.UserProfile) -> p.Examples.UserProfile:
+    def model_protocol_54(
+        value: (ExamplesFlextModels.Examples.UserProfile),
+    ) -> ExamplesFlextProtocols.Examples.UserProfile:
         return value
 
     def model_protocol_55(
-        value: m.Examples.ValidPersonPayload,
-    ) -> p.Examples.ValidPersonPayload:
+        value: (ExamplesFlextModels.Examples.ValidPersonPayload),
+    ) -> ExamplesFlextProtocols.Examples.ValidPersonPayload:
         return value

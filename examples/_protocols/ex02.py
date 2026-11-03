@@ -10,7 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, c
+from examples import c
+from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -33,14 +34,6 @@ class ExamplesFlextProtocolsEx02:
             """Service connection status."""
             ...
 
-        @staticmethod
-        def connect() -> p.Result[bool]:
-            """Structural member projected from the owning model."""
-
-        @staticmethod
-        def query(sql: str) -> p.Result[p.ConfigMap]:
-            """Structural member projected from the owning model."""
-
     @runtime_checkable
     class CacheService(FlextProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
@@ -55,10 +48,6 @@ class ExamplesFlextProtocolsEx02:
             """Service connection status."""
             ...
 
-        @staticmethod
-        def set(key: str, value: str) -> p.Result[bool]:
-            """Structural member projected from the owning model."""
-
     @runtime_checkable
     class EmailService(FlextProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
@@ -72,10 +61,6 @@ class ExamplesFlextProtocolsEx02:
         def status(self) -> c.Status:
             """Service connection status."""
             ...
-
-        @staticmethod
-        def send(to: str, subject: str, body: str) -> p.Result[bool]:
-            """Structural member projected from the owning model."""
 
 
 __all__: list[str] = [

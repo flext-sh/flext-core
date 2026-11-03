@@ -237,7 +237,7 @@ to repair authored declarations.
 | `upg` | Resolve declared dependency and tool updates and publish their resolution metadata and locks. | — |
 | `gen` | Materialize explicitly declared new projects and publish every applicable generated projection. | — |
 | `gen-scope` | Run the focal generation surface (WHAT, MODULE for facades, SCOPE) through the same engine, lock and budget as gen. | WHAT, MODULE, SCOPE |
-| `mod` | Check and fix one theme globally (LAWS=ENFORCE ids or RULES=rule ids, ADR-028 Decision 18 item 2); a run without a selection is refused. | LAWS, RULES |
+| `mod` | Refactor declared source structure through the shared pipeline and publish the complete coherent change; LAWS (ENFORCE ids) or RULES (rule ids) diagnose or repair one law (ADR-028 Decision 18 item 2). | LAWS, RULES |
 | `fix` | Apply declared repairs to authored inputs through their canonical owners. | — |
 | `fmt` | Format authored content through the configured formatters. | — |
 | `check` | Validate declarations, projections, environment, documentation and configured gates without repairs or publication. | CHECK_PHASE |
@@ -686,8 +686,9 @@ affected runtime and gate receipts and requires their renewed validation, never 
 retry or a whole-workspace quiet window.
 
 Staged, unstaged and untracked work are normal rig and lane inputs (root
-`AGENTS.md` "Rig and Lane Contract"), not admission failures. Check's existing Git observer reports that state without
-demanding cleanup or a globally stable tree. It does not authorize discarding
+`AGENTS.md` "Rig and Lane Contract"), not admission failures. Check's existing
+Git observer reports that state without demanding cleanup or a globally stable
+tree. It does not authorize discarding
 changes or clearing recovery objects. Repair actual validation failures forward
 and recapture only the affected inputs when they change.
 

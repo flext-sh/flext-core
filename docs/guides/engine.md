@@ -3,6 +3,8 @@
 
 # flext-core - FLEXT Engine Law — Rope-Only Python Interpretation
 
+> Project profile: `flext-core`
+
 <!-- TOC START -->
 
 - [What stays canonical](#what-stays-canonical)
@@ -12,8 +14,6 @@
 - [Blocked capabilities](#blocked-capabilities)
 
 <!-- TOC END -->
-
-> Project profile: `flext-core`
 
 The active rewrite's 2026-10-30 handoff
 records owners, source changes, unresolved bootstrap/candidate failures and exact

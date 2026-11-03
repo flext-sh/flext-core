@@ -45,7 +45,7 @@ from io import StringIO
 
 from structlog.contextvars import bound_contextvars
 
-from flext_core import c, m, p, t, u
+from flext_core import c, m, p, u
 
 prior_settings: p.LoggingSettings = u.logging_settings()
 prior_options: p.StructlogOptions = u.logging_options()

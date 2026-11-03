@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from examples import c
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
@@ -29,7 +30,7 @@ class ExamplesFlextProtocolsEx05:
             ...
 
         @property
-        def status(self) -> ExamplesFlextModelsEx05.StatusEnum:
+        def status(self) -> c.Examples.StatusEnum:
             """User account status."""
             ...
 
@@ -54,10 +55,6 @@ class ExamplesFlextProtocolsEx05:
     @runtime_checkable
     class GoodProcessor(FlextProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
-
-        @staticmethod
-        def process() -> bool:
-            """Structural member projected from the owning model."""
 
     @runtime_checkable
     class BadProcessor(FlextProtocols.Model, Protocol):

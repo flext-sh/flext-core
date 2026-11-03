@@ -76,7 +76,7 @@ class FlextApiSettings(FlextSettings):
 ```python
 from __future__ import annotations
 
-from flext_cli import FlextCliCli, FlextCliSettings, m, p, t
+from flext_cli import FlextCliCli, FlextCliSettings, m, t
 
 settings = FlextCliSettings.fetch_global()
 
@@ -124,8 +124,9 @@ directly. This independent example constructs and invokes a real model-backed co
 handlers return their value but do not automatically print it.
 
 ```python
+from tests import c, m, tm
+
 from flext_cli import FlextCliCli
-from tests import c, m, p, tm
 
 
 class GreetInput(m.BaseModel):
@@ -203,7 +204,7 @@ the public facade as shown above. A corrected handler consumes its declared inpu
 and returns its value:
 
 ```python
-from flext_cli import m, p
+from flext_cli import m
 
 
 class GreetInput(m.BaseModel):

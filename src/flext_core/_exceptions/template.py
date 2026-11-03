@@ -33,10 +33,10 @@ class FlextExceptionsTemplate:
             if params is not None
             else {}
         )
-        if params is not None:
+        if isinstance(params, m.BaseModel):
             payload |= {
                 f"{field_name}_description": field_help
-                for field_name, field_info in params.__class__.model_fields.items()
+                for field_name, field_info in type(params).model_fields.items()
                 if isinstance(
                     (field_help := field_info.description or field_info.title),
                     str,

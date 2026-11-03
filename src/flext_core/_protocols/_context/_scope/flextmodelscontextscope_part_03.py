@@ -28,6 +28,11 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart03:
             """Container configured for service namespace resolution."""
             ...
 
+        @property
+        def configured(self) -> bool:
+            """Whether a container is configured for service access."""
+            ...
+
 
 __all__: list[str] = [
     "FlextProtocolsContextScopeFlextmodelscontextscopePart03",
