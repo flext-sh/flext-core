@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from examples import c
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c
     from flext_core import p
 
 
@@ -21,7 +21,7 @@ class ExamplesFlextProtocolsEx02:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class DatabaseService(FlextProtocols.Model, Protocol):
+    class DatabaseService(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -35,7 +35,7 @@ class ExamplesFlextProtocolsEx02:
             ...
 
     @runtime_checkable
-    class CacheService(FlextProtocols.Model, Protocol):
+    class CacheService(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -49,7 +49,7 @@ class ExamplesFlextProtocolsEx02:
             ...
 
     @runtime_checkable
-    class EmailService(FlextProtocols.Model, Protocol):
+    class EmailService(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

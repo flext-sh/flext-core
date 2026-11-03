@@ -18,7 +18,7 @@ class TestsFlextProtocolsMixinsDomain:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class EmailResponse(FlextTestsProtocols.Model, Protocol):
+    class EmailResponse(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -32,13 +32,13 @@ class TestsFlextProtocolsMixinsDomain:
             ...
 
     @runtime_checkable
-    class NoDict(FlextTestsProtocols.Model, Protocol):
+    class NoDict(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         value: int
 
     @runtime_checkable
-    class ParseOptions(FlextTestsProtocols.Model, Protocol):
+    class ParseOptions(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

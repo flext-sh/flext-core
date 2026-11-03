@@ -20,7 +20,7 @@ class FlextProtocolsCqrsFlextmodelscqrsPart01:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Pagination(FlextProtocolsBase.Model, Protocol):
+    class Pagination(FlextProtocolsBase.FlexibleInternalModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

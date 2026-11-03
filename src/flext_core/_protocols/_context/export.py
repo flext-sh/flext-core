@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsEntity
 
 if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsContainers
+    from flext_core._protocols import FlextProtocolsBase, FlextProtocolsContainers
     from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
@@ -22,7 +22,7 @@ class FlextProtocolsContextExport:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ContextExport(FlextProtocolsBase.Model, Protocol):
+    class ContextExport(FlextProtocolsEntity.Value, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

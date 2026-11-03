@@ -8,18 +8,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
-from tests import t
+if TYPE_CHECKING:
+    from tests import t
 
 
 class TestsFlextProtocolsMixinsCoreErrors:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class FailureEnvelope(FlextTestsProtocols.Model, Protocol):
+    class FailureEnvelope(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         error: str
@@ -30,28 +31,21 @@ class TestsFlextProtocolsMixinsCoreErrors:
         failure: Literal[True]
 
     @runtime_checkable
-    class AttrObject(FlextTestsProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def name(self) -> str:
-            """Attribute recursive container name."""
-            ...
-
-        @property
-        def value(self) -> int:
-            """Attribute recursive container value."""
-            ...
-
-    @runtime_checkable
-    class SampleModel(FlextTestsProtocols.Model, Protocol):
+    class AttrObject(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         name: str
         value: int
 
     @runtime_checkable
-    class TargetModel(FlextTestsProtocols.Model, Protocol):
+    class SampleModel(FlextTestsProtocols.BaseModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        name: str
+        value: int
+
+    @runtime_checkable
+    class TargetModel(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         value: int

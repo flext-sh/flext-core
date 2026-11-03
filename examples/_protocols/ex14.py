@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from examples import c, t
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c, t
     from flext_core import p
 
 
@@ -22,7 +22,7 @@ class ExamplesFlextProtocolsEx14:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class HandlerCreateUserCommand(FlextProtocols.Model, Protocol):
+    class HandlerCreateUserCommand(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -30,27 +30,15 @@ class ExamplesFlextProtocolsEx14:
             """Message type discriminator (always 'command')."""
             ...
 
-        @property
-        def command_type(self) -> t.NonEmptyStr:
-            """Command type identifier."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
+        command_type: t.NonEmptyStr
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
         user_id: str
         name: str
         email: str
 
     @runtime_checkable
-    class HandlerGetUserQuery(FlextProtocols.Model, Protocol):
+    class HandlerGetUserQuery(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -58,13 +46,7 @@ class ExamplesFlextProtocolsEx14:
             """Message type discriminator."""
             ...
 
-        @property
-        def filters(self) -> Mapping[str, t.Scalar]:
-            """Structural member projected from the owning model.
-
-            Filter values that restrict which records are returned by the query.
-            """
-            ...
+        filters: Mapping[str, t.Scalar]
 
         @property
         def pagination(self) -> p.Pagination:
@@ -75,20 +57,12 @@ class ExamplesFlextProtocolsEx14:
             """
             ...
 
-        @property
-        def query_id(self) -> t.NonEmptyStr:
-            """Unique query identifier used for tracing and cache correlation."""
-            ...
-
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier for dispatcher routing."""
-            ...
-
+        query_id: t.NonEmptyStr
+        query_type: str | None
         user_id: str
 
     @runtime_checkable
-    class UserDTO(FlextProtocols.Model, Protocol):
+    class UserDTO(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

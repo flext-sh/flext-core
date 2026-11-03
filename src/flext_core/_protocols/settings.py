@@ -14,17 +14,23 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from flext_core._typings import FlextTypesAnnotateds, FlextTypesPydantic
-from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsPydantic,
+    FlextProtocolsResult,
+)
 
 
 class FlextProtocolsSettings:
     """Protocols for configurable components and settings."""
 
-    type SettingsOverride = t.SettingsOverride[FlextProtocolsBase.Model]
-    type SettingsOverridesMapping = t.SettingsOverridesMapping[FlextProtocolsBase.Model]
+    type SettingsOverride = t.SettingsOverride[FlextProtocolsPydantic.BaseModel]
+    type SettingsOverridesMapping = t.SettingsOverridesMapping[
+        FlextProtocolsPydantic.BaseModel
+    ]
 
     @runtime_checkable
-    class Configurable(FlextProtocolsBase.Base, Protocol):
+    class Configurable(FlextProtocolsPydantic.Base, Protocol):
         """Protocol for component configuration."""
 
         def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
@@ -34,7 +40,7 @@ class FlextProtocolsSettings:
     @runtime_checkable
     class Settings(
         FlextProtocolsResult.HasModelDump[t.MetadataMapping],
-        FlextProtocolsBase.Base,
+        FlextProtocolsPydantic.Base,
         Protocol,
     ):
         """Minimal Pydantic-2 settings contract and universal log level.
@@ -127,11 +133,11 @@ class FlextProtocolsSettings:
             ...
 
     @runtime_checkable
-    class SettingsValue(FlextProtocolsBase.Model, Protocol):
+    class SettingsValue(FlextProtocolsBase.ImmutableValueModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class RetryConfiguration(FlextProtocolsBase.Model, Protocol):
+    class RetryConfiguration(FlextProtocolsBase.RetryConfigurationMixin, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -139,35 +145,15 @@ class FlextProtocolsSettings:
             """Maximum retry attempts from c (Constants default)."""
             ...
 
-        @property
-        def initial_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
-            """Initial delay between retries."""
-            ...
-
-        @property
-        def max_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
-            """Maximum delay between retries."""
-            ...
-
-        @property
-        def exponential_backoff(self) -> bool:
-            """Whether to use exponential backoff between retry attempts."""
-            ...
+        exponential_backoff: bool
 
         @property
         def backoff_multiplier(self) -> FlextTypesAnnotateds.BackoffMultiplier:
             """Backoff multiplier for exponential backoff."""
             ...
 
-        @property
-        def retry_on_exceptions(self) -> Sequence[type[BaseException]]:
-            """Exception types to retry on."""
-            ...
-
-        @property
-        def retry_on_status_codes(self) -> Sequence[int]:
-            """HTTP status codes to retry on."""
-            ...
+        retry_on_exceptions: Sequence[type[BaseException]]
+        retry_on_status_codes: Sequence[int]
 
 
 __all__: list[str] = ["FlextProtocolsSettings"]

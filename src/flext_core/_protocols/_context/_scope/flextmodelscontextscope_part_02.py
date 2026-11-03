@@ -26,7 +26,7 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart02:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ContextRuntimeState(FlextProtocolsBase.Model, Protocol):
+    class ContextRuntimeState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

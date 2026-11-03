@@ -25,7 +25,11 @@ from collections.abc import Mapping
 from contextlib import AbstractContextManager
 from typing import Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase, FlextProtocolsSettings
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsPydantic,
+    FlextProtocolsSettings,
+)
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -46,13 +50,13 @@ class FlextProtocolsService:
 
         def __call__(
             self,
-            service: FlextProtocolsBase.Base,
+            service: FlextProtocolsPydantic.Base,
             /,
-            *requests: FlextProtocolsBase.Base,
+            *requests: FlextProtocolsPydantic.Base,
         ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
 
     @runtime_checkable
-    class ServiceOperation(FlextProtocolsBase.Model, Protocol):
+    class ServiceOperation(FlextProtocolsBase.ContractModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -153,7 +157,7 @@ class FlextProtocolsService:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Service[T](FlextProtocolsBase.Base, MixinsInfrastructure, Protocol):
+    class Service[T](FlextProtocolsPydantic.Base, MixinsInfrastructure, Protocol):
         """Domain service interface: the runtime surface plus ``execute``.
 
         Every ``FlextService[T]`` satisfies it structurally. The runtime surface
@@ -174,14 +178,14 @@ class FlextProtocolsService:
 
         def dispatch(
             self,
-            message: FlextProtocolsBase.Model,
+            message: FlextProtocolsPydantic.BaseModel,
             /,
-        ) -> FlextProtocolsBase.Model:
+        ) -> FlextProtocolsPydantic.BaseModel:
             """Dispatch a message and return the result."""
             ...
 
     @runtime_checkable
-    class ServiceRuntime(FlextProtocolsBase.Model, Protocol):
+    class ServiceRuntime(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -215,7 +219,7 @@ class FlextProtocolsService:
             ...
 
     @runtime_checkable
-    class RuntimeBootstrapOptions(FlextProtocolsBase.Model, Protocol):
+    class RuntimeBootstrapOptions(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

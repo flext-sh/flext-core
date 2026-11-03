@@ -21,7 +21,7 @@ class ExamplesFlextProtocolsEx08:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class UserEntity(FlextProtocols.Model, Protocol):
+    class UserEntity(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -29,13 +29,10 @@ class ExamplesFlextProtocolsEx08:
             """List of uncommitted domain events for event sourcing."""
             ...
 
-        @property
-        def name(self) -> str:
-            """User display name."""
-            ...
+        name: str
 
     @runtime_checkable
-    class OrderEntity(FlextProtocols.Model, Protocol):
+    class OrderEntity(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -43,10 +40,7 @@ class ExamplesFlextProtocolsEx08:
             """List of uncommitted domain events for event sourcing."""
             ...
 
-        @property
-        def status(self) -> str:
-            """Order lifecycle status."""
-            ...
+        status: str
 
 
 __all__: list[str] = [

@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from examples import c, t
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c, t
     from flext_core import p
 
 
@@ -22,7 +22,7 @@ class ExamplesFlextProtocolsEx07:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class CreateUserCommand(FlextProtocols.Model, Protocol):
+    class CreateUserCommand(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -30,26 +30,14 @@ class ExamplesFlextProtocolsEx07:
             """Message type discriminator (always 'command')."""
             ...
 
-        @property
-        def command_type(self) -> t.NonEmptyStr:
-            """Command type identifier."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
+        command_type: t.NonEmptyStr
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
         name: str
         email: str
 
     @runtime_checkable
-    class UserCreatedEvent(FlextProtocols.Model, Protocol):
+    class UserCreatedEvent(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -59,26 +47,13 @@ class ExamplesFlextProtocolsEx07:
 
         event_type: str
         aggregate_id: str
-
-        @property
-        def event_id(self) -> t.NonEmptyStr:
-            """Unique event identifier used for deduplication and observability."""
-            ...
-
-        @property
-        def data(self) -> Mapping[str, t.Scalar]:
-            """Event payload data."""
-            ...
-
-        @property
-        def metadata(self) -> Mapping[str, t.Scalar]:
-            """Event metadata (timestamps, correlation IDs, etc.)."""
-            ...
-
+        event_id: t.NonEmptyStr
+        data: Mapping[str, t.Scalar]
+        metadata: Mapping[str, t.Scalar]
         name: str
 
     @runtime_checkable
-    class GetUserQuery(FlextProtocols.Model, Protocol):
+    class GetUserQuery(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -86,13 +61,7 @@ class ExamplesFlextProtocolsEx07:
             """Message type discriminator."""
             ...
 
-        @property
-        def filters(self) -> Mapping[str, t.Scalar]:
-            """Structural member projected from the owning model.
-
-            Filter values that restrict which records are returned by the query.
-            """
-            ...
+        filters: Mapping[str, t.Scalar]
 
         @property
         def pagination(self) -> p.Pagination:
@@ -103,20 +72,12 @@ class ExamplesFlextProtocolsEx07:
             """
             ...
 
-        @property
-        def query_id(self) -> t.NonEmptyStr:
-            """Unique query identifier used for tracing and cache correlation."""
-            ...
-
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier for dispatcher routing."""
-            ...
-
+        query_id: t.NonEmptyStr
+        query_type: str | None
         user_id: str
 
     @runtime_checkable
-    class DemoPlugin(FlextProtocols.Model, Protocol):
+    class DemoPlugin(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

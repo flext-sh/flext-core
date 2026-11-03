@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from examples import c, t
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c, t
     from flext_core import p
 
 
@@ -21,7 +21,7 @@ class ExamplesFlextProtocolsEx12:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class RegistryLookupOptions(FlextProtocols.Model, Protocol):
+    class RegistryLookupOptions(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -29,18 +29,11 @@ class ExamplesFlextProtocolsEx12:
             """Registry instance for plugin lookup."""
             ...
 
-        @property
-        def category(self) -> str:
-            """Plugin category for registry lookup."""
-            ...
-
-        @property
-        def plugin_name(self) -> str:
-            """Plugin name for registry lookup."""
-            ...
+        category: str
+        plugin_name: str
 
     @runtime_checkable
-    class CommandA(FlextProtocols.Model, Protocol):
+    class CommandA(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -48,38 +41,15 @@ class ExamplesFlextProtocolsEx12:
             """Message type discriminator (always 'command')."""
             ...
 
-        @property
-        def command_type(self) -> str:
-            """Command type identifier for command A."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for command A."""
-            ...
-
-        @property
-        def event_type(self) -> str:
-            """Event type for command A."""
-            ...
-
-        @property
-        def value(self) -> str:
-            """Command A payload."""
-            ...
+        command_type: str
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
+        query_type: str
+        event_type: str
+        value: str
 
     @runtime_checkable
-    class CommandB(FlextProtocols.Model, Protocol):
+    class CommandB(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -87,35 +57,12 @@ class ExamplesFlextProtocolsEx12:
             """Message type discriminator (always 'command')."""
             ...
 
-        @property
-        def command_type(self) -> str:
-            """Command type identifier for command B."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for command B."""
-            ...
-
-        @property
-        def event_type(self) -> str:
-            """Event type for command B."""
-            ...
-
-        @property
-        def amount(self) -> int:
-            """Command B payload."""
-            ...
+        command_type: str
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
+        query_type: str
+        event_type: str
+        amount: int
 
 
 __all__: list[str] = [

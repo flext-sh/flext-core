@@ -261,7 +261,7 @@ class FlextModelsContainer:
                 validate_default=True,
             ),
         ] = None
-        user_overrides: t.Port[p.Model] | t.UserOverridesMapping | None = (
+        user_overrides: t.Port[p.BaseModel] | t.UserOverridesMapping | None = (
             FlextModelsPydantic.Field(
                 default=None,
                 title="User Overrides",
@@ -271,7 +271,7 @@ class FlextModelsContainer:
                 validate_default=True,
             )
         )
-        container_config: t.Port[p.Model] | None = FlextModelsPydantic.Field(
+        container_config: t.Port[p.BaseModel] | None = FlextModelsPydantic.Field(
             default=None,
             title="Container Config",
             description="Container configuration model controlling DI behavior.",

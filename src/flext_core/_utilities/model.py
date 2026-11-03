@@ -71,7 +71,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: type[TValue],
-        data: t.ValidationInput[p.Model],
+        data: t.ValidationInput[p.BaseModel],
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -81,7 +81,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: t.ValueAdapter[TValue],
-        data: t.ValidationInput[p.Model],
+        data: t.ValidationInput[p.BaseModel],
         *,
         from_json: bool = False,
         strict: bool | None = None,
@@ -90,7 +90,7 @@ class FlextUtilitiesModel:
     @staticmethod
     def validate_value[TValue](
         target: t.ValueAdapter[TValue] | type[TValue],
-        data: t.ValidationInput[p.Model],
+        data: t.ValidationInput[p.BaseModel],
         *,
         from_json: bool = False,
         strict: bool | None = None,

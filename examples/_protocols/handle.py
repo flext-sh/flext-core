@@ -17,7 +17,7 @@ class ExamplesFlextProtocolsHandle:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Handle(FlextProtocols.Model, Protocol):
+    class Handle(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from examples import c
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c
     from flext_core import p
 
 
@@ -22,7 +22,7 @@ class ExamplesFlextProtocolsEx00:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class UserProfile(FlextProtocols.Model, Protocol):
+    class UserProfile(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -30,27 +30,16 @@ class ExamplesFlextProtocolsEx00:
             """List of uncommitted domain events for event sourcing."""
             ...
 
-        @property
-        def name(self) -> str:
-            """User display name."""
-            ...
-
-        @property
-        def email(self) -> str:
-            """User email address."""
-            ...
-
-        @property
-        def status(self) -> c.Status:
-            """User account status."""
-            ...
+        name: str
+        email: str
+        status: c.Status
 
         def activate(self) -> p.Result[bool]:
             """Activate user once."""
             ...
 
     @runtime_checkable
-    class UserInput(FlextProtocols.Model, Protocol):
+    class UserInput(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

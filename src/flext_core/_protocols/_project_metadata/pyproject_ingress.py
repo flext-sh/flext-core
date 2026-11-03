@@ -10,14 +10,19 @@ from __future__ import annotations
 
 from typing import Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols._project_metadata import (
+    FlextProtocolsProjectMetadataContract,
+)
 
 
 class FlextProtocolsProjectMetadataPyprojectIngress:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class FlextModelsPyprojectIngressContract(FlextProtocolsBase.Model, Protocol):
+    class FlextModelsPyprojectIngressContract(
+        FlextProtocolsProjectMetadataContract.FlextModelsProjectMetadataContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
 

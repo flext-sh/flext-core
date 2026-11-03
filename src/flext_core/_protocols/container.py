@@ -29,6 +29,7 @@ from flext_core._protocols import (
     FlextProtocolsContext,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
+    FlextProtocolsPydantic,
     FlextProtocolsRegistry,
     FlextProtocolsResult,
     FlextProtocolsService,
@@ -40,7 +41,7 @@ class FlextProtocolsContainer:
     """Public facade for FlextProtocolsContainer."""
 
     type RegistryCollaborator = t.Port[
-        FlextProtocolsBase.Model
+        FlextProtocolsPydantic.BaseModel
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
         | FlextProtocolsContext.Context
@@ -55,7 +56,7 @@ class FlextProtocolsContainer:
     type ResourceMap = t.ResourceMap[RegistryCollaborator]
 
     @runtime_checkable
-    class ServiceRegistrationSpec(FlextProtocolsBase.Model, Protocol):
+    class ServiceRegistrationSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -94,23 +95,24 @@ class FlextProtocolsContainer:
         @property
         def user_overrides(
             self,
-        ) -> FlextProtocolsBase.Model | FlextTypesServices.UserOverridesMapping | None:
+        ) -> (
+            FlextProtocolsPydantic.BaseModel
+            | FlextTypesServices.UserOverridesMapping
+            | None
+        ):
             """User-level configuration overrides applied after defaults."""
             ...
 
         @property
-        def container_config(self) -> FlextProtocolsBase.Model | None:
+        def container_config(self) -> FlextProtocolsPydantic.BaseModel | None:
             """Container configuration model controlling DI behavior."""
             ...
 
     @runtime_checkable
-    class ServiceRegistration(FlextProtocolsBase.Model, Protocol):
+    class RegistrationEnvelope(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def registration_time(self) -> datetime:
-            """Timestamp when service was registered (configured timezone)."""
-            ...
+        registration_time: datetime
 
         @property
         def metadata(
@@ -118,6 +120,10 @@ class FlextProtocolsContainer:
         ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
             """Additional service metadata (JSON-serializable)."""
             ...
+
+    @runtime_checkable
+    class ServiceRegistration(RegistrationEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
         def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
@@ -129,10 +135,7 @@ class FlextProtocolsContainer:
             """Service instance (protocols, models, callables)."""
             ...
 
-        @property
-        def tags(self) -> Sequence[str]:
-            """Service tags for categorization."""
-            ...
+        tags: Sequence[str]
 
         @property
         def service_type(self) -> str:
@@ -160,7 +163,7 @@ class FlextProtocolsContainer:
     @runtime_checkable
     class Container(
         FlextProtocolsSettings.Configurable,
-        FlextProtocolsBase.Base,
+        FlextProtocolsPydantic.Base,
         Protocol,
     ):
         """Dependency injection container protocol.
@@ -342,36 +345,8 @@ class FlextProtocolsContainer:
     ]
 
     @runtime_checkable
-    class RegistrationEnvelope(FlextProtocolsBase.Model, Protocol):
+    class FactoryRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
-
-        @property
-        def registration_time(self) -> datetime:
-            """Timestamp when service was registered (configured timezone)."""
-            ...
-
-        @property
-        def metadata(
-            self,
-        ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
-            """Additional service metadata (JSON-serializable)."""
-            ...
-
-    @runtime_checkable
-    class FactoryRegistration(FlextProtocolsBase.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def registration_time(self) -> datetime:
-            """Timestamp when service was registered (configured timezone)."""
-            ...
-
-        @property
-        def metadata(
-            self,
-        ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
-            """Additional service metadata (JSON-serializable)."""
-            ...
 
         @property
         def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
@@ -384,20 +359,8 @@ class FlextProtocolsContainer:
             ...
 
     @runtime_checkable
-    class ResourceRegistration(FlextProtocolsBase.Model, Protocol):
+    class ResourceRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
-
-        @property
-        def registration_time(self) -> datetime:
-            """Timestamp when service was registered (configured timezone)."""
-            ...
-
-        @property
-        def metadata(
-            self,
-        ) -> FlextProtocolsBase.Metadata | FlextProtocolsContainers.ConfigMap | None:
-            """Additional service metadata (JSON-serializable)."""
-            ...
 
         @property
         def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
@@ -410,18 +373,11 @@ class FlextProtocolsContainer:
             ...
 
     @runtime_checkable
-    class ContainerConfig(FlextProtocolsBase.Model, Protocol):
+    class ContainerConfig(FlextProtocolsBase.FlexibleInternalModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def enable_singleton(self) -> bool:
-            """Enable singleton pattern for factories."""
-            ...
-
-        @property
-        def enable_factory_caching(self) -> bool:
-            """Enable caching of factory-created instances."""
-            ...
+        enable_singleton: bool
+        enable_factory_caching: bool
 
         @property
         def max_services(self) -> FlextTypesPydantic.PositiveInt:
@@ -433,23 +389,12 @@ class FlextProtocolsContainer:
             """Maximum number of factories allowed in registry."""
             ...
 
-        @property
-        def enable_auto_registration(self) -> bool:
-            """Enable automatic service registration from decorators."""
-            ...
-
-        @property
-        def enable_lifecycle_hooks(self) -> bool:
-            """Enable lifecycle hooks (on_register, on_get, etc.)."""
-            ...
-
-        @property
-        def lazy_loading(self) -> bool:
-            """Enable lazy loading of services."""
-            ...
+        enable_auto_registration: bool
+        enable_lifecycle_hooks: bool
+        lazy_loading: bool
 
     @runtime_checkable
-    class FactoryDecoratorConfig(FlextProtocolsBase.Model, Protocol):
+    class FactoryDecoratorConfig(FlextProtocolsBase.ImmutableValueModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

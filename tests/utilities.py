@@ -20,13 +20,13 @@ from tests import c, h, m, p, r, t
 from tests._utilities import (
     TestsFlextUtilitiesContracts,
     TestsFlextUtilitiesDispatch,
+    TestsFlextUtilitiesParserReliability,
     TestsFlextUtilitiesRailway,
     TestsFlextUtilitiesResultCombinators,
     TestsFlextUtilitiesValidationFactories,
 )
 from tests._utilities.decorators import TestsFlextDecoratorsLegacy
 from tests._utilities.handlers import TestsFlextFlextHandlers
-from tests._utilities.parser_reliability import TestsFlextUtilitiesParserReliability
 from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenarios
 from tests._utilities.reliability_scenarios import (
     TestsFlextUtilitiesReliabilityScenarios,
@@ -399,6 +399,7 @@ class TestsFlextUtilities(flext_tests_u):
         flext_tests_u.Tests,
         TestsFlextUtilitiesContracts,
         TestsFlextUtilitiesDispatch,
+        TestsFlextUtilitiesParserReliability,
         TestsFlextUtilitiesRailway,
         TestsFlextUtilitiesResultCombinators,
         TestsFlextUtilitiesValidationFactories,

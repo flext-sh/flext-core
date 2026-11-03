@@ -14,7 +14,11 @@ from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import t
-from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsPydantic,
+    FlextProtocolsResult,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -57,7 +61,7 @@ class FlextProtocolsHandler:
 
     # FLEXT: annotations remain structural; concrete models are construction-only.
     @runtime_checkable
-    class ExecutionContext(FlextProtocolsBase.Model, Protocol):
+    class ExecutionContext(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -70,10 +74,7 @@ class FlextProtocolsHandler:
             """Mode of handler execution."""
             ...
 
-        @property
-        def started_at(self) -> float | None:
-            """Monotonic start timestamp used to compute execution time."""
-            ...
+        started_at: float | None
 
         @property
         def metrics_state_data(self) -> FlextProtocolsContainers.Dict:
@@ -86,7 +87,7 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class HandlerRuntimeState(FlextProtocolsBase.Model, Protocol):
+    class HandlerRuntimeState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -110,7 +111,7 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class DecoratorConfig(FlextProtocolsBase.Model, Protocol):
+    class DecoratorConfig(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -138,7 +139,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Handler[MessageT, ResultT](FlextProtocolsBase.Base, Protocol):
+    class Handler[MessageT, ResultT](FlextProtocolsPydantic.Base, Protocol):
         """Typed message handler contract.
 
         Mirrors the public instance API of ``FlextHandlers[MessageT, ResultT]``
@@ -260,7 +261,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class HandlerRegistration(FlextProtocolsBase.Model, Protocol):
+    class HandlerRegistration(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -279,7 +280,7 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class HandlerRegistrationReport(FlextProtocolsBase.Model, Protocol):
+    class HandlerRegistrationReport(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -293,7 +294,7 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class Dispatcher(FlextProtocolsBase.Base, Protocol):
+    class Dispatcher(FlextProtocolsPydantic.Base, Protocol):
         """Protocol for dispatching and publishing messages in CQRS systems.
 
         Mirrors the public surface of ``FlextDispatcher``.
@@ -372,20 +373,20 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Middleware(FlextProtocolsBase.Base, Protocol):
+    class Middleware(FlextProtocolsPydantic.Base, Protocol):
         """Protocol for middleware layers in handler execution chains."""
 
         def process[TResult](
             self,
-            command: FlextProtocolsBase.Model,
+            command: FlextProtocolsPydantic.BaseModel,
             next_handler: Callable[
-                [FlextProtocolsBase.Model],
+                [FlextProtocolsPydantic.BaseModel],
                 FlextProtocolsResult.Result[TResult],
             ],
         ) -> FlextProtocolsResult.Result[TResult]: ...
 
     @runtime_checkable
-    class RegistrationDetails(FlextProtocolsBase.Model, Protocol):
+    class RegistrationDetails(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -409,7 +410,7 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class CombinedRailwayOptions(FlextProtocolsBase.Model, Protocol):
+    class CombinedRailwayOptions(FlextProtocolsBase.ImmutableValueModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

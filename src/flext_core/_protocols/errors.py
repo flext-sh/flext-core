@@ -21,18 +21,11 @@ class FlextProtocolsErrors:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ResultFailureSpec(FlextProtocolsBase.Model, Protocol):
+    class ResultFailureSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def error(self) -> str | None:
-            """Human-readable failure message."""
-            ...
-
-        @property
-        def error_code(self) -> str | None:
-            """Canonical failure error code."""
-            ...
+        error: str | None
+        error_code: str | None
 
         @property
         def error_data(
@@ -47,41 +40,18 @@ class FlextProtocolsErrors:
             ...
 
     @runtime_checkable
-    class LoggedCallSpec(FlextProtocolsBase.Model, Protocol):
+    class LoggedCallSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def func_name(self) -> str:
-            """Wrapped function name."""
-            ...
-
-        @property
-        def func_module(self) -> str:
-            """Wrapped function module qualified name."""
-            ...
-
-        @property
-        def op_name(self) -> str:
-            """Logical operation name used in log events."""
-            ...
-
-        @property
-        def correlation_id(self) -> str | None:
-            """Active correlation identifier."""
-            ...
-
-        @property
-        def track_perf(self) -> bool:
-            """Track and log the call duration."""
-            ...
-
-        @property
-        def start_time(self) -> float:
-            """Monotonic start time of the call."""
-            ...
+        func_name: str
+        func_module: str
+        op_name: str
+        correlation_id: str | None
+        track_perf: bool
+        start_time: float
 
     @runtime_checkable
-    class ExceptionMetricsSnapshot(FlextProtocolsBase.Model, Protocol):
+    class ExceptionMetricsSnapshot(FlextProtocolsBase.StrictModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -94,10 +64,7 @@ class FlextProtocolsErrors:
             """Per-exception occurrence totals keyed by type name."""
             ...
 
-        @property
-        def exception_counts_summary(self) -> str:
-            """Human-readable summary for logs and diagnostics."""
-            ...
+        exception_counts_summary: str
 
         @property
         def unique_exception_types(self) -> FlextTypesPydantic.NonNegativeInt:
@@ -114,7 +81,7 @@ class FlextProtocolsErrors:
             ...
 
     @runtime_checkable
-    class ExceptionMetricsState(FlextProtocolsBase.Model, Protocol):
+    class ExceptionMetricsState(FlextProtocolsBase.StrictModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

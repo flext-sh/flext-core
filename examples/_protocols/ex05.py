@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from examples import c
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c
     from flext_core import p
 
 
@@ -21,7 +21,7 @@ class ExamplesFlextProtocolsEx05:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class UserModel(FlextProtocols.Model, Protocol):
+    class UserModel(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -40,11 +40,11 @@ class ExamplesFlextProtocolsEx05:
             ...
 
     @runtime_checkable
-    class HandlerBad(FlextProtocols.Model, Protocol):
+    class HandlerBad(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class HandlerLike(FlextProtocols.Model, Protocol):
+    class HandlerLike(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -53,11 +53,11 @@ class ExamplesFlextProtocolsEx05:
             ...
 
     @runtime_checkable
-    class GoodProcessor(FlextProtocols.Model, Protocol):
+    class GoodProcessor(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class BadProcessor(FlextProtocols.Model, Protocol):
+    class BadProcessor(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
 

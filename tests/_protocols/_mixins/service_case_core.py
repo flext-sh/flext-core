@@ -13,17 +13,17 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
-from tests import t
-
 if TYPE_CHECKING:
     from flext_tests import p
+
+    from tests import t
 
 
 class TestsFlextProtocolsMixinsServiceCaseCore:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ServiceUserData(FlextTestsProtocols.Model, Protocol):
+    class ServiceUserData(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -37,7 +37,7 @@ class TestsFlextProtocolsMixinsServiceCaseCore:
             ...
 
     @runtime_checkable
-    class ServiceUserService(FlextTestsProtocols.Model, Protocol):
+    class ServiceUserService(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -61,7 +61,7 @@ class TestsFlextProtocolsMixinsServiceCaseCore:
             ...
 
     @runtime_checkable
-    class ServiceTestCase(FlextTestsProtocols.Model, Protocol):
+    class ServiceTestCase(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -100,7 +100,7 @@ class TestsFlextProtocolsMixinsServiceCaseCore:
             ...
 
     @runtime_checkable
-    class RailwayTestCase(FlextTestsProtocols.Model, Protocol):
+    class RailwayTestCase(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

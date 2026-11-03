@@ -9,11 +9,11 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
 from flext_core._protocols._project_metadata import (
     FlextProtocolsProjectMetadataAggregates,
     FlextProtocolsProjectMetadataDocument,
     FlextProtocolsProjectMetadataFields,
+    FlextProtocolsProjectMetadataPyprojectIngress,
 )
 
 if TYPE_CHECKING:
@@ -43,7 +43,10 @@ class FlextProtocolsProjectMetadata(
         ) -> Iterable[Distribution]: ...
 
     @runtime_checkable
-    class PyprojectDocument(FlextProtocolsBase.Model, Protocol):
+    class PyprojectDocument(
+        FlextProtocolsProjectMetadataPyprojectIngress.FlextModelsPyprojectIngressContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property

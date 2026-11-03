@@ -14,17 +14,17 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
-from tests import c, t
-
 if TYPE_CHECKING:
     from flext_tests import p
+
+    from tests import c, t
 
 
 class TestsFlextProtocolsMixinsCorePublic:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class RegistryQuery(FlextTestsProtocols.Model, Protocol):
+    class RegistryQuery(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -32,13 +32,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             """Message type discriminator."""
             ...
 
-        @property
-        def filters(self) -> Mapping[str, t.Scalar]:
-            """Structural member projected from the owning model.
-
-            Filter values that restrict which records are returned by the query.
-            """
-            ...
+        filters: Mapping[str, t.Scalar]
 
         @property
         def pagination(self) -> p.Pagination:
@@ -49,21 +43,17 @@ class TestsFlextProtocolsMixinsCorePublic:
             """
             ...
 
-        @property
-        def query_id(self) -> t.NonEmptyStr:
-            """Unique query identifier used for tracing and cache correlation."""
-            ...
-
+        query_id: t.NonEmptyStr
         query_type: str | None
 
     @runtime_checkable
-    class HandlerObservations(FlextTestsProtocols.Model, Protocol):
+    class HandlerObservations(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         handled: MutableSequence[str]
 
     @runtime_checkable
-    class BinaryContract(FlextTestsProtocols.Model, Protocol):
+    class BinaryContract(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -72,7 +62,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class DispatchRequest(FlextTestsProtocols.Model, Protocol):
+    class DispatchRequest(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -91,7 +81,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class DispatchAudit(FlextTestsProtocols.Model, Protocol):
+    class DispatchAudit(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -135,7 +125,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class QueryAudit(FlextTestsProtocols.Model, Protocol):
+    class QueryAudit(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -179,7 +169,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class OrchestrationAudit(FlextTestsProtocols.Model, Protocol):
+    class OrchestrationAudit(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -213,7 +203,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class DispatchEnvelope(FlextTestsProtocols.Model, Protocol):
+    class DispatchEnvelope(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -242,7 +232,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class ManifestSnapshot(FlextTestsProtocols.Model, Protocol):
+    class ManifestSnapshot(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -266,7 +256,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class BootstrapSnapshot(FlextTestsProtocols.Model, Protocol):
+    class BootstrapSnapshot(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -285,14 +275,10 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class PublicPayload(FlextTestsProtocols.Model, Protocol):
+    class PublicPayload(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def raw_name(self) -> str:
-            """Structural member projected from the owning model."""
-            ...
-
+        raw_name: str
         visits: int
 
         @property
@@ -301,7 +287,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class KwargsComputedPayload(FlextTestsProtocols.Model, Protocol):
+    class KwargsComputedPayload(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         raw: str
@@ -312,7 +298,7 @@ class TestsFlextProtocolsMixinsCorePublic:
             ...
 
     @runtime_checkable
-    class PlainSerializedPayload(FlextTestsProtocols.Model, Protocol):
+    class PlainSerializedPayload(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         name: str

@@ -21,7 +21,11 @@ from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
 from flext_core import c
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsEntity,
+    FlextProtocolsPydantic,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,7 +42,7 @@ class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
 
     @runtime_checkable
-    class RegistrySummary(FlextProtocolsBase.Model, Protocol):
+    class RegistrySummary(FlextProtocolsEntity.Value, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -67,7 +71,7 @@ class FlextProtocolsRegistry:
             ...
 
     @runtime_checkable
-    class Registry(FlextProtocolsBase.Base, Protocol):
+    class Registry(FlextProtocolsPydantic.Base, Protocol):
         """Registry protocol for CQRS handler and plugin management.
 
         Mirrors the public instance API of ``FlextRegistry`` so consumers
@@ -166,11 +170,11 @@ class FlextProtocolsRegistry:
             ...
 
     @runtime_checkable
-    class RegistryServiceState(FlextProtocolsBase.Model, Protocol):
+    class RegistryServiceState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class RegistryOptions(FlextProtocolsBase.Model, Protocol):
+    class RegistryOptions(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

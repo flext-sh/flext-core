@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsEntity
 
 if TYPE_CHECKING:
     from flext_core._typings import FlextTypesAnnotateds, FlextTypesServices
@@ -21,7 +21,7 @@ class FlextProtocolsContextTokens:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class StructlogProxyToken(FlextProtocolsBase.Model, Protocol):
+    class StructlogProxyToken(FlextProtocolsEntity.Value, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -35,7 +35,7 @@ class FlextProtocolsContextTokens:
             ...
 
     @runtime_checkable
-    class Token(FlextProtocolsBase.Model, Protocol):
+    class Token(FlextProtocolsEntity.Value, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

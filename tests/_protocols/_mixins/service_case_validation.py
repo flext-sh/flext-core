@@ -13,17 +13,17 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
-from tests import t
-
 if TYPE_CHECKING:
     from flext_tests import p
+
+    from tests import t
 
 
 class TestsFlextProtocolsMixinsServiceCaseValidation:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ValidationScenario(FlextTestsProtocols.Model, Protocol):
+    class ValidationScenario(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -67,7 +67,7 @@ class TestsFlextProtocolsMixinsServiceCaseValidation:
             ...
 
     @runtime_checkable
-    class Operation(FlextTestsProtocols.Model, Protocol):
+    class Operation(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -91,7 +91,7 @@ class TestsFlextProtocolsMixinsServiceCaseValidation:
             ...
 
     @runtime_checkable
-    class Conversion(FlextTestsProtocols.Model, Protocol):
+    class Conversion(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -120,7 +120,7 @@ class TestsFlextProtocolsMixinsServiceCaseValidation:
             ...
 
     @runtime_checkable
-    class ParserScenario(FlextTestsProtocols.Model, Protocol):
+    class ParserScenario(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -159,7 +159,7 @@ class TestsFlextProtocolsMixinsServiceCaseValidation:
             ...
 
     @runtime_checkable
-    class PublicParseCase(FlextTestsProtocols.Model, Protocol):
+    class PublicParseCase(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

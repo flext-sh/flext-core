@@ -22,9 +22,9 @@ class TestsFlextCoreModelCopyProtocol:
     def test_native_models_preserve_copy_and_public_model_contract() -> None:
         """Share the native copy signature without inventing a RootModel dump type."""
         tm.ok(is_protocol(p.ModelCopy))
-        tm.ok(is_protocol(p.Model))
-        tm.ok(p.ModelCopy in p.Model.__mro__)
-        tm.ok(p.Model.model_copy is p.ModelCopy.model_copy)
+        tm.ok(is_protocol(p.BaseModel))
+        tm.ok(p.ModelCopy in p.BaseModel.__mro__)
+        tm.ok(p.BaseModel.model_copy is p.ModelCopy.model_copy)
         tm.that(
             tuple(signature(p.ModelCopy.model_copy).parameters),
             eq=tuple(signature(m.BaseModel.model_copy).parameters),

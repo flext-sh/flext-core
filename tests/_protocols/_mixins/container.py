@@ -8,18 +8,19 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
-from tests import t
+if TYPE_CHECKING:
+    from tests import t
 
 
 class TestsFlextProtocolsMixinsContainer:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ServiceScenario(FlextTestsProtocols.Model, Protocol):
+    class ServiceScenario(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -38,7 +39,7 @@ class TestsFlextProtocolsMixinsContainer:
             ...
 
     @runtime_checkable
-    class TypedRetrievalScenario(FlextTestsProtocols.Model, Protocol):
+    class TypedRetrievalScenario(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

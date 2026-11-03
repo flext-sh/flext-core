@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from examples import c, t
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c, t
     from flext_core import p
 
 
@@ -22,131 +22,7 @@ class ExamplesFlextProtocolsEx04:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class _CommandEnvelope(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
-            """Message type discriminator (always 'command')."""
-            ...
-
-        @property
-        def command_type(self) -> t.NonEmptyStr:
-            """Command type identifier for the ex04 operation."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
-        @property
-        def event_type(self) -> str:
-            """Event type placeholder for the ex04 operation."""
-            ...
-
-    @runtime_checkable
-    class _QueryEnvelope(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.QUERY]:
-            """Message type discriminator."""
-            ...
-
-        @property
-        def filters(self) -> Mapping[str, t.Scalar]:
-            """Structural member projected from the owning model.
-
-            Filter values that restrict which records are returned by the query.
-            """
-            ...
-
-        @property
-        def pagination(self) -> p.Pagination:
-            """Structural member projected from the owning model.
-
-            Pagination settings controlling page number and page size for query
-            results.
-            """
-            ...
-
-        @property
-        def query_id(self) -> t.NonEmptyStr:
-            """Unique query identifier used for tracing and cache correlation."""
-            ...
-
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier for the ex04 operation."""
-            ...
-
-        @property
-        def command_type(self) -> str:
-            """Command type placeholder for the ex04 operation."""
-            ...
-
-        @property
-        def event_type(self) -> str:
-            """Event type placeholder for the ex04 operation."""
-            ...
-
-    @runtime_checkable
-    class _EventEnvelope(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerType.EVENT]:
-            """Message type discriminator (always 'event')."""
-            ...
-
-        @property
-        def event_type(self) -> str:
-            """Event type identifier for the ex04 operation."""
-            ...
-
-        @property
-        def aggregate_id(self) -> str:
-            """Aggregate ID for events."""
-            ...
-
-        @property
-        def event_id(self) -> t.NonEmptyStr:
-            """Unique event identifier used for deduplication and observability."""
-            ...
-
-        @property
-        def data(self) -> Mapping[str, t.Scalar]:
-            """Event payload data."""
-            ...
-
-        @property
-        def metadata(self) -> Mapping[str, t.Scalar]:
-            """Event metadata (timestamps, correlation IDs, etc.)."""
-            ...
-
-        @property
-        def command_type(self) -> str:
-            """Command type placeholder for the ex04 operation."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
-    @runtime_checkable
-    class CreateUser(FlextProtocols.Model, Protocol):
+    class _CommandEnvelope(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -155,31 +31,13 @@ class ExamplesFlextProtocolsEx04:
             ...
 
         command_type: t.NonEmptyStr
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
+        query_type: str
         event_type: str
 
-        @property
-        def username(self) -> str:
-            """Username for the user to create."""
-            ...
-
     @runtime_checkable
-    class GetUser(FlextProtocols.Model, Protocol):
+    class _QueryEnvelope(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -187,13 +45,7 @@ class ExamplesFlextProtocolsEx04:
             """Message type discriminator."""
             ...
 
-        @property
-        def filters(self) -> Mapping[str, t.Scalar]:
-            """Structural member projected from the owning model.
-
-            Filter values that restrict which records are returned by the query.
-            """
-            ...
+        filters: Mapping[str, t.Scalar]
 
         @property
         def pagination(self) -> p.Pagination:
@@ -204,204 +56,13 @@ class ExamplesFlextProtocolsEx04:
             """
             ...
 
-        @property
-        def query_id(self) -> t.NonEmptyStr:
-            """Unique query identifier used for tracing and cache correlation."""
-            ...
-
+        query_id: t.NonEmptyStr
         query_type: str | None
-
-        @property
-        def command_type(self) -> str:
-            """Command type placeholder for the ex04 operation."""
-            ...
-
+        command_type: str
         event_type: str
 
-        @property
-        def username(self) -> str:
-            """Username to retrieve."""
-            ...
-
     @runtime_checkable
-    class DeleteUser(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
-            """Message type discriminator (always 'command')."""
-            ...
-
-        command_type: t.NonEmptyStr
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
-        event_type: str
-
-        @property
-        def username(self) -> str:
-            """Username of the user to delete."""
-            ...
-
-    @runtime_checkable
-    class FailingDelete(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
-            """Message type discriminator (always 'command')."""
-            ...
-
-        command_type: t.NonEmptyStr
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
-        event_type: str
-
-        @property
-        def username(self) -> str:
-            """Username for the failing delete operation."""
-            ...
-
-    @runtime_checkable
-    class AutoCommand(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
-            """Message type discriminator (always 'command')."""
-            ...
-
-        command_type: t.NonEmptyStr
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
-        event_type: str
-
-        @property
-        def payload(self) -> str:
-            """Payload data for the auto command."""
-            ...
-
-    @runtime_checkable
-    class Ping(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
-            """Message type discriminator (always 'command')."""
-            ...
-
-        command_type: t.NonEmptyStr
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
-        event_type: str
-
-        @property
-        def value(self) -> str:
-            """Value data for the ping command."""
-            ...
-
-    @runtime_checkable
-    class UnknownQuery(FlextProtocols.Model, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.QUERY]:
-            """Message type discriminator."""
-            ...
-
-        @property
-        def filters(self) -> Mapping[str, t.Scalar]:
-            """Structural member projected from the owning model.
-
-            Filter values that restrict which records are returned by the query.
-            """
-            ...
-
-        @property
-        def pagination(self) -> p.Pagination:
-            """Structural member projected from the owning model.
-
-            Pagination settings controlling page number and page size for query
-            results.
-            """
-            ...
-
-        @property
-        def query_id(self) -> t.NonEmptyStr:
-            """Unique query identifier used for tracing and cache correlation."""
-            ...
-
-        query_type: str | None
-
-        @property
-        def command_type(self) -> str:
-            """Command type placeholder for the ex04 operation."""
-            ...
-
-        event_type: str
-
-        @property
-        def payload(self) -> str:
-            """Payload data for the unknown query."""
-            ...
-
-    @runtime_checkable
-    class UserCreated(FlextProtocols.Model, Protocol):
+    class _EventEnvelope(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -411,82 +72,65 @@ class ExamplesFlextProtocolsEx04:
 
         event_type: str
         aggregate_id: str
-
-        @property
-        def event_id(self) -> t.NonEmptyStr:
-            """Unique event identifier used for deduplication and observability."""
-            ...
-
-        @property
-        def data(self) -> Mapping[str, t.Scalar]:
-            """Event payload data."""
-            ...
-
-        @property
-        def metadata(self) -> Mapping[str, t.Scalar]:
-            """Event metadata (timestamps, correlation IDs, etc.)."""
-            ...
-
-        @property
-        def command_type(self) -> str:
-            """Command type placeholder for the ex04 operation."""
-            ...
-
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
-
-        @property
-        def username(self) -> str:
-            """Username of the user that was created."""
-            ...
+        event_id: t.NonEmptyStr
+        data: Mapping[str, t.Scalar]
+        metadata: Mapping[str, t.Scalar]
+        command_type: str
+        query_type: str
 
     @runtime_checkable
-    class NoSubscriberEvent(FlextProtocols.Model, Protocol):
+    class CreateUser(_CommandEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def message_type(self) -> Literal[c.HandlerType.EVENT]:
-            """Message type discriminator (always 'event')."""
-            ...
+        username: str
 
-        event_type: str
+    @runtime_checkable
+    class GetUser(_QueryEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
 
-        @property
-        def aggregate_id(self) -> str:
-            """Aggregate ID for events."""
-            ...
+        username: str
 
-        @property
-        def event_id(self) -> t.NonEmptyStr:
-            """Unique event identifier used for deduplication and observability."""
-            ...
+    @runtime_checkable
+    class DeleteUser(_CommandEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
 
-        @property
-        def data(self) -> Mapping[str, t.Scalar]:
-            """Event payload data."""
-            ...
+        username: str
 
-        @property
-        def metadata(self) -> Mapping[str, t.Scalar]:
-            """Event metadata (timestamps, correlation IDs, etc.)."""
-            ...
+    @runtime_checkable
+    class FailingDelete(_CommandEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
 
-        @property
-        def command_type(self) -> str:
-            """Command type placeholder for the ex04 operation."""
-            ...
+        username: str
 
-        @property
-        def query_type(self) -> str:
-            """Query type placeholder for the ex04 operation."""
-            ...
+    @runtime_checkable
+    class AutoCommand(_CommandEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
 
-        @property
-        def marker(self) -> str:
-            """Marker identifying the event as having no subscribers."""
-            ...
+        payload: str
+
+    @runtime_checkable
+    class Ping(_CommandEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        value: str
+
+    @runtime_checkable
+    class UnknownQuery(_QueryEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        payload: str
+
+    @runtime_checkable
+    class UserCreated(_EventEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        username: str
+
+    @runtime_checkable
+    class NoSubscriberEvent(_EventEnvelope, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        marker: str
 
 
 __all__: list[str] = [

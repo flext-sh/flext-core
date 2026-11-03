@@ -10,75 +10,45 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols._exception_params import FlextProtocolsExceptionParamsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsExceptionParamsOperationErrors:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class OperationErrorParams(FlextProtocolsBase.Model, Protocol):
+    class OperationErrorParams(FlextProtocolsExceptionParamsBase.ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def operation(self) -> str | None:
-            """Operation name associated with the failure."""
-            ...
-
-        @property
-        def reason(self) -> str | None:
-            """Short reason explaining the operation failure."""
-            ...
+        operation: str | None
+        reason: str | None
 
     @runtime_checkable
-    class ServiceLookupParams(FlextProtocolsBase.Model, Protocol):
+    class ServiceLookupParams(
+        FlextProtocolsExceptionParamsBase.ExpectedActualTypeParams, Protocol
+    ):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def expected_type(self) -> FlextTypesPydantic.StrictStr | None:
-            """Expected runtime type name for the failing value."""
-            ...
-
-        @property
-        def actual_type(self) -> FlextTypesPydantic.StrictStr | None:
-            """Actual runtime type name received at runtime."""
-            ...
-
-        @property
-        def service_name(self) -> str | None:
-            """Service identifier requested from the container/registry."""
-            ...
+        service_name: str | None
 
     @runtime_checkable
-    class RegistryPluginParams(FlextProtocolsBase.Model, Protocol):
+    class RegistryPluginParams(FlextProtocolsExceptionParamsBase.ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def category(self) -> str | None:
-            """Registry category for plugin registration."""
-            ...
-
-        @property
-        def name(self) -> str | None:
-            """Plugin name within a category."""
-            ...
-
-        @property
-        def scope(self) -> str | None:
-            """Registration scope used by registry operations."""
-            ...
+        category: str | None
+        name: str | None
+        scope: str | None
 
     @runtime_checkable
-    class AttributeAccessErrorParams(FlextProtocolsBase.Model, Protocol):
+    class AttributeAccessErrorParams(
+        FlextProtocolsExceptionParamsBase.ParamsModel, Protocol
+    ):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def attribute_name(self) -> str | None:
-            """Attribute name that could not be accessed safely."""
-            ...
+        attribute_name: str | None
 
         @property
         def attribute_context(self) -> FlextTypingBase.RuntimeData | None:

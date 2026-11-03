@@ -22,7 +22,7 @@ class FlextProtocolsDomainEvent:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class DomainEvent(FlextProtocolsBase.Model, Protocol):
+    class DomainEvent(FlextProtocolsBase.TimestampedModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

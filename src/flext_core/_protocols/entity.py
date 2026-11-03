@@ -22,7 +22,7 @@ class FlextProtocolsEntity:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Entity(FlextProtocolsBase.Model, Protocol):
+    class Entity(FlextProtocolsBase.TimestampedModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -31,20 +31,15 @@ class FlextProtocolsEntity:
             ...
 
     @runtime_checkable
-    class Value(FlextProtocolsBase.Model, Protocol):
+    class Value(FlextProtocolsBase.FrozenValueModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class AggregateRoot(FlextProtocolsBase.Model, Protocol):
+    class AggregateRoot(Entity, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def domain_events(self) -> Sequence[FlextProtocolsDomainEvent.DomainEvent]:
-            """List of uncommitted domain events for event sourcing."""
-            ...
-
     @runtime_checkable
-    class TransformOptions(FlextProtocolsBase.Model, Protocol):
+    class TransformOptions(Value, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -68,7 +63,7 @@ class FlextProtocolsEntity:
             ...
 
     @runtime_checkable
-    class ExtractResolvePathPartContext(FlextProtocolsBase.Model, Protocol):
+    class ExtractResolvePathPartContext(Value, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

@@ -21,41 +21,18 @@ class FlextProtocolsCollectionModels:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class TransformSpec(FlextProtocolsBase.Model, Protocol):
+    class TransformSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def normalize(self) -> bool:
-            """Normalize the mapping values before the pipeline."""
-            ...
-
-        @property
-        def strip_none(self) -> bool:
-            """Drop entries whose value is None."""
-            ...
-
-        @property
-        def strip_empty(self) -> bool:
-            """Drop entries whose value is empty."""
-            ...
-
-        @property
-        def map_keys(self) -> Mapping[str, str] | None:
-            """Optional rename map applied to keys."""
-            ...
-
-        @property
-        def filter_keys(self) -> set[str] | None:
-            """Keep only these keys when provided."""
-            ...
-
-        @property
-        def exclude_keys(self) -> set[str] | None:
-            """Drop these keys when provided."""
-            ...
+        normalize: bool
+        strip_none: bool
+        strip_empty: bool
+        map_keys: Mapping[str, str] | None
+        filter_keys: set[str] | None
+        exclude_keys: set[str] | None
 
     @runtime_checkable
-    class GuardCheckSpec(FlextProtocolsBase.Model, Protocol):
+    class GuardCheckSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -68,43 +45,12 @@ class FlextProtocolsCollectionModels:
             """Require the value to differ from this value."""
             ...
 
-        @property
-        def gt(self) -> float | str | None:
-            """Require value to be greater than this (sortable: numeric or string)."""
-            ...
-
-        @property
-        def gte(self) -> float | str | None:
-            """Structural member projected from the owning model.
-
-            Require value to be greater than or equal to this (sortable: numeric or
-            string).
-            """
-            ...
-
-        @property
-        def lt(self) -> float | str | None:
-            """Require value to be less than this (sortable: numeric or string)."""
-            ...
-
-        @property
-        def lte(self) -> float | str | None:
-            """Structural member projected from the owning model.
-
-            Require value to be less than or equal to this (sortable: numeric or
-            string).
-            """
-            ...
-
-        @property
-        def is_(self) -> type | None:
-            """Require the value to be an instance of this type."""
-            ...
-
-        @property
-        def not_(self) -> type | None:
-            """Require the value to not be an instance of this type."""
-            ...
+        gt: float | str | None
+        gte: float | str | None
+        lt: float | str | None
+        lte: float | str | None
+        is_: type | None
+        not_: type | None
 
         @property
         def in_(self) -> FlextTypingBase.JsonList | None:
@@ -116,30 +62,11 @@ class FlextProtocolsCollectionModels:
             """Require the value to not be present in this sequence."""
             ...
 
-        @property
-        def none(self) -> bool | None:
-            """When True, require None. When False, require non-None."""
-            ...
-
-        @property
-        def empty(self) -> bool | None:
-            """When True, require empty value; when False, require non-empty."""
-            ...
-
-        @property
-        def contains(self) -> str | None:
-            """Require string or iterable value to contain this item."""
-            ...
-
-        @property
-        def starts(self) -> str | None:
-            """Require string value to start with this prefix."""
-            ...
-
-        @property
-        def ends(self) -> str | None:
-            """Require string value to end with this suffix."""
-            ...
+        none: bool | None
+        empty: bool | None
+        contains: str | None
+        starts: str | None
+        ends: str | None
 
 
 __all__: list[str] = [

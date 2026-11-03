@@ -27,11 +27,11 @@ class FlextProtocolsExceptionParamsBase:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ParamsModel(FlextProtocolsBase.Model, Protocol):
+    class ParamsModel(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ExceptionFactoryOptions(FlextProtocolsBase.Model, Protocol):
+    class ExceptionFactoryOptions(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -45,13 +45,10 @@ class FlextProtocolsExceptionParamsBase:
             ...
 
     @runtime_checkable
-    class ExceptionInitOptions(FlextProtocolsBase.Model, Protocol):
+    class ExceptionInitOptions(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def error_code(self) -> str:
-            """Canonical error code carried by the exception."""
-            ...
+        error_code: str
 
         @property
         def context(
@@ -76,15 +73,8 @@ class FlextProtocolsExceptionParamsBase:
             """Explicit correlation identifier for the exception."""
             ...
 
-        @property
-        def auto_correlation(self) -> bool:
-            """Generate a correlation identifier when none is given."""
-            ...
-
-        @property
-        def auto_log(self) -> bool:
-            """Log the exception automatically on construction."""
-            ...
+        auto_correlation: bool
+        auto_log: bool
 
         @property
         def merged_kwargs(
@@ -98,7 +88,7 @@ class FlextProtocolsExceptionParamsBase:
             ...
 
     @runtime_checkable
-    class ResourceIdentityParams(FlextProtocolsBase.Model, Protocol):
+    class ResourceIdentityParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -112,7 +102,7 @@ class FlextProtocolsExceptionParamsBase:
             ...
 
     @runtime_checkable
-    class ExpectedActualTypeParams(FlextProtocolsBase.Model, Protocol):
+    class ExpectedActualTypeParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -126,7 +116,7 @@ class FlextProtocolsExceptionParamsBase:
             ...
 
     @runtime_checkable
-    class ValidationErrorParams(FlextProtocolsBase.Model, Protocol):
+    class ValidationErrorParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -140,7 +130,7 @@ class FlextProtocolsExceptionParamsBase:
             ...
 
     @runtime_checkable
-    class ConfigurationErrorParams(FlextProtocolsBase.Model, Protocol):
+    class ConfigurationErrorParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -154,18 +144,11 @@ class FlextProtocolsExceptionParamsBase:
             ...
 
     @runtime_checkable
-    class ConnectionErrorParams(FlextProtocolsBase.Model, Protocol):
+    class ConnectionErrorParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def host(self) -> str | None:
-            """Hostname or address used for the failed connection attempt."""
-            ...
-
-        @property
-        def port(self) -> int | None:
-            """Network port used for the failed connection attempt."""
-            ...
+        host: str | None
+        port: int | None
 
         @property
         def timeout(self) -> FlextTypingBase.Numeric | None:

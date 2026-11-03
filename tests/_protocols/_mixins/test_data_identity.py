@@ -17,7 +17,7 @@ class TestsFlextProtocolsMixinsTestDataIdentity:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Names(FlextTestsProtocols.Model, Protocol):
+    class Names(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

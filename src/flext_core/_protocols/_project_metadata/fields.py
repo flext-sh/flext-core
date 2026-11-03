@@ -11,7 +11,10 @@ from __future__ import annotations
 from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols._project_metadata import (
+    FlextProtocolsProjectMetadataContract,
+    FlextProtocolsProjectMetadataPyprojectIngress,
+)
 
 if TYPE_CHECKING:
     from flext_core._typings import FlextTypingBase, FlextTypingConfig
@@ -21,7 +24,10 @@ class FlextProtocolsProjectMetadataFields:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ProjectAuthor(FlextProtocolsBase.Model, Protocol):
+    class ProjectAuthor(
+        FlextProtocolsProjectMetadataPyprojectIngress.FlextModelsPyprojectIngressContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -35,7 +41,10 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
     @runtime_checkable
-    class ProjectUrls(FlextProtocolsBase.Model, Protocol):
+    class ProjectUrls(
+        FlextProtocolsProjectMetadataPyprojectIngress.FlextModelsPyprojectIngressContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -54,7 +63,10 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
     @runtime_checkable
-    class ProjectToolFlextProject(FlextProtocolsBase.Model, Protocol):
+    class ProjectToolFlextProject(
+        FlextProtocolsProjectMetadataContract.FlextModelsProjectMetadataContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -85,7 +97,10 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
     @runtime_checkable
-    class ProjectToolFlextReadmeSection(FlextProtocolsBase.Model, Protocol):
+    class ProjectToolFlextReadmeSection(
+        FlextProtocolsProjectMetadataContract.FlextModelsProjectMetadataContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -109,7 +124,10 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
     @runtime_checkable
-    class ProjectToolFlextDocs(FlextProtocolsBase.Model, Protocol):
+    class ProjectToolFlextDocs(
+        FlextProtocolsProjectMetadataContract.FlextModelsProjectMetadataContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -142,7 +160,10 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
     @runtime_checkable
-    class ProjectToolFlextWorkspace(FlextProtocolsBase.Model, Protocol):
+    class ProjectToolFlextWorkspace(
+        FlextProtocolsProjectMetadataContract.FlextModelsProjectMetadataContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -151,7 +172,10 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
     @runtime_checkable
-    class ProjectToolFlextNamespace(FlextProtocolsBase.Model, Protocol):
+    class ProjectToolFlextNamespace(
+        FlextProtocolsProjectMetadataContract.FlextModelsProjectMetadataContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property

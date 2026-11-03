@@ -83,7 +83,7 @@ must preserve the actual Pydantic override and source-construction behavior.
 Protocol names used by executable `r[p.Contract]` specializations remain real
 runtime bindings; a `TYPE_CHECKING`-only import cannot supply their validation.
 
-The shared runtime-checkable `p.Model` owns instance serialization capabilities,
+The shared runtime-checkable `p.BaseModel` owns instance serialization capabilities,
 including native `model_dump_json` keyword options. Generated model protocols
 inherit that capability; consumers do not duplicate serializer declarations.
 

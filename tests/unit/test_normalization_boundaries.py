@@ -168,9 +168,9 @@ class TestsFlextCoreNormalizationBoundaries:
         payload = {"attributes": attributes}
         metadata: p.Metadata = tm.ok(u.validate_value(m.Metadata, payload))
         tm.that(metadata.attributes, eq=attributes)
-        model: p.Model = metadata
+        model: p.BaseModel = metadata
         tm.ok(tm.ok(u.validate_value(m.Metadata, model)) is metadata)
-        inputs: t.ValidationInput[p.Model] = [
+        inputs: t.ValidationInput[p.BaseModel] = [
             model,
             MappingProxyType({"attributes": attributes}),
         ]

@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from examples import c, t
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c, t
     from flext_core import p
 
 
@@ -21,7 +21,7 @@ class ExamplesFlextProtocolsEx10:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Message(FlextProtocols.Model, Protocol):
+    class Message(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -29,57 +29,17 @@ class ExamplesFlextProtocolsEx10:
             """Message type discriminator (always 'command')."""
             ...
 
-        @property
-        def command_type(self) -> t.NonEmptyStr:
-            """Command type identifier."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def text(self) -> str:
-            """Message text content."""
-            ...
+        command_type: t.NonEmptyStr
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
+        text: str
 
     @runtime_checkable
-    class DerivedMessage(FlextProtocols.Model, Protocol):
+    class DerivedMessage(Message, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
-            """Message type discriminator (always 'command')."""
-            ...
-
-        @property
-        def command_type(self) -> t.NonEmptyStr:
-            """Command type identifier."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
-        @property
-        def text(self) -> str:
-            """Message text content."""
-            ...
-
     @runtime_checkable
-    class ContextPayload(FlextProtocols.Model, Protocol):
+    class ContextPayload(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -88,7 +48,7 @@ class ExamplesFlextProtocolsEx10:
             ...
 
     @runtime_checkable
-    class Entity(FlextProtocols.Model, Protocol):
+    class Entity(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -97,7 +57,7 @@ class ExamplesFlextProtocolsEx10:
             ...
 
     @runtime_checkable
-    class ProcessorGood(FlextProtocols.Model, Protocol):
+    class ProcessorGood(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -106,7 +66,7 @@ class ExamplesFlextProtocolsEx10:
             ...
 
     @runtime_checkable
-    class ProcessorBad(FlextProtocols.Model, Protocol):
+    class ProcessorBad(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -115,13 +75,10 @@ class ExamplesFlextProtocolsEx10:
             ...
 
     @runtime_checkable
-    class ProtocolHandler(FlextProtocols.Model, Protocol):
+    class ProtocolHandler(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def message_type(self) -> type[p.Command]:
-            """Message type for protocol handler."""
-            ...
+        message_type: type[p.Command]
 
 
 __all__: list[str] = [

@@ -19,7 +19,7 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _normalize_accessible_value(
-        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
+        value: t.JsonPayload | p.BaseModel | p.HasModelDump | p.ValidatorSpec | None,
     ) -> t.JsonPayload | t.JsonValue:
         """Normalize protocol-accessible values.
 
@@ -43,7 +43,7 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _normalize_payload_value(
-        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec | None,
+        value: t.JsonPayload | p.BaseModel | p.HasModelDump | p.ValidatorSpec | None,
     ) -> t.JsonPayload | t.JsonValue:
         """Normalize the payload shapes that never expose ``model_dump``.
 
@@ -59,7 +59,7 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _container_or_string(
-        value: t.JsonPayload | p.Model | p.HasModelDump | p.ValidatorSpec,
+        value: t.JsonPayload | p.BaseModel | p.HasModelDump | p.ValidatorSpec,
     ) -> t.JsonPayload | t.JsonValue:
         """Return container values as-is and everything else stringified.
 

@@ -23,7 +23,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Command(FlextProtocolsBase.Model, Protocol):
+    class Command(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -49,7 +49,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
             ...
 
     @runtime_checkable
-    class Query(FlextProtocolsBase.Model, Protocol):
+    class Query(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -77,13 +77,10 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
             """Unique query identifier used for tracing and cache correlation."""
             ...
 
-        @property
-        def query_type(self) -> str | None:
-            """Query type identifier for dispatcher routing."""
-            ...
+        query_type: str | None
 
     @runtime_checkable
-    class HandlerConfig(FlextProtocolsBase.Model, Protocol):
+    class HandlerConfig(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -130,7 +127,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
             ...
 
     @runtime_checkable
-    class Event(FlextProtocolsBase.Model, Protocol):
+    class Event(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

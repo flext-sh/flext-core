@@ -21,7 +21,7 @@ class FlextProtocolsContextData:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ContextData(FlextProtocolsBase.Model, Protocol):
+    class ContextData(FlextProtocolsBase.FlexibleInternalModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

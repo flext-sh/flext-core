@@ -21,7 +21,7 @@ class ExamplesFlextProtocolsEx11:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Payload(FlextProtocols.Model, Protocol):
+    class Payload(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -30,31 +30,15 @@ class ExamplesFlextProtocolsEx11:
             ...
 
     @runtime_checkable
-    class ServiceHandlerConfig(FlextProtocols.Model, Protocol):
+    class ServiceHandlerConfig(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def debug(self) -> bool:
-            """Enable debug mode."""
-            ...
-
-        @property
-        def trace(self) -> bool:
-            """Enable detailed stacks and high-volume diagnostics."""
-            ...
-
+        debug: bool
+        trace: bool
         log_level: str
         logging_profile: Literal["console", "json"]
-
-        @property
-        def timezone(self) -> str:
-            """IANA timezone for datetime operations."""
-            ...
-
-        @property
-        def async_logging(self) -> bool:
-            """Enable asynchronous buffered logging."""
-            ...
+        timezone: str
+        async_logging: bool
 
         @property
         def cache_dir(self) -> Path:
@@ -86,22 +70,16 @@ class ExamplesFlextProtocolsEx11:
             """Consuming application's ephemeral runtime directory."""
             ...
 
-        @property
-        def enabled(self) -> bool:
-            """Whether the service is enabled."""
-            ...
+        enabled: bool
 
     @runtime_checkable
-    class ServiceHandlerLike(FlextProtocols.Model, Protocol):
+    class ServiceHandlerLike(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def message_type(self) -> type[p.Value]:
-            """Message type handled by this handler."""
-            ...
+        message_type: type[p.Value]
 
     @runtime_checkable
-    class ProcessorProtocolGood(FlextProtocols.Model, Protocol):
+    class ProcessorProtocolGood(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -110,7 +88,7 @@ class ExamplesFlextProtocolsEx11:
             ...
 
     @runtime_checkable
-    class ProcessorProtocolBad(FlextProtocols.Model, Protocol):
+    class ProcessorProtocolBad(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

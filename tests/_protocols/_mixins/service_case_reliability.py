@@ -20,7 +20,7 @@ class TestsFlextProtocolsMixinsServiceCaseReliability:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ReliabilityScenario(FlextTestsProtocols.Model, Protocol):
+    class ReliabilityScenario(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

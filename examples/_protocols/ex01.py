@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from examples import c, t
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
+    from examples import c, t
     from flext_core import p
 
 
@@ -22,7 +22,7 @@ class ExamplesFlextProtocolsEx01:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class User(FlextProtocols.Model, Protocol):
+    class User(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -34,7 +34,7 @@ class ExamplesFlextProtocolsEx01:
         email: str
 
     @runtime_checkable
-    class DemonstrationResult(FlextProtocols.Model, Protocol):
+    class DemonstrationResult(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -53,7 +53,7 @@ class ExamplesFlextProtocolsEx01:
             ...
 
     @runtime_checkable
-    class RunDemonstrationCommand(FlextProtocols.Model, Protocol):
+    class RunDemonstrationCommand(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -61,25 +61,13 @@ class ExamplesFlextProtocolsEx01:
             """Message type discriminator (always 'command')."""
             ...
 
-        @property
-        def command_type(self) -> t.NonEmptyStr:
-            """Command type identifier."""
-            ...
-
-        @property
-        def command_id(self) -> t.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> t.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
-
+        command_type: t.NonEmptyStr
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
         operation: str
 
     @runtime_checkable
-    class ValidPersonPayload(FlextProtocols.Model, Protocol):
+    class ValidPersonPayload(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -93,7 +81,7 @@ class ExamplesFlextProtocolsEx01:
             ...
 
     @runtime_checkable
-    class InvalidPersonPayload(FlextProtocols.Model, Protocol):
+    class InvalidPersonPayload(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

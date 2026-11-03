@@ -21,7 +21,7 @@ class ExamplesFlextProtocolsEx03:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class Email(FlextProtocols.Model, Protocol):
+    class Email(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -30,7 +30,7 @@ class ExamplesFlextProtocolsEx03:
             ...
 
     @runtime_checkable
-    class Money(FlextProtocols.Model, Protocol):
+    class Money(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -44,7 +44,7 @@ class ExamplesFlextProtocolsEx03:
             ...
 
     @runtime_checkable
-    class OrderItem(FlextProtocols.Model, Protocol):
+    class OrderItem(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -58,7 +58,7 @@ class ExamplesFlextProtocolsEx03:
             ...
 
     @runtime_checkable
-    class Order(FlextProtocols.Model, Protocol):
+    class Order(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -66,13 +66,10 @@ class ExamplesFlextProtocolsEx03:
             """List of uncommitted domain events for event sourcing."""
             ...
 
-        @property
-        def status(self) -> str:
-            """Order lifecycle status."""
-            ...
+        status: str
 
     @runtime_checkable
-    class EmailUser(FlextProtocols.Model, Protocol):
+    class EmailUser(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -80,10 +77,7 @@ class ExamplesFlextProtocolsEx03:
             """List of uncommitted domain events for event sourcing."""
             ...
 
-        @property
-        def email(self) -> str:
-            """User email address."""
-            ...
+        email: str
 
 
 __all__: list[str] = [

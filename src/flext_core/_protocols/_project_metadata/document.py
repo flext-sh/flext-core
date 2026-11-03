@@ -11,7 +11,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols._project_metadata import (
+    FlextProtocolsProjectMetadataContract,
+    FlextProtocolsProjectMetadataPyprojectIngress,
+)
 
 if TYPE_CHECKING:
     from flext_core._protocols._project_metadata import (
@@ -23,7 +26,10 @@ class FlextProtocolsProjectMetadataDocument:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class PyprojectTool(FlextProtocolsBase.Model, Protocol):
+    class PyprojectTool(
+        FlextProtocolsProjectMetadataPyprojectIngress.FlextModelsPyprojectIngressContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -32,7 +38,10 @@ class FlextProtocolsProjectMetadataDocument:
             ...
 
     @runtime_checkable
-    class ProjectMetadata(FlextProtocolsBase.Model, Protocol):
+    class ProjectMetadata(
+        FlextProtocolsProjectMetadataContract.FlextModelsProjectMetadataContract,
+        Protocol,
+    ):
         """Structural data contract projected from the owning model."""
 
         @property

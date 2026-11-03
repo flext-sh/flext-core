@@ -383,7 +383,7 @@ class FlextTypesPydantic:
 
     @staticmethod
     def schema_for_model(
-        model: type[p.Model],
+        model: type[p.BaseModel],
     ) -> FlextTypesPydantic.GetPydanticSchema:
         """Delegate a protocol payload to its authenticated native model schema.
 

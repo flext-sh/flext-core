@@ -12,36 +12,36 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
 
-from tests import c, t
-
 if TYPE_CHECKING:
     from flext_tests import p
+
+    from tests import c, t
 
 
 class TestsFlextProtocolsMixinsGuardsMapper:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class PortModel(FlextTestsProtocols.Model, Protocol):
+    class PortModel(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         port: int
         nested: t.JsonMapping
 
     @runtime_checkable
-    class MaybeModel(FlextTestsProtocols.Model, Protocol):
+    class MaybeModel(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         x: str | None
 
     @runtime_checkable
-    class GroupModel(FlextTestsProtocols.Model, Protocol):
+    class GroupModel(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         kind: str | None
 
     @runtime_checkable
-    class UserCreatedEvent(FlextTestsProtocols.Model, Protocol):
+    class UserCreatedEvent(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -49,35 +49,17 @@ class TestsFlextProtocolsMixinsGuardsMapper:
             """Immutable event discriminator for union routing."""
             ...
 
-        @property
-        def event_type(self) -> t.NonEmptyStr:
-            """Domain event type identifier for subscriber routing."""
-            ...
-
-        @property
-        def aggregate_id(self) -> t.NonEmptyStr:
-            """Identifier of the aggregate root that produced this event."""
-            ...
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
 
         @property
         def data(self) -> p.ConfigMap:
             """Event data container."""
             ...
 
-        @property
-        def user_id(self) -> str:
-            """Identifier of the created user."""
-            ...
-
-        @property
-        def user_name(self) -> str:
-            """Name assigned to the new user."""
-            ...
-
-        @property
-        def timestamp(self) -> float:
-            """POSIX timestamp when the event fired."""
-            ...
+        user_id: str
+        user_name: str
+        timestamp: float
 
 
 __all__: list[str] = [

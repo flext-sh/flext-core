@@ -17,14 +17,14 @@ class TestsFlextProtocolsMixinsCoreState:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class SingletonClassForTest(FlextTestsProtocols.Model, Protocol):
+    class SingletonClassForTest(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         name: str
         timeout: int
 
     @runtime_checkable
-    class _SampleEntity(FlextTestsProtocols.Model, Protocol):
+    class _SampleEntity(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         unique_id: str

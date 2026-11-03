@@ -122,8 +122,8 @@ class TestsFlextUtilitiesDispatch:
 
         @staticmethod
         def process[TResult](
-            command: p.Model,
-            next_handler: Callable[[p.Model], p.Result[TResult]],
+            command: p.BaseModel,
+            next_handler: Callable[[p.BaseModel], p.Result[TResult]],
         ) -> p.Result[TResult]:
             """Return the next handler's result without replacing its payload."""
             return next_handler(command)

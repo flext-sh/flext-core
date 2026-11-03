@@ -10,17 +10,17 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols._exception_params import FlextProtocolsExceptionParamsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
+    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsExceptionParamsServiceErrors:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class TimeoutErrorParams(FlextProtocolsBase.Model, Protocol):
+    class TimeoutErrorParams(FlextProtocolsExceptionParamsBase.ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -28,90 +28,47 @@ class FlextProtocolsExceptionParamsServiceErrors:
             """Timeout duration in seconds that triggered this exception."""
             ...
 
-        @property
-        def operation(self) -> str | None:
-            """Operation name that exceeded the configured timeout."""
-            ...
+        operation: str | None
 
     @runtime_checkable
-    class AuthenticationErrorParams(FlextProtocolsBase.Model, Protocol):
+    class AuthenticationErrorParams(
+        FlextProtocolsExceptionParamsBase.ParamsModel, Protocol
+    ):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def auth_method(self) -> str | None:
-            """Authentication method used when the failure occurred."""
-            ...
-
-        @property
-        def user_id(self) -> str | None:
-            """User identifier associated with the authentication attempt."""
-            ...
+        auth_method: str | None
+        user_id: str | None
 
     @runtime_checkable
-    class AuthorizationErrorParams(FlextProtocolsBase.Model, Protocol):
+    class AuthorizationErrorParams(
+        FlextProtocolsExceptionParamsBase.ParamsModel, Protocol
+    ):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def user_id(self) -> str | None:
-            """User identifier denied access to a protected resource."""
-            ...
-
-        @property
-        def resource(self) -> str | None:
-            """Protected resource that triggered the authorization failure."""
-            ...
-
-        @property
-        def permission(self) -> str | None:
-            """Missing permission required to complete the requested action."""
-            ...
+        user_id: str | None
+        resource: str | None
+        permission: str | None
 
     @runtime_checkable
-    class NotFoundErrorParams(FlextProtocolsBase.Model, Protocol):
+    class NotFoundErrorParams(
+        FlextProtocolsExceptionParamsBase.ResourceIdentityParams, Protocol
+    ):
         """Structural data contract projected from the owning model."""
-
-        @property
-        def resource_type(self) -> FlextTypesPydantic.StrictStr | None:
-            """Domain resource type associated with the failure."""
-            ...
-
-        @property
-        def resource_id(self) -> FlextTypesPydantic.StrictStr | None:
-            """Identifier of the resource associated with the failure."""
-            ...
 
     @runtime_checkable
-    class ConflictErrorParams(FlextProtocolsBase.Model, Protocol):
+    class ConflictErrorParams(
+        FlextProtocolsExceptionParamsBase.ResourceIdentityParams, Protocol
+    ):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def resource_type(self) -> FlextTypesPydantic.StrictStr | None:
-            """Domain resource type associated with the failure."""
-            ...
-
-        @property
-        def resource_id(self) -> FlextTypesPydantic.StrictStr | None:
-            """Identifier of the resource associated with the failure."""
-            ...
-
-        @property
-        def conflict_reason(self) -> str | None:
-            """Human-readable explanation for why the conflict occurred."""
-            ...
+        conflict_reason: str | None
 
     @runtime_checkable
-    class RateLimitErrorParams(FlextProtocolsBase.Model, Protocol):
+    class RateLimitErrorParams(FlextProtocolsExceptionParamsBase.ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def limit(self) -> int | None:
-            """Maximum request count allowed within the configured window."""
-            ...
-
-        @property
-        def window_seconds(self) -> int | None:
-            """Duration, in seconds, of the rate-limit window."""
-            ...
+        limit: int | None
+        window_seconds: int | None
 
         @property
         def retry_after(self) -> FlextTypingBase.Numeric | None:
@@ -119,18 +76,13 @@ class FlextProtocolsExceptionParamsServiceErrors:
             ...
 
     @runtime_checkable
-    class CircuitBreakerErrorParams(FlextProtocolsBase.Model, Protocol):
+    class CircuitBreakerErrorParams(
+        FlextProtocolsExceptionParamsBase.ParamsModel, Protocol
+    ):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def service_name(self) -> str | None:
-            """External service monitored by the circuit breaker."""
-            ...
-
-        @property
-        def failure_count(self) -> int | None:
-            """Consecutive failure count at the moment the breaker opened."""
-            ...
+        service_name: str | None
+        failure_count: int | None
 
         @property
         def reset_timeout(self) -> FlextTypingBase.Numeric | None:
@@ -138,18 +90,10 @@ class FlextProtocolsExceptionParamsServiceErrors:
             ...
 
     @runtime_checkable
-    class TypeErrorParams(FlextProtocolsBase.Model, Protocol):
+    class TypeErrorParams(
+        FlextProtocolsExceptionParamsBase.ExpectedActualTypeParams, Protocol
+    ):
         """Structural data contract projected from the owning model."""
-
-        @property
-        def expected_type(self) -> FlextTypesPydantic.StrictStr | None:
-            """Expected runtime type name for the failing value."""
-            ...
-
-        @property
-        def actual_type(self) -> FlextTypesPydantic.StrictStr | None:
-            """Actual runtime type name received at runtime."""
-            ...
 
 
 __all__: list[str] = [
