@@ -10,6 +10,12 @@ SPDX-License-Identifier: MIT
 
 from pathlib import Path
 
+import pytest
 from flext_tests import install_local_packages
 
-install_local_packages(Path(__file__).resolve().parent)
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_configure(config: pytest.Config) -> None:
+    """Register the local packages before collection imports any test module."""
+    del config
+    install_local_packages(Path(__file__).resolve().parent)
