@@ -12,6 +12,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
     from flext_core._protocols import FlextProtocolsService
 
 
@@ -36,25 +38,33 @@ class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
 
     @runtime_checkable
-    class RegistrySummary(FlextProtocolsBase.Base, Protocol):
-        """Observable outcome of one atomic registration batch."""
+    class RegistrySummary(FlextProtocolsBase.Model, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
-        def registered(
-            self,
-        ) -> Sequence[FlextProtocolsHandler.RegistrationDetails]: ...
+        def registered(self) -> Sequence[FlextProtocolsHandler.RegistrationDetails]:
+            """Successfully registered handlers with registration details."""
+            ...
 
         @property
-        def skipped(self) -> Sequence[str]: ...
+        def skipped(self) -> Sequence[str]:
+            """Handler identifiers that were skipped (already registered)."""
+            ...
 
         @property
-        def errors(self) -> Sequence[str]: ...
+        def errors(self) -> MutableSequence[str]:
+            """Error messages for failed registrations."""
+            ...
 
         @property
-        def success(self) -> bool: ...
+        def failure(self) -> bool:
+            """Indicate whether the batch registration had errors."""
+            ...
 
         @property
-        def failure(self) -> bool: ...
+        def success(self) -> bool:
+            """Indicate whether the batch registration fully succeeded."""
+            ...
 
     @runtime_checkable
     class Registry(FlextProtocolsBase.Base, Protocol):

@@ -796,7 +796,7 @@ VERB_ARGUMENTS_gen :=
 VERB_DESCRIPTION_gen-scope := Run the focal generation surface (WHAT, MODULE for facades, SCOPE) through the same engine, lock and budget as gen.
 VERB_ARGUMENTS_gen-scope := WHAT MODULE SCOPE
 
-VERB_DESCRIPTION_mod := Check and fix one theme globally (LAWS=ENFORCE ids or RULES=rule ids, ADR-028 Decision 18 item 2); a run without a selection is refused.
+VERB_DESCRIPTION_mod := Refactor declared source structure through the shared pipeline and publish the complete coherent change; LAWS (ENFORCE ids) or RULES (rule ids) diagnose or repair one law (ADR-028 Decision 18 item 2).
 VERB_ARGUMENTS_mod := LAWS RULES
 
 VERB_DESCRIPTION_fix := Apply declared repairs to authored inputs through their canonical owners.

@@ -208,7 +208,7 @@ class TestsFlextCorePydanticDeclarations:
     class _Box(m.BaseModel):
         """Container whose base-typed field serializes runtime subclasses."""
 
-        item: p.SerializeAsAny[TestsFlextCorePydanticDeclarations._Item]
+        item: t.SerializeAsAny[TestsFlextCorePydanticDeclarations._Item]
 
     class _Greeter:
         """Plain runtime class guarded by InstanceOf."""
@@ -220,7 +220,7 @@ class TestsFlextCorePydanticDeclarations:
     class _GreetingCard(m.BaseModel):
         """Model whose payload must be a Greeter instance."""
 
-        payload: p.InstanceOf[TestsFlextCorePydanticDeclarations._Greeter]
+        payload: t.InstanceOf[TestsFlextCorePydanticDeclarations._Greeter]
 
     class _Constrained(m.BaseModel):
         """Model field constrained through StringConstraints."""

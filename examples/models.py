@@ -22,7 +22,6 @@ from examples._models import (
     ExamplesFlextModelsEx12,
     ExamplesFlextModelsEx14,
     ExamplesFlextModelsHandle,
-    ExamplesFlextModelsOutput,
     ExamplesFlextModelsPerson,
 )
 from flext_core import m as flext_core_m
@@ -46,7 +45,6 @@ class ExamplesFlextModels(flext_core_m):
         ExamplesFlextModelsEx12,
         ExamplesFlextModelsEx14,
         ExamplesFlextModelsHandle,
-        ExamplesFlextModelsOutput,
         ExamplesFlextModelsPerson,
     ):
         """Canonical namespace for all example domain models.

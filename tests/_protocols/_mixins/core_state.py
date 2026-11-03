@@ -23,16 +23,6 @@ class TestsFlextProtocolsMixinsCoreState:
         name: str
         timeout: int
 
-        @classmethod
-        def fetch_global(
-            cls,
-        ) -> TestsFlextProtocolsMixinsCoreState.SingletonClassForTest:
-            """Get global singleton instance."""
-
-        @classmethod
-        def reset_instance(cls) -> None:
-            """Reset singleton instance for test isolation."""
-
     @runtime_checkable
     class _SampleEntity(FlextTestsProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""

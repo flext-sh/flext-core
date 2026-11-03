@@ -35,15 +35,16 @@ Do not infer a fleet-wide capability from one installed environment. Member lock
 and the workspace lock that composes them follow
 (ADR-030).
 
-Two 2026-10-25 operator rulings bind every FLEXT model (root `AGENTS.md`
+Two operator rulings bind every FLEXT model (root `AGENTS.md`
 "Pydantic law"; ADR-028 Decisions 14 and 19):
 
-- models import `u` only from the upstream FLEXT project or, in very restricted
-  cases, from a private `_utilities` class of their own namespace; arbitrary
-  business methods belong outside models, while native validators, serializers
-  and computed fields remain model declarations. The Pydantic surface they need
-  lives in `_models/pydantic.py`
-  (tracker memory `operator-ruling-2026-10-25-models-u-imports-pydantic-home`);
+- each family owns its Pydantic surface and a model never imports `u`: the
+  Pydantic surface models need lives in `_models/pydantic.py` (and each family's own
+  Pydantic module serves that family); arbitrary business methods belong outside
+  models, while native validators, serializers and computed fields remain model
+  declarations (tracker memories
+  `operator-ruling-2026-10-25-models-u-imports-pydantic-home` and
+  `operator-order-2026-11-02-models-never-import-u-for-pydantic`);
 - entity equality is Pydantic value equality with explicit identity by id
   (tracker memory `operator-ruling-2026-10-25-entity-equality-pydantic-way`; see
   Domain models).

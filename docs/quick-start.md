@@ -13,15 +13,6 @@
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from flext_core import p, r
 
 
@@ -50,6 +41,8 @@ if not missing_ping.failure:
 ## Step 2: Container basics
 
 ```python
+from __future__ import annotations
+
 from flext_core import FlextContainer
 
 container = FlextContainer()
@@ -67,6 +60,8 @@ if app.value != expected_app:
 ## Step 3: Dispatcher example
 
 ```python
+from __future__ import annotations
+
 from examples.ex_04_flext_dispatcher import Ex04DispatchDsl
 
 result = Ex04DispatchDsl.run()

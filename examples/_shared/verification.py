@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 from typing import cast
 
-from examples import m, p, r, t
+from examples import c, m, p, r, t
 from examples._shared import ExamplesFlextSharedBase
 
 
@@ -18,7 +18,7 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
 
     def audit_check(self, label: str, value: p.AttributeProbe | None) -> None:
         """Append ``label: <serialised value>`` to the results buffer."""
-        separator = m.Examples.LABEL_VALUE_SEPARATOR
+        separator = c.Examples.LABEL_VALUE_SEPARATOR
         self._results.append(f"{label}{separator}{self.ser(value)}")
 
     def rand_person(self) -> ExamplesFlextShared.Person:
@@ -43,28 +43,28 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
         checks = sum(
             1
             for line in self._results
-            if m.Examples.RESULT_LINE_PATTERN.match(line) is not None
+            if c.Examples.RESULT_LINE_PATTERN.match(line) is not None
         )
         if expected_path.exists():
             expected = expected_path.read_text(encoding="utf-8")
             if actual == expected:
                 actual_path.unlink(missing_ok=True)
-                pass_template = m.Examples.TEMPLATE_BY_KIND[
-                    m.Examples.OutputKind.SUCCESS
+                pass_template = c.Examples.TEMPLATE_BY_KIND[
+                    c.Examples.OutputKind.SUCCESS
                 ]
                 _ = sys.stdout.write(
                     pass_template.format(
-                        kind=m.Examples.OutputKind.SUCCESS,
+                        kind=c.Examples.OutputKind.SUCCESS,
                         stem=self.caller_file.stem,
                         checks=checks,
                     ),
                 )
                 return
             _ = actual_path.write_text(actual, encoding="utf-8")
-            fail_template = m.Examples.TEMPLATE_BY_KIND[p.Examples.OutputKind.FAIL]
+            fail_template = c.Examples.TEMPLATE_BY_KIND[c.Examples.OutputKind.FAIL]
             _ = sys.stdout.write(
                 fail_template.format(
-                    kind=m.Examples.OutputKind.FAIL,
+                    kind=c.Examples.OutputKind.FAIL,
                     stem=self.caller_file.stem,
                     expected_name=expected_path.name,
                     actual_name=actual_path.name,
@@ -72,12 +72,12 @@ class ExamplesFlextShared(ExamplesFlextSharedBase):
             )
             sys.exit(1)
         _ = expected_path.write_text(actual, encoding="utf-8")
-        generated_template = m.Examples.TEMPLATE_BY_KIND[
-            m.Examples.OutputKind.GENERATED
+        generated_template = c.Examples.TEMPLATE_BY_KIND[
+            c.Examples.OutputKind.GENERATED
         ]
         _ = sys.stdout.write(
             generated_template.format(
-                kind=m.Examples.OutputKind.GENERATED,
+                kind=c.Examples.OutputKind.GENERATED,
                 expected_name=expected_path.name,
                 checks=checks,
             ),

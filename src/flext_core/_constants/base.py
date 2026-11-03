@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, Final
 
 
 class FlextConstantsBase:
@@ -31,7 +31,9 @@ class FlextConstantsBase:
     # Runtime type-guard tuples: every consumer reaches them through the
     # constants namespace (``c.*``); the typings family never redeclares them.
     NUMERIC_TYPES: ClassVar[tuple[type[int], type[float]]] = (int, float)
-    SEQUENCE_PAIR_TYPES: ClassVar[tuple[type, ...]] = (list, tuple)
+    # Generic members keep their inferred types: an explicit tuple[type, ...]
+    # erases them and isinstance(value, c.SEQUENCE_PAIR_TYPES) stops narrowing.
+    SEQUENCE_PAIR_TYPES: Final = (list, tuple)
     STR_BYTES_TYPES: ClassVar[tuple[type[str], type[bytes]]] = (str, bytes)
     STR_BINARY_TYPES: ClassVar[tuple[type[str], type[bytes], type[bytearray]]] = (
         str,
@@ -44,7 +46,7 @@ class FlextConstantsBase:
     CONTAINER_TYPES: ClassVar[
         tuple[type[str], type[int], type[float], type[bool], type[datetime], type[Path]]
     ] = (str, int, float, bool, datetime, Path)
-    CONTAINER_AND_COLLECTION_TYPES: ClassVar[tuple[type, ...]] = (
+    CONTAINER_AND_COLLECTION_TYPES: Final = (
         *CONTAINER_TYPES,
         list,
         dict,

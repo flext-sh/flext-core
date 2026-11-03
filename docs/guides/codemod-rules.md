@@ -105,10 +105,9 @@ verification before it becomes an instruction to execute. Missing routing is a
 defect in that owner, to repair using this same operation. Preserve snapshot
 acceptance while repairing it; no consumer owns another snapshot engine or
 edits the generated Makefile.
-Fixture refresh elects authored catalogs through the existing provider
-composition directly. Generated rules have no fixtures, so refresh does not
-build a source engine or render project-dependent rules to discover their
-authored owners.
+Fixture refresh elects the authored catalogs through the existing provider
+composition. Every rule is authored and carries fixtures; no rule is rendered
+(ADR-028 Decision 10).
 
 The catalog applies through ast-grep's own `scan --update-all`; the pipeline order,
 native tool use and validation in the real tree are ADR-028 Decisions 11-13.
@@ -116,27 +115,18 @@ Authored fixtures exercise draft rules through the root's native test and
 refactoring owners; real consumer behavior and the completed root cycle prove
 the transformation.
 
-`make mod` runs the native cascade first. The owner is
-`flext_infra/_utilities/codemod_native_cascade.py`, called from
-`codemod/batch_apply.py`. The cascade covers every fixable rule that is neither
-an owned-path rule nor a Rope relocation, plus the generated rules, and runs the
-`mod.phases.stages` declared in `tooling.yaml`:
-
-1. `header`: the generated `import-header` rules.
-2. `catalog`: every other native rule.
-3. `import-fix`: Ruff `F401`/`I001`.
-
-The stages repeat over one staged preview until no byte changes. Each stage's
-staged `sgconfig.yml` lives under `.reports/codemod/native/<stage>`, so
-`ast-grep scan -c` reproduces the stage by hand.
+The pipeline's rule stage runs the authored catalog over one staged candidate
+(ADR-028 Decisions 13 and 18): the import rules, then every other rule, repeated
+until no byte changes. Rendering emits the final import order; no Ruff stage decides
+or repairs imports. Each stage's staged `sgconfig.yml` lives under
+`.reports/codemod/native/<stage>`, so `ast-grep scan -c` reproduces the stage by hand.
 
 Machine-only native configurations use JSON-form YAML documents, serialized by
 the existing typed JSON owner. Elected scan rules share one multi-document YAML
 file; global utilities retain one document per file as ast-grep requires.
-The generated scope manifest is `scopes.json` and is read by the JSON owner:
-selector keys may exceed YAML's implicit-key length limit. Its declared filename
-participates in the provider digest, so the format change elects a new immutable
-provider rather than reinterpreting a previously published YAML manifest.
+Computed fact utilities are serialized into the staged scan by the same typed JSON
+owner; they carry facts only (names, paths, regular expressions of published
+identities), never a pattern or a law of their own.
 Authored catalogs, fixtures and snapshots keep their existing source format.
 This avoids runtime-value normalization and one file write per elected scan
 rule without changing native rule identities, scopes, bindings or diagnostics.
@@ -154,38 +144,28 @@ context stays inside that native predicate instead of repeating whole enclosing
 classes in every diagnostic. Primary match ranges, binding equality, messages and
 severity remain owned by the original rule; the complete native output is retained.
 
-The producers and renderers registered in `Infra.codegen.ast_grep` render each
-governed project's generated utilities and rules (`codemod_native_generated`).
-`u.Infra.codemod_rule_plan` materializes them as one native provider,
-`generated`, under `.reports/codemod/native/generated/<content digest>/`
-(`sgconfig.yml`, `ruleDirs/`, `utilDirs/`). It then elects that provider after the
-catalogs, like any other provider. Generated rules retain their renderer IDs.
-Each repository has its own plan and native stage; the workspace coordinator visits
-repositories in dependency order in one process. Each stage scans only its
-repository's owned sources; declared members enter their own stages.
-Generated providers also carry
-utilities and file scopes when they contribute no elected rules, so catalog rules can
-still consume those declarations. Each project's scan, `check`
-codemod gate and cascade consume its own generated provider through the same plan as its
-authored rules. `ast-grep scan -c` on that project provider reproduces the rule set.
-Generated rules carry no fixtures: renderer tests own their proof. The retired
-per-rule
-repository projections under `config/rules/ast-grep/{utils,rules/generated}` are
-declared at the generation owner; authored files are never retired by that declaration.
+The engine computes each governed project's facts (own package, facade packages,
+publication, layer rank, elected upstream, runtime aliases, runtime reads and the
+import-cycle graph) and binds them into the staged scan as fact utilities that
+authored rules reference through `matches:`. `u.Infra.codemod_rule_plan` composes the
+authored catalogs with those fact utilities into one staged native provider per
+repository. The workspace coordinator visits repositories in dependency order in one
+process, and each stage scans only its repository's owned sources. `ast-grep scan -c`
+on the staged provider reproduces the run.
 
 | Workspace declaration | Infra implementation |
 | --- | --- |
-| ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/40ec9df58cd4170f70227e91cee4483f1250d221/src/flext_infra/_utilities/_codemod/native_utilities.py) |
-| ADR-028 Decision 18 owns one generalized source rule per law. | Repository plans preserve renderer IDs; the source catalog remains the single rule owner. |
+| ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/_codemod/native_utilities.py) |
+| ADR-028 Decision 18 owns one generalized source rule per law. | The authored catalog is the single rule owner; repository plans bind computed facts to it. |
 
 Every finding is the native match; no Python admission runs after the scan. A
-project fact a catalog rule needs is a stable generated utility (`own-package`,
+project fact a catalog rule needs is a computed fact utility (`own-package`,
 `stdlib-module`, `runtime-package`, `facade-package`, `local-alias`,
 `runtime-alias`, `package-published-import`, `compose-module`, ...) that the rule references
-through `matches:`, or a file scope the generated provider publishes in its
-`scopes.json`. Catalog fixtures resolve those identities through
+through `matches:`, or a computed fact selector bound through `scope`. Catalog
+fixtures resolve those identities through
 `config/rules/ast-grep/fixture-utils/`, which only the fixture stage reads. A native
-rule that still reports an actionable finding after the cascade fails `make mod`.
+rule that still reports an actionable finding after the rule stage fails `make mod`.
 
 The deep-import law has one rewrite rule, `rewire-deep-import-to-package`: a
 `from <package>.<module> import ...` moves to `from <package> import ...` only
@@ -283,7 +263,7 @@ The engine reads these `metadata` keys, declared in
 
 | Key | Meaning |
 |---|---|
-| `scope` | File scopes the generated provider publishes: `{in: [selector], not-in: [selector]}` narrows the rule's `files`/`ignores`; `partition` renders one generated rule `<id>--<package>[--<key>]` per file group, and selecting the catalog id selects every partition. |
+| `scope` | File scopes as computed fact selectors: `{in: [selector], not-in: [selector]}` narrows the rule's `files`/`ignores`. No rule is partitioned or rendered per package. |
 | `owner` | The distribution that owns the law; that project's own plan drops the rule. |
 | `consumers_of` | The rule applies only to projects whose runtime closure includes that distribution. |
 | `relocation` | A detection-only rule names the Rope relocation that repairs it and captures the symbol as `$NAME`. `family-declaration` also captures the owning facade letter as `$FAMILY` (see below). |
@@ -338,7 +318,7 @@ intended use and never fires; only a call whose callee is the `p` path does,
 and only in a module that binds `p` from a FLEXT package. The runtime failure
 this prevents is real: a protocol class has no `model_validate`.
 
-The rewrite is exact and derived, never listed. The generated utility
+The rewrite is exact and derived, never listed. The computed fact utility
 `protocol-model-path` (producer `codemod_requested_utilities`, the same
 request mechanism as `generic-specialization`) holds the dotted `p` paths that
 a reached facade package publishes as a model (`FacadeMemberKind.MODEL`) at the
@@ -380,22 +360,21 @@ as small as possible. Renames and moves that Rope's refactorings express run
 through them, not through a custom planner (ADR-028 Decision 17), and a rename of
 library-named exports to capability names follows ADR-028 Decision 15.
 
-#### Theme-rule convergence
+#### One pipeline, one owner per law
 
 ADR-028 Decision 18 item 2
-(operator orders 2026-11-02) makes the theme the unit of correction. A theme is one law
-set fixed by one generalized rule. Each theme is checked and applied globally, over
-every governed repository, with its selection
-(`refactor mod --projects <every repo> --laws <set> [--check]`). Then it is verified with
-direct `ruff` and `pyrefly`, committed everywhere, and the next theme starts. A run
-without a selection is refused, and violating sources are never edited by hand. Theme
-execution is tracked under bead `flext-brr3y`:
+(operator orders 2026-11-02; epic `flext-lqfqo`) makes `check`, `gen` and `mod` one
+pipeline with one rule set. Each law is owned by exactly one stage or generalized rule,
+perfected with fixtures and the native test, and applied through the pipeline;
+duplicates are exterminated. `--laws <set>` diagnoses or repairs one law; the import law
+always runs. Violating sources are never edited by hand. The law sets below are tracked
+under bead `flext-brr3y`:
 
 | Theme | Rules (unified into one law) | Bead |
 | --- | --- | --- |
-| T0 law selector | engine: `--laws`, per-repo expansion by `enforce`, theme purity | `flext-brr3y.4` |
+| T0 law selector | engine: `--laws`, per-repo expansion by `enforce` | `flext-brr3y.4` |
 | TH1 protocol construction | `ban-protocol-constructor` | `flext-brr3y.5` |
-| TH2 letter binding, import header | generated `import-header--*` documents; `add-facade-module-*-alias`; missing-import companions | `flext-brr3y.6` |
+| TH2 letter binding, import header | the authored letter-binding rule (import header, own letter, duplicate and foreign origins, module path, module object, aliases); `add-facade-module-*-alias`; missing-import companions | `flext-brr3y.6` |
 | TH3 protocol projection | model-to-protocol generator; holder composition; duplicate retirement | `flext-brr3y.7` |
 | TH4 Pydantic ConfigDict | `config-dict-type-from-typings`, `rewire-relaxed-*` | `flext-brr3y.8` |
 | TH5 deep import | `rewire-deep-import-to-package`, `ban-consumer-submodule-import`, `ban-test-deep-module-import` | `flext-brr3y.9` |
@@ -405,20 +384,14 @@ execution is tracked under bead `flext-brr3y`:
 | TH9 `m.` in type positions | `rewire-model-protocol-field-to-port`, `ban-model-typing-in-protocol-projection` | `flext-brr3y.13` |
 | TH10 exceptions to axioms | exemption and ignore owners | `flext-brr3y.14` |
 
-- **One document per law.** Facts that vary per package, letter or namespace
-  are rendered into the values of a single document, never into one document
-  per value. Those values are the regex of `constraints` on metavariables,
-  `any` branches, rule-local `utils`, and `rewriters` selected by a `rewrite`
-  transform. `relocate-facade-component--<package>` is the pattern: one
-  document with one `any` branch and one rewriter per facade namespace.
-- **Partitions only where the file scope differs.** ast-grep scopes a whole
-  document by `files`/`ignores`; one branch cannot have its own file scope. A
-  `partition` is used only when the verdict depends on which file group holds
-  the match. When the law can be stated from the code itself, state it there
-  and use `scope: {not-in: [...]}`, which renders as plain native `ignores`.
-  The generated `foreign-origin` letter-binding document is one document per
-  package that way: the family modules compose upstream letters by design, so
-  they are listed in its native `ignores` rather than partitioned per letter.
+- **One authored rule per law.** Facts that vary per package, letter or namespace
+  are bound as fact utilities and parameters of one authored rule, never rendered
+  into rule documents. A per-namespace variation is an `any` branch or a
+  `rewriter` of that one rule, selected through the bound fact.
+- **File scope by fact selectors only.** ast-grep scopes a whole document by
+  `files`/`ignores`; `scope: {in: [...], not-in: [...]}` binds a computed fact
+  selector as native `ignores`. A law is stated from the code itself; no rule is
+  split per package or file group.
 - **One law, one rule, every library.** A law that applies to many libraries,
   packages or letters derives the set from its facts (installed distributions,
   facade exports, the import law). It never ships one clone per member.
@@ -429,64 +402,20 @@ execution is tracked under bead `flext-brr3y`:
   executes per project is reported from `mod-findings.json` (`totals_by_rule`).
   Its budget is a typed configuration key, never a number in code.
 
-Generated rules come from renderers registered in `Infra.codegen.ast_grep.renderers`.
-Each renderer receives one facts model.
-`codemod_package_export_facts` supplies, for every package: its `__all__`, its
-directory, and its child modules and packages. Two renderers consume it:
+These laws are authored rules over computed facts, each with fixtures (epic
+`flext-lqfqo`):
 
-- `codemod_import_header_rules` emits the `import-header--<package>[--<scope>]`
-  rules.
-  - Trigger: the module uses a declared name that it binds nowhere. Bindings are
-    judged by the universal `name-binding` utility, embedded as each rule's local
-    utility.
-  - Effect: one `from <package> import ...` line is inserted after the module's
-    first import, carrying every name the package resolves in that scope. The
-    `import-fix` stage prunes the unused names.
-  - Package choice: a module inside a declaring package imports from the deepest
-    declaring package that contains it. Any other module imports from the unique
-    shallowest declaring package. A name declared by more than one
-    shallowest package is never inserted.
-- `codemod_module_member_rules` emits the `module-member--<package>` rules.
-  - Effect: `<child>.<Name>` is rewritten to `Name` when `<child>` is a child
-    package bound by `from <package> import <child>`. The `<child>` package must
-    publish `Name`, and the header must resolve it.
-  - Skip: a module that binds `<child>` or `Name` outside an import keeps the
-    attribute access unchanged.
-  - Follow-up: the header stage then imports `Name`, and Ruff removes the
-    module-object import.
-
-A renderer without `facts` receives only the project root:
-
-- `codemod_type_set_rules` emits the single `type-set` rule for the project's
-  constants facade.
-  - Shape: one rule, `isinstance($VALUE, $SET)`. Each tuple-of-classes constant
-    contributes one rule-local util that matches its exact set, and one
-    rewriter that replaces the set with the constant. A `rewrite` transform
-    selects the rewriter whose util matched.
-  - Election: by value, with no naming filter and no list. Two unmarked
-    constants holding the same set fail generation with both paths. A
-    compat-marked alias (below) is not elected.
-  - Trigger: `isinstance(value, <set>)` outside the constants family, when the
-    second argument is exactly a declared set as a tuple or a `|` union, in any
-    operand order.
-  - Spellings: a builtin by its bare name, a stdlib class through its top-level
-    module (`ast.FunctionDef`), and any class through each constants-facade
-    alias that binds it (`c.Infra.Cst.ClassDef`). A set with a member that has
-    no admitted spelling gets no util.
-  - Effect: the set is replaced by the constant (`c.Infra.AST_FUNCTION_TYPES`).
-  - Partner: `ban-inline-type-set-outside-constants` detects every inline set,
-    including those no constant declares yet; declaring the constant makes the
-    generated rule repair it.
-- `codemod_compat_rules` emits the single `compat-read` rule for constants kept
-  through a deprecation window.
-  - Marker: the constant's annotation carries the stdlib marker as metadata,
-    `X: Annotated[ClassVar[...], warnings.deprecated("compat: <old> -> <new>;
-    fix: <rewire>")] = <new owner>`. The message grammar is enforced; a
-    malformed marker fails generation.
-  - Trigger: every read of the old facade path. The declaration itself is never
-    matched, so the alias does not fail CI and every use of it does.
-  - Effect: each read is rewritten to the new owner named in the marker. The
-    alias is deleted when no read remains in the fleet or external consumers.
+- **Letter binding and import header.** A name a module uses but binds nowhere is
+  bound from the package that publishes it, grouped into one statement per package;
+  the own letter, competing and duplicate origins, module-path and module-object
+  reads are rewritten to the binding ADR-028 Decision 10 elects.
+- **Constant type sets.** `isinstance(value, <set>)` outside the constants family,
+  when the set is exactly a declared tuple-of-classes constant, is replaced by that
+  constant. The constant is elected by value from the facade's facts; two unmarked
+  constants with the same set fail with both paths.
+- **No deprecation window in this pipeline.** Every consumer of a renamed or moved
+  name in the governed roots is rewired in the same cutover, so no pass-through or
+  compatibility read survives.
 
 A package initializer never publishes a child package object. Consumers import a
 child's names from the child package (ADR-028).

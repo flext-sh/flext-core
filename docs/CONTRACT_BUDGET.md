@@ -10,7 +10,7 @@
   - [FlextTypesServices — KEEP (signature composition only)](#flexttypesservices-keep-signature-composition-only)
   - [FlextTypesServices — REMOVE](#flexttypesservices-remove)
 - [Budget: p.(FlextProtocols)](#budget-pflextprotocols)
-- [Budget: p.(FlextModels)](#budget-mflextmodels)
+- [Budget: p.(FlextModels)](#budget-pflextmodels)
 - [Budget: u.\* (FlextUtilities)](#budget-u-flextutilities)
 - [Budget: c.\* (FlextConstants)](#budget-c-flextconstants)
 - [Execution order (strict)](#execution-order-strict)
