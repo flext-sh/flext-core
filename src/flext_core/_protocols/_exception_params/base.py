@@ -175,6 +175,7 @@ class FlextProtocolsExceptionParamsBase:
         @property
         def connection_target(self) -> str:
             """Human-readable host:port string for log messages."""
+            ...
 
 
 __all__: list[str] = [

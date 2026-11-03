@@ -11,386 +11,554 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core import m, p
+    from flext_core import FlextModels, FlextProtocols
 
-    def model_protocol_1(value: m.AggregateRoot) -> p.AggregateRoot:
+    def model_protocol_1(
+        value: (FlextModels.AggregateRoot),
+    ) -> FlextProtocols.AggregateRoot:
         return value
 
-    def model_protocol_2(value: m.ArbitraryTypesModel) -> p.ArbitraryTypesModel:
+    def model_protocol_2(
+        value: (FlextModels.ArbitraryTypesModel),
+    ) -> FlextProtocols.ArbitraryTypesModel:
         return value
 
-    def model_protocol_3(value: m.AsyncLogJob) -> p.AsyncLogJob:
+    def model_protocol_3(
+        value: (FlextModels.AsyncLogJob),
+    ) -> FlextProtocols.AsyncLogJob:
         return value
 
     def model_protocol_4(
-        value: m.AttributeAccessErrorParams,
-    ) -> p.AttributeAccessErrorParams:
+        value: (FlextModels.AttributeAccessErrorParams),
+    ) -> FlextProtocols.AttributeAccessErrorParams:
         return value
 
     def model_protocol_5(
-        value: m.AuthenticationErrorParams,
-    ) -> p.AuthenticationErrorParams:
+        value: (FlextModels.AuthenticationErrorParams),
+    ) -> FlextProtocols.AuthenticationErrorParams:
         return value
 
     def model_protocol_6(
-        value: m.AuthorizationErrorParams,
-    ) -> p.AuthorizationErrorParams:
+        value: (FlextModels.AuthorizationErrorParams),
+    ) -> FlextProtocols.AuthorizationErrorParams:
         return value
 
-    def model_protocol_7(value: m.BaseModel) -> p.BaseModel:
+    def model_protocol_7(value: (FlextModels.BaseModel)) -> FlextProtocols.BaseModel:
         return value
 
-    def model_protocol_8(value: m.BaseSettings) -> p.BaseSettings:
+    def model_protocol_8(
+        value: (FlextModels.BaseSettings),
+    ) -> FlextProtocols.BaseSettings:
         return value
 
     def model_protocol_9(
-        value: m.CircuitBreakerErrorParams,
-    ) -> p.CircuitBreakerErrorParams:
+        value: (FlextModels.CircuitBreakerErrorParams),
+    ) -> FlextProtocols.CircuitBreakerErrorParams:
         return value
 
-    def model_protocol_10(value: m.CombinedRailwayOptions) -> p.CombinedRailwayOptions:
+    def model_protocol_10(
+        value: (FlextModels.CombinedRailwayOptions),
+    ) -> FlextProtocols.CombinedRailwayOptions:
         return value
 
-    def model_protocol_11(value: m.Command) -> p.Command:
+    def model_protocol_11(value: (FlextModels.Command)) -> FlextProtocols.Command:
         return value
 
-    def model_protocol_12(value: m.ConfigDocument) -> p.ConfigDocument:
+    def model_protocol_12(
+        value: (FlextModels.ConfigDocument),
+    ) -> FlextProtocols.ConfigDocument:
         return value
 
-    def model_protocol_13(value: m.ConfigMap) -> p.ConfigMap:
+    def model_protocol_13(value: (FlextModels.ConfigMap)) -> FlextProtocols.ConfigMap:
         return value
 
     def model_protocol_14(
-        value: m.ConfigurationErrorParams,
-    ) -> p.ConfigurationErrorParams:
+        value: (FlextModels.ConfigurationErrorParams),
+    ) -> FlextProtocols.ConfigurationErrorParams:
         return value
 
-    def model_protocol_15(value: m.ConflictErrorParams) -> p.ConflictErrorParams:
+    def model_protocol_15(
+        value: (FlextModels.ConflictErrorParams),
+    ) -> FlextProtocols.ConflictErrorParams:
         return value
 
-    def model_protocol_16(value: m.ConnectionErrorParams) -> p.ConnectionErrorParams:
+    def model_protocol_16(
+        value: (FlextModels.ConnectionErrorParams),
+    ) -> FlextProtocols.ConnectionErrorParams:
         return value
 
-    def model_protocol_17(value: m.ContainerConfig) -> p.ContainerConfig:
+    def model_protocol_17(
+        value: (FlextModels.ContainerConfig),
+    ) -> FlextProtocols.ContainerConfig:
         return value
 
-    def model_protocol_18(value: m.ContextContainerState) -> p.ContextContainerState:
+    def model_protocol_18(
+        value: (FlextModels.ContextContainerState),
+    ) -> FlextProtocols.ContextContainerState:
         return value
 
-    def model_protocol_19(value: m.ContextData) -> p.ContextData:
+    def model_protocol_19(
+        value: (FlextModels.ContextData),
+    ) -> FlextProtocols.ContextData:
         return value
 
-    def model_protocol_20(value: m.ContextExport) -> p.ContextExport:
+    def model_protocol_20(
+        value: (FlextModels.ContextExport),
+    ) -> FlextProtocols.ContextExport:
         return value
 
-    def model_protocol_21(value: m.ContextRuntimeState) -> p.ContextRuntimeState:
+    def model_protocol_21(
+        value: (FlextModels.ContextRuntimeState),
+    ) -> FlextProtocols.ContextRuntimeState:
         return value
 
-    def model_protocol_22(value: m.ContextState) -> p.ContextState:
+    def model_protocol_22(
+        value: (FlextModels.ContextState),
+    ) -> FlextProtocols.ContextState:
         return value
 
-    def model_protocol_23(value: m.ContextStatistics) -> p.ContextStatistics:
+    def model_protocol_23(
+        value: (FlextModels.ContextStatistics),
+    ) -> FlextProtocols.ContextStatistics:
         return value
 
-    def model_protocol_24(value: m.ContractModel) -> p.ContractModel:
+    def model_protocol_24(
+        value: (FlextModels.ContractModel),
+    ) -> FlextProtocols.ContractModel:
         return value
 
-    def model_protocol_25(value: m.DecoratorConfig) -> p.DecoratorConfig:
+    def model_protocol_25(
+        value: (FlextModels.DecoratorConfig),
+    ) -> FlextProtocols.DecoratorConfig:
         return value
 
-    def model_protocol_26(value: m.Dict) -> p.Dict:
+    def model_protocol_26(value: (FlextModels.Dict)) -> FlextProtocols.Dict:
         return value
 
-    def model_protocol_27(value: m.DomainEvent) -> p.DomainEvent:
+    def model_protocol_27(
+        value: (FlextModels.DomainEvent),
+    ) -> FlextProtocols.DomainEvent:
         return value
 
-    def model_protocol_28(value: m.DynamicModel) -> p.DynamicModel:
+    def model_protocol_28(
+        value: (FlextModels.DynamicModel),
+    ) -> FlextProtocols.DynamicModel:
         return value
 
-    def model_protocol_29(value: m.EnforcedModel) -> p.EnforcedModel:
+    def model_protocol_29(
+        value: (FlextModels.EnforcedModel),
+    ) -> FlextProtocols.EnforcedModel:
         return value
 
-    def model_protocol_30(value: m.Entity) -> p.Entity:
+    def model_protocol_30(value: (FlextModels.Entity)) -> FlextProtocols.Entity:
         return value
 
-    def model_protocol_31(value: m.EnumManagedModel) -> p.EnumManagedModel:
+    def model_protocol_31(
+        value: (FlextModels.EnumManagedModel),
+    ) -> FlextProtocols.EnumManagedModel:
         return value
 
-    def model_protocol_32(value: m.Event) -> p.Event:
+    def model_protocol_32(value: (FlextModels.Event)) -> FlextProtocols.Event:
         return value
 
     def model_protocol_33(
-        value: m.ExceptionFactoryOptions,
-    ) -> p.ExceptionFactoryOptions:
+        value: (FlextModels.ExceptionFactoryOptions),
+    ) -> FlextProtocols.ExceptionFactoryOptions:
         return value
 
-    def model_protocol_34(value: m.ExceptionInitOptions) -> p.ExceptionInitOptions:
+    def model_protocol_34(
+        value: (FlextModels.ExceptionInitOptions),
+    ) -> FlextProtocols.ExceptionInitOptions:
         return value
 
     def model_protocol_35(
-        value: m.ExceptionMetricsSnapshot,
-    ) -> p.ExceptionMetricsSnapshot:
+        value: (FlextModels.ExceptionMetricsSnapshot),
+    ) -> FlextProtocols.ExceptionMetricsSnapshot:
         return value
 
-    def model_protocol_36(value: m.ExceptionMetricsState) -> p.ExceptionMetricsState:
+    def model_protocol_36(
+        value: (FlextModels.ExceptionMetricsState),
+    ) -> FlextProtocols.ExceptionMetricsState:
         return value
 
-    def model_protocol_37(value: m.ExecutionContext) -> p.ExecutionContext:
+    def model_protocol_37(
+        value: (FlextModels.ExecutionContext),
+    ) -> FlextProtocols.ExecutionContext:
         return value
 
     def model_protocol_38(
-        value: m.ExpectedActualTypeParams,
-    ) -> p.ExpectedActualTypeParams:
+        value: (FlextModels.ExpectedActualTypeParams),
+    ) -> FlextProtocols.ExpectedActualTypeParams:
         return value
 
-    def model_protocol_39(value: m.ExternalContractModel) -> p.ExternalContractModel:
+    def model_protocol_39(
+        value: (FlextModels.ExternalContractModel),
+    ) -> FlextProtocols.ExternalContractModel:
         return value
 
     def model_protocol_40(
-        value: m.ExtractResolvePathPartContext,
-    ) -> p.ExtractResolvePathPartContext:
+        value: (FlextModels.ExtractResolvePathPartContext),
+    ) -> FlextProtocols.ExtractResolvePathPartContext:
         return value
 
-    def model_protocol_41(value: m.FactoryDecoratorConfig) -> p.FactoryDecoratorConfig:
+    def model_protocol_41(
+        value: (FlextModels.FactoryDecoratorConfig),
+    ) -> FlextProtocols.FactoryDecoratorConfig:
         return value
 
-    def model_protocol_42(value: m.FactoryRegistration) -> p.FactoryRegistration:
+    def model_protocol_42(
+        value: (FlextModels.FactoryRegistration),
+    ) -> FlextProtocols.FactoryRegistration:
         return value
 
-    def model_protocol_43(value: m.FlexibleInternalModel) -> p.FlexibleInternalModel:
+    def model_protocol_43(
+        value: (FlextModels.FlexibleInternalModel),
+    ) -> FlextProtocols.FlexibleInternalModel:
         return value
 
-    def model_protocol_44(value: m.FlexibleModel) -> p.FlexibleModel:
+    def model_protocol_44(
+        value: (FlextModels.FlexibleModel),
+    ) -> FlextProtocols.FlexibleModel:
         return value
 
-    def model_protocol_45(value: m.FrozenDynamicModel) -> p.FrozenDynamicModel:
+    def model_protocol_45(
+        value: (FlextModels.FrozenDynamicModel),
+    ) -> FlextProtocols.FrozenDynamicModel:
         return value
 
-    def model_protocol_46(value: m.FrozenModel) -> p.FrozenModel:
+    def model_protocol_46(
+        value: (FlextModels.FrozenModel),
+    ) -> FlextProtocols.FrozenModel:
         return value
 
-    def model_protocol_47(value: m.FrozenValueModel) -> p.FrozenValueModel:
+    def model_protocol_47(
+        value: (FlextModels.FrozenValueModel),
+    ) -> FlextProtocols.FrozenValueModel:
         return value
 
-    def model_protocol_48(value: m.GenerateOptions) -> p.GenerateOptions:
+    def model_protocol_48(
+        value: (FlextModels.GenerateOptions),
+    ) -> FlextProtocols.GenerateOptions:
         return value
 
-    def model_protocol_49(value: m.GuardCheckSpec) -> p.GuardCheckSpec:
+    def model_protocol_49(
+        value: (FlextModels.GuardCheckSpec),
+    ) -> FlextProtocols.GuardCheckSpec:
         return value
 
-    def model_protocol_50(value: m.HandlerConfig) -> p.HandlerConfig:
+    def model_protocol_50(
+        value: (FlextModels.HandlerConfig),
+    ) -> FlextProtocols.HandlerConfig:
         return value
 
-    def model_protocol_51(value: m.HandlerRegistration) -> p.HandlerRegistration:
+    def model_protocol_51(
+        value: (FlextModels.HandlerRegistration),
+    ) -> FlextProtocols.HandlerRegistration:
         return value
 
     def model_protocol_52(
-        value: m.HandlerRegistrationReport,
-    ) -> p.HandlerRegistrationReport:
+        value: (FlextModels.HandlerRegistrationReport),
+    ) -> FlextProtocols.HandlerRegistrationReport:
         return value
 
-    def model_protocol_53(value: m.HandlerRuntimeState) -> p.HandlerRuntimeState:
+    def model_protocol_53(
+        value: (FlextModels.HandlerRuntimeState),
+    ) -> FlextProtocols.HandlerRuntimeState:
         return value
 
-    def model_protocol_54(value: m.ImmutableValueModel) -> p.ImmutableValueModel:
+    def model_protocol_54(
+        value: (FlextModels.ImmutableValueModel),
+    ) -> FlextProtocols.ImmutableValueModel:
         return value
 
-    def model_protocol_55(value: m.LoggedCallSpec) -> p.LoggedCallSpec:
+    def model_protocol_55(
+        value: (FlextModels.LoggedCallSpec),
+    ) -> FlextProtocols.LoggedCallSpec:
         return value
 
-    def model_protocol_56(value: m.LoggingRecord) -> p.LoggingRecord:
+    def model_protocol_56(
+        value: (FlextModels.LoggingRecord),
+    ) -> FlextProtocols.LoggingRecord:
         return value
 
-    def model_protocol_57(value: m.ManagedModel) -> p.ManagedModel:
+    def model_protocol_57(
+        value: (FlextModels.ManagedModel),
+    ) -> FlextProtocols.ManagedModel:
         return value
 
-    def model_protocol_58(value: m.Metadata) -> p.Metadata:
+    def model_protocol_58(value: (FlextModels.Metadata)) -> FlextProtocols.Metadata:
         return value
 
-    def model_protocol_59(value: m.ModelDumpOptions) -> p.ModelDumpOptions:
+    def model_protocol_59(
+        value: (FlextModels.ModelDumpOptions),
+    ) -> FlextProtocols.ModelDumpOptions:
         return value
 
-    def model_protocol_60(value: m.NormalizedModel) -> p.NormalizedModel:
+    def model_protocol_60(
+        value: (FlextModels.NormalizedModel),
+    ) -> FlextProtocols.NormalizedModel:
         return value
 
-    def model_protocol_61(value: m.NotFoundErrorParams) -> p.NotFoundErrorParams:
+    def model_protocol_61(
+        value: (FlextModels.NotFoundErrorParams),
+    ) -> FlextProtocols.NotFoundErrorParams:
         return value
 
-    def model_protocol_62(value: m.ObjectList) -> p.ObjectList:
+    def model_protocol_62(value: (FlextModels.ObjectList)) -> FlextProtocols.ObjectList:
         return value
 
-    def model_protocol_63(value: m.OperationErrorParams) -> p.OperationErrorParams:
+    def model_protocol_63(
+        value: (FlextModels.OperationErrorParams),
+    ) -> FlextProtocols.OperationErrorParams:
         return value
 
-    def model_protocol_64(value: m.Pagination) -> p.Pagination:
+    def model_protocol_64(value: (FlextModels.Pagination)) -> FlextProtocols.Pagination:
         return value
 
-    def model_protocol_65(value: m.ParamsModel) -> p.ParamsModel:
+    def model_protocol_65(
+        value: (FlextModels.ParamsModel),
+    ) -> FlextProtocols.ParamsModel:
         return value
 
-    def model_protocol_66[T]() -> type[p.ParseOptions[T]]:
-        return m.ParseOptions[T]
+    def model_protocol_66[T]() -> type[FlextProtocols.ParseOptions[T]]:
+        return FlextModels.ParseOptions[T]
 
-    def model_protocol_67(value: m.Project) -> p.Project:
+    def model_protocol_67(value: (FlextModels.Project)) -> FlextProtocols.Project:
         return value
 
-    def model_protocol_68(value: m.ProjectAuthor) -> p.ProjectAuthor:
+    def model_protocol_68(
+        value: (FlextModels.ProjectAuthor),
+    ) -> FlextProtocols.ProjectAuthor:
         return value
 
-    def model_protocol_69(value: m.ProjectMetadata) -> p.ProjectMetadata:
+    def model_protocol_69(
+        value: (FlextModels.ProjectMetadata),
+    ) -> FlextProtocols.ProjectMetadata:
         return value
 
-    def model_protocol_70(value: m.ProjectToolFlext) -> p.ProjectToolFlext:
+    def model_protocol_70(
+        value: (FlextModels.ProjectToolFlext),
+    ) -> FlextProtocols.ProjectToolFlext:
         return value
 
-    def model_protocol_71(value: m.ProjectToolFlextDocs) -> p.ProjectToolFlextDocs:
+    def model_protocol_71(
+        value: (FlextModels.ProjectToolFlextDocs),
+    ) -> FlextProtocols.ProjectToolFlextDocs:
         return value
 
     def model_protocol_72(
-        value: m.ProjectToolFlextNamespace,
-    ) -> p.ProjectToolFlextNamespace:
+        value: (FlextModels.ProjectToolFlextNamespace),
+    ) -> FlextProtocols.ProjectToolFlextNamespace:
         return value
 
     def model_protocol_73(
-        value: m.ProjectToolFlextProject,
-    ) -> p.ProjectToolFlextProject:
+        value: (FlextModels.ProjectToolFlextProject),
+    ) -> FlextProtocols.ProjectToolFlextProject:
         return value
 
     def model_protocol_74(
-        value: m.ProjectToolFlextReadmeSection,
-    ) -> p.ProjectToolFlextReadmeSection:
+        value: (FlextModels.ProjectToolFlextReadmeSection),
+    ) -> FlextProtocols.ProjectToolFlextReadmeSection:
         return value
 
     def model_protocol_75(
-        value: m.ProjectToolFlextWorkspace,
-    ) -> p.ProjectToolFlextWorkspace:
+        value: (FlextModels.ProjectToolFlextWorkspace),
+    ) -> FlextProtocols.ProjectToolFlextWorkspace:
         return value
 
-    def model_protocol_76(value: m.ProjectUrls) -> p.ProjectUrls:
+    def model_protocol_76(
+        value: (FlextModels.ProjectUrls),
+    ) -> FlextProtocols.ProjectUrls:
         return value
 
-    def model_protocol_77(value: m.PyprojectDocument) -> p.PyprojectDocument:
+    def model_protocol_77(
+        value: (FlextModels.PyprojectDocument),
+    ) -> FlextProtocols.PyprojectDocument:
         return value
 
-    def model_protocol_78(value: m.PyprojectTool) -> p.PyprojectTool:
+    def model_protocol_78(
+        value: (FlextModels.PyprojectTool),
+    ) -> FlextProtocols.PyprojectTool:
         return value
 
-    def model_protocol_79(value: m.Query) -> p.Query:
+    def model_protocol_79(value: (FlextModels.Query)) -> FlextProtocols.Query:
         return value
 
-    def model_protocol_80(value: m.RateLimitErrorParams) -> p.RateLimitErrorParams:
+    def model_protocol_80(
+        value: (FlextModels.RateLimitErrorParams),
+    ) -> FlextProtocols.RateLimitErrorParams:
         return value
 
-    def model_protocol_81(value: m.RegistrationDetails) -> p.RegistrationDetails:
+    def model_protocol_81(
+        value: (FlextModels.RegistrationDetails),
+    ) -> FlextProtocols.RegistrationDetails:
         return value
 
-    def model_protocol_82(value: m.RegistrationEnvelope) -> p.RegistrationEnvelope:
+    def model_protocol_82(
+        value: (FlextModels.RegistrationEnvelope),
+    ) -> FlextProtocols.RegistrationEnvelope:
         return value
 
-    def model_protocol_83(value: m.RegistryOptions) -> p.RegistryOptions:
+    def model_protocol_83(
+        value: (FlextModels.RegistryOptions),
+    ) -> FlextProtocols.RegistryOptions:
         return value
 
-    def model_protocol_84(value: m.RegistryPluginParams) -> p.RegistryPluginParams:
+    def model_protocol_84(
+        value: (FlextModels.RegistryPluginParams),
+    ) -> FlextProtocols.RegistryPluginParams:
         return value
 
-    def model_protocol_85(value: m.RegistryServiceState) -> p.RegistryServiceState:
+    def model_protocol_85(
+        value: (FlextModels.RegistryServiceState),
+    ) -> FlextProtocols.RegistryServiceState:
         return value
 
-    def model_protocol_86(value: m.RegistrySummary) -> p.RegistrySummary:
+    def model_protocol_86(
+        value: (FlextModels.RegistrySummary),
+    ) -> FlextProtocols.RegistrySummary:
         return value
 
-    def model_protocol_87(value: m.ResourceIdentityParams) -> p.ResourceIdentityParams:
+    def model_protocol_87(
+        value: (FlextModels.ResourceIdentityParams),
+    ) -> FlextProtocols.ResourceIdentityParams:
         return value
 
-    def model_protocol_88(value: m.ResourceRegistration) -> p.ResourceRegistration:
+    def model_protocol_88(
+        value: (FlextModels.ResourceRegistration),
+    ) -> FlextProtocols.ResourceRegistration:
         return value
 
-    def model_protocol_89(value: m.ResultFailureSpec) -> p.ResultFailureSpec:
+    def model_protocol_89(
+        value: (FlextModels.ResultFailureSpec),
+    ) -> FlextProtocols.ResultFailureSpec:
         return value
 
-    def model_protocol_90(value: m.RetryConfiguration) -> p.RetryConfiguration:
+    def model_protocol_90(
+        value: (FlextModels.RetryConfiguration),
+    ) -> FlextProtocols.RetryConfiguration:
         return value
 
     def model_protocol_91(
-        value: m.RetryConfigurationMixin,
-    ) -> p.RetryConfigurationMixin:
+        value: (FlextModels.RetryConfigurationMixin),
+    ) -> FlextProtocols.RetryConfigurationMixin:
         return value
 
-    def model_protocol_92(value: m.RetryOptions) -> p.RetryOptions:
+    def model_protocol_92(
+        value: (FlextModels.RetryOptions),
+    ) -> FlextProtocols.RetryOptions:
         return value
 
-    def model_protocol_93[RootValueT]() -> type[p.RootModel[RootValueT]]:
-        return m.RootModel[RootValueT]
+    def model_protocol_93[RootValueT]() -> type[FlextProtocols.RootModel[RootValueT]]:
+        return FlextModels.RootModel[RootValueT]
 
     def model_protocol_94(
-        value: m.RuntimeBootstrapOptions,
-    ) -> p.RuntimeBootstrapOptions:
+        value: (FlextModels.RuntimeBootstrapOptions),
+    ) -> FlextProtocols.RuntimeBootstrapOptions:
         return value
 
-    def model_protocol_95(value: m.ServiceLookupParams) -> p.ServiceLookupParams:
+    def model_protocol_95(
+        value: (FlextModels.ServiceLookupParams),
+    ) -> FlextProtocols.ServiceLookupParams:
         return value
 
-    def model_protocol_96(value: m.ServiceOperation) -> p.ServiceOperation:
+    def model_protocol_96(
+        value: (FlextModels.ServiceOperation),
+    ) -> FlextProtocols.ServiceOperation:
         return value
 
-    def model_protocol_97(value: m.ServiceRegistration) -> p.ServiceRegistration:
+    def model_protocol_97(
+        value: (FlextModels.ServiceRegistration),
+    ) -> FlextProtocols.ServiceRegistration:
         return value
 
     def model_protocol_98(
-        value: m.ServiceRegistrationSpec,
-    ) -> p.ServiceRegistrationSpec:
+        value: (FlextModels.ServiceRegistrationSpec),
+    ) -> FlextProtocols.ServiceRegistrationSpec:
         return value
 
-    def model_protocol_99(value: m.ServiceRuntime) -> p.ServiceRuntime:
+    def model_protocol_99(
+        value: (FlextModels.ServiceRuntime),
+    ) -> FlextProtocols.ServiceRuntime:
         return value
 
-    def model_protocol_100(value: m.ServiceState) -> p.ServiceState:
+    def model_protocol_100(
+        value: (FlextModels.ServiceState),
+    ) -> FlextProtocols.ServiceState:
         return value
 
-    def model_protocol_101(value: m.SettingsValue) -> p.SettingsValue:
+    def model_protocol_101(
+        value: (FlextModels.SettingsValue),
+    ) -> FlextProtocols.SettingsValue:
         return value
 
-    def model_protocol_102(value: m.StrictBoundaryModel) -> p.StrictBoundaryModel:
+    def model_protocol_102(
+        value: (FlextModels.StrictBoundaryModel),
+    ) -> FlextProtocols.StrictBoundaryModel:
         return value
 
-    def model_protocol_103(value: m.StrictManagedModel) -> p.StrictManagedModel:
+    def model_protocol_103(
+        value: (FlextModels.StrictManagedModel),
+    ) -> FlextProtocols.StrictManagedModel:
         return value
 
-    def model_protocol_104(value: m.StrictModel) -> p.StrictModel:
+    def model_protocol_104(
+        value: (FlextModels.StrictModel),
+    ) -> FlextProtocols.StrictModel:
         return value
 
-    def model_protocol_105(value: m.StructlogOptions) -> p.StructlogOptions:
+    def model_protocol_105(
+        value: (FlextModels.StructlogOptions),
+    ) -> FlextProtocols.StructlogOptions:
         return value
 
-    def model_protocol_106(value: m.StructlogProxyToken) -> p.StructlogProxyToken:
+    def model_protocol_106(
+        value: (FlextModels.StructlogProxyToken),
+    ) -> FlextProtocols.StructlogProxyToken:
         return value
 
-    def model_protocol_107(value: m.TaggedModel) -> p.TaggedModel:
+    def model_protocol_107(
+        value: (FlextModels.TaggedModel),
+    ) -> FlextProtocols.TaggedModel:
         return value
 
-    def model_protocol_108(value: m.TimeoutErrorParams) -> p.TimeoutErrorParams:
+    def model_protocol_108(
+        value: (FlextModels.TimeoutErrorParams),
+    ) -> FlextProtocols.TimeoutErrorParams:
         return value
 
-    def model_protocol_109(value: m.TimestampedModel) -> p.TimestampedModel:
+    def model_protocol_109(
+        value: (FlextModels.TimestampedModel),
+    ) -> FlextProtocols.TimestampedModel:
         return value
 
-    def model_protocol_110(value: m.Token) -> p.Token:
+    def model_protocol_110(value: (FlextModels.Token)) -> FlextProtocols.Token:
         return value
 
-    def model_protocol_111(value: m.TransformOptions) -> p.TransformOptions:
+    def model_protocol_111(
+        value: (FlextModels.TransformOptions),
+    ) -> FlextProtocols.TransformOptions:
         return value
 
-    def model_protocol_112(value: m.TransformSpec) -> p.TransformSpec:
+    def model_protocol_112(
+        value: (FlextModels.TransformSpec),
+    ) -> FlextProtocols.TransformSpec:
         return value
 
-    def model_protocol_113(value: m.TypeErrorParams) -> p.TypeErrorParams:
+    def model_protocol_113(
+        value: (FlextModels.TypeErrorParams),
+    ) -> FlextProtocols.TypeErrorParams:
         return value
 
-    def model_protocol_114(value: m.ValidationErrorParams) -> p.ValidationErrorParams:
+    def model_protocol_114(
+        value: (FlextModels.ValidationErrorParams),
+    ) -> FlextProtocols.ValidationErrorParams:
         return value
 
-    def model_protocol_115(value: m.ValidatorCallable) -> p.ValidatorCallable:
+    def model_protocol_115(
+        value: (FlextModels.ValidatorCallable),
+    ) -> FlextProtocols.ValidatorCallable:
         return value
 
-    def model_protocol_116(value: m.Value) -> p.Value:
+    def model_protocol_116(value: (FlextModels.Value)) -> FlextProtocols.Value:
         return value

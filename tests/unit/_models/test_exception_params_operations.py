@@ -27,7 +27,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
     def test_no_arg_construction_yields_all_none_fields(
-        model_cls: type[p.ParamsModel],
+        model_cls: t.ModelClass[t.BaseModelType],
     ) -> None:
         instance = model_cls()
         for value in instance.model_dump().values():
@@ -39,7 +39,9 @@ class TestsFlextCoreExceptionParamsOperations:
         TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
-    def test_unknown_field_is_rejected(model_cls: type[p.ParamsModel]) -> None:
+    def test_unknown_field_is_rejected(
+        model_cls: t.ModelClass[t.BaseModelType],
+    ) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
 
@@ -102,7 +104,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=["field-int", "port-str", "expected-type-int"],
     )
     def test_strict_typing_rejects_wrong_type(
-        model_cls: type[p.ParamsModel],
+        model_cls: t.ModelClass[t.BaseModelType],
         payload: t.JsonMapping,
     ) -> None:
         with pytest.raises(c.ValidationError):
@@ -129,5 +131,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=["connection", "authorization", "rate-limit"],
     )
     def test_model_dump_roundtrip_preserves_values(params: p.ParamsModel) -> None:
+        if not isinstance(params, m.BaseModel):
+            pytest.fail("exception params must be a Pydantic model")
         rebuilt = type(params).model_validate(params.model_dump())
         tm.that(rebuilt.model_dump(), eq=params.model_dump())

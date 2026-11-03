@@ -53,22 +53,6 @@ class TestsFlextProtocols(FlextTestsProtocols, TestsFlextProtocolsMixins):
             command_type: str = c.DEFAULT_COMMAND_TYPE
 
         @runtime_checkable
-        class DispatchRequest(Protocol):
-            """Only the request capability consumed by the dispatch operation."""
-
-            @property
-            def command_name(self) -> str:
-                """Expose the name consumed by the dispatch operation."""
-                ...
-
-        @runtime_checkable
-        class PublicPayload(FlextTestsProtocols.Base, Protocol):
-            """Data consumed through a protocol and validated by its model owner."""
-
-            raw_name: str
-            visits: int
-
-        @runtime_checkable
         class GoodProtocol(FlextTestsProtocols.Base, Protocol):
             """Runtime-checkable port used by the clean enforcement fixture."""
 

@@ -28,10 +28,12 @@ class TestsFlextProtocolsMixinsCoreState:
             cls,
         ) -> TestsFlextProtocolsMixinsCoreState.SingletonClassForTest:
             """Get global singleton instance."""
+            ...
 
         @classmethod
         def reset_instance(cls) -> None:
             """Reset singleton instance for test isolation."""
+            ...
 
     @runtime_checkable
     class _SampleEntity(FlextTestsProtocols.Model, Protocol):

@@ -45,9 +45,8 @@ class FlextUtilitiesModel:
             Dictionary representation of the model.
 
         """
-        opts = FlextUtilitiesArgs.resolve_options(
-            options,
-            kwargs,
+        opts = FlextUtilitiesArgs.parse_model(
+            options.model_dump(exclude_none=True) if options is not None else kwargs,
             m.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)

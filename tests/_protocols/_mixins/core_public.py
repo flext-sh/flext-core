@@ -10,11 +10,11 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence, Sequence
 from datetime import datetime
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from flext_tests import FlextTestsProtocols, t
+from flext_tests import FlextTestsProtocols
 
-from flext_core import c
+from tests import c, t
 
 if TYPE_CHECKING:
     from flext_tests import p

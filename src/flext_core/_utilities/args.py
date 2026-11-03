@@ -17,7 +17,7 @@ class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: p.BaseModel](
+    def parse_model[M: t.BaseModelType](
         kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
@@ -45,13 +45,13 @@ class FlextUtilitiesArgs:
             return FlextResult[M].fail_op("parse options model", exc)
 
     @staticmethod
-    def resolve_options[M: p.BaseModel](
-        options: M | None,
+    def resolve_options[P, M: t.BaseModelType](
+        options: P | None,
         kwargs: Mapping[str, t.JsonPayload],
         model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
-    ) -> p.Result[M]:
+    ) -> p.Result[P | M]:
         """Resolve options from a pre-instantiated model or kwargs concisely.
 
         Reduces boilerplate by returning an r[M] which callers can unwrap_or()
@@ -62,7 +62,7 @@ class FlextUtilitiesArgs:
 
         """
         if options is not None:
-            return FlextResult[M].ok(options)
+            return FlextResult[P | M].ok(options)
         return FlextUtilitiesArgs.parse_model(
             kwargs,
             model_cls,

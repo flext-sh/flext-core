@@ -134,6 +134,11 @@ class FlextProtocolsContainer:
             """Service tags for categorization."""
             ...
 
+        @property
+        def service_type(self) -> str:
+            """Type name of the registered service, derived from the service."""
+            ...
+
     @runtime_checkable
     class RootDict[RootValueT](Protocol):
         """Protocol for dict-like root model objects.

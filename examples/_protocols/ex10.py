@@ -8,9 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, c, t
+from examples import c, t
+from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -107,6 +108,7 @@ class ExamplesFlextProtocolsEx10:
         @staticmethod
         def process() -> bool:
             """Structural member projected from the owning model."""
+            ...
 
     @runtime_checkable
     class ProcessorBad(FlextProtocols.Model, Protocol):
@@ -127,8 +129,9 @@ class ExamplesFlextProtocolsEx10:
             ...
 
         @staticmethod
-        def handle(message: p.Examples.Message) -> p.Result[str]:
+        def handle(message: ExamplesFlextProtocolsEx10.Message) -> p.Result[str]:
             """Structural member projected from the owning model."""
+            ...
 
 
 __all__: list[str] = [

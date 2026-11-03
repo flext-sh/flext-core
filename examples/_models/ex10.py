@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import m, p, r
+from examples import p
+from flext_core import m, r
 
 
 class ExamplesFlextModelsEx10:
@@ -49,7 +50,7 @@ class ExamplesFlextModelsEx10:
         ] = m.Command
 
         @staticmethod
-        def handle(message: ExamplesFlextModelsEx10.Message) -> p.Result[str]:
+        def handle(message: p.Examples.Message) -> p.Result[str]:
             return r[str].ok(message.text)
 
 

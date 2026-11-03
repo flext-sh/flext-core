@@ -52,12 +52,12 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, p.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name.
 
         Returns:
             The resulting ``Sequence[tuple[str,
-                m.FactoryDecoratorConfig]]``.
+                p.FactoryDecoratorConfig]]``.
 
         """
         return sorted(

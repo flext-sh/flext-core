@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
     from flext_core import c
     from flext_core._constants import FlextConstantsCqrs, FlextConstantsStatus
-    from flext_core._protocols import FlextProtocolsContainer
+    from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsContainers
     from flext_core._typings import (
         FlextTypesAnnotateds,
         FlextTypesCore,
@@ -58,24 +58,32 @@ class FlextProtocolsHandler:
     # FLEXT: annotations remain structural; concrete models are construction-only.
     @runtime_checkable
     class ExecutionContext(FlextProtocolsBase.Model, Protocol):
-        """Field-level contract for active handler execution state."""
+        """Structural data contract projected from the owning model."""
 
         @property
-        def handler_name(self) -> str: ...
+        def handler_name(self) -> FlextTypesAnnotateds.NonEmptyStr:
+            """Name of the handler being executed."""
+            ...
 
         @property
-        def handler_mode(self) -> c.HandlerType: ...
+        def handler_mode(self) -> FlextConstantsCqrs.HandlerType:
+            """Mode of handler execution."""
+            ...
 
         @property
-        def started_at(self) -> float | None: ...
+        def started_at(self) -> float | None:
+            """Monotonic start timestamp used to compute execution time."""
+            ...
 
         @property
-        def metrics_state_data(
-            self,
-        ) -> FlextProtocolsContainer.MutableRootDict[t.JsonPayload]: ...
+        def metrics_state_data(self) -> FlextProtocolsContainers.Dict:
+            """Mutable metrics payload for the active handler execution."""
+            ...
 
         @property
-        def execution_time_ms(self) -> float: ...
+        def execution_time_ms(self) -> float:
+            """Elapsed execution time in milliseconds (0 until started)."""
+            ...
 
     @runtime_checkable
     class HandlerRuntimeState(FlextProtocolsBase.Model, Protocol):
@@ -89,6 +97,16 @@ class FlextProtocolsHandler:
         @property
         def context_stack(self) -> Sequence[FlextProtocolsHandler.ExecutionContext]:
             """Stack of nested execution contexts."""
+            ...
+
+        @property
+        def handler_name(self) -> str:
+            """Active handler name taken from the execution context."""
+            ...
+
+        @property
+        def handler_mode(self) -> FlextConstantsCqrs.HandlerType:
+            """Active handler mode taken from the execution context."""
             ...
 
     @runtime_checkable

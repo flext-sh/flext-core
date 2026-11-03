@@ -78,7 +78,7 @@ class TestsFlextCoreEnumValueContracts:
         [Managed, Strict, Factory, Frozen, Contract, SettingsValue, Params, Service],
     )
     def test_enum_python_input_and_json_round_trip(
-        model: type[p.BaseModel], member: c.HandlerType
+        model: type[t.BaseModelType], member: c.HandlerType
     ) -> None:
         """Python retains members; the native JSON round trip restores them."""
         payload = model.model_validate({"kind": member})
@@ -104,7 +104,7 @@ class TestsFlextCoreEnumValueContracts:
     @staticmethod
     @pytest.mark.parametrize("model", [Managed, Factory])
     def test_default_is_validated_by_the_shared_preset(
-        model: type[p.BaseModel],
+        model: type[t.BaseModelType],
     ) -> None:
         """Defaults retain members without a local field-level validation policy."""
         payload = model.model_validate({})
@@ -118,7 +118,7 @@ class TestsFlextCoreEnumValueContracts:
     @staticmethod
     @pytest.mark.parametrize("model", [InvalidDefault, InvalidFactory])
     def test_defaults_must_satisfy_their_declared_constraints(
-        model: type[p.BaseModel],
+        model: type[t.BaseModelType],
     ) -> None:
         """Defaults and factory results cannot bypass a constrained data contract."""
         with pytest.raises(m.ValidationError):
@@ -150,7 +150,7 @@ class TestsFlextCoreEnumValueContracts:
     @staticmethod
     @pytest.mark.parametrize("model", [Strict, Frozen, Contract])
     def test_strict_python_input_rejects_a_primitive(
-        model: type[p.BaseModel],
+        model: type[t.BaseModelType],
     ) -> None:
         """JSON enum values do not authorize coercion of a strict Python input."""
         with pytest.raises(m.ValidationError):
@@ -158,7 +158,7 @@ class TestsFlextCoreEnumValueContracts:
 
     @staticmethod
     @pytest.mark.parametrize("model", [Frozen, Contract])
-    def test_frozen_models_reject_enum_assignment(model: type[p.BaseModel]) -> None:
+    def test_frozen_models_reject_enum_assignment(model: type[t.BaseModelType]) -> None:
         """Frozen contracts expose no mutable enum capability."""
         payload = model.model_validate({"kind": c.DEFAULT_HANDLER_TYPE})
 

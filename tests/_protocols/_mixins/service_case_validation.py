@@ -11,7 +11,9 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_tests import FlextTestsProtocols, t
+from flext_tests import FlextTestsProtocols
+
+from tests import t
 
 if TYPE_CHECKING:
     from flext_tests import p

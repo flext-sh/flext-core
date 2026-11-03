@@ -8,10 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from pathlib import Path
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from flext_core import FlextProtocols, FlextSettings
+from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p
@@ -44,7 +44,7 @@ class ExamplesFlextProtocolsEx11:
             ...
 
         log_level: str
-        logging_profile: Literal[console, json]
+        logging_profile: Literal["console", "json"]
 
         @property
         def timezone(self) -> str:
@@ -91,72 +91,6 @@ class ExamplesFlextProtocolsEx11:
             """Whether the service is enabled."""
             ...
 
-        @staticmethod
-        def app_env_prefix(namespace: str) -> str:
-            """Return the environment prefix owned by one application namespace."""
-
-        @staticmethod
-        def resolve_env_file(namespace: str | None = None) -> str:
-            """Resolve the effective ``.env`` path honouring ``FLEXT_ENV_FILE``."""
-
-        @classmethod
-        def fetch_global(
-            cls, *, overrides: Mapping[str, JsonValue] | None = None
-        ) -> Self:
-            """Return the shared per-class singleton (lazy, thread-safe)."""
-
-        def clone(
-            self,
-            **overrides: BaseModel
-            | JsonValue
-            | Path
-            | datetime
-            | bytes
-            | SecretStr
-            | SecretBytes
-            | Mapping[str, JsonValue]
-            | tuple[JsonValue, ...]
-            | FlextSettings._ModelValue
-            | Sequence[JsonValue],
-        ) -> Self:
-            """Deep copy with optional field overrides + re-validation."""
-
-        @classmethod
-        def update_global(
-            cls,
-            **overrides: BaseModel
-            | JsonValue
-            | Path
-            | datetime
-            | bytes
-            | SecretStr
-            | SecretBytes
-            | Mapping[str, JsonValue]
-            | tuple[JsonValue, ...]
-            | FlextSettings._ModelValue
-            | Sequence[JsonValue],
-        ) -> Self:
-            """Validate an isolated candidate, then publish into the stable root."""
-
-        @classmethod
-        def reset_for_testing(cls) -> None:
-            """Reload sources into a published root; leave an unused class lazy."""
-
-        @staticmethod
-        def platform_config_root() -> Path:
-            """Structural member projected from the owning model.
-
-            Return the OS-native config root shared with configuration loading.
-            """
-
-        @classmethod
-        def apply_app_namespace(cls, namespace: str) -> None:
-            """Set the outer application identity once for the current process."""
-
-        @classmethod
-        def reset_app_namespace(cls) -> None:
-            """Clear the process application identity for isolated tests."""
-
     @runtime_checkable
     class ServiceHandlerLike(FlextProtocols.Model, Protocol):
         """Structural data contract projected from the owning model."""
@@ -167,8 +101,9 @@ class ExamplesFlextProtocolsEx11:
             ...
 
         @staticmethod
-        def handle(message: p.Examples.Payload) -> p.Result[str]:
+        def handle(message: ExamplesFlextProtocolsEx11.Payload) -> p.Result[str]:
             """Structural member projected from the owning model."""
+            ...
 
     @runtime_checkable
     class ProcessorProtocolGood(FlextProtocols.Model, Protocol):

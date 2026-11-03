@@ -194,9 +194,9 @@ class FlextExceptionsFactoriesFail:
 
         """
         params = (
-            details
-            if isinstance(details, m.ServiceLookupParams)
-            else m.ServiceLookupParams(expected_type=details, actual_type=actual)
+            m.ServiceLookupParams(expected_type=details, actual_type=actual)
+            if isinstance(details, str)
+            else details
         )
         expected_type = (
             params.expected_type
@@ -238,7 +238,7 @@ class FlextExceptionsFactoriesFail:
         """
         params = (
             details
-            if isinstance(details, m.ValidationErrorParams)
+            if details is not None and not isinstance(details, str)
             else m.ValidationErrorParams(field=details)
         )
         field_name = params.field if params.field is not None else "input"
