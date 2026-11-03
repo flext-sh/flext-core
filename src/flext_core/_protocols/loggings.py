@@ -14,7 +14,7 @@ from structlog.typing import Processor
 
 from flext_core import t
 from flext_core._protocols import (
-    FlextProtocolsBase,
+    FlextProtocolsPydantic,
     FlextProtocolsResult,
     FlextProtocolsSettings,
 )
@@ -27,10 +27,10 @@ class FlextProtocolsLogging:
     """Public facade for FlextProtocolsLogging."""
 
     type LogArgument[T] = t.LogArgument[T]
-    type LogValue = t.LogValue[FlextProtocolsBase.Model]
-    type LoggingEventValue = t.LoggingEventValue[FlextProtocolsBase.Model]
-    type LoggingEvent = t.LoggingEvent[FlextProtocolsBase.Model]
-    type LoggingContext = t.LoggingContext[FlextProtocolsBase.Model]
+    type LogValue = t.LogValue[FlextProtocolsPydantic.BaseModel]
+    type LoggingEventValue = t.LoggingEventValue[FlextProtocolsPydantic.BaseModel]
+    type LoggingEvent = t.LoggingEvent[FlextProtocolsPydantic.BaseModel]
+    type LoggingContext = t.LoggingContext[FlextProtocolsPydantic.BaseModel]
     type LogResult = FlextProtocolsResult.Result[bool]
 
     @runtime_checkable
@@ -112,7 +112,7 @@ class FlextProtocolsLogging:
         def info(
             self,
             msg: str,
-            *args: t.LogPositionalValue[FlextProtocolsBase.Model],
+            *args: t.LogPositionalValue[FlextProtocolsPydantic.BaseModel],
             **kw: FlextProtocolsLogging.LogValue,
         ) -> FlextProtocolsLogging.LogResult:
             """Log info message."""
@@ -291,7 +291,7 @@ class FlextProtocolsLogging:
         def close(self) -> None: ...
 
     @runtime_checkable
-    class Connection(FlextProtocolsBase.Base, Protocol):
+    class Connection(FlextProtocolsPydantic.Base, Protocol):
         """External system connection protocol."""
 
         def close_connection(self) -> None:
@@ -308,7 +308,7 @@ class FlextProtocolsLogging:
             ...
 
     @runtime_checkable
-    class ValidatorSpec(FlextProtocolsBase.Base, Protocol):
+    class ValidatorSpec(FlextProtocolsPydantic.Base, Protocol):
         """Protocol for validator specifications with operator composition.
 
         Validators implement __call__ to validate values and support composition
@@ -343,7 +343,7 @@ class FlextProtocolsLogging:
             ...
 
     @runtime_checkable
-    class Entry(FlextProtocolsBase.Base, Protocol):
+    class Entry(FlextProtocolsPydantic.Base, Protocol):
         """Entry protocol (read-only)."""
 
         @property
@@ -390,8 +390,8 @@ class FlextProtocolsLogging:
 
     type AccessibleData = (
         t.JsonPayload
-        | FlextProtocolsBase.Model
-        | Mapping[str, t.JsonPayload | FlextProtocolsBase.Model | None]
+        | FlextProtocolsPydantic.BaseModel
+        | Mapping[str, t.JsonPayload | FlextProtocolsPydantic.BaseModel | None]
         | FlextProtocolsResult.HasModelDump
         | ValidatorSpec
     )

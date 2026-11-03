@@ -122,8 +122,8 @@ ONLY after all src green.
 ### FlextTypesServices — REMOVE
 
 - All `# DEPRECATED` comment blocks (dead code — delete, don't leave).
-- `ProtocolModelCarrier = p.Model` — thin pass-through duplicate of `p.Model`; inline at
-  call sites.
+- `ProtocolModelCarrier = p.BaseModel` — thin pass-through duplicate of
+  `p.BaseModel`; inline at call sites.
 - `DomainModelCarrier = ModelCarrier | ProtocolModelCarrier` — collapse to
   `ModelCarrier` (pydantic `BaseModel` is the SSOT).
 - `RegisterableService` gigantic union — tighten to
