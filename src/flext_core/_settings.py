@@ -83,13 +83,17 @@ class FlextSettings(BaseSettings):
         return f"{normalized.upper()}_"
 
     @staticmethod
-    def _resolve_env_file(
-        env_var: str, default: str, namespace: str | None = None
-    ) -> str:
+    def _resolve_env_file(env_var: str, namespace: str | None = None) -> str:
         """Resolve dotenv input before the settings class configuration is built.
 
+        The file comes only from an explicit ``FLEXT_ENV_FILE`` or from the
+        declared scoped ``.env.flext-<namespace>``. There is no
+        ``Path.cwd()/.env`` fallback: an implicit working-directory dotenv is
+        a secret-echo channel (a ``ValidationError`` would render its values).
+
         Returns:
-            The dotenv file path selected for this settings class.
+            The dotenv file path selected for this settings class; an empty
+            string means no dotenv file is read.
 
         """
         custom_env_file = os.environ.get(env_var)
@@ -99,13 +103,12 @@ class FlextSettings(BaseSettings):
                 return str(custom_path.resolve())
             return custom_env_file
         if namespace:
-            scoped = Path.cwd() / f".env.flext-{namespace}"
-            if scoped.exists():
-                return str(scoped.resolve())
-        default_path = Path.cwd() / default
-        if default_path.exists():
-            return str(default_path.resolve())
-        return default
+            scoped = f".env.flext-{namespace}"
+            scoped_path = Path.cwd() / scoped
+            if scoped_path.exists():
+                return str(scoped_path.resolve())
+            return scoped
+        return ""
 
     ENV_FILE_ENV_VAR: ClassVar[str] = "FLEXT_ENV_FILE"
     ENV_FILE_DEFAULT: ClassVar[str] = ".env"
@@ -114,11 +117,12 @@ class FlextSettings(BaseSettings):
     model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_prefix=ENV_PREFIX,
         env_nested_delimiter="__",
-        env_file=_resolve_env_file(ENV_FILE_ENV_VAR, ENV_FILE_DEFAULT),
+        env_file=_resolve_env_file(ENV_FILE_ENV_VAR),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",
         validate_assignment=True,
+        hide_input_in_errors=True,
     )
 
     @staticmethod
@@ -129,11 +133,11 @@ class FlextSettings(BaseSettings):
         removed (chain law: ``c`` consumes ``settings``, never the reverse).
 
         Returns:
-            The resulting ``str``.
+            The resulting ``str``; empty when no dotenv source is declared.
 
         """
         return FlextSettings._resolve_env_file(
-            FlextSettings.ENV_FILE_ENV_VAR, FlextSettings.ENV_FILE_DEFAULT, namespace
+            FlextSettings.ENV_FILE_ENV_VAR, namespace
         )
 
     debug: Annotated[bool, Field(description="Enable debug mode")] = False

@@ -10,6 +10,7 @@ import os
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextSettings
 from tests import c, m, tm, u
@@ -85,24 +86,43 @@ class TestsFlextCoreUtilitiesSettings:
         tm.that(snapshot.log_level, eq=c.LogLevel.ERROR)
 
     @staticmethod
-    def test_env_file_resolves_cwd_default_then_override_then_fallback(
+    def test_env_file_resolves_only_explicit_and_scoped_sources(
         tmp_path: Path,
     ) -> None:
-        """Test env file resolves cwd default then override then fallback."""
+        """No implicit cwd dotenv: only ``FLEXT_ENV_FILE`` or a scoped file."""
         os.chdir(tmp_path)
-        default_env_file = tmp_path / c.ENV_FILE_DEFAULT
-        default_env_file.write_text("FLEXT_DEBUG=true\n", encoding="utf-8")
+        explicit_env_file = tmp_path / "explicit.env"
+        explicit_env_file.write_text("FLEXT_DEBUG=true\n", encoding="utf-8")
         missing_override = str(tmp_path / "missing.env")
+        scoped_name = ".env.flext-probe"
+        scoped_env_file = tmp_path / scoped_name
+        scoped_env_file.write_text("FLEXT_TRACE=true\n", encoding="utf-8")
 
         with u.Tests.env_vars_context(vars_to_clear=[c.ENV_FILE_ENV_VAR]):
-            cwd_resolved = FlextSettings.resolve_env_file()
-            default_env_file.unlink()
+            unset_resolved = FlextSettings.resolve_env_file()
+            scoped_resolved = FlextSettings.resolve_env_file("probe")
+            with u.Tests.env_vars_context(
+                env_vars={c.ENV_FILE_ENV_VAR: str(explicit_env_file)},
+            ):
+                explicit_resolved = FlextSettings.resolve_env_file()
             with u.Tests.env_vars_context(
                 env_vars={c.ENV_FILE_ENV_VAR: missing_override},
             ):
                 override_resolved = FlextSettings.resolve_env_file()
-            fallback_resolved = FlextSettings.resolve_env_file()
 
-        tm.that(cwd_resolved, eq=str(default_env_file.resolve()))
+        tm.that(unset_resolved, eq="")
+        tm.that(scoped_resolved, eq=str(scoped_env_file.resolve()))
+        tm.that(explicit_resolved, eq=str(explicit_env_file.resolve()))
         tm.that(override_resolved, eq=missing_override)
-        tm.that(fallback_resolved, eq=c.ENV_FILE_DEFAULT)
+
+    @staticmethod
+    def test_validation_error_does_not_echo_input_values() -> None:
+        """A malformed setting fails typed without rendering the input value."""
+        sentinel = "sentinel-bool-violation-secret"
+        with (
+            u.Tests.env_vars_context(env_vars={"FLEXT_DEBUG": sentinel}),
+            pytest.raises(ValidationError) as caught,
+        ):
+            FlextSettings()
+
+        tm.that(sentinel not in str(caught.value), eq=True)
