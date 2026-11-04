@@ -9,22 +9,22 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from tests import m
+from tests import m, p
 
 
-class TestsFlextUtilitiesReliabilityScenariosMixin:
+class TestsFlextUtilitiesReliabilityScenarios:
     """Reliability scenario helpers."""
 
     """Centralized reliability scenarios - single source of truth."""
 
-    _RETRY_BASE_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
+    _RETRY_BASE_SETTINGS: ClassVar[p.ConfigMap] = m.ConfigMap(
         root={"max_retries": 3, "backoff_type": "constant", "backoff_ms": 10},
     )
-    _RETRY_EXHAUSTED_SETTINGS: ClassVar[m.ConfigMap] = m.ConfigMap(
+    _RETRY_EXHAUSTED_SETTINGS: ClassVar[p.ConfigMap] = m.ConfigMap(
         root={"max_retries": 2, "backoff_type": "constant", "backoff_ms": 10},
     )
 
-    RETRY_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [
+    RETRY_SCENARIOS: ClassVar[Sequence[p.Tests.ReliabilityScenario]] = [
         m.Tests.ReliabilityScenario(
             name="retry_immediate_success",
             strategy="retry",
@@ -53,7 +53,7 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
             description="All retries exhausted",
         ),
     ]
-    CIRCUIT_BREAKER_SCENARIOS: ClassVar[Sequence[m.Tests.ReliabilityScenario]] = [
+    CIRCUIT_BREAKER_SCENARIOS: ClassVar[Sequence[p.Tests.ReliabilityScenario]] = [
         m.Tests.ReliabilityScenario(
             name="circuit_initial_closed",
             strategy="circuit_breaker",
@@ -75,4 +75,4 @@ class TestsFlextUtilitiesReliabilityScenariosMixin:
     ]
 
 
-__all__: list[str] = ["TestsFlextUtilitiesReliabilityScenariosMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesReliabilityScenarios"]

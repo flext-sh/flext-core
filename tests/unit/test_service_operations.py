@@ -190,8 +190,8 @@ class TestsFlextCoreServiceOperations:
 
         def join(
             self,
-            left: m.Tests.DispatchRequest,
-            right: m.Tests.DispatchRequest,
+            left: p.Tests.DispatchRequest,
+            right: p.Tests.DispatchRequest,
         ) -> p.Result[bool]:
             """Join two requests.
 
@@ -204,7 +204,7 @@ class TestsFlextCoreServiceOperations:
     class KeywordOnlyService(OperationService):
         """Operation with a keyword-only request."""
 
-        def send(self, *, request: m.Tests.DispatchRequest) -> p.Result[bool]:
+        def send(self, *, request: p.Tests.DispatchRequest) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -218,7 +218,7 @@ class TestsFlextCoreServiceOperations:
 
         def send(
             self,
-            request: m.Tests.DispatchRequest | None = None,
+            request: p.Tests.DispatchRequest | None = None,
         ) -> p.Result[bool]:
             """Send an optional request.
 
@@ -253,7 +253,7 @@ class TestsFlextCoreServiceOperations:
     class UnionRequestService(OperationService):
         """Operation whose request annotation is not a dotted name."""
 
-        def send(self, request: m.Tests.DispatchRequest | str) -> p.Result[bool]:
+        def send(self, request: p.Tests.DispatchRequest | str) -> p.Result[bool]:
             """Send a request.
 
             Returns:
@@ -315,7 +315,7 @@ class TestsFlextCoreServiceOperations:
         """A model annotation cannot replace the public Protocol contract."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:

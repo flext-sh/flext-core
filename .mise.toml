@@ -17,11 +17,13 @@
 # and records any entry the lock is missing, so lock drift never blocks setup.
 
 # === SECTION: settings (managed) ===
-# Source: config:codegen.toolchain.mise_lockfile / mise_lockfile_platforms /
+# Source: config:codegen.toolchain.mise_lockfile / mise_activate_aggressive / mise_lockfile_platforms /
 #         dependency_cooldown_days (one fleet supply-chain cooldown, operator 2026-10-01)
 [settings]
 minimum_release_age = "10d"
 lockfile = true
+# Project-selected tools precede inherited host paths through native Mise policy.
+activate_aggressive = true
 # The mise release moves only through mise.lock (`make upg`); a newer release
 # notice is not actionable here and only adds noise to every command.
 disable_update_warning = true

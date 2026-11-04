@@ -10,11 +10,26 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flext_core._protocols import FlextProtocolsConfig, FlextProtocolsHandler
+    from flext_core._typings import (
+        FlextTypesPydantic,
+        FlextTypesServices,
+        FlextTypingBase,
+    )
+
+
 from collections.abc import Mapping
 from contextlib import AbstractContextManager
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase, FlextProtocolsSettings
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsPydantic,
+    FlextProtocolsSettings,
+)
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -35,28 +50,36 @@ class FlextProtocolsService:
 
         def __call__(
             self,
-            service: FlextProtocolsBase.Base,
+            service: FlextProtocolsPydantic.Base,
             /,
-            *requests: FlextProtocolsBase.Base,
+            *requests: FlextProtocolsPydantic.Base,
         ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
 
     @runtime_checkable
-    class ServiceOperation(Protocol):
-        """One discovered operation and its sole request-schema association."""
+    class ServiceOperation(FlextProtocolsBase.ContractModel, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
-        def name(self) -> str: ...
+        def name(self) -> str:
+            """Method name that implements the operation."""
+            ...
 
         @property
-        def summary(self) -> str: ...
+        def summary(self) -> str:
+            """First docstring line of the operation."""
+            ...
 
         @property
         def request(
             self,
-        ) -> t.ModelClass[t.BaseModelType] | None: ...
+        ) -> FlextTypesServices.ModelClass[FlextTypesPydantic.BaseModelType] | None:
+            """Pydantic request model, or None for an input-less operation."""
+            ...
 
         @property
-        def handler(self) -> FlextProtocolsService.ServiceOperationHandler: ...
+        def handler(self) -> FlextProtocolsService.ServiceOperationHandler:
+            """Original unbound operation, invoked with the provided service."""
+            ...
 
     # ------------------------------------------------------------------
     # RuntimeBootstrapProvider — a service base that declares its runtime
@@ -75,7 +98,7 @@ class FlextProtocolsService:
         @classmethod
         def runtime_bootstrap_options(
             cls,
-        ) -> FlextProtocolsContext.RuntimeBootstrapOptions:
+        ) -> FlextProtocolsService.RuntimeBootstrapOptions:
             """Return the runtime bootstrap options this service base declares."""
             ...
 
@@ -134,7 +157,7 @@ class FlextProtocolsService:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class Service[T](FlextProtocolsBase.Base, MixinsInfrastructure, Protocol):
+    class Service[T](FlextProtocolsPydantic.Base, MixinsInfrastructure, Protocol):
         """Domain service interface: the runtime surface plus ``execute``.
 
         Every ``FlextService[T]`` satisfies it structurally. The runtime surface
@@ -155,10 +178,91 @@ class FlextProtocolsService:
 
         def dispatch(
             self,
-            message: FlextProtocolsBase.Model,
+            message: FlextProtocolsPydantic.BaseModel,
             /,
-        ) -> FlextProtocolsBase.Model:
+        ) -> FlextProtocolsPydantic.BaseModel:
             """Dispatch a message and return the result."""
+            ...
+
+    @runtime_checkable
+    class ServiceRuntime(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings:
+            """Service configuration settings for runtime behavior."""
+            ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context:
+            """Execution context carrying correlation and tracing metadata."""
+            ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container:
+            """Dependency injection container scoped to this runtime."""
+            ...
+
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher:
+            """Dispatcher resolved for CQRS routing in this runtime."""
+            ...
+
+        @property
+        def logger(self) -> FlextProtocolsLogging.Logger:
+            """Logging destination elected by the composition root."""
+            ...
+
+        @property
+        def logger_injected(self) -> bool:
+            """Keep an explicit logger when transport settings are rebound."""
+            ...
+
+    @runtime_checkable
+    class RuntimeBootstrapOptions(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def settings(self) -> FlextProtocolsSettings.Settings | None:
+            """Settings source cloned once into the elected container scope."""
+            ...
+
+        @property
+        def settings_type(self) -> FlextProtocolsSettings.SettingsType | None:
+            """FlextSettings class used to load runtime settings."""
+            ...
+
+        @property
+        def settings_overrides(self) -> FlextTypingBase.JsonMapping | None:
+            """Key-value overrides applied on top of the loaded configuration."""
+            ...
+
+        @property
+        def context(self) -> FlextProtocolsContext.Context | None:
+            """Pre-built execution context to inject into the runtime."""
+            ...
+
+        @property
+        def container(self) -> FlextProtocolsContainer.Container | None:
+            """Structural member projected from the owning model.
+
+            Existing container whose public DI registrations the runtime preserves.
+            """
+            ...
+
+        @property
+        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None:
+            """Pre-built dispatcher injected into the runtime."""
+            ...
+
+        @property
+        def logger(self) -> FlextProtocolsLogging.Logger | None:
+            """Logging dependency; absent selects the runtime policy."""
+            ...
+
+        @property
+        def logging_options(self) -> FlextProtocolsConfig.StructlogOptions | None:
+            """Programmatic logging extensions elected by the root."""
             ...
 
 

@@ -18,18 +18,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
-from flext_core import (
-    FlextContext,
-    FlextSettings,
-    FlextUtilitiesLogging,
-    c,
-    e,
-    m,
-    p,
-    r,
-    t,
-    u,
-)
+from flext_core import FlextContext, FlextDispatcher, FlextSettings, c, e, m, p, r, t, u
 from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
@@ -55,7 +44,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     _config: p.Settings
 
-    _user_overrides: m.ConfigMap
+    _user_overrides: p.ConfigMap
 
     _initialized: bool = False
 
@@ -64,14 +53,12 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         m.ServiceRegistration | m.FactoryRegistration | m.ResourceRegistration,
     ]
 
-    _global_config: m.ContainerConfig
+    _global_config: p.ContainerConfig
 
     def __new__(
         cls,
         *,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -89,9 +76,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def __init__(
         self,
         *,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize the singleton once; later calls apply the explicit spec."""
         if not self._initialized:
@@ -114,25 +99,6 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def context(self) -> p.Context:
         """Execution context bound to this container."""
         return self._context
-
-    @override
-    def logger(
-        self,
-        module_name: str,
-        *,
-        service_name: str | None = None,
-        service_version: str | None = None,
-        correlation_id: str | None = None,
-    ) -> p.Logger:
-        """Create a module logger for the specified runtime scope.
-
-        Returns:
-            The resulting ``p.Logger``.
-
-        """
-        _ = service_name, service_version, correlation_id
-        logger: p.Logger = FlextUtilitiesLogging.fetch_logger(module_name)
-        return logger
 
     @staticmethod
     def _matches_service_type[T: p.RegisterableService](
@@ -321,7 +287,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         )
 
     @override
-    def snapshot(self) -> m.ConfigMap:
+    def snapshot(self) -> p.ConfigMap:
         """Return the merged settings exposed by this container.
 
         Returns:
@@ -353,9 +319,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
     def initialize_registrations(
         self,
         *,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Reset the registrations from a spec and register the core services.
 
@@ -426,9 +390,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
                 c.ServiceName.COMMAND_BUS,
                 lambda: m.ServiceRegistration(
                     name=c.ServiceName.COMMAND_BUS,
-                    service=dispatcher
-                    if dispatcher is not None
-                    else u.build_dispatcher(),
+                    service=dispatcher if dispatcher is not None else FlextDispatcher(),
                 ),
             ),
         )
@@ -443,9 +405,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         self,
         *,
         subproject: str | None = None,
-        registration: m.ServiceRegistrationSpec
-        | p.ServiceRegistrationSpec
-        | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create an isolated scope inheriting the public registrations.
 
@@ -547,6 +507,62 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         )
 
     @classmethod
+    def build_service_runtime(
+        cls,
+        source: p.RuntimeBootstrapProvider
+        | p.RuntimeBootstrapOptions
+        | p.MixinsInfrastructure
+        | None = None,
+    ) -> p.ServiceRuntime:
+        """Materialize settings, context, container and dispatcher for one component.
+
+        The container scopes the injected container, or the shared container,
+        preserving public DI registrations. Its settings are the runtime's
+        actual elected provider. A dispatcher the options do not inject is the
+        container's command bus; failing to resolve it raises with its cause.
+
+        Returns:
+            The component's service runtime.
+
+        Raises:
+            ValidationError: If neither logging policy nor an explicit logger is given.
+
+        """
+        options = u.resolve_runtime_options(source)
+        settings = u.resolve_runtime_settings(options)
+        logger = options.logger
+        if logger is None:
+            if not isinstance(settings, p.LoggingSettings):
+                msg = "Runtime settings must declare logging policy or inject a logger"
+                raise e.ValidationError(msg)
+            logger = u.create_module_logger(
+                f"{type(source).__module__}.{type(source).__qualname__}",
+                runtime_settings=settings,
+                options=options.logging_options
+                if options.logging_options is not None
+                else u.logging_options(),
+            )
+        context = (
+            options.context if options.context is not None else FlextContext.create()
+        )
+        source_container = options.container or cls.shared()
+        container = source_container.scope(
+            registration=m.ServiceRegistrationSpec(
+                settings=settings,
+                context=context,
+                dispatcher=options.dispatcher,
+            ),
+        )
+        return m.ServiceRuntime(
+            settings=container.settings,
+            context=container.context,
+            container=container,
+            dispatcher=container.dispatcher().unwrap(),
+            logger=logger,
+            logger_injected=options.logger is not None,
+        )
+
+    @classmethod
     def shared(
         cls,
         *,
@@ -610,7 +626,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
 
     def _apply_explicit_bootstrap(
         self,
-        registration: m.ServiceRegistrationSpec | p.ServiceRegistrationSpec,
+        registration: p.ServiceRegistrationSpec,
     ) -> None:
         """Rebind explicitly selected core collaborators of an existing container."""
         if registration.settings is not None:

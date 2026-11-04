@@ -195,7 +195,7 @@ class TestsFlextCoreModelsCqrs:
     @staticmethod
     def test_handler_stores_identity_and_defaults_mode_to_command() -> None:
         """Test handler stores identity and defaults mode to command."""
-        handler = m.Handler(
+        handler = m.HandlerConfig(
             handler_type=c.HandlerType.QUERY,
             handler_id="h-1",
             handler_name="handler",
@@ -215,7 +215,9 @@ class TestsFlextCoreModelsCqrs:
         handler_type: c.HandlerType,
     ) -> None:
         """Test handler accepts each handler type."""
-        handler = m.Handler(handler_type=handler_type, handler_id="h", handler_name="n")
+        handler = m.HandlerConfig(
+            handler_type=handler_type, handler_id="h", handler_name="n"
+        )
 
         tm.that(handler.handler_type, eq=handler_type)
 
@@ -223,7 +225,7 @@ class TestsFlextCoreModelsCqrs:
     def test_handler_rejects_empty_identity() -> None:
         """Test handler rejects empty identity."""
         with pytest.raises(m.ValidationError):
-            m.Handler(
+            m.HandlerConfig(
                 handler_type=c.HandlerType.COMMAND,
                 handler_id="",
                 handler_name="",

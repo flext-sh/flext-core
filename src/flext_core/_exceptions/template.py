@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import c, m, t
+from flext_core import c, m, p, t
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
@@ -19,9 +19,9 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def template_values(
-        params: m.BaseModel | None,
+        params: p.BaseModel | None,
         values: FlextExceptionsTemplate.TemplateValues,
-    ) -> m.ConfigMap:
+    ) -> p.ConfigMap:
         """Build template substitution values using params data and field metadata.
 
         Returns:
@@ -33,10 +33,10 @@ class FlextExceptionsTemplate:
             if params is not None
             else {}
         )
-        if params is not None:
+        if isinstance(params, m.BaseModel):
             payload |= {
                 f"{field_name}_description": field_help
-                for field_name, field_info in params.__class__.model_fields.items()
+                for field_name, field_info in type(params).model_fields.items()
                 if isinstance(
                     (field_help := field_info.description or field_info.title),
                     str,
@@ -54,7 +54,7 @@ class FlextExceptionsTemplate:
     def render_template(
         template: str,
         *,
-        params: m.BaseModel | None = None,
+        params: p.BaseModel | None = None,
         **values: t.JsonPayload | None,
     ) -> str:
         """Render a message template from params + explicit values.
@@ -79,9 +79,9 @@ class FlextExceptionsTemplate:
 
     @staticmethod
     def result_error_data(
-        params: m.BaseModel | None,
+        params: p.BaseModel | None,
         **values: t.JsonPayload | None,
-    ) -> m.ConfigMap | None:
+    ) -> p.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values.
 
         Returns:

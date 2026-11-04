@@ -7,8 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 
-class TestsFlextModelsFixturePayloadsMixin:
+class TestsFlextModelsFixturePayloads:
     """Fixture payload model helpers."""
 
 
-__all__: list[str] = ["TestsFlextModelsFixturePayloadsMixin"]
+__all__: list[str] = ["TestsFlextModelsFixturePayloads"]

@@ -11,7 +11,7 @@ from collections.abc import Sequence
 from tests import c, t
 
 
-class TestsFlextUtilitiesRailwayCasesMixin:
+class TestsFlextUtilitiesRailwayCases:
     """Railway case helpers."""
 
     @staticmethod
@@ -99,4 +99,4 @@ class TestsFlextUtilitiesRailwayCasesMixin:
         ]
 
 
-__all__: list[str] = ["TestsFlextUtilitiesRailwayCasesMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesRailwayCases"]

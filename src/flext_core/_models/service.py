@@ -11,6 +11,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
+from typing import ClassVar
 
 from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
@@ -31,6 +32,10 @@ class FlextModelsService:
         settings, context, container or dispatcher.
         """
 
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
+
         settings: t.Port[p.Settings] = FlextModelsPydantic.Field(
             exclude=True,
             description="Service configuration settings for runtime behavior.",
@@ -47,6 +52,13 @@ class FlextModelsService:
             exclude=True,
             description="Dispatcher resolved for CQRS routing in this runtime.",
         )
+        logger: t.Port[p.Logger] = FlextModelsPydantic.Field(
+            description="Logging destination elected by the composition root.",
+        )
+        logger_injected: bool = FlextModelsPydantic.Field(
+            default=False,
+            description="Keep an explicit logger when transport settings are rebound.",
+        )
 
     class RuntimeBootstrapOptions(FlextModelsBase.ArbitraryTypesModel):
         """Options a service base declares to build its runtime.
@@ -55,6 +67,10 @@ class FlextModelsService:
         from its canonical owner (the settings class, a fresh context, the
         container's command bus).
         """
+
+        model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
+            FlextModelsPydantic.ConfigDict(frozen=True)
+        )
 
         settings: t.Port[p.Settings] | None = FlextModelsPydantic.Field(
             default=None,
@@ -91,6 +107,14 @@ class FlextModelsService:
             default=None,
             exclude=True,
             description="Pre-built dispatcher injected into the runtime.",
+        )
+        logger: t.Port[p.Logger] | None = FlextModelsPydantic.Field(
+            default=None,
+            description="Logging dependency; absent selects the runtime policy.",
+        )
+        logging_options: t.Port[p.StructlogOptions] | None = FlextModelsPydantic.Field(
+            default=None,
+            description="Programmatic logging extensions elected by the root.",
         )
 
     class ServiceOperation(FlextModelsBase.ContractModel):

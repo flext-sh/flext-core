@@ -7,36 +7,32 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._protocols._context.flextprotocolscontext_part_01 import (
-        FlextProtocolsContextPart01,
-    )
-    from flext_core._protocols._context.flextprotocolscontext_part_02 import (
-        FlextProtocolsContextPart02,
-    )
-    from flext_core._protocols._context.flextprotocolscontext_part_03 import (
-        FlextProtocolsContextPart03,
-    )
+    from flext_core._protocols._context.data import FlextProtocolsContextData
+    from flext_core._protocols._context.export import FlextProtocolsContextExport
+    from flext_core._protocols._context.scope import FlextProtocolsContextScope
+    from flext_core._protocols._context.tokens import FlextProtocolsContextTokens
 
 
 __all__: tuple[str, ...] = (
-    "FlextProtocolsContextPart01",
-    "FlextProtocolsContextPart02",
-    "FlextProtocolsContextPart03",
+    "FlextProtocolsContextData",
+    "FlextProtocolsContextExport",
+    "FlextProtocolsContextScope",
+    "FlextProtocolsContextTokens",
 )
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextProtocolsContextPart01": ".flextprotocolscontext_part_01",
-        "FlextProtocolsContextPart02": ".flextprotocolscontext_part_02",
-        "FlextProtocolsContextPart03": ".flextprotocolscontext_part_03",
-    }),
+    {
+        "FlextProtocolsContextData": ".data",
+        "FlextProtocolsContextExport": ".export",
+        "FlextProtocolsContextScope": ".scope",
+        "FlextProtocolsContextTokens": ".tokens",
+    },
     public_exports=__all__,
 )

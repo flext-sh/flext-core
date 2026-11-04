@@ -10,7 +10,7 @@
   - [FlextTypesServices — KEEP (signature composition only)](#flexttypesservices-keep-signature-composition-only)
   - [FlextTypesServices — REMOVE](#flexttypesservices-remove)
 - [Budget: p.(FlextProtocols)](#budget-pflextprotocols)
-- [Budget: m.(FlextModels)](#budget-mflextmodels)
+- [Budget: p.(FlextModels)](#budget-pflextmodels)
 - [Budget: u.\* (FlextUtilities)](#budget-u-flextutilities)
 - [Budget: c.\* (FlextConstants)](#budget-c-flextconstants)
 - [Execution order (strict)](#execution-order-strict)
@@ -122,8 +122,8 @@ ONLY after all src green.
 ### FlextTypesServices — REMOVE
 
 - All `# DEPRECATED` comment blocks (dead code — delete, don't leave).
-- `ProtocolModelCarrier = p.Model` — thin pass-through duplicate of `p.Model`; inline at
-  call sites.
+- `ProtocolModelCarrier = p.BaseModel` — thin pass-through duplicate of
+  `p.BaseModel`; inline at call sites.
 - `DomainModelCarrier = ModelCarrier | ProtocolModelCarrier` — collapse to
   `ModelCarrier` (pydantic `BaseModel` is the SSOT).
 - `RegisterableService` gigantic union — tighten to
@@ -153,7 +153,7 @@ Keep only behavioral:
 Nothing else. All dict/list recursive hints in protocol signatures must switch to
 `t.FlatContainerMapping` / `Mapping[str, str]` / `m.*` / concrete payload models.
 
-## Budget: m._(FlextModels_)
+## Budget: p._(FlextModels_)
 
 SSOT for structured/validated payloads. Primary rewiring targets (replace recursive
 dicts):

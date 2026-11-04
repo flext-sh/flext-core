@@ -11,6 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
+from flext_core import FlextDispatcher
 from tests import c, h, m, p, r, t, tm, u
 
 
@@ -21,7 +22,7 @@ class TestsFlextCoreDispatcher:
     def test_inferred_route_preserves_broader_runtime_capability() -> None:
         """A request annotation must not narrow an explicit can_handle capability."""
         command, event = u.Tests.CapabilityHandler(), u.Tests.CapabilityHandler()
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         tm.ok(dispatcher.register_handler(command))
         tm.ok(dispatcher.register_handler(event, is_event=True))
         message = m.Command(command_type="secondary-capability-route")
@@ -33,7 +34,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_builder_and_explicit_callback_registration() -> None:
         """The builder returns the public capability and binds the original callable."""
-        dispatcher: p.Dispatcher = u.build_dispatcher()
+        dispatcher: p.Dispatcher = FlextDispatcher()
         received: MutableSequence[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -50,7 +51,7 @@ class TestsFlextCoreDispatcher:
     @pytest.mark.parametrize("wrapped", [False, True])
     def test_public_execution_preserves_model_payload(*, wrapped: bool) -> None:
         """Neither a native model nor a successful Result is converted to JSON text."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         payload = m.ConfigMap(root={"native": "payload"})
 
         def handler(_message: p.Routable) -> p.Result[t.JsonPayload] | t.JsonPayload:
@@ -63,7 +64,7 @@ class TestsFlextCoreDispatcher:
     @pytest.mark.parametrize("registered", [False, True])
     def test_unmatched_route_never_invokes_a_handler(*, registered: bool) -> None:
         """Missing routes fail without executing another route's handler."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         received: MutableSequence[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -78,7 +79,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_message_without_a_route_fails_with_its_cause() -> None:
         """The native route boundary rejects unroutable data without a fake default."""
-        result = u.build_dispatcher().dispatch(m.ConfigMap(root={}))
+        result = FlextDispatcher().dispatch(m.ConfigMap(root={}))
         tm.that(result.failure)
         tm.that(isinstance(result.exception, (TypeError, ValueError)))
 
@@ -91,7 +92,7 @@ class TestsFlextCoreDispatcher:
             received.append(message)
             return r[t.JsonPayload].ok(value=True)
 
-        tm.that(u.build_dispatcher().register_handler(handler).failure)
+        tm.that(FlextDispatcher().register_handler(handler).failure)
         tm.that(received, empty=True)
 
     @staticmethod
@@ -100,7 +101,7 @@ class TestsFlextCoreDispatcher:
         *, sequence: bool
     ) -> None:
         """Events reach the same subscriber without reconstruction."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         received: MutableSequence[p.Routable] = []
 
         def handler(message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -123,7 +124,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_publication_without_subscribers_is_a_successful_noop() -> None:
         """Publishing without subscribers succeeds without effects."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         tm.that(
             tm.ok(
                 dispatcher.publish(
@@ -137,7 +138,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_composed_dispatchers_do_not_share_routes() -> None:
         """Each composed dispatcher owns independent route bindings."""
-        first, second = u.build_dispatcher(), u.build_dispatcher()
+        first, second = FlextDispatcher(), FlextDispatcher()
 
         def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("first")
@@ -152,7 +153,7 @@ class TestsFlextCoreDispatcher:
         capfd: p.Tests.OutputCapture,
     ) -> None:
         """Handler failures retain their cause and emit native diagnostics."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         cause = RuntimeError("native handler failure")
 
         def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -169,7 +170,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_bound_method_repeat_is_idempotent_and_another_receiver_conflicts() -> None:
         """Repeated bound methods are idempotent only for the same receiver."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         original, other = u.Tests.AutoSubscriber(), u.Tests.AutoSubscriber()
         first = original.handle
         tm.ok(dispatcher.register_handler(first, message_type="bound"))
@@ -192,7 +193,7 @@ class TestsFlextCoreDispatcher:
         *, existing: bool
     ) -> None:
         """Batch conflicts preserve the previously published graph."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
 
         def original(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("original")
@@ -221,7 +222,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_explicit_binding_preserves_callable_and_rejects_conflict() -> None:
         """Explicit bindings retain identity and reject contradictory metadata."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
 
         @h.handler(command=m.Command)
         def handler(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -243,7 +244,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_event_batch_fans_out_distinct_callbacks_once() -> None:
         """Each distinct subscriber receives one event from the batch."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         calls: MutableSequence[str] = []
 
         def first(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -274,7 +275,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_publication_stops_at_failure_without_undoing_prior_effects() -> None:
         """Publication retains prior effects and stops at the first failure."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         calls: MutableSequence[str] = []
         cause = RuntimeError("subscriber failure")
         failure = r[t.JsonPayload].fail(
@@ -315,7 +316,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_reentrant_registration_is_visible_only_to_the_next_snapshot() -> None:
         """Registration during publication affects only later snapshots."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         calls: MutableSequence[str] = []
 
         def later(_message: p.Routable) -> p.Result[t.JsonPayload]:
@@ -343,7 +344,7 @@ class TestsFlextCoreDispatcher:
     @staticmethod
     def test_concurrent_command_writers_never_overwrite_the_winner() -> None:
         """Concurrent registrations elect exactly one command handler."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
 
         def left(_message: p.Routable) -> p.Result[t.JsonPayload]:
             return r[t.JsonPayload].ok("left")
@@ -371,7 +372,7 @@ class TestsFlextCoreDispatcher:
         *, auto_first: bool
     ) -> None:
         """Automatic and explicit subscribers retain registration order."""
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         auto = u.Tests.AutoSubscriber()
         observed: MutableSequence[Sequence[str]] = []
 

@@ -37,15 +37,6 @@ covers what the kernel provides today.
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from typing import Annotated
 
 from flext_core import m, p, r, s
@@ -90,15 +81,6 @@ declares it with `t.Port`:
 
 ```python
 from __future__ import annotations
-
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
 
 from typing import Protocol, runtime_checkable
 
@@ -183,21 +165,78 @@ services. Pure dependency injection through constructors is the definitive compo
 model: there is no protocol-keyed container binding and no `compose()` step. One adapter
 shared by two services is a variable passed to both constructors:
 
-```{.python .notest}
+```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
+from typing import Protocol, runtime_checkable
+
+from flext_core import m, p, r, s, t
+
+
+@runtime_checkable
+class Clock(p.Base, Protocol):
+    """Current time in seconds."""
+
+    def now(self) -> int:
+        """Read the current instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        ...
+
+
+class SystemClock:
+    """Adapter reading a fixed instant for the example."""
+
+    @staticmethod
+    def now() -> int:
+        """Return the instant.
+
+        Returns:
+            The resulting ``int``.
+
+        """
+        return 7
+
+
+class StampService(s[int]):
+    """Stamp an event with the time its clock reads."""
+
+    clock: t.Port[Clock] = m.Field(exclude=True, description="Clock the stamp reads.")
+
+    def execute(self) -> p.Result[int]:
+        """Stamp the event with the clock reading.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+
+        """
+        return r[int].ok(self.clock.now())
+
+
+class AuditService(s[int]):
+    """Audit an event with the time its clock reads."""
+
+    clock: t.Port[Clock] = m.Field(exclude=True, description="Clock the audit reads.")
+
+    def execute(self) -> p.Result[int]:
+        """Audit the event with the clock reading.
+
+        Returns:
+            The resulting ``p.Result[int]``.
+
+        """
+        return r[int].ok(self.clock.now())
+
 
 clock = SystemClock()
 stamps = StampService(clock=clock)
 audit = AuditService(clock=clock)
+if stamps.execute().value != audit.execute().value:
+    message = "Both services must read the shared clock"
+    raise RuntimeError(message)
 ```
 
 - Constructing an adapter performs no I/O; it connects on first use, so importing
@@ -214,24 +253,27 @@ audit = AuditService(clock=clock)
 The project base declares its settings class once, in a classmethod the core reads
 through `p.RuntimeBootstrapProvider`; `FlextService` itself declares no hook:
 
-```{.python .notest}
+```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
+from flext_core import FlextSettings, m, p, s
 
 
-class FlextBillingServiceBase(s[m.Billing.Invoice]):
+class FlextBillingSettings(FlextSettings):
+    """Settings of the billing project."""
+
+
+class FlextBillingServiceBase(s[int]):
     """Service base of the billing project."""
 
     @classmethod
-    def runtime_bootstrap_options(cls) -> m.RuntimeBootstrapOptions:
+    def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+        """Declare the project settings type for the core runtime.
+
+        Returns:
+            The resulting ``p.RuntimeBootstrapOptions``.
+
+        """
         return m.RuntimeBootstrapOptions(settings_type=FlextBillingSettings)
 ```
 
@@ -239,9 +281,10 @@ class FlextBillingServiceBase(s[m.Billing.Invoice]):
   seeds `runtime_settings`, `settings_type`, `settings_overrides` and `initial_context`;
   a seed set on the instance wins. It also accepts an `m.RuntimeBootstrapOptions`, which
   it returns unchanged; any other source raises `TypeError`.
-- `u.build_service_runtime(source)` builds the validated `m.ServiceRuntime`: injected or
-  loaded settings, the context, a scope of the shared container, and the container's
-  command bus as dispatcher. Failing to resolve the dispatcher raises with its cause.
+- `FlextContainer.build_service_runtime(source)` builds the validated
+  `m.ServiceRuntime`: settings elected by `u.resolve_runtime_settings`, the context, a
+  scope of the injected or shared container, and the container's command bus as
+  dispatcher. Failing to resolve the dispatcher raises with its cause.
 - Seeds and ports are validated: `runtime_settings` must satisfy `p.Settings` and
   `initial_context` must satisfy `p.Context`. Runtime seeds never enter the JSON Schema.
 - A service never reads a global `settings` or `config`; the root passes values through
@@ -263,15 +306,6 @@ owner alignment with the fleet typing rule, rather than a protocol or alias work
 
 ```python
 from __future__ import annotations
-
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
 
 from flext_core import m, p, r, s, u
 
@@ -366,11 +400,21 @@ behavior above is what runs.
 
 ## Registry composition
 
-`u.build_registry(dispatcher, discovery_module=module)` composes an explicitly supplied
-dispatcher and discovers only the supplied module. Omit `discovery_module` when no
-discovery is required. There is no creation/auto-discovery flag or implicit stack scan.
+`FlextRegistry.create(dispatcher, discovery_module=module)` composes an explicitly
+supplied dispatcher and discovers only the supplied module. Omit `discovery_module`
+when no discovery is required. There is no creation/auto-discovery flag or implicit
+stack scan.
 `h.Discovery.scan_module(module)` returns original decorated callables and metadata;
 it neither invokes them nor stringifies their results.
+
+Handler discovery reads attached declaration metadata without invoking a candidate's
+dynamic attribute lookup. Bound instance and class methods retain the metadata of
+their original function; static methods retain their function metadata directly.
+Missing metadata means no handler declaration, while genuinely attached malformed
+metadata remains an error.
+Discovery inspects callable declarations without imposing the dispatcher's request
+signature: a handler accepting its declared command remains discoverable even when
+its input is narrower than the general routable protocol.
 
 `register_handlers` and `register_bindings` publish atomically: an invalid or conflicting
 entry leaves every route unchanged. Their summary distinguishes exact new `registered`
@@ -395,21 +439,12 @@ The first failure propagates with its cause: inside a result boundary as
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
 from flext_core import r
 
 failure = r[int].fail("lookup failed", exception=KeyError("user-7"))
 try:
     failure.unwrap()
-except KeyError as exc:
+except KeyError:
     pass
 else:
     message = "Expected unwrap to raise on failure"

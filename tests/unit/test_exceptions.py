@@ -213,7 +213,7 @@ class TestsFlextCoreExceptions:
         )
 
     @staticmethod
-    @pytest.mark.parametrize("violation", [e.MroViolation, e.SmellViolation])
+    @pytest.mark.parametrize("violation", [e.MroViolationError, e.SmellViolationError])
     def test_enforcement_violations_are_raisable_exception_types(
         violation: type[Exception],
     ) -> None:

@@ -6,24 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import StrEnum, unique
 from typing import override
 
-from flext_core import m
+from examples import c
+from flext_core import m, p
 
 
 class ExamplesFlextModelsEx05:
     """Example 05 mixins model namespace."""
 
-    @unique
-    class StatusEnum(StrEnum):
-        ACTIVE = "active"
-        PENDING = "pending"
-        INACTIVE = "inactive"
-
     class UserModel(m.Value):
         name: str = m.Field(description="User display name")
-        status: ExamplesFlextModelsEx05.StatusEnum = m.Field(
+        status: c.Examples.StatusEnum = m.Field(
             description="User account status",
         )
         age: int = m.Field(description="User age in years")
@@ -32,17 +26,17 @@ class ExamplesFlextModelsEx05:
         @classmethod
         def normalize_status(
             cls,
-            value: str | ExamplesFlextModelsEx05.StatusEnum,
-        ) -> ExamplesFlextModelsEx05.StatusEnum:
-            if isinstance(value, ExamplesFlextModelsEx05.StatusEnum):
+            value: str | c.Examples.StatusEnum,
+        ) -> c.Examples.StatusEnum:
+            if isinstance(value, c.Examples.StatusEnum):
                 return value
-            return ExamplesFlextModelsEx05.StatusEnum(value)
+            return c.Examples.StatusEnum(value)
 
     class HandlerBad(m.Value):
         """Marker model that is not a valid handler."""
 
     class HandlerLike(m.Value):
-        data: m.ConfigMap = m.Field(
+        data: p.ConfigMap = m.Field(
             default_factory=lambda: m.ConfigMap(root={}),
             description="Handler payload map",
         )
@@ -54,7 +48,7 @@ class ExamplesFlextModelsEx05:
 
         @override
         @classmethod
-        def validate(cls, value: m.ConfigMap) -> ExamplesFlextModelsEx05.GoodProcessor:
+        def validate(cls, value: p.ConfigMap) -> ExamplesFlextModelsEx05.GoodProcessor:
             return cls.model_validate(value)
 
     class BadProcessor(m.Value):

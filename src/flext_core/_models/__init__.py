@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal package for models.
+"""Flext Core. Models package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
@@ -35,6 +34,7 @@ if TYPE_CHECKING:
     from flext_core._models.registry import FlextModelsRegistry
     from flext_core._models.service import FlextModelsService
     from flext_core._models.settings import FlextModelsSettings
+
 
 __all__: tuple[str, ...] = (
     "FlextModelsBase",
@@ -64,7 +64,7 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "FlextModelsBase": ".base",
         "FlextModelsBuilder": ".builder",
         "FlextModelsCollections": ".collection_models",
@@ -87,6 +87,6 @@ install_lazy_exports(
         "FlextModelsService": ".service",
         "FlextModelsServiceState": ".flext_mixins",
         "FlextModelsSettings": ".settings",
-    }),
+    },
     public_exports=__all__,
 )

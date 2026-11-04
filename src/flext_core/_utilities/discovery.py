@@ -40,7 +40,7 @@ class FlextUtilitiesDiscovery:
     def _factory_config_for(
         module: ModuleType,
         name: str,
-    ) -> m.FactoryDecoratorConfig | None:
+    ) -> p.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
             return None
@@ -52,12 +52,12 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> Sequence[tuple[str, m.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, p.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name.
 
         Returns:
             The resulting ``Sequence[tuple[str,
-                m.FactoryDecoratorConfig]]``.
+                p.FactoryDecoratorConfig]]``.
 
         """
         return sorted(

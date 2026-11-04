@@ -18,24 +18,33 @@ from flext_tests import u as flext_tests_u
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
-    TestsFlextUtilitiesContractsMixin,
-    TestsFlextUtilitiesDispatchMixin,
-    TestsFlextUtilitiesParserReliabilityMixin,
-    TestsFlextUtilitiesParserScenariosMixin,
-    TestsFlextUtilitiesRailwayCasesMixin,
-    TestsFlextUtilitiesRailwayMixin,
-    TestsFlextUtilitiesRailwayPipelinesMixin,
-    TestsFlextUtilitiesRailwayServicesMixin,
-    TestsFlextUtilitiesReliabilityScenariosMixin,
+    TestsFlextUtilitiesContracts,
+    TestsFlextUtilitiesDispatch,
+    TestsFlextUtilitiesParserReliability,
+    TestsFlextUtilitiesRailway,
     TestsFlextUtilitiesResultCombinators,
-    TestsFlextUtilitiesServicesMixin,
-    TestsFlextUtilitiesValidationFactoriesMixin,
-    TestsFlextUtilitiesValidationNetworkScenarios,
-    TestsFlextUtilitiesValidationNumericScenarios,
-    TestsFlextUtilitiesValidationPatternScenarios,
-    TestsFlextUtilitiesValidationStringScenarios,
-    TestsFlextUtilitiesValidationUriScenarios,
+    TestsFlextUtilitiesValidationFactories,
 )
+from tests._utilities.decorators import TestsFlextDecoratorsLegacy
+from tests._utilities.handlers import TestsFlextFlextHandlers
+from tests._utilities.parser_scenarios import TestsFlextUtilitiesParserScenarios
+from tests._utilities.reliability_scenarios import (
+    TestsFlextUtilitiesReliabilityScenarios,
+)
+from tests._utilities.result_exception_carrying import TestsFlextResultExceptionCarrying
+from tests._utilities.validation_network import (
+    TestsFlextUtilitiesValidationNetworkScenarios,
+)
+from tests._utilities.validation_numeric import (
+    TestsFlextUtilitiesValidationNumericScenarios,
+)
+from tests._utilities.validation_pattern import (
+    TestsFlextUtilitiesValidationPatternScenarios,
+)
+from tests._utilities.validation_string import (
+    TestsFlextUtilitiesValidationStringScenarios,
+)
+from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
 
 
 class TestsFlextUtilities(flext_tests_u):
@@ -69,7 +78,7 @@ class TestsFlextUtilities(flext_tests_u):
         class ConcreteTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for string messages."""
 
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -144,7 +153,7 @@ class TestsFlextUtilities(flext_tests_u):
         class ValidationTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler for validation."""
 
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -164,7 +173,7 @@ class TestsFlextUtilities(flext_tests_u):
         class FailingTestHandler(h[t.JsonPayload, t.JsonPayload]):
             """Test handler that fails."""
 
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 """Initialize with optional handler settings."""
                 super().__init__(settings=settings)
 
@@ -239,7 +248,7 @@ class TestsFlextUtilities(flext_tests_u):
         class DecoratorTestCase(m.BaseModel):
             """Test case for decorator."""
 
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
             name: Annotated[str, m.Field(description="Decorator test case name")]
             operation: Annotated[
                 str,
@@ -387,26 +396,39 @@ class TestsFlextUtilities(flext_tests_u):
             )
 
     class Tests(
-        TestsFlextUtilitiesContractsMixin,
-        TestsFlextUtilitiesDispatchMixin,
-        TestsFlextUtilitiesResultCombinators,
-        TestsFlextUtilitiesValidationFactoriesMixin,
-        TestsFlextUtilitiesServicesMixin,
-        TestsFlextUtilitiesParserReliabilityMixin,
-        TestsFlextUtilitiesParserScenariosMixin,
-        TestsFlextUtilitiesReliabilityScenariosMixin,
-        TestsFlextUtilitiesRailwayMixin,
-        TestsFlextUtilitiesRailwayPipelinesMixin,
-        TestsFlextUtilitiesRailwayServicesMixin,
-        TestsFlextUtilitiesRailwayCasesMixin,
-        TestsFlextUtilitiesValidationNetworkScenarios,
-        TestsFlextUtilitiesValidationNumericScenarios,
-        TestsFlextUtilitiesValidationPatternScenarios,
-        TestsFlextUtilitiesValidationStringScenarios,
-        TestsFlextUtilitiesValidationUriScenarios,
         flext_tests_u.Tests,
+        TestsFlextUtilitiesContracts,
+        TestsFlextUtilitiesDispatch,
+        TestsFlextUtilitiesParserReliability,
+        TestsFlextUtilitiesRailway,
+        TestsFlextUtilitiesResultCombinators,
+        TestsFlextUtilitiesValidationFactories,
     ):
         """flext-core test utilities namespace."""
+
+        TestsFlextDecoratorsLegacy = TestsFlextDecoratorsLegacy
+        TestsFlextFlextHandlers = TestsFlextFlextHandlers
+        TestsFlextUtilitiesParserReliability = TestsFlextUtilitiesParserReliability
+        TestsFlextUtilitiesParserScenarios = TestsFlextUtilitiesParserScenarios
+        TestsFlextUtilitiesReliabilityScenarios = (
+            TestsFlextUtilitiesReliabilityScenarios
+        )
+        TestsFlextResultExceptionCarrying = TestsFlextResultExceptionCarrying
+        TestsFlextUtilitiesValidationNetworkScenarios = (
+            TestsFlextUtilitiesValidationNetworkScenarios
+        )
+        TestsFlextUtilitiesValidationNumericScenarios = (
+            TestsFlextUtilitiesValidationNumericScenarios
+        )
+        TestsFlextUtilitiesValidationPatternScenarios = (
+            TestsFlextUtilitiesValidationPatternScenarios
+        )
+        TestsFlextUtilitiesValidationStringScenarios = (
+            TestsFlextUtilitiesValidationStringScenarios
+        )
+        TestsFlextUtilitiesValidationUriScenarios = (
+            TestsFlextUtilitiesValidationUriScenarios
+        )
 
 
 u = TestsFlextUtilities

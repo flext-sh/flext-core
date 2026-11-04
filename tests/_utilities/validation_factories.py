@@ -10,14 +10,14 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from tests import p
-from tests._utilities import TestsFlextUtilitiesServicesMixin
+from tests._utilities import TestsFlextUtilitiesServices
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class TestsFlextUtilitiesValidationFactoriesMixin(
-    TestsFlextUtilitiesServicesMixin,
+class TestsFlextUtilitiesValidationFactories(
+    TestsFlextUtilitiesServices,
 ):
     """Validation and failing service factory helpers."""
 
@@ -49,4 +49,4 @@ class TestsFlextUtilitiesValidationFactoriesMixin(
         return label
 
 
-__all__: list[str] = ["TestsFlextUtilitiesValidationFactoriesMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesValidationFactories"]

@@ -14,6 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
@@ -22,7 +23,7 @@ from typing import cast
 import pytest
 
 import flext_core
-from flext_core import FlextSettings, c
+from flext_core import FlextSettings
 from tests import e, p, r, t, tm
 
 # Public facade names a caller can import from ``flext_core``.
@@ -254,7 +255,7 @@ class TestsFlextCorePublicApiContract:
         tm.that(repr(r[int].fail("z")), eq="r[T].fail('z')")
 
     @staticmethod
-    @pytest.mark.parametrize("exc_name", ["MroViolation", "SmellViolation"])
+    @pytest.mark.parametrize("exc_name", ["MroViolationError", "SmellViolationError"])
     def test_exception_family_members_are_raisable_and_catchable(
         exc_name: str,
     ) -> None:
@@ -289,12 +290,15 @@ class TestsFlextCoreFacadeLifecycle:
         tm.that(base is FlextSettings, truth=True)
 
     @staticmethod
-    def test_exceptions_mro_violation_is_real_reference() -> None:
-        """``FlextExceptions.MroViolation`` is the canonical violation class."""
-        tm.that(
-            flext_core.FlextExceptions.MroViolation is c.FlextMroViolationError,
-            truth=True,
-        )
+    def test_exceptions_violation_classes_are_warning_categories() -> None:
+        """``e.MroViolationError``/``e.SmellViolationError`` are warn-able categories.
+
+        The enforcement contract emits them through ``warnings.warn``, which
+        only admits ``Warning`` subclasses; the smell class is its own category.
+        """
+        for categoria in (e.MroViolationError, e.SmellViolationError):
+            with pytest.warns(categoria, match="contrato"):
+                warnings.warn("contrato", categoria, stacklevel=1)
 
     @staticmethod
     def test_flextcore_facade_is_importable_and_singleton() -> None:

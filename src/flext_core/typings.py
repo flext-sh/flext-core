@@ -10,10 +10,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core._typings import (
-    FlextTypesAnnotateds,
     FlextTypesCore,
     FlextTypesLazy,
-    FlextTypesPydantic,
     FlextTypesServices,
     FlextTypingBase,
     FlextTypingConfig,
@@ -22,10 +20,8 @@ from flext_core._typings import (
 
 class FlextTypes(
     FlextTypingBase,
-    FlextTypesPydantic,
     FlextTypingConfig,
     FlextTypesCore,
-    FlextTypesAnnotateds,
     FlextTypesLazy,
     FlextTypesServices,
 ):

@@ -17,15 +17,15 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class TestsFlextUtilitiesDispatchMixin:
+class TestsFlextUtilitiesDispatch:
     """Dispatcher test helpers."""
 
     @staticmethod
     def handler_module(
         name: str,
-        **members: p.RegisterableService | p.DispatchableHandler,
+        **members: p.RegisterableService | p.DispatchableHandler | p.HandlerCallable,
     ) -> t.RegistryModule:
-        """Build an actual module for the public discovery API.
+        """Build a discovery module, retaining command-specific handler signatures.
 
         Returns:
             A module exposing the supplied members without import patches.
@@ -122,11 +122,11 @@ class TestsFlextUtilitiesDispatchMixin:
 
         @staticmethod
         def process[TResult](
-            command: p.Model,
-            next_handler: Callable[[p.Model], p.Result[TResult]],
+            command: p.BaseModel,
+            next_handler: Callable[[p.BaseModel], p.Result[TResult]],
         ) -> p.Result[TResult]:
             """Return the next handler's result without replacing its payload."""
             return next_handler(command)
 
 
-__all__: list[str] = ["TestsFlextUtilitiesDispatchMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesDispatch"]

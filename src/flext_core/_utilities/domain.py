@@ -163,9 +163,9 @@ class FlextUtilitiesDomain:
     def add_domain_event(
         entity: p.HasDomainEvents,
         event_type: str,
-        data: m.ConfigMap | Mapping[str, t.JsonPayload | None] | None = None,
+        data: p.ConfigMap | Mapping[str, t.JsonPayload | None] | None = None,
         aggregate_id: str | None = None,
-    ) -> m.DomainEvent:
+    ) -> p.DomainEvent:
         """Create a domain event and append it to the entity's event buffer.
 
         Pass ``aggregate_id`` explicitly when the entity's stable identity

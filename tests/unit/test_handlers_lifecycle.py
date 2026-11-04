@@ -18,14 +18,16 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
 
     def test_default_config_exposes_command_mode_and_given_name(self) -> None:
         """Test default config exposes command mode and given name."""
-        settings = u.Tests.create_handler_config("h_default", "Default Handler")
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            "h_default", "Default Handler"
+        )
         handler = self.ConcreteTestHandler(settings=settings)
         tm.that(handler.mode, eq=c.HandlerMode.COMMAND)
         tm.that(handler.handler_name, eq="Default Handler")
 
     def test_custom_config_exposes_requested_mode_and_name(self) -> None:
         """Test custom config exposes requested mode and name."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             "h_query",
             "Query Handler",
             m.Tests.HandlerConfigParams(
@@ -47,7 +49,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         scenario: u.TestsFlextFlextHandlers.HandlerTypeScenario,
     ) -> None:
         """Test mode reflects configured handler mode."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             f"h_{scenario.name}",
             f"{scenario.name.title()} Handler",
             m.Tests.HandlerConfigParams(
@@ -67,7 +69,9 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
     def test_handle_reports_failure_with_producer_error(self) -> None:
         """Test handle reports failure with producer error."""
         handler = self.FailingTestHandler(
-            settings=u.Tests.create_handler_config("h_fail", "Fail Handler"),
+            settings=u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+                "h_fail", "Fail Handler"
+            ),
         )
         result = handler.handle("payload")
         u.Tests.assert_failure(result, expected_error="Handler failed for: payload")
@@ -140,7 +144,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
 
     def test_metadata_is_preserved_and_does_not_block_execution(self) -> None:
         """Test metadata is preserved and does not block execution."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             "h_meta",
             "Metadata Handler",
             m.Tests.HandlerConfigParams(
@@ -153,7 +157,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
 
     def test_command_timeout_config_does_not_break_execution(self) -> None:
         """Test command timeout config does not break execution."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             "h_timeout",
             "Timeout Handler",
             m.Tests.HandlerConfigParams(
@@ -166,7 +170,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
 
     def test_retry_config_does_not_break_execution(self) -> None:
         """Test retry config does not break execution."""
-        settings = u.Tests.create_handler_config(
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
             "h_retry",
             "Retry Handler",
             m.Tests.HandlerConfigParams(
@@ -182,7 +186,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         """Test subclass specialises handle for its own message type."""
 
         class IntHandler(h[t.JsonPayload, t.JsonPayload]):
-            def __init__(self, *, settings: m.Handler | None = None) -> None:
+            def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
                 super().__init__(settings=settings)
 
             @override
@@ -192,7 +196,9 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
                 return r[t.JsonPayload].ok(f"processed_{message}")
 
         handler = IntHandler(
-            settings=u.Tests.create_handler_config("h_int", "Int Handler"),
+            settings=u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+                "h_int", "Int Handler"
+            ),
         )
         u.Tests.assert_success(handler.handle(42), expected_value="processed_42")
         u.Tests.assert_failure(
@@ -205,5 +211,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         handler_id: str,
         handler_name: str,
     ) -> u.TestsFlextFlextHandlers.ConcreteTestHandler:
-        settings = u.Tests.create_handler_config(handler_id, handler_name)
+        settings = u.Tests.FlextTestsUtilitiesHandlerHelpers.create_handler_config(
+            handler_id, handler_name
+        )
         return self.ConcreteTestHandler(settings=settings)

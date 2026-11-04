@@ -30,6 +30,8 @@ from typing import (
 
 import pydantic
 import pydantic_core
+import pydantic_settings
+import typing_extensions
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
 
@@ -48,6 +50,9 @@ class FlextTypesPydantic:
 
     # String constraints
     type ConfigDict = pydantic.ConfigDict
+    type SettingsConfigDict = pydantic_settings.SettingsConfigDict
+    type PydanticBaseSettings = pydantic_settings.BaseSettings
+    type PydanticBaseSettingsSource = pydantic_settings.PydanticBaseSettingsSource
     type ComputedFieldInfo = pydantic.fields.ComputedFieldInfo
     type FieldInfo = pydantic.fields.FieldInfo
     type StrictStr = pydantic.StrictStr
@@ -188,8 +193,10 @@ class FlextTypesPydantic:
     Tag = pydantic.Tag
     ValidateAs = pydantic.ValidateAs
     WithJsonSchema = pydantic.WithJsonSchema
-    SkipJsonSchema = pydantic_json_schema.SkipJsonSchema
-    SerializeAsAny = pydantic.SerializeAsAny
+    # PEP 695 generic aliases (as ``Port`` below): a class-attribute re-binding
+    # is never a type alias for mypy, which then reads every use as ``Any``.
+    type SkipJsonSchema[X] = pydantic_json_schema.SkipJsonSchema[X]
+    type SerializeAsAny[X] = pydantic.SerializeAsAny[X]
     AllowInfNan = pydantic.AllowInfNan
     Strict = pydantic.Strict
     FailFast = pydantic.FailFast
@@ -256,7 +263,8 @@ class FlextTypesPydantic:
                 The original input or its source-decoded representation.
 
             """
-            context = info.context
+            # pydantic-core passes the context untyped; it is typed once here.
+            context: Mapping[str, p.GuardInput] | None = info.context
             return (
                 decoder.validate_python(value, strict=True)
                 if isinstance(context, Mapping)
@@ -273,12 +281,22 @@ class FlextTypesPydantic:
 
     type DocumentInput[ValueT] = Annotated[
         ValueT,
-        pydantic.GetPydanticSchema(_document_input_schema),
+        pydantic.GetPydanticSchema(FlextTypesPydantic._document_input_schema),
     ]
 
-    # A port target as pydantic hands it over: a class, a PEP 695 alias, a
-    # type parameter, a generic or union form, or None.
-    type PortTarget = type | TypeVar | TypeAliasType | GenericAlias | UnionType | None
+    # A port target as pydantic hands it over: a class, a PEP 695 alias (from
+    # ``typing`` or ``typing_extensions`` — pydantic's own aliases such as
+    # ``JsonValue`` are ``typing_extensions.TypeAliasType``, a different class
+    # on Python 3.13), a type parameter, a generic or union form, or None.
+    type PortTarget = (
+        type
+        | TypeVar
+        | TypeAliasType
+        | typing_extensions.TypeAliasType
+        | GenericAlias
+        | UnionType
+        | None
+    )
 
     @staticmethod
     def _port_parameter_schema(
@@ -344,9 +362,9 @@ class FlextTypesPydantic:
         schema: core_schema.CoreSchema
         if isinstance(target, TypeVar):
             schema = FlextTypesPydantic._port_parameter_schema(target, scope)
-        elif isinstance(target, TypeAliasType):
+        elif isinstance(target, (TypeAliasType, typing_extensions.TypeAliasType)):
             schema = resolve(target.__value__, scope)
-        elif isinstance(origin, TypeAliasType):
+        elif isinstance(origin, (TypeAliasType, typing_extensions.TypeAliasType)):
             parameters = {
                 parameter: scope.get(arg, arg)
                 for parameter, arg in zip(origin.__type_params__, args, strict=False)
@@ -362,6 +380,26 @@ class FlextTypesPydantic:
         else:
             schema = core_schema.is_instance_schema(origin or target)
         return schema
+
+    @staticmethod
+    def schema_for_model(
+        model: type[p.BaseModel],
+    ) -> FlextTypesPydantic.GetPydanticSchema:
+        """Delegate a protocol payload to its authenticated native model schema.
+
+        Returns:
+            Native metadata preserving the model's validation and serialization.
+
+        Raises:
+            TypeError: The supplied schema owner is not a Pydantic model class.
+
+        """
+        if not issubclass(model, pydantic.BaseModel):
+            message = "payload schema owner must be a Pydantic model class"
+            raise TypeError(message)
+        return pydantic.GetPydanticSchema(
+            lambda _source, handler: handler.generate_schema(model)
+        )
 
     # Dependency port: a field typed by a class, normally a
     # ``@runtime_checkable`` Protocol from ``p``, or an alias over such classes.

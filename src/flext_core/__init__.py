@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
@@ -26,9 +25,7 @@ if TYPE_CHECKING:
     )
     from flext_core._config import FlextConfig, config
     from flext_core._settings import FlextSettings, PydanticBaseSettingsSource, settings
-    from flext_core._utilities.logging import FlextUtilitiesLogging
     from flext_core.api import FlextCore, core
-    from flext_core.bound_logger import FlextBoundLogger
     from flext_core.cli import FlextCli
     from flext_core.config_sources import FlextStrictYamlConfigSource
     from flext_core.constants import FlextConstants, c
@@ -36,7 +33,7 @@ if TYPE_CHECKING:
     from flext_core.context import FlextContext
     from flext_core.decorators import FlextDecoratorsRuntime, d
     from flext_core.dispatcher import FlextDispatcher
-    from flext_core.exceptions import FlextExceptions, FlextMroViolation, e
+    from flext_core.exceptions import FlextExceptions, e
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_member import FlextLazyMember
     from flext_core.flextlazy_native_export import FlextTypingNativeExport
@@ -62,8 +59,8 @@ if TYPE_CHECKING:
     from flext_core.typings import FlextTypes, t
     from flext_core.utilities import FlextUtilities, u
 
+
 __all__: tuple[str, ...] = (
-    "FlextBoundLogger",
     "FlextCli",
     "FlextConfig",
     "FlextConstants",
@@ -81,7 +78,6 @@ __all__: tuple[str, ...] = (
     "FlextLazyPart02",
     "FlextMixins",
     "FlextModels",
-    "FlextMroViolation",
     "FlextProtocols",
     "FlextRegistry",
     "FlextResult",
@@ -91,7 +87,6 @@ __all__: tuple[str, ...] = (
     "FlextTypes",
     "FlextTypingNativeExport",
     "FlextUtilities",
-    "FlextUtilitiesLogging",
     "FlextVersion",
     "PydanticBaseSettingsSource",
     "__author__",
@@ -130,8 +125,7 @@ __all__: tuple[str, ...] = (
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
-        "FlextBoundLogger": ".bound_logger",
+    {
         "FlextCli": ".cli",
         "FlextConfig": "._config",
         "FlextConstants": ".constants",
@@ -149,7 +143,6 @@ install_lazy_exports(
         "FlextLazyPart02": ".flextlazy_part_02",
         "FlextMixins": ".mixins",
         "FlextModels": ".models",
-        "FlextMroViolation": ".exceptions",
         "FlextProtocols": ".protocols",
         "FlextRegistry": ".registry",
         "FlextResult": ".result",
@@ -189,7 +182,9 @@ install_lazy_exports(
         "t": ".typings",
         "u": ".utilities",
         "x": ".mixins",
-        "FlextUtilitiesLogging": "._utilities.logging",
-    }),
+    },
     public_exports=__all__,
 )
+
+if not TYPE_CHECKING:
+    from flext_core.__version__ import __version__

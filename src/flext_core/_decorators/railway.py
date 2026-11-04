@@ -167,7 +167,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         func_name: str,
         logger: p.Logger,
         *,
-        retry_settings: m.RetryConfiguration,
+        retry_settings: p.RetryConfiguration,
     ) -> TResult | Exception:
         """Execute retry loop with closure; return last exception on exhaustion.
 

@@ -19,9 +19,9 @@ from typing import Self
 import structlog
 
 from flext_core import c, p, t
-from flext_core._utilities import (
+from flext_core._utilities import FlextUtilitiesLoggingContext
+from flext_core._utilities._logging_context.bound_logger import (
     FlextUtilitiesLoggingBoundLogger,
-    FlextUtilitiesLoggingContext,
 )
 
 
@@ -185,15 +185,32 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         name: str,
         *,
         context: Mapping[str, t.JsonPayload | None] | None = None,
+        runtime_settings: p.LoggingSettings | None = None,
+        options: p.StructlogOptions | None = None,
     ) -> p.Logger:
-        """Construct a lazy module logger without configuring a destination.
+        """Build a module binding, scoped when a root supplies policy or sinks.
 
         Returns:
-            The lazy logger with the supplied context.
+            The logger with its elected composition and supplied context.
 
         """
         # Foreign utility facades must construct the canonical logger, not `cls`.
-        return FlextUtilitiesLoggingBoundLogger(name, owner=cls, context=context)
+        selected = runtime_settings
+        if selected is None and options is not None:
+            selected = cls.logging_settings()
+        return FlextUtilitiesLoggingBoundLogger(
+            name,
+            owner=cls,
+            context=context,
+            runtime_settings=selected,
+            native_logger=cls.compose_native_logger(
+                name,
+                runtime_settings=selected,
+                options=options if options is not None else cls.logging_options(),
+            )
+            if selected is not None
+            else None,
+        )
 
 
 __all__: tuple[str, ...] = ("FlextUtilitiesLogging",)

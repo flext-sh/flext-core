@@ -14,7 +14,7 @@ from flext_core import m
 from tests import t
 
 
-class TestsFlextModelsCoreErrorsMixin:
+class TestsFlextModelsCoreErrors:
     """Core error model helpers."""
 
     class FailureEnvelope(m.ArbitraryTypesModel):
@@ -86,4 +86,4 @@ class TestsFlextModelsCoreErrorsMixin:
         value: int
 
 
-__all__: list[str] = ["TestsFlextModelsCoreErrorsMixin"]
+__all__: list[str] = ["TestsFlextModelsCoreErrors"]

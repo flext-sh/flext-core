@@ -7,27 +7,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._constants._errors.flextconstantserrors_part_01 import (
-        FlextConstantsErrorsMessages,
-    )
-    from flext_core._constants._errors.flextconstantserrors_part_02 import (
-        FlextConstantsErrorsRuntimeExceptions,
-    )
-    from flext_core._constants._errors.flextconstantserrors_part_03 import (
-        FlextConstantsErrorsValidationExceptions,
-    )
-    from flext_core._constants._errors.flextconstantserrors_part_04 import (
-        FlextConstantsErrorsDomainParser,
-    )
-    from flext_core._constants._errors.flextconstantserrors_part_05 import (
-        FlextConstantsErrorsRuntimeSettings,
-    )
     from flext_core._constants.base import FlextConstantsBase
     from flext_core._constants.config import FlextConstantsConfig
     from flext_core._constants.cqrs import FlextConstantsCqrs
@@ -46,12 +30,7 @@ if TYPE_CHECKING:
     from flext_core._constants.status import FlextConstantsStatus
     from flext_core._constants.timeout import FlextConstantsTimeout
     from flext_core._constants.validation import FlextConstantsValidation
-    from flext_core._constants.violations import (
-        FlextMroViolation,
-        FlextMroViolationError,
-        FlextSmellViolation,
-        FlextSmellViolationError,
-    )
+
 
 __all__: tuple[str, ...] = (
     "FlextConstantsBase",
@@ -59,11 +38,6 @@ __all__: tuple[str, ...] = (
     "FlextConstantsCqrs",
     "FlextConstantsEnvironment",
     "FlextConstantsErrors",
-    "FlextConstantsErrorsDomainParser",
-    "FlextConstantsErrorsMessages",
-    "FlextConstantsErrorsRuntimeExceptions",
-    "FlextConstantsErrorsRuntimeSettings",
-    "FlextConstantsErrorsValidationExceptions",
     "FlextConstantsFile",
     "FlextConstantsGuards",
     "FlextConstantsInfrastructure",
@@ -77,30 +51,17 @@ __all__: tuple[str, ...] = (
     "FlextConstantsStatus",
     "FlextConstantsTimeout",
     "FlextConstantsValidation",
-    "FlextMroViolation",
-    "FlextMroViolationError",
-    "FlextSmellViolation",
-    "FlextSmellViolationError",
 )
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "FlextConstantsBase": ".base",
         "FlextConstantsConfig": ".config",
         "FlextConstantsCqrs": ".cqrs",
         "FlextConstantsEnvironment": ".environment",
         "FlextConstantsErrors": ".errors",
-        "FlextConstantsErrorsDomainParser": "._errors.flextconstantserrors_part_04",
-        "FlextConstantsErrorsMessages": "._errors.flextconstantserrors_part_01",
-        "FlextConstantsErrorsRuntimeExceptions": (
-            "._errors.flextconstantserrors_part_02"
-        ),
-        "FlextConstantsErrorsRuntimeSettings": "._errors.flextconstantserrors_part_05",
-        "FlextConstantsErrorsValidationExceptions": (
-            "._errors.flextconstantserrors_part_03"
-        ),
         "FlextConstantsFile": ".file",
         "FlextConstantsGuards": ".guards",
         "FlextConstantsInfrastructure": ".infrastructure",
@@ -114,10 +75,6 @@ install_lazy_exports(
         "FlextConstantsStatus": ".status",
         "FlextConstantsTimeout": ".timeout",
         "FlextConstantsValidation": ".validation",
-        "FlextMroViolation": ".violations",
-        "FlextMroViolationError": ".violations",
-        "FlextSmellViolation": ".violations",
-        "FlextSmellViolationError": ".violations",
-    }),
+    },
     public_exports=__all__,
 )

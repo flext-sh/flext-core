@@ -9,13 +9,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from tests import m
+from tests import m, p
 
 
 class TestsFlextUtilitiesValidationUriScenarios:
     """URI validation scenarios."""
 
-    URI_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    URI_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="uri_valid_http",
             validator_type="network",

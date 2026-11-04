@@ -40,12 +40,12 @@ selects DEBUG and trace, captures actual observer/output receipts, and restores
 the prior settings and options rather than assuming their values.
 
 ```python
-import json
+from collections.abc import MutableSequence
 from io import StringIO
 
 from structlog.contextvars import bound_contextvars
 
-from flext_core import c, m, p, t, u
+from flext_core import c, m, p, u
 
 prior_settings: p.LoggingSettings = u.logging_settings()
 prior_options: p.StructlogOptions = u.logging_options()
@@ -83,7 +83,8 @@ try:
         _ = u.failure("batch_failed", exception=cause)
     output = json_stream.getvalue().splitlines()
     assert len(receipts) == len(output)
-    assert json.loads(output[0])[c.HandlerType.EVENT] == receipts[0].message
+    first = u.json_mapping_adapter().validate_json(output[0])
+    assert first[c.HandlerType.EVENT] == receipts[0].message
     assert receipts[0].message in console_stream.getvalue()
     assert receipts[-1].exception is cause
 finally:

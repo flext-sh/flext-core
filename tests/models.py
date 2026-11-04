@@ -42,9 +42,9 @@ class TestsFlextModels(flext_tests_m):
 
     @override
     class Tests(
-        TestsFlextModelsNamespace,
         flext_tests_m.Tests,
         TestsFlextModelsMixins.TestsFlextModelsMixins,
+        TestsFlextModelsNamespace,
     ):
         """flext-core test models namespace."""
 

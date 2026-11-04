@@ -9,11 +9,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import MutableSequence
+
+    from flext_core._protocols import FlextProtocolsService
+
+
 from collections.abc import Mapping, Sequence
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 from flext_core import c
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsEntity,
+    FlextProtocolsPydantic,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -30,41 +42,36 @@ class FlextProtocolsRegistry:
     """Protocols for handler registration and plugin management."""
 
     @runtime_checkable
-    class RegistrationDetails(FlextProtocolsBase.Base, Protocol):
-        """Observable registration identity and routing metadata."""
+    class RegistrySummary(FlextProtocolsEntity.Value, Protocol):
+        """Structural data contract projected from the owning model."""
 
         @property
-        def registration_id(self) -> str: ...
+        def registered(self) -> Sequence[FlextProtocolsHandler.RegistrationDetails]:
+            """Successfully registered handlers with registration details."""
+            ...
 
         @property
-        def handler_mode(self) -> c.HandlerType: ...
+        def skipped(self) -> Sequence[str]:
+            """Handler identifiers that were skipped (already registered)."""
+            ...
 
         @property
-        def status(self) -> c.Status: ...
+        def errors(self) -> MutableSequence[str]:
+            """Error messages for failed registrations."""
+            ...
+
+        @property
+        def failure(self) -> bool:
+            """Indicate whether the batch registration had errors."""
+            ...
+
+        @property
+        def success(self) -> bool:
+            """Indicate whether the batch registration fully succeeded."""
+            ...
 
     @runtime_checkable
-    class RegistrySummary(FlextProtocolsBase.Base, Protocol):
-        """Observable outcome of one atomic registration batch."""
-
-        @property
-        def registered(
-            self,
-        ) -> Sequence[FlextProtocolsRegistry.RegistrationDetails]: ...
-
-        @property
-        def skipped(self) -> Sequence[str]: ...
-
-        @property
-        def errors(self) -> Sequence[str]: ...
-
-        @property
-        def success(self) -> bool: ...
-
-        @property
-        def failure(self) -> bool: ...
-
-    @runtime_checkable
-    class Registry(FlextProtocolsBase.Base, Protocol):
+    class Registry(FlextProtocolsPydantic.Base, Protocol):
         """Registry protocol for CQRS handler and plugin management.
 
         Mirrors the public instance API of ``FlextRegistry`` so consumers
@@ -95,7 +102,7 @@ class FlextProtocolsRegistry:
         def register_handler(
             self,
             handler: FlextProtocolsHandler.DispatchableHandler,
-        ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrationDetails]:
+        ) -> FlextProtocolsResult.Result[FlextProtocolsHandler.RegistrationDetails]:
             """Register a handler instance or callable."""
             ...
 
@@ -160,6 +167,19 @@ class FlextProtocolsRegistry:
             scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
         ) -> FlextProtocolsResult.Result[Sequence[str]]:
             """List all plugins in a category."""
+            ...
+
+    @runtime_checkable
+    class RegistryServiceState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class RegistryOptions(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def registry_runtime(self) -> FlextProtocolsService.ServiceRuntime:
+            """Explicit runtime shared by registration and execution."""
             ...
 
 

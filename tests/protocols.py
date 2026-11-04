@@ -1,3 +1,4 @@
+# AUTO-GENERATED FILE — Regenerate with: make gen
 """Protocol definitions for flext-core tests.
 
 Provides TestsFlextProtocols, extending TestsFlextProtocols with flext-core-specific
@@ -20,13 +21,14 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_tests import FlextTestsProtocols
 
 from flext_core import c
+from tests._protocols import TestsFlextProtocolsMixins
 
 if TYPE_CHECKING:
-    from tests import c, t
+    from tests import p, t
     from tests._models import TestsFlextModelsMixins
 
 
-class TestsFlextProtocols(FlextTestsProtocols):
+class TestsFlextProtocols(FlextTestsProtocols, TestsFlextProtocolsMixins):
     """Protocol definitions for flext-core tests - extends TestsFlextProtocols.
 
     Architecture: Extends TestsFlextProtocols with flext-core-specific protocol
@@ -39,29 +41,16 @@ class TestsFlextProtocols(FlextTestsProtocols):
     - All generic protocols come from TestsFlextProtocols
     """
 
-    class Tests(FlextTestsProtocols.Tests):
+    class Tests(
+        FlextTestsProtocols.Tests,
+        TestsFlextProtocolsMixins,
+    ):
         """flext-core test protocols namespace."""
 
         class InferredCommand(Protocol):
             """A request route hint does not restrict runtime handler capability."""
 
             command_type: str = c.DEFAULT_COMMAND_TYPE
-
-        @runtime_checkable
-        class DispatchRequest(Protocol):
-            """Only the request capability consumed by the dispatch operation."""
-
-            @property
-            def command_name(self) -> str:
-                """Expose the name consumed by the dispatch operation."""
-                ...
-
-        @runtime_checkable
-        class PublicPayload(FlextTestsProtocols.Base, Protocol):
-            """Data consumed through a protocol and validated by its model owner."""
-
-            raw_name: str
-            visits: int
 
         @runtime_checkable
         class GoodProtocol(FlextTestsProtocols.Base, Protocol):

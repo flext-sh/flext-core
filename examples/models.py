@@ -22,7 +22,6 @@ from examples._models import (
     ExamplesFlextModelsEx12,
     ExamplesFlextModelsEx14,
     ExamplesFlextModelsHandle,
-    ExamplesFlextModelsOutput,
     ExamplesFlextModelsPerson,
 )
 from flext_core import m as flext_core_m
@@ -32,6 +31,7 @@ class ExamplesFlextModels(flext_core_m):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(
+        ExamplesFlextModelsErrors,
         ExamplesFlextModelsEx00,
         ExamplesFlextModelsEx01,
         ExamplesFlextModelsEx02,
@@ -46,8 +46,6 @@ class ExamplesFlextModels(flext_core_m):
         ExamplesFlextModelsEx14,
         ExamplesFlextModelsHandle,
         ExamplesFlextModelsPerson,
-        ExamplesFlextModelsErrors.Examples,
-        ExamplesFlextModelsOutput.Examples,
     ):
         """Canonical namespace for all example domain models.
 

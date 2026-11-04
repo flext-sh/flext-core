@@ -163,7 +163,18 @@ class FlextLazyPart01:
         finally:
             del frame
 
-    def _load(self, module_path: str) -> ModuleType:
+    def load(self, module_path: str) -> ModuleType:
+        """Import ``module_path`` once and reuse it from the module cache.
+
+        This is the lazy machinery's single dynamic-import path: lazy exports,
+        lazy members and data-driven discovery (module names read from
+        published metadata) all load through it. A module still initializing
+        in this thread (a circular import) is returned but never cached.
+
+        Returns:
+            The imported module.
+
+        """
         cached = self.module_cache.get(module_path)
         if cached is not None:
             return cached
@@ -178,7 +189,7 @@ class FlextLazyPart01:
         cached = self.child_lazy_cache.get(module_path)
         if cached is not None:
             return cached
-        child = self._load(module_path)
+        child = self.load(module_path)
         raw_lazy_imports = vars(child).get("_LAZY_IMPORTS")
         if raw_lazy_imports is None:
             normalized: MutableMapping[str, str | tuple[str, str]] = {}
@@ -213,7 +224,7 @@ class FlextLazyPart01:
         """Build one flat lazy-import map.
 
         Returns:
-            The resulting ``LazyImportDict``.
+            The resulting ``MutableLazyImportMap``.
 
         """
         out: MutableMapping[str, str | tuple[str, str]] = {

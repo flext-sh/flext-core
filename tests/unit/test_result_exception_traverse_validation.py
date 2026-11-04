@@ -12,12 +12,12 @@ from __future__ import annotations
 
 import pytest
 
-import tests.utilities
 from tests import c, p, r, t, tm
+from tests.utilities import TestsFlextUtilities
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(
-    tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying,
+    TestsFlextUtilities.TestsFlextResultExceptionCarrying,
 ):
     """Tests for ``FlextCoreResultExceptionTraverseValidation``."""
 
@@ -144,10 +144,10 @@ class TestsFlextCoreResultExceptionTraverseValidation(
 
         # Act
         result = r[
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
+            TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
         ].from_validation(
             invalid,
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
+            TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert
@@ -163,10 +163,10 @@ class TestsFlextCoreResultExceptionTraverseValidation(
 
         # Act
         result = r[
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
+            TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel
         ].from_validation(
             valid,
-            tests.utilities.TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
+            TestsFlextUtilities.TestsFlextResultExceptionCarrying.UserModel,
         )
 
         # Assert

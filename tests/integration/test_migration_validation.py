@@ -16,7 +16,7 @@ from typing import override
 
 import pytest
 
-from flext_core import FlextContainer, FlextService
+from flext_core import FlextContainer, FlextDispatcher, FlextRegistry, FlextService
 from tests import m, p, r, t, tm, u
 from tests.integration.migration_validation_cases import capture_output
 
@@ -223,5 +223,5 @@ class TestsFlextCoreMigrationValidation:
     @staticmethod
     def test_factory_helpers_produce_protocol_conformant_objects() -> None:
         """Public builders return objects satisfying their published protocols."""
-        tm.that(u.build_dispatcher(), is_=p.Dispatcher)
-        tm.that(u.build_registry(), is_=p.Registry)
+        tm.that(FlextDispatcher(), is_=p.Dispatcher)
+        tm.that(FlextRegistry.create(), is_=p.Registry)

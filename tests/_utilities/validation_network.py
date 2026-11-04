@@ -9,13 +9,13 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import ClassVar
 
-from tests import m
+from tests import m, p
 
 
 class TestsFlextUtilitiesValidationNetworkScenarios:
     """Network validation scenarios."""
 
-    PORT_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    PORT_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="port_valid_80",
             validator_type="network",
@@ -89,7 +89,7 @@ class TestsFlextUtilitiesValidationNetworkScenarios:
             description="Port above maximum",
         ),
     ]
-    HOSTNAME_SCENARIOS: ClassVar[Sequence[m.Tests.ValidationScenario]] = [
+    HOSTNAME_SCENARIOS: ClassVar[Sequence[p.Tests.ValidationScenario]] = [
         m.Tests.ValidationScenario(
             name="hostname_simple",
             validator_type="network",

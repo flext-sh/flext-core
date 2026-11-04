@@ -11,7 +11,8 @@ from contextlib import redirect_stdout
 from pathlib import Path
 from typing import override
 
-from examples import ExamplesFlextShared, c, p, u
+from examples import ExamplesFlextShared, c, m, p, t, u
+from flext_core import FlextContainer, FlextSettings
 
 
 def _raise_value_error(message: str) -> None:
@@ -201,6 +202,101 @@ class ExamplesFlextLogger(ExamplesFlextShared):
             self._ok(u.clear_scope(c.ContextScope.OPERATION)),
         )
 
+    def _exercise_runtime_policy(self) -> None:
+        """Compose real isolated runtime destinations and nested correlation."""
+        self.section("runtime_policy")
+        streams = (io.StringIO(), io.StringIO())
+        observed: list[p.LoggingRecord] = []
+        runtimes = [
+            FlextContainer.build_service_runtime(
+                m.RuntimeBootstrapOptions(
+                    settings=FlextSettings(log_level=level, async_logging=False),
+                    logging_options=m.StructlogOptions(
+                        handlers=(u.create_logging_handler(stream=stream),),
+                        observers=(observed.append,),
+                    ),
+                )
+            )
+            for level, stream in zip(("ERROR", "INFO"), streams, strict=True)
+        ]
+        first, second = runtimes
+        first.logger.info("filtered")
+        first.logger.error("first")
+        with u.logging_scope("operation", run_id="outer"):
+            second.logger.info("outer")
+            with u.logging_scope("operation", run_id="inner"):
+                second.logger.info("inner")
+            second.logger.info("restored")
+        self.audit_check(
+            "runtime.first.logger.port", isinstance(first.logger, p.Logger)
+        )
+        self.audit_check(
+            "runtime.first.filtered", "filtered" not in streams[0].getvalue()
+        )
+        self.audit_check("runtime.first.isolated", "outer" not in streams[0].getvalue())
+        self.audit_check(
+            "runtime.second.isolated", '"event": "first"' not in streams[1].getvalue()
+        )
+        self.audit_check(
+            "runtime.scopes.restored",
+            [event.context.get("run_id") for event in observed]
+            == [None, "outer", "inner", "outer"],
+        )
+
+    def _exercise_sink_presentation(self) -> None:
+        """Keep one sanitized event complete outside the compact console."""
+        self.section("sink_presentation")
+        console, structured = io.StringIO(), io.StringIO()
+        events: list[p.LoggingRecord] = []
+        policy = FlextSettings(
+            log_level="INFO", async_logging=False, debug=False, trace=False
+        )
+        logger = u.create_module_logger(
+            "examples.ex_03.destinations",
+            runtime_settings=policy,
+            options=m.StructlogOptions(
+                handlers=(
+                    u.create_logging_handler(
+                        stream=console, console_renderer=True, runtime_settings=policy
+                    ),
+                    u.create_logging_handler(stream=structured, console_renderer=False),
+                ),
+                observers=(events.append,),
+            ),
+        )
+        logger.info("presentation", operation="logging-example")
+        payload = (
+            m.RootModel[t.JsonDict].model_validate_json(structured.getvalue()).root
+        )
+        self.audit_check("console.compact", "func_name=" not in console.getvalue())
+        self.audit_check("console.no_ansi", "\x1b[" not in console.getvalue())
+        self.audit_check(
+            "console.business_context", "logging-example" in console.getvalue()
+        )
+        self.audit_check("json.callsite", bool(payload.get("func_name")))
+        self.audit_check(
+            "observer.complete",
+            events[0].context.get("func_name") == payload.get("func_name"),
+        )
+        detail = io.StringIO()
+        debug_policy = policy.model_copy(update={"debug": True})
+        detailed = u.create_module_logger(
+            "examples.ex_03.debug",
+            runtime_settings=debug_policy,
+            options=m.StructlogOptions(
+                handlers=(
+                    u.create_logging_handler(
+                        stream=detail,
+                        console_renderer=True,
+                        runtime_settings=debug_policy,
+                    ),
+                ),
+            ),
+        )
+        detailed.info("diagnostic detail")
+        self.audit_check("debug.callsite", "func_name=" in detail.getvalue())
+        self.audit_check("debug.no_ansi", "\x1b[" not in detail.getvalue())
+
     @override
     def exercise(self) -> None:
         """Run all logger example sections in deterministic order."""
@@ -212,6 +308,8 @@ class ExamplesFlextLogger(ExamplesFlextShared):
         self._exercise_instance_methods()
         self._exercise_performance_tracker()
         self._exercise_result_adapter()
+        self._exercise_runtime_policy()
+        self._exercise_sink_presentation()
 
     @override
     def run(self) -> None:

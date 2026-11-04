@@ -56,7 +56,7 @@ class ExamplesFlextSharedBase:
         """
         return self._next_unit_float() >= self._BOOL_THRESHOLD
 
-    def rand_dict(self, n: int = 3) -> m.ConfigMap:
+    def rand_dict(self, n: int = 3) -> p.ConfigMap:
         """Return a ConfigMap with ``n`` random string keys to int values.
 
         Returns:

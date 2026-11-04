@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, TypeIs
 
 from pydantic import BaseModel as PydanticBaseModel
 
-from flext_core import m, p, t
+from flext_core import p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -22,7 +22,7 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def has_model_dump(
-        value: p.GuardInput | p.HasModelDump | p.Model | t.JsonValue | None,
+        value: p.GuardInput | p.HasModelDump | p.BaseModel | t.JsonValue | None,
     ) -> TypeIs[p.HasModelDump]:
         """Narrow value to objects exposing a callable ``model_dump``.
 
@@ -36,11 +36,11 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def model_type(
         value: t.TypeHintSpecifier,
-    ) -> TypeIs[t.ModelClass[m.BaseModel]]:
+    ) -> TypeIs[t.ModelClass[t.BaseModelType]]:
         """Narrow a runtime value to a canonical Pydantic model class.
 
         Returns:
-            The resulting ``TypeIs[t.ModelClass[mp.BaseModel]]``.
+            The resulting ``TypeIs[t.ModelClass[t.BaseModelType]]``.
 
         """
         return isinstance(value, type) and issubclass(value, PydanticBaseModel)
@@ -59,8 +59,8 @@ class FlextUtilitiesGuardsTypeModel:
 
     @staticmethod
     def pydantic_model(
-        value: p.GuardInput | p.Model | t.JsonValue | PydanticBaseModel | None,
-    ) -> TypeIs[m.BaseModel]:
+        value: p.GuardInput | p.BaseModel | t.JsonValue | PydanticBaseModel | None,
+    ) -> TypeIs[t.BaseModelType]:
         """Narrow value to the canonical Pydantic model carrier.
 
         Accepts both ``m.BaseModel`` and

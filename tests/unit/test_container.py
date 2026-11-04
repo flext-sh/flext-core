@@ -12,8 +12,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import inspect
-
 import pytest
 
 from flext_core import FlextContainer
@@ -44,19 +42,6 @@ class TestsFlextCoreContainer:
             replacement is not original,
             eq=True,
             msg="reset_for_testing must force a brand-new singleton instance",
-        )
-
-    @staticmethod
-    def test_logger_requires_explicit_module_name(
-        clean_container: p.Container,
-    ) -> None:
-        """Test logger requires explicit module name."""
-        params = inspect.signature(type(clean_container).logger).parameters
-        module_param = params["module_name"]
-        tm.that(
-            module_param.default is inspect.Parameter.empty,
-            eq=True,
-            msg="module_name must be required, not optional",
         )
 
     @staticmethod

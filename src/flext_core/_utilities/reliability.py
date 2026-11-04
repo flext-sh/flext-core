@@ -101,7 +101,7 @@ class FlextUtilitiesReliability:
     @staticmethod
     def retry[TResult](
         operation: Callable[[], p.Result[TResult]],
-        options: m.RetryOptions | None = None,
+        options: p.RetryOptions | None = None,
         **kwargs: t.JsonPayload,
     ) -> p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.

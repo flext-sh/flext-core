@@ -17,7 +17,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 import sys
 from collections.abc import Iterator
 from pathlib import Path
@@ -25,6 +24,7 @@ from types import ModuleType
 
 import pytest
 
+from flext_core import lazy
 from flext_core.config_sources import FlextStrictYamlConfigSource
 from tests import tm, u
 
@@ -74,7 +74,7 @@ def _install_package(root: Path, package: str, defaults: str) -> ModuleType:
     (package_dir / "config" / "defaults.yaml").write_text(defaults, encoding="utf-8")
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
-    return importlib.import_module(f"{package}._config")
+    return lazy.load(f"{package}._config")
 
 
 @pytest.fixture
@@ -86,6 +86,9 @@ def isolate_import_state() -> Iterator[None]:
     sys.path[:] = original_path
     for name in set(sys.modules) - original_modules:
         del sys.modules[name]
+    # The lazy loader caches every module it imports: drop the synthetic ones
+    # with the import state so a reused package name loads its new content.
+    lazy.reset()
 
 
 class TestPackagedConfigWithUserPreferences:
@@ -226,7 +229,7 @@ class TestPackagedConfigWithUserPreferences:
                 (directory / "defaults.yaml").write_text(
                     "greeting: foreign\n", encoding="utf-8"
                 )
-            module = importlib.import_module("synthpkg_nested.declarations.owner")
+            module = lazy.load("synthpkg_nested.declarations.owner")
             config = module.NestedConfig.fetch_global()
             tm.that(config.greeting, eq=child.SynthConfig.fetch_global().greeting)
             tm.that(config.greeting, ne=parent.SynthConfig.fetch_global().greeting)
@@ -265,7 +268,7 @@ class TestPackagedConfigWithUserPreferences:
                 "    pass\n",
                 encoding="utf-8",
             )
-            module = importlib.import_module("synthpkg_child_chain.owner")
+            module = lazy.load("synthpkg_child_chain.owner")
             inherited = module.GrandchildConfig.fetch_global()
             expected = FlextStrictYamlConfigSource(
                 module.GrandchildConfig,
@@ -303,7 +306,7 @@ class TestPackagedConfigWithUserPreferences:
                 "        'second.yaml', 'first.yaml')\n",
                 encoding="utf-8",
             )
-            module = importlib.import_module("synthpkg_ordered_chain.owner")
+            module = lazy.load("synthpkg_ordered_chain.owner")
             expected = FlextStrictYamlConfigSource(
                 module.ChildConfig,
                 yaml_file=(second, first),
@@ -337,7 +340,7 @@ class TestPackagedConfigWithUserPreferences:
                 "        'defaults.yaml',)\n",
                 encoding="utf-8",
             )
-            module = importlib.import_module("synthpkg_missing.declared")
+            module = lazy.load("synthpkg_missing.declared")
             with pytest.raises(FileNotFoundError, match="declared config directory"):
                 module.DeclaredConfig.fetch_global()
 
@@ -388,7 +391,7 @@ class TestPackagedConfigWithUserPreferences:
                 config_dir.mkdir(parents=True, exist_ok=True)
                 default.write_text("greeting: installed\n", encoding="utf-8")
             sys.path.insert(0, str(site))
-            module = importlib.import_module(f"{package}.declared")
+            module = lazy.load(f"{package}.declared")
             config = module.DeclaredConfig.fetch_global()
 
             tm.that(config.greeting, eq="source")

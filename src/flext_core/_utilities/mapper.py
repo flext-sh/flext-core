@@ -8,18 +8,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-from flext_core import FlextResult, c, m, t
+from flext_core import FlextResult, c, m, p, t
 from flext_core._utilities import (
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesMapperExtract,
     FlextUtilitiesPydantic,
 )
-
-if TYPE_CHECKING:
-    from flext_core import p
 
 
 class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
@@ -237,7 +234,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
     def transform(
         source: t.JsonMapping | m.ConfigMap,
         *,
-        options: m.TransformOptions | None = None,
+        options: p.TransformOptions | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
     ) -> p.Result[t.JsonMapping]:

@@ -40,7 +40,7 @@ class FlextExceptionsFactoriesFail:
     def _failure_message(
         operation: str,
         *,
-        params: m.BaseModel | None = None,
+        params: p.BaseModel | None = None,
         error: Exception | str | None = None,
     ) -> str:
         """Render the canonical failure message with or without an error cause.
@@ -71,8 +71,8 @@ class FlextExceptionsFactoriesFail:
 
     @staticmethod
     def _resolve_options(
-        options: m.ExceptionFactoryOptions | None = None,
-    ) -> tuple[m.ExceptionFactoryOptions, Exception | str | None]:
+        options: p.ExceptionFactoryOptions | None = None,
+    ) -> tuple[p.ExceptionFactoryOptions, Exception | str | None]:
         resolved_options = (
             options if options is not None else m.ExceptionFactoryOptions()
         )
@@ -81,9 +81,9 @@ class FlextExceptionsFactoriesFail:
     @staticmethod
     def _fail_result[TResult](
         message: str,
-        params: m.BaseModel | None,
+        params: p.BaseModel | None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         default_error_code: str,
         result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
@@ -170,7 +170,7 @@ class FlextExceptionsFactoriesFail:
 
     @staticmethod
     def fail_type_mismatch[TResult](
-        details: m.ServiceLookupParams | str,
+        details: p.ServiceLookupParams | str,
         actual: str | None = None,
         *,
         error_code: str | None = None,
@@ -194,9 +194,9 @@ class FlextExceptionsFactoriesFail:
 
         """
         params = (
-            details
-            if isinstance(details, m.ServiceLookupParams)
-            else m.ServiceLookupParams(expected_type=details, actual_type=actual)
+            m.ServiceLookupParams(expected_type=details, actual_type=actual)
+            if isinstance(details, str)
+            else details
         )
         expected_type = (
             params.expected_type
@@ -217,7 +217,7 @@ class FlextExceptionsFactoriesFail:
 
     @staticmethod
     def fail_validation[TResult](
-        details: m.ValidationErrorParams | str | None = None,
+        details: p.ValidationErrorParams | str | None = None,
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,
@@ -238,7 +238,7 @@ class FlextExceptionsFactoriesFail:
         """
         params = (
             details
-            if isinstance(details, m.ValidationErrorParams)
+            if details is not None and not isinstance(details, str)
             else m.ValidationErrorParams(field=details)
         )
         field_name = params.field if params.field is not None else "input"
@@ -271,7 +271,7 @@ class FlextExceptionsFactoriesFail:
         config_key: str,
         config_source: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical configuration-error message.
@@ -306,8 +306,8 @@ class FlextExceptionsFactoriesFail:
     def fail_connection[TResult](
         host: str,
         *,
-        params: m.ConnectionErrorParams | None = None,
-        options: m.ExceptionFactoryOptions | None = None,
+        params: p.ConnectionErrorParams | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
@@ -378,7 +378,7 @@ class FlextExceptionsFactoriesFail:
         auth_method: str | None = None,
         user_id: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authentication-error message.
@@ -412,7 +412,7 @@ class FlextExceptionsFactoriesFail:
         resource: str,
         permission: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authorization-error message.
@@ -450,7 +450,7 @@ class FlextExceptionsFactoriesFail:
         resource_id: str,
         reason: str | None = None,
         *,
-        options: m.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
     ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical conflict message.

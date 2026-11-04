@@ -11,10 +11,10 @@ from typing import Annotated, ClassVar, override
 from flext_tests import r
 
 from tests import c, m, p, s, t
-from tests._utilities import TestsFlextUtilitiesRailwayServicesMixin
+from tests._utilities import TestsFlextUtilitiesRailwayServices
 
 
-class TestsFlextUtilitiesServicesMixin:
+class TestsFlextUtilitiesServices:
     """Service helper classes."""
 
     class MemoryCounter(p.Tests.Counter):
@@ -82,7 +82,7 @@ class TestsFlextUtilitiesServicesMixin:
                 )
             return r[str].ok(self.value_input.upper())
 
-    class GetUserServiceAuto(TestsFlextUtilitiesRailwayServicesMixin.GetUserService):
+    class GetUserServiceAuto(TestsFlextUtilitiesRailwayServices.GetUserService):
         """Auto-executing `GetUserService`."""
 
         auto_execute: ClassVar[bool] = True
@@ -93,4 +93,4 @@ class TestsFlextUtilitiesServicesMixin:
         auto_execute: ClassVar[bool] = True
 
 
-__all__: list[str] = ["TestsFlextUtilitiesServicesMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesServices"]

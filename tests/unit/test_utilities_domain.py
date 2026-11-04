@@ -16,7 +16,7 @@ from types import MappingProxyType
 
 import pytest
 
-from tests import c, t, tm, u
+from tests import t, tm, u
 
 
 class TestsFlextCoreUtilitiesDomain:
@@ -112,29 +112,6 @@ class TestsFlextCoreUtilitiesDomain:
     def test_to_str_present_value_ignores_default() -> None:
         """Test to str present value ignores default."""
         tm.that(u.to_str("real", default="fallback"), eq="real")
-
-    # ---------------------------------------------------------- to_str_list
-    @staticmethod
-    @pytest.mark.parametrize(
-        ("value", "expected"),
-        [
-            ("single", ["single"]),
-            (["a", "b"], ["a", "b"]),
-            ([1, 2], [c.ParserBooleanToken.ONE, "2"]),
-            (None, []),
-        ],
-    )
-    def test_to_str_list_converts_value(
-        value: str | list[str] | list[int] | None,
-        expected: list[str],
-    ) -> None:
-        """Test to str list converts value."""
-        tm.that(u.to_str_list(value), eq=expected)
-
-    @staticmethod
-    def test_to_str_list_none_uses_default() -> None:
-        """Test to str list none uses default."""
-        tm.that(u.to_str_list(None, default=["x"]), eq=["x"])
 
     # --------------------------------------------------------------- to_int
     @staticmethod

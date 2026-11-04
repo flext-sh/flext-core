@@ -30,7 +30,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 import pytest
-from tests import test_framework, tm
+from tests import p, test_framework, tm
 
 from flext_core import r, p, u
 

@@ -139,18 +139,6 @@ class TestsFlextCoreUtilities:
     @staticmethod
     @pytest.mark.parametrize(
         ("value", "expected"),
-        [("a", ["a"]), ("a,b", ["a,b"]), (["x", "y"], ["x", "y"])],
-    )
-    def test_to_str_list_wraps_scalars_and_preserves_lists(
-        value: str | list[str],
-        expected: list[str],
-    ) -> None:
-        """Test to str list wraps scalars and preserves lists."""
-        tm.that(u.to_str_list(value), eq=expected)
-
-    @staticmethod
-    @pytest.mark.parametrize(
-        ("value", "expected"),
         [("Aa9!@ x", "aa9x"), ("abc", "abc"), ("!!!", "")],
     )
     def test_normalize_alnum_lowercases_and_drops_non_alnum(

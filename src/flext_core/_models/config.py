@@ -203,6 +203,20 @@ class FlextModelsConfig:
                 validate_default=True,
             ),
         ] = None
+        exclude_computed_fields: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                description="Exclude computed fields",
+                validate_default=True,
+            ),
+        ] = None
+        round_trip: Annotated[
+            bool | None,
+            FlextModelsPydantic.Field(
+                description="Dump in a form that validates back into the model",
+                validate_default=True,
+            ),
+        ] = None
 
     class ParseOptions[T](FlextModelsBase.FlexibleInternalModel):
         """Options controlling parsing behavior for string-to-type conversion."""

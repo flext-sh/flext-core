@@ -6,9 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from examples import c, m, p, r, u
+from examples import c, m, p, r
 from examples.ex_12_registry_flow import ExamplesFlextRegistryFlow
 from examples.ex_12_registry_support import RegistryLookup
+from flext_core import FlextRegistry
 
 
 class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
@@ -127,7 +128,7 @@ class ExamplesFlextRegistryPlugins(ExamplesFlextRegistryFlow):
         lookup = RegistryLookup(registry=registry, category=category, plugin_name=name)
         shared = RegistryLookup(registry=registry, category=category, plugin_name=name)
         isolated = RegistryLookup(
-            registry=u.build_registry(), category=category, plugin_name=name
+            registry=FlextRegistry.create(), category=category, plugin_name=name
         )
         self.audit_check("service.shared_registry", lookup.registry is shared.registry)
         self.audit_check(

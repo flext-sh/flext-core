@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable, MutableMapping
 from typing import ClassVar
 
-from flext_core import FlextResult, c, m, p, t
+from flext_core import FlextResult, c, p, t
 
 
 class FlextUtilitiesParserCoerce:
@@ -102,7 +102,7 @@ class FlextUtilitiesParserCoerce:
 
     @staticmethod
     def _parse_with_default[T](
-        options: m.ParseOptions[T],
+        options: p.ParseOptions[T],
         error_msg: str,
     ) -> p.Result[T]:
         """Return default or error for parse failures.

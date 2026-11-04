@@ -9,13 +9,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar
-
-from flext_core._constants.violations import (
-    FlextMroViolation,
-    FlextMroViolationError,
-    FlextSmellViolationError,
-)
 from flext_core._exceptions import (
     FlextExceptionsBase,
     FlextExceptionsFactories,
@@ -24,6 +17,7 @@ from flext_core._exceptions import (
     FlextExceptionsTemplate,
     FlextExceptionsTypes,
 )
+from flext_core._exceptions.violations import FlextExceptionsViolations
 
 
 class FlextExceptions(
@@ -32,6 +26,7 @@ class FlextExceptions(
     FlextExceptionsHelpers,
     FlextExceptionsMetrics,
     FlextExceptionsTypes,
+    FlextExceptionsViolations,
     FlextExceptionsBase,
 ):
     """Exception types with correlation metadata — MRO facade.
@@ -40,10 +35,7 @@ class FlextExceptions(
     for consistent error handling and logging.
     """
 
-    MroViolation: ClassVar[type[FlextMroViolationError]] = FlextMroViolationError
-    SmellViolation: ClassVar[type[FlextSmellViolationError]] = FlextSmellViolationError
-
 
 e = FlextExceptions
 
-__all__: list[str] = ["FlextExceptions", "FlextMroViolation", "e"]
+__all__: list[str] = ["FlextExceptions", "e"]

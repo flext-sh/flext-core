@@ -8,11 +8,48 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextLoggingScopes:
     """Binding and clearing logging context scopes through ``u``."""
+
+    @staticmethod
+    def test_nested_scope_restores_outer_value_after_failure() -> None:
+        """An inner operation cannot erase the outer operation's correlation."""
+        events: list[p.LoggingRecord] = []
+        u.configure_structlog(
+            settings=m.StructlogOptions(observers=(events.append,)),
+        )
+        tm.ok(u.clear_global_context())
+        logger = u.create_module_logger(__name__)
+
+        def inner_operation() -> None:
+            """Emit and fail inside a nested correlation scope.
+
+            Raises:
+                ValueError: To exercise exception-safe scope restoration.
+
+            """
+            with u.logging_scope("operation", run_id="inner"):
+                logger.info("inner")
+                msg = "inner failed"
+                raise ValueError(msg)
+
+        try:
+            with u.logging_scope("operation", run_id="outer"):
+                logger.info("outer")
+                with pytest.raises(ValueError, match="inner failed"):
+                    inner_operation()
+                logger.info("restored")
+            logger.info("outside")
+            tm.that(
+                [event.context.get("run_id") for event in events],
+                eq=["outer", "inner", "outer", None],
+            )
+        finally:
+            tm.ok(u.clear_global_context())
+            u.configure_structlog(settings=m.StructlogOptions())
 
     @staticmethod
     @pytest.mark.parametrize(

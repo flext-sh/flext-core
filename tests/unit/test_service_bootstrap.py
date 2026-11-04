@@ -154,7 +154,7 @@ class TestsFlextCoreServiceBootstrap:
         """The runtime uses the container's context and command bus."""
         declared = self.ConcreteTestService.runtime_bootstrap_options().settings_type
 
-        runtime = u.build_service_runtime(self.ConcreteTestService())
+        runtime = FlextContainer.build_service_runtime(self.ConcreteTestService())
 
         declared = tm.not_none(declared)
         tm.ok(runtime.settings is declared.fetch_global())
@@ -172,7 +172,7 @@ class TestsFlextCoreServiceBootstrap:
         context = FlextContext.create()
         dispatcher = source.dispatcher().unwrap()
         provider = FlextSettings.fetch_global().clone(log_level=c.LogLevel.ERROR)
-        initial = u.build_service_runtime(
+        initial = FlextContainer.build_service_runtime(
             m.RuntimeBootstrapOptions(
                 settings=provider,
                 container=source,
@@ -185,7 +185,7 @@ class TestsFlextCoreServiceBootstrap:
         resolved = u.resolve_logging_settings(
             runtime_settings=initial.settings, debug=True
         )
-        rebound = u.build_service_runtime(
+        rebound = FlextContainer.build_service_runtime(
             m.RuntimeBootstrapOptions(
                 settings=resolved,
                 container=initial.container,
@@ -375,3 +375,22 @@ class TestsFlextCoreServiceBootstrap:
         )
         with pytest.raises(m.ValidationError):
             model.model_validate({"counter": c.Tests.DEFAULT_ERROR_MESSAGE})
+
+
+class TestsFlextRuntimeLoggingInjection:
+    """The runtime exposes the original explicitly injected logging port."""
+
+    @staticmethod
+    def test_service_consumes_its_explicit_runtime_logger() -> None:
+        """The service logger is the injected port, not a shared class cache."""
+        selected = u.create_module_logger(__name__)
+
+        class LoggedService(TestsFlextCoreServiceBootstrap.ConcreteTestService):
+            @classmethod
+            @override
+            def runtime_bootstrap_options(cls) -> p.RuntimeBootstrapOptions:
+                return m.RuntimeBootstrapOptions(logger=selected)
+
+        service = LoggedService()
+        tm.ok(service.logger is selected)
+        tm.ok(service.execute().success)

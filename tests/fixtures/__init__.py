@@ -7,35 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
-import re
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-from types import MappingProxyType
-
 from flext_core.lazy import install_lazy_exports
 
 __all__: tuple[str, ...] = ()
@@ -43,6 +14,6 @@ __all__: tuple[str, ...] = ()
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({}),
+    {},
     public_exports=__all__,
 )

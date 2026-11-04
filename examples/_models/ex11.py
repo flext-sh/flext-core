@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextSettings, m, p, r
+from examples import p
+from flext_core import FlextSettings, m, r
 
 
 class ExamplesFlextModelsEx11:
@@ -25,12 +26,12 @@ class ExamplesFlextModelsEx11:
 
     class ServiceHandlerLike(m.BaseModel):
         message_type: Annotated[
-            type[m.Value],
+            type[p.Value],
             m.Field(description="Message type handled by this handler"),
         ] = m.Value
 
         @staticmethod
-        def handle(message: ExamplesFlextModelsEx11.Payload) -> p.Result[str]:
+        def handle(message: p.Examples.Payload) -> p.Result[str]:
             return r[str].ok(message.text)
 
     class ProcessorProtocolGood(m.Value):

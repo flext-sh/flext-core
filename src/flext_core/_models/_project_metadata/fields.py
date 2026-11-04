@@ -231,3 +231,6 @@ class FlextModelsProjectMetadataFields:
                 description="Whether non-canonical tracked dirs join the scan",
             ),
         ] = None
+
+
+__all__: list[str] = ["FlextModelsProjectMetadataFields"]

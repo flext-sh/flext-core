@@ -8,19 +8,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, override
 
-from flext_core import m
+from flext_core import m, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class TestsFlextModelsDomainMixin:
+class TestsFlextModelsDomain:
     """Domain and parser model helpers."""
 
     class EmailResponse(m.BaseModel):
         """Shared email response model for tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         status: str
         message_id: str
@@ -28,7 +28,7 @@ class TestsFlextModelsDomainMixin:
     class NoDict(m.BaseModel):
         """Model for testing value-comparison fallback paths in domain utilities."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         value: int = 0
 
@@ -45,11 +45,11 @@ class TestsFlextModelsDomainMixin:
     class ParseOptions(m.BaseModel):
         """Test-local parse options after production model removal."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         strip: bool = True
         remove_empty: bool = True
         validator: Callable[[str], bool] | None = None
 
 
-__all__: list[str] = ["TestsFlextModelsDomainMixin"]
+__all__: list[str] = ["TestsFlextModelsDomain"]

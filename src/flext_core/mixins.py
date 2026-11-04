@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from contextlib import contextmanager
 
-from flext_core import FlextContext, c, m, p, t, u
+from flext_core import FlextContainer, FlextContext, c, m, p, t, u
 
 
 class FlextMixins(m.ServiceState):
@@ -32,25 +32,8 @@ class FlextMixins(m.ServiceState):
 
     @property
     def logger(self) -> p.Logger:
-        """Reuse the kernel logger rather than bootstrap one per operation."""
-        return self._get_or_create_logger()
-
-    @classmethod
-    def _get_or_create_logger(cls) -> p.Logger:
-        """Reuse one logger per concrete component class.
-
-        Returns:
-            The component's cached logger.
-
-        """
-        logger_name = f"{cls.__module__}.{cls.__name__}"
-        with cls._cache_lock:
-            if logger_name in cls._logger_cache:
-                return cls._logger_cache[logger_name]
-        logger = u.fetch_logger(logger_name)
-        with cls._cache_lock:
-            cls._logger_cache[logger_name] = logger
-        return logger
+        """Consume the logging dependency elected by this component's runtime."""
+        return self._get_runtime().logger
 
     @contextmanager
     def track(self, operation_name: str) -> t.OperationMetricsStream:
@@ -113,7 +96,7 @@ class FlextMixins(m.ServiceState):
 
         """
         if self._runtime is None:
-            self._runtime = u.build_service_runtime(self)
+            self._runtime = FlextContainer.build_service_runtime(self)
         return self._runtime
 
 

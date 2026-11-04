@@ -13,12 +13,10 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_core import FlextSettings
-from tests import c, m, tm, u
+from tests import c, m, p, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator
-
-from tests import p
 
 
 class TestsFlextCoreLoggingThreshold:
@@ -26,8 +24,8 @@ class TestsFlextCoreLoggingThreshold:
 
     pytestmark = pytest.mark.usefixtures("restore_default_level")
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def restore_default_level() -> Generator[None]:
         """Restore the captured application policy, never today's defaults."""
         original_settings, original_options = u.logging_settings(), u.logging_options()

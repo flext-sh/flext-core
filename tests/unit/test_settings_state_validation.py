@@ -13,7 +13,7 @@ from uuid import UUID
 import pytest
 
 from flext_core import FlextSettings
-from tests import m, tm, u
+from tests import m, t, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -55,7 +55,7 @@ class TestsFlextCoreSettingsStateValidation:
             port: int = m.Field(default=389, ge=1, le=65535)
 
         class Connections(m.BaseModel):
-            entries: list[Connection] = m.Field(default_factory=list[Connection])
+            entries: list[Connection] = m.Field(default_factory=list)
 
         class Owner(FlextSettings):
             connections: Connections = m.Field(default_factory=Connections)
@@ -200,7 +200,7 @@ class TestsFlextCoreSettingsStateValidation:
         """Shared and indexed AliasPaths resolve before field-name overrides."""
 
         class Owner(FlextSettings):
-            model_config: ClassVar[m.SettingsConfigDict] = m.SettingsConfigDict(
+            model_config: ClassVar[t.SettingsConfigDict] = m.SettingsConfigDict(
                 extra="forbid", populate_by_name=False
             )
             endpoint: str = m.Field(validation_alias=m.AliasPath("connection", "host"))
@@ -228,7 +228,7 @@ class TestsFlextCoreSettingsStateValidation:
         """Partial AliasPath input and canonical field names share one branch owner."""
 
         class Branch(m.BaseModel):
-            model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
                 extra="forbid", populate_by_name=False
             )
             endpoint: str = m.Field(

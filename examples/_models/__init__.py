@@ -7,7 +7,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 from flext_core.lazy import install_lazy_exports
@@ -27,7 +26,6 @@ if TYPE_CHECKING:
     from examples._models.ex12 import ExamplesFlextModelsEx12
     from examples._models.ex14 import ExamplesFlextModelsEx14
     from examples._models.handle import ExamplesFlextModelsHandle
-    from examples._models.output import ExamplesFlextModelsOutput
     from examples._models.person import ExamplesFlextModelsPerson
 
 
@@ -46,14 +44,13 @@ __all__: tuple[str, ...] = (
     "ExamplesFlextModelsEx12",
     "ExamplesFlextModelsEx14",
     "ExamplesFlextModelsHandle",
-    "ExamplesFlextModelsOutput",
     "ExamplesFlextModelsPerson",
 )
 
 install_lazy_exports(
     __name__,
     globals(),
-    MappingProxyType({
+    {
         "ExamplesFlextModelsErrors": ".errors",
         "ExamplesFlextModelsEx00": ".ex00",
         "ExamplesFlextModelsEx01": ".ex01",
@@ -68,8 +65,7 @@ install_lazy_exports(
         "ExamplesFlextModelsEx12": ".ex12",
         "ExamplesFlextModelsEx14": ".ex14",
         "ExamplesFlextModelsHandle": ".handle",
-        "ExamplesFlextModelsOutput": ".output",
         "ExamplesFlextModelsPerson": ".person",
-    }),
+    },
     public_exports=__all__,
 )

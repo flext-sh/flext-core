@@ -6,20 +6,31 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
-from flext_core._protocols import FlextProtocolsBase, FlextProtocolsResult
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from flext_core._typings import FlextTypesAnnotateds, FlextTypesPydantic
+from flext_core._protocols import (
+    FlextProtocolsBase,
+    FlextProtocolsPydantic,
+    FlextProtocolsResult,
+)
 
 
 class FlextProtocolsSettings:
     """Protocols for configurable components and settings."""
 
-    type SettingsOverride = t.SettingsOverride[FlextProtocolsBase.Model]
-    type SettingsOverridesMapping = t.SettingsOverridesMapping[FlextProtocolsBase.Model]
+    type SettingsOverride = t.SettingsOverride[FlextProtocolsPydantic.BaseModel]
+    type SettingsOverridesMapping = t.SettingsOverridesMapping[
+        FlextProtocolsPydantic.BaseModel
+    ]
 
     @runtime_checkable
-    class Configurable(FlextProtocolsBase.Base, Protocol):
+    class Configurable(FlextProtocolsPydantic.Base, Protocol):
         """Protocol for component configuration."""
 
         def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
@@ -29,7 +40,7 @@ class FlextProtocolsSettings:
     @runtime_checkable
     class Settings(
         FlextProtocolsResult.HasModelDump[t.MetadataMapping],
-        FlextProtocolsBase.Base,
+        FlextProtocolsPydantic.Base,
         Protocol,
     ):
         """Minimal Pydantic-2 settings contract and universal log level.
@@ -120,6 +131,29 @@ class FlextProtocolsSettings:
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...
+
+    @runtime_checkable
+    class SettingsValue(FlextProtocolsBase.ImmutableValueModel, Protocol):
+        """Structural data contract projected from the owning model."""
+
+    @runtime_checkable
+    class RetryConfiguration(FlextProtocolsBase.RetryConfigurationMixin, Protocol):
+        """Structural data contract projected from the owning model."""
+
+        @property
+        def max_retries(self) -> FlextTypesPydantic.PositiveInt:
+            """Maximum retry attempts from c (Constants default)."""
+            ...
+
+        exponential_backoff: bool
+
+        @property
+        def backoff_multiplier(self) -> FlextTypesAnnotateds.BackoffMultiplier:
+            """Backoff multiplier for exponential backoff."""
+            ...
+
+        retry_on_exceptions: Sequence[type[BaseException]]
+        retry_on_status_codes: Sequence[int]
 
 
 __all__: list[str] = ["FlextProtocolsSettings"]

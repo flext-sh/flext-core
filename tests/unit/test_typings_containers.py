@@ -280,7 +280,7 @@ class TestsFlextCoreTypedCollectionAliases:
 
     @staticmethod
     def test_int_pair_alias_validates_two_ints() -> None:
-        """tuple[int, int] coerces and validates a pair of ints, rejecting wrong arity."""
+        """tuple[int, int] coerces and validates a pair, rejecting wrong arity."""
         adapter: t.TypeAdapter[tuple[int, int]] = u.type_adapter(
             t.TypeForm(tuple[int, int])
         )

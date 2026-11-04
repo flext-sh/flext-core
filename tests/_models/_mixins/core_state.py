@@ -8,33 +8,33 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core import m
+from flext_core import m, t
 
 
-class TestsFlextModelsCoreStateMixin:
+class TestsFlextModelsCoreState:
     """Core state model helpers."""
 
     class SingletonClassForTest(m.BaseModel):
         """Test singleton class with Pydantic validation."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
             validate_assignment=True,
             extra="forbid",
         )
 
-        _instance: ClassVar[
-            TestsFlextModelsCoreStateMixin.SingletonClassForTest | None
-        ] = None
+        _instance: ClassVar[TestsFlextModelsCoreState.SingletonClassForTest | None] = (
+            None
+        )
 
         name: str = "default"
         timeout: int = 30
 
         @classmethod
-        def fetch_global(cls) -> TestsFlextModelsCoreStateMixin.SingletonClassForTest:
+        def fetch_global(cls) -> TestsFlextModelsCoreState.SingletonClassForTest:
             """Get global singleton instance.
 
             Returns:
-                The resulting ``TestsFlextModelsCoreStateMixin.SingletonClassForTest``.
+                The resulting ``TestsFlextModelsCoreState.SingletonClassForTest``.
 
             """
             if cls._instance is None:
@@ -49,10 +49,10 @@ class TestsFlextModelsCoreStateMixin:
     class _SampleEntity(m.BaseModel):
         """Test entity for domain utility tests."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=False)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=False)
 
         unique_id: str = "test-123"
         name: str = "test"
 
 
-__all__: list[str] = ["TestsFlextModelsCoreStateMixin"]
+__all__: list[str] = ["TestsFlextModelsCoreState"]

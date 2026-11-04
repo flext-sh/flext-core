@@ -8,9 +8,21 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from functools import partial
-from typing import TYPE_CHECKING, Unpack, override
+from typing import TYPE_CHECKING, Self, Unpack, override
 
-from flext_core import c, e, m, p, r, s, t, u
+from flext_core import (
+    FlextContainer,
+    FlextDispatcher,
+    FlextHandlers,
+    c,
+    e,
+    m,
+    p,
+    r,
+    s,
+    t,
+    u,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -19,10 +31,45 @@ if TYPE_CHECKING:
 class FlextRegistry(s[bool], m.RegistryOptions):
     """Coordinate the injected runtime without another dispatch or storage engine."""
 
-    def __init_subclass__(cls, **kwargs: Unpack[m.ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
         """Keep explicitly selected class-scope plugins local to each subclass."""
         super().__init_subclass__(**kwargs)
         cls._class_plugin_storage = {}
+
+    @classmethod
+    def create(
+        cls,
+        dispatcher: p.Dispatcher | None = None,
+        *,
+        discovery_module: t.RegistryModule | None = None,
+    ) -> Self:
+        """Build a registry on a fresh service runtime around ``dispatcher``.
+
+        Handlers discovered in ``discovery_module`` are registered on the same
+        dispatcher the registry dispatches through.
+
+        Returns:
+            The registry sharing one runtime for registration and dispatch.
+
+        """
+        elected = dispatcher if dispatcher is not None else FlextDispatcher()
+        registry = cls(
+            registry_runtime=FlextContainer.build_service_runtime(
+                m.RuntimeBootstrapOptions(dispatcher=elected),
+            ),
+        )
+        if discovery_module is not None:
+            elected.register_handlers(
+                tuple(
+                    m.HandlerRegistration(
+                        handler=handler, message_type=metadata.command
+                    )
+                    for _, handler, metadata in FlextHandlers.Discovery.scan_module(
+                        discovery_module
+                    )
+                )
+            ).unwrap()
+        return registry
 
     @override
     def _get_runtime(self) -> p.ServiceRuntime:

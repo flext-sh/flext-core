@@ -44,7 +44,7 @@ class FlextModelsPydantic:
     """Public base model classes from pydantic v2.
 
     **NEVER import pydantic directly outside flext-core/src/.**
-    Extend from these bases via m.* instead: m.BaseModel, m.RootModel
+    Extend from these bases via m.* instead: p.BaseModel, m.RootModel
 
     Available model bases (accessible as m.MODEL_NAME):
         BaseModel: Pydantic v2 base for all data models with validation
@@ -123,11 +123,6 @@ class FlextModelsPydantic:
 
     # Validation exception (re-exported so consumers avoid `import pydantic`)
     ValidationError = pydantic.ValidationError
-
-    # Settings-source hook contract: ``settings_customise_sources`` overrides
-    # annotate the wide upstream base (Liskov-correct parameter widening).
-    type PydanticBaseSettings = pydantic_settings.BaseSettings
-    type PydanticBaseSettingsSource = pydantic_settings.PydanticBaseSettingsSource
 
 
 __all__: list[str] = ["FlextModelsPydantic"]

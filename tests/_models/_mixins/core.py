@@ -7,18 +7,18 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from tests._models._mixins import (
-    TestsFlextModelsCoreErrorsMixin,
-    TestsFlextModelsCorePublicMixin,
-    TestsFlextModelsCoreStateMixin,
+    TestsFlextModelsCoreErrors,
+    TestsFlextModelsCorePublic,
+    TestsFlextModelsCoreState,
 )
 
 
-class TestsFlextModelsCoreMixin(
-    TestsFlextModelsCoreStateMixin,
-    TestsFlextModelsCoreErrorsMixin,
-    TestsFlextModelsCorePublicMixin,
+class TestsFlextModelsCore(
+    TestsFlextModelsCoreState,
+    TestsFlextModelsCoreErrors,
+    TestsFlextModelsCorePublic,
 ):
     """Core shared model helpers."""
 
 
-__all__: list[str] = ["TestsFlextModelsCoreMixin"]
+__all__: list[str] = ["TestsFlextModelsCore"]

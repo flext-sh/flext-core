@@ -7,13 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from tests._models._mixins import (
-    TestsFlextModelsContainerMixin,
-    TestsFlextModelsCoreMixin,
-    TestsFlextModelsDomainMixin,
-    TestsFlextModelsFixtureDictsMixin,
-    TestsFlextModelsGuardsMapperMixin,
-    TestsFlextModelsServiceCasesMixin,
-    TestsFlextModelsTestDataMixin,
+    TestsFlextModelsContainer,
+    TestsFlextModelsCore,
+    TestsFlextModelsDomain,
+    TestsFlextModelsFixtureDicts,
+    TestsFlextModelsGuardsMapper,
+    TestsFlextModelsServiceCases,
+    TestsFlextModelsTestData,
 )
 
 
@@ -24,13 +24,13 @@ class TestsFlextModelsNamespace:
         """Composition of the flext-core test model mixins."""
 
         class TestsFlextModelsMixins(
-            TestsFlextModelsContainerMixin,
-            TestsFlextModelsCoreMixin,
-            TestsFlextModelsDomainMixin,
-            TestsFlextModelsFixtureDictsMixin,
-            TestsFlextModelsGuardsMapperMixin,
-            TestsFlextModelsServiceCasesMixin,
-            TestsFlextModelsTestDataMixin,
+            TestsFlextModelsContainer,
+            TestsFlextModelsCore,
+            TestsFlextModelsDomain,
+            TestsFlextModelsFixtureDicts,
+            TestsFlextModelsGuardsMapper,
+            TestsFlextModelsServiceCases,
+            TestsFlextModelsTestData,
         ):
             """flext-core test models namespace."""
 

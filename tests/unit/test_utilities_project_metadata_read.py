@@ -1,6 +1,6 @@
 """Project metadata read utility tests.
 
-``_read(root)`` returns ``p.Result[m.ProjectMetadata]`` — a
+``_read(root)`` returns ``p.Result[p.ProjectMetadata]`` — a
 Result-wrapped, frozen model whose PEP 621 payload lives under the nested
 ``project`` field. Tests assert the observable success value and the
 Result failure contract for missing/incomplete pyproject inputs.
@@ -20,11 +20,11 @@ from tests import c, m, p, r, tm, u
 from tests.unit._project_metadata_support import write_pyproject
 
 
-def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
+def _read(root: Path) -> p.ResultView[p.ProjectMetadata]:
     """Read project metadata through the canonical owner chain.
 
     Returns:
-        The resulting ``p.ResultView[m.ProjectMetadata]``.
+        The resulting ``p.ResultView[p.ProjectMetadata]``.
 
     """
     resolved = root.resolve()
@@ -33,13 +33,13 @@ def _read(root: Path) -> p.ResultView[m.ProjectMetadata]:
         meta = u.build_project_metadata(resolved, document)
     except (OSError, ValueError) as exc:
         return cast(
-            "p.ResultView[m.ProjectMetadata]",
-            r[m.ProjectMetadata].fail(
+            "p.ResultView[p.ProjectMetadata]",
+            r[p.ProjectMetadata].fail(
                 f"cannot read project metadata from {resolved}: {exc}",
                 exception=exc,
             ),
         )
-    return cast("p.ResultView[m.ProjectMetadata]", r[m.ProjectMetadata].ok(meta))
+    return cast("p.ResultView[p.ProjectMetadata]", r[p.ProjectMetadata].ok(meta))
 
 
 class TestsFlextUtilitiesProjectMetadataRead:

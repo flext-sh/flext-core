@@ -27,6 +27,7 @@ class TestsFlextConstants(flext_tests_c, flext_core_c):
     """Layer 0 constants facade for flext-core tests."""
 
     class Tests(
+        flext_tests_c.Tests,
         TestsFlextConstantsDomain,
         TestsFlextConstantsEnums,
         TestsFlextConstantsErrors,
@@ -34,7 +35,6 @@ class TestsFlextConstants(flext_tests_c, flext_core_c):
         TestsFlextConstantsOther,
         TestsFlextConstantsResult,
         TestsFlextConstantsServices,
-        flext_tests_c.Tests,
     ):
         """Flat constants for test composition and parametrization.
 

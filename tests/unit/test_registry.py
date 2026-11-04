@@ -10,7 +10,7 @@ from collections.abc import Callable
 
 import pytest
 
-from flext_core import FlextRegistry
+from flext_core import FlextContainer, FlextDispatcher, FlextRegistry
 from tests import c, h, m, p, r, t, tm, u
 
 
@@ -34,7 +34,7 @@ class TestsFlextCoreRegistry:
     @staticmethod
     def test_registry_consumes_one_validated_runtime() -> None:
         """Registration and plugin storage share the explicit composition graph."""
-        runtime = u.build_service_runtime()
+        runtime = FlextContainer.build_service_runtime()
         registry = FlextRegistry(registry_runtime=runtime)
         tm.that(registry.dispatcher is runtime.dispatcher, truth=True)
         tm.that(registry.container is runtime.container, truth=True)
@@ -54,15 +54,15 @@ class TestsFlextCoreRegistry:
     @staticmethod
     def test_registry_validates_runtime_assignment() -> None:
         """Assignment cannot invalidate the composed graph after construction."""
-        runtime = u.build_service_runtime()
+        runtime = FlextContainer.build_service_runtime()
         registry = FlextRegistry(registry_runtime=runtime)
         field_name = "registry_runtime"
         with pytest.raises((TypeError, ValueError)):
             setattr(registry, field_name, "invalid")
         tm.that(registry.registry_runtime is runtime, truth=True)
 
-    @staticmethod
     @pytest.fixture
+    @staticmethod
     def registry() -> p.Registry:
         """Build a registry backed by an accepting dispatcher.
 
@@ -70,12 +70,12 @@ class TestsFlextCoreRegistry:
             The resulting ``p.Registry``.
 
         """
-        return u.build_registry(dispatcher=u.build_dispatcher())
+        return FlextRegistry.create(dispatcher=FlextDispatcher())
 
     @staticmethod
     def test_execute_succeeds_when_dispatcher_present() -> None:
         """Test execute succeeds when dispatcher present."""
-        registry = u.build_registry(dispatcher=u.build_dispatcher())
+        registry = FlextRegistry.create(dispatcher=FlextDispatcher())
 
         outcome = registry.execute()
 
@@ -192,7 +192,7 @@ class TestsFlextCoreRegistry:
     @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
     def test_plugin_identity_and_conflicts(scope: c.RegistrationScope) -> None:
         """Models remain live collaborators, not dumps or equality-based aliases."""
-        registry = u.build_registry()
+        registry = FlextRegistry.create()
         plugin = m.ConfigMap(root={"plugin": "original"})
         equal_but_distinct = m.ConfigMap(root={"plugin": "original"})
         try:
@@ -228,7 +228,7 @@ class TestsFlextCoreRegistry:
     @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
     def test_bound_plugin_method_is_idempotent(scope: c.RegistrationScope) -> None:
         """Repeated bound-method access preserves the same receiver and function."""
-        registry = u.build_registry()
+        registry = FlextRegistry.create()
         payload = m.ConfigMap(root={})
         original = payload.model_dump
         try:
@@ -257,7 +257,7 @@ class TestsFlextCoreRegistry:
     @staticmethod
     def test_instance_plugins_do_not_leak_between_compositions() -> None:
         """Two independently composed APIs do not inherit another registry's plugins."""
-        first, second = u.build_registry(), u.build_registry()
+        first, second = FlextRegistry.create(), FlextRegistry.create()
         tm.that(first.register_plugin("isolated", "payload", "one").success, truth=True)
         tm.that(second.fetch_plugin("isolated", "payload").failure, truth=True)
 
@@ -288,8 +288,8 @@ class TestsFlextCoreRegistry:
     @staticmethod
     def test_class_scope_plugin_is_visible_across_instances() -> None:
         """Test class scope plugin is visible across instances."""
-        writer = u.build_registry(dispatcher=u.build_dispatcher())
-        reader = u.build_registry(dispatcher=u.build_dispatcher())
+        writer = FlextRegistry.create(dispatcher=FlextDispatcher())
+        reader = FlextRegistry.create(dispatcher=FlextDispatcher())
 
         registration = writer.register_plugin(
             "validators",

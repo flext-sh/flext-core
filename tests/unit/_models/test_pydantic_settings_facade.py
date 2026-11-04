@@ -1,6 +1,6 @@
-"""Behavioral contract tests for the pydantic-settings facade on ``m``.
+"""Behavioral settings-source contracts for SDK types and runtime presets.
 
-Exercises the wide pydantic-settings exports consumed through ``m`` exactly as
+Exercises the wide pydantic-settings contracts consumed through ``t`` exactly as
 fleet consumers do: observable override behavior only, never pydantic
 internals or identity introspection.
 
@@ -32,7 +32,7 @@ class TestsFlextCorePydanticSettingsFacade:
     def test_native_settings_alias_accepts_the_public_preset() -> None:
         """The native annotation accepts the original settings instance."""
         instance = FlextModels.BaseSettings()
-        adapter = u.type_adapter(t.TypeForm(FlextModels.PydanticBaseSettings))
+        adapter = u.type_adapter(t.TypeForm(t.PydanticBaseSettings))
         tm.ok(adapter.validate_python(instance) is instance)
 
     class _TopicSettings(m.BaseSettings):
@@ -44,16 +44,16 @@ class TestsFlextCorePydanticSettingsFacade:
         @classmethod
         def settings_customise_sources(
             cls,
-            settings_cls: type[m.PydanticBaseSettings],
-            init_settings: m.PydanticBaseSettingsSource,
-            env_settings: m.PydanticBaseSettingsSource,
-            dotenv_settings: m.PydanticBaseSettingsSource,
-            file_secret_settings: m.PydanticBaseSettingsSource,
-        ) -> tuple[m.PydanticBaseSettingsSource, ...]:
+            settings_cls: type[t.PydanticBaseSettings],
+            init_settings: t.PydanticBaseSettingsSource,
+            env_settings: t.PydanticBaseSettingsSource,
+            dotenv_settings: t.PydanticBaseSettingsSource,
+            file_secret_settings: t.PydanticBaseSettingsSource,
+        ) -> tuple[t.PydanticBaseSettingsSource, ...]:
             """Init-only resolution proves the override is consulted.
 
             Returns:
-                The resulting ``tuple[m.PydanticBaseSettingsSource, ...]``.
+                The resulting ``tuple[t.PydanticBaseSettingsSource, ...]``.
 
             """
             _ = (settings_cls, env_settings, dotenv_settings, file_secret_settings)

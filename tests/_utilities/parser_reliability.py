@@ -7,16 +7,16 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from tests._utilities import (
-    TestsFlextUtilitiesParserScenariosMixin,
-    TestsFlextUtilitiesReliabilityScenariosMixin,
+    TestsFlextUtilitiesParserScenarios,
+    TestsFlextUtilitiesReliabilityScenarios,
 )
 
 
-class TestsFlextUtilitiesParserReliabilityMixin(
-    TestsFlextUtilitiesParserScenariosMixin,
-    TestsFlextUtilitiesReliabilityScenariosMixin,
+class TestsFlextUtilitiesParserReliability(
+    TestsFlextUtilitiesParserScenarios,
+    TestsFlextUtilitiesReliabilityScenarios,
 ):
     """Parser and reliability scenario helpers."""
 
 
-__all__: list[str] = ["TestsFlextUtilitiesParserReliabilityMixin"]
+__all__: list[str] = ["TestsFlextUtilitiesParserReliability"]

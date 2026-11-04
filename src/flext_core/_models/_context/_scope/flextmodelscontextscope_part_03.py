@@ -26,6 +26,7 @@ class FlextModelsContextScopePart03(FlextModelsContextScopePart02):
         ] = None
 
         @FlextModelsPydantic.computed_field
+        @property
         def configured(self) -> bool:
             """Whether a container is configured for service access.
 

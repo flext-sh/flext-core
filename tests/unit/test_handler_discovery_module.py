@@ -13,6 +13,7 @@ from types import ModuleType
 
 import pytest
 
+from flext_core import FlextDispatcher
 from tests import c, h, m, p, r, t, tm, u
 
 
@@ -121,7 +122,7 @@ class TestsFlextHandlerDiscovery:
         found = h.Discovery.scan_module(module)[0][1]
         tm.that(found is operation)
         tm.that(received, empty=True)
-        dispatcher = u.build_dispatcher()
+        dispatcher = FlextDispatcher()
         report: p.HandlerRegistrationReport = tm.ok(
             dispatcher.register_handlers((
                 m.HandlerRegistration(
@@ -160,7 +161,7 @@ class TestsFlextHandlerDiscovery:
             h.handler(command=m.Command, priority=-1)(operation)
 
     @staticmethod
-    @pytest.mark.parametrize(c.HandlerMode.COMMAND, [m.Command, m.Event])
+    @pytest.mark.parametrize(c.HandlerMode.COMMAND, [p.Command, m.Event])
     def test_stacked_declarations_leave_original_metadata_unchanged(
         command: type,
     ) -> None:
@@ -279,10 +280,12 @@ class TestsFlextHandlerDiscovery:
             return r[str].ok("created")
 
         setattr(operation, c.HANDLER_ATTR, invalid)
-        with pytest.raises(TypeError):
-            h.Discovery.scan_module(
-                u.Tests.handler_module("invalid_handlers", operation=operation)
-            )
+        module = u.Tests.handler_module("invalid_handlers", operation=operation)
+        diagnostic = c.ERR_HANDLER_METADATA_INVALID.format(
+            name=f"{module.__name__}.{operation.__name__}"
+        )
+        with pytest.raises(TypeError, match=escape(diagnostic)):
+            h.Discovery.scan_module(module)
 
     @staticmethod
     def test_injected_unsupported_policy_is_rejected_by_discovery() -> None:
@@ -339,6 +342,24 @@ class TestsFlextHandlerDiscovery:
         tm.that(
             tm.ok(u.Tests.InheritedHandlerService().create(request)), eq="overridden"
         )
+
+    @staticmethod
+    def test_bound_and_static_methods_retain_their_declarations() -> None:
+        """Static metadata reads preserve real instance and class descriptors."""
+        service = u.Tests.HandlerService()
+        for candidate, command in (
+            (service.create, m.Command),
+            (u.Tests.DescriptorHandlerService.class_method, m.Event),
+            (u.Tests.DescriptorHandlerService.static, m.Command),
+        ):
+            discovered = h.Discovery.scan_module(
+                u.Tests.handler_module("descriptor_handlers", operation=candidate)
+            )
+            tm.that(len(discovered), eq=1)
+            name, found, metadata = discovered[0]
+            tm.that(name, eq=c.ContextScope.OPERATION)
+            tm.that(found is candidate)
+            tm.that(metadata.command is command)
 
     @staticmethod
     def test_empty_inputs_do_not_construct_a_service() -> None:

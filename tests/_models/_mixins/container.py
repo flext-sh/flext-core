@@ -13,16 +13,13 @@ from flext_core import m
 from tests import t
 
 
-class TestsFlextModelsContainerMixin:
+class TestsFlextModelsContainer:
     """Container scenario model helpers."""
 
     class ServiceScenario(m.BaseModel):
         """Test scenario for service registration and retrieval."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
-        )
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Service scenario name")]
         service: Annotated[
             t.Primitives,
@@ -33,10 +30,7 @@ class TestsFlextModelsContainerMixin:
     class TypedRetrievalScenario(m.BaseModel):
         """Test scenario for typed service retrieval."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
-            frozen=True,
-            arbitrary_types_allowed=True,
-        )
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
         name: Annotated[str, m.Field(description="Typed retrieval scenario name")]
         service: Annotated[str | int, m.Field(description="Registered service value")]
         expected_type: Annotated[
@@ -53,10 +47,10 @@ class TestsFlextModelsContainerMixin:
         """Centralized container test scenarios using c."""
 
         SERVICE_SCENARIOS: ClassVar[
-            Sequence[TestsFlextModelsContainerMixin.ServiceScenario]
+            Sequence[TestsFlextModelsContainer.ServiceScenario]
         ] = []  # populated after class definition
         TYPED_RETRIEVAL_SCENARIOS: ClassVar[
-            Sequence[TestsFlextModelsContainerMixin.TypedRetrievalScenario]
+            Sequence[TestsFlextModelsContainer.TypedRetrievalScenario]
         ] = []  # populated after class definition
         CONFIG_SCENARIOS: ClassVar[Sequence[Mapping[str, t.Scalar]]] = [
             {"enable_singleton": False, "max_services": 8},
@@ -67,4 +61,4 @@ class TestsFlextModelsContainerMixin:
     # --- from test_utilities_guards.py and test_utilities_guards_full_coverage.py ---
 
 
-__all__: list[str] = ["TestsFlextModelsContainerMixin"]
+__all__: list[str] = ["TestsFlextModelsContainer"]

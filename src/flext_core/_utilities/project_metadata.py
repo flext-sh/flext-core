@@ -51,7 +51,7 @@ class FlextUtilitiesProjectMetadata(
     @cache
     def read_project_document_cached(
         root: Path,
-    ) -> m.PyprojectDocument:
+    ) -> p.PyprojectDocument:
         """Read and validate the ``pyproject.toml`` document at one root.
 
         The parsed document is cached per root path.
@@ -73,8 +73,8 @@ class FlextUtilitiesProjectMetadata(
     def build_project_metadata(
         cls,
         root: Path,
-        document: m.PyprojectDocument,
-    ) -> m.ProjectMetadata:
+        document: p.PyprojectDocument,
+    ) -> p.ProjectMetadata:
         """Build canonical project metadata from a parsed pyproject document.
 
         When the document carries no ``[project]`` table, the package name

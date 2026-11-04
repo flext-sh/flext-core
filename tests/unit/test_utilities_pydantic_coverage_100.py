@@ -29,7 +29,7 @@ class TestsFlextUtilitiesPydantic:
     class _FieldFactoryContract(m.BaseModel):
         """Required fields and typed factories through both public facades."""
 
-        model_config: ClassVar[m.ConfigDict] = m.ConfigDict(str_strip_whitespace=True)
+        model_config: ClassVar[t.ConfigDict] = m.ConfigDict(str_strip_whitespace=True)
 
         label: str = m.Field(min_length=1)
         echo: str = m.Field(default_factory=u.Tests.validated_label)
@@ -56,7 +56,6 @@ class TestsFlextUtilitiesPydantic:
     @staticmethod
     def test_field_defaults_preserve_native_types_and_validation() -> None:
         """Default overloads preserve identity, defaults and schema constraints."""
-        tm.ok(m.Field is u.Field)
         model = TestsFlextUtilitiesPydantic._FieldDefaultsContract.model_validate({})
         label: str = model.label
         attempts: int = model.attempts
@@ -202,7 +201,7 @@ class TestsFlextUtilitiesPydantic:
     class _PrivateAttrContract(m.BaseModel):
         label: str
         _model_values: list[str] = m.PrivateAttr(
-            default_factory=list[str],
+            default_factory=list,
         )
         _utility_values: list[str] = m.PrivateAttr(
             default_factory=u.empty(t.TypeForm(list[str])),

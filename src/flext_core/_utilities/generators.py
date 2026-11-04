@@ -15,10 +15,9 @@ import string
 import uuid
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, tzinfo
-from importlib import import_module
 from zoneinfo import ZoneInfo
 
-from flext_core import c, m, t
+from flext_core import FlextSettings, c, m, p, t
 
 
 class FlextUtilitiesGenerators:
@@ -127,7 +126,7 @@ class FlextUtilitiesGenerators:
     def generate(
         kind: str | None = None,
         *,
-        options: m.GenerateOptions | None = None,
+        options: p.GenerateOptions | None = None,
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method).
 
@@ -251,10 +250,8 @@ class FlextUtilitiesGenerators:
             The resulting ``tzinfo``.
 
         """
-        settings_module = import_module("flext_core._settings")
-        settings_cls = settings_module.FlextSettings
         return FlextUtilitiesGenerators.resolve_timezone(
-            settings_cls.fetch_global().timezone,
+            FlextSettings.fetch_global().timezone,
         )
 
     @staticmethod

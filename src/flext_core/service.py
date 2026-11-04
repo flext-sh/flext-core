@@ -52,7 +52,7 @@ class FlextService[TDomainResult = p.Base](x):
     ``TDomainResult`` fixes the result payload type the service returns.
     """
 
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
         strict=True,
         extra="forbid",
         validate_by_name=True,
@@ -63,7 +63,7 @@ class FlextService[TDomainResult = p.Base](x):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _instance: ClassVar[p.Base | None] = None
 
-    def __init_subclass__(cls, **kwargs: Unpack[m.ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         super().__init_subclass__(**kwargs)
         cls._instance = None

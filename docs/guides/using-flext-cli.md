@@ -12,6 +12,8 @@
 - [Settings](#settings)
 - [Model-driven command](#model-driven-command)
 - [Testing a command](#testing-a-command)
+- [Managed process communication](#managed-process-communication)
+- [Guarded directory materialization](#guarded-directory-materialization)
 - [Good practices](#good-practices)
 - [Bad practices](#bad-practices)
 - [Related](#related)
@@ -74,16 +76,7 @@ class FlextApiSettings(FlextSettings):
 ```python
 from __future__ import annotations
 
-from collections.abc import (
-    Iterable,
-    Iterator,
-    Mapping,
-    MutableMapping,
-    MutableSequence,
-    Sequence,
-)
-
-from flext_cli import FlextCli, FlextCliSettings, m, t
+from flext_cli import FlextCliCli, FlextCliSettings, m, t
 
 settings = FlextCliSettings.fetch_global()
 
@@ -108,20 +101,20 @@ def greet_handler(model: GreetInput) -> t.JsonValue:
     return {"message": message}
 
 
-command = FlextCli.model_command(
+command = FlextCliCli.model_command(
     model_cls=GreetInput,
     handler=greet_handler,
     settings=settings,
 )
-cli = FlextCli()
+cli = FlextCliCli()
 app = cli.create_app_with_common_params(name="greeting", help_text="Greeting commands")
 cli.register_command(app, name="greet", help_text="Build a greeting", command=command)
 ```
 
 **Common mistakes to avoid:**
 
-- `FlextCli.build_model_command(...)` does not exist; use
-  `FlextCli.model_command(...)`.
+- `FlextCliCli.build_model_command(...)` does not exist; use
+  `FlextCliCli.model_command(...)`.
 - `m.CliInput` / `m.CliOutput` do not exist; use plain `m.BaseModel` subclasses.
 
 ## Testing a command
@@ -130,9 +123,10 @@ Use `FlextCliCli.invoke_app` with the adapter-owned application, not Typer's `Cl
 directly. This independent example constructs and invokes a real model-backed command;
 handlers return their value but do not automatically print it.
 
-```{.python .notest}
-from flext_cli import FlextCliCli
+```python
 from tests import c, m, tm
+
+from flext_cli import FlextCliCli
 
 
 class GreetInput(m.BaseModel):
@@ -165,6 +159,36 @@ def test_greet_command() -> None:
     tm.that(invocation.value.exit_code, eq=c.Cli.EXIT_CODE_SUCCESS)
     assert greet_handler(GreetInput(name="Ada")) == "Hello, Ada!"
 ```
+
+## Managed process communication
+
+The existing `u.Cli.process_start` owner returns `p.Cli.ManagedProcess`; it remains
+responsible for spawning, captured streams and child lifecycle. Its
+`stdin_write(data, timeout=...)` contract sends the complete byte message without
+closing stdin or starting another process. The default deadline comes from Core's
+`c.DEFAULT_TIMEOUT_SECONDS`; a consumer may supply its remaining operation budget.
+An absent input stream, an exited child, an invalid deadline or incomplete delivery
+returns a failure before dependent work. Native I/O failures retain their original
+exception and the number of bytes already sent. `stdout_read_until` reads the reply
+on that same handle, and the caller still owns termination and reaping.
+
+This communication contract supports the AI Hub JSONC document session: one SDK
+parse retains its tree while Python composes the declared changes, then the same
+child applies the complete batch. It does not authorize another process runner,
+parser, hidden retry or unverified success. Qualification requires real request/reply
+and failure evidence; this contract alone is not runtime proof.
+
+## Guarded directory materialization
+
+Directory creation consumes the original `m.Cli.AtomicDirectoryChainPlan`; it never
+re-elects a parent after an effect. The native creator retains successful creation
+receipts in the caller's optional progress collection and leaves those directories
+in place if a later native operation fails. Its original exception retains those
+receipts as causal evidence. The existing `atomic_create_directory_chain_guarded`
+Result boundary also exposes the created receipts in structured failure data.
+Neither path restores a prior image or compensates published directories. Consumers
+use the retained state to diagnose and plan forward, rather than copying the chain
+algorithm into their own application.
 
 ## Good practices
 

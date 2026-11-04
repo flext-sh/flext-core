@@ -34,7 +34,7 @@ class TestsFlextResultOperationType(StrEnum):
 class ResultScenario(m.BaseModel):
     """Generic result scenario for r tests."""
 
-    model_config: ClassVar[m.ConfigDict] = m.ConfigDict(frozen=True)
+    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
     name: Annotated[str, m.Field(description="Result scenario name")]
     operation_type: Annotated[
         TestsFlextResultOperationType,
