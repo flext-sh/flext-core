@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from enum import StrEnum, unique
-from typing import ClassVar, Literal
+from typing import ClassVar
 
 
 class TestsFlextConstantsFixtures:
@@ -18,7 +18,6 @@ class TestsFlextConstantsFixtures:
 
     MAX_VALUE: ClassVar[int] = 100
     MAX_RETRIES: ClassVar[int] = 3
-    StatusLiteral = Literal["active", "inactive"]
 
     SAMPLE_PROJECT_NAME: ClassVar[str] = "flext-ldif"
     SAMPLE_PROJECT_VERSION: ClassVar[str] = "0.12.0-dev"
