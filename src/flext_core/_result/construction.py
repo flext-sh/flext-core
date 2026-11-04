@@ -1,7 +1,19 @@
-"""Construction operations for FlextResult.
+"""Factory methods and construction combinators for FlextResult.
+
+Supplies class-level constructor methods such as ``ok``, ``fail``, ``fail_op``,
+``from_failure``, ``from_result``, and ``from_validation``. Enforces standardized
+error code resolution, error metadata validation, and sensitive data redaction.
+
+See Also:
+    - Workspace ADR-001 (Railway-Oriented Programming):
+      ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+    - Workspace ADR-027 (Facade Single-Owner Law):
+      ``flext/docs/architecture/adr/027-facade-single-owner-law.md``
+    - :mod:`flext_core._result.behavior`: Pythonic behavioral extensions.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -18,16 +30,32 @@ if TYPE_CHECKING:
 
 
 class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
-    """Factory methods for the concrete result facade.
+    """Constructor and factory layer for railway result instances.
 
-    Contracts are typed as ``p.Result``. Payload-changing operations delegate
-    to generic construction hooks supplied by the concrete facade through MRO.
+    Provides high-level factory methods for building success and failure results,
+    converting exceptions into explicit failure values, and copying error context.
+
+    Type Parameters:
+        T: The payload type carried upon successful completion.
+
+    See Also:
+        - Workspace ADR-001 (Railway-Oriented Programming):
+          ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+
     """
 
     @staticmethod
     @abstractmethod
     def _create_success[V](value: V) -> p.Result[V]:
-        """Construct a payload through the concrete facade's MRO owner."""
+        """Construct a validated success payload through the concrete facade.
+
+        Args:
+            value: The payload instance.
+
+        Returns:
+            p.Result[V]: Success result instance.
+
+        """
         raise NotImplementedError(value)
 
     @staticmethod
@@ -38,19 +66,30 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         error_data: t.JsonDict | None,
         exception: BaseException | None,
     ) -> p.Result[Never]:
-        """Construct normalized failure state through the concrete facade."""
+        """Construct normalized failure state through the concrete facade.
+
+        Args:
+            error: Descriptive failure message.
+            error_code: Optional machine-readable error code.
+            error_data: Optional structured metadata dictionary.
+            exception: Optional causal exception.
+
+        Returns:
+            p.Result[Never]: Failure result instance.
+
+        """
         msg = f"{error}|{error_code}|{error_data}|{exception}"
         raise NotImplementedError(msg)
 
     @staticmethod
     def require_error(source: p.FailureLike) -> str:
-        """Extract error text from any failed Result.
+        """Extract the error description string from a failed result.
 
-        Empty failures (``fail(None)`` / ``fail("")``) are valid railway values;
-        return ``""`` so combinators re-wrap instead of raising.
+        Args:
+            source: A failure-like container exposing error attributes.
 
         Returns:
-            The resulting ``str``.
+            str: The error message string, or empty string if None.
 
         """
         error = source.error
@@ -58,10 +97,13 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
 
     @classmethod
     def ok[V](cls: type[Self], value: V) -> p.Result[V]:
-        """Create a successful result carrying ``value``.
+        """Create a successful result carrying the provided payload.
+
+        Args:
+            value: The success payload instance.
 
         Returns:
-            The resulting ``p.Result[V]``.
+            p.Result[V]: A validated success result wrapping ``value``.
 
         """
         cls.reject_banned_result_parameterization()
@@ -69,16 +111,16 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
 
     @classmethod
     def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[Never]:
-        """Build a failure copying the error metadata of another result.
+        """Build a failure result copying error metadata from another failed result.
 
         Args:
-            source: The failed result whose error state is copied.
+            source: An existing failed result whose metadata is copied.
 
         Returns:
-            The resulting ``p.Result[Never]``.
+            p.Result[Never]: A new failure result matching the source error context.
 
         Raises:
-            ValueError: If ``source`` is a successful result.
+            ValueError: If ``source`` indicates a successful result.
 
         """
         if source.success:
@@ -140,10 +182,13 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
 
     @classmethod
     def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
-        """Copy an abstract result into this concrete result family.
+        """Convert or copy an abstract result into this concrete result family.
+
+        Args:
+            source: An abstract or concrete result protocol implementation.
 
         Returns:
-            The resulting ``p.Result[V]``.
+            p.Result[V]: A concrete result instance mirroring the source outcome.
 
         """
         cls.reject_banned_result_parameterization()
@@ -158,8 +203,11 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     def _copy_failure(cls, source: p.FailureLike) -> p.Result[Never]:
         """Copy failure state without coupling its absent payload to a type.
 
+        Args:
+            source: A failure-like container exposing error attributes.
+
         Returns:
-            A failure carrying the original metadata.
+            p.Result[Never]: A failure carrying the original metadata.
 
         """
         return cls._failure(
@@ -175,14 +223,15 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         func: Callable[[], V | None],
         error_code: str | None = None,
     ) -> p.Result[V]:
-        """Invoke a callable, turning ``None`` and exceptions into failures.
+        """Invoke a callable, converting ``None`` returns and exceptions into failures.
 
         Args:
-            func: The callable producing the payload.
-            error_code: Optional error code carried by the failure results.
+            func: The zero-argument callable producing the payload.
+            error_code: Optional machine-readable error code for failure cases.
 
         Returns:
-            The resulting ``p.Result[V]``.
+            p.Result[V]: A success result if ``func()`` returns a non-None value,
+                otherwise a failure result.
 
         """
         cls.reject_banned_result_parameterization()
@@ -202,8 +251,12 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     ) -> t.JsonDict | None:
         """Drop sensitive keys from any error_data mapping before storage.
 
+        Args:
+            payload: Raw error context dictionary.
+            exception: Optional causal exception defining context exclusion keys.
+
         Returns:
-            The resulting ``t.JsonDict | None``.
+            t.JsonDict | None: Filtered dictionary with sensitive fields redacted.
 
         """
         if payload is None:
@@ -235,10 +288,10 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
             error: The human-readable error message, or ``None``.
             error_code: Optional machine-readable error code.
             error_data: Optional structured error payload to validate and filter.
-            exception: Optional exception bound to the failure.
+            exception: Optional causal exception bound to the failure.
 
         Returns:
-            The resulting ``p.Result[Never]``.
+            p.Result[Never]: A normalized failure result instance.
 
         """
         cls.reject_banned_result_parameterization()
@@ -257,8 +310,14 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     ) -> p.Result[Never]:
         """Normalize failure state before the concrete generic factory consumes it.
 
+        Args:
+            error: Raw error message string or None.
+            error_code: Optional machine-readable error code.
+            error_data: Optional structured metadata dictionary or model.
+            exception: Optional causal exception.
+
         Returns:
-            A result carrying normalized, redacted failure state.
+            p.Result[Never]: Normalized failure result instance.
 
         """
         error_msg = error if error is not None else ""
@@ -286,11 +345,11 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         """Build a failure with a standardized ``<operation> failed`` message.
 
         Args:
-            operation: The operation name leading the error message.
-            exc: Optional exception or message appended to the error.
+            operation: Name of the failed operation leading the error message.
+            exc: Optional exception or message string appended to the error.
 
         Returns:
-            The resulting ``p.Result[Never]``.
+            p.Result[Never]: Standardized failure result instance.
 
         """
         if isinstance(exc, Exception):
@@ -301,19 +360,20 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return cls.fail(error_msg)
 
     @classmethod
-    def from_validation[ModelT: t.BaseModelType](
+    def from_validation[ModelT: p.BaseModel](
         cls: type[Self],
         data: p.ModelInput,
         model: t.ModelClass[ModelT],
     ) -> p.Result[ModelT]:
-        """Validate data against a model, turning validation errors into failures.
+        """Validate input data against a Pydantic model, capturing validation errors.
 
         Args:
-            data: The input passed to the model's validation.
-            model: The model class validating the data.
+            data: Raw input dictionary or mapping passed to model validation.
+            model: The target Pydantic model class performing validation.
 
         Returns:
-            The resulting ``p.Result[ModelT]``.
+            p.Result[ModelT]: A success result carrying the validated model instance,
+                or a failure result carrying validation error details.
 
         """
         try:
@@ -324,20 +384,26 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
 
     @staticmethod
     def successful_result(obj: p.SuccessCheckable | t.JsonPayload) -> bool:
-        """Check whether an object is a successful result instance.
+        """Determine whether an object is a successful result instance.
+
+        Args:
+            obj: The object candidate to inspect.
 
         Returns:
-            The resulting ``bool``.
+            bool: True if ``obj`` is a successful ``FlextResultBase`` instance.
 
         """
         return isinstance(obj, FlextResultBase) and obj.success
 
     @staticmethod
     def failed_result(obj: p.SuccessCheckable | t.JsonPayload) -> bool:
-        """Check whether an object is a failed result instance.
+        """Determine whether an object is a failed result instance.
+
+        Args:
+            obj: The object candidate to inspect.
 
         Returns:
-            The resulting ``bool``.
+            bool: True if ``obj`` is a failed ``FlextResultBase`` instance.
 
         """
         return isinstance(obj, FlextResultBase) and not obj.success

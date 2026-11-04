@@ -1,7 +1,20 @@
-"""Transform operations for FlextResult.
+"""Monadic transformations, error mapping, and pipeline flow operations for FlextResult.
+
+Provides monadic transformation primitives (``map``, ``flat_map``, ``flow_through``),
+recovery combinators (``lash``, ``recover``, ``map_or``), branching operations
+(``fold``, ``filter``), side-effect taps (``tap``, ``tap_error``), and Pydantic
+model conversions (``to_model``).
+
+See Also:
+    - Workspace ADR-001 (Railway-Oriented Programming):
+      ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+    - Workspace ADR-027 (Facade Single-Owner Law):
+      ``flext/docs/architecture/adr/027-facade-single-owner-law.md``
+    - :mod:`flext_core._result.composition`: Sequence and collection combinators.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -9,7 +22,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Self, overload
 
-from flext_core import c, p, t
+from flext_core import c, p
 from flext_core._result import FlextResultConstruction
 
 if TYPE_CHECKING:
@@ -17,29 +30,42 @@ if TYPE_CHECKING:
 
 
 class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
-    """Instance transformation methods for result values and errors.
+    """Instance transformation methods for monadic result values and errors.
 
-    Covers mapping payloads through callables, mapping errors, combining
-    with defaults (``map_or`` family) and converting back to plain values
-    or results without changing the success/failure disposition.
+    Provides functional combinators for projecting payloads, chaining dependent
+    railway calls, inspecting values without mutation, and converting errors.
+
+    Type Parameters:
+        T: The payload type carried upon successful completion.
+
+    See Also:
+        - Workspace ADR-001 (Railway-Oriented Programming):
+          ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+
     """
 
     @abstractmethod
     def _as_result(self) -> p.Result[T]:
-        """Require the complete public Result view from the composed MRO owner."""
+        """Expose the complete public Result view from the composed MRO owner.
+
+        Returns:
+            p.Result[T]: The complete protocol view of this instance.
+
+        """
         raise NotImplementedError
 
     def filter(self: Self, predicate: Callable[[T], bool]) -> p.Result[T]:
-        """Keep the result only when the predicate holds for the payload.
+        """Retain the success payload only when the predicate evaluates to True.
 
-        A false predicate turns the result into a failure; an exception raised
-        by ``predicate`` becomes a failure. Failures pass through unchanged.
+        If ``predicate(payload)`` evaluates to False or raises a catchable runtime
+        exception, transforms the result into a failure. Failed results pass
+        through unchanged.
 
         Args:
-            predicate: The callable testing the success payload.
+            predicate: Callable taking the payload and returning a boolean.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            p.Result[T]: The original success if predicate holds, otherwise a failure.
 
         """
         if self.success:
@@ -52,16 +78,17 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         return self._as_result()
 
     def flat_map[U](self: Self, func: Callable[[T], p.Result[U]]) -> p.Result[U]:
-        """Chain a result-returning function over the payload.
+        """Chain a result-returning callable over the success payload (monadic bind).
 
-        Failures propagate with their metadata preserved; an exception raised
-        by ``func`` becomes a failure.
+        Passes the payload to ``func`` on success, propagating any returned failure
+        or newly created failure if ``func`` raises an exception. Failed results pass
+        through with original error metadata preserved.
 
         Args:
-            func: The callable producing the next result.
+            func: Callable producing the subsequent Result given the current payload.
 
         Returns:
-            The resulting ``p.Result[U]``.
+            p.Result[U]: The chained Result instance.
 
         """
         if self.failure:
@@ -86,14 +113,14 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
     def flow_through[U](
         self: Self, *funcs: Callable[[T | U], p.Result[U]]
     ) -> p.Result[T | U]:
-        """Apply functions left to right, stopping at the first failure.
+        """Sequentially apply result-returning functions, stopping at the first failure.
 
         Args:
-            *funcs: The result-returning functions applied in order.
+            *funcs: Variable sequence of result-returning callables applied in order.
 
         Returns:
-            The resulting ``p.Result[T | U]``. With no functions, the original
-            result is preserved.
+            p.Result[T | U]: The cumulative result of the pipeline, or the first
+                failure encountered.
 
         """
         current: p.Result[T | U] = self._as_result()
@@ -112,14 +139,14 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         on_failure: Callable[[str], U],
         on_success: Callable[[T], U],
     ) -> U:
-        """Reduce the result to one value through the matching branch.
+        """Collapse the result into a single value by executing the matching branch.
 
         Args:
-            on_failure: The callable receiving the error message on failure.
-            on_success: The callable receiving the payload on success.
+            on_failure: Callable invoked with the error message if this result failed.
+            on_success: Callable invoked with the success payload on success.
 
         Returns:
-            The value produced by the matching callable.
+            U: The value produced by whichever branch callable was executed.
 
         """
         if self.success:
@@ -127,16 +154,16 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         return on_failure(self.require_error(self._as_result()))
 
     def lash[U](self: Self, func: Callable[[str], p.Result[U]]) -> p.Result[T | U]:
-        """Recover a failure through a result-returning error handler.
+        """Recover from a failure by chaining an error-handling result callable.
 
-        Successes pass through unchanged; an exception raised by ``func``
-        becomes a failure.
+        If the current result succeeded, it is returned unchanged. If it failed,
+        invokes ``func(error_message)`` and returns its Result.
 
         Args:
-            func: The callable mapping the error message to a new result.
+            func: Callable accepting the error message string and returning a Result.
 
         Returns:
-            The resulting ``p.Result[T | U]``.
+            p.Result[T | U]: The original success result or the recovered Result.
 
         """
         if self.failure:
@@ -147,16 +174,17 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         return self._as_result()
 
     def map[U](self: Self, func: Callable[[T], U]) -> p.Result[U]:
-        """Transform the payload with a plain function on success.
+        """Transform the success payload by applying a pure mapping function.
 
-        Failures propagate with their metadata preserved; an exception raised
-        by ``func`` becomes a failure.
+        If the current result is a failure, propagates the failure metadata
+        without executing ``func``. If ``func`` raises a catchable exception,
+        converts it into a failure result.
 
         Args:
-            func: The callable transforming the success payload.
+            func: Pure transformation function taking the payload and returning a value.
 
         Returns:
-            The resulting ``p.Result[U]``.
+            p.Result[U]: A new success result with the transformed payload, or failure.
 
         """
         if self.success:
@@ -167,16 +195,16 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         return self._copy_failure(self._as_result())
 
     def map_error(self: Self, func: Callable[[str], str]) -> p.Result[T]:
-        """Transform the error message on failure, preserving other metadata.
+        """Transform the failure message while preserving other error metadata.
 
-        Successes pass through unchanged; an exception raised by ``func``
-        becomes a failure.
+        If the current result succeeded, returns it unchanged. If it failed,
+        applies ``func(error_message)`` to update the descriptive error message.
 
         Args:
-            func: The callable transforming the error message.
+            func: Transformation callable mapping the current error string to a new one.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            p.Result[T]: The original success, or an updated failure with new message.
 
         """
         if self.failure:
@@ -201,14 +229,14 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
     def map_or[U](self, default: U, func: Callable[[T], U]) -> U: ...
 
     def map_or[U](self, default: U, func: Callable[[T], U] | None = None) -> U | T:
-        """Apply ``func`` to the payload on success, otherwise return ``default``.
+        """Apply ``func`` to payload on success, otherwise return ``default``.
 
         Args:
-            default: The value returned when this result is a failure.
-            func: The optional callable applied to the success payload.
+            default: Fallback value returned when this result represents a failure.
+            func: Optional transformation callable applied to the success payload.
 
         Returns:
-            The transformed payload, the payload itself, or ``default``.
+            U | T: The transformed payload, raw payload (if func is None), or default.
 
         """
         if self.success:
@@ -218,16 +246,16 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         return default
 
     def recover[U](self: Self, func: Callable[[str], U]) -> p.Result[T | U]:
-        """Turn a failure into a success through a fallback function.
+        """Transform a failure into a success by computing a fallback value.
 
-        Successes pass through unchanged; an exception raised by ``func``
-        becomes a failure.
+        If the current result succeeded, returns it unchanged. If it failed,
+        computes a fallback payload using ``func(error_message)``.
 
         Args:
-            func: The callable mapping the error message to the recovery value.
+            func: Callable mapping the failure error message to a recovery payload.
 
         Returns:
-            The resulting ``p.Result[T | U]``.
+            p.Result[T | U]: The original success result or a newly wrapped success.
 
         """
         if self.success:
@@ -238,16 +266,13 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
             return self._failure(str(exc), exception=exc)
 
     def tap(self: Self, func: Callable[[T], None]) -> p.Result[T]:
-        """Run a side effect on the payload without changing the result.
-
-        Only runs on success; an exception raised by ``func`` becomes a
-        failure.
+        """Execute a side effect on the success payload without altering the result.
 
         Args:
-            func: The callable receiving the success payload.
+            func: Callable accepting the success payload for inspection or logging.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            p.Result[T]: The original result instance, or a failure if ``func`` raises.
 
         """
         if self.success:
@@ -258,16 +283,13 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         return self._as_result()
 
     def tap_error(self: Self, func: Callable[[str], None]) -> p.Result[T]:
-        """Run a side effect on the error message without changing the result.
-
-        Only runs on failure; an exception raised by ``func`` becomes a
-        failure.
+        """Execute a side effect on the failure error message without altering result.
 
         Args:
-            func: The callable receiving the error message.
+            func: Callable accepting the error message string for inspection or logging.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            p.Result[T]: The original result instance, or a failure if ``func`` raises.
 
         """
         if self.failure:
@@ -277,17 +299,15 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def to_model[U: t.BaseModelType](self: Self, model: type[U]) -> p.Result[U]:
-        """Validate the payload into a model instance on success.
-
-        Failures propagate with their metadata preserved; a validation error
-        becomes a failure.
+    def to_model[U: p.BaseModel](self: Self, model: type[U]) -> p.Result[U]:
+        """Validate and parse the success payload into an instance of a Pydantic model.
 
         Args:
-            model: The model class validating the payload.
+            model: Target Pydantic model class performing payload validation.
 
         Returns:
-            The resulting ``p.Result[U]``.
+            p.Result[U]: A success result carrying the validated model instance,
+                or a failure result capturing validation errors.
 
         """
         if self.failure:

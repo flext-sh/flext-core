@@ -140,7 +140,7 @@ class FlextExceptionsBase:
                 return f"[{self.error_code}] {self.message}"
             return self.message
 
-        params_cls: ClassVar[t.ModelClass[t.BaseModelType] | None] = None
+        params_cls: ClassVar[t.ModelClass[p.BaseModel] | None] = None
         excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
         _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
 
@@ -313,7 +313,7 @@ class FlextExceptionsBase:
         @staticmethod
         def _attach_declared_field_context(
             ctx: t.MutableJsonMapping,
-            declaredparams_cls: t.ModelClass[t.BaseModelType],
+            declaredparams_cls: t.ModelClass[p.BaseModel],
             resolved: p.BaseModel,
             declared_param_keys: frozenset[str],
         ) -> None:
@@ -334,7 +334,7 @@ class FlextExceptionsBase:
 
         def _resolve_declared_params(
             self,
-            declaredparams_cls: t.ModelClass[t.BaseModelType],
+            declaredparams_cls: t.ModelClass[p.BaseModel],
             context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
             remaining_extra: t.MutableJsonMapping,
             params: p.BaseModel | None,

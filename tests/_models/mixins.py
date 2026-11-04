@@ -12,6 +12,7 @@ from tests._models._mixins import (
     TestsFlextModelsDomain,
     TestsFlextModelsFixtureDicts,
     TestsFlextModelsGuardsMapper,
+    TestsFlextModelsSchemaOwnerHeir,
     TestsFlextModelsServiceCases,
     TestsFlextModelsTestData,
 )
@@ -29,6 +30,7 @@ class TestsFlextModelsNamespace:
             TestsFlextModelsDomain,
             TestsFlextModelsFixtureDicts,
             TestsFlextModelsGuardsMapper,
+            TestsFlextModelsSchemaOwnerHeir,
             TestsFlextModelsServiceCases,
             TestsFlextModelsTestData,
         ):

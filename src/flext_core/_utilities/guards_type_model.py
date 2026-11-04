@@ -36,11 +36,11 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def model_type(
         value: t.TypeHintSpecifier,
-    ) -> TypeIs[t.ModelClass[t.BaseModelType]]:
+    ) -> TypeIs[t.ModelClass[p.BaseModel]]:
         """Narrow a runtime value to a canonical Pydantic model class.
 
         Returns:
-            The resulting ``TypeIs[t.ModelClass[t.BaseModelType]]``.
+            The resulting ``TypeIs[t.ModelClass[p.BaseModel]]``.
 
         """
         return isinstance(value, type) and issubclass(value, PydanticBaseModel)
@@ -60,7 +60,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def pydantic_model(
         value: p.GuardInput | p.BaseModel | t.JsonValue | PydanticBaseModel | None,
-    ) -> TypeIs[t.BaseModelType]:
+    ) -> TypeIs[p.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier.
 
         Accepts both ``m.BaseModel`` and

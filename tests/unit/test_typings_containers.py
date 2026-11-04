@@ -18,7 +18,6 @@ import math
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 
-import flext_tests
 import pytest
 
 from tests import c, m, t, tm, u
@@ -32,7 +31,7 @@ class TestsFlextCoreJsonPayload:
         """Models must be serialized before crossing the JSON boundary."""
         model = m.ConfigMap(root={"name": "sample"})
         adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(t.TypeForm(t.JsonValue))
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             adapter.validate_python(model)
 
     @staticmethod
@@ -49,7 +48,7 @@ class TestsFlextCoreJsonPayload:
         """The JSON branch must not silently admit arbitrary model instances."""
         model = m.Metadata(attributes={"name": "sample"})
         adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(t.TypeForm(t.JsonValue))
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             adapter.validate_python({"items": [{"model": model}]})
 
     @staticmethod
@@ -59,7 +58,7 @@ class TestsFlextCoreJsonPayload:
             t.TypeForm(t.JsonPayload)
         )
 
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             adapter.validate_python(object())
 
 
@@ -170,7 +169,7 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_dict_rejects_non_mapping_root() -> None:
         """Constructing m.Dict from a non-mapping value fails validation."""
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             m.Dict.model_validate(["not", "a", "mapping"])
 
     # ---- m.ConfigMap: shares the mapping contract --------------------------
@@ -231,7 +230,7 @@ class TestsFlextCoreTypedCollectionAliases:
     @staticmethod
     def test_object_list_rejects_non_sequence_root() -> None:
         """Constructing m.ObjectList from a mapping fails validation."""
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             m.ObjectList.model_validate({"not": "a list"})
 
     # ---- c.SCALAR_TYPES: runtime scalar contract ---------------------------
@@ -265,7 +264,7 @@ class TestsFlextCoreTypedCollectionAliases:
             t.TypeForm(tuple[int, str])
         )
         tm.that(adapter.validate_python((1, "x")), eq=(1, "x"))
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             adapter.validate_python((1, "x", "extra"))
 
     @staticmethod
@@ -275,7 +274,7 @@ class TestsFlextCoreTypedCollectionAliases:
             t.TypeForm(tuple[int, str, bool]),
         )
         tm.that(adapter.validate_python((1, "x", True)), eq=(1, "x", True))
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             adapter.validate_python((1, "x"))
 
     @staticmethod
@@ -285,7 +284,7 @@ class TestsFlextCoreTypedCollectionAliases:
             t.TypeForm(tuple[int, int])
         )
         tm.that(adapter.validate_python((1, 2)), eq=(1, 2))
-        with pytest.raises(flext_tests.m.ValidationError):
+        with pytest.raises(m.ValidationError):
             adapter.validate_python((1, 2, 3))
 
     @staticmethod

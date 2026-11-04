@@ -156,7 +156,7 @@ class FlextProtocolsResult:
             func: Callable[[str], U],
         ) -> FlextProtocolsResult.Result[T | U]: ...
 
-        def to_model[U: t.BaseModelType](
+        def to_model[U: p.BaseModel](
             self,
             model: type[U],
         ) -> FlextProtocolsResult.Result[U]: ...

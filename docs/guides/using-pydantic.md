@@ -255,8 +255,11 @@ invalid: ADR-018 requires retaining its runtime class and closure while deriving
 a deterministic lexical protocol identity. Do not hoist it generically or call
 `model_rebuild` to hide an unresolved declaration. Repair the actual dependency
 or export, and prove a fresh public import. The enclosing family class is not
-bound while its body executes, so a self-qualified sibling reference needs its
-real declaring owner, not a fabricated namespace.
+bound while its body executes, so a self-qualified sibling reference is never
+evaluated eagerly: type the field by the sibling's protocol and defer the schema
+owner, `Annotated[p.X, t.schema_for_model(lambda: Holder.X)]`. The field is then
+complete at class creation, and a subclass in another module inherits it without
+re-resolving any name.
 
 ## Library boundaries
 

@@ -27,7 +27,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
     def test_no_arg_construction_yields_all_none_fields(
-        model_cls: t.ModelClass[t.BaseModelType],
+        model_cls: t.ModelClass[p.BaseModel],
     ) -> None:
         instance = model_cls()
         for value in instance.model_dump().values():
@@ -40,7 +40,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
     )
     def test_unknown_field_is_rejected(
-        model_cls: t.ModelClass[t.BaseModelType],
+        model_cls: t.ModelClass[p.BaseModel],
     ) -> None:
         with pytest.raises(c.ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
@@ -104,7 +104,7 @@ class TestsFlextCoreExceptionParamsOperations:
         ids=["field-int", "port-str", "expected-type-int"],
     )
     def test_strict_typing_rejects_wrong_type(
-        model_cls: t.ModelClass[t.BaseModelType],
+        model_cls: t.ModelClass[p.BaseModel],
         payload: t.JsonMapping,
     ) -> None:
         with pytest.raises(c.ValidationError):
