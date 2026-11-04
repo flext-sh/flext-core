@@ -23,12 +23,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Never, override
+from typing import Never, override
 
+from flext_core import p, t
 from flext_core._result import FlextResultComposed
-
-if TYPE_CHECKING:
-    from flext_core import p, t
 
 
 class FlextResult[T](FlextResultComposed[T]):

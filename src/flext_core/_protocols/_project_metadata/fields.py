@@ -17,7 +17,7 @@ from flext_core._protocols._project_metadata import (
 )
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase, FlextTypingConfig
+    from flext_core import t
 
 
 class FlextProtocolsProjectMetadataFields:
@@ -75,7 +75,7 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
         @property
-        def budget(self) -> FlextTypingBase.JsonMapping | None:
+        def budget(self) -> t.JsonMapping | None:
             """Structural member projected from the owning model.
 
             Per-gate resource budget table emitted by the flext-infra budget-gate
@@ -86,7 +86,7 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
         @property
-        def duplication(self) -> FlextTypingBase.JsonMapping | None:
+        def duplication(self) -> t.JsonMapping | None:
             """Structural member projected from the owning model.
 
             Duplication-gate scope overrides table read by the flext-infra duplication
@@ -131,7 +131,7 @@ class FlextProtocolsProjectMetadataFields:
         """Structural data contract projected from the owning model."""
 
         @property
-        def documentation_language(self) -> FlextTypingConfig.DocumentationLanguage:
+        def documentation_language(self) -> t.DocumentationLanguage:
             """Generated documentation language."""
             ...
 
@@ -184,7 +184,7 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
         @property
-        def scan_dirs(self) -> FlextTypingBase.StrTuple:
+        def scan_dirs(self) -> t.StrTuple:
             """Explicit namespace scan directories."""
             ...
 

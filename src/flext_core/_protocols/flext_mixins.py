@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
+    from flext_core import t
     from flext_core._protocols import FlextProtocolsContext, FlextProtocolsSettings
-    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsFlextMixins:
@@ -35,7 +35,7 @@ class FlextProtocolsFlextMixins:
             ...
 
         @property
-        def settings_overrides(self) -> FlextTypingBase.JsonMapping | None:
+        def settings_overrides(self) -> t.JsonMapping | None:
             """Settings overrides applied at instantiation."""
             ...
 

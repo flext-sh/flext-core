@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesPydantic
+    from flext_core import t
 
 
 class FlextProtocolsCqrsFlextmodelscqrsPart01:
@@ -23,15 +23,8 @@ class FlextProtocolsCqrsFlextmodelscqrsPart01:
     class Pagination(FlextProtocolsBase.FlexibleInternalModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def page(self) -> FlextTypesPydantic.PositiveInt:
-            """Page number (1-based indexing)."""
-            ...
-
-        @property
-        def size(self) -> FlextTypesPydantic.PositiveInt:
-            """Number of items per page within the configured bounds."""
-            ...
+        page: t.PositiveInt
+        size: t.PositiveInt
 
         @property
         def limit(self) -> int:

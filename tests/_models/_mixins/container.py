@@ -58,7 +58,5 @@ class TestsFlextModelsContainer:
             {},
         ]
 
-    # --- from test_utilities_guards.py and test_utilities_guards_full_coverage.py ---
-
 
 __all__: list[str] = ["TestsFlextModelsContainer"]

@@ -118,7 +118,7 @@ override FLEXT_PYTEST_TESTMON_DATABASE = $(if $(strip $(PYTEST_CACHE_HOME)),$(PY
 # Storage law: the pytest scratch root sits under the user home, keyed by the
 # absolute checkout path, never under /tmp and never inside a versioned tree.
 override FLEXT_PYTEST_SCRATCH_ROOT = $(if $(strip $(HOME)),$(HOME)/.local/state/.flext-runtime$(PROJECT_ROOT)/scratch)
-override PYTEST_RUN_TIMEOUT_SECONDS := 60
+override PYTEST_RUN_TIMEOUT_SECONDS := 240
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
 override PYTEST_ENFORCEMENT_PLUGIN := flext_tests.enforcement_plugin

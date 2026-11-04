@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsPydantic
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesPydantic
+    from flext_core import t
 
 
 class FlextProtocolsOptions:
@@ -24,12 +24,7 @@ class FlextProtocolsOptions:
         """Structural data contract projected from the owning model."""
 
         prefix: str | None
-
-        @property
-        def parts(self) -> tuple[FlextTypesPydantic.JsonValue, ...] | None:
-            """Optional parts inserted between prefix and random suffix."""
-            ...
-
+        parts: tuple[t.JsonValue, ...] | None
         length: int | None
         include_timestamp: bool
         separator: str

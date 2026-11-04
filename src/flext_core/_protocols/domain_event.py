@@ -13,9 +13,8 @@ from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core._constants import FlextConstantsCqrs
+    from flext_core import c, t
     from flext_core._protocols import FlextProtocolsContainers
-    from flext_core._typings import FlextTypesAnnotateds
 
 
 class FlextProtocolsDomainEvent:
@@ -26,19 +25,12 @@ class FlextProtocolsDomainEvent:
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(self) -> Literal[FlextConstantsCqrs.HandlerType.EVENT]:
+        def message_type(self) -> Literal[c.HandlerType.EVENT]:
             """Immutable event discriminator for union routing."""
             ...
 
-        @property
-        def event_type(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Domain event type identifier for subscriber routing."""
-            ...
-
-        @property
-        def aggregate_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Identifier of the aggregate root that produced this event."""
-            ...
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
 
         @property
         def data(self) -> FlextProtocolsContainers.ConfigMap:

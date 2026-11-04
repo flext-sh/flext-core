@@ -5,6 +5,15 @@
 
 config_version = "0"
 
+# Scaffolding gerado (lazy exports e protocolos derivados) é idêntico por
+# construção; o gate de smells avalia apenas código autoral. Consistente com a
+# exclusão de `_protocols/**` já declarada no jscpd do projeto.
+exclude_patterns = [
+  "**/__init__.py",
+  "**/_protocols/**",
+  "**/_constants/**",
+]
+
 [smells]
 mode = "block"
 

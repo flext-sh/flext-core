@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols._exception_params import FlextProtocolsExceptionParamsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
+    from flext_core import t
 
 
 class FlextProtocolsExceptionParamsServiceErrors:
@@ -23,11 +23,7 @@ class FlextProtocolsExceptionParamsServiceErrors:
     class TimeoutErrorParams(FlextProtocolsExceptionParamsBase.ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def timeout_seconds(self) -> FlextTypingBase.Numeric | None:
-            """Timeout duration in seconds that triggered this exception."""
-            ...
-
+        timeout_seconds: t.Numeric | None
         operation: str | None
 
     @runtime_checkable
@@ -69,11 +65,7 @@ class FlextProtocolsExceptionParamsServiceErrors:
 
         limit: int | None
         window_seconds: int | None
-
-        @property
-        def retry_after(self) -> FlextTypingBase.Numeric | None:
-            """Time in seconds clients should wait before retrying."""
-            ...
+        retry_after: t.Numeric | None
 
     @runtime_checkable
     class CircuitBreakerErrorParams(
@@ -83,11 +75,7 @@ class FlextProtocolsExceptionParamsServiceErrors:
 
         service_name: str | None
         failure_count: int | None
-
-        @property
-        def reset_timeout(self) -> FlextTypingBase.Numeric | None:
-            """Seconds before allowing a circuit breaker reset attempt."""
-            ...
+        reset_timeout: t.Numeric | None
 
     @runtime_checkable
     class TypeErrorParams(

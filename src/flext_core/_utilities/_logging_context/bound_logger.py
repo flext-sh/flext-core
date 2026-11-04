@@ -17,7 +17,7 @@ from flext_core._utilities import (
 )
 
 if TYPE_CHECKING:
-    from flext_core._utilities.logging import FlextUtilitiesLogging
+    from flext_core._utilities import FlextUtilitiesLogging
 
 
 class FlextUtilitiesLoggingBoundLogger(

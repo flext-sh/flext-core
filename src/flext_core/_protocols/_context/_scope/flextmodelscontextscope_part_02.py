@@ -15,11 +15,11 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
+    from flext_core import t
     from flext_core._protocols import FlextProtocolsContainer
     from flext_core._protocols._context._scope import (
         FlextProtocolsContextScopeFlextmodelscontextscopePart01,
     )
-    from flext_core._typings import FlextTypesServices
 
 
 class FlextProtocolsContextScopeFlextmodelscontextscopePart02:
@@ -35,7 +35,7 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart02:
             ...
 
         @property
-        def hooks(self) -> FlextTypesServices.ContextHookMap:
+        def hooks(self) -> t.ContextHookMap:
             """Lifecycle hooks keyed by event name."""
             ...
 
@@ -61,10 +61,7 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart02:
             self,
         ) -> Mapping[
             str,
-            ContextVar[
-                FlextProtocolsContainer.MutableRootDict[FlextTypesServices.JsonPayload]
-                | None
-            ],
+            ContextVar[FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None],
         ]:
             """ContextVar registry keyed by scope name."""
             ...

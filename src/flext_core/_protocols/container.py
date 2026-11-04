@@ -13,11 +13,6 @@ if TYPE_CHECKING:
 
     from flext_core import p
     from flext_core._protocols import FlextProtocolsContainers
-    from flext_core._typings import (
-        FlextTypesAnnotateds,
-        FlextTypesPydantic,
-        FlextTypesServices,
-    )
 
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
@@ -95,11 +90,7 @@ class FlextProtocolsContainer:
         @property
         def user_overrides(
             self,
-        ) -> (
-            FlextProtocolsPydantic.BaseModel
-            | FlextTypesServices.UserOverridesMapping
-            | None
-        ):
+        ) -> FlextProtocolsPydantic.BaseModel | t.UserOverridesMapping | None:
             """User-level configuration overrides applied after defaults."""
             ...
 
@@ -125,10 +116,7 @@ class FlextProtocolsContainer:
     class ServiceRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Service identifier/name."""
-            ...
+        name: t.NonEmptyStr
 
         @property
         def service(self) -> FlextProtocolsContainer.RegisterableService:
@@ -348,10 +336,7 @@ class FlextProtocolsContainer:
     class FactoryRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Factory identifier/name."""
-            ...
+        name: t.NonEmptyStr
 
         @property
         def factory(self) -> FlextProtocolsContainer.FactoryCallable:
@@ -362,10 +347,7 @@ class FlextProtocolsContainer:
     class ResourceRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Resource identifier/name."""
-            ...
+        name: t.NonEmptyStr
 
         @property
         def factory(self) -> FlextProtocolsContainer.ResourceCallable:
@@ -378,17 +360,8 @@ class FlextProtocolsContainer:
 
         enable_singleton: bool
         enable_factory_caching: bool
-
-        @property
-        def max_services(self) -> FlextTypesPydantic.PositiveInt:
-            """Maximum number of services allowed in registry."""
-            ...
-
-        @property
-        def max_factories(self) -> FlextTypesPydantic.PositiveInt:
-            """Maximum number of factories allowed in registry."""
-            ...
-
+        max_services: t.PositiveInt
+        max_factories: t.PositiveInt
         enable_auto_registration: bool
         enable_lifecycle_hooks: bool
         lazy_loading: bool
@@ -398,7 +371,7 @@ class FlextProtocolsContainer:
         """Structural data contract projected from the owning model."""
 
         @property
-        def name(self) -> FlextTypesAnnotateds.NonEmptyStr:
+        def name(self) -> t.NonEmptyStr:
             """Name to register this factory under in the container."""
             ...
 

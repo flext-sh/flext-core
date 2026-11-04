@@ -1,25 +1,8 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Internal implementation hierarchy for the FlextResult railway container.
-
-Defines the layered classes that compose the complete ``FlextResult`` MRO:
-    - :class:`FlextResultBase`: Data schema and strict Pydantic validation.
-    - :class:`FlextResultBehavior`: Context management, truthiness, and operators.
-    - :class:`FlextResultConstruction`: Factories, error normalization, and guards.
-    - :class:`FlextResultTransforms`: Monadic mappings, filtering, and chaining.
-    - :class:`FlextResultComposition`: Sequence traversal and error accumulation.
-    - :class:`FlextResultUnwrap`: Terminal value extraction helpers.
-    - :class:`FlextResultComposed`: Unified internal base for the public facade.
-
-See Also:
-    - Workspace ADR-001 (Railway-Oriented Programming):
-      ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
-    - Workspace ADR-018 (Generator Declarations):
-      ``flext/docs/architecture/adr/018-generator-declarations.md``
-    - :mod:`flext_core.result`: Public result facade and canonical ``r`` alias.
+"""Flext Core. Result package.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
-
 """
 
 from __future__ import annotations

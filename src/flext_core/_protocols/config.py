@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
     from flext_core._protocols import FlextProtocolsLogging
-    from flext_core._typings import FlextTypesServices, FlextTypingBase
 
 
 from typing import Protocol, runtime_checkable
@@ -60,7 +59,7 @@ class FlextProtocolsConfig:
             ...
 
         @property
-        def completion(self) -> FlextTypesServices.LoggingWriteCompletion:
+        def completion(self) -> t.LoggingWriteCompletion:
             """Native completion receiving this job's result or first failure."""
             ...
 
@@ -109,7 +108,7 @@ class FlextProtocolsConfig:
         """Structural data contract projected from the owning model."""
 
         @property
-        def data(self) -> FlextTypingBase.JsonMapping:
+        def data(self) -> t.JsonMapping:
             """Parsed config mapping (execution parametrization)."""
             ...
 
@@ -168,7 +167,7 @@ class FlextProtocolsConfig:
             ...
 
         @property
-        def context(self) -> FlextTypingBase.JsonMapping:
+        def context(self) -> t.JsonMapping:
             """Sanitized structured event context."""
             ...
 

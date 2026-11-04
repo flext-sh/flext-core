@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
+    from flext_core import t
 
 
 class FlextProtocolsContextScopeFlextmodelscontextscopePart01:
@@ -24,27 +24,27 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart01:
         """Structural data contract projected from the owning model."""
 
         @property
-        def sets(self) -> FlextTypesPydantic.NonNegativeInt:
+        def sets(self) -> t.NonNegativeInt:
             """Number of set operations."""
             ...
 
         @property
-        def gets(self) -> FlextTypesPydantic.NonNegativeInt:
+        def gets(self) -> t.NonNegativeInt:
             """Number of get operations."""
             ...
 
         @property
-        def removes(self) -> FlextTypesPydantic.NonNegativeInt:
+        def removes(self) -> t.NonNegativeInt:
             """Number of remove operations."""
             ...
 
         @property
-        def clears(self) -> FlextTypesPydantic.NonNegativeInt:
+        def clears(self) -> t.NonNegativeInt:
             """Number of clear operations."""
             ...
 
         @property
-        def operations(self) -> FlextTypingBase.JsonMapping:
+        def operations(self) -> t.JsonMapping:
             """Additional metric counters and timing values grouped by metric key."""
             ...
 
