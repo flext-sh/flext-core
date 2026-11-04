@@ -149,15 +149,15 @@ standalone packages. `flext-tests` owns matcher behavior; the universal
 facades may reexport the canonical `tm`, but never implement a competing matcher
 or a project-specific assertion rewrite.
 
-| Intent | Public pattern | Required invariant |
-| --- | --- | --- |
-| Successful or failed Result | `tm.ok(result)` / `tm.fail(result)` | State is independent of payload truthiness; success returns the original payload. |
-| Native equality or inequality | `tm.that(value, eq=expected)` / `ne=expected` | Operators are independent; operands stay native and successful checks do not render them. |
-| General truth | `tm.that(value, truth=True)` / `truth=False` | The supplied subject is observed without payload normalization. |
-| Typed local value | `value = tm.not_none(value)` / `tm.instance(value, Expected)` | Return the same object; rebind only when that local binding is intended. |
-| Guard, short-circuit condition, or lazy message | Native conditional branch with `tm.reject()` / `tm.reject(message)` | Preserve conditional evaluation, narrowing, name scope, exception arguments, and message timing. |
-| Structured input | Validate once with the canonical Pydantic model, then assert its public behavior | Do not scatter casts, dictionary narrowing, or schema copies through consumers. |
-| Configured expectations | Read the same typed config/settings owner as production | A valid configuration change must not invalidate a hardcoded expectation. |
+| Intent                                          | Public pattern                                                                   | Required invariant                                                                               |
+| ----------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Successful or failed Result                     | `tm.ok(result)` / `tm.fail(result)`                                              | State is independent of payload truthiness; success returns the original payload.                |
+| Native equality or inequality                   | `tm.that(value, eq=expected)` / `ne=expected`                                    | Operators are independent; operands stay native and successful checks do not render them.        |
+| General truth                                   | `tm.that(value, truth=True)` / `truth=False`                                     | The supplied subject is observed without payload normalization.                                  |
+| Typed local value                               | `value = tm.not_none(value)` / `tm.instance(value, Expected)`                    | Return the same object; rebind only when that local binding is intended.                         |
+| Guard, short-circuit condition, or lazy message | Native conditional branch with `tm.reject()` / `tm.reject(message)`              | Preserve conditional evaluation, narrowing, name scope, exception arguments, and message timing. |
+| Structured input                                | Validate once with the canonical Pydantic model, then assert its public behavior | Do not scatter casts, dictionary narrowing, or schema copies through consumers.                  |
+| Configured expectations                         | Read the same typed config/settings owner as production                          | A valid configuration change must not invalidate a hardcoded expectation.                        |
 
 The automation retains native control flow when a matcher call alone cannot prove
 the original semantics. It does not rebind globals, reinterpret a callable message

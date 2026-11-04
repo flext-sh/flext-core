@@ -132,7 +132,7 @@ class FlextModelsService:
         summary: str = FlextModelsPydantic.Field(
             description="First docstring line of the operation.",
         )
-        request: t.ModelClass[p.BaseModel] | None = FlextModelsPydantic.Field(
+        request: t.ModelClass[t.BaseModelType] | None = FlextModelsPydantic.Field(
             description="Pydantic request model, or None for an input-less operation.",
         )
         handler: t.Port[p.ServiceOperationHandler] = FlextModelsPydantic.Field(

@@ -1,6 +1,6 @@
 # @flext-managed: continuous
 # @flext-regenerate: make gen
-# @flext-ssot: flext-infra/config/tooling.yaml
+# @flext-ssot: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/markdownlintignore.j2
 # @flext-maintenance: do not edit generated projections; edit the SSOT and regenerate
 **/*.bak
 **/*.egg-info/**

@@ -360,7 +360,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return cls.fail(error_msg)
 
     @classmethod
-    def from_validation[ModelT: p.BaseModel](
+    def from_validation[ModelT: t.BaseModelType](
         cls: type[Self],
         data: p.ModelInput,
         model: t.ModelClass[ModelT],

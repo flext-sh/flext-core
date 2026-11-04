@@ -22,7 +22,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Self, overload
 
-from flext_core import c, p
+from flext_core import c, p, t
 from flext_core._result import FlextResultConstruction
 
 if TYPE_CHECKING:
@@ -299,7 +299,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def to_model[U: p.BaseModel](self: Self, model: type[U]) -> p.Result[U]:
+    def to_model[U: t.BaseModelType](self: Self, model: type[U]) -> p.Result[U]:
         """Validate and parse the success payload into an instance of a Pydantic model.
 
         Args:

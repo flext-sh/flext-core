@@ -293,7 +293,7 @@ class FlextUtilitiesDiscovery:
         func: FunctionType,
         where: tuple[type, str, str],
         signature: inspect.Signature,
-    ) -> t.ModelClass[p.BaseModel] | None:
+    ) -> t.ModelClass[t.BaseModelType] | None:
         """Resolve a request Protocol and its single explicit model declaration.
 
         Returns:

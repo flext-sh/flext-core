@@ -22,8 +22,8 @@ base for refactoring existing modules: the existing Infra Rope catalog assembles
 typed slot content, preserving authored code and native identity. See
 ADR-018.
 
-| Workspace declaration | Accepted decision |
-| --- | --- |
+| Workspace declaration                                                              | Accepted decision                         |
+| ---------------------------------------------------------------------------------- | ----------------------------------------- |
 | This page; the living census and wave status (beads `flext-pipol`, `flext-u9h2i`). | ADR-028 Decision 17, amendment 2026-10-28 |
 
 Operator law, 2026-10-28: **rope is the only accepted Python interpreter in
@@ -148,12 +148,12 @@ through its normal owner.
 
 ## What stays canonical
 
-| Engine | Domain |
-| --- | --- |
-| Rope | Python analysis and refactoring: one loop and native session/index per repository per invocation, shared by DI; small dependency-closed cohorts use the same publisher within the five-second transaction budget (ADR-028 Decision 17; ADR-018 transaction contract). This does not mean one physical transaction for the whole invocation. Native refactorings first (rename, move, restructure, ImportOrganizer); custom transforms operate on the indexed PyModules through rope's public API. |
-| ast-grep | Declarative rules (detection AND fix), one generalized rule per law (ADR-028 Decision 11, Decision 18); the rules catalog is SSOT data. |
-| sed | Non-Python text. |
-| Generator (`make gen`) | Projections from declared templates. |
+| Engine                 | Domain                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rope                   | Python analysis and refactoring: one loop and native session/index per repository per invocation, shared by DI; small dependency-closed cohorts use the same publisher within the five-second transaction budget (ADR-028 Decision 17; ADR-018 transaction contract). This does not mean one physical transaction for the whole invocation. Native refactorings first (rename, move, restructure, ImportOrganizer); custom transforms operate on the indexed PyModules through rope's public API. |
+| ast-grep               | Declarative rules (detection AND fix), one generalized rule per law (ADR-028 Decision 11, Decision 18); the rules catalog is SSOT data.                                                                                                                                                                                                                                                                                                                                                           |
+| sed                    | Non-Python text.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Generator (`make gen`) | Projections from declared templates.                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 ## Isolation by repository
 
