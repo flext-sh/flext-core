@@ -19,7 +19,7 @@ from tests import c, tm
 
 _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.constants",
-    "typings",
+    "flext_core.typings",
     "flext_core.protocols",
     "flext_core.models",
     "flext_core.utilities",
