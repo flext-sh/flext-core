@@ -82,10 +82,14 @@ class FlextProtocolsPydantic:
             self,
             *,
             mode: str = "python",
-            exclude: set[str] | None = None,
+            include: t.IncEx | None = None,
+            exclude: t.IncEx | None = None,
             by_alias: bool | None = None,
+            exclude_unset: bool = False,
             exclude_defaults: bool = False,
             exclude_none: bool = False,
+            exclude_computed_fields: bool = False,
+            round_trip: bool = False,
         ) -> DumpT:
             """Dump the validated model at an external serialization boundary."""
             ...
