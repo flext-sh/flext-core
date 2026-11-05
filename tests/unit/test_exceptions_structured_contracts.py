@@ -16,7 +16,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from tests import c, e, p, tm
+from tests import c, e, p, tm, u
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
 
@@ -54,20 +54,22 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("_name", "factory", "expected_domain", "expected_code", "_expected_payload"),
+        ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_are_raisable_and_preserve_contract(
-        _name: str,
+        name: str,
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        _expected_payload: Mapping[str, str | int | None],
+        expected_payload: Mapping[str, str | int | None],
     ) -> None:
         # Act / Assert: the error is a real exception that callers can catch,
         # and its structured contract survives raise/except unchanged.
         """Test structured errors are raisable and preserve contract."""
-        with pytest.raises(e.BaseError) as caught:
+        tm.that(name, truth=True)
+        tm.that(expected_payload, none=False)
+        with u.Tests.raises(e.BaseError) as caught:
             raise factory()
 
         error = caught.value
@@ -76,6 +78,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         tm.that(error.matches_error_domain(expected_domain), truth=True)
         tm.that(error.message in str(error), truth=True)
         tm.that(error.error_message, eq=error.message)
+        for key, value in expected_payload.items():
+            tm.that(error.metadata.attributes[key], eq=value)
 
     @staticmethod
     def test_base_error_defaults_to_unknown_domain_protocol_surface() -> None:
@@ -99,7 +103,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
             resource_type="User",
             resource_id="123",
         )
-        with pytest.raises(e.BaseError) as caught:
+        with u.Tests.raises(e.BaseError) as caught:
             raise not_found
 
         error = caught.value
@@ -184,11 +188,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
         # Strict extraction preserves the failure instead of inventing a value.
         if result.exception is not None:
-            with pytest.raises(type(result.exception)) as raised:
+            with u.Tests.raises(type(result.exception)) as raised:
                 result.unwrap()
             tm.that(raised.value is result.exception, truth=True)
         else:
-            with pytest.raises(RuntimeError) as logical:
+            with u.Tests.raises(RuntimeError) as logical:
                 result.unwrap()
             tm.that(
                 str(logical.value),

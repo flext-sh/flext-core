@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m, tm
+from tests import m, tm, u
 
 
 class TestsFlextCoreEntity:
@@ -89,7 +89,7 @@ class TestsFlextCoreEntity:
     def test_mutable_entity_is_not_hashable(self) -> None:
         entity = self._Sample(name="a")
 
-        with pytest.raises(TypeError):
+        with u.Tests.raises(TypeError):
             hash(entity)
 
     def test_entity_model_dump_exposes_public_fields(self) -> None:
@@ -114,7 +114,7 @@ class TestsFlextCoreEntity:
 
         tm.that(root.unique_id, eq=twin.unique_id)
         tm.that(root, eq=root.model_copy())
-        with pytest.raises(TypeError):
+        with u.Tests.raises(TypeError):
             hash(root)
 
     def test_values_with_equal_fields_are_equal(self) -> None:

@@ -17,16 +17,21 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
-from flext_core import c, m, p, t
+from flext_core import p
+from flext_core._constants.errors import FlextConstantsErrors
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesPydantic,
     FlextUtilitiesTypingAdapterJson,
 )
 
+if TYPE_CHECKING:
+    from flext_core import t
 
-class FlextResultBase[T](m.BaseModel):
+
+class FlextResultBase[T](FlextModelsPydantic.BaseModel):
     """Underlying data container and strict validator for railway results.
 
     Enforces payload constraints, schema invariants, and explicit parameterization
@@ -43,15 +48,15 @@ class FlextResultBase[T](m.BaseModel):
 
     """
 
-    model_config = m.ConfigDict(extra="forbid")
+    model_config = FlextModelsPydantic.ConfigDict(extra="forbid")
 
     success: bool = True
     error: str | None = None
     error_code: str | None = None
     error_data: t.JsonDict | None = None
 
-    _payload: T = m.PrivateAttr()
-    _exception: BaseException | None = m.PrivateAttr(default=None)
+    _payload: T = FlextModelsPydantic.PrivateAttr()
+    _exception: BaseException | None = FlextModelsPydantic.PrivateAttr(default=None)
 
     @classmethod
     def create_success(cls, value: T) -> Self:
@@ -116,9 +121,11 @@ class FlextResultBase[T](m.BaseModel):
             return
         arg0 = args[0]
         if arg0 is None or arg0 is type(None):
-            raise ValueError(c.ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN)
+            raise ValueError(FlextConstantsErrors.ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN)
         if arg0 is object:
-            raise ValueError(c.ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN)
+            raise ValueError(
+                FlextConstantsErrors.ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN
+            )
 
     @staticmethod
     def reject_banned_success_payload(value: T) -> None:
@@ -129,9 +136,13 @@ class FlextResultBase[T](m.BaseModel):
 
         """
         if value is None:
-            raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE)
+            raise ValueError(
+                FlextConstantsErrors.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE
+            )
         if type(value) is object:
-            raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT)
+            raise ValueError(
+                FlextConstantsErrors.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT
+            )
 
     @staticmethod
     def validate_error_data(
