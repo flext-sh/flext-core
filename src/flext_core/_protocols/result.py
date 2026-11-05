@@ -9,12 +9,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core import p
+    pass
 
 
 from typing import Protocol, Self, TypeVar, overload, runtime_checkable
 
-from flext_core import t
+import flext_core
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -27,14 +27,20 @@ _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
 class FlextProtocolsResult:
     """Single structural result contract used across FLEXT."""
 
-    type ModelInput = t.ModelInput[
-        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    type ModelInput = flext_core.t.ModelInput[
+        flext_core.t.Port[
+            FlextProtocolsResult.HasModelDump[flext_core.t.MetadataMapping]
+        ]
     ]
-    type ConfigModelInput = t.ConfigModelInput[
-        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    type ConfigModelInput = flext_core.t.ConfigModelInput[
+        flext_core.t.Port[
+            FlextProtocolsResult.HasModelDump[flext_core.t.MetadataMapping]
+        ]
     ]
-    type MetadataInput = t.MetadataInput[
-        t.Port[FlextProtocolsResult.HasModelDump[t.MetadataMapping]]
+    type MetadataInput = flext_core.t.MetadataInput[
+        flext_core.t.Port[
+            FlextProtocolsResult.HasModelDump[flext_core.t.MetadataMapping]
+        ]
     ]
 
     @runtime_checkable
@@ -46,7 +52,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> flext_core.t.JsonMapping | None: ...
         @property
         def success(self) -> bool: ...
         @property
@@ -63,7 +69,7 @@ class FlextProtocolsResult:
         @property
         def error_code(self) -> str | None: ...
         @property
-        def error_data(self) -> t.JsonMapping | None: ...
+        def error_data(self) -> flext_core.t.JsonMapping | None: ...
         @property
         def exception(self) -> BaseException | None: ...
         @property
@@ -156,7 +162,7 @@ class FlextProtocolsResult:
             func: Callable[[str], U],
         ) -> FlextProtocolsResult.Result[T | U]: ...
 
-        def to_model[U: t.BaseModelType](
+        def to_model[U: flext_core.t.BaseModelType](
             self,
             model: type[U],
         ) -> FlextProtocolsResult.Result[U]: ...
@@ -203,14 +209,15 @@ class FlextProtocolsResult:
         @property
         def message(self) -> str: ...
         @property
-        def metadata(self) -> p.Metadata: ...
+        def metadata(self) -> flext_core.p.Metadata: ...
 
         def matches_error_domain(self, domain: str) -> bool: ...
 
     @runtime_checkable
-    class HasModelDump[DumpT: t.JsonPayload | t.MetadataMapping = t.MetadataMapping](
-        Protocol
-    ):
+    class HasModelDump[
+        DumpT: flext_core.t.JsonPayload
+        | flext_core.t.MetadataMapping = flext_core.t.MetadataMapping
+    ](Protocol):
         def model_dump(
             self,
             *,

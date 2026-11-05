@@ -9,13 +9,13 @@ from __future__ import annotations
 from inspect import getattr_static
 from types import MethodType
 
-from flext_core import FlextModels, c, m, p, r
+import flext_core
 from flext_core._utilities import FlextUtilitiesModel, FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(
     FlextUtilitiesModelOptions,
-    FlextModels,
+    flext_core.FlextModels,
 ):
     """Runtime DSL: registry comparison, plugin keys and settings election.
 
@@ -26,8 +26,8 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def registry_same_value(
-        previous: p.RegisterableService | p.DispatchableHandler,
-        candidate: p.RegisterableService | p.DispatchableHandler,
+        previous: flext_core.p.RegisterableService | flext_core.p.DispatchableHandler,
+        candidate: flext_core.p.RegisterableService | flext_core.p.DispatchableHandler,
     ) -> bool:
         """Compare collaborators by identity, immutable scalars by type and value.
 
@@ -45,12 +45,17 @@ class FlextUtilitiesModelRuntime(
             )
         return (
             type(previous) is type(candidate)
-            and any(type(previous) is scalar_type for scalar_type in c.SCALAR_TYPES)
+            and any(
+                type(previous) is scalar_type
+                for scalar_type in flext_core.c.SCALAR_TYPES
+            )
             and previous == candidate
         )
 
     @staticmethod
-    def registry_plugin_key(category: str, name: str | None = None) -> p.Result[str]:
+    def registry_plugin_key(
+        category: str, name: str | None = None
+    ) -> flext_core.p.Result[str]:
         """Validate a plugin key, or a category prefix when no name is supplied.
 
         Returns:
@@ -58,23 +63,23 @@ class FlextUtilitiesModelRuntime(
             is empty or contains the configured separator.
 
         """
-        separator = c.REGISTRY_KEY_SEPARATOR
+        separator = flext_core.c.REGISTRY_KEY_SEPARATOR
         if (
             not category
             or separator in category
             or (name is not None and (not name or separator in name))
         ):
-            return r[str].fail(
-                c.ERR_REGISTRY_PLUGIN_KEY_INVALID.format(separator=separator)
+            return flext_core.r[str].fail(
+                flext_core.c.ERR_REGISTRY_PLUGIN_KEY_INVALID.format(separator=separator)
             )
-        return r[str].ok(
+        return flext_core.r[str].ok(
             f"{category}{separator}{name}"
             if name is not None
             else f"{category}{separator}"
         )
 
     @staticmethod
-    def registry_registration_name(binding: p.HandlerRegistration) -> str:
+    def registry_registration_name(binding: flext_core.p.HandlerRegistration) -> str:
         """Read the normalized route published by the dispatcher.
 
         Returns:
@@ -87,12 +92,12 @@ class FlextUtilitiesModelRuntime(
 
     @staticmethod
     def handler_metadata(
-        candidate: p.RegisterableService
-        | p.DispatchableHandler
-        | p.ResolvedHandlerCallable,
+        candidate: flext_core.p.RegisterableService
+        | flext_core.p.DispatchableHandler
+        | flext_core.p.ResolvedHandlerCallable,
         *,
         name: str,
-    ) -> p.DecoratorConfig | None:
+    ) -> flext_core.p.DecoratorConfig | None:
         """Read validated decorator data without wrapping or invoking a callable.
 
         Returns:
@@ -104,19 +109,19 @@ class FlextUtilitiesModelRuntime(
 
         """
         target = candidate.__func__ if isinstance(candidate, MethodType) else candidate
-        metadata = getattr_static(target, c.HANDLER_ATTR, None)
+        metadata = getattr_static(target, flext_core.c.HANDLER_ATTR, None)
         if metadata is None:
             return None
-        if not isinstance(metadata, m.DecoratorConfig):
-            raise TypeError(c.ERR_HANDLER_METADATA_INVALID.format(name=name))
+        if not isinstance(metadata, flext_core.m.DecoratorConfig):
+            raise TypeError(flext_core.c.ERR_HANDLER_METADATA_INVALID.format(name=name))
         if metadata.timeout is not None or metadata.middleware:
-            raise ValueError(c.ERR_HANDLER_POLICY_UNSUPPORTED)
+            raise ValueError(flext_core.c.ERR_HANDLER_POLICY_UNSUPPORTED)
         return metadata
 
     @classmethod
     def registry_registration_details(
-        cls, binding: p.HandlerRegistration
-    ) -> p.RegistrationDetails:
+        cls, binding: flext_core.p.HandlerRegistration
+    ) -> flext_core.p.RegistrationDetails:
         """Project a normalized binding without losing the handler's declared mode.
 
         Returns:
@@ -125,22 +130,22 @@ class FlextUtilitiesModelRuntime(
 
         """
         handler = binding.handler
-        return m.RegistrationDetails(
+        return flext_core.m.RegistrationDetails(
             registration_id=cls.registry_registration_name(binding),
             handler_mode=(
                 handler.mode
-                if isinstance(handler, p.Handler)
-                else c.HandlerType.EVENT
+                if isinstance(handler, flext_core.p.Handler)
+                else flext_core.c.HandlerType.EVENT
                 if binding.is_event
-                else c.HandlerType.COMMAND
+                else flext_core.c.HandlerType.COMMAND
             ),
         )
 
     @classmethod
     def resolve_runtime_settings(
         cls,
-        runtime_options: p.RuntimeBootstrapOptions,
-    ) -> p.Settings:
+        runtime_options: flext_core.p.RuntimeBootstrapOptions,
+    ) -> flext_core.p.Settings:
         """Return the injected provider or load the declared settings class.
 
         Returns:

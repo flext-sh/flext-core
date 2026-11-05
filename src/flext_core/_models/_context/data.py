@@ -8,12 +8,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from types import MappingProxyType
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
-from flext_core import c, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
-_EMPTY_SCALAR_MAPPING: Mapping[str, t.Scalar] = MappingProxyType({})
+_EMPTY_SCALAR_MAPPING: Mapping[str, flext_core.t.Scalar] = MappingProxyType({})
 
 
 class FlextModelsContextData:
@@ -23,13 +26,13 @@ class FlextModelsContextData:
         """Lightweight container for initializing context state."""
 
         data: Annotated[
-            Mapping[str, t.Scalar],
+            Mapping[str, flext_core.t.Scalar],
             FlextModelsPydantic.Field(
                 description="Initial context data as key-value pairs"
             ),
         ] = FlextModelsPydantic.Field(default_factory=lambda: _EMPTY_SCALAR_MAPPING)
         metadata: Annotated[
-            FlextModelsBase.Metadata | Mapping[str, t.Scalar] | None,
+            FlextModelsBase.Metadata | Mapping[str, flext_core.t.Scalar] | None,
             FlextModelsPydantic.Field(
                 description="Context metadata (creation info, source, etc.)"
             ),
@@ -38,8 +41,8 @@ class FlextModelsContextData:
         @FlextModelsPydantic.field_validator("data", mode="before")
         @classmethod
         def validate_dict_serializable(
-            cls, value: p.ModelInput | None
-        ) -> Mapping[str, t.Scalar]:
+            cls, value: flext_core.p.ModelInput | None
+        ) -> Mapping[str, flext_core.t.Scalar]:
             """Validate the immutable flat scalar representation at ingress.
 
             Returns:
@@ -58,18 +61,22 @@ class FlextModelsContextData:
             )
             if not isinstance(data, Mapping):
                 raise TypeError(
-                    c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
+                    flext_core.c.ERR_CONTEXT_CANNOT_NORMALIZE_TYPE_TO_MAPPING.format(
                         type_name=type(value).__name__
                     )
                 )
             return MappingProxyType({
-                key: item if isinstance(item, c.PRIMITIVES_TYPES) else str(item)
+                key: item
+                if isinstance(item, flext_core.c.PRIMITIVES_TYPES)
+                else str(item)
                 for key, item in data.items()
             })
 
         @FlextModelsPydantic.field_validator("metadata", mode="before")
         @classmethod
-        def validate_metadata_before(cls, value: p.MetadataInput) -> p.MetadataInput:
+        def validate_metadata_before(
+            cls, value: flext_core.p.MetadataInput
+        ) -> flext_core.p.MetadataInput:
             """Validate attribute mappings as metadata without a failure fallback.
 
             Returns:
@@ -78,7 +85,7 @@ class FlextModelsContextData:
             """
             if isinstance(value, dict):
                 return FlextModelsBase.Metadata.model_validate({
-                    c.FIELD_ATTRIBUTES: value
+                    flext_core.c.FIELD_ATTRIBUTES: value
                 })
             return value
 

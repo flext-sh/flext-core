@@ -6,7 +6,7 @@ behavioral layers into a single abstract base class through C3 linearization.
 See Also:
     - Workspace ADR-001 (Railway-Oriented Programming):
       ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
-    - :mod:`flext_core.result`: Public concrete result facade.
+    - :mod:`result`: Public concrete result facade.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -18,6 +18,7 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING, override
 
+import flext_core
 from flext_core._result import (
     FlextResultBehavior,
     FlextResultComposition,
@@ -27,7 +28,7 @@ from flext_core._result import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import p
+    pass
 
 
 class FlextResultComposed[T](
@@ -50,12 +51,12 @@ class FlextResultComposed[T](
     See Also:
         - Workspace ADR-001 (Railway-Oriented Programming):
           ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
-        - :class:`flext_core.result.FlextResult`: Concrete public facade.
+        - :class:`result.FlextResult`: Concrete public facade.
 
     """
 
     @override
-    def _as_result(self) -> p.Result[T]:
+    def _as_result(self) -> flext_core.p.Result[T]:
         """Return the complete result view by direct self reference.
 
         Returns:

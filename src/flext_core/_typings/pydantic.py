@@ -35,10 +35,10 @@ import typing_extensions
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
 
-from flext_core import c
+import flext_core
 
 if TYPE_CHECKING:
-    from flext_core import p
+    pass
 
 
 class FlextTypesPydantic:
@@ -204,7 +204,7 @@ class FlextTypesPydantic:
     class DocumentInputContext[MetadataT](TypedDict):
         """Typed source selection and separately validated operational metadata."""
 
-        kind: c.ValidationInputKind
+        kind: flext_core.c.ValidationInputKind
         metadata: MetadataT
 
     @staticmethod
@@ -256,8 +256,8 @@ class FlextTypesPydantic:
         decoder = pydantic_core.SchemaValidator(codec)
 
         def decode(
-            value: p.GuardInput, info: core_schema.ValidationInfo
-        ) -> p.GuardInput:
+            value: flext_core.p.GuardInput, info: core_schema.ValidationInfo
+        ) -> flext_core.p.GuardInput:
             """Decode only the context elected by the document entry owner.
 
             Returns:
@@ -265,11 +265,11 @@ class FlextTypesPydantic:
 
             """
             # pydantic-core passes the context untyped; it is typed once here.
-            context: Mapping[str, p.GuardInput] | None = info.context
+            context: Mapping[str, flext_core.p.GuardInput] | None = info.context
             return (
                 decoder.validate_python(value, strict=True)
                 if isinstance(context, Mapping)
-                and context.get("kind") is c.ValidationInputKind.DOCUMENT
+                and context.get("kind") is flext_core.c.ValidationInputKind.DOCUMENT
                 else value
             )
 
@@ -326,7 +326,7 @@ class FlextTypesPydantic:
         if target.__bound__ is not None:
             return resolve(target.__bound__, bound)
 
-        def require_specialization(_value: p.AttributeProbe) -> Never:
+        def require_specialization(_value: flext_core.p.AttributeProbe) -> Never:
             """Reject a concrete value without a declared dependency contract.
 
             Raises:
@@ -388,7 +388,7 @@ class FlextTypesPydantic:
 
     @staticmethod
     def schema_for_model(
-        model: Callable[[], type[p.BaseModel]],
+        model: Callable[[], type[flext_core.p.BaseModel]],
     ) -> pydantic.GetPydanticSchema:
         """Delegate a protocol payload to its native model schema, resolved lazily.
 

@@ -9,9 +9,12 @@ from __future__ import annotations
 import time
 import uuid
 from collections.abc import Mapping, MutableMapping
-from typing import ClassVar, cast, override
+from typing import TYPE_CHECKING, ClassVar, cast, override
 
-from flext_core import c, m, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._exceptions import FlextExceptionsHelpers
 
 
@@ -23,9 +26,9 @@ class FlextExceptionsBase:
 
         @staticmethod
         def normalize_metadata(
-            metadata: p.HasModelDump | t.JsonValue | None,
-            merged_kwargs: Mapping[str, t.JsonPayload],
-        ) -> p.Metadata:
+            metadata: flext_core.p.HasModelDump | flext_core.t.JsonValue | None,
+            merged_kwargs: Mapping[str, flext_core.t.JsonPayload],
+        ) -> flext_core.p.Metadata:
             """Normalize metadata from various input types to m.Metadata model.
 
             Returns:
@@ -38,41 +41,51 @@ class FlextExceptionsBase:
                 if metadata_model is not None
                 else {}
             )
-            merged_attrs: MutableMapping[str, t.JsonPayload | None] = (
+            merged_attrs: MutableMapping[str, flext_core.t.JsonPayload | None] = (
                 dict(metadata_model.attributes) if metadata_model is not None else {}
             )
             merged_attrs.update(merged_kwargs)
-            return m.Metadata.model_validate({
+            return flext_core.m.Metadata.model_validate({
                 **source,
-                c.FIELD_ATTRIBUTES: merged_attrs,
+                flext_core.c.FIELD_ATTRIBUTES: merged_attrs,
             })
 
         message: str
         error_code: str
         correlation_id: str | None
-        metadata: p.Metadata
+        metadata: flext_core.p.Metadata
         timestamp: float
         auto_log: bool
         args: tuple[str, ...]
 
-        _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
-            c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
-            c.ErrorCode.TYPE_ERROR: c.ErrorDomain.VALIDATION,
-            c.ErrorCode.ALREADY_EXISTS: c.ErrorDomain.VALIDATION,
-            c.ErrorCode.CONFIG_ERROR: c.ErrorDomain.INTERNAL,
-            c.ErrorCode.CONFIGURATION_ERROR: c.ErrorDomain.INTERNAL,
-            c.ErrorCode.ATTRIBUTE_ERROR: c.ErrorDomain.INTERNAL,
-            c.ErrorCode.OPERATION_ERROR: c.ErrorDomain.INTERNAL,
-            c.ErrorCode.AUTHENTICATION_ERROR: c.ErrorDomain.AUTH,
-            c.ErrorCode.AUTHORIZATION_ERROR: c.ErrorDomain.AUTH,
-            c.ErrorCode.PERMISSION_ERROR: c.ErrorDomain.AUTH,
-            c.ErrorCode.CONNECTION_ERROR: c.ErrorDomain.NETWORK,
-            c.ErrorCode.EXTERNAL_SERVICE_ERROR: c.ErrorDomain.NETWORK,
-            c.ErrorCode.TIMEOUT_ERROR: c.ErrorDomain.TIMEOUT,
-            c.ErrorCode.NOT_FOUND_ERROR: c.ErrorDomain.NOT_FOUND,
-            c.ErrorCode.NOT_FOUND: c.ErrorDomain.NOT_FOUND,
-            c.ErrorCode.RESOURCE_NOT_FOUND: c.ErrorDomain.NOT_FOUND,
-            c.ErrorCode.UNKNOWN_ERROR: c.ErrorDomain.UNKNOWN,
+        _error_domains: ClassVar[Mapping[str, flext_core.c.ErrorDomain]] = {
+            flext_core.c.ErrorCode.VALIDATION_ERROR: (
+                flext_core.c.ErrorDomain.VALIDATION
+            ),
+            flext_core.c.ErrorCode.TYPE_ERROR: (flext_core.c.ErrorDomain.VALIDATION),
+            flext_core.c.ErrorCode.ALREADY_EXISTS: flext_core.c.ErrorDomain.VALIDATION,
+            flext_core.c.ErrorCode.CONFIG_ERROR: flext_core.c.ErrorDomain.INTERNAL,
+            flext_core.c.ErrorCode.CONFIGURATION_ERROR: (
+                flext_core.c.ErrorDomain.INTERNAL
+            ),
+            flext_core.c.ErrorCode.ATTRIBUTE_ERROR: flext_core.c.ErrorDomain.INTERNAL,
+            flext_core.c.ErrorCode.OPERATION_ERROR: flext_core.c.ErrorDomain.INTERNAL,
+            flext_core.c.ErrorCode.AUTHENTICATION_ERROR: (
+                flext_core.c.ErrorDomain.AUTH
+            ),
+            flext_core.c.ErrorCode.AUTHORIZATION_ERROR: flext_core.c.ErrorDomain.AUTH,
+            flext_core.c.ErrorCode.PERMISSION_ERROR: flext_core.c.ErrorDomain.AUTH,
+            flext_core.c.ErrorCode.CONNECTION_ERROR: flext_core.c.ErrorDomain.NETWORK,
+            flext_core.c.ErrorCode.EXTERNAL_SERVICE_ERROR: (
+                flext_core.c.ErrorDomain.NETWORK
+            ),
+            flext_core.c.ErrorCode.TIMEOUT_ERROR: flext_core.c.ErrorDomain.TIMEOUT,
+            flext_core.c.ErrorCode.NOT_FOUND_ERROR: flext_core.c.ErrorDomain.NOT_FOUND,
+            flext_core.c.ErrorCode.NOT_FOUND: flext_core.c.ErrorDomain.NOT_FOUND,
+            flext_core.c.ErrorCode.RESOURCE_NOT_FOUND: (
+                flext_core.c.ErrorDomain.NOT_FOUND
+            ),
+            flext_core.c.ErrorCode.UNKNOWN_ERROR: flext_core.c.ErrorDomain.UNKNOWN,
         }
 
         @property
@@ -80,7 +93,9 @@ class FlextExceptionsBase:
             """Canonical routing domain derived from the structured error code."""
             if not self.error_code:
                 return None
-            domain = self._error_domains.get(self.error_code, c.ErrorDomain.UNKNOWN)
+            domain = self._error_domains.get(
+                self.error_code, flext_core.c.ErrorDomain.UNKNOWN
+            )
             return domain.value
 
         @property
@@ -102,14 +117,14 @@ class FlextExceptionsBase:
             message: str,
             *,
             error_code: str,
-            options: p.ExceptionInitOptions,
-            extra_kwargs: Mapping[str, t.JsonPayload | None],
+            options: flext_core.p.ExceptionInitOptions,
+            extra_kwargs: Mapping[str, flext_core.t.JsonPayload | None],
         ) -> None:
             """Initialize the shared base error state without metaprogramming."""
             self.args = (message,)
             self.message = message
             self.error_code = error_code
-            final_kwargs_dict: t.JsonDict = {}
+            final_kwargs_dict: flext_core.t.JsonDict = {}
             for source_value in (options.merged_kwargs, options.context, extra_kwargs):
                 if source_value is None:
                     continue
@@ -140,18 +155,20 @@ class FlextExceptionsBase:
                 return f"[{self.error_code}] {self.message}"
             return self.message
 
-        params_cls: ClassVar[t.ModelClass[t.BaseModelType] | None] = None
+        params_cls: ClassVar[
+            flext_core.t.ModelClass[flext_core.t.BaseModelType] | None
+        ] = None
         excluded_context_keys: ClassVar[set[str] | frozenset[str] | None] = None
-        _default_error_code: ClassVar[str] = c.ErrorCode.UNKNOWN_ERROR
+        _default_error_code: ClassVar[str] = flext_core.c.ErrorCode.UNKNOWN_ERROR
 
         def __init__(
             self,
             message: str,
-            *format_args: t.JsonPayload,
-            options: p.ExceptionInitOptions | None = None,
-            params: p.BaseModel | None = None,
-            metadata: p.HasModelDump | t.JsonValue | None = None,
-            **extra_kwargs: t.JsonValue,
+            *format_args: flext_core.t.JsonPayload,
+            options: flext_core.p.ExceptionInitOptions | None = None,
+            params: flext_core.p.BaseModel | None = None,
+            metadata: flext_core.p.HasModelDump | flext_core.t.JsonValue | None = None,
+            **extra_kwargs: flext_core.t.JsonValue,
         ) -> None:
             """Initialize base error with message and optional metadata.
 
@@ -163,7 +180,9 @@ class FlextExceptionsBase:
             """
             resolved_message = message % format_args if format_args else message
             opts = (
-                cast("m.ExceptionInitOptions", options) if options is not None else None
+                cast("flext_core.m.ExceptionInitOptions", options)
+                if options is not None
+                else None
             )
             if opts is None:
                 # Keyword-form construction: the tested public contract accepts
@@ -174,13 +193,13 @@ class FlextExceptionsBase:
                 # generic extra bucket; ``metadata`` is a named parameter.
                 option_kwargs: MutableMapping[
                     str,
-                    p.HasModelDump | t.JsonValue | None,
+                    flext_core.p.HasModelDump | flext_core.t.JsonValue | None,
                 ] = {
                     key: extra_kwargs.pop(key)
                     for key in (
                         "error_code",
                         "context",
-                        c.ContextKey.CORRELATION_ID,
+                        flext_core.c.ContextKey.CORRELATION_ID,
                         "auto_correlation",
                         "auto_log",
                         "merged_kwargs",
@@ -189,7 +208,7 @@ class FlextExceptionsBase:
                 }
                 if metadata is not None:
                     option_kwargs["metadata"] = metadata
-                opts = m.ExceptionInitOptions.model_validate(option_kwargs)
+                opts = flext_core.m.ExceptionInitOptions.model_validate(option_kwargs)
             elif metadata is not None:
                 opts = opts.model_copy(update={"metadata": metadata})
             declaredparams_cls = self.__class__.params_cls
@@ -239,15 +258,17 @@ class FlextExceptionsBase:
             """
             return (
                 self._default_error_code
-                if error_code == c.ErrorCode.UNKNOWN_ERROR
+                if error_code == flext_core.c.ErrorCode.UNKNOWN_ERROR
                 else error_code
             )
 
         @staticmethod
         def _build_declared_extra(
-            merged_kwargs: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-            extra_kwargs: Mapping[str, t.JsonValue],
-        ) -> MutableMapping[str, t.JsonPayload | None]:
+            merged_kwargs: Mapping[str, flext_core.t.JsonPayload | None]
+            | flext_core.p.HasModelDump
+            | None,
+            extra_kwargs: Mapping[str, flext_core.t.JsonValue],
+        ) -> MutableMapping[str, flext_core.t.JsonPayload | None]:
             """Normalize merged and extra kwargs into the declared-extra mapping.
 
             Returns:
@@ -260,10 +281,10 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _extract_declared_remaining(
-            combined_extra: MutableMapping[str, t.JsonPayload | None],
+            combined_extra: MutableMapping[str, flext_core.t.JsonPayload | None],
         ) -> tuple[
-            t.MutableJsonMapping,
-            t.JsonValue | None,
+            flext_core.t.MutableJsonMapping,
+            flext_core.t.JsonValue | None,
             str | None,
         ]:
             """Split declared params from remaining extras in the combined mapping.
@@ -275,9 +296,9 @@ class FlextExceptionsBase:
             remaining_extra = FlextExceptionsHelpers.build_context_map(
                 combined_extra, {}
             )
-            preserved_metadata = remaining_extra.pop(c.FIELD_METADATA, None)
+            preserved_metadata = remaining_extra.pop(flext_core.c.FIELD_METADATA, None)
             correlation_id_raw = remaining_extra.pop(
-                c.ContextKey.CORRELATION_ID,
+                flext_core.c.ContextKey.CORRELATION_ID,
                 None,
             )
             correlation_id_str = FlextExceptionsHelpers.safe_optional_str(
@@ -287,11 +308,13 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _resolve_named_param_values(
-            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-            remaining_extra: t.MutableJsonMapping,
+            context: Mapping[str, flext_core.t.JsonPayload | None]
+            | flext_core.p.HasModelDump
+            | None,
+            remaining_extra: flext_core.t.MutableJsonMapping,
             declared_param_keys: frozenset[str],
-            resolved_named: MutableMapping[str, t.JsonPayload | None],
-        ) -> t.JsonDict:
+            resolved_named: MutableMapping[str, flext_core.t.JsonPayload | None],
+        ) -> flext_core.t.JsonDict:
             """Fold resolved named params into the declared param-value map.
 
             Returns:
@@ -312,9 +335,9 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _attach_declared_field_context(
-            ctx: t.MutableJsonMapping,
-            declaredparams_cls: t.ModelClass[t.BaseModelType],
-            resolved: p.BaseModel,
+            ctx: flext_core.t.MutableJsonMapping,
+            declaredparams_cls: flext_core.t.ModelClass[flext_core.t.BaseModelType],
+            resolved: flext_core.p.BaseModel,
             declared_param_keys: frozenset[str],
         ) -> None:
             """Attach declared field values and help text to the context map."""
@@ -334,11 +357,13 @@ class FlextExceptionsBase:
 
         def _resolve_declared_params(
             self,
-            declaredparams_cls: t.ModelClass[t.BaseModelType],
-            context: Mapping[str, t.JsonPayload | None] | p.HasModelDump | None,
-            remaining_extra: t.MutableJsonMapping,
-            params: p.BaseModel | None,
-        ) -> tuple[p.BaseModel, t.MutableJsonMapping]:
+            declaredparams_cls: flext_core.t.ModelClass[flext_core.t.BaseModelType],
+            context: Mapping[str, flext_core.t.JsonPayload | None]
+            | flext_core.p.HasModelDump
+            | None,
+            remaining_extra: flext_core.t.MutableJsonMapping,
+            params: flext_core.p.BaseModel | None,
+        ) -> tuple[flext_core.p.BaseModel, flext_core.t.MutableJsonMapping]:
             """Validate declared params and build the structured context mapping.
 
             Returns:
@@ -346,7 +371,7 @@ class FlextExceptionsBase:
 
             """
             declared_param_keys = frozenset(declaredparams_cls.model_fields)
-            resolved_named: MutableMapping[str, t.JsonPayload | None] = {}
+            resolved_named: MutableMapping[str, flext_core.t.JsonPayload | None] = {}
             for key in declared_param_keys:
                 resolved_named.setdefault(key, remaining_extra.pop(key, None))
             param_values = self._resolve_named_param_values(
@@ -375,18 +400,18 @@ class FlextExceptionsBase:
 
         @staticmethod
         def _resolve_declared_options(
-            options: p.ExceptionInitOptions,
-            ctx: t.MutableJsonMapping,
-            preserved_metadata: t.JsonValue | None,
+            options: flext_core.p.ExceptionInitOptions,
+            ctx: flext_core.t.MutableJsonMapping,
+            preserved_metadata: flext_core.t.JsonValue | None,
             declared_correlation_id: str | None,
-        ) -> p.ExceptionInitOptions:
+        ) -> flext_core.p.ExceptionInitOptions:
             """Fold declared-params resolutions back into the init options.
 
             Returns:
                 The resulting ``m.ExceptionInitOptions``.
 
             """
-            return cast("m.ExceptionInitOptions", options).model_copy(
+            return cast("flext_core.m.ExceptionInitOptions", options).model_copy(
                 update={
                     "context": ctx or None,
                     "metadata": (
@@ -394,7 +419,7 @@ class FlextExceptionsBase:
                         if options.metadata is not None
                         else preserved_metadata
                     ),
-                    c.ContextKey.CORRELATION_ID: (
+                    flext_core.c.ContextKey.CORRELATION_ID: (
                         options.correlation_id
                         if options.correlation_id is not None
                         else declared_correlation_id

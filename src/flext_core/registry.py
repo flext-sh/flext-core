@@ -10,28 +10,19 @@ from collections.abc import Mapping, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, Self, Unpack, override
 
-from flext_core import (
-    FlextContainer,
-    FlextDispatcher,
-    FlextHandlers,
-    c,
-    e,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
 
-class FlextRegistry(s[bool], m.RegistryOptions):
+class FlextRegistry(flext_core.s[bool], flext_core.m.RegistryOptions):
     """Coordinate the injected runtime without another dispatch or storage engine."""
 
-    def __init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[flext_core.t.ConfigDict]) -> None:
         """Keep explicitly selected class-scope plugins local to each subclass."""
         super().__init_subclass__(**kwargs)
         cls._class_plugin_storage = {}
@@ -39,9 +30,9 @@ class FlextRegistry(s[bool], m.RegistryOptions):
     @classmethod
     def create(
         cls,
-        dispatcher: p.Dispatcher | None = None,
+        dispatcher: flext_core.p.Dispatcher | None = None,
         *,
-        discovery_module: t.RegistryModule | None = None,
+        discovery_module: flext_core.t.RegistryModule | None = None,
     ) -> Self:
         """Build a registry on a fresh service runtime around ``dispatcher``.
 
@@ -52,19 +43,19 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             The registry sharing one runtime for registration and dispatch.
 
         """
-        elected = dispatcher if dispatcher is not None else FlextDispatcher()
+        elected = dispatcher if dispatcher is not None else flext_core.FlextDispatcher()
         registry = cls(
-            registry_runtime=FlextContainer.build_service_runtime(
-                m.RuntimeBootstrapOptions(dispatcher=elected),
+            registry_runtime=flext_core.FlextContainer.build_service_runtime(
+                flext_core.m.RuntimeBootstrapOptions(dispatcher=elected),
             ),
         )
         if discovery_module is not None:
             elected.register_handlers(
                 tuple(
-                    m.HandlerRegistration(
+                    flext_core.m.HandlerRegistration(
                         handler=handler, message_type=metadata.command
                     )
-                    for _, handler, metadata in FlextHandlers.Discovery.scan_module(
+                    for _, handler, metadata in flext_core.h.Discovery.scan_module(
                         discovery_module
                     )
                 )
@@ -72,25 +63,27 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         return registry
 
     @override
-    def _get_runtime(self) -> p.ServiceRuntime:
+    def _get_runtime(self) -> flext_core.p.ServiceRuntime:
         return self.registry_runtime
 
     @property
-    def dispatcher(self) -> p.Dispatcher:
+    def dispatcher(self) -> flext_core.p.Dispatcher:
         """Dispatcher used by the same runtime as plugin registration."""
         return self.registry_runtime.dispatcher
 
     @override
-    def execute(self) -> p.Result[bool]:
+    def execute(self) -> flext_core.p.Result[bool]:
         """Confirm the runtime already validated at construction.
 
         Returns:
             Result[bool]: The result of the validation.
 
         """
-        return r[bool].ok(value=True)
+        return flext_core.r[bool].ok(value=True)
 
-    def register(self, name: str, service: p.RegisterableService) -> p.Result[bool]:
+    def register(
+        self, name: str, service: flext_core.p.RegisterableService
+    ) -> flext_core.p.Result[bool]:
         """Bind a collaborator unchanged, rejecting conflicting registrations.
 
         Args:
@@ -104,24 +97,24 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         if self.container.has(name):
             existing = self.container.resolve(name)
             if existing.failure:
-                return r[bool].from_failure(existing)
+                return flext_core.r[bool].from_failure(existing)
             previous = existing.value
-            if u.registry_same_value(previous, service):
-                return r[bool].ok(value=True)
-            return r[bool].fail_op(
+            if flext_core.u.registry_same_value(previous, service):
+                return flext_core.r[bool].ok(value=True)
+            return flext_core.r[bool].fail_op(
                 "register service in registry",
-                c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name),
+                flext_core.c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name),
             )
         try:
             self.container.bind(name, service)
-        except e.ValidationError as exc:
-            return e.fail_operation("register service in registry", exc)
-        return r[bool].ok(value=True)
+        except flext_core.e.ValidationError as exc:
+            return flext_core.e.fail_operation("register service in registry", exc)
+        return flext_core.r[bool].ok(value=True)
 
     def register_handler(
         self,
-        handler: p.DispatchableHandler,
-    ) -> p.Result[p.RegistrationDetails]:
+        handler: flext_core.p.DispatchableHandler,
+    ) -> flext_core.p.Result[flext_core.p.RegistrationDetails]:
         """Register one handler through the canonical atomic batch owner.
 
         Args:
@@ -133,18 +126,20 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         """
         outcome = self.dispatcher.register_handlers((
-            m.HandlerRegistration(handler=handler),
+            flext_core.m.HandlerRegistration(handler=handler),
         ))
         if outcome.failure:
-            return r[p.RegistrationDetails].from_failure(outcome)
+            return flext_core.r[flext_core.p.RegistrationDetails].from_failure(outcome)
         report = outcome.value
         binding = (report.registered or report.skipped)[0]
-        return r[p.RegistrationDetails].ok(u.registry_registration_details(binding))
+        return flext_core.r[flext_core.p.RegistrationDetails].ok(
+            flext_core.u.registry_registration_details(binding)
+        )
 
     def register_handlers(
         self,
-        handlers: Sequence[p.DispatchableHandler],
-    ) -> p.Result[p.RegistrySummary]:
+        handlers: Sequence[flext_core.p.DispatchableHandler],
+    ) -> flext_core.p.Result[flext_core.p.RegistrySummary]:
         """Register every handler atomically without discarding failure metadata.
 
         Args:
@@ -156,13 +151,18 @@ class FlextRegistry(s[bool], m.RegistryOptions):
 
         """
         return self._register_batch(
-            tuple(m.HandlerRegistration(handler=handler) for handler in handlers)
+            tuple(
+                flext_core.m.HandlerRegistration(handler=handler)
+                for handler in handlers
+            )
         )
 
     def register_bindings(
         self,
-        bindings: Mapping[t.RegistryBindingKey, p.DispatchableHandler],
-    ) -> p.Result[p.RegistrySummary]:
+        bindings: Mapping[
+            flext_core.t.RegistryBindingKey, flext_core.p.DispatchableHandler
+        ],
+    ) -> flext_core.p.Result[flext_core.p.RegistrySummary]:
         """Bind each declared message route through the dispatcher itself.
 
         Args:
@@ -175,27 +175,30 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         """
         return self._register_batch(
             tuple(
-                m.HandlerRegistration(handler=handler, message_type=message_type)
+                flext_core.m.HandlerRegistration(
+                    handler=handler, message_type=message_type
+                )
                 for message_type, handler in bindings.items()
             )
         )
 
     def _register_batch(
         self,
-        bindings: Sequence[p.HandlerRegistration],
-    ) -> p.Result[p.RegistrySummary]:
+        bindings: Sequence[flext_core.p.HandlerRegistration],
+    ) -> flext_core.p.Result[flext_core.p.RegistrySummary]:
         outcome = self.dispatcher.register_handlers(bindings)
         if outcome.failure:
-            return r[p.RegistrySummary].from_failure(outcome)
+            return flext_core.r[flext_core.p.RegistrySummary].from_failure(outcome)
         report = outcome.value
-        return r[p.RegistrySummary].ok(
-            m.RegistrySummary.model_validate({
+        return flext_core.r[flext_core.p.RegistrySummary].ok(
+            flext_core.m.RegistrySummary.model_validate({
                 "registered": [
-                    u.registry_registration_details(binding)
+                    flext_core.u.registry_registration_details(binding)
                     for binding in report.registered
                 ],
                 "skipped": tuple(
-                    u.registry_registration_name(binding) for binding in report.skipped
+                    flext_core.u.registry_registration_name(binding)
+                    for binding in report.skipped
                 ),
             })
         )
@@ -204,11 +207,14 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         self,
         category: str,
         name: str,
-        plugin: p.RegisterableService,
+        plugin: flext_core.p.RegisterableService,
         *,
-        validate: Callable[[p.RegisterableService], p.Result[bool]] | None = None,
-        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[bool]:
+        validate: Callable[
+            [flext_core.p.RegisterableService], flext_core.p.Result[bool]
+        ]
+        | None = None,
+        scope: flext_core.c.RegistrationScope = flext_core.c.RegistrationScope.INSTANCE,
+    ) -> flext_core.p.Result[bool]:
         """Store the original plugin, never its string or serialized projection.
 
         Args:
@@ -222,23 +228,25 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             A ``p.Result[bool]`` indicating the success of the registration.
 
         """
-        key = u.registry_plugin_key(category, name)
+        key = flext_core.u.registry_plugin_key(category, name)
         if key.failure:
-            return r[bool].from_failure(key)
+            return flext_core.r[bool].from_failure(key)
         if validate is not None:
-            validated = u.guard_result(
+            validated = flext_core.u.guard_result(
                 partial(validate, plugin),
-                catch=c.EXC_RUNTIME_TYPE,
+                catch=flext_core.c.EXC_RUNTIME_TYPE,
                 op_name="validate plugin registration",
             )
             if validated.failure or not validated.value:
                 return (
                     validated
                     if validated.failure
-                    else r[bool].fail_op("validate plugin registration", name)
+                    else flext_core.r[bool].fail_op(
+                        "validate plugin registration", name
+                    )
                 )
         with self._lock:
-            if scope == c.RegistrationScope.INSTANCE:
+            if scope == flext_core.c.RegistrationScope.INSTANCE:
                 outcome = self.register(key.value, plugin)
                 if outcome.success:
                     self._registered_keys.add(key.value)
@@ -246,22 +254,22 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             storage = self._class_plugin_storage
             if key.value in storage:
                 previous = storage[key.value]
-                if u.registry_same_value(previous, plugin):
-                    return r[bool].ok(value=True)
-                return r[bool].fail_op(
+                if flext_core.u.registry_same_value(previous, plugin):
+                    return flext_core.r[bool].ok(value=True)
+                return flext_core.r[bool].fail_op(
                     "register class plugin",
-                    c.ERR_CONTAINER_NAME_DUPLICATE.format(name=key.value),
+                    flext_core.c.ERR_CONTAINER_NAME_DUPLICATE.format(name=key.value),
                 )
             storage[key.value] = plugin
-        return r[bool].ok(value=True)
+        return flext_core.r[bool].ok(value=True)
 
     def fetch_plugin(
         self,
         category: str,
         name: str,
         *,
-        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[p.RegisterableService]:
+        scope: flext_core.c.RegistrationScope = flext_core.c.RegistrationScope.INSTANCE,
+    ) -> flext_core.p.Result[flext_core.p.RegisterableService]:
         """Fetch the unchanged collaborator from the selected registry scope.
 
         Args:
@@ -274,24 +282,26 @@ class FlextRegistry(s[bool], m.RegistryOptions):
                 error if not found.
 
         """
-        key = u.registry_plugin_key(category, name)
+        key = flext_core.u.registry_plugin_key(category, name)
         if key.failure:
-            return r[p.RegisterableService].from_failure(key)
+            return flext_core.r[flext_core.p.RegisterableService].from_failure(key)
         with self._lock:
-            if scope == c.RegistrationScope.INSTANCE:
+            if scope == flext_core.c.RegistrationScope.INSTANCE:
                 if key.value not in self._registered_keys:
-                    return e.fail_not_found(category, name)
+                    return flext_core.e.fail_not_found(category, name)
                 return self.container.resolve(key.value)
             if key.value not in self._class_plugin_storage:
-                return e.fail_not_found(category, name)
-            return r[p.RegisterableService].ok(self._class_plugin_storage[key.value])
+                return flext_core.e.fail_not_found(category, name)
+            return flext_core.r[flext_core.p.RegisterableService].ok(
+                self._class_plugin_storage[key.value]
+            )
 
     def list_plugins(
         self,
         category: str,
         *,
-        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[Sequence[str]]:
+        scope: flext_core.c.RegistrationScope = flext_core.c.RegistrationScope.INSTANCE,
+    ) -> flext_core.p.Result[Sequence[str]]:
         """List registered names deterministically in one category.
 
         Args:
@@ -303,17 +313,17 @@ class FlextRegistry(s[bool], m.RegistryOptions):
                 names.
 
         """
-        key_prefix = u.registry_plugin_key(category)
+        key_prefix = flext_core.u.registry_plugin_key(category)
         if key_prefix.failure:
-            return r[Sequence[str]].from_failure(key_prefix)
+            return flext_core.r[Sequence[str]].from_failure(key_prefix)
         prefix = key_prefix.value
         with self._lock:
             keys = (
                 self._registered_keys
-                if scope == c.RegistrationScope.INSTANCE
+                if scope == flext_core.c.RegistrationScope.INSTANCE
                 else self._class_plugin_storage.keys()
             )
-            return r[Sequence[str]].ok(
+            return flext_core.r[Sequence[str]].ok(
                 tuple(
                     sorted(
                         key.removeprefix(prefix)
@@ -328,8 +338,8 @@ class FlextRegistry(s[bool], m.RegistryOptions):
         category: str,
         name: str,
         *,
-        scope: c.RegistrationScope = c.RegistrationScope.INSTANCE,
-    ) -> p.Result[bool]:
+        scope: flext_core.c.RegistrationScope = flext_core.c.RegistrationScope.INSTANCE,
+    ) -> flext_core.p.Result[bool]:
         """Remove storage before ownership, allowing a new registration afterward.
 
         Args:
@@ -341,22 +351,22 @@ class FlextRegistry(s[bool], m.RegistryOptions):
             A ``p.Result[bool]`` indicating the success of the unregistration.
 
         """
-        key = u.registry_plugin_key(category, name)
+        key = flext_core.u.registry_plugin_key(category, name)
         if key.failure:
-            return r[bool].from_failure(key)
+            return flext_core.r[bool].from_failure(key)
         with self._lock:
-            if scope == c.RegistrationScope.INSTANCE:
+            if scope == flext_core.c.RegistrationScope.INSTANCE:
                 if key.value not in self._registered_keys:
-                    return e.fail_not_found(category, name)
+                    return flext_core.e.fail_not_found(category, name)
                 outcome = self.container.drop(key.value)
                 if outcome.failure:
                     return outcome
                 self._registered_keys.remove(key.value)
                 return outcome
             if key.value not in self._class_plugin_storage:
-                return e.fail_not_found(category, name)
+                return flext_core.e.fail_not_found(category, name)
             del self._class_plugin_storage[key.value]
-        return r[bool].ok(value=True)
+        return flext_core.r[bool].ok(value=True)
 
 
 __all__: list[str] = ["FlextRegistry"]

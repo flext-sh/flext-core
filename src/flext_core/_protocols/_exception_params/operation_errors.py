@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import flext_core
 from flext_core._protocols._exception_params import FlextProtocolsExceptionParamsBase
 
 if TYPE_CHECKING:
-    from flext_core import t
+    pass
 
 
 class FlextProtocolsExceptionParamsOperationErrors:
@@ -49,7 +50,7 @@ class FlextProtocolsExceptionParamsOperationErrors:
         """Structural data contract projected from the owning model."""
 
         attribute_name: str | None
-        attribute_context: t.RuntimeData | None
+        attribute_context: flext_core.t.RuntimeData | None
 
 
 __all__: list[str] = [

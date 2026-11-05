@@ -41,10 +41,10 @@ from collections.abc import MutableSequence
 from types import NoneType, UnionType
 from typing import ClassVar, Self, Unpack, get_args, get_origin, is_protocol, override
 
-from flext_core import c, m, p, t, x
+import flext_core
 
 
-class FlextService[TDomainResult = p.Base](x):
+class FlextService[TDomainResult = flext_core.p.Base](flext_core.x):
     """Base class for domain services in FLEXT applications.
 
     Concrete services inherit settings, container, context and logger access
@@ -52,7 +52,7 @@ class FlextService[TDomainResult = p.Base](x):
     ``TDomainResult`` fixes the result payload type the service returns.
     """
 
-    model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+    model_config: ClassVar[flext_core.t.ConfigDict] = flext_core.m.ConfigDict(
         strict=True,
         extra="forbid",
         validate_by_name=True,
@@ -61,9 +61,9 @@ class FlextService[TDomainResult = p.Base](x):
     )
 
     _lock: ClassVar[threading.RLock] = threading.RLock()
-    _instance: ClassVar[p.Base | None] = None
+    _instance: ClassVar[flext_core.p.Base | None] = None
 
-    def __init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[flext_core.t.ConfigDict]) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         super().__init_subclass__(**kwargs)
         cls._instance = None
@@ -79,7 +79,7 @@ class FlextService[TDomainResult = p.Base](x):
         """
         super().__pydantic_on_complete__()
         for name, field in cls.model_fields.items():
-            if get_origin(field.annotation) is not t.Port:
+            if get_origin(field.annotation) is not flext_core.t.Port:
                 continue
             (declared,) = get_args(field.annotation)
             members = (
@@ -92,7 +92,7 @@ class FlextService[TDomainResult = p.Base](x):
                 if is_protocol(origin) and not getattr(
                     origin, "_is_runtime_protocol", False
                 ):
-                    msg = c.ERR_SERVICE_PORT_TYPE.format(
+                    msg = flext_core.c.ERR_SERVICE_PORT_TYPE.format(
                         service=cls.__name__,
                         field=name,
                         port_type=member,
@@ -125,7 +125,7 @@ class FlextService[TDomainResult = p.Base](x):
             cls._instance = None
 
     @classmethod
-    def with_settings(cls, settings: p.Settings) -> Self:
+    def with_settings(cls, settings: flext_core.p.Settings) -> Self:
         """Return an isolated service snapshot with one runtime settings clone.
 
         Uses the structural `m.Settings.clone()` contract already consumed by the
@@ -138,7 +138,7 @@ class FlextService[TDomainResult = p.Base](x):
         """
         return cls(runtime_settings=settings.clone())
 
-    def execute(self) -> p.Result[TDomainResult]:
+    def execute(self) -> flext_core.p.Result[TDomainResult]:
         """Execute the service domain logic.
 
         Concrete services must override this method with their typed runtime result.

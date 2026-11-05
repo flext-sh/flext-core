@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Self
 
-from flext_core import p
+import flext_core
 from flext_core._constants.errors import FlextConstantsErrors
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities import (
@@ -28,7 +28,7 @@ from flext_core._utilities import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import t
+    pass
 
 
 class FlextResultBase[T](FlextModelsPydantic.BaseModel):
@@ -53,7 +53,7 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
     success: bool = True
     error: str | None = None
     error_code: str | None = None
-    error_data: t.JsonDict | None = None
+    error_data: flext_core.t.JsonDict | None = None
 
     _payload: T = FlextModelsPydantic.PrivateAttr()
     _exception: BaseException | None = FlextModelsPydantic.PrivateAttr(default=None)
@@ -80,7 +80,7 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
         cls,
         error: str,
         error_code: str | None,
-        error_data: t.JsonDict | None,
+        error_data: flext_core.t.JsonDict | None,
         exception: BaseException | None,
     ) -> Self:
         """Instantiate a validated failure result binding normalized error state.
@@ -146,8 +146,8 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
 
     @staticmethod
     def validate_error_data(
-        error_data: t.JsonMapping | p.ConfigModelInput | None,
-    ) -> t.JsonDict | None:
+        error_data: flext_core.t.JsonMapping | flext_core.p.ConfigModelInput | None,
+    ) -> flext_core.t.JsonDict | None:
         """Normalize structured error context into a strict JSON-compatible dictionary.
 
         Args:
@@ -162,7 +162,7 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
             return None
         payload = (
             error_data.model_dump(mode="json")
-            if isinstance(error_data, p.HasModelDump)
+            if isinstance(error_data, flext_core.p.HasModelDump)
             else error_data
         )
         return FlextUtilitiesTypingAdapterJson.json_dict_adapter().validate_python(

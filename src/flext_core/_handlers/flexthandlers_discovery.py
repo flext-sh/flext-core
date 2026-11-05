@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING
 
-from flext_core import p, t, u
+import flext_core
 from flext_core._handlers import FlextHandlersFactory
 
 if TYPE_CHECKING:
@@ -21,7 +21,7 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
 ):
     """Final CQRS handler facade with discovery utilities composed by MRO."""
 
-    def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
+    def __init__(self, *, settings: flext_core.p.HandlerConfig | None = None) -> None:
         """Initialize the facade, forwarding configuration to the base.
 
         Declared on the public facade so pyright's pydantic model synthesis for
@@ -62,7 +62,7 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
         @staticmethod
         def scan_class(
             target_class: type,
-        ) -> Sequence[tuple[str, p.DecoratorConfig]]:
+        ) -> Sequence[tuple[str, flext_core.p.DecoratorConfig]]:
             """Scan class for methods decorated with @handler().
 
             Introspects the class to find all methods with handler configuration
@@ -80,13 +80,15 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
                 ...     u.Cli.print(f"{method_name}: {settings.command.__name__}")
 
             """
-            handlers: MutableSequence[tuple[str, p.DecoratorConfig]] = []
-            callable_adapter = u.type_adapter(t.TypeForm(p.ResolvedHandlerCallable))
+            handlers: MutableSequence[tuple[str, flext_core.p.DecoratorConfig]] = []
+            callable_adapter = flext_core.u.type_adapter(
+                flext_core.t.TypeForm(flext_core.p.ResolvedHandlerCallable)
+            )
             for name in dir(target_class):
                 method = getattr(target_class, name, None)
                 if callable_adapter.validator.isinstance_python(method):
                     candidate = callable_adapter.validate_python(method)
-                    metadata = u.handler_metadata(
+                    metadata = flext_core.u.handler_metadata(
                         candidate, name=f"{target_class.__qualname__}.{name}"
                     )
                     if metadata is not None:
@@ -96,7 +98,11 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
         @staticmethod
         def scan_module(
             module: ModuleType,
-        ) -> Sequence[tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]]:
+        ) -> Sequence[
+            tuple[
+                str, flext_core.p.ResolvedHandlerCallable, flext_core.p.DecoratorConfig
+            ]
+        ]:
             """Scan module for functions decorated with @handler().
 
             Introspects the module to find all functions with handler configuration
@@ -118,16 +124,22 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
 
             """
             handlers: list[
-                tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]
+                tuple[
+                    str,
+                    flext_core.p.ResolvedHandlerCallable,
+                    flext_core.p.DecoratorConfig,
+                ]
             ] = []
-            callable_adapter = u.type_adapter(t.TypeForm(p.ResolvedHandlerCallable))
+            callable_adapter = flext_core.u.type_adapter(
+                flext_core.t.TypeForm(flext_core.p.ResolvedHandlerCallable)
+            )
             for name, func in vars(module).items():
                 if name.startswith(
                     "_"
                 ) or not callable_adapter.validator.isinstance_python(func):
                     continue
                 candidate = callable_adapter.validate_python(func)
-                settings = u.handler_metadata(
+                settings = flext_core.u.handler_metadata(
                     candidate, name=f"{module.__name__}.{name}"
                 )
                 if settings is None:

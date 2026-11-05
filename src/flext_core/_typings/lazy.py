@@ -1,4 +1,4 @@
-"""Lazy export typing contracts for ``flext_core.lazy`` internals.
+"""Lazy export typing contracts for ``lazy`` internals.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT

@@ -9,11 +9,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
 from pydantic import ConfigDict, Field, computed_field
 
-from flext_core import c, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._models import FlextModelsBase
 
 
@@ -36,18 +39,22 @@ class FlextModelsCqrsPart01:
             },
         )
         page: Annotated[
-            t.PositiveInt,
+            flext_core.t.PositiveInt,
             Field(description="Page number (1-based indexing)", examples=[1, 2, 10]),
-        ] = c.FIRST_PAGE_INDEX
+        ] = flext_core.c.FIRST_PAGE_INDEX
         size: Annotated[
-            t.PositiveInt,
+            flext_core.t.PositiveInt,
             Field(
-                ge=c.MIN_PAGE_SIZE,
-                le=c.MAX_PAGE_SIZE,
+                ge=flext_core.c.MIN_PAGE_SIZE,
+                le=flext_core.c.MAX_PAGE_SIZE,
                 description="Number of items per page within the configured bounds",
-                examples=[c.MIN_PAGE_SIZE, c.DEFAULT_PAGE_SIZE, c.MAX_PAGE_SIZE],
+                examples=[
+                    flext_core.c.MIN_PAGE_SIZE,
+                    flext_core.c.DEFAULT_PAGE_SIZE,
+                    flext_core.c.MAX_PAGE_SIZE,
+                ],
             ),
-        ] = c.DEFAULT_PAGE_SIZE
+        ] = flext_core.c.DEFAULT_PAGE_SIZE
 
         @computed_field
         @property
@@ -59,7 +66,7 @@ class FlextModelsCqrsPart01:
         @property
         def offset(self) -> int:
             """Offset from page and size."""
-            return (self.page - c.FIRST_PAGE_INDEX) * self.size
+            return (self.page - flext_core.c.FIRST_PAGE_INDEX) * self.size
 
 
 __all__: list[str] = ["FlextModelsCqrsPart01"]

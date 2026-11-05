@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
+import flext_core
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import c, t
     from flext_core._protocols import FlextProtocolsContainers
 
 
@@ -25,12 +25,12 @@ class FlextProtocolsDomainEvent:
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(self) -> Literal[c.HandlerType.EVENT]:
+        def message_type(self) -> Literal[flext_core.c.HandlerType.EVENT]:
             """Immutable event discriminator for union routing."""
             ...
 
-        event_type: t.NonEmptyStr
-        aggregate_id: t.NonEmptyStr
+        event_type: flext_core.t.NonEmptyStr
+        aggregate_id: flext_core.t.NonEmptyStr
 
         @property
         def data(self) -> FlextProtocolsContainers.ConfigMap:

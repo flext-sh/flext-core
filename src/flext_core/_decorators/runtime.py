@@ -10,7 +10,7 @@ import time
 from functools import wraps
 from typing import TYPE_CHECKING
 
-from flext_core import c, m
+import flext_core
 from flext_core._decorators import FlextDecoratorsCombined
 from flext_core._exceptions import FlextExceptionsTypes
 
@@ -36,12 +36,12 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
         """
 
         def decorator(func: Callable[P, T]) -> Callable[P, T]:
-            settings = m.FactoryDecoratorConfig(
+            settings = flext_core.m.FactoryDecoratorConfig(
                 name=name,
                 singleton=singleton,
                 lazy=lazy,
             )
-            setattr(func, c.FACTORY_ATTR, settings)
+            setattr(func, flext_core.c.FACTORY_ATTR, settings)
             return func
 
         return decorator
@@ -62,7 +62,7 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
         max_duration = (
             timeout_seconds
             if timeout_seconds is not None
-            else c.DEFAULT_TIMEOUT_SECONDS
+            else flext_core.c.DEFAULT_TIMEOUT_SECONDS
         )
 
         def decorator(
@@ -85,9 +85,9 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                         )
                         raise FlextExceptionsTypes.FlextTimeoutError(
                             msg,
-                            options=m.ExceptionInitOptions(
+                            options=flext_core.m.ExceptionInitOptions(
                                 error_code=error_code
-                                or c.ErrorCode.TIMEOUT_ERROR.value,
+                                or flext_core.c.ErrorCode.TIMEOUT_ERROR.value,
                             ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,
@@ -104,9 +104,9 @@ class FlextDecoratorsRuntime(FlextDecoratorsCombined):
                         )
                         raise FlextExceptionsTypes.FlextTimeoutError(
                             msg,
-                            options=m.ExceptionInitOptions(
+                            options=flext_core.m.ExceptionInitOptions(
                                 error_code=error_code
-                                or c.ErrorCode.TIMEOUT_ERROR.value,
+                                or flext_core.c.ErrorCode.TIMEOUT_ERROR.value,
                             ),
                             timeout_seconds=max_duration,
                             operation=func.__name__,

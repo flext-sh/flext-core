@@ -20,7 +20,7 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping
 from typing import TYPE_CHECKING, Annotated
 
-from flext_core import t
+import flext_core
 from flext_core._models import FlextModelsPydantic
 
 if TYPE_CHECKING:
@@ -31,12 +31,12 @@ class FlextModelsContainers:
     """Pydantic RootModel container namespace."""
 
     class ValidatorCallable(
-        FlextModelsPydantic.RootModel[t.ValidatorCallable],
+        FlextModelsPydantic.RootModel[flext_core.t.ValidatorCallable],
     ):
         """Callable validator container rooted in a scalar-or-model transform."""
 
         root: Annotated[
-            t.ValidatorCallable,
+            flext_core.t.ValidatorCallable,
             FlextModelsPydantic.Field(
                 title="Validator Callable",
                 description=(
@@ -49,12 +49,12 @@ class FlextModelsContainers:
 
         def __call__(
             self,
-            value: t.ScalarOrModel,
-        ) -> t.ScalarOrModel:
+            value: flext_core.t.ScalarOrModel,
+        ) -> flext_core.t.ScalarOrModel:
             return self.root(value)
 
     class _MappingRootBase(
-        FlextModelsPydantic.RootModel[MutableMapping[str, t.JsonPayload]],
+        FlextModelsPydantic.RootModel[MutableMapping[str, flext_core.t.JsonPayload]],
     ):
         """MRO base providing the explicit mapping API for dict-rooted RootModels.
 
@@ -64,10 +64,10 @@ class FlextModelsContainers:
         ``root`` field with the appropriate description.
         """
 
-        def __getitem__(self, key: str) -> t.JsonPayload:
+        def __getitem__(self, key: str) -> flext_core.t.JsonPayload:
             return self.root[key]
 
-        def __setitem__(self, key: str, value: t.JsonPayload) -> None:
+        def __setitem__(self, key: str, value: flext_core.t.JsonPayload) -> None:
             self.root[key] = value
 
         def __delitem__(self, key: str) -> None:
@@ -86,19 +86,19 @@ class FlextModelsContainers:
             """Return a view over the mapping's string keys."""
             return self.root.keys()
 
-        def values(self) -> ValuesView[t.JsonPayload]:
+        def values(self) -> ValuesView[flext_core.t.JsonPayload]:
             """Return a view over the stored JSON payloads."""
             return self.root.values()
 
-        def items(self) -> ItemsView[str, t.JsonPayload]:
+        def items(self) -> ItemsView[str, flext_core.t.JsonPayload]:
             """Return a view over the key-payload pairs."""
             return self.root.items()
 
         def get(
             self,
             key: str,
-            default: t.JsonPayload = None,
-        ) -> t.JsonPayload:
+            default: flext_core.t.JsonPayload = None,
+        ) -> flext_core.t.JsonPayload:
             """Return the payload stored under ``key``.
 
             Args:
@@ -113,7 +113,7 @@ class FlextModelsContainers:
 
         def update(
             self,
-            other: Mapping[str, t.JsonPayload],
+            other: Mapping[str, flext_core.t.JsonPayload],
         ) -> None:
             """Merge ``other`` into the mapping, overwriting existing keys.
 
@@ -130,8 +130,8 @@ class FlextModelsContainers:
         def pop(
             self,
             key: str,
-            *args: t.JsonPayload,
-        ) -> t.JsonPayload:
+            *args: flext_core.t.JsonPayload,
+        ) -> flext_core.t.JsonPayload:
             """Remove ``key`` and return its payload.
 
             Args:
@@ -145,7 +145,7 @@ class FlextModelsContainers:
             """
             return self.root.pop(key, *args)
 
-        def popitem(self) -> tuple[str, t.JsonPayload]:
+        def popitem(self) -> tuple[str, flext_core.t.JsonPayload]:
             """Remove the most recently inserted key-payload pair.
 
             Returns:
@@ -157,8 +157,8 @@ class FlextModelsContainers:
         def setdefault(
             self,
             key: str,
-            default: t.JsonPayload,
-        ) -> t.JsonPayload:
+            default: flext_core.t.JsonPayload,
+        ) -> flext_core.t.JsonPayload:
             """Return the payload under ``key``, storing ``default`` if absent.
 
             Args:
@@ -176,7 +176,7 @@ class FlextModelsContainers:
         """Runtime dictionary container with explicit mapping API."""
 
         root: Annotated[
-            MutableMapping[str, t.JsonPayload],
+            MutableMapping[str, flext_core.t.JsonPayload],
             FlextModelsPydantic.Field(
                 description="Validated runtime key-value mapping.",
             ),
@@ -186,14 +186,14 @@ class FlextModelsContainers:
         """Runtime configuration mapping with explicit mapping API."""
 
         root: Annotated[
-            MutableMapping[str, t.JsonPayload],
+            MutableMapping[str, flext_core.t.JsonPayload],
             FlextModelsPydantic.Field(
                 description="Validated runtime configuration mapping.",
             ),
         ]
 
     class ObjectList(
-        FlextModelsPydantic.RootModel[list[t.JsonPayload]],
+        FlextModelsPydantic.RootModel[list[flext_core.t.JsonPayload]],
     ):
         """Runtime list container rooted in validated values.
 
@@ -201,7 +201,7 @@ class FlextModelsContainers:
         """
 
         root: Annotated[
-            list[t.JsonPayload],
+            list[flext_core.t.JsonPayload],
             FlextModelsPydantic.Field(description="Validated runtime sequence."),
         ]
 

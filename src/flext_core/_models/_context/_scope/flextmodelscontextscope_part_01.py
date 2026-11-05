@@ -9,7 +9,7 @@ from __future__ import annotations
 from types import MappingProxyType
 from typing import Annotated, ClassVar
 
-from flext_core import c, t
+import flext_core
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context import FlextModelsContextData
 
@@ -29,35 +29,35 @@ class FlextModelsContextScopePart01:
         )
 
         sets: Annotated[
-            t.NonNegativeInt,
+            flext_core.t.NonNegativeInt,
             FlextModelsPydantic.Field(
-                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                default=flext_core.c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of set operations",
             ),
-        ] = c.DEFAULT_MAX_COMMAND_RETRIES
+        ] = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES
         gets: Annotated[
-            t.NonNegativeInt,
+            flext_core.t.NonNegativeInt,
             FlextModelsPydantic.Field(
-                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                default=flext_core.c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of get operations",
             ),
-        ] = c.DEFAULT_MAX_COMMAND_RETRIES
+        ] = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES
         removes: Annotated[
-            t.NonNegativeInt,
+            flext_core.t.NonNegativeInt,
             FlextModelsPydantic.Field(
-                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                default=flext_core.c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of remove operations",
             ),
-        ] = c.DEFAULT_MAX_COMMAND_RETRIES
+        ] = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES
         clears: Annotated[
-            t.NonNegativeInt,
+            flext_core.t.NonNegativeInt,
             FlextModelsPydantic.Field(
-                default=c.DEFAULT_MAX_COMMAND_RETRIES,
+                default=flext_core.c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Number of clear operations",
             ),
-        ] = c.DEFAULT_MAX_COMMAND_RETRIES
+        ] = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES
         operations: Annotated[
-            t.JsonMapping,
+            flext_core.t.JsonMapping,
             FlextModelsPydantic.BeforeValidator(
                 FlextModelsContextData.ContextData.validate_dict_serializable,
             ),
@@ -68,7 +68,7 @@ class FlextModelsContextScopePart01:
                 ),
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=lambda: MappingProxyType[str, t.JsonValue]({}),
+            default_factory=lambda: MappingProxyType[str, flext_core.t.JsonValue]({}),
             validate_default=True,
         )
 

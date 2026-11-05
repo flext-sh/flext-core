@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from structlog.types import BindableLogger
 from structlog.typing import Processor
 
-from flext_core import t
+import flext_core
 from flext_core._protocols import (
     FlextProtocolsPydantic,
     FlextProtocolsResult,
@@ -26,11 +26,13 @@ if TYPE_CHECKING:
 class FlextProtocolsLogging:
     """Public facade for FlextProtocolsLogging."""
 
-    type LogArgument[T] = t.LogArgument[T]
-    type LogValue = t.LogValue[FlextProtocolsPydantic.BaseModel]
-    type LoggingEventValue = t.LoggingEventValue[FlextProtocolsPydantic.BaseModel]
-    type LoggingEvent = t.LoggingEvent[FlextProtocolsPydantic.BaseModel]
-    type LoggingContext = t.LoggingContext[FlextProtocolsPydantic.BaseModel]
+    type LogArgument[T] = flext_core.t.LogArgument[T]
+    type LogValue = flext_core.t.LogValue[FlextProtocolsPydantic.BaseModel]
+    type LoggingEventValue = flext_core.t.LoggingEventValue[
+        FlextProtocolsPydantic.BaseModel
+    ]
+    type LoggingEvent = flext_core.t.LoggingEvent[FlextProtocolsPydantic.BaseModel]
+    type LoggingContext = flext_core.t.LoggingContext[FlextProtocolsPydantic.BaseModel]
     type LogResult = FlextProtocolsResult.Result[bool]
 
     @runtime_checkable
@@ -47,11 +49,11 @@ class FlextProtocolsLogging:
             """Logger name exposed by the public adapter."""
             ...
 
-        def bind(self, **new_values: t.JsonPayload) -> Self:
+        def bind(self, **new_values: flext_core.t.JsonPayload) -> Self:
             """Bind context and return a logger preserving the public protocol."""
             ...
 
-        def new(self, **new_values: t.JsonPayload) -> Self:
+        def new(self, **new_values: flext_core.t.JsonPayload) -> Self:
             """Replace bound context and return a logger preserving the protocol."""
             ...
 
@@ -68,7 +70,7 @@ class FlextProtocolsLogging:
             *,
             exception: BaseException | None,
             exc_info: bool,
-            context: Mapping[str, t.JsonPayload | Exception],
+            context: Mapping[str, flext_core.t.JsonPayload | Exception],
         ) -> FlextProtocolsLogging.LoggingEvent:
             """Build normalized structured exception context."""
             ...
@@ -112,7 +114,7 @@ class FlextProtocolsLogging:
         def info(
             self,
             msg: str,
-            *args: t.LogPositionalValue[FlextProtocolsPydantic.BaseModel],
+            *args: flext_core.t.LogPositionalValue[FlextProtocolsPydantic.BaseModel],
             **kw: FlextProtocolsLogging.LogValue,
         ) -> FlextProtocolsLogging.LogResult:
             """Log info message."""
@@ -280,11 +282,11 @@ class FlextProtocolsLogging:
         def level(self) -> int: ...
 
         @property
-        def formatter(self) -> t.LoggingNativeFormatter | None: ...
+        def formatter(self) -> flext_core.t.LoggingNativeFormatter | None: ...
 
         def handle(
-            self, record: t.LoggingNativeRecord
-        ) -> bool | t.LoggingNativeRecord: ...
+            self, record: flext_core.t.LoggingNativeRecord
+        ) -> bool | flext_core.t.LoggingNativeRecord: ...
 
         def flush(self) -> None: ...
 
@@ -320,7 +322,7 @@ class FlextProtocolsLogging:
 
         """
 
-        def __call__(self, value: t.JsonValue) -> bool:
+        def __call__(self, value: flext_core.t.JsonValue) -> bool:
             """Validate value, return True if valid."""
             ...
 
@@ -368,7 +370,7 @@ class FlextProtocolsLogging:
             """Update attribute values, returning self for chaining."""
             ...
 
-        def to_dict(self) -> Mapping[str, t.Scalar]:
+        def to_dict(self) -> Mapping[str, flext_core.t.Scalar]:
             """Convert to dictionary representation."""
             ...
 
@@ -389,9 +391,11 @@ class FlextProtocolsLogging:
         def flush(self) -> None: ...
 
     type AccessibleData = (
-        t.JsonPayload
+        flext_core.t.JsonPayload
         | FlextProtocolsPydantic.BaseModel
-        | Mapping[str, t.JsonPayload | FlextProtocolsPydantic.BaseModel | None]
+        | Mapping[
+            str, flext_core.t.JsonPayload | FlextProtocolsPydantic.BaseModel | None
+        ]
         | FlextProtocolsResult.HasModelDump
         | ValidatorSpec
     )

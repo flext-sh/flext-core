@@ -10,8 +10,12 @@ from __future__ import annotations
 
 import math
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 
-from flext_core import c, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 
 
 class FlextUtilitiesConversion:
@@ -40,7 +44,7 @@ class FlextUtilitiesConversion:
         return separator.join(normalized)
 
     @staticmethod
-    def normalize(value: t.StrictValue, *, case: str | None = None) -> str:
+    def normalize(value: flext_core.t.StrictValue, *, case: str | None = None) -> str:
         """Normalize value to string with optional case conversion.
 
         Returns:
@@ -56,7 +60,11 @@ class FlextUtilitiesConversion:
 
     @staticmethod
     def to_str(
-        value: t.JsonPayload | t.StrictValue | t.JsonMapping | Sequence[str] | None,
+        value: flext_core.t.JsonPayload
+        | flext_core.t.StrictValue
+        | flext_core.t.JsonMapping
+        | Sequence[str]
+        | None,
         *,
         default: str | None = None,
     ) -> str:
@@ -80,7 +88,11 @@ class FlextUtilitiesConversion:
         return str(value)
 
     @staticmethod
-    def to_int(value: t.JsonPayload | t.Scalar | None, *, default: int = 0) -> int:
+    def to_int(
+        value: flext_core.t.JsonPayload | flext_core.t.Scalar | None,
+        *,
+        default: int = 0,
+    ) -> int:
         """Convert value to int with safe fallback; bool returns default.
 
         Returns:
@@ -89,7 +101,7 @@ class FlextUtilitiesConversion:
         """
         if value is None or isinstance(value, bool):
             return default
-        if isinstance(value, c.NUMERIC_TYPES):
+        if isinstance(value, flext_core.c.NUMERIC_TYPES):
             return (
                 int(value)
                 if isinstance(value, int) or math.isfinite(value)
@@ -107,7 +119,9 @@ class FlextUtilitiesConversion:
         return default
 
     @staticmethod
-    def to_float(value: t.JsonPayload | None, *, default: float = 0.0) -> float:
+    def to_float(
+        value: flext_core.t.JsonPayload | None, *, default: float = 0.0
+    ) -> float:
         """Convert value to float with safe fallback; bool returns default.
 
         Returns:
@@ -116,7 +130,7 @@ class FlextUtilitiesConversion:
         """
         if value is None or isinstance(value, bool):
             return default
-        if isinstance(value, c.NUMERIC_TYPES):
+        if isinstance(value, flext_core.c.NUMERIC_TYPES):
             return float(value)
         if isinstance(value, str):
             try:
@@ -126,7 +140,9 @@ class FlextUtilitiesConversion:
         return default
 
     @staticmethod
-    def to_bool(value: t.JsonPayload | None, *, default: bool = False) -> bool:
+    def to_bool(
+        value: flext_core.t.JsonPayload | None, *, default: bool = False
+    ) -> bool:
         """Convert value to bool with safe fallback.
 
         Returns:
@@ -138,7 +154,9 @@ class FlextUtilitiesConversion:
         return bool(value)
 
     @staticmethod
-    def to_positive_int(value: t.JsonPayload | None, *, default: int = 0) -> int:
+    def to_positive_int(
+        value: flext_core.t.JsonPayload | None, *, default: int = 0
+    ) -> int:
         """Convert value to a strictly positive integer with safe fallback.
 
         Rejects ``None``, booleans, non-numeric strings, and non-positive values.
@@ -158,7 +176,7 @@ class FlextUtilitiesConversion:
         return default
 
     @staticmethod
-    def to_optional_str(value: t.JsonPayload | None) -> str | None:
+    def to_optional_str(value: flext_core.t.JsonPayload | None) -> str | None:
         """Return the value unchanged only when it is a non-empty string.
 
         Returns:

@@ -11,11 +11,12 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING
 
+import flext_core
 from flext_core.flextlazy_member import FlextLazyMember
 from flext_core.flextlazy_part_01 import FlextLazyPart01
 
 if TYPE_CHECKING:
-    from flext_core import t
+    pass
 
 
 class FlextLazyPart02(FlextLazyPart01):
@@ -58,9 +59,9 @@ class FlextLazyPart02(FlextLazyPart01):
         self,
         name: str,
         lazy_imports: Mapping[str, str | tuple[str, str]],
-        module_globals: t.ModuleGlobals,
+        module_globals: flext_core.t.ModuleGlobals,
         module_name: str,
-    ) -> t.ModuleGlobalValue:
+    ) -> flext_core.t.ModuleGlobalValue:
         """Resolve one lazy symbol and cache it.
 
         Returns:
@@ -103,7 +104,7 @@ class FlextLazyPart02(FlextLazyPart01):
             return mod
 
         try:
-            value: t.ModuleGlobalValue = getattr(mod, attr)
+            value: flext_core.t.ModuleGlobalValue = getattr(mod, attr)
         except AttributeError as exc:
             if isinstance(entry, str) and module_path.rsplit(".", 1)[-1] == name:
                 if not self._module_is_initializing(mod):
@@ -185,12 +186,12 @@ class FlextLazyPart02(FlextLazyPart01):
     def install(
         self,
         module_name: str,
-        module_globals: t.ModuleGlobals,
+        module_globals: flext_core.t.ModuleGlobals,
         lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
         publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
-    ) -> t.LazyExportHooks:
+    ) -> flext_core.t.LazyExportHooks:
         """Install __getattr__/__dir__/__all__ and publish _LAZY_IMPORTS.
 
         The normalized map is published into the module globals as
@@ -225,7 +226,7 @@ class FlextLazyPart02(FlextLazyPart01):
 
         module_globals["_LAZY_IMPORTS"] = normalized
 
-        def _module_getattr(name: str) -> t.ModuleGlobalValue:
+        def _module_getattr(name: str) -> flext_core.t.ModuleGlobalValue:
             return self.get(name, normalized, module_globals, module_name)
 
         def _module_dir() -> list[str]:

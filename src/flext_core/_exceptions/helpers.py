@@ -9,11 +9,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
-from flext_core import c, m, p
+import flext_core
 from flext_core._utilities import FlextUtilitiesPydantic
 
 if TYPE_CHECKING:
-    from flext_core import t
+    pass
 
 
 class FlextExceptionsHelpers:
@@ -21,23 +21,23 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def _normalized_source_entries(
-        context: p.MetadataInput,
-        extra_kwargs: t.MetadataMapping,
-    ) -> tuple[tuple[str, t.JsonValue], ...]:
+        context: flext_core.p.MetadataInput,
+        extra_kwargs: flext_core.t.MetadataMapping,
+    ) -> tuple[tuple[str, flext_core.t.JsonValue], ...]:
         """Collect normalized metadata entries from context and kwargs once.
 
         Returns:
             The resulting ``tuple[tuple[str, tb.JsonValue], ...]``.
 
         """
-        entries: list[tuple[str, t.JsonValue]] = []
+        entries: list[tuple[str, flext_core.t.JsonValue]] = []
         source_values = (context, extra_kwargs)
         for source_value in source_values:
             if source_value is None:
                 continue
             source_mapping = (
                 source_value.model_dump(mode="json")
-                if isinstance(source_value, p.HasModelDump)
+                if isinstance(source_value, flext_core.p.HasModelDump)
                 else source_value
             )
             for key, value in source_mapping.items():
@@ -50,27 +50,30 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def safe_metadata(
-        value: p.HasModelDump | Mapping[str, t.JsonPayload | None] | t.JsonValue | None,
-    ) -> p.Metadata | None:
+        value: flext_core.p.HasModelDump
+        | Mapping[str, flext_core.t.JsonPayload | None]
+        | flext_core.t.JsonValue
+        | None,
+    ) -> flext_core.p.Metadata | None:
         """Normalize supported metadata inputs to runtime metadata model.
 
         Returns:
             The resulting ``m.Metadata | None``.
 
         """
-        if value is None or isinstance(value, m.Metadata):
+        if value is None or isinstance(value, flext_core.m.Metadata):
             return value
-        return m.Metadata.model_validate({
-            c.FIELD_ATTRIBUTES: (
+        return flext_core.m.Metadata.model_validate({
+            flext_core.c.FIELD_ATTRIBUTES: (
                 value.model_dump(mode="json")
-                if isinstance(value, p.HasModelDump)
+                if isinstance(value, flext_core.p.HasModelDump)
                 else value
             )
         })
 
     @staticmethod
     def safe_optional_str(
-        value: t.JsonPayload | type | None,
+        value: flext_core.t.JsonPayload | type | None,
     ) -> str | None:
         """Extract optional strict string from dynamic values.
 
@@ -86,10 +89,10 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_context_map(
-        context: p.MetadataInput,
-        extra_kwargs: t.MetadataMapping,
+        context: flext_core.p.MetadataInput,
+        extra_kwargs: flext_core.t.MetadataMapping,
         excluded_keys: set[str] | frozenset[str] | None = None,
-    ) -> t.JsonDict:
+    ) -> flext_core.t.JsonDict:
         """Build normalized context map from context and kwargs.
 
         Returns:
@@ -108,10 +111,10 @@ class FlextExceptionsHelpers:
 
     @staticmethod
     def build_param_map(
-        context: p.MetadataInput,
-        extra_kwargs: t.MetadataMapping,
+        context: flext_core.p.MetadataInput,
+        extra_kwargs: flext_core.t.MetadataMapping,
         keys: set[str] | frozenset[str],
-    ) -> t.JsonDict:
+    ) -> flext_core.t.JsonDict:
         """Build parameter map restricted to declared param keys.
 
         Returns:

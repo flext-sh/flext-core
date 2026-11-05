@@ -14,11 +14,14 @@ from __future__ import annotations
 import time
 from collections.abc import Mapping, MutableMapping
 from types import TracebackType
-from typing import Self
+from typing import TYPE_CHECKING, Self
 
 import structlog
 
-from flext_core import c, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities import FlextUtilitiesLoggingContext
 from flext_core._utilities._logging_context.bound_logger import (
     FlextUtilitiesLoggingBoundLogger,
@@ -36,7 +39,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
     class PerformanceTracker:
         """Context manager for performance tracking with automatic logging."""
 
-        def __init__(self, logger: p.Logger, operation_name: str) -> None:
+        def __init__(self, logger: flext_core.p.Logger, operation_name: str) -> None:
             """Initialize with logger and operation name."""
             super().__init__()
             self.logger = logger
@@ -62,11 +65,13 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
             """Log timing while preserving the original business exception."""
             elapsed = time.time() - self._start_time
             success = exc_type is None
-            status = c.Status.SUCCESS if success else c.Status.FAILED
-            context: MutableMapping[str, p.LogValue] = {
-                c.MetadataKey.DURATION_SECONDS: elapsed,
-                c.HandlerType.OPERATION: self._operation_name,
-                c.FIELD_STATUS: status,
+            status = (
+                flext_core.c.Status.SUCCESS if success else flext_core.c.Status.FAILED
+            )
+            context: MutableMapping[str, flext_core.p.LogValue] = {
+                flext_core.c.MetadataKey.DURATION_SECONDS: elapsed,
+                flext_core.c.HandlerType.OPERATION: self._operation_name,
+                flext_core.c.FIELD_STATUS: status,
             }
             if not success:
                 context["exception_type"] = exc_type.__name__ if exc_type else ""
@@ -87,7 +92,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
                 raise
 
     @classmethod
-    def _direct_logger(cls) -> p.Logger:
+    def _direct_logger(cls) -> flext_core.p.Logger:
         """Let native structlog resolve the real caller on each direct emission.
 
         Returns:
@@ -101,10 +106,10 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
     def log(
         cls,
         message: str,
-        *args: p.LogValue,
+        *args: flext_core.p.LogValue,
         level: str | None = None,
-        **context: p.LogValue,
-    ) -> p.LogResult:
+        **context: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit an ordinary event through the elected Core composition.
 
         Returns:
@@ -112,25 +117,34 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
         """
         return cls._direct_logger().log(
-            level if level is not None else c.LogLevel.INFO, message, *args, **context
+            level if level is not None else flext_core.c.LogLevel.INFO,
+            message,
+            *args,
+            **context,
         )
 
     @classmethod
     def debug(
-        cls, message: str, *args: p.LogValue, **context: p.LogValue
-    ) -> p.LogResult:
+        cls,
+        message: str,
+        *args: flext_core.p.LogValue,
+        **context: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit a DEBUG event without allocating a consumer-owned logger.
 
         Returns:
             The native logging result.
 
         """
-        return cls.log(message, *args, level=c.LogLevel.DEBUG, **context)
+        return cls.log(message, *args, level=flext_core.c.LogLevel.DEBUG, **context)
 
     @classmethod
     def trace(
-        cls, message: str, *args: p.LogValue, **context: p.LogValue
-    ) -> p.LogResult:
+        cls,
+        message: str,
+        *args: flext_core.p.LogValue,
+        **context: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit opt-in high-volume detail at DEBUG, never another severity.
 
         Returns:
@@ -141,24 +155,27 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
     @classmethod
     def warning(
-        cls, message: str, *args: p.LogValue, **context: p.LogValue
-    ) -> p.LogResult:
+        cls,
+        message: str,
+        *args: flext_core.p.LogValue,
+        **context: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit a WARNING event through the same pipeline.
 
         Returns:
             The native logging result.
 
         """
-        return cls.log(message, *args, level=c.LogLevel.WARNING, **context)
+        return cls.log(message, *args, level=flext_core.c.LogLevel.WARNING, **context)
 
     @classmethod
     def failure(
         cls,
         message: str,
-        *args: p.LogValue,
+        *args: flext_core.p.LogValue,
         exception: BaseException | None = None,
-        **context: p.LogValue,
-    ) -> p.LogResult:
+        **context: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit ERROR with original causal data; trace only changes its detail.
 
         Returns:
@@ -170,7 +187,7 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         return cls._direct_logger().exception(message, *args, **context)
 
     @classmethod
-    def fetch_logger(cls, name: str) -> p.Logger:
+    def fetch_logger(cls, name: str) -> flext_core.p.Logger:
         """Construct the canonical lazy logger for an explicit name.
 
         Returns:
@@ -184,10 +201,10 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
         cls,
         name: str,
         *,
-        context: Mapping[str, t.JsonPayload | None] | None = None,
-        runtime_settings: p.LoggingSettings | None = None,
-        options: p.StructlogOptions | None = None,
-    ) -> p.Logger:
+        context: Mapping[str, flext_core.t.JsonPayload | None] | None = None,
+        runtime_settings: flext_core.p.LoggingSettings | None = None,
+        options: flext_core.p.StructlogOptions | None = None,
+    ) -> flext_core.p.Logger:
         """Build a module binding, scoped when a root supplies policy or sinks.
 
         Returns:

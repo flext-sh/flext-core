@@ -14,9 +14,12 @@ from __future__ import annotations
 import os
 import tempfile
 from pathlib import Path
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, p
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 
 
 class FlextUtilitiesFiles:
@@ -28,7 +31,7 @@ class FlextUtilitiesFiles:
         data: str,
         *,
         encoding: str = "utf-8",
-    ) -> p.ResultView[int]:
+    ) -> flext_core.p.ResultView[int]:
         """Atomically append text to a file through ``O_APPEND``.
 
         The append flag keeps concurrent writers line-atomic; creation is
@@ -43,19 +46,25 @@ class FlextUtilitiesFiles:
             descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
         except OSError as exc:
             return cast(
-                "p.ResultView[int]",
-                FlextResult.fail(f"atomic append open failed: {exc}", exception=exc),
+                "flext_core.p.ResultView[int]",
+                flext_core.FlextResult.fail(
+                    f"atomic append open failed: {exc}", exception=exc
+                ),
             )
         try:
             written = os.write(descriptor, data.encode(encoding))
         except OSError as exc:
             return cast(
-                "p.ResultView[int]",
-                FlextResult.fail(f"atomic append write failed: {exc}", exception=exc),
+                "flext_core.p.ResultView[int]",
+                flext_core.FlextResult.fail(
+                    f"atomic append write failed: {exc}", exception=exc
+                ),
             )
         finally:
             os.close(descriptor)
-        return cast("p.ResultView[int]", FlextResult[int].ok(written))
+        return cast(
+            "flext_core.p.ResultView[int]", flext_core.FlextResult[int].ok(written)
+        )
 
     @staticmethod
     def write_atomic(
@@ -63,7 +72,7 @@ class FlextUtilitiesFiles:
         data: str,
         *,
         encoding: str = "utf-8",
-    ) -> p.ResultView[int]:
+    ) -> flext_core.p.ResultView[int]:
         """Atomically replace a file's contents via temp file + rename.
 
         Returns:
@@ -84,18 +93,24 @@ class FlextUtilitiesFiles:
                 staged = Path(tmp.name)
         except OSError as exc:
             return cast(
-                "p.ResultView[int]",
-                FlextResult.fail(f"atomic write stage failed: {exc}", exception=exc),
+                "flext_core.p.ResultView[int]",
+                flext_core.FlextResult.fail(
+                    f"atomic write stage failed: {exc}", exception=exc
+                ),
             )
         try:
             staged.replace(path)
         except OSError as exc:
             staged.unlink(missing_ok=True)
             return cast(
-                "p.ResultView[int]",
-                FlextResult.fail(f"atomic write rename failed: {exc}", exception=exc),
+                "flext_core.p.ResultView[int]",
+                flext_core.FlextResult.fail(
+                    f"atomic write rename failed: {exc}", exception=exc
+                ),
             )
-        return cast("p.ResultView[int]", FlextResult[int].ok(len(payload)))
+        return cast(
+            "flext_core.p.ResultView[int]", flext_core.FlextResult[int].ok(len(payload))
+        )
 
 
 __all__: list[str] = ["FlextUtilitiesFiles"]

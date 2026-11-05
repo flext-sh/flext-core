@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-from flext_core import t
+import flext_core
 from flext_core._protocols import FlextProtocolsResult
 from flext_core._protocols._context import (
     FlextProtocolsContextData,
@@ -45,7 +45,9 @@ class FlextProtocolsContext(
     class ContextRead(Protocol):
         """Read-only context operations."""
 
-        def get(self, key: str) -> FlextProtocolsResult.Result[t.JsonPayload]:
+        def get(
+            self, key: str
+        ) -> FlextProtocolsResult.Result[flext_core.t.JsonPayload]:
             """Get a context value by key."""
             ...
 
@@ -57,11 +59,11 @@ class FlextProtocolsContext(
             """Return all keys in the context scope."""
             ...
 
-        def values(self) -> list[t.JsonPayload]:
+        def values(self) -> list[flext_core.t.JsonPayload]:
             """Return all values in the context scope."""
             ...
 
-        def items(self) -> list[tuple[str, t.JsonPayload]]:
+        def items(self) -> list[tuple[str, flext_core.t.JsonPayload]]:
             """Return all key-value pairs in the context scope."""
             ...
 
@@ -70,7 +72,7 @@ class FlextProtocolsContext(
         """Write context operations."""
 
         def set(
-            self, key: str, value: t.JsonPayload
+            self, key: str, value: flext_core.t.JsonPayload
         ) -> FlextProtocolsResult.Result[bool]:
             """Set a context value in the context scope."""
             ...
@@ -91,7 +93,7 @@ class FlextProtocolsContext(
             """Clone context for isolated execution."""
             ...
 
-        def merge(self, other: Self | Mapping[str, t.JsonPayload]) -> Self:
+        def merge(self, other: Self | Mapping[str, flext_core.t.JsonPayload]) -> Self:
             """Merge another context or mapping into this one."""
             ...
 
@@ -103,7 +105,7 @@ class FlextProtocolsContext(
             self,
             *,
             as_dict: bool = ...,
-        ) -> Mapping[str, t.JsonPayload] | Self:
+        ) -> Mapping[str, flext_core.t.JsonPayload] | Self:
             """Export context state as a dict or the context instance itself."""
             ...
 
@@ -113,11 +115,11 @@ class FlextProtocolsContext(
 
         def resolve_metadata(
             self, key: str
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
+        ) -> FlextProtocolsResult.Result[flext_core.t.JsonPayload]:
             """Get a metadata value by key."""
             ...
 
-        def apply_metadata(self, key: str, value: t.JsonValue) -> None:
+        def apply_metadata(self, key: str, value: flext_core.t.JsonValue) -> None:
             """Set a metadata value by key."""
             ...
 
@@ -203,7 +205,7 @@ class FlextProtocolsContext(
         def timed_operation(
             operation_name: str | None = None,
         ) -> AbstractContextManager[
-            FlextProtocolsContainer.MutableRootDict[t.JsonPayload]
+            FlextProtocolsContainer.MutableRootDict[flext_core.t.JsonPayload]
         ]:
             """Create a timed operation scope."""
             ...
@@ -213,7 +215,7 @@ class FlextProtocolsContext(
         """Protocol for context serialization helpers."""
 
         @staticmethod
-        def export_full_context() -> t.JsonMapping:
+        def export_full_context() -> flext_core.t.JsonMapping:
             """Export the active global context variables."""
             ...
 
@@ -236,7 +238,9 @@ class FlextProtocolsContext(
         """Protocol for flat context classes exposing the canonical class API."""
 
         @classmethod
-        def create(cls, **initial_data: t.JsonPayload) -> FlextProtocolsContext.Context:
+        def create(
+            cls, **initial_data: flext_core.t.JsonPayload
+        ) -> FlextProtocolsContext.Context:
             """Create a new context instance."""
             ...
 
@@ -312,13 +316,13 @@ class FlextProtocolsContext(
         def timed_operation(
             operation_name: str | None = None,
         ) -> AbstractContextManager[
-            FlextProtocolsContainer.MutableRootDict[t.JsonPayload]
+            FlextProtocolsContainer.MutableRootDict[flext_core.t.JsonPayload]
         ]:
             """Create a timed operation scope."""
             ...
 
         @staticmethod
-        def export_full_context() -> Mapping[str, t.Scalar]:
+        def export_full_context() -> Mapping[str, flext_core.t.Scalar]:
             """Export the active process context state."""
             ...
 
@@ -335,13 +339,13 @@ class FlextProtocolsContext(
         def key(self) -> str: ...
 
         @property
-        def previous_value(self) -> t.JsonPayload | datetime | None: ...
+        def previous_value(self) -> flext_core.t.JsonPayload | datetime | None: ...
 
     @runtime_checkable
-    class ContextProxy[ValueT: t.JsonPayload | datetime](Protocol):
+    class ContextProxy[ValueT: flext_core.t.JsonPayload | datetime](Protocol):
         """Context-variable operations sharing structlog's backing storage."""
 
-        def get(self) -> t.JsonPayload | datetime | None: ...
+        def get(self) -> flext_core.t.JsonPayload | datetime | None: ...
 
         def set(
             self, value: ValueT | None
@@ -355,7 +359,7 @@ class FlextProtocolsContext(
         """Metadata snapshot copied when creating a context runtime."""
 
         @property
-        def attributes(self) -> t.JsonMapping: ...
+        def attributes(self) -> flext_core.t.JsonMapping: ...
 
         def model_copy(self, *, deep: bool = False) -> Self: ...
 

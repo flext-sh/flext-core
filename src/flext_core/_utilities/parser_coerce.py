@@ -12,25 +12,28 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextResult, c, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 
 
 class FlextUtilitiesParserCoerce:
     """Primitive coercion + string normalization + default fallback."""
 
     _CASE_OPS: ClassVar[MutableMapping[str, Callable[[str], str]]] = {
-        c.ParserCase.LOWER.value: str.lower,
-        c.ParserCase.UPPER.value: str.upper,
-        c.ParserCase.TITLE.value: str.title,
+        flext_core.c.ParserCase.LOWER.value: str.lower,
+        flext_core.c.ParserCase.UPPER.value: str.upper,
+        flext_core.c.ParserCase.TITLE.value: str.title,
     }
 
     @staticmethod
     def _parse_normalize_str(
-        value: t.JsonPayload,
+        value: flext_core.t.JsonPayload,
         *,
-        case: str = c.ParserCase.LOWER.value,
+        case: str = flext_core.c.ParserCase.LOWER.value,
     ) -> str:
         """Normalize string value (avoids circular import with u.normalize).
 
@@ -43,7 +46,7 @@ class FlextUtilitiesParserCoerce:
         return op(value_str) if op else value_str
 
     @staticmethod
-    def _coerce_to_bool(value: t.JsonPayload) -> p.Result[bool]:
+    def _coerce_to_bool(value: flext_core.t.JsonPayload) -> flext_core.p.Result[bool]:
         """Coerce value to bool. Returns None if not coercible.
 
         Returns:
@@ -55,17 +58,17 @@ class FlextUtilitiesParserCoerce:
                 value,
                 case="lower",
             )
-            if normalized_val in c.PARSER_BOOLEAN_TRUTHY:
-                return FlextResult[bool].ok(value=True)
-            if normalized_val in c.PARSER_BOOLEAN_FALSY:
-                return FlextResult[bool].ok(value=False)
-            return FlextResult[bool].fail(
-                c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value)
+            if normalized_val in flext_core.c.PARSER_BOOLEAN_TRUTHY:
+                return flext_core.FlextResult[bool].ok(value=True)
+            if normalized_val in flext_core.c.PARSER_BOOLEAN_FALSY:
+                return flext_core.FlextResult[bool].ok(value=False)
+            return flext_core.FlextResult[bool].fail(
+                flext_core.c.ERR_PARSER_COERCE_BOOL_FAILED.format(value=value)
             )
-        return FlextResult[bool].ok(bool(value))
+        return flext_core.FlextResult[bool].ok(bool(value))
 
     @staticmethod
-    def _coerce_to_float(value: t.JsonPayload) -> p.Result[float]:
+    def _coerce_to_float(value: flext_core.t.JsonPayload) -> flext_core.p.Result[float]:
         """Coerce value to float. Returns None if not coercible.
 
         Returns:
@@ -73,17 +76,19 @@ class FlextUtilitiesParserCoerce:
 
         """
         if isinstance(value, (str, int)):
-            return FlextResult[float].create_from_callable(
+            return flext_core.FlextResult[float].create_from_callable(
                 lambda: float(value),
                 error_code="FLOAT_COERCE_ERROR",
             )
-        return FlextResult[float].fail(
-            c.ERR_PARSER_COERCE_FLOAT_FAILED.format(type_name=value.__class__.__name__),
+        return flext_core.FlextResult[float].fail(
+            flext_core.c.ERR_PARSER_COERCE_FLOAT_FAILED.format(
+                type_name=value.__class__.__name__
+            ),
             error_code="FLOAT_COERCE_TYPE_ERROR",
         )
 
     @staticmethod
-    def _coerce_to_int(value: t.JsonPayload) -> p.Result[int]:
+    def _coerce_to_int(value: flext_core.t.JsonPayload) -> flext_core.p.Result[int]:
         """Coerce value to int. Returns None if not coercible.
 
         Returns:
@@ -91,20 +96,22 @@ class FlextUtilitiesParserCoerce:
 
         """
         if isinstance(value, (str, float)):
-            return FlextResult[int].create_from_callable(
+            return flext_core.FlextResult[int].create_from_callable(
                 lambda: int(float(value)),
                 error_code="INT_COERCE_ERROR",
             )
-        return FlextResult[int].fail(
-            c.ERR_PARSER_COERCE_INT_FAILED.format(type_name=value.__class__.__name__),
+        return flext_core.FlextResult[int].fail(
+            flext_core.c.ERR_PARSER_COERCE_INT_FAILED.format(
+                type_name=value.__class__.__name__
+            ),
             error_code="INT_COERCE_TYPE_ERROR",
         )
 
     @staticmethod
     def _parse_with_default[T](
-        options: p.ParseOptions[T],
+        options: flext_core.p.ParseOptions[T],
         error_msg: str,
-    ) -> p.Result[T]:
+    ) -> flext_core.p.Result[T]:
         """Return default or error for parse failures.
 
         Returns:
@@ -112,14 +119,14 @@ class FlextUtilitiesParserCoerce:
 
         """
         if options.default is not None:
-            return FlextResult[T].ok(options.default)
+            return flext_core.FlextResult[T].ok(options.default)
         if options.default_factory is not None:
-            return FlextResult[T].ok(options.default_factory())
-        return FlextResult[T].fail(error_msg)
+            return flext_core.FlextResult[T].ok(options.default_factory())
+        return flext_core.FlextResult[T].fail(error_msg)
 
     @staticmethod
     def norm_str(
-        value: t.JsonPayload | None,
+        value: flext_core.t.JsonPayload | None,
         *,
         case: str | None = None,
         default: str = "",

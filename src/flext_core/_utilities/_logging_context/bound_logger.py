@@ -10,7 +10,10 @@ import logging
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Self
 
-from flext_core import c, p, r, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities import (
     FlextUtilitiesLoggingConfig,
     FlextUtilitiesLoggingContext,
@@ -38,9 +41,9 @@ class FlextUtilitiesLoggingBoundLogger(
         name: str,
         *,
         owner: type[FlextUtilitiesLogging],
-        context: Mapping[str, t.JsonPayload | None] | None = None,
-        runtime_settings: p.LoggingSettings | None = None,
-        native_logger: p.NativeLoggingWrapper | None = None,
+        context: Mapping[str, flext_core.t.JsonPayload | None] | None = None,
+        runtime_settings: flext_core.p.LoggingSettings | None = None,
+        native_logger: flext_core.p.NativeLoggingWrapper | None = None,
     ) -> None:
         """Initialize the bound logger with name and optional context.
 
@@ -56,7 +59,7 @@ class FlextUtilitiesLoggingBoundLogger(
             raise ValueError(msg)
         resolved_name = name
         self.name = resolved_name
-        resolved_context: t.MutableJsonMapping = {}
+        resolved_context: flext_core.t.MutableJsonMapping = {}
         if context is not None:
             resolved_context = dict(
                 self._owner.to_container_context({
@@ -64,20 +67,26 @@ class FlextUtilitiesLoggingBoundLogger(
                 }),
             )
         if runtime_settings is not None:
-            service_name = getattr(runtime_settings, c.ContextKey.SERVICE_NAME, None)
+            service_name = getattr(
+                runtime_settings, flext_core.c.ContextKey.SERVICE_NAME, None
+            )
             service_version = getattr(
-                runtime_settings, c.ContextKey.SERVICE_VERSION, None
+                runtime_settings, flext_core.c.ContextKey.SERVICE_VERSION, None
             )
             correlation_id = getattr(
-                runtime_settings, c.ContextKey.CORRELATION_ID, None
+                runtime_settings, flext_core.c.ContextKey.CORRELATION_ID, None
             )
             if isinstance(service_name, str) and service_name:
-                resolved_context[c.ContextKey.SERVICE_NAME] = service_name
+                resolved_context[flext_core.c.ContextKey.SERVICE_NAME] = service_name
             if isinstance(service_version, str) and service_version:
-                resolved_context[c.ContextKey.SERVICE_VERSION] = service_version
+                resolved_context[flext_core.c.ContextKey.SERVICE_VERSION] = (
+                    service_version
+                )
             if isinstance(correlation_id, str) and correlation_id:
-                resolved_context[c.ContextKey.CORRELATION_ID] = correlation_id
-        resolved_context.setdefault(c.ContextKey.LOGGER_NAME, name)
+                resolved_context[flext_core.c.ContextKey.CORRELATION_ID] = (
+                    correlation_id
+                )
+        resolved_context.setdefault(flext_core.c.ContextKey.LOGGER_NAME, name)
         if native_logger is not None:
             self._native = native_logger.bind(**resolved_context)
         else:
@@ -96,19 +105,21 @@ class FlextUtilitiesLoggingBoundLogger(
         return self
 
     @property
-    def _context(self) -> p.LoggingContext:
+    def _context(self) -> flext_core.p.LoggingContext:
         """Context mapping for BindableLogger protocol compliance."""
-        context: p.LoggingContext = self._owner.structlog().get_context(self._native)
+        context: flext_core.p.LoggingContext = self._owner.structlog().get_context(
+            self._native
+        )
         return context
 
     @property
-    def logger(self) -> p.NativeLoggingWrapper:
+    def logger(self) -> flext_core.p.NativeLoggingWrapper:
         """Native lazy composition, including the latest factory and processors."""
         if self._scoped_settings is None:
             self._owner.ensure_structlog_configured()
         return self._native
 
-    def bind(self, **context: t.JsonPayload) -> Self:
+    def bind(self, **context: flext_core.t.JsonPayload) -> Self:
         """Return a new logger with additional native bound context."""
         bound_logger = self.logger.bind(**context)
         return self.__class__(
@@ -119,7 +130,7 @@ class FlextUtilitiesLoggingBoundLogger(
             native_logger=bound_logger if self._scoped_settings is not None else None,
         )
 
-    def new(self, **context: t.JsonPayload) -> Self:
+    def new(self, **context: flext_core.t.JsonPayload) -> Self:
         """Replace bound context without mutating this logger.
 
         Returns:
@@ -136,7 +147,9 @@ class FlextUtilitiesLoggingBoundLogger(
             ),
         )
 
-    def exception(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
+    def exception(
+        self, msg: str, *args: flext_core.p.LogValue, **kw: flext_core.p.LogValue
+    ) -> flext_core.p.LogResult:
         """Emit native exception context and preserve selected failures.
 
         Returns:
@@ -146,22 +159,22 @@ class FlextUtilitiesLoggingBoundLogger(
         if args and isinstance(args[0], BaseException):
             kw["exception"], args = args[0], args[1:]
         kw.setdefault("exc_info", True)
-        return self._log(c.LogLevel.ERROR, msg, *args, **kw)
+        return self._log(flext_core.c.LogLevel.ERROR, msg, *args, **kw)
 
     def build_exception_context(
         self,
         *,
         exception: BaseException | None,
         exc_info: bool,
-        context: Mapping[str, t.JsonPayload | Exception],
-    ) -> p.LoggingEvent:
+        context: Mapping[str, flext_core.t.JsonPayload | Exception],
+    ) -> flext_core.p.LoggingEvent:
         """Adapt causal data to native exc_info without formatting a stack.
 
         Returns:
             The event with its original causal data.
 
         """
-        result: p.LoggingEvent = {
+        result: flext_core.p.LoggingEvent = {
             k: self._owner.to_container_value(v) for k, v in context.items()
         }
         if exception is not None:
@@ -193,22 +206,24 @@ class FlextUtilitiesLoggingBoundLogger(
         """
         return self.unbind(*keys, safe=True)
 
-    def warning(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
+    def warning(
+        self, msg: str, *args: flext_core.p.LogValue, **kw: flext_core.p.LogValue
+    ) -> flext_core.p.LogResult:
         """Emit WARNING through the native pipeline.
 
         Returns:
             The native logging result.
 
         """
-        return self._log(c.LogLevel.WARNING, msg, *args, **kw)
+        return self._log(flext_core.c.LogLevel.WARNING, msg, *args, **kw)
 
     def _log(
         self,
-        level: t.LogLevel | str,
+        level: flext_core.t.LogLevel | str,
         event: str,
-        *args: t.LogPositionalValue[p.BaseModel],
-        **context: p.LogValue,
-    ) -> p.LogResult:
+        *args: flext_core.t.LogPositionalValue[flext_core.p.BaseModel],
+        **context: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit once, preserving original business identity and saved traceback.
 
         Returns:
@@ -235,19 +250,19 @@ class FlextUtilitiesLoggingBoundLogger(
                     business_info[2]
                 ) from business_error.__cause__
             raise
-        return r[bool].ok(value=True)
+        return flext_core.r[bool].ok(value=True)
 
     def _emit_native(
         self,
-        level: t.LogLevel | str,
+        level: flext_core.t.LogLevel | str,
         event: str,
-        args: tuple[t.LogPositionalValue[p.BaseModel], ...],
-        context: Mapping[str, p.LogValue],
-        selected_info: t.LoggingExceptionInfo | None,
+        args: tuple[flext_core.t.LogPositionalValue[flext_core.p.BaseModel], ...],
+        context: Mapping[str, flext_core.p.LogValue],
+        selected_info: flext_core.t.LoggingExceptionInfo | None,
     ) -> None:
         """Prepare one event and emit it through the native pipeline."""
         level_str = logging.getLevelName(self.level_number(level)).lower()
-        native_context: p.LoggingEvent = dict(
+        native_context: flext_core.p.LoggingEvent = dict(
             self._owner.to_container_context({
                 key: value
                 for key, value in context.items()
@@ -260,54 +275,60 @@ class FlextUtilitiesLoggingBoundLogger(
             native_context["positional_args"] = args
         getattr(self.logger, level_str)(event, **native_context)
 
-    def critical(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
+    def critical(
+        self, msg: str, *args: flext_core.p.LogValue, **kw: flext_core.p.LogValue
+    ) -> flext_core.p.LogResult:
         """Emit CRITICAL through the native pipeline.
 
         Returns:
             The native logging result.
 
         """
-        return self._log(c.LogLevel.CRITICAL, msg, *args, **kw)
+        return self._log(flext_core.c.LogLevel.CRITICAL, msg, *args, **kw)
 
-    def debug(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
+    def debug(
+        self, msg: str, *args: flext_core.p.LogValue, **kw: flext_core.p.LogValue
+    ) -> flext_core.p.LogResult:
         """Emit DEBUG through the native pipeline.
 
         Returns:
             The native logging result.
 
         """
-        return self._log(c.LogLevel.DEBUG, msg, *args, **kw)
+        return self._log(flext_core.c.LogLevel.DEBUG, msg, *args, **kw)
 
-    def error(self, msg: str, *args: p.LogValue, **kw: p.LogValue) -> p.LogResult:
+    def error(
+        self, msg: str, *args: flext_core.p.LogValue, **kw: flext_core.p.LogValue
+    ) -> flext_core.p.LogResult:
         """Emit ERROR through the native pipeline.
 
         Returns:
             The native logging result.
 
         """
-        return self._log(c.LogLevel.ERROR, msg, *args, **kw)
+        return self._log(flext_core.c.LogLevel.ERROR, msg, *args, **kw)
 
     def info(
         self,
         msg: str,
-        *args: t.LogPositionalValue[p.BaseModel],
-        **kw: p.LogValue,
-    ) -> p.LogResult:
+        *args: flext_core.t.LogPositionalValue[flext_core.p.BaseModel],
+        **kw: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit ordinary INFO through the native pipeline.
 
         Returns:
             The native logging result.
 
         """
-        return self._log(c.LogLevel.INFO, msg, *args, **kw)
+        return self._log(flext_core.c.LogLevel.INFO, msg, *args, **kw)
 
     def log(
         self,
         level: str,
         message: str,
-        *args: p.LogValue,
-        **context: p.LogValue,
-    ) -> p.LogResult:
+        *args: flext_core.p.LogValue,
+        **context: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit at the requested standard severity.
 
         Returns:
@@ -319,9 +340,9 @@ class FlextUtilitiesLoggingBoundLogger(
     def trace(
         self,
         message: str,
-        *args: p.LogValue,
-        **kwargs: p.LogValue,
-    ) -> p.LogResult:
+        *args: flext_core.p.LogValue,
+        **kwargs: flext_core.p.LogValue,
+    ) -> flext_core.p.LogResult:
         """Emit opt-in high-volume diagnostics at DEBUG.
 
         Returns:
@@ -330,8 +351,8 @@ class FlextUtilitiesLoggingBoundLogger(
         """
         selected = self._scoped_settings or self.logging_settings()
         if selected.trace:
-            return self._log(c.LogLevel.DEBUG, message, *args, **kwargs)
-        return r[bool].ok(value=True)
+            return self._log(flext_core.c.LogLevel.DEBUG, message, *args, **kwargs)
+        return flext_core.r[bool].ok(value=True)
 
 
-__all__: t.StrTuple = ("FlextUtilitiesLoggingBoundLogger",)
+__all__: flext_core.t.StrTuple = ("FlextUtilitiesLoggingBoundLogger",)

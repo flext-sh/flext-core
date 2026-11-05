@@ -11,9 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
-from flext_core import c, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsContainers,
@@ -34,20 +37,22 @@ class FlextModelsDomainEvent:
     ):
         """Base class for domain events."""
 
-        message_type: Literal[c.HandlerType.EVENT] = FlextModelsPydantic.Field(
-            default=c.HandlerType.EVENT,
-            frozen=True,
-            description="Immutable event discriminator for union routing.",
-            validate_default=True,
+        message_type: Literal[flext_core.c.HandlerType.EVENT] = (
+            FlextModelsPydantic.Field(
+                default=flext_core.c.HandlerType.EVENT,
+                frozen=True,
+                description="Immutable event discriminator for union routing.",
+                validate_default=True,
+            )
         )
         event_type: Annotated[
-            t.NonEmptyStr,
+            flext_core.t.NonEmptyStr,
             FlextModelsPydantic.Field(
                 description="Domain event type identifier for subscriber routing.",
             ),
         ]
         aggregate_id: Annotated[
-            t.NonEmptyStr,
+            flext_core.t.NonEmptyStr,
             FlextModelsPydantic.Field(
                 description=(
                     "Identifier of the aggregate root that produced this event."

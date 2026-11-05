@@ -7,33 +7,39 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
+from typing import TYPE_CHECKING
 
-from flext_core import c, m, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextExceptionsTemplate:
     """Template rendering helpers for exception and result messages."""
 
-    type TemplateValues = Mapping[str, t.JsonPayload | None] | m.ConfigMap
+    type TemplateValues = (
+        Mapping[str, flext_core.t.JsonPayload | None] | flext_core.m.ConfigMap
+    )
 
     @staticmethod
     def template_values(
-        params: p.BaseModel | None,
+        params: flext_core.p.BaseModel | None,
         values: FlextExceptionsTemplate.TemplateValues,
-    ) -> p.ConfigMap:
+    ) -> flext_core.p.ConfigMap:
         """Build template substitution values using params data and field metadata.
 
         Returns:
             The resulting ``m.ConfigMap``.
 
         """
-        payload: t.JsonDict = (
+        payload: flext_core.t.JsonDict = (
             params.model_dump(mode="json", exclude_none=True)
             if params is not None
             else {}
         )
-        if isinstance(params, m.BaseModel):
+        if isinstance(params, flext_core.m.BaseModel):
             payload |= {
                 f"{field_name}_description": field_help
                 for field_name, field_info in type(params).model_fields.items()
@@ -48,14 +54,14 @@ class FlextExceptionsTemplate:
             for key, value in values.items()
             if value is not None
         }
-        return m.ConfigMap.model_validate(payload)
+        return flext_core.m.ConfigMap.model_validate(payload)
 
     @staticmethod
     def render_template(
         template: str,
         *,
-        params: p.BaseModel | None = None,
-        **values: t.JsonPayload | None,
+        params: flext_core.p.BaseModel | None = None,
+        **values: flext_core.t.JsonPayload | None,
     ) -> str:
         """Render a message template from params + explicit values.
 
@@ -74,14 +80,16 @@ class FlextExceptionsTemplate:
         except KeyError as exc:
             missing_key = str(exc).strip("'")
             raise ValueError(
-                c.ERR_TEMPLATE_MISSING_VALUE.format(key=missing_key, template=template),
+                flext_core.c.ERR_TEMPLATE_MISSING_VALUE.format(
+                    key=missing_key, template=template
+                ),
             ) from exc
 
     @staticmethod
     def result_error_data(
-        params: p.BaseModel | None,
-        **values: t.JsonPayload | None,
-    ) -> p.ConfigMap | None:
+        params: flext_core.p.BaseModel | None,
+        **values: flext_core.t.JsonPayload | None,
+    ) -> flext_core.p.ConfigMap | None:
         """Build canonical error_data payload from params and explicit values.
 
         Returns:

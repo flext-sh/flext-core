@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, c, p, t
+import flext_core
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
@@ -29,30 +29,32 @@ class FlextUtilitiesDispatcherExecute:
 
     @staticmethod
     def _adapt_dispatcher_output(
-        raw_output: t.JsonPayload | p.Result[t.JsonPayload] | None,
-        dispatch_result: type[r[t.JsonPayload]],
-    ) -> p.Result[t.JsonPayload]:
-        result: p.Result[t.JsonPayload]
+        raw_output: flext_core.t.JsonPayload
+        | flext_core.p.Result[flext_core.t.JsonPayload]
+        | None,
+        dispatch_result: type[r[flext_core.t.JsonPayload]],
+    ) -> flext_core.p.Result[flext_core.t.JsonPayload]:
+        result: flext_core.p.Result[flext_core.t.JsonPayload]
         if raw_output is None:
             result = dispatch_result.fail_op(
                 "validate handler return payload",
-                c.ERR_HANDLER_RETURNED_NONE,
+                flext_core.c.ERR_HANDLER_RETURNED_NONE,
             )
-        elif isinstance(raw_output, p.Result):
+        elif isinstance(raw_output, flext_core.p.Result):
             if raw_output.failure:
                 result = dispatch_result.from_failure(raw_output)
             else:
                 output_value = raw_output.value
                 if FlextUtilitiesGuardsTypeCore.container_value(output_value):
-                    payload: t.JsonPayload = output_value
+                    payload: flext_core.t.JsonPayload = output_value
                     result = dispatch_result.ok(payload)
                 elif FlextUtilitiesGuardsTypeModel.pydantic_model(output_value):
-                    model_payload: t.JsonPayload = output_value
+                    model_payload: flext_core.t.JsonPayload = output_value
                     result = dispatch_result.ok(model_payload)
                 else:
                     result = dispatch_result.fail_op(
                         "validate handler success payload",
-                        c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+                        flext_core.c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
                     )
         elif FlextUtilitiesGuardsTypeCore.container_value(
             raw_output
@@ -61,20 +63,24 @@ class FlextUtilitiesDispatcherExecute:
         else:
             result = dispatch_result.fail_op(
                 "validate handler return payload",
-                c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+                flext_core.c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
             )
         return result
 
     @staticmethod
     def _normalize_dispatcher_output(
-        raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
-        dispatch_result: type[r[t.JsonPayload]],
-    ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
-        if isinstance(raw_candidate, FlextResult):
-            return cast("p.Result[t.JsonPayload]", raw_candidate)
+        raw_candidate: flext_core.t.JsonPayload
+        | flext_core.p.ResultView[flext_core.t.JsonPayload]
+        | None,
+        dispatch_result: type[r[flext_core.t.JsonPayload]],
+    ) -> (
+        flext_core.t.JsonPayload | flext_core.p.Result[flext_core.t.JsonPayload] | None
+    ):
+        if isinstance(raw_candidate, flext_core.FlextResult):
+            return cast("flext_core.p.Result[flext_core.t.JsonPayload]", raw_candidate)
         if raw_candidate is None:
             return None
-        if isinstance(raw_candidate, p.ResultView):
+        if isinstance(raw_candidate, flext_core.p.ResultView):
             return FlextUtilitiesDispatcherExecute._from_result_view(
                 raw_candidate,
                 dispatch_result,
@@ -85,14 +91,14 @@ class FlextUtilitiesDispatcherExecute:
             return raw_candidate
         return dispatch_result.fail_op(
             "validate handler return payload",
-            c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
+            flext_core.c.ERR_HANDLER_RETURNED_NON_CONTAINER_VALUE,
         )
 
     @staticmethod
     def _from_result_view(
-        view: p.ResultView[t.JsonPayload],
-        dispatch_result: type[r[t.JsonPayload]],
-    ) -> t.JsonPayload | p.Result[t.JsonPayload]:
+        view: flext_core.p.ResultView[flext_core.t.JsonPayload],
+        dispatch_result: type[r[flext_core.t.JsonPayload]],
+    ) -> flext_core.t.JsonPayload | flext_core.p.Result[flext_core.t.JsonPayload]:
         """Adapt one ResultView outcome into the dispatcher result type.
 
         Returns:
@@ -108,17 +114,17 @@ class FlextUtilitiesDispatcherExecute:
             return dispatch_result.ok(success_value)
         return dispatch_result.fail_op(
             "normalize handler result view",
-            c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
+            flext_core.c.ERR_HANDLER_RETURNED_NON_CONTAINER_SUCCESS_RESULT,
         )
 
     @staticmethod
     def execute_dispatcher_handler(
         *,
-        resolved_handler: p.RoutedHandlerCallable,
-        message: p.Routable,
+        resolved_handler: flext_core.p.RoutedHandlerCallable,
+        message: flext_core.p.Routable,
         route_name: str,
-        logger: p.Logger,
-    ) -> p.Result[t.JsonPayload]:
+        logger: flext_core.p.Logger,
+    ) -> flext_core.p.Result[flext_core.t.JsonPayload]:
         """Execute ``resolved_handler(message)`` and adapt the outcome.
 
         The adapted outcome type is ``r[JsonPayload]``.
@@ -132,7 +138,7 @@ class FlextUtilitiesDispatcherExecute:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        dispatch_result = FlextResult[t.JsonPayload]
+        dispatch_result = flext_core.FlextResult[flext_core.t.JsonPayload]
         try:
             raw_candidate = resolved_handler(message)
             raw_output = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(
@@ -154,7 +160,7 @@ class FlextUtilitiesDispatcherExecute:
             ArithmeticError,
         ) as exc:
             logger.exception(
-                c.LOG_HANDLER_EXECUTION_FAILED,
+                flext_core.c.LOG_HANDLER_EXECUTION_FAILED,
                 exception=exc,
                 route=route_name,
             )

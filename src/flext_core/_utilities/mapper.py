@@ -8,9 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, c, m, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities import (
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeCore,
@@ -24,18 +27,18 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def _transform_result(
-        pipeline: Callable[[], t.JsonDict],
-    ) -> p.Result[t.JsonMapping]:
+        pipeline: Callable[[], flext_core.t.JsonDict],
+    ) -> flext_core.p.Result[flext_core.t.JsonMapping]:
         """Run one transform pipeline, mapping failures to ``r``.
 
         Returns:
             The resulting ``p.Result[t.JsonMapping]``.
 
         """
-        transform_result: p.Result[t.JsonMapping] = FlextResult[
-            t.JsonMapping
-        ].create_from_callable(
-            pipeline,
+        transform_result: flext_core.p.Result[flext_core.t.JsonMapping] = (
+            flext_core.FlextResult[flext_core.t.JsonMapping].create_from_callable(
+                pipeline,
+            )
         )
         if transform_result.failure:
             failure_reason = (
@@ -43,11 +46,15 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 if isinstance(transform_result.exception, Exception)
                 else transform_result.error
             )
-            return FlextResult[t.JsonMapping].fail_op("transform", failure_reason)
+            return flext_core.FlextResult[flext_core.t.JsonMapping].fail_op(
+                "transform", failure_reason
+            )
         return transform_result
 
     @staticmethod
-    def _normalize_step(step: t.JsonDict, *, normalize: bool) -> t.JsonDict:
+    def _normalize_step(
+        step: flext_core.t.JsonDict, *, normalize: bool
+    ) -> flext_core.t.JsonDict:
         """Optionally normalize a step mapping to metadata form.
 
         Returns:
@@ -63,11 +70,11 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def _remap_step(
-        step: t.JsonDict,
+        step: flext_core.t.JsonDict,
         map_keys: Mapping[str, str] | None,
         filter_keys: set[str] | None,
         exclude_keys: set[str] | None,
-    ) -> t.JsonDict:
+    ) -> flext_core.t.JsonDict:
         """Apply key mapping, filtering, and exclusion to a step mapping.
 
         Returns:
@@ -85,11 +92,11 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def _strip_step(
-        step: t.JsonDict,
+        step: flext_core.t.JsonDict,
         *,
         strip_none: bool,
         strip_empty: bool,
-    ) -> t.JsonDict:
+    ) -> flext_core.t.JsonDict:
         """Optionally strip None values and empty values from a step mapping.
 
         Returns:
@@ -112,7 +119,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         return result
 
     @staticmethod
-    def _is_not_none(value: t.JsonValue) -> bool:
+    def _is_not_none(value: flext_core.t.JsonValue) -> bool:
         """Whether a value is not None.
 
         Returns:
@@ -122,7 +129,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         return value is not None
 
     @staticmethod
-    def _is_not_empty(value: t.JsonValue) -> bool:
+    def _is_not_empty(value: flext_core.t.JsonValue) -> bool:
         """Whether a value is not an empty scalar or container.
 
         Returns:
@@ -134,10 +141,11 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
     @staticmethod
     def agg[T](
         items: Sequence[T] | tuple[T, ...],
-        field: str | Callable[[T], t.Numeric],
+        field: str | Callable[[T], flext_core.t.Numeric],
         *,
-        fn: Callable[[Sequence[t.Numeric]], t.Numeric] | None = None,
-    ) -> t.Numeric:
+        fn: Callable[[Sequence[flext_core.t.Numeric]], flext_core.t.Numeric]
+        | None = None,
+    ) -> flext_core.t.Numeric:
         """Aggregate numeric field values from objects using fn (default: sum).
 
         Returns:
@@ -146,29 +154,31 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         """
         items_list: Sequence[T] = list(items)
         if callable(field):
-            numeric_values: list[t.Numeric] = [field(item) for item in items_list]
+            numeric_values: list[flext_core.t.Numeric] = [
+                field(item) for item in items_list
+            ]
         else:
             numeric_values = []
             for item in items_list:
-                raw: p.AttributeProbe | None
-                if isinstance(item, m.BaseModel):
+                raw: flext_core.p.AttributeProbe | None
+                if isinstance(item, flext_core.m.BaseModel):
                     raw = getattr(item, field, None)
                 elif isinstance(item, Mapping):
                     raw = cast(
-                        "Mapping[str, p.AttributeProbe]",
+                        "Mapping[str, flext_core.p.AttributeProbe]",
                         item,
                     ).get(field)
                 else:
                     continue
-                if isinstance(raw, c.NUMERIC_TYPES):
+                if isinstance(raw, flext_core.c.NUMERIC_TYPES):
                     numeric_values.append(raw)
         agg_fn = fn if fn is not None else sum
         return agg_fn(numeric_values) if numeric_values else 0
 
     @staticmethod
     def _deep_eq_values(
-        val_a: t.JsonPayload | t.JsonValue,
-        val_b: t.JsonPayload | t.JsonValue,
+        val_a: flext_core.t.JsonPayload | flext_core.t.JsonValue,
+        val_b: flext_core.t.JsonPayload | flext_core.t.JsonValue,
     ) -> bool:
         """Recursive deep equality for any two nested items.
 
@@ -197,8 +207,8 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def deep_eq(
-        a: Mapping[str, t.JsonValue | t.JsonPayload],
-        b: Mapping[str, t.JsonValue | t.JsonPayload],
+        a: Mapping[str, flext_core.t.JsonValue | flext_core.t.JsonPayload],
+        b: Mapping[str, flext_core.t.JsonValue | flext_core.t.JsonPayload],
     ) -> bool:
         """Recursive deep equality for nested dicts/lists/primitives.
 
@@ -212,11 +222,16 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             return False
         return all(
             key in b and FlextUtilitiesMapper._deep_eq_values(val_a, b[key])
-            for key, val_a in a.items()
+            for key, val_a in flext_core.a.items()
         )
 
     @staticmethod
-    def prop(key: str) -> Callable[[p.ConfigModelInput], t.JsonPayload | t.JsonValue]:
+    def prop(
+        key: str,
+    ) -> Callable[
+        [flext_core.p.ConfigModelInput],
+        flext_core.t.JsonPayload | flext_core.t.JsonValue,
+    ]:
         """Return an accessor function that extracts the named property from an object.
 
         Returns:
@@ -224,7 +239,9 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
         """
 
-        def accessor(obj: p.ConfigModelInput) -> t.JsonPayload | t.JsonValue:
+        def accessor(
+            obj: flext_core.p.ConfigModelInput,
+        ) -> flext_core.t.JsonPayload | flext_core.t.JsonValue:
             result = FlextUtilitiesMapper._get_raw(obj, key)
             return result if result is not None else ""
 
@@ -232,12 +249,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def transform(
-        source: t.JsonMapping | m.ConfigMap,
+        source: flext_core.t.JsonMapping | flext_core.m.ConfigMap,
         *,
-        options: p.TransformOptions | None = None,
+        options: flext_core.p.TransformOptions | None = None,
         filter_keys: set[str] | None = None,
         exclude_keys: set[str] | None = None,
-    ) -> p.Result[t.JsonMapping]:
+    ) -> flext_core.p.Result[flext_core.t.JsonMapping]:
         """Apply the dict normalization pipeline to a mapping.
 
         Steps: normalize, strip_none, strip_empty, map_keys, filter_keys,
@@ -248,17 +265,17 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             The resulting ``p.Result[t.JsonMapping]``.
 
         """
-        resolved = options if options is not None else (m.TransformOptions())
-        coerced: t.JsonMapping = (
+        resolved = options if options is not None else (flext_core.m.TransformOptions())
+        coerced: flext_core.t.JsonMapping = (
             {
                 k: FlextUtilitiesPydantic.normalize_to_json_value(v)
                 for k, v in source.root.items()
             }
-            if isinstance(source, m.ConfigMap)
+            if isinstance(source, flext_core.m.ConfigMap)
             else source
         )
 
-        def _pipeline() -> t.JsonDict:
+        def _pipeline() -> flext_core.t.JsonDict:
             normalized = FlextUtilitiesMapper._normalize_step(
                 dict(coerced), normalize=resolved.normalize
             )

@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import flext_core
 from flext_core._protocols import FlextProtocolsEntity
 
 if TYPE_CHECKING:
-    from flext_core import t
     from flext_core._protocols import FlextProtocolsBase, FlextProtocolsContainers
 
 
@@ -26,7 +26,7 @@ class FlextProtocolsContextExport:
         """Structural data contract projected from the owning model."""
 
         @property
-        def data(self) -> Mapping[str, t.JsonPayload]:
+        def data(self) -> Mapping[str, flext_core.t.JsonPayload]:
             """All context data from all scopes."""
             ...
 
@@ -38,7 +38,7 @@ class FlextProtocolsContextExport:
             ...
 
         @property
-        def statistics(self) -> t.JsonMapping:
+        def statistics(self) -> flext_core.t.JsonMapping:
             """Usage statistics (operation counts, timing info)."""
             ...
 

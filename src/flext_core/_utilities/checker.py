@@ -9,11 +9,14 @@ from __future__ import annotations
 import inspect
 from collections.abc import Mapping, MutableSequence, Sequence
 from types import FunctionType, MethodType
-from typing import get_args, get_origin, get_type_hints
+from typing import TYPE_CHECKING, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel
 
-from flext_core import FlextResult, c, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 
 
 class FlextUtilitiesChecker:
@@ -21,7 +24,7 @@ class FlextUtilitiesChecker:
 
     @staticmethod
     def _is_subclass_of(
-        candidate: t.TypeHintSpecifier,
+        candidate: flext_core.t.TypeHintSpecifier,
         parent: type,
     ) -> bool:
         """Safe subclass check that never raises TypeError.
@@ -33,7 +36,7 @@ class FlextUtilitiesChecker:
         return isinstance(candidate, type) and issubclass(candidate, parent)
 
     @classmethod
-    def _is_dict_type(cls, candidate: t.TypeHintSpecifier) -> bool:
+    def _is_dict_type(cls, candidate: flext_core.t.TypeHintSpecifier) -> bool:
         """Check if candidate is dict or a subclass of dict.
 
         Returns:
@@ -45,10 +48,10 @@ class FlextUtilitiesChecker:
     @classmethod
     def _check_dict_compatibility(
         cls,
-        expected_type: t.TypeHintSpecifier,
-        message_type: t.MessageTypeSpecifier,
-        origin_type: t.TypeHintSpecifier,
-        message_origin: t.TypeHintSpecifier,
+        expected_type: flext_core.t.TypeHintSpecifier,
+        message_type: flext_core.t.MessageTypeSpecifier,
+        origin_type: flext_core.t.TypeHintSpecifier,
+        message_origin: flext_core.t.TypeHintSpecifier,
     ) -> bool:
         """Check dict type compatibility between expected and message types.
 
@@ -69,7 +72,7 @@ class FlextUtilitiesChecker:
     @classmethod
     def _check_object_type_compatibility(
         cls,
-        expected_type: t.TypeHintSpecifier,
+        expected_type: flext_core.t.TypeHintSpecifier,
     ) -> bool:
         """Check if expected type is a canonical catch-all value contract.
 
@@ -77,15 +80,15 @@ class FlextUtilitiesChecker:
             The resulting ``bool``.
 
         """
-        return expected_type is t.JsonPayload
+        return expected_type is flext_core.t.JsonPayload
 
     @classmethod
     def _extract_message_type_from_parameter(
         cls,
         parameter: inspect.Parameter,
-        type_hints: Mapping[str, t.TypeHintSpecifier | None],
+        type_hints: Mapping[str, flext_core.t.TypeHintSpecifier | None],
         param_name: str,
-    ) -> p.Result[t.TypeHintSpecifier]:
+    ) -> flext_core.p.Result[flext_core.t.TypeHintSpecifier]:
         """Extract message type from parameter hints or signature annotation.
 
         Returns:
@@ -95,18 +98,18 @@ class FlextUtilitiesChecker:
         if param_name in type_hints:
             hint = type_hints[param_name]
             if hint is None:
-                return FlextResult[t.TypeHintSpecifier].fail(
-                    c.ERR_CHECKER_TYPE_HINT_NONE
+                return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].fail(
+                    flext_core.c.ERR_CHECKER_TYPE_HINT_NONE
                 )
-            return FlextResult[t.TypeHintSpecifier].ok(
+            return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].ok(
                 hint if isinstance(hint, (str, type)) else str(hint),
             )
         annotation = parameter.annotation
         if annotation is inspect.Signature.empty:
-            return FlextResult[t.TypeHintSpecifier].fail(
-                c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
+            return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].fail(
+                flext_core.c.ERR_CHECKER_NO_ANNOTATION_OR_TYPE_HINT,
             )
-        return FlextResult[t.TypeHintSpecifier].ok(
+        return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].ok(
             annotation if isinstance(annotation, (str, type)) else str(annotation),
         )
 
@@ -114,7 +117,7 @@ class FlextUtilitiesChecker:
     def _get_method_signature(
         cls,
         handle_method: FunctionType | MethodType,
-    ) -> p.Result[inspect.Signature]:
+    ) -> flext_core.p.Result[inspect.Signature]:
         """Extract signature from handle method, wrapping errors in Result.
 
         Returns:
@@ -122,10 +125,12 @@ class FlextUtilitiesChecker:
 
         """
         try:
-            return FlextResult[inspect.Signature].ok(inspect.signature(handle_method))
-        except c.EXC_TYPE_VALIDATION:
-            return FlextResult[inspect.Signature].fail(
-                c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
+            return flext_core.FlextResult[inspect.Signature].ok(
+                inspect.signature(handle_method)
+            )
+        except flext_core.c.EXC_TYPE_VALIDATION:
+            return flext_core.FlextResult[inspect.Signature].fail(
+                flext_core.c.ERR_CHECKER_INVALID_HANDLE_METHOD_SIGNATURE,
             )
 
     @classmethod
@@ -133,14 +138,14 @@ class FlextUtilitiesChecker:
         cls,
         handle_method: FunctionType | MethodType,
         handler_class: type,
-    ) -> Mapping[str, t.TypeHintSpecifier | None]:
+    ) -> Mapping[str, flext_core.t.TypeHintSpecifier | None]:
         """Safely extract type hints, returning empty dict on error.
 
         Returns:
             The resulting mapping of type-hint specifiers, ``None`` for absent.
 
         """
-        hints: Mapping[str, t.TypeHintSpecifier | None] = {}
+        hints: Mapping[str, flext_core.t.TypeHintSpecifier | None] = {}
         function = (
             handle_method.__func__
             if isinstance(handle_method, MethodType)
@@ -159,8 +164,8 @@ class FlextUtilitiesChecker:
     @classmethod
     def _handle_instance_check(
         cls,
-        message_type: t.TypeHintSpecifier,
-        origin_type: t.TypeHintSpecifier,
+        message_type: flext_core.t.TypeHintSpecifier,
+        origin_type: flext_core.t.TypeHintSpecifier,
     ) -> bool:
         """Instance check for non-type objects; returns True on TypeError.
 
@@ -184,10 +189,10 @@ class FlextUtilitiesChecker:
     @classmethod
     def _handle_type_or_origin_check(
         cls,
-        expected_type: t.TypeHintSpecifier,
-        message_type: t.TypeHintSpecifier,
-        origin_type: t.TypeHintSpecifier,
-        message_origin: t.TypeHintSpecifier,
+        expected_type: flext_core.t.TypeHintSpecifier,
+        message_type: flext_core.t.TypeHintSpecifier,
+        origin_type: flext_core.t.TypeHintSpecifier,
+        message_origin: flext_core.t.TypeHintSpecifier,
     ) -> bool:
         """Type checking for types or objects with __origin__.
 
@@ -210,10 +215,10 @@ class FlextUtilitiesChecker:
     @classmethod
     def _match_type_or_origin(
         cls,
-        expected_type: t.TypeHintSpecifier,
-        message_type: t.TypeHintSpecifier,
-        origin_type: t.TypeHintSpecifier,
-        message_origin: t.TypeHintSpecifier,
+        expected_type: flext_core.t.TypeHintSpecifier,
+        message_type: flext_core.t.TypeHintSpecifier,
+        origin_type: flext_core.t.TypeHintSpecifier,
+        message_origin: flext_core.t.TypeHintSpecifier,
     ) -> bool:
         """Resolve the origin/type match without guarding against TypeError.
 
@@ -230,8 +235,8 @@ class FlextUtilitiesChecker:
     @classmethod
     def _evaluate_type_compatibility(
         cls,
-        expected_type: t.TypeHintSpecifier,
-        message_type: t.MessageTypeSpecifier,
+        expected_type: flext_core.t.TypeHintSpecifier,
+        message_type: flext_core.t.MessageTypeSpecifier,
     ) -> bool:
         """Evaluate compatibility between expected and actual message types.
 
@@ -265,34 +270,41 @@ class FlextUtilitiesChecker:
     def _extract_generic_message_types(
         cls,
         handler_class: type,
-    ) -> Sequence[t.TypeHintSpecifier]:
+    ) -> Sequence[flext_core.t.TypeHintSpecifier]:
         """Extract message types from generic base annotations.
 
         Returns:
             The resulting sequence of type-hint specifiers.
 
         """
-        raw_bases: t.VariadicTuple[t.TypeHintSpecifier] | tuple[()] = getattr(
+        raw_bases: (
+            flext_core.t.VariadicTuple[flext_core.t.TypeHintSpecifier] | tuple[()]
+        ) = getattr(
             handler_class,
             "__orig_bases__",
             (),
         )
-        generic_bases: t.VariadicTuple[t.TypeHintSpecifier] = raw_bases
-        message_types: MutableSequence[t.TypeHintSpecifier] = [
+        generic_bases: flext_core.t.VariadicTuple[flext_core.t.TypeHintSpecifier] = (
+            raw_bases
+        )
+        message_types: MutableSequence[flext_core.t.TypeHintSpecifier] = [
             args[0]
             for base in generic_bases
             if (origin := get_origin(base)) is not None
-            if getattr(origin, "__name__", "") in c.CHECKER_HANDLER_ORIGIN_NAMES
+            if getattr(origin, "__name__", "")
+            in flext_core.c.CHECKER_HANDLER_ORIGIN_NAMES
             if (args := get_args(base))
         ]
         if message_types:
             return message_types
-        metadata_types: MutableSequence[t.TypeHintSpecifier] = []
+        metadata_types: MutableSequence[flext_core.t.TypeHintSpecifier] = []
         for parent_cls in handler_class.__bases__:
             metadata: (
                 Mapping[
                     str,
-                    t.TypeHintSpecifier | t.VariadicTuple[t.TypeHintSpecifier] | None,
+                    flext_core.t.TypeHintSpecifier
+                    | flext_core.t.VariadicTuple[flext_core.t.TypeHintSpecifier]
+                    | None,
                 ]
                 | None
             ) = getattr(
@@ -303,7 +315,10 @@ class FlextUtilitiesChecker:
             if not isinstance(metadata, Mapping):
                 continue
             origin = metadata.get("origin")
-            if getattr(origin, "__name__", "") not in c.CHECKER_HANDLER_ORIGIN_NAMES:
+            if (
+                getattr(origin, "__name__", "")
+                not in flext_core.c.CHECKER_HANDLER_ORIGIN_NAMES
+            ):
                 continue
             args = metadata.get("args")
             if isinstance(args, tuple) and args:
@@ -314,43 +329,47 @@ class FlextUtilitiesChecker:
     def _extract_message_type_from_handle(
         cls,
         handler_class: type,
-    ) -> p.Result[t.TypeHintSpecifier]:
+    ) -> flext_core.p.Result[flext_core.t.TypeHintSpecifier]:
         """Extract message type from handle method annotations when generics are absent.
 
         Returns:
             The resulting ``p.Result[t.TypeHintSpecifier]``.
 
         """
-        if not hasattr(handler_class, c.MethodName.HANDLE):
-            return FlextResult[t.TypeHintSpecifier].fail(
-                c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD
+        if not hasattr(handler_class, flext_core.c.MethodName.HANDLE):
+            return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].fail(
+                flext_core.c.ERR_CHECKER_HANDLER_NO_HANDLE_METHOD
             )
-        handle_method_raw: p.GuardInput | None = getattr(
+        handle_method_raw: flext_core.p.GuardInput | None = getattr(
             handler_class,
-            c.MethodName.HANDLE,
+            flext_core.c.MethodName.HANDLE,
             None,
         )
         if not isinstance(handle_method_raw, FunctionType | MethodType):
-            return FlextResult[t.TypeHintSpecifier].fail(
-                c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
+            return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].fail(
+                flext_core.c.ERR_CHECKER_HANDLER_HANDLE_NOT_CALLABLE,
             )
         handle_method = handle_method_raw
         signature_result = cls._get_method_signature(handle_method)
         if signature_result.failure:
-            return FlextResult[t.TypeHintSpecifier].from_failure(signature_result)
+            return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].from_failure(
+                signature_result
+            )
         signature = signature_result.unwrap()
         type_hints = cls._get_type_hints_safe(handle_method, handler_class)
         for name, parameter in signature.parameters.items():
-            if name == c.FRAME_SELF_KEY:
+            if name == flext_core.c.FRAME_SELF_KEY:
                 continue
             return cls._extract_message_type_from_parameter(parameter, type_hints, name)
-        return FlextResult[t.TypeHintSpecifier].fail(c.ERR_CHECKER_NO_MESSAGE_PARAMETER)
+        return flext_core.FlextResult[flext_core.t.TypeHintSpecifier].fail(
+            flext_core.c.ERR_CHECKER_NO_MESSAGE_PARAMETER
+        )
 
     @classmethod
     def can_handle_message_type(
         cls,
-        accepted_types: t.VariadicTuple[t.TypeHintSpecifier],
-        message_type: t.MessageTypeSpecifier | None,
+        accepted_types: flext_core.t.VariadicTuple[flext_core.t.TypeHintSpecifier],
+        message_type: flext_core.t.MessageTypeSpecifier | None,
     ) -> bool:
         """Check if handler can process this message type.
 
@@ -369,14 +388,14 @@ class FlextUtilitiesChecker:
     def compute_accepted_message_types(
         cls,
         handler_class: type,
-    ) -> t.VariadicTuple[t.TypeHintSpecifier]:
+    ) -> flext_core.t.VariadicTuple[flext_core.t.TypeHintSpecifier]:
         """Compute message types accepted by a handler using cached introspection.
 
         Returns:
             The resulting tuple of type-hint specifiers.
 
         """
-        message_types: MutableSequence[t.TypeHintSpecifier] = []
+        message_types: MutableSequence[flext_core.t.TypeHintSpecifier] = []
         generic_types = cls._extract_generic_message_types(handler_class)
         message_types.extend(generic_types)
         if not message_types:
@@ -386,7 +405,9 @@ class FlextUtilitiesChecker:
         return tuple(message_types)
 
     @classmethod
-    def resolve_message_route(cls, msg: p.Routable | type[p.Routable] | str) -> str:
+    def resolve_message_route(
+        cls, msg: flext_core.p.Routable | type[flext_core.p.Routable] | str
+    ) -> str:
         """Resolve route name from Routable attributes or string.
 
         Returns:
@@ -400,7 +421,7 @@ class FlextUtilitiesChecker:
             return msg
         route_attrs = ("command_type", "query_type", "event_type")
         for attr in route_attrs:
-            attr_val: t.StrictStr | None = getattr(msg, attr, None)
+            attr_val: flext_core.t.StrictStr | None = getattr(msg, attr, None)
             if isinstance(attr_val, str) and attr_val:
                 return attr_val
         if isinstance(msg, type) and issubclass(msg, BaseModel):

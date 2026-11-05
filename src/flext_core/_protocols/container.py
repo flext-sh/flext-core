@@ -11,14 +11,13 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from datetime import datetime
 
-    from flext_core import p
     from flext_core._protocols import FlextProtocolsContainers
 
 
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import Protocol, Self, overload, override, runtime_checkable
 
-from flext_core import t
+import flext_core
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsContext,
@@ -35,20 +34,20 @@ from flext_core._protocols import (
 class FlextProtocolsContainer:
     """Public facade for FlextProtocolsContainer."""
 
-    type RegistryCollaborator = t.Port[
+    type RegistryCollaborator = flext_core.t.Port[
         FlextProtocolsPydantic.BaseModel
         | FlextProtocolsLogging.Logger
         | FlextProtocolsSettings.Settings
         | FlextProtocolsContext.Context
         | FlextProtocolsHandler.Dispatcher
     ]
-    type ServiceValue = t.ServiceValue[RegistryCollaborator]
-    type RegisterableService = t.RegisterableService[RegistryCollaborator]
-    type FactoryCallable = t.FactoryCallable[RegistryCollaborator]
-    type ResourceCallable = t.ResourceCallable[RegistryCollaborator]
-    type ServiceMap = t.ServiceMap[RegistryCollaborator]
-    type FactoryMap = t.FactoryMap[RegistryCollaborator]
-    type ResourceMap = t.ResourceMap[RegistryCollaborator]
+    type ServiceValue = flext_core.t.ServiceValue[RegistryCollaborator]
+    type RegisterableService = flext_core.t.RegisterableService[RegistryCollaborator]
+    type FactoryCallable = flext_core.t.FactoryCallable[RegistryCollaborator]
+    type ResourceCallable = flext_core.t.ResourceCallable[RegistryCollaborator]
+    type ServiceMap = flext_core.t.ServiceMap[RegistryCollaborator]
+    type FactoryMap = flext_core.t.FactoryMap[RegistryCollaborator]
+    type ResourceMap = flext_core.t.ResourceMap[RegistryCollaborator]
 
     @runtime_checkable
     class ServiceRegistrationSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
@@ -90,7 +89,9 @@ class FlextProtocolsContainer:
         @property
         def user_overrides(
             self,
-        ) -> FlextProtocolsPydantic.BaseModel | t.UserOverridesMapping | None:
+        ) -> (
+            FlextProtocolsPydantic.BaseModel | flext_core.t.UserOverridesMapping | None
+        ):
             """User-level configuration overrides applied after defaults."""
             ...
 
@@ -116,7 +117,7 @@ class FlextProtocolsContainer:
     class ServiceRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
-        name: t.NonEmptyStr
+        name: flext_core.t.NonEmptyStr
 
         @property
         def service(self) -> FlextProtocolsContainer.RegisterableService:
@@ -183,7 +184,9 @@ class FlextProtocolsContainer:
             ...
 
         @override
-        def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
+        def apply(
+            self, settings: flext_core.t.UserOverridesMapping | None = None
+        ) -> Self:
             """Apply user configuration overrides to the container."""
             ...
 
@@ -205,7 +208,7 @@ class FlextProtocolsContainer:
             FlextProtocolsContainer.RegisterableService
         ]: ...
 
-        def snapshot(self) -> p.ConfigMap:
+        def snapshot(self) -> flext_core.p.ConfigMap:
             """Return the merged settings exposed by this container."""
             ...
 
@@ -303,25 +306,25 @@ class FlextProtocolsContainer:
             ...
 
     type ProtocolGuardInput = (
-        t.JsonPayload
-        | t.JsonMapping
+        flext_core.t.JsonPayload
+        | flext_core.t.JsonMapping
         | Sequence[str]
-        | t.TypeHintSpecifier
-        | Callable[..., t.JsonPayload]
+        | flext_core.t.TypeHintSpecifier
+        | Callable[..., flext_core.t.JsonPayload]
         | Container
         | FlextProtocolsContext.Context
         | FlextProtocolsHandler.Dispatcher
         | FlextProtocolsHandler.Handle
         | FlextProtocolsHandler.Middleware
         | FlextProtocolsLogging.Logger
-        | FlextProtocolsResult.Result[t.JsonPayload]
+        | FlextProtocolsResult.Result[flext_core.t.JsonPayload]
         | FlextProtocolsSettings.Settings
-        | FlextProtocolsService.Service[t.JsonPayload]
+        | FlextProtocolsService.Service[flext_core.t.JsonPayload]
         | None
     )
 
     # The generic guard already builds registration values from these leaves.
-    type GuardInput = t.GuardInput[
+    type GuardInput = flext_core.t.GuardInput[
         FlextProtocolsContainer.RegistryCollaborator
         | Container
         | FlextProtocolsHandler.Handle
@@ -336,7 +339,7 @@ class FlextProtocolsContainer:
     class FactoryRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
-        name: t.NonEmptyStr
+        name: flext_core.t.NonEmptyStr
 
         @property
         def factory(self) -> FlextProtocolsContainer.FactoryCallable:
@@ -347,7 +350,7 @@ class FlextProtocolsContainer:
     class ResourceRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
-        name: t.NonEmptyStr
+        name: flext_core.t.NonEmptyStr
 
         @property
         def factory(self) -> FlextProtocolsContainer.ResourceCallable:
@@ -360,8 +363,8 @@ class FlextProtocolsContainer:
 
         enable_singleton: bool
         enable_factory_caching: bool
-        max_services: t.PositiveInt
-        max_factories: t.PositiveInt
+        max_services: flext_core.t.PositiveInt
+        max_factories: flext_core.t.PositiveInt
         enable_auto_registration: bool
         enable_lifecycle_hooks: bool
         lazy_loading: bool
@@ -371,7 +374,7 @@ class FlextProtocolsContainer:
         """Structural data contract projected from the owning model."""
 
         @property
-        def name(self) -> t.NonEmptyStr:
+        def name(self) -> flext_core.t.NonEmptyStr:
             """Name to register this factory under in the container."""
             ...
 

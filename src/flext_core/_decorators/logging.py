@@ -10,7 +10,7 @@ import time
 from functools import wraps
 from typing import TYPE_CHECKING, Annotated
 
-from flext_core import c, u
+import flext_core
 from flext_core._decorators._logging import FlextDecoratorsLoggingPayloads
 from flext_core._models import FlextModelsPydantic
 from flext_core._protocols import FlextProtocolsLogging
@@ -110,8 +110,8 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                     ensure_correlation=ensure_correlation,
                 )
                 cls._context_type.apply_operation_name(op_name)
-                binding_result = u.bind_context(
-                    c.ContextScope.OPERATION,
+                binding_result = flext_core.u.bind_context(
+                    flext_core.c.ContextScope.OPERATION,
                     operation=op_name,
                 )
                 if binding_result.failure:
@@ -131,7 +131,9 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                         ),
                     )
                 finally:
-                    u.clear_scope(c.ContextScope.OPERATION).unwrap()
+                    flext_core.u.clear_scope(
+                        flext_core.c.ContextScope.OPERATION
+                    ).unwrap()
 
             return wrapper
 
@@ -147,7 +149,7 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
         """
         if ensure_correlation:
             return cls._context_type.ensure_correlation_id()
-        current_id = u.CORRELATION_ID.get()
+        current_id = flext_core.u.CORRELATION_ID.get()
         return current_id if isinstance(current_id, str) else None
 
     @classmethod
@@ -183,13 +185,13 @@ class FlextDecoratorsLogging(FlextDecoratorsLoggingPayloads):
                 "success": False,
                 "error": str(exc),
                 "error_type": exc.__class__.__name__,
-                c.ContextScope.OPERATION: spec.op_name,
+                flext_core.c.ContextScope.OPERATION: spec.op_name,
             }
             if spec.correlation_id is not None:
-                exc_kw[c.ContextKey.CORRELATION_ID] = spec.correlation_id
+                exc_kw[flext_core.c.ContextKey.CORRELATION_ID] = spec.correlation_id
             if spec.track_perf:
-                exc_kw["duration_ms"] = tracked_duration * c.MS_PER_SECOND
-                exc_kw[c.MetadataKey.DURATION_SECONDS] = tracked_duration
+                exc_kw["duration_ms"] = tracked_duration * flext_core.c.MS_PER_SECOND
+                exc_kw[flext_core.c.MetadataKey.DURATION_SECONDS] = tracked_duration
             spec.logger.exception(spec.op_name, exception=exc, **exc_kw)
             raise
         else:

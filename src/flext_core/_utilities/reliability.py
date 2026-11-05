@@ -1,6 +1,6 @@
 """Reliability helpers aligned with dispatcher-centric CQRS flows.
 
-Utilities extracted from ``flext_core.utilities`` to keep retry and
+Utilities extracted from ``utilities`` to keep retry and
 timeout behaviors modular. All helpers return ``p.Result``-compatible
 implementations so dispatcher handlers can compose reliability policies
 without raising exceptions or leaking thread-local state.
@@ -18,7 +18,10 @@ import time
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, c, m, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
@@ -41,7 +44,7 @@ class FlextUtilitiesReliability:
 
         """
         if catch is None:
-            return c.EXC_BROAD_RUNTIME_OS
+            return flext_core.c.EXC_BROAD_RUNTIME_OS
         if isinstance(catch, type):
             return (catch,)
         return catch
@@ -52,7 +55,7 @@ class FlextUtilitiesReliability:
         catch: type[Exception] | _HandledExceptions | None = None,
         *,
         op_name: str = "execute guarded operation",
-    ) -> p.Result[TResult]:
+    ) -> flext_core.p.Result[TResult]:
         """Execute a callable and capture configured exceptions as failed results.
 
         Wraps the callable's return value into ``r[T].ok(...)`` and translates
@@ -66,17 +69,17 @@ class FlextUtilitiesReliability:
         """
         handled = FlextUtilitiesReliability._resolve_handled(catch)
         try:
-            return FlextResult[TResult].ok(operation())
+            return flext_core.FlextResult[TResult].ok(operation())
         except handled as exc:
-            return FlextResult[TResult].fail_op(op_name, exc)
+            return flext_core.FlextResult[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def guard_result[TResult](
-        operation: Callable[[], p.Result[TResult]],
+        operation: Callable[[], flext_core.p.Result[TResult]],
         *,
         catch: type[Exception] | _HandledExceptions | None = None,
         op_name: str = "execute guarded operation",
-    ) -> p.Result[TResult]:
+    ) -> flext_core.p.Result[TResult]:
         """Boundary-guard a Result-returning operation.
 
         Wraps any callable that already returns ``p.Result[T]`` with an
@@ -96,14 +99,14 @@ class FlextUtilitiesReliability:
         try:
             return operation()
         except handled as exc:
-            return FlextResult[TResult].fail_op(op_name, exc)
+            return flext_core.FlextResult[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def retry[TResult](
-        operation: Callable[[], p.Result[TResult]],
-        options: p.RetryOptions | None = None,
-        **kwargs: t.JsonPayload,
-    ) -> p.Result[TResult]:
+        operation: Callable[[], flext_core.p.Result[TResult]],
+        options: flext_core.p.RetryOptions | None = None,
+        **kwargs: flext_core.t.JsonPayload,
+    ) -> flext_core.p.Result[TResult]:
         """Execute an operation with retry logic using railway patterns.
 
         Args:
@@ -120,42 +123,47 @@ class FlextUtilitiesReliability:
         opts_res = FlextUtilitiesArgs.resolve_options(
             options,
             kwargs,
-            m.RetryOptions,
+            flext_core.m.RetryOptions,
         )
         if opts_res.failure:
             # Preserve the validated options failure metadata for every consumer.
-            return FlextResult[TResult].from_failure(opts_res)
+            return flext_core.FlextResult[TResult].from_failure(opts_res)
         opts = opts_res.value
         max_att = (
-            opts.max_attempts if opts.max_attempts is not None else c.MAX_RETRY_ATTEMPTS
+            opts.max_attempts
+            if opts.max_attempts is not None
+            else flext_core.c.MAX_RETRY_ATTEMPTS
         )
         delay_sec = (
             opts.delay_seconds
             if opts.delay_seconds is not None
-            else c.DEFAULT_RETRY_DELAY_SECONDS
+            else flext_core.c.DEFAULT_RETRY_DELAY_SECONDS
         )
-        last_failure: p.Result[TResult] | None = None
+        last_failure: flext_core.p.Result[TResult] | None = None
         for attempt in range(max_att):
             try:
                 result = operation()
-            except c.EXC_BROAD_RUNTIME_OS as exc:
-                result = FlextResult[TResult].fail_op("execute retry operation", exc)
+            except flext_core.c.EXC_BROAD_RUNTIME_OS as exc:
+                result = flext_core.FlextResult[TResult].fail_op(
+                    "execute retry operation", exc
+                )
             if result.success:
                 return result
             last_failure = result
             if attempt < max_att - 1:
                 current_delay = min(
-                    delay_sec * c.DEFAULT_BACKOFF_MULTIPLIER**attempt,
-                    c.DEFAULT_MAX_DELAY_SECONDS,
+                    delay_sec * flext_core.c.DEFAULT_BACKOFF_MULTIPLIER**attempt,
+                    flext_core.c.DEFAULT_MAX_DELAY_SECONDS,
                 )
                 if current_delay > 0:
                     time.sleep(current_delay)
         if last_failure is None:
-            return FlextResult[TResult].fail(
-                c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
+            return flext_core.FlextResult[TResult].fail(
+                flext_core.c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
             )
         return (
-            FlextResult[TResult]
+            flext_core
+            .FlextResult[TResult]
             .from_failure(last_failure)
             .map_error(
                 lambda error: f"Operation failed after {max_att} attempts: {error}",

@@ -9,13 +9,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import flext_core
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._exceptions._factories.fail import FlextExceptionsFactoriesFail
 
 
-__all__: tuple[str, ...] = ("FlextExceptionsFactoriesFail",)
+__all__: tuple[str, ...] = ("FlextExceptionsFactoriesFail", "flext_core")
 
 install_lazy_exports(
     __name__,

@@ -11,9 +11,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Annotated, ClassVar
+from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_core import c, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
 
@@ -35,14 +38,14 @@ class FlextModelsExceptionParamsBase:
         """Shared factory options for exception failures."""
 
         error: Annotated[
-            t.Port[Exception] | str | None,
+            flext_core.t.Port[Exception] | str | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Optional underlying error cause for this failure.",
             ),
         ] = None
         error_code: Annotated[
-            c.ErrorCode | None,
+            flext_core.c.ErrorCode | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Optional override for the canonical failure error code.",
@@ -55,26 +58,30 @@ class FlextModelsExceptionParamsBase:
         error_code: Annotated[
             str,
             FlextModelsPydantic.Field(
-                default=c.ErrorCode.UNKNOWN_ERROR,
+                default=flext_core.c.ErrorCode.UNKNOWN_ERROR,
                 description="Canonical error code carried by the exception.",
             ),
-        ] = c.ErrorCode.UNKNOWN_ERROR
+        ] = flext_core.c.ErrorCode.UNKNOWN_ERROR
         context: Annotated[
-            Mapping[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
+            Mapping[str, flext_core.t.JsonPayload | None]
+            | flext_core.t.Port[flext_core.p.HasModelDump]
+            | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Structured context mapping or dumpable payload.",
             ),
         ] = None
         metadata: Annotated[
-            t.Port[p.HasModelDump] | t.JsonValue | None,
+            flext_core.t.Port[flext_core.p.HasModelDump]
+            | flext_core.t.JsonValue
+            | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Metadata payload or dumpable model for the exception.",
             ),
         ] = None
         correlation_id: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Explicit correlation identifier for the exception.",
@@ -95,7 +102,9 @@ class FlextModelsExceptionParamsBase:
             ),
         ] = True
         merged_kwargs: Annotated[
-            Mapping[str, t.JsonPayload | None] | t.Port[p.HasModelDump] | None,
+            Mapping[str, flext_core.t.JsonPayload | None]
+            | flext_core.t.Port[flext_core.p.HasModelDump]
+            | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Pre-merged keyword payload forwarded by factories.",
@@ -106,13 +115,13 @@ class FlextModelsExceptionParamsBase:
         """Shared resource identity fields for resource-oriented errors."""
 
         resource_type: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 description="Domain resource type associated with the failure.",
             ),
         ] = None
         resource_id: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 description="Identifier of the resource associated with the failure.",
             ),
@@ -122,13 +131,13 @@ class FlextModelsExceptionParamsBase:
         """Shared expected/actual runtime type fields."""
 
         expected_type: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 description="Expected runtime type name for the failing value.",
             ),
         ] = None
         actual_type: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 description="Actual runtime type name received at runtime.",
             ),
@@ -138,7 +147,7 @@ class FlextModelsExceptionParamsBase:
         """Validated params for ValidationError."""
 
         field: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Name of the input field that failed validation.",
@@ -147,7 +156,7 @@ class FlextModelsExceptionParamsBase:
             ),
         ] = None
         value: Annotated[
-            t.RuntimeData | None,
+            flext_core.t.RuntimeData | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Rejected input value that triggered the validation error.",
@@ -158,13 +167,13 @@ class FlextModelsExceptionParamsBase:
         """Validated params for ConfigurationError."""
 
         config_key: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 description="Settings key associated with the error.",
             ),
         ] = None
         config_source: Annotated[
-            t.StrictStr | None,
+            flext_core.t.StrictStr | None,
             FlextModelsPydantic.Field(
                 description="Settings source where the invalid value originated.",
             ),
@@ -190,7 +199,7 @@ class FlextModelsExceptionParamsBase:
             ),
         ] = None
         timeout: Annotated[
-            t.Numeric | None,
+            flext_core.t.Numeric | None,
             FlextModelsPydantic.Field(
                 default=None,
                 description="Connection timeout threshold in seconds.",
@@ -200,7 +209,7 @@ class FlextModelsExceptionParamsBase:
         @property
         def connection_target(self) -> str:
             """Human-readable host:port string for log messages."""
-            host = self.host or c.IDENTIFIER_UNKNOWN
+            host = self.host or flext_core.c.IDENTIFIER_UNKNOWN
             if self.port is None:
                 return host
             return f"{host}:{self.port}"

@@ -19,7 +19,7 @@ from pydantic import BaseModel, validate_call, with_config
 from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
-from flext_core import c, m, p, t
+import flext_core
 from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesBase,
@@ -58,7 +58,9 @@ class FlextUtilitiesPydantic(
     to_jsonable_python = FlextTypingNativeExport(to_jsonable_python)
 
     @staticmethod
-    def normalize_to_container(value: p.GuardInput) -> t.JsonPayload:
+    def normalize_to_container(
+        value: flext_core.p.GuardInput,
+    ) -> flext_core.t.JsonPayload:
         """Preserve model identity and use native JSON for supported data shapes.
 
         Returns:
@@ -68,7 +70,9 @@ class FlextUtilitiesPydantic(
             TypeError: If the value has no supported container representation.
 
         """
-        root_model = isinstance(value, (m.ConfigMap, m.Dict, m.ObjectList))
+        root_model = isinstance(
+            value, (flext_core.m.ConfigMap, flext_core.m.Dict, flext_core.m.ObjectList)
+        )
         if value is None:
             return None
         if isinstance(value, BaseModel) and not root_model:
@@ -78,33 +82,36 @@ class FlextUtilitiesPydantic(
         source = value
         if (
             root_model
-            or isinstance(value, (*c.SCALAR_TYPES, Mapping, AbstractSet))
+            or isinstance(value, (*flext_core.c.SCALAR_TYPES, Mapping, AbstractSet))
             or (
-                isinstance(value, Sequence) and not isinstance(value, c.STR_BYTES_TYPES)
+                isinstance(value, Sequence)
+                and not isinstance(value, flext_core.c.STR_BYTES_TYPES)
             )
         ):
             return FlextUtilitiesPydantic.normalize_to_json_value(source)
-        message = c.ERR_RUNTIME_CONTAINER_INVALID_TYPE.format(
+        message = flext_core.c.ERR_RUNTIME_CONTAINER_INVALID_TYPE.format(
             type_name=type(value).__name__,
         )
         raise TypeError(message)
 
     @staticmethod
-    def _json_data[OutputT: t.JsonValue](
-        value: p.GuardInput | p.ModelInput,
-        adapter: t.ValueAdapter[OutputT],
+    def _json_data[OutputT: flext_core.t.JsonValue](
+        value: flext_core.p.GuardInput | flext_core.p.ModelInput,
+        adapter: flext_core.t.ValueAdapter[OutputT],
     ) -> OutputT:
-        if isinstance(value, p.HasModelDump):
+        if isinstance(value, flext_core.p.HasModelDump):
             return adapter.validate_python(value.model_dump(mode="json"), strict=True)
         payload = (
-            m.ConfigMap.model_validate(value).root
+            flext_core.m.ConfigMap.model_validate(value).root
             if isinstance(value, Mapping)
             else value
         )
         return adapter.validate_python(to_jsonable_python(payload), strict=True)
 
     @staticmethod
-    def normalize_to_json_value(value: p.GuardInput | p.ModelInput) -> t.JsonValue:
+    def normalize_to_json_value(
+        value: flext_core.p.GuardInput | flext_core.p.ModelInput,
+    ) -> flext_core.t.JsonValue:
         """Serialize through the native SDK and validate the JSON value contract.
 
         Returns:
@@ -116,7 +123,9 @@ class FlextUtilitiesPydantic(
         )
 
     @staticmethod
-    def normalize_to_json_mapping(value: p.GuardInput | p.ModelInput) -> t.JsonMapping:
+    def normalize_to_json_mapping(
+        value: flext_core.p.GuardInput | flext_core.p.ModelInput,
+    ) -> flext_core.t.JsonMapping:
         """Serialize through the same SDK pipeline and require a JSON object.
 
         Returns:
@@ -129,8 +138,8 @@ class FlextUtilitiesPydantic(
 
     @staticmethod
     def normalize_model_input_mapping(
-        value: p.ConfigModelInput | None,
-    ) -> t.JsonMapping | None:
+        value: flext_core.p.ConfigModelInput | None,
+    ) -> flext_core.t.JsonMapping | None:
         """Preserve absent model input and validate every supplied object shape.
 
         Returns:
@@ -141,16 +150,16 @@ class FlextUtilitiesPydantic(
             return None
         payload = (
             value.model_dump(mode="json")
-            if isinstance(value, p.HasModelDump)
+            if isinstance(value, flext_core.p.HasModelDump)
             else value
         )
-        parsed = m.ConfigMap.model_validate(payload)
+        parsed = flext_core.m.ConfigMap.model_validate(payload)
         return FlextUtilitiesPydantic.normalize_to_json_mapping(parsed)
 
     @staticmethod
     def normalize_metadata_input_mapping(
-        value: p.MetadataInput,
-    ) -> t.JsonMapping | None:
+        value: flext_core.p.MetadataInput,
+    ) -> flext_core.t.JsonMapping | None:
         """Validate string-keyed metadata before serializing its values.
 
         Returns:
@@ -163,7 +172,7 @@ class FlextUtilitiesPydantic(
 
     @staticmethod
     def validate_metadata_model_input[ModelT: BaseModel](
-        value: p.MetadataInput,
+        value: flext_core.p.MetadataInput,
         metadata_model: type[ModelT],
     ) -> ModelT:
         """Materialize the requested SDK model from validated metadata attributes.
@@ -176,7 +185,9 @@ class FlextUtilitiesPydantic(
             return value
         attributes = FlextUtilitiesPydantic.normalize_metadata_input_mapping(value)
         return metadata_model.model_validate({
-            c.FIELD_ATTRIBUTES: {} if attributes is None else dict(attributes)
+            flext_core.c.FIELD_ATTRIBUTES: {}
+            if attributes is None
+            else dict(attributes)
         })
 
     @staticmethod
@@ -190,7 +201,7 @@ class FlextUtilitiesPydantic(
             TypeError: The contract has no supported collection shape.
 
         """
-        current: t.TypeFormSpecifier = contract
+        current: flext_core.t.TypeFormSpecifier = contract
         while True:
             origin = get_origin(current)
             if origin is Annotated:
@@ -203,12 +214,12 @@ class FlextUtilitiesPydantic(
                 break
         resolved = origin or current
         if isinstance(resolved, type) and not issubclass(
-            resolved, (*c.STR_BINARY_TYPES, BaseModel)
+            resolved, (*flext_core.c.STR_BINARY_TYPES, BaseModel)
         ):
             if issubclass(resolved, Mapping):
-                return c.EMPTY_COLLECTION_JSON_SEEDS["object"]
+                return flext_core.c.EMPTY_COLLECTION_JSON_SEEDS["object"]
             if issubclass(resolved, (Sequence, AbstractSet)):
-                return c.EMPTY_COLLECTION_JSON_SEEDS["array"]
+                return flext_core.c.EMPTY_COLLECTION_JSON_SEEDS["array"]
         msg = f"empty default requires a collection contract; got {contract!r}"
         raise TypeError(msg)
 
@@ -254,7 +265,7 @@ class FlextUtilitiesPydantic(
         else:
             msg = "empty accepts either contract or contract_factory, not both"
             raise TypeError(msg)
-        adapter: t.ValueAdapter[ContractT] | None = None
+        adapter: flext_core.t.ValueAdapter[ContractT] | None = None
         seed = b""
 
         def factory() -> ContractT:
@@ -264,7 +275,7 @@ class FlextUtilitiesPydantic(
                 seed = FlextUtilitiesPydantic._empty_collection_seed(resolved_contract)
                 native_adapter = FlextUtilitiesBase.type_adapter(
                     resolved_contract,
-                    config=m.ArbitraryTypesModel.model_config,
+                    config=flext_core.m.ArbitraryTypesModel.model_config,
                 )
                 adapter = native_adapter
             return adapter.validate_json(seed)

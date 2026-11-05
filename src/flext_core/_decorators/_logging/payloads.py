@@ -7,8 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import time
+from typing import TYPE_CHECKING
 
-from flext_core import c, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._decorators import FlextDecoratorsBase
 
 
@@ -21,19 +25,19 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         func_name: str,
         func_module: str,
         correlation_id: str | None,
-    ) -> t.MutableJsonMapping:
+    ) -> flext_core.t.MutableJsonMapping:
         """Build structured operation-start log payload.
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
 
         """
-        payload: t.MutableJsonMapping = {
+        payload: flext_core.t.MutableJsonMapping = {
             "function": func_name,
             "func_module": func_module,
         }
         if correlation_id:
-            payload[c.ContextKey.CORRELATION_ID] = correlation_id
+            payload[flext_core.c.ContextKey.CORRELATION_ID] = correlation_id
         return payload
 
     @staticmethod
@@ -43,23 +47,23 @@ class FlextDecoratorsLoggingPayloads(FlextDecoratorsBase):
         correlation_id: str | None,
         track_perf: bool,
         start_time: float,
-    ) -> t.MutableJsonMapping:
+    ) -> flext_core.t.MutableJsonMapping:
         """Build structured operation-success log payload.
 
         Returns:
             The resulting ``tb.MutableJsonMapping``.
 
         """
-        payload: t.MutableJsonMapping = {
+        payload: flext_core.t.MutableJsonMapping = {
             "function": func_name,
             "success": True,
         }
         if correlation_id is not None:
-            payload[c.ContextKey.CORRELATION_ID] = correlation_id
+            payload[flext_core.c.ContextKey.CORRELATION_ID] = correlation_id
         if track_perf:
             duration = time.perf_counter() - start_time
-            payload["duration_ms"] = duration * c.MS_PER_SECOND
-            payload[c.MetadataKey.DURATION_SECONDS] = duration
+            payload["duration_ms"] = duration * flext_core.c.MS_PER_SECOND
+            payload[flext_core.c.MetadataKey.DURATION_SECONDS] = duration
         return payload
 
 

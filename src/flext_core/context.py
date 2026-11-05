@@ -9,18 +9,18 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Self
 
-from flext_core import FlextExceptions, FlextResult, FlextUtilities, c, m, p, t
+import flext_core
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextContext(
-    m.ContextState,
-    FlextUtilities,
+    flext_core.m.ContextState,
+    flext_core.FlextUtilities,
 ):
     """Scoped store, metadata and shared structlog context-variable operations."""
 
     @classmethod
-    def create(cls, **initial_data: t.JsonPayload) -> p.Context:
+    def create(cls, **initial_data: flext_core.t.JsonPayload) -> flext_core.p.Context:
         """Create a context seeded with the supplied scope values.
 
         Returns:
@@ -33,7 +33,7 @@ class FlextContext(
         return context
 
     @classmethod
-    def resolve_container(cls) -> p.Container:
+    def resolve_container(cls) -> flext_core.p.Container:
         """Return the configured container, failing if none was configured.
 
         Raises:
@@ -41,18 +41,20 @@ class FlextContext(
 
         """
         if cls._container_state.container is None:
-            raise RuntimeError(c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED)
+            raise RuntimeError(flext_core.c.ERR_RUNTIME_CONTAINER_NOT_INITIALIZED)
         return cls._container_state.container
 
     @classmethod
-    def configure_container(cls, container: p.Container) -> None:
+    def configure_container(cls, container: flext_core.p.Container) -> None:
         """Bind the container used by the service namespace."""
         cls._container_state = cls._container_state.model_copy(
             update={"container": container},
         )
 
     @staticmethod
-    def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
+    def fetch_service(
+        service_name: str,
+    ) -> flext_core.p.Result[flext_core.p.RegisterableService]:
         """Resolve a named service through the configured container.
 
         Returns:
@@ -64,8 +66,8 @@ class FlextContext(
     @staticmethod
     def register_service(
         service_name: str,
-        service: p.RegisterableService,
-    ) -> p.Result[bool]:
+        service: flext_core.p.RegisterableService,
+    ) -> flext_core.p.Result[bool]:
         """Register a service, preserving the validation failure boundary.
 
         Returns:
@@ -74,11 +76,13 @@ class FlextContext(
         """
         try:
             _ = FlextContext.resolve_container().bind(service_name, service)
-        except FlextExceptions.ValidationError as exc:
-            return FlextResult[bool].fail_op("register service", exc)
-        return FlextResult[bool].ok(value=True)
+        except flext_core.FlextExceptions.ValidationError as exc:
+            return flext_core.FlextResult[bool].fail_op("register service", exc)
+        return flext_core.FlextResult[bool].ok(value=True)
 
-    def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
+    def set(
+        self, key: str, value: flext_core.t.JsonPayload
+    ) -> flext_core.p.Result[bool]:
         """Store a value in this context's scope.
 
         Returns:
@@ -86,16 +90,20 @@ class FlextContext(
 
         """
         self.data.root[key] = value
-        return FlextResult[bool].ok(value=True)
+        return flext_core.FlextResult[bool].ok(value=True)
 
-    def get(self, key: str) -> p.Result[t.JsonPayload]:
+    def get(self, key: str) -> flext_core.p.Result[flext_core.t.JsonPayload]:
         """Return a stored value or an explicit missing/null failure."""
         if key not in self.data.root:
-            return FlextResult[t.JsonPayload].fail(f"Key '{key}' not found in context")
+            return flext_core.FlextResult[flext_core.t.JsonPayload].fail(
+                f"Key '{key}' not found in context"
+            )
         value = self.data.root[key]
         if value is None:
-            return FlextResult[t.JsonPayload].fail(f"Key '{key}' has no value")
-        return FlextResult[t.JsonPayload].ok(value)
+            return flext_core.FlextResult[flext_core.t.JsonPayload].fail(
+                f"Key '{key}' has no value"
+            )
+        return flext_core.FlextResult[flext_core.t.JsonPayload].ok(value)
 
     def has(self, key: str) -> bool:
         """Whether the scope contains the key, including null-valued entries.
@@ -110,26 +118,34 @@ class FlextContext(
         """Return stored keys in insertion order."""
         return tuple(self.data.root)
 
-    def values(self) -> list[t.JsonPayload]:
+    def values(self) -> list[flext_core.t.JsonPayload]:
         """Return stored values in insertion order."""
         return list(self.data.root.values())
 
-    def items(self) -> list[tuple[str, t.JsonPayload]]:
+    def items(self) -> list[tuple[str, flext_core.t.JsonPayload]]:
         """Return stored key-value pairs in insertion order."""
         return list(self.data.root.items())
 
-    def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
+    def resolve_metadata(
+        self, key: str
+    ) -> flext_core.p.Result[flext_core.t.JsonPayload]:
         """Return a metadata attribute or an explicit missing/null failure."""
         if key not in self.metadata.attributes:
-            return FlextResult[t.JsonPayload].fail(f"Metadata key '{key}' not found")
+            return flext_core.FlextResult[flext_core.t.JsonPayload].fail(
+                f"Metadata key '{key}' not found"
+            )
         value = self.metadata.attributes[key]
         if value is None:
-            return FlextResult[t.JsonPayload].fail(f"Metadata key '{key}' has no value")
-        return FlextResult[t.JsonPayload].ok(value)
+            return flext_core.FlextResult[flext_core.t.JsonPayload].fail(
+                f"Metadata key '{key}' has no value"
+            )
+        return flext_core.FlextResult[flext_core.t.JsonPayload].ok(value)
 
-    def apply_metadata(self, key: str, value: t.JsonValue) -> None:
+    def apply_metadata(self, key: str, value: flext_core.t.JsonValue) -> None:
         """Replace metadata with a snapshot containing the supplied attribute."""
-        attributes: MutableMapping[str, t.JsonValue] = dict(self.metadata.attributes)
+        attributes: MutableMapping[str, flext_core.t.JsonValue] = dict(
+            self.metadata.attributes
+        )
         attributes[key] = value
         snapshot = FlextUtilitiesPydantic.normalize_to_json_mapping(attributes)
         self.metadata = self.metadata.model_copy(update={"attributes": snapshot})
@@ -142,14 +158,18 @@ class FlextContext(
         """Clear the instance scope without changing process context variables."""
         self.data.root.clear()
 
-    def merge(self, other: p.Context | Mapping[str, t.JsonPayload]) -> Self:
+    def merge(
+        self, other: flext_core.p.Context | Mapping[str, flext_core.t.JsonPayload]
+    ) -> Self:
         """Merge a context or mapping into this instance and return it.
 
         Returns:
             This context with merged values.
 
         """
-        self.data.root.update(other.items() if isinstance(other, p.Context) else other)
+        self.data.root.update(
+            other.items() if isinstance(other, flext_core.p.Context) else other
+        )
         return self
 
     def clone(self) -> Self:
@@ -164,7 +184,9 @@ class FlextContext(
             metadata=self.metadata.model_copy(),
         )
 
-    def export(self, *, as_dict: bool = True) -> Mapping[str, t.JsonPayload] | Self:
+    def export(
+        self, *, as_dict: bool = True
+    ) -> Mapping[str, flext_core.t.JsonPayload] | Self:
         """Export a scope mapping or return this context unchanged.
 
         Returns:

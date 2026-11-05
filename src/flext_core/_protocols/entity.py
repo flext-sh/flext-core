@@ -11,10 +11,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import flext_core
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import t
     from flext_core._protocols import FlextProtocolsDomainEvent
 
 
@@ -72,7 +72,7 @@ class FlextProtocolsEntity:
             ...
 
         @property
-        def default(self) -> t.JsonPayload | None:
+        def default(self) -> flext_core.t.JsonPayload | None:
             """Default fallback payload."""
             ...
 

@@ -14,7 +14,10 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from flext_core import c, m, p
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._handlers import FlextHandlersSettings
 
 if TYPE_CHECKING:
@@ -31,9 +34,9 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
     ](
         command: type,
         *,
-        priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
+        priority: int = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES,
         timeout: float | None = None,
-        middleware: Sequence[type[p.Middleware]] | None = None,
+        middleware: Sequence[type[flext_core.p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
         """Mark methods as handlers for commands.
 
@@ -57,7 +60,9 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
 
         Example:
             >>> @FlextHandlers.handler(command=m.Command)
-            ... def handle_command(request: p.CommandRoutable) -> p.Result[str]:
+            ... def handle_command(
+            ...     request: p.CommandRoutable,
+            ... ) -> p.Result[str]:
             ...     return r[str].ok(request.command_type)
 
         """
@@ -80,16 +85,16 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
                 ValueError: If the callable already declares handler metadata.
 
             """
-            if hasattr(func, c.HANDLER_ATTR):
+            if hasattr(func, flext_core.c.HANDLER_ATTR):
                 msg = "Handler metadata is already declared on this callable"
                 raise ValueError(msg)
-            settings = m.DecoratorConfig(
+            settings = flext_core.m.DecoratorConfig(
                 command=command,
                 priority=priority,
                 timeout=timeout,
                 middleware=(),
             )
-            setattr(func, c.HANDLER_ATTR, settings)
+            setattr(func, flext_core.c.HANDLER_ATTR, settings)
             return func
 
         return decorator

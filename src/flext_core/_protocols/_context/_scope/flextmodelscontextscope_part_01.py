@@ -10,10 +10,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import flext_core
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import t
+    pass
 
 
 class FlextProtocolsContextScopeFlextmodelscontextscopePart01:
@@ -24,27 +25,27 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart01:
         """Structural data contract projected from the owning model."""
 
         @property
-        def sets(self) -> t.NonNegativeInt:
+        def sets(self) -> flext_core.t.NonNegativeInt:
             """Number of set operations."""
             ...
 
         @property
-        def gets(self) -> t.NonNegativeInt:
+        def gets(self) -> flext_core.t.NonNegativeInt:
             """Number of get operations."""
             ...
 
         @property
-        def removes(self) -> t.NonNegativeInt:
+        def removes(self) -> flext_core.t.NonNegativeInt:
             """Number of remove operations."""
             ...
 
         @property
-        def clears(self) -> t.NonNegativeInt:
+        def clears(self) -> flext_core.t.NonNegativeInt:
             """Number of clear operations."""
             ...
 
         @property
-        def operations(self) -> t.JsonMapping:
+        def operations(self) -> flext_core.t.JsonMapping:
             """Additional metric counters and timing values grouped by metric key."""
             ...
 

@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import flext_core
+
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
@@ -26,7 +28,6 @@ from flext_core._protocols import FlextProtocolsBase
 if TYPE_CHECKING:
     from pathlib import Path
 
-    from flext_core import t
     from flext_core._protocols import FlextProtocolsResult
 
 
@@ -37,15 +38,17 @@ class FlextProtocolsConfig:
     class ConfigLoader(Protocol):
         """Structural contract for loading a config source into a mapping."""
 
-        def config_load(self, path: Path) -> FlextProtocolsResult.Result[t.JsonMapping]:
+        def config_load(
+            self, path: Path
+        ) -> FlextProtocolsResult.Result[flext_core.t.JsonMapping]:
             """Load and parse a config source into a validated mapping."""
             ...
 
         def config_merge(
             self,
-            base: t.JsonMapping,
-            override: t.JsonMapping,
-        ) -> t.JsonMapping:
+            base: flext_core.t.JsonMapping,
+            override: flext_core.t.JsonMapping,
+        ) -> flext_core.t.JsonMapping:
             """Deep-merge ``override`` onto ``base``, returning a new mapping."""
             ...
 
@@ -59,7 +62,7 @@ class FlextProtocolsConfig:
             ...
 
         @property
-        def completion(self) -> t.LoggingWriteCompletion:
+        def completion(self) -> flext_core.t.LoggingWriteCompletion:
             """Native completion receiving this job's result or first failure."""
             ...
 
@@ -108,7 +111,7 @@ class FlextProtocolsConfig:
         """Structural data contract projected from the owning model."""
 
         @property
-        def data(self) -> t.JsonMapping:
+        def data(self) -> flext_core.t.JsonMapping:
             """Parsed config mapping (execution parametrization)."""
             ...
 
@@ -167,7 +170,7 @@ class FlextProtocolsConfig:
             ...
 
         @property
-        def context(self) -> t.JsonMapping:
+        def context(self) -> flext_core.t.JsonMapping:
             """Sanitized structured event context."""
             ...
 

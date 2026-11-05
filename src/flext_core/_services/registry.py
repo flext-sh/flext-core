@@ -6,19 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextRegistry, m, p, s
+import flext_core
 
 
-class FlextServiceRegistry(s[p.Base], m.RegistryServiceState):
+class FlextServiceRegistry(
+    flext_core.s[flext_core.p.Base], flext_core.m.RegistryServiceState
+):
     """Provide registry access through the public facade."""
 
     @property
-    def registry(self) -> p.Registry:
+    def registry(self) -> flext_core.p.Registry:
         """Persistent registry bound to this component's exact runtime."""
         with self._registry_lock:
             registry = self._registry
             if registry is None:
-                registry = FlextRegistry(registry_runtime=self._get_runtime())
+                registry = flext_core.FlextRegistry(
+                    registry_runtime=self._get_runtime()
+                )
                 self._registry = registry
             return registry
 

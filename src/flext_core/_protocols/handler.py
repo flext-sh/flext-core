@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+import flext_core
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsPydantic,
@@ -23,32 +23,31 @@ from flext_core._protocols import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import c
     from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsContainers
 
 
 class FlextProtocolsHandler:
     """Protocols for CQRS handlers and message routing."""
 
-    type HandlerCallable = t.HandlerCallable[
-        FlextProtocolsResult.ResultView[t.ScalarOrModel]
+    type HandlerCallable = flext_core.t.HandlerCallable[
+        FlextProtocolsResult.ResultView[flext_core.t.ScalarOrModel]
     ]
-    type DispatchableHandler = t.DispatchableHandler[
+    type DispatchableHandler = flext_core.t.DispatchableHandler[
         FlextProtocolsHandler.DispatchMessage
         | FlextProtocolsHandler.Handle
         | FlextProtocolsHandler.Execute
         | FlextProtocolsHandler.AutoDiscoverableHandler,
         FlextProtocolsBase.Routable,
-        FlextProtocolsResult.ResultView[t.JsonPayload],
+        FlextProtocolsResult.ResultView[flext_core.t.JsonPayload],
     ]
-    type ResolvedHandlerCallable = t.ResolvedHandlerCallable[
-        FlextProtocolsResult.ResultView[t.JsonPayload]
+    type ResolvedHandlerCallable = flext_core.t.ResolvedHandlerCallable[
+        FlextProtocolsResult.ResultView[flext_core.t.JsonPayload]
     ]
-    type RoutedHandlerCallable = t.RoutedHandlerCallable[
+    type RoutedHandlerCallable = flext_core.t.RoutedHandlerCallable[
         FlextProtocolsBase.Routable,
-        FlextProtocolsResult.ResultView[t.JsonPayload],
+        FlextProtocolsResult.ResultView[flext_core.t.JsonPayload],
     ]
-    type DispatcherRouteEntry = t.DispatcherRouteEntry[
+    type DispatcherRouteEntry = flext_core.t.DispatcherRouteEntry[
         FlextProtocolsHandler.DispatchableHandler,
         FlextProtocolsHandler.RoutedHandlerCallable,
     ]
@@ -58,8 +57,8 @@ class FlextProtocolsHandler:
     class ExecutionContext(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        handler_name: t.NonEmptyStr
-        handler_mode: c.HandlerType
+        handler_name: flext_core.t.NonEmptyStr
+        handler_mode: flext_core.c.HandlerType
         started_at: float | None
 
         @property
@@ -92,7 +91,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def handler_mode(self) -> c.HandlerType:
+        def handler_mode(self) -> flext_core.c.HandlerType:
             """Active handler mode taken from the execution context."""
             ...
 
@@ -106,7 +105,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def priority(self) -> t.NonNegativeInt:
+        def priority(self) -> flext_core.t.NonNegativeInt:
             """Handler priority (higher = processed first)."""
             ...
 
@@ -141,7 +140,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def mode(self) -> c.HandlerType:
+        def mode(self) -> flext_core.c.HandlerType:
             """Handler mode (command, query, event, operation, saga)."""
             ...
 
@@ -183,7 +182,7 @@ class FlextProtocolsHandler:
 
         def push_context(
             self,
-            ctx: t.JsonMapping | FlextProtocolsHandler.ExecutionContext,
+            ctx: flext_core.t.JsonMapping | FlextProtocolsHandler.ExecutionContext,
         ) -> FlextProtocolsResult.Result[bool]:
             """Push execution context onto the local handler stack."""
             ...
@@ -191,7 +190,7 @@ class FlextProtocolsHandler:
         def pop_context(
             self,
         ) -> FlextProtocolsResult.Result[
-            FlextProtocolsContainer.RootDict[t.JsonPayload]
+            FlextProtocolsContainer.RootDict[flext_core.t.JsonPayload]
         ]:
             """Pop execution context from the local handler stack."""
             ...
@@ -199,7 +198,7 @@ class FlextProtocolsHandler:
         def record_metric(
             self,
             name: str,
-            value: t.JsonPayload,
+            value: flext_core.t.JsonPayload,
         ) -> FlextProtocolsResult.Result[bool]:
             """Record a metric value in the current handler state."""
             ...
@@ -216,7 +215,11 @@ class FlextProtocolsHandler:
             self,
             message: FlextProtocolsBase.Routable,
             operation: str = ...,
-        ) -> FlextProtocolsResult.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
+        ) -> (
+            FlextProtocolsResult.ResultView[flext_core.t.JsonPayload]
+            | flext_core.t.JsonPayload
+            | None
+        ): ...
 
     @runtime_checkable
     class Handle(Protocol):
@@ -225,7 +228,11 @@ class FlextProtocolsHandler:
         def handle(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
+        ) -> (
+            FlextProtocolsResult.ResultView[flext_core.t.JsonPayload]
+            | flext_core.t.JsonPayload
+            | None
+        ): ...
 
     @runtime_checkable
     class Execute(Protocol):
@@ -234,7 +241,11 @@ class FlextProtocolsHandler:
         def execute(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.ResultView[t.JsonPayload] | t.JsonPayload | None: ...
+        ) -> (
+            FlextProtocolsResult.ResultView[flext_core.t.JsonPayload]
+            | flext_core.t.JsonPayload
+            | None
+        ): ...
 
     @runtime_checkable
     class AutoDiscoverableHandler(Protocol):
@@ -256,7 +267,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def message_type(self) -> t.RegistryBindingKey | None:
+        def message_type(self) -> flext_core.t.RegistryBindingKey | None:
             """Explicit message type or route name."""
             ...
 
@@ -289,7 +300,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
+        ) -> FlextProtocolsResult.Result[flext_core.t.JsonPayload]:
             """Route a CQRS message to a registered handler."""
             ...
 
@@ -304,7 +315,7 @@ class FlextProtocolsHandler:
             self,
             handler: FlextProtocolsHandler.DispatchableHandler,
             *,
-            message_type: t.RegistryBindingKey | None = None,
+            message_type: flext_core.t.RegistryBindingKey | None = None,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a handler for message routing."""
@@ -332,7 +343,7 @@ class FlextProtocolsHandler:
         def dispatch(
             self,
             message: FlextProtocolsBase.Routable,
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]:
+        ) -> FlextProtocolsResult.Result[flext_core.t.JsonPayload]:
             """Dispatch a command to a registered handler."""
             ...
 
@@ -340,7 +351,7 @@ class FlextProtocolsHandler:
             self,
             handler: FlextProtocolsHandler.DispatchableHandler,
             *,
-            message_type: t.RegistryBindingKey | None = None,
+            message_type: flext_core.t.RegistryBindingKey | None = None,
             is_event: bool = False,
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a handler for command routing."""
@@ -376,12 +387,12 @@ class FlextProtocolsHandler:
         """Structural data contract projected from the owning model."""
 
         @property
-        def registration_id(self) -> t.NonEmptyStr:
+        def registration_id(self) -> flext_core.t.NonEmptyStr:
             """Unique registration identifier."""
             ...
 
         @property
-        def handler_mode(self) -> c.HandlerType:
+        def handler_mode(self) -> flext_core.c.HandlerType:
             """Handler mode (command, query, or event)."""
             ...
 
@@ -391,7 +402,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def status(self) -> c.Status:
+        def status(self) -> flext_core.c.Status:
             """Current registration status."""
             ...
 

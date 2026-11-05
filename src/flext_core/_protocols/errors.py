@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
+import flext_core
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import t
     from flext_core._protocols import FlextProtocolsResult
 
 
@@ -30,7 +30,7 @@ class FlextProtocolsErrors:
         @property
         def error_data(
             self,
-        ) -> t.JsonMapping | FlextProtocolsResult.ConfigModelInput | None:
+        ) -> flext_core.t.JsonMapping | FlextProtocolsResult.ConfigModelInput | None:
             """Structured error payload attached to the failure."""
             ...
 
@@ -54,17 +54,17 @@ class FlextProtocolsErrors:
     class ExceptionMetricsSnapshot(FlextProtocolsBase.StrictModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        total_exceptions: t.NonNegativeInt
-        exception_counts: t.IntMapping
+        total_exceptions: flext_core.t.NonNegativeInt
+        exception_counts: flext_core.t.IntMapping
         exception_counts_summary: str
-        unique_exception_types: t.NonNegativeInt
+        unique_exception_types: flext_core.t.NonNegativeInt
 
         @property
         def has_exceptions(self) -> bool:
             """Whether the metrics snapshot contains recorded exceptions."""
             ...
 
-        def to_config_map(self) -> t.JsonMapping:
+        def to_config_map(self) -> flext_core.t.JsonMapping:
             """Expose the snapshot through the canonical flat config contract."""
             ...
 
@@ -72,7 +72,7 @@ class FlextProtocolsErrors:
     class ExceptionMetricsState(FlextProtocolsBase.StrictModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        exception_counts: t.IntMapping
+        exception_counts: flext_core.t.IntMapping
 
         @property
         def total_exceptions(self) -> int:

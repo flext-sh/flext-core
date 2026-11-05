@@ -13,15 +13,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
-from flext_core import c, e, m, u, x
+import flext_core
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
 
-    from flext_core import p
 
-
-class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
+class FlextHandlersCqrsBase[MessageT_contra, ResultT](flext_core.x):
     """Abstract CQRS handler with validation and railway-style execution.
 
     Provides the base implementation for Command Query Responsibility Segregation
@@ -35,7 +33,7 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
 
     _expected_result_type: ClassVar[type | None] = None
 
-    def __init__(self, *, settings: p.HandlerConfig | None = None) -> None:
+    def __init__(self, *, settings: flext_core.p.HandlerConfig | None = None) -> None:
         """Initialize handler with configuration and context.
 
         Sets up the handler with optional configuration parameters.
@@ -56,25 +54,27 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
         if settings is not None:
             self._config_model = settings
         else:
-            self._config_model = m.HandlerConfig(
+            self._config_model = flext_core.m.HandlerConfig(
                 handler_id=f"handler_{id(self)}",
                 handler_name=self.__class__.__name__,
             )
         handler_type = self._config_model.handler_mode
         valid_handler_types = {
-            c.HandlerType.COMMAND,
-            c.HandlerType.QUERY,
-            c.HandlerType.EVENT,
-            c.HandlerType.OPERATION,
-            c.HandlerType.SAGA,
+            flext_core.c.HandlerType.COMMAND,
+            flext_core.c.HandlerType.QUERY,
+            flext_core.c.HandlerType.EVENT,
+            flext_core.c.HandlerType.OPERATION,
+            flext_core.c.HandlerType.SAGA,
         }
         if handler_type not in valid_handler_types:
-            error_msg = c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
-            raise e.ValidationError(error_msg)
+            error_msg = flext_core.c.ERR_HANDLER_INVALID_MODE.format(mode=handler_type)
+            raise flext_core.e.ValidationError(error_msg)
         handler_mode_literal = self._handler_type_to_literal(handler_type)
-        self._runtime_state: p.HandlerRuntimeState = u.create_runtime_state(
-            handler_name=self._config_model.handler_name,
-            handler_mode=handler_mode_literal,
+        self._runtime_state: flext_core.p.HandlerRuntimeState = (
+            flext_core.u.create_runtime_state(
+                handler_name=self._config_model.handler_name,
+                handler_mode=handler_mode_literal,
+            )
         )
 
     def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
@@ -99,11 +99,11 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
             return
         for klass in cls.mro():
             if klass is FlextHandlersCqrsBase:
-                msg = c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
+                msg = flext_core.c.ERR_HANDLER_MISSING_HANDLE_IMPLEMENTATION.format(
                     qualname=cls.__qualname__,
                 )
                 raise TypeError(msg)
-            if c.MethodName.HANDLE in klass.__dict__:
+            if flext_core.c.MethodName.HANDLE in klass.__dict__:
                 break
 
     @property
@@ -117,7 +117,7 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
         return self._runtime_state.execution_context.handler_name
 
     @property
-    def mode(self) -> c.HandlerType:
+    def mode(self) -> flext_core.c.HandlerType:
         """Handler mode from configuration.
 
         Returns:
@@ -127,7 +127,9 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
         return self._runtime_state.execution_context.handler_mode
 
     @staticmethod
-    def _handler_type_to_literal(handler_type: c.HandlerType | str) -> c.HandlerType:
+    def _handler_type_to_literal(
+        handler_type: flext_core.c.HandlerType | str,
+    ) -> flext_core.c.HandlerType:
         """Coerce string or StrEnum to canonical HandlerType.
 
         Returns:
@@ -137,13 +139,13 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
             TypeError: Always.
 
         """
-        if isinstance(handler_type, c.HandlerType):
+        if isinstance(handler_type, flext_core.c.HandlerType):
             return handler_type
-        for member in c.HandlerType:
+        for member in flext_core.c.HandlerType:
             if member.value == handler_type:
                 return member
         raise TypeError(
-            c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
+            flext_core.c.ERR_HANDLER_UNSUPPORTED_TYPE.format(handler_type=handler_type),
         )
 
 

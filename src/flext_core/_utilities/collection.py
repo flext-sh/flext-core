@@ -13,8 +13,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from functools import partial
+from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, c, p
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
 from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
@@ -44,7 +48,7 @@ class FlextUtilitiesCollection(
     def find[TItem](
         items: Sequence[TItem] | tuple[TItem] | Mapping[str, TItem],
         predicate: Callable[[TItem], bool],
-    ) -> p.Result[TItem]:
+    ) -> flext_core.p.Result[TItem]:
         """Find first item matching predicate; returns r[T].
 
         Returns:
@@ -54,14 +58,20 @@ class FlextUtilitiesCollection(
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
-                    return FlextResult[TItem].ok(v)
-            return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
-        if isinstance(items, c.SEQUENCE_PAIR_TYPES):
+                    return flext_core.FlextResult[TItem].ok(v)
+            return flext_core.FlextResult[TItem].fail(
+                flext_core.c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND
+            )
+        if isinstance(items, flext_core.c.SEQUENCE_PAIR_TYPES):
             for item in items:
                 if predicate(item):
-                    return FlextResult[TItem].ok(item)
-            return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
-        return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+                    return flext_core.FlextResult[TItem].ok(item)
+            return flext_core.FlextResult[TItem].fail(
+                flext_core.c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND
+            )
+        return flext_core.FlextResult[TItem].fail(
+            flext_core.c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND
+        )
 
     @staticmethod
     def process[TItem, TMapped](
@@ -69,7 +79,7 @@ class FlextUtilitiesCollection(
         processor: Callable[[TItem], TMapped],
         *,
         predicate: Callable[[TItem], bool] | None = None,
-    ) -> p.Result[Sequence[TMapped]]:
+    ) -> flext_core.p.Result[Sequence[TMapped]]:
         """Map items (optionally filtered); the first item failure ends the run.
 
         The returned failure carries the processor's exception and error code
@@ -83,12 +93,12 @@ class FlextUtilitiesCollection(
         for item in items:
             if predicate is not None and not predicate(item):
                 continue
-            process_result = FlextResult[TMapped].create_from_callable(
+            process_result = flext_core.FlextResult[TMapped].create_from_callable(
                 partial(processor, item)
             )
             if process_result.failure:
-                return FlextResult[Sequence[TMapped]].fail(
-                    c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
+                return flext_core.FlextResult[Sequence[TMapped]].fail(
+                    flext_core.c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
                         item=item,
                         error=process_result.error,
                     ),
@@ -96,7 +106,7 @@ class FlextUtilitiesCollection(
                     exception=process_result.exception,
                 )
             results.append(process_result.unwrap())
-        return FlextResult[Sequence[TMapped]].ok(results)
+        return flext_core.FlextResult[Sequence[TMapped]].ok(results)
 
 
 __all__: list[str] = ["FlextUtilitiesCollection"]

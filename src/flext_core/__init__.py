@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+import flext_core
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
@@ -104,6 +105,7 @@ __all__: tuple[str, ...] = (
     "core",
     "d",
     "e",
+    "flext_core",
     "h",
     "install_lazy_exports",
     "lazy",

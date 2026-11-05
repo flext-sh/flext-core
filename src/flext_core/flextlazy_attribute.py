@@ -9,8 +9,9 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, cast
 
+import flext_core
+
 if TYPE_CHECKING:
-    from flext_core import t
     from flext_core.lazy import FlextLazy
 
 
@@ -28,7 +29,7 @@ class FlextLazyAttribute[T]:
         lazy: FlextLazy,
         name: str,
         lazy_imports: Mapping[str, str | tuple[str, str]],
-        module_globals: t.ModuleGlobals,
+        module_globals: flext_core.t.ModuleGlobals,
         module_name: str,
     ) -> None:
         """Bind the symbol and module context used for deferred resolution."""
@@ -40,7 +41,7 @@ class FlextLazyAttribute[T]:
 
     def __get__(
         self,
-        instance: t.ModuleGlobalValue | None,
+        instance: flext_core.t.ModuleGlobalValue | None,
         owner: type | None = None,
     ) -> T:
         """Resolve and cache the target symbol through the owning lazy container.

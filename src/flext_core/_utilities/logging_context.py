@@ -10,9 +10,12 @@ from collections.abc import Generator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from types import MappingProxyType
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import FlextExceptions, FlextResult, c, m, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesLoggingConfig,
@@ -30,7 +33,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
 
     @classmethod
     @contextmanager
-    def logging_scope(cls, scope: str, **context: t.JsonPayload) -> Generator[None]:
+    def logging_scope(
+        cls, scope: str, **context: flext_core.t.JsonPayload
+    ) -> Generator[None]:
         """Restore previous correlation values and ownership even on failure.
 
         Yields:
@@ -49,7 +54,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             cls._scope_keys.reset(token)
 
     @classmethod
-    def bind_context(cls, scope: str, **context: t.JsonPayload) -> p.Result[bool]:
+    def bind_context(
+        cls, scope: str, **context: flext_core.t.JsonPayload
+    ) -> flext_core.p.Result[bool]:
         """Bind native context and record this context's scoped key ownership.
 
         Returns:
@@ -63,14 +70,16 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 **scopes,
                 scope: scopes.get(scope, frozenset()) | context.keys(),
             })
-            return FlextResult[bool].ok(value=True)
-        except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(
-                f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc
+            return flext_core.FlextResult[bool].ok(value=True)
+        except flext_core.c.CONTEXT_EXCEPTIONS as exc:
+            return flext_core.FlextExceptions.fail_operation(
+                f"{flext_core.c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc
             )
 
     @classmethod
-    def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
+    def bind_global_context(
+        cls, **context: flext_core.t.JsonPayload
+    ) -> flext_core.p.Result[bool]:
         """Bind values in the current native logging context.
 
         Returns:
@@ -79,12 +88,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         """
         try:
             cls.structlog().contextvars.bind_contextvars(**context)
-            return FlextResult[bool].ok(value=True)
-        except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
+            return flext_core.FlextResult[bool].ok(value=True)
+        except flext_core.c.CONTEXT_EXCEPTIONS as exc:
+            return flext_core.FlextExceptions.fail_operation(
+                flext_core.c.LoggingOperation.BIND_GLOBAL, exc
+            )
 
     @classmethod
-    def clear_global_context(cls) -> p.Result[bool]:
+    def clear_global_context(cls) -> flext_core.p.Result[bool]:
         """Clear this context's native values and scoped key ownership.
 
         Returns:
@@ -94,12 +105,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             cls.structlog().contextvars.clear_contextvars()
             cls._scope_keys.set({})
-            return FlextResult[bool].ok(value=True)
-        except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
+            return flext_core.FlextResult[bool].ok(value=True)
+        except flext_core.c.CONTEXT_EXCEPTIONS as exc:
+            return flext_core.FlextExceptions.fail_operation(
+                flext_core.c.LoggingOperation.CLEAR_GLOBAL, exc
+            )
 
     @classmethod
-    def clear_scope(cls, scope: str) -> p.Result[bool]:
+    def clear_scope(cls, scope: str) -> flext_core.p.Result[bool]:
         """Unbind the keys owned by this scope in the current context.
 
         Returns:
@@ -110,14 +123,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             scopes = dict(cls._scope_keys.get())
             cls.structlog().contextvars.unbind_contextvars(*scopes.pop(scope, ()))
             cls._scope_keys.set(scopes)
-            return FlextResult[bool].ok(value=True)
-        except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(
-                f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc
+            return flext_core.FlextResult[bool].ok(value=True)
+        except flext_core.c.CONTEXT_EXCEPTIONS as exc:
+            return flext_core.FlextExceptions.fail_operation(
+                f"{flext_core.c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc
             )
 
     @classmethod
-    def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
+    def unbind_global_context(cls, *keys: str) -> flext_core.p.Result[bool]:
         """Unbind native keys and retire their scoped ownership.
 
         Returns:
@@ -130,12 +143,16 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 scope: owned.difference(keys)
                 for scope, owned in cls._scope_keys.get().items()
             })
-            return FlextResult[bool].ok(value=True)
-        except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
+            return flext_core.FlextResult[bool].ok(value=True)
+        except flext_core.c.CONTEXT_EXCEPTIONS as exc:
+            return flext_core.FlextExceptions.fail_operation(
+                flext_core.c.LoggingOperation.UNBIND_GLOBAL, exc
+            )
 
     @staticmethod
-    def to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
+    def to_container_value(
+        value: flext_core.p.LogValue | flext_core.t.JsonValue,
+    ) -> flext_core.t.JsonValue:
         """Admit ordinary fields before canonical JSON normalization.
 
         Native exception triples belong to reserved ``exc_info`` and bypass
@@ -149,16 +166,16 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             return str(value)
         if isinstance(value, tuple):
             admitted = FlextUtilitiesBase.type_adapter(
-                t.TypeForm(t.JsonPayload),
-                config=m.ArbitraryTypesModel.model_config,
+                flext_core.t.TypeForm(flext_core.t.JsonPayload),
+                config=flext_core.m.ArbitraryTypesModel.model_config,
             ).validate_python(list(value))
             return FlextUtilitiesPydantic.normalize_to_json_value(admitted)
         return FlextUtilitiesPydantic.normalize_to_json_value(value)
 
     @staticmethod
     def to_container_context(
-        context: Mapping[str, p.LogValue | t.JsonValue],
-    ) -> t.JsonMapping:
+        context: Mapping[str, flext_core.p.LogValue | flext_core.t.JsonValue],
+    ) -> flext_core.t.JsonMapping:
         """Serialize owned fields once before entering the native processor chain.
 
         Returns:

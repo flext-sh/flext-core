@@ -7,15 +7,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence
-from typing import ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
-from flext_core import m, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 
 
 class FlextExceptionsMetrics:
     """Exception occurrence metrics tracking."""
 
-    _metrics_state: ClassVar[p.ExceptionMetricsState] = m.ExceptionMetricsState()
+    _metrics_state: ClassVar[flext_core.p.ExceptionMetricsState] = (
+        flext_core.m.ExceptionMetricsState()
+    )
 
     @classmethod
     def record_exception(cls, exception_type: type[BaseException]) -> None:
@@ -28,7 +33,7 @@ class FlextExceptionsMetrics:
         cls._metrics_state = cls._metrics_state.clear()
 
     @classmethod
-    def resolve_metrics_snapshot(cls) -> p.ExceptionMetricsSnapshot:
+    def resolve_metrics_snapshot(cls) -> flext_core.p.ExceptionMetricsSnapshot:
         """Get the typed public metrics snapshot.
 
         Returns:
@@ -38,7 +43,7 @@ class FlextExceptionsMetrics:
         return cls._metrics_state.snapshot()
 
     @classmethod
-    def resolve_metrics(cls) -> t.JsonMapping:
+    def resolve_metrics(cls) -> flext_core.t.JsonMapping:
         """Get exception metrics and statistics.
 
         Returns:

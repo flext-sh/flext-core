@@ -10,7 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import m, p
+import flext_core
 
 
 class FlextUtilitiesModelOptions:
@@ -19,11 +19,11 @@ class FlextUtilitiesModelOptions:
     @classmethod
     def resolve_runtime_options(
         cls,
-        source: p.RuntimeBootstrapProvider
-        | p.RuntimeBootstrapOptions
-        | p.MixinsInfrastructure
+        source: flext_core.p.RuntimeBootstrapProvider
+        | flext_core.p.RuntimeBootstrapOptions
+        | flext_core.p.MixinsInfrastructure
         | None = None,
-    ) -> p.RuntimeBootstrapOptions:
+    ) -> flext_core.p.RuntimeBootstrapOptions:
         """Resolve the runtime options an options model or a component declares.
 
         A component contributes the options its service base declares through
@@ -41,25 +41,25 @@ class FlextUtilitiesModelOptions:
         """
         match source:
             case None:
-                return m.RuntimeBootstrapOptions()
-            case m.RuntimeBootstrapOptions():
+                return flext_core.m.RuntimeBootstrapOptions()
+            case flext_core.m.RuntimeBootstrapOptions():
                 return source
-            case p.MixinsInfrastructure():
+            case flext_core.p.MixinsInfrastructure():
                 declared = (
-                    m.RuntimeBootstrapOptions.model_validate(
+                    flext_core.m.RuntimeBootstrapOptions.model_validate(
                         source.runtime_bootstrap_options(),
                         from_attributes=True,
                     )
-                    if isinstance(source, p.RuntimeBootstrapProvider)
-                    else m.RuntimeBootstrapOptions()
+                    if isinstance(source, flext_core.p.RuntimeBootstrapProvider)
+                    else flext_core.m.RuntimeBootstrapOptions()
                 )
-                seeds = m.RuntimeBootstrapOptions(
+                seeds = flext_core.m.RuntimeBootstrapOptions(
                     settings=source.runtime_settings,
                     settings_type=source.settings_type,
                     settings_overrides=source.settings_overrides,
                     context=source.initial_context,
                 )
-                return m.RuntimeBootstrapOptions.model_validate({
+                return flext_core.m.RuntimeBootstrapOptions.model_validate({
                     **dict(declared),
                     **{name: value for name, value in seeds if value is not None},
                 })

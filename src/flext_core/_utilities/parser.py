@@ -13,8 +13,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 from enum import StrEnum
+from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, c, p, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesParserTargets,
@@ -25,12 +29,12 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
     """Universal type parser dispatch — strings, enums, models, primitives."""
 
     @staticmethod
-    @FlextResult.safe
+    @flext_core.FlextResult.safe
     def parse[T](
-        value: t.JsonPayload,
+        value: flext_core.t.JsonPayload,
         target: type[T],
-        options: p.ParseOptions[T] | None = None,
-        **kwargs: t.JsonPayload,
+        options: flext_core.p.ParseOptions[T] | None = None,
+        **kwargs: flext_core.t.JsonPayload,
     ) -> T:
         """Universal type parser supporting enums, models, and primitives.
 
@@ -43,11 +47,11 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
 
     @staticmethod
     def _dispatch[T](
-        value: t.JsonPayload,
+        value: flext_core.t.JsonPayload,
         target: type[T],
-        opts: p.ParseOptions[T],
+        opts: flext_core.p.ParseOptions[T],
         fp: str,
-        kwargs: Mapping[str, t.JsonPayload],
+        kwargs: Mapping[str, flext_core.t.JsonPayload],
     ) -> T:
         """Dispatch parsing with pre-resolved options for stable type inference.
 
@@ -57,10 +61,10 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         """
         resolved_value: T
         if value is None:
-            default_result_initial: p.Result[T] = (
+            default_result_initial: flext_core.p.Result[T] = (
                 FlextUtilitiesParser._parse_with_default(
                     opts,
-                    c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
+                    flext_core.c.ERR_PARSER_VALUE_IS_NONE.format(field_prefix=fp),
                 )
             )
             resolved_value = default_result_initial.unwrap()
@@ -69,31 +73,35 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
         else:
             match target:
                 case tgt if issubclass(tgt, StrEnum):
-                    enum_result: p.Result[T] = FlextUtilitiesParser._parse_try_enum(
-                        value,
-                        target,
-                        options=None,
-                        **kwargs,
+                    enum_result: flext_core.p.Result[T] = (
+                        FlextUtilitiesParser._parse_try_enum(
+                            value,
+                            target,
+                            options=None,
+                            **kwargs,
+                        )
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
                             opts,
-                            FlextResult.require_error(enum_result),
+                            flext_core.FlextResult.require_error(enum_result),
                         ).unwrap()
                         if enum_result.failure
                         else enum_result.value
                     )
                 case tgt if FlextUtilitiesGuardsTypeModel.model_type(tgt):
-                    model_result: p.Result[T] = FlextUtilitiesParser._parse_try_model(
-                        value,
-                        target,
-                        options=None,
-                        **kwargs,
+                    model_result: flext_core.p.Result[T] = (
+                        FlextUtilitiesParser._parse_try_model(
+                            value,
+                            target,
+                            options=None,
+                            **kwargs,
+                        )
                     )
                     resolved_value = (
                         FlextUtilitiesParser._parse_with_default(
                             opts,
-                            FlextResult.require_error(model_result),
+                            flext_core.FlextResult.require_error(model_result),
                         ).unwrap()
                         if model_result.failure
                         else model_result.value
@@ -109,7 +117,7 @@ class FlextUtilitiesParser(FlextUtilitiesParserTargets):
                         if prim is not None
                         else FlextUtilitiesParser._parse_with_default(
                             opts,
-                            c.ERR_PARSER_PARSE_FAILED_FOR_TARGET.format(
+                            flext_core.c.ERR_PARSER_PARSE_FAILED_FOR_TARGET.format(
                                 field_prefix=fp,
                                 value=value,
                                 target_name=target.__name__,

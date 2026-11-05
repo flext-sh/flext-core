@@ -23,13 +23,11 @@ from abc import ABC
 from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING, Self
 
-from flext_core import c, m
+import flext_core
 from flext_core._result import FlextResultTransforms
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-
-    from flext_core import p
 
 
 class FlextResultComposition[T](FlextResultTransforms[T], ABC):
@@ -50,8 +48,8 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
     @classmethod
     def accumulate_errors[ValueT](
         cls: type[Self],
-        *results: p.Result[ValueT],
-    ) -> p.Result[Sequence[ValueT]]:
+        *results: flext_core.p.Result[ValueT],
+    ) -> flext_core.p.Result[Sequence[ValueT]]:
         """Collect success payloads into a sequence or retain failure context.
 
         If a single failure is encountered, its original error message, code,
@@ -68,7 +66,7 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         """
         successes: MutableSequence[ValueT] = []
         errors: MutableSequence[str] = []
-        first_failure: p.Result[ValueT] | None = None
+        first_failure: flext_core.p.Result[ValueT] | None = None
         for result in results:
             if result.success:
                 successes.append(result.value)
@@ -92,11 +90,13 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
     def traverse[V, U](
         cls: type[Self],
         items: Sequence[V],
-        func: Callable[[V], p.Result[U]],
+        func: Callable[[V], flext_core.p.Result[U]],
         *,
         fail_fast: bool = True,
-        exceptions: tuple[type[Exception], ...] = c.CATCHABLE_RUNTIME_EXCEPTIONS,
-    ) -> p.Result[Sequence[U]]:
+        exceptions: tuple[
+            type[Exception], ...
+        ] = flext_core.c.CATCHABLE_RUNTIME_EXCEPTIONS,
+    ) -> flext_core.p.Result[Sequence[U]]:
         """Map a result-returning callable across a sequence of items.
 
         Args:
@@ -116,7 +116,7 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
                 try:
                     result = func(item)
                 except exceptions as exc:
-                    if isinstance(exc, c.EXC_CANCELLATION):
+                    if isinstance(exc, flext_core.c.EXC_CANCELLATION):
                         raise
                     return cls._failure(str(exc), exception=exc)
                 if result.failure:
@@ -124,12 +124,12 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
                 results.append(result.value)
             payload: Sequence[U] = results
             return cls._create_success(payload)
-        all_results: MutableSequence[p.Result[U]] = []
+        all_results: MutableSequence[flext_core.p.Result[U]] = []
         for item in items:
             try:
                 all_results.append(cls.from_result(func(item)))
             except exceptions as exc:
-                if isinstance(exc, c.EXC_CANCELLATION):
+                if isinstance(exc, flext_core.c.EXC_CANCELLATION):
                     raise
                 all_results.append(
                     cls._failure(str(exc), exception=exc),
@@ -140,9 +140,9 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
     def with_resource[R, U](
         cls: type[Self],
         factory: Callable[[], R],
-        op: Callable[[R], p.Result[U]],
+        op: Callable[[R], flext_core.p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
-    ) -> p.Result[U]:
+    ) -> flext_core.p.Result[U]:
         """Execute an operation over an acquired resource with guaranteed cleanup.
 
         Args:
@@ -157,23 +157,23 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         """
         try:
             resource = factory()
-        except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+        except flext_core.c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
             return cls._failure(str(exc), exception=exc)
-        result: p.Result[U]
+        result: flext_core.p.Result[U]
         try:
             result = cls.from_result(op(resource))
-        except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+        except flext_core.c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
             result = cls._failure(str(exc), exception=exc)
         if cleanup:
             try:
                 cleanup(resource)
-            except c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
+            except flext_core.c.CATCHABLE_RUNTIME_EXCEPTIONS as exc:
                 return cls._failure(str(exc), exception=exc)
         return result
 
     @staticmethod
     def _model_error_message(error: BaseException) -> str:
-        if isinstance(error, m.ValidationError):
+        if isinstance(error, flext_core.m.ValidationError):
             return str(error.errors())
         errors_fn = getattr(error, "errors", None)
         if callable(errors_fn):
@@ -185,8 +185,10 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         cls: type[Self],
         func: Callable[PFunc, U],
         *,
-        exceptions: tuple[type[Exception], ...] = c.CATCHABLE_RUNTIME_EXCEPTIONS,
-    ) -> Callable[PFunc, p.Result[U]]:
+        exceptions: tuple[
+            type[Exception], ...
+        ] = flext_core.c.CATCHABLE_RUNTIME_EXCEPTIONS,
+    ) -> Callable[PFunc, flext_core.p.Result[U]]:
         """Wrap a function to intercept runtime exceptions and return Result instances.
 
         Args:
@@ -198,11 +200,13 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
 
         """
 
-        def wrapper(*args: PFunc.args, **kwargs: PFunc.kwargs) -> p.Result[U]:
+        def wrapper(
+            *args: PFunc.args, **kwargs: PFunc.kwargs
+        ) -> flext_core.p.Result[U]:
             try:
                 return cls._create_success(func(*args, **kwargs))
             except exceptions as exc:
-                if isinstance(exc, c.EXC_CANCELLATION):
+                if isinstance(exc, flext_core.c.EXC_CANCELLATION):
                     raise
                 return cls._failure(str(exc), exception=exc)
 

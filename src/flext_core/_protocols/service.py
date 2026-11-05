@@ -14,6 +14,7 @@ from collections.abc import Mapping
 from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import flext_core
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsPydantic,
@@ -21,7 +22,6 @@ from flext_core._protocols import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import t
     from flext_core._protocols import (
         FlextProtocolsConfig,
         FlextProtocolsContainer,
@@ -44,7 +44,7 @@ class FlextProtocolsService:
             service: FlextProtocolsPydantic.Base,
             /,
             *requests: FlextProtocolsPydantic.Base,
-        ) -> FlextProtocolsResult.Result[t.JsonPayload]: ...
+        ) -> FlextProtocolsResult.Result[flext_core.t.JsonPayload]: ...
 
     @runtime_checkable
     class ServiceOperation(FlextProtocolsBase.ContractModel, Protocol):
@@ -61,7 +61,9 @@ class FlextProtocolsService:
             ...
 
         @property
-        def request(self) -> t.ModelClass[FlextProtocolsBase.BaseModel] | None:
+        def request(
+            self,
+        ) -> flext_core.t.ModelClass[FlextProtocolsBase.BaseModel] | None:
             """Pydantic request model, or None for an input-less operation."""
             ...
 
@@ -111,7 +113,7 @@ class FlextProtocolsService:
             """Settings seed observed by the service runtime."""
             ...
 
-        settings_overrides: t.JsonMapping | None
+        settings_overrides: flext_core.t.JsonMapping | None
         initial_context: FlextProtocolsContext.Context | None
 
         @property
@@ -137,7 +139,7 @@ class FlextProtocolsService:
         def track(
             self,
             operation_name: str,
-        ) -> AbstractContextManager[Mapping[str, t.JsonPayload]]:
+        ) -> AbstractContextManager[Mapping[str, flext_core.t.JsonPayload]]:
             """Track operation performance with timing and context cleanup."""
             ...
 
@@ -222,7 +224,7 @@ class FlextProtocolsService:
             ...
 
         @property
-        def settings_overrides(self) -> t.JsonMapping | None:
+        def settings_overrides(self) -> flext_core.t.JsonMapping | None:
             """Key-value overrides applied on top of the loaded configuration."""
             ...
 

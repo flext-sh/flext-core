@@ -11,10 +11,11 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+import flext_core
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core import t
+    pass
 
 
 class FlextProtocolsCollectionModels:
@@ -35,16 +36,16 @@ class FlextProtocolsCollectionModels:
     class GuardCheckSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        eq: t.JsonValue | None
-        ne: t.JsonValue | None
+        eq: flext_core.t.JsonValue | None
+        ne: flext_core.t.JsonValue | None
         gt: float | str | None
         gte: float | str | None
         lt: float | str | None
         lte: float | str | None
         is_: type | None
         not_: type | None
-        in_: t.JsonList | None
-        not_in: t.JsonList | None
+        in_: flext_core.t.JsonList | None
+        not_in: flext_core.t.JsonList | None
         none: bool | None
         empty: bool | None
         contains: str | None

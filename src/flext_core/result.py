@@ -14,7 +14,7 @@ See Also:
     - Workspace ADR-027 (Facade Single-Owner Law):
       ``flext/docs/architecture/adr/027-facade-single-owner-law.md``
     - :mod:`flext_core._result.base`: Foundational result data model.
-    - :mod:`flext_core.service`: Domain service base consuming railway results.
+    - :mod:`service`: Domain service base consuming railway results.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -25,12 +25,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Never, override
 
+import flext_core
 from flext_core._result import FlextResultComposed
 
 if TYPE_CHECKING:
     # The facades are annotations only; importing them at runtime re-enters the
     # package initializer while it is still publishing its lazy exports.
-    from flext_core import p, t
+    pass
 
 
 class FlextResult[T](FlextResultComposed[T]):
@@ -59,7 +60,7 @@ class FlextResult[T](FlextResultComposed[T]):
 
     @staticmethod
     @override
-    def _create_success[V](value: V) -> p.Result[V]:
+    def _create_success[V](value: V) -> flext_core.p.Result[V]:
         """Construct a validated success result carrying the given payload.
 
         Args:
@@ -76,9 +77,9 @@ class FlextResult[T](FlextResultComposed[T]):
     def _create_failure(
         error: str,
         error_code: str | None,
-        error_data: t.JsonDict | None,
+        error_data: flext_core.t.JsonDict | None,
         exception: BaseException | None,
-    ) -> p.Result[Never]:
+    ) -> flext_core.p.Result[Never]:
         """Construct a normalized failure result with immutable error context.
 
         Args:

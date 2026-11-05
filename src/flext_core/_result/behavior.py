@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, NoReturn, Self, override
 
-from flext_core import c
+import flext_core
 from flext_core._result import FlextResultBase
 
 if TYPE_CHECKING:
@@ -62,7 +62,9 @@ class FlextResultBehavior[T](FlextResultBase[T]):
         """Raise the causal failure while retaining its structured result context."""
         error = self._exception
         if error is None:
-            error = RuntimeError(c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error))
+            error = RuntimeError(
+                flext_core.c.ERR_RESULT_CANNOT_UNWRAP.format(error=self.error)
+            )
         if self.error or self.error_code is not None or self.error_data is not None:
             note = self.model_dump_json(
                 include={"error", "error_code", "error_data"},

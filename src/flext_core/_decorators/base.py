@@ -10,7 +10,7 @@ import warnings
 from functools import wraps
 from typing import TYPE_CHECKING, ClassVar, TypeIs
 
-from flext_core import FlextContainer, FlextContext, c, m, p, t, u
+import flext_core
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -19,7 +19,12 @@ if TYPE_CHECKING:
 class FlextDecoratorsBase:
     """Base helpers shared by concrete decorator namespaces."""
 
-    type _LoggerCarrier = p.HasLogger | p.Logger | t.JsonPayload | m.BaseModel
+    type _LoggerCarrier = (
+        flext_core.p.HasLogger
+        | flext_core.p.Logger
+        | flext_core.t.JsonPayload
+        | flext_core.m.BaseModel
+    )
     _CAUGHT_EXCEPTIONS: tuple[type[Exception], ...] = (
         AttributeError,
         TypeError,
@@ -27,13 +32,13 @@ class FlextDecoratorsBase:
         RuntimeError,
         KeyError,
     )
-    _container_type: ClassVar[p.ContainerType] = FlextContainer
-    _context_type: ClassVar[p.ContextType] = FlextContext
+    _container_type: ClassVar[flext_core.p.ContainerType] = flext_core.FlextContainer
+    _context_type: ClassVar[flext_core.p.ContextType] = flext_core.FlextContext
 
     @classmethod
     def _is_logger_carrier(
         cls,
-        value: p.AttributeProbe | None,
+        value: flext_core.p.AttributeProbe | None,
     ) -> TypeIs[_LoggerCarrier]:
         """Return whether value carries or can route logging context.
 
@@ -44,37 +49,37 @@ class FlextDecoratorsBase:
         return isinstance(
             value,
             (
-                p.Logger,
-                p.HasLogger,
-                m.BaseModel,
-                *c.CONTAINER_TYPES,
+                flext_core.p.Logger,
+                flext_core.p.HasLogger,
+                flext_core.m.BaseModel,
+                *flext_core.c.CONTAINER_TYPES,
             ),
         )
 
     @classmethod
     def _resolve_logger(
         cls,
-        first_arg: p.Logger | _LoggerCarrier | None = None,
+        first_arg: flext_core.p.Logger | _LoggerCarrier | None = None,
         *,
-        func: p.DispatchableHandler | None = None,
+        func: flext_core.p.DispatchableHandler | None = None,
         func_module: str | None = None,
-    ) -> p.Logger:
+    ) -> flext_core.p.Logger:
         """Resolve the logger associated with the decorated call.
 
         Returns:
             The resulting ``pl.Logger``.
 
         """
-        if isinstance(first_arg, p.Logger):
+        if isinstance(first_arg, flext_core.p.Logger):
             return first_arg
-        if isinstance(first_arg, p.HasLogger):
+        if isinstance(first_arg, flext_core.p.HasLogger):
             return first_arg.logger
         module_name = (
             func_module
             if isinstance(func_module, str)
             else (func.__module__ if callable(func) else __name__)
         )
-        logger: p.Logger = u.fetch_logger(
+        logger: flext_core.p.Logger = flext_core.u.fetch_logger(
             module_name,
         )
         return logger

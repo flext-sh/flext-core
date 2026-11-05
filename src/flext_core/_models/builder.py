@@ -7,9 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import MutableSequence, Sequence
-from typing import Self, override
+from typing import TYPE_CHECKING, Self, override
 
-from flext_core import c, t
+import flext_core
+
+if TYPE_CHECKING:
+    pass
 from flext_core._models import FlextModelsBase
 
 
@@ -40,8 +43,8 @@ class FlextModelsBuilder:
 
         def _set(
             self,
-            **updates: t.JsonPayload
-            | Sequence[t.JsonPayload]
+            **updates: flext_core.t.JsonPayload
+            | Sequence[flext_core.t.JsonPayload]
             | Sequence[FlextModelsBase.ContractModel],
         ) -> Self:
             """Apply one immutable ``model_copy(update=...)`` transition.
@@ -61,14 +64,14 @@ class FlextModelsBuilder:
             """
             return self._set(**{field_name: tuple(parts)})
 
-        def _append(self, field_name: str, value: t.JsonValue) -> Self:
+        def _append(self, field_name: str, value: flext_core.t.JsonValue) -> Self:
             """Append one value to a sequence field while preserving immutability.
 
             Returns:
                 The resulting ``Self``.
 
             """
-            current_values: tuple[t.JsonValue, ...] = tuple(
+            current_values: tuple[flext_core.t.JsonValue, ...] = tuple(
                 getattr(self.state, field_name),
             )
             return self._set(**{field_name: (*current_values, value)})
@@ -77,7 +80,7 @@ class FlextModelsBuilder:
         def _model[ModelT: FlextModelsBase.ContractModel](
             model_type: type[ModelT],
             /,
-            **data: t.JsonPayload | Sequence[t.JsonPayload],
+            **data: flext_core.t.JsonPayload | Sequence[flext_core.t.JsonPayload],
         ) -> ModelT:
             """Build one ContractModel payload for DSL composition.
 
@@ -93,7 +96,7 @@ class FlextModelsBuilder:
             field_name: str,
             model_type: type[ModelT],
             /,
-            **data: t.JsonPayload | Sequence[t.JsonPayload],
+            **data: flext_core.t.JsonPayload | Sequence[flext_core.t.JsonPayload],
         ) -> Self:
             """Build and append one ContractModel item to a sequence field.
 
@@ -114,7 +117,8 @@ class FlextModelsBuilder:
         def _build_product(self, state: StateT) -> ProductT:
             """Build one product from state. Subclasses must implement it."""
             msg = (
-                f"{c.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED}: {type(state).__name__}"
+                f"{flext_core.c.ERR_BUILDER_BUILD_PRODUCT_NOT_IMPLEMENTED}: "
+                f"{type(state).__name__}"
             )
             raise NotImplementedError(msg)
 
