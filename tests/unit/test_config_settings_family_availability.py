@@ -67,7 +67,10 @@ class TestsConfigSettingsFamilyAvailability:
 
     @staticmethod
     def test_config_exposes_typed_namespace_mapping() -> None:
-        """The config singleton exposes its business-rule namespaces."""
+        """The config singleton dumps exactly its declared namespaces.
+
+        Undeclared YAML keys are refused (df87332f7d), so the base config,
+        which declares none, dumps an empty mapping; subclasses add theirs.
+        """
         namespaces = config.model_dump()
-        tm.that(len(namespaces), gt=0)
         tm.that(set(namespaces), eq=set(type(config).model_fields))
