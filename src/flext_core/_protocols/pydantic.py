@@ -74,10 +74,6 @@ class FlextProtocolsPydantic:
         in typings.py, preventing circular dependencies.
         """
 
-        # NOTE (multi-agent, mro-wkii.17 / agent: codex): declare only the
-        # instance capability consumed by interfaces; Pydantic class APIs stay
-        # on ``ModelType``.
-
         def model_dump(
             self,
             *,
@@ -85,6 +81,7 @@ class FlextProtocolsPydantic:
             exclude: set[str] | None = None,
             by_alias: bool | None = None,
             exclude_defaults: bool = False,
+            exclude_computed_fields: bool = False,
             exclude_none: bool = False,
         ) -> DumpT:
             """Dump the validated model at an external serialization boundary."""
