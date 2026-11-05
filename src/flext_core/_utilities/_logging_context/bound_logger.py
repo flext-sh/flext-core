@@ -131,8 +131,12 @@ class FlextUtilitiesLoggingBoundLogger(
             owner=self._owner,
             context=context,
             runtime_settings=self._scoped_settings,
+            # structlog's native ``new()`` clears this logger's context in
+            # place; a copy without the current keys keeps this one intact.
             native_logger=(
-                self.logger.new() if self._scoped_settings is not None else None
+                self.logger.try_unbind(*self._context)
+                if self._scoped_settings is not None
+                else None
             ),
         )
 

@@ -246,7 +246,6 @@ class FlextLazyPart02(FlextLazyPart01):
         module_globals: t.ModuleGlobals,
         lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
-        publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
         deferred_members: Mapping[str, Sequence[str]] | None = None,
     ) -> t.LazyExportHooks:
@@ -268,12 +267,11 @@ class FlextLazyPart02(FlextLazyPart01):
             The installed PEP 562 hooks, reused for identical installation inputs.
 
         """
-        pre_signature: tuple[int, int, int, int, bool] = (
+        pre_signature: tuple[int, int, int, int] = (
             id(module_globals),
             id(lazy_imports),
             0 if public_exports is None else id(public_exports),
             0 if deferred_members is None else id(deferred_members),
-            publish_all,
         )
         cached = self.install_cache.get(module_name)
         if cached is not None and cached[0] == pre_signature:
@@ -308,8 +306,7 @@ class FlextLazyPart02(FlextLazyPart01):
         if target is not None:
             vars(target)["__getattr__"] = _module_getattr
         module_globals["__dir__"] = _module_dir
-        if publish_all:
-            module_globals["__all__"] = names
+        module_globals["__all__"] = names
 
         self.cleanup(module_name, normalized)
         hooks = (_module_getattr, _module_dir)

@@ -19,7 +19,7 @@ from tests import c, tm
 
 _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.constants",
-    "typings",
+    "flext_core.typings",
     "flext_core.protocols",
     "flext_core.models",
     "flext_core.utilities",
@@ -50,8 +50,10 @@ class TestsConfigSettingsFamilyAvailability:
         """Each family surface imports and the SSOT stays functional."""
         module = lazy.load(module_name)
         tm.that(module.__name__, eq=module_name)
+        # the SSOT dumps after the family import; the base config declares
+        # no fields (library subclasses add their own), so only the shape holds
         tm.that(len(settings.model_dump()), gt=0)
-        tm.that(len(config.model_dump()), gt=0)
+        tm.that(config.model_dump(), is_=dict)
 
     @staticmethod
     def test_settings_timezone_resolves_for_models_family() -> None:
@@ -65,7 +67,10 @@ class TestsConfigSettingsFamilyAvailability:
 
     @staticmethod
     def test_config_exposes_typed_namespace_mapping() -> None:
-        """The config singleton exposes its business-rule namespaces."""
+        """The config singleton dumps exactly its declared namespaces.
+
+        Undeclared YAML keys are refused (df87332f7d), so the base config,
+        which declares none, dumps an empty mapping; subclasses add theirs.
+        """
         namespaces = config.model_dump()
-        tm.that(len(namespaces), gt=0)
         tm.that(set(namespaces), eq=set(type(config).model_fields))
