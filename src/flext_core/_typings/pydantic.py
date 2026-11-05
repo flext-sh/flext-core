@@ -409,9 +409,6 @@ class FlextTypesPydantic:
                 The resolved model's native core schema.
 
             Raises:
-                PydanticUndefinedAnnotation: The owner's holder is still being
-                    defined (a generic parametrized inside the holder body builds
-                    its schema eagerly); Pydantic defers that schema to first use.
                 TypeError: The owner does not resolve to a Pydantic model class.
 
             """
