@@ -201,7 +201,7 @@ class TestsFlextCoreDispatcher:
 
         if existing:
             tm.ok(dispatcher.register_handler(original, message_type="conflict"))
-        bindings = [m.HandlerRegistration(handler=replacement, message_type="new")]
+        bindings = [p.HandlerRegistration(handler=replacement, message_type="new")]
         if not existing:
             bindings.append(
                 m.HandlerRegistration(handler=original, message_type="conflict")
