@@ -6,10 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Self, cast, overload
+from typing import TYPE_CHECKING, Self, overload
 
 from pydantic import BaseModel
 
+import flext_core
 from flext_core import c
 from flext_core._result import FlextResultConstruction, copy_result, ok_result
 
@@ -33,22 +34,14 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         Returns:
             The resulting ``p.Result[T]``.
 
-        """
-        return cast("p.Result[T]", self)
-
-    def _fail_with_metadata(self) -> p.Result[T]:
-        """Rebuild this failure as ``p.Result[T]`` preserving error metadata.
-
-        Returns:
-            The resulting ``p.Result[T]``.
+        Raises:
+            TypeError: If the operation is called outside the public result family.
 
         """
-        return self.__class__.fail(
-            self.require_error(self._as_result()),
-            error_code=self.error_code,
-            error_data=self.error_data,
-            exception=self._exception,
-        )
+        if not isinstance(self, flext_core.r):
+            msg = "Result operations require the complete public result family"
+            raise TypeError(msg)
+        return self
 
     def filter(self: Self, predicate: Callable[[T], bool]) -> p.Result[T]:
         """Keep the result only when the predicate holds for the payload.
@@ -86,30 +79,43 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
 
         """
         if self.failure:
-            return cast("p.Result[U]", self._fail_with_metadata())
+            return flext_core.r[U].from_failure(self._as_result())
         try:
             return copy_result(func(self._payload))
         except c.EXC_BROAD_RUNTIME as exc:
-            return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
+            return flext_core.r[U].fail(str(exc), exception=exc)
 
-    def flow_through(self: Self, *funcs: Callable[[T], p.Result[T]]) -> p.Result[T]:
+    @overload
+    def flow_through(self: Self) -> p.Result[T]: ...
+
+    @overload
+    def flow_through[U](
+        self: Self,
+        first: Callable[[T | U], p.Result[U]],
+        /,
+        *funcs: Callable[[T | U], p.Result[U]],
+    ) -> p.Result[T | U]: ...
+
+    def flow_through[U](
+        self: Self, *funcs: Callable[[T | U], p.Result[U]]
+    ) -> p.Result[T | U]:
         """Apply functions left to right, stopping at the first failure.
 
         Args:
             *funcs: The result-returning functions applied in order.
 
         Returns:
-            The resulting ``p.Result[T]``.
+            The resulting ``p.Result[T | U]``. With no functions, the original
+            result is preserved.
 
         """
-        factory = self.__class__
-        current: p.Result[T] = self._as_result()
+        current: p.Result[T | U] = self._as_result()
         for func in funcs:
             if current.success:
                 try:
                     current = copy_result(func(current.value))
                 except c.EXC_BROAD_RUNTIME as exc:
-                    current = factory.fail(str(exc), exception=exc)
+                    current = self.__class__.fail(str(exc), exception=exc)
             else:
                 break
         return current
@@ -148,19 +154,10 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
         """
         if self.failure:
             try:
-                return cast(
-                    "p.Result[T | U]",
-                    copy_result(
-                        self._factory(),
-                        func(self.require_error(self._as_result())),
-                    ),
-                )
+                return copy_result(func(self.require_error(self._as_result())))
             except c.EXC_BROAD_RUNTIME as exc:
-                return cast(
-                    "p.Result[T | U]",
-                    self.__class__.fail(str(exc), exception=exc),
-                )
-        return cast("p.Result[T | U]", self._as_result())
+                return self.__class__.fail(str(exc), exception=exc)
+        return self._as_result()
 
     def map[U](self: Self, func: Callable[[T], U]) -> p.Result[U]:
         """Transform the payload with a plain function on success.
@@ -179,8 +176,8 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
             try:
                 return ok_result(func(self._payload))
             except c.EXC_BROAD_RUNTIME as exc:
-                return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
-        return cast("p.Result[U]", self._fail_with_metadata())
+                return flext_core.r[U].fail(str(exc), exception=exc)
+        return flext_core.r[U].from_failure(self._as_result())
 
     def map_error(self: Self, func: Callable[[str], str]) -> p.Result[T]:
         """Transform the error message on failure, preserving other metadata.
@@ -245,14 +242,11 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
 
         """
         if self.success:
-            return cast("p.Result[T | U]", self)
+            return self._as_result()
         try:
-            return cast(
-                "p.Result[T | U]",
-                ok_result(self._factory(), func(self.require_error(self._as_result()))),
-            )
+            return ok_result(func(self.require_error(self._as_result())))
         except c.EXC_BROAD_RUNTIME as exc:
-            return cast("p.Result[T | U]", self.__class__.fail(str(exc), exception=exc))
+            return self.__class__.fail(str(exc), exception=exc)
 
     def tap(self: Self, func: Callable[[T], None]) -> p.Result[T]:
         """Run a side effect on the payload without changing the result.
@@ -308,11 +302,11 @@ class FlextResultTransforms[T](FlextResultConstruction[T]):
 
         """
         if self.failure:
-            return cast("p.Result[U]", self._fail_with_metadata())
+            return flext_core.r[U].from_failure(self._as_result())
         try:
-            return ok_result(self._factory(), model.model_validate(self._payload))
+            return ok_result(model.model_validate(self._payload))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return cast("p.Result[U]", self.__class__.fail(str(exc), exception=exc))
+            return flext_core.r[U].fail(str(exc), exception=exc)
 
 
 __all__: list[str] = ["FlextResultTransforms"]

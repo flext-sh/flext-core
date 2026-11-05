@@ -16,6 +16,7 @@ from flext_core._utilities._beartype import FlextUtilitiesBeartypeHelpers
 from flext_core._utilities._beartype._class_visitor_parts.class_visitor_part_01 import (
     BINARY_ARITY,
     NO_VIOLATION,
+    FlextUtilitiesBeartypeClassVisitor,
 )
 
 type _AliasRows = tuple[tuple[str, str, str], ...]
@@ -242,6 +243,9 @@ def _base_analysis(
         unparametrized_name == "FlextService"
         or unparametrized_name.endswith(valid_suffixes)
         or is_service_alias_base_first
+        or FlextUtilitiesBeartypeClassVisitor.model_state_service_first(
+            target, package_name, ctx[2]
+        )
     )
     allows_single_peer_base = all((
         base_count == 1,
