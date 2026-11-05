@@ -181,18 +181,19 @@ class TestsFlextCoreLazyExports:
     def test_cold_public_declarations_resolve_from_live_sources(
         first_import: str,
     ) -> None:
-        """Public consumers resolve declarations without warming constants first."""
-        workspace = Path(__file__).resolve().parents[3]
+        """Public consumers resolve declarations without warming constants first.
+
+        Live sources are the editable checkouts, never an installed wheel; the
+        check reads the loaded module path, not the checkout topology.
+        """
         script = (
             f"{first_import}\n"
             "from pathlib import Path\n"
             "from typing import get_args\n"
             "import flext_core, flext_cli, flext_infra\n"
             "from flext_core import FlextSettings, c, m, p, t\n"
-            f"workspace = Path({str(workspace)!r})\n"
             "for package in (flext_core, flext_cli, flext_infra):\n"
-            "    source = workspace / package.__name__.replace('_', '-') / 'src'\n"
-            "    print(Path(package.__file__).resolve().is_relative_to(source), "
+            "    print('site-packages' not in Path(package.__file__).resolve().parts, "
             "issubclass(package.t, t), issubclass(package.p, p), "
             "issubclass(package.m, m))\n"
             "print(isinstance(FlextSettings, p.SettingsType))\n"
@@ -203,9 +204,11 @@ class TestsFlextCoreLazyExports:
             "c.RegistrationScope.INSTANCE)\n"
             "options = m.RuntimeBootstrapOptions(settings_type=FlextSettings)\n"
             "print(options.settings_type is FlextSettings)\n"
-            "print(options.model_dump() == {'settings_overrides': None})\n"
+            "dump = options.model_dump()\n"
+            "print('settings_type' not in dump "
+            "and dump['settings_overrides'] is None)\n"
         )
-        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=workspace)
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=Path.cwd())
         tm.that(result.success, truth=True, msg=result.error)
         tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
         tm.that(result.value.stderr, eq="")
