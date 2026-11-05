@@ -10,10 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from tests import TestsFlextModels
-
 if TYPE_CHECKING:
-    from tests import TestsFlextProtocols
+    from tests import TestsFlextModels, TestsFlextProtocols
 
     def model_protocol_1(
         value: (TestsFlextModels.Tests.AttrObject),
@@ -166,61 +164,76 @@ if TYPE_CHECKING:
         return value
 
     def model_protocol_31(
+        value: (TestsFlextModels.Tests.SchemaOwnerCount),
+    ) -> TestsFlextProtocols.Tests.SchemaOwnerCount:
+        return value
+
+    def model_protocol_32(
         value: (TestsFlextModels.Tests.SchemaOwnerDeclarations),
     ) -> TestsFlextProtocols.Tests.SchemaOwnerDeclarations:
         return value
 
-    def model_protocol_32(
+    def model_protocol_33(
         value: (TestsFlextModels.Tests.SchemaOwnerHeirDeclarations),
     ) -> TestsFlextProtocols.Tests.SchemaOwnerHeirDeclarations:
         return value
 
-    def model_protocol_33(
+    def model_protocol_34(
         value: (TestsFlextModels.Tests.SchemaOwnerLeaf),
     ) -> TestsFlextProtocols.Tests.SchemaOwnerLeaf:
         return value
 
-    def model_protocol_34(
+    def model_protocol_35(
+        value: (TestsFlextModels.Tests.SchemaOwnerText),
+    ) -> TestsFlextProtocols.Tests.SchemaOwnerText:
+        return value
+
+    def model_protocol_36(
+        value: (TestsFlextModels.Tests.SchemaOwnerVariantCell),
+    ) -> TestsFlextProtocols.Tests.SchemaOwnerVariantCell:
+        return value
+
+    def model_protocol_37(
         value: (TestsFlextModels.Tests.ServiceScenario),
     ) -> TestsFlextProtocols.Tests.ServiceScenario:
         return value
 
-    def model_protocol_35(
+    def model_protocol_38(
         value: (TestsFlextModels.Tests.ServiceTestCase),
     ) -> TestsFlextProtocols.Tests.ServiceTestCase:
         return value
 
-    def model_protocol_36(
+    def model_protocol_39(
         value: (TestsFlextModels.Tests.ServiceUserData),
     ) -> TestsFlextProtocols.Tests.ServiceUserData:
         return value
 
-    def model_protocol_37(
+    def model_protocol_40(
         value: (TestsFlextModels.Tests.ServiceUserService),
     ) -> TestsFlextProtocols.Tests.ServiceUserService:
         return value
 
-    def model_protocol_38(
+    def model_protocol_41(
         value: (TestsFlextModels.Tests.SingletonClassForTest),
     ) -> TestsFlextProtocols.Tests.SingletonClassForTest:
         return value
 
-    def model_protocol_39(
+    def model_protocol_42(
         value: (TestsFlextModels.Tests.TargetModel),
     ) -> TestsFlextProtocols.Tests.TargetModel:
         return value
 
-    def model_protocol_40(
+    def model_protocol_43(
         value: (TestsFlextModels.Tests.TypedRetrievalScenario),
     ) -> TestsFlextProtocols.Tests.TypedRetrievalScenario:
         return value
 
-    def model_protocol_41(
+    def model_protocol_44(
         value: (TestsFlextModels.Tests.UserCreatedEvent),
     ) -> TestsFlextProtocols.Tests.UserCreatedEvent:
         return value
 
-    def model_protocol_42(
+    def model_protocol_45(
         value: (TestsFlextModels.Tests.ValidationScenario),
     ) -> TestsFlextProtocols.Tests.ValidationScenario:
         return value

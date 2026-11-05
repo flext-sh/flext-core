@@ -39,6 +39,39 @@ class TestsFlextCoreTypingsSchemaOwner:
             })
 
     @staticmethod
+    def test_union_owner_validates_each_variant_through_its_model() -> None:
+        """A model-union owner validates a payload through the model its tag names."""
+        cell = m.Tests.SchemaOwnerVariantCell.model_validate({
+            "variant": {"kind": "count", "count": 3},
+        })
+        tm.that(isinstance(cell.variant, p.Tests.SchemaOwnerCount), eq=True)
+        tm.that(cell.variant.model_dump(), eq={"kind": "count", "count": 3})
+
+    @staticmethod
+    def test_union_owner_rejects_an_unknown_tag() -> None:
+        """The discriminated union refuses a tag none of its models declares."""
+        with u.Tests.raises(pydantic.ValidationError):
+            m.Tests.SchemaOwnerVariantCell.model_validate({
+                "variant": {"kind": "other"},
+            })
+
+    @staticmethod
+    def test_union_owner_json_round_trip_and_schema() -> None:
+        """JSON ingress, dump and JSON Schema come from the variant models."""
+        cell = m.Tests.SchemaOwnerVariantCell.model_validate_json(
+            '{"variant": {"kind": "text", "text": "json"}}'
+        )
+        tm.that(
+            m.Tests.SchemaOwnerVariantCell.model_validate_json(cell.model_dump_json()),
+            eq=cell,
+        )
+        schema = m.Tests.SchemaOwnerVariantCell.model_json_schema()
+        tm.that(
+            sorted(schema["$defs"]),
+            eq=["SchemaOwnerCount", "SchemaOwnerText", "SchemaOwnerVariant"],
+        )
+
+    @staticmethod
     def test_json_ingress_and_dump_use_native_model_contract() -> None:
         """JSON ingress, dump and JSON Schema come from the sibling model."""
         heir = m.Tests.SchemaOwnerHeirDeclarations.model_validate_json(
