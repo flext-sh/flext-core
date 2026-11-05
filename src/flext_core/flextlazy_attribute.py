@@ -9,9 +9,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, cast
 
-from flext_core import t
-
 if TYPE_CHECKING:
+    from flext_core import t
     from flext_core.lazy import FlextLazy
 
 

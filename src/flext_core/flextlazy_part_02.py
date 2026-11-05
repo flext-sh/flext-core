@@ -9,10 +9,13 @@ from __future__ import annotations
 import sys
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
+from typing import TYPE_CHECKING
 
-from flext_core import t
 from flext_core.flextlazy_member import FlextLazyMember
 from flext_core.flextlazy_part_01 import FlextLazyPart01
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextLazyPart02(FlextLazyPart01):
