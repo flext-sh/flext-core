@@ -26,11 +26,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
+        ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_expose_public_contract(
-        _name: str,
+        name: str,
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
@@ -41,7 +41,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         error = factory()
 
         # Assert: structured protocol surface
-        tm.that(error, is_=p.StructuredError)
+        tm.that(error, is_=p.StructuredError, msg=name)
         tm.that(error.error_domain, eq=expected_domain)
         tm.that(error.error_code, eq=expected_code)
         tm.that(error.error_message, eq=error.message)
@@ -54,7 +54,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
+        ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_are_raisable_and_preserve_contract(
@@ -140,11 +140,11 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
+        ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
     def test_failure_factories_return_public_result_contract(
-        _name: str,
+        name: str,
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,
@@ -156,7 +156,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         result_data = result.error_data or {}
 
         # Assert: r[T] failure contract
-        tm.that(result.failure, truth=True)
+        tm.that(result.failure, truth=True, msg=name)
         tm.that(result.success, truth=False)
         tm.that(result.error, none=False)
         tm.that(expected_fragment in str(result.error), truth=True)
@@ -167,24 +167,30 @@ class TestsFlextCoreExceptionsStructuredContracts:
 
     @staticmethod
     @pytest.mark.parametrize(
-        ("_name", "factory", "_expected_fragment", "expected_code", "_expected_data"),
+        ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
     def test_failure_results_honor_combinator_contract(
-        _name: str,
+        name: str,
         factory: FailureFactory,
-        _expected_fragment: str,
+        expected_fragment: str,
         expected_code: str,
-        _expected_data: Mapping[str, str | int | None],
+        expected_data: Mapping[str, str | int | None],
     ) -> None:
         # Arrange
         """Test failure results honor combinator contract."""
         result = factory()
 
-        # Act / Assert: map short-circuits, preserving the failure and its code.
+        # Act / Assert: map short-circuits, preserving the failure, its code,
+        # message and data.
         mapped = result.map(operator.not_)
-        tm.that(mapped.failure, truth=True)
+        tm.that(mapped.failure, truth=True, msg=name)
         tm.that(mapped.error_code, eq=expected_code)
+        tm.that(expected_fragment in str(mapped.error), truth=True)
+        tm.that(
+            {key: (mapped.error_data or {})[key] for key in expected_data},
+            eq=dict(expected_data),
+        )
 
         # Strict extraction preserves the failure instead of inventing a value.
         if result.exception is not None:
