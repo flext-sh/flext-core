@@ -383,19 +383,43 @@ class FlextTypesPydantic:
         return schema
 
     @staticmethod
+    def _model_schema_owner(owner: type | TypeAliasType) -> bool:
+        """Return whether ``owner`` names models only: one class or a union alias.
+
+        A union alias may carry ``Annotated`` metadata (its discriminator) and
+        nest further union aliases; every member must be a Pydantic model class.
+
+        Returns:
+            Whether the owner's native schema is built from model classes only.
+
+        """
+        if isinstance(owner, type):
+            return issubclass(owner, pydantic.BaseModel)
+        if not isinstance(owner, (TypeAliasType, typing_extensions.TypeAliasType)):
+            return False
+        value = owner.__value__
+        if get_origin(value) is Annotated:
+            value = get_args(value)[0]
+        return get_origin(value) in {Union, UnionType} and all(
+            FlextTypesPydantic._model_schema_owner(member) for member in get_args(value)
+        )
+
+    @staticmethod
     def schema_for_model(
-        model: Callable[[], type[p.BaseModel]],
+        model: Callable[[], type[p.BaseModel] | TypeAliasType],
     ) -> pydantic.GetPydanticSchema:
         """Delegate a protocol payload to its native model schema, resolved lazily.
 
-        The owner is a zero-argument callable returning the model class. It is
-        called when the schema is generated, never when the annotation is
-        evaluated, so a field may name a sibling through its holder class while
-        that holder's body is still executing: the field stays complete at class
-        creation and subclasses in other modules inherit it unchanged.
+        The owner is a zero-argument callable returning the model class, or the
+        alias of a union of model classes (a discriminated union keeps its
+        ``Annotated`` discriminator). It is called when the schema is
+        generated, never when the annotation is evaluated, so a field may name
+        a sibling through its holder class while that holder's body is still
+        executing: the field stays complete at class creation and subclasses in
+        other modules inherit it unchanged.
 
         Returns:
-            Native metadata preserving the model's validation and serialization.
+            Native metadata preserving the models' validation and serialization.
 
         """
 
@@ -406,12 +430,13 @@ class FlextTypesPydantic:
             """Generate the owner's native schema when the field schema is built.
 
             Returns:
-                The resolved model's native core schema.
+                The resolved owner's native core schema.
 
             Raises:
                 PydanticUndefinedAnnotation: The owner names a holder that is
                     not bound yet, so Pydantic defers the schema.
-                TypeError: The owner does not resolve to a Pydantic model class.
+                TypeError: The owner resolves to neither a Pydantic model class
+                    nor an alias of a union of them.
 
             """
             try:
@@ -420,8 +445,11 @@ class FlextTypesPydantic:
                 raise pydantic.errors.PydanticUndefinedAnnotation(
                     name=error.name, message=str(error)
                 ) from error
-            if not issubclass(owner, pydantic.BaseModel):
-                message = "payload schema owner must be a Pydantic model class"
+            if not FlextTypesPydantic._model_schema_owner(owner):
+                message = (
+                    "payload schema owner must be a Pydantic model class or an "
+                    "alias of a union of them"
+                )
                 raise TypeError(message)
             return handler.generate_schema(owner)
 
