@@ -177,16 +177,17 @@ class TestsFlextConstantsNew:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(("raw", "_reason"), c.Tests.SAFE_STRING_INVALID_CASES)
+    @pytest.mark.parametrize(("raw", "reason"), c.Tests.SAFE_STRING_INVALID_CASES)
     def test_safe_string_invalid_cases_do_not_match_identifier_regex(
         raw: str | None,
-        _reason: str,
+        reason: str,
     ) -> None:
         """Invalid fixture values should fail core identifier matching."""
         candidate = "" if raw is None else raw.strip()
         tm.that(
             bool(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE.fullmatch(candidate)),
             eq=False,
+            msg=reason,
         )
 
     @staticmethod

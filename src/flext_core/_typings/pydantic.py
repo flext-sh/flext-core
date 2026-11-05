@@ -409,14 +409,16 @@ class FlextTypesPydantic:
                 The resolved model's native core schema.
 
             Raises:
+                PydanticUndefinedAnnotation: The owner names a holder that is
+                    not bound yet, so Pydantic defers the schema.
                 TypeError: The owner does not resolve to a Pydantic model class.
 
             """
             try:
                 owner = model if isinstance(model, type) else model()
             except NameError as error:
-                raise pydantic.errors.PydanticUndefinedAnnotation.from_name_error(
-                    error
+                raise pydantic.errors.PydanticUndefinedAnnotation(
+                    name=error.name, message=str(error)
                 ) from error
             if not issubclass(owner, pydantic.BaseModel):
                 message = "payload schema owner must be a Pydantic model class"
