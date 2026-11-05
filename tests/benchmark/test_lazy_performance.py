@@ -59,7 +59,6 @@ class TestsFlextLazyPerformance:
                         module_name,
                         virtual_module.__dict__,
                         lazy_map,
-                        publish_all=index % 2 == 0,
                     )
                 finally:
                     del sys.modules[module_name]

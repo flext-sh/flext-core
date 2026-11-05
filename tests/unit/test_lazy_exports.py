@@ -20,8 +20,6 @@ from tests import c, t, tm, u
 
 def _install_alpha(
     registered_alpha_module: tuple[str, type],
-    *,
-    publish_all: bool = True,
 ) -> t.ModuleGlobals:
     """Install the registered alpha lazy export and return package globals.
 
@@ -36,7 +34,6 @@ def _install_alpha(
         package_name,
         module_globals,
         {"Alpha": (module_name, "Alpha")},
-        publish_all=publish_all,
     )
     return module_globals
 
@@ -235,28 +232,11 @@ class TestsFlextCoreLazyExports:
         tm.that(result.value.stdout, eq="True\n")
 
     @staticmethod
-    def test_install_without_publish_all_omits_dunder_all(
+    def test_install_publishes_dunder_all(
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
-        """Test install without publish all omits dunder all."""
-        module_globals = _install_alpha(registered_alpha_module, publish_all=False)
-
-        # Assert — no __all__ published, but __dir__ still lists the public name
-        def has_no_dunder_all(namespace: t.ModuleGlobals) -> bool:
-            return "__all__" not in namespace
-
-        tm.that(module_globals, where=has_no_dunder_all)
-        dir_fn = cast("Callable[[], list[str]]", module_globals["__dir__"])
-        tm.that(callable(dir_fn), truth=True)
-        tm.that(dir_fn(), eq=["Alpha"])
-
-    @staticmethod
-    def test_install_with_publish_all_publishes_dunder_all(
-        registered_alpha_module: tuple[str, type],
-    ) -> None:
-        # Arrange
-        """Test install with publish all publishes dunder all."""
+        """Install publishes ``__all__`` with every lazy export."""
         module_globals = _install_alpha(registered_alpha_module)
 
         # Assert
@@ -363,7 +343,6 @@ class TestsFlextCoreLazyExports:
                 package_name,
                 module_globals,
                 {"alias": target_name},
-                publish_all=False,
             )
 
             # Act
