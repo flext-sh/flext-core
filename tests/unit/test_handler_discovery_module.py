@@ -141,13 +141,13 @@ class TestsFlextHandlerDiscovery:
     @pytest.mark.parametrize("timeout", [0.0, 1.0, 30.0])
     def test_unsupported_timeout_fails_before_application(timeout: float) -> None:
         """The executor never accepts a policy it cannot implement."""
-        with pytest.raises(ValueError, match="timeout execution is not supported"):
+        with u.Tests.raises(ValueError, match="timeout execution is not supported"):
             h.handler(command=m.Command, timeout=timeout)
 
     @staticmethod
     def test_unsupported_middleware_fails_before_application() -> None:
         """Requested middleware requires an actual executor capability."""
-        with pytest.raises(ValueError, match="middleware execution is not supported"):
+        with u.Tests.raises(ValueError, match="middleware execution is not supported"):
             h.handler(command=m.Command, middleware=(u.Tests.Middleware,))
 
     @staticmethod
@@ -157,7 +157,7 @@ class TestsFlextHandlerDiscovery:
         def operation(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("created")
 
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             h.handler(command=m.Command, priority=-1)(operation)
 
     @staticmethod
@@ -173,7 +173,7 @@ class TestsFlextHandlerDiscovery:
 
         module = u.Tests.handler_module("single_declaration", operation=operation)
         original = h.Discovery.scan_module(module)[0][2]
-        with pytest.raises(ValueError, match="metadata is already declared"):
+        with u.Tests.raises(ValueError, match="metadata is already declared"):
             h.handler(command=command)(operation)
         tm.that(h.Discovery.scan_module(module)[0][2] is original)
 
@@ -284,7 +284,7 @@ class TestsFlextHandlerDiscovery:
         diagnostic = c.ERR_HANDLER_METADATA_INVALID.format(
             name=f"{module.__name__}.{operation.__name__}"
         )
-        with pytest.raises(TypeError, match=escape(diagnostic)):
+        with u.Tests.raises(TypeError, match=escape(diagnostic)):
             h.Discovery.scan_module(module)
 
     @staticmethod
@@ -297,7 +297,7 @@ class TestsFlextHandlerDiscovery:
         setattr(
             operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command, timeout=1.0)
         )
-        with pytest.raises(ValueError, match=escape(c.ERR_HANDLER_POLICY_UNSUPPORTED)):
+        with u.Tests.raises(ValueError, match=escape(c.ERR_HANDLER_POLICY_UNSUPPORTED)):
             h.Discovery.scan_module(
                 u.Tests.handler_module("unsupported_handlers", operation=operation)
             )

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import p, r, tm
+from tests import p, r, tm, u
 from tests.utilities import TestsFlextUtilities
 
 
@@ -118,7 +118,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
             return a / b
 
         failed = divide(10, 0)
-        with pytest.raises(ZeroDivisionError) as raised:
+        with u.Tests.raises(ZeroDivisionError) as raised:
             failed.unwrap()
         tm.ok(raised.value is failed.exception)
 

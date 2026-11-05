@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsPydantic,
@@ -22,10 +22,8 @@ if TYPE_CHECKING:
 class FlextProtocolsSettings:
     """Protocols for configurable components and settings."""
 
-    type SettingsOverride = flext_core.t.SettingsOverride[
-        FlextProtocolsPydantic.BaseModel
-    ]
-    type SettingsOverridesMapping = flext_core.t.SettingsOverridesMapping[
+    type SettingsOverride = t.SettingsOverride[FlextProtocolsPydantic.BaseModel]
+    type SettingsOverridesMapping = t.SettingsOverridesMapping[
         FlextProtocolsPydantic.BaseModel
     ]
 
@@ -33,15 +31,13 @@ class FlextProtocolsSettings:
     class Configurable(FlextProtocolsPydantic.Base, Protocol):
         """Protocol for component configuration."""
 
-        def apply(
-            self, settings: flext_core.t.UserOverridesMapping | None = None
-        ) -> Self:
+        def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
             """Apply configuration overrides."""
             ...
 
     @runtime_checkable
     class Settings(
-        FlextProtocolsResult.HasModelDump[flext_core.t.MetadataMapping],
+        FlextProtocolsResult.HasModelDump[t.MetadataMapping],
         FlextProtocolsPydantic.Base,
         Protocol,
     ):
@@ -62,9 +58,7 @@ class FlextProtocolsSettings:
             ...
 
         @classmethod
-        def fetch_global(
-            cls, *, overrides: flext_core.t.JsonMapping | None = None
-        ) -> Self:
+        def fetch_global(cls, *, overrides: t.JsonMapping | None = None) -> Self:
             """Return the global singleton settings with overrides."""
             ...
 
@@ -131,7 +125,7 @@ class FlextProtocolsSettings:
         def fetch_global(
             cls,
             *,
-            overrides: flext_core.t.JsonMapping | None = None,
+            overrides: t.JsonMapping | None = None,
         ) -> FlextProtocolsSettings.Settings:
             """Return the global singleton settings instance."""
             ...
@@ -144,9 +138,9 @@ class FlextProtocolsSettings:
     class RetryConfiguration(FlextProtocolsBase.RetryConfigurationMixin, Protocol):
         """Structural data contract projected from the owning model."""
 
-        max_retries: flext_core.t.PositiveInt
+        max_retries: t.PositiveInt
         exponential_backoff: bool
-        backoff_multiplier: flext_core.t.BackoffMultiplier
+        backoff_multiplier: t.BackoffMultiplier
         retry_on_exceptions: Sequence[type[BaseException]]
         retry_on_status_codes: Sequence[int]
 

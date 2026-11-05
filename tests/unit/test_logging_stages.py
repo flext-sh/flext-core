@@ -326,7 +326,7 @@ class TestsFlextLoggingStages:
                 emit = logger.trace
             case _:
                 emit = logger.info
-        with pytest.raises(ValueError, match="typed stage failed") as caught:
+        with u.Tests.raises(ValueError, match="typed stage failed") as caught:
             _ = emit("stage failure")
 
         tm.ok(caught.value is failure)
@@ -371,7 +371,7 @@ class TestsFlextLoggingStages:
     @staticmethod
     def test_invalid_registration_is_rejected() -> None:
         """The options boundary rejects a noncallable stage."""
-        with pytest.raises(ValidationError):
+        with u.Tests.raises(ValidationError):
             _ = m.StructlogOptions.model_validate({"processing_stages": [1]})
 
     @pytest.mark.parametrize("saved_tuple", [False, True])
@@ -436,7 +436,7 @@ class TestsFlextLoggingStages:
         )
         original = ValueError("not an ordinary JSON value")
         saved: t.LoggingExceptionInfo = type(original), original, None
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             _ = u.fetch_logger("native.exception.field").info(
                 "invalid JSON field", payload=saved
             )
@@ -458,7 +458,7 @@ class TestsFlextLoggingStages:
         u.configure_structlog(settings=options)
         logger = u.create_module_logger("tests.logging.stages.invalid")
 
-        with pytest.raises(TypeError):
+        with u.Tests.raises(TypeError):
             _ = logger.info("invalid stage signature")
 
         tm.that(stream.getvalue(), eq="")
@@ -794,7 +794,7 @@ class TestsFlextLoggingNativeEmission:
             except RuntimeError as error:
                 _ = u.failure("operation failed", exception=error)
 
-        with pytest.raises(RuntimeError) as caught:
+        with u.Tests.raises(RuntimeError) as caught:
             log_business_failure()
         tm.ok(caught.value is original)
         tm.ok(original.__cause__ is cause)
@@ -840,7 +840,7 @@ class TestsFlextLoggingNativeEmission:
             )
         )
         stream.close()
-        with pytest.raises(ValueError, match="closed file") as caught:
+        with u.Tests.raises(ValueError, match="closed file") as caught:
             _ = u.log("native sink failure")
         tm.ok(caught.value.__traceback__ is not None)
 
@@ -893,7 +893,7 @@ class TestsFlextLoggingNativeEmission:
                 )
             )
             stream.close()
-            with pytest.raises(type(original)) as caught:
+            with u.Tests.raises(type(original)) as caught:
                 _ = u.fetch_logger("saved.native.exception").error(
                     "failed operation", exc_info=saved
                 )
@@ -951,9 +951,9 @@ class TestsFlextLoggingNativeEmission:
         """Validation rejects selected incomplete composition before effects."""
         original = u.logging_settings()
         stream = io.StringIO()
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             _ = u.resolve_logging_settings(logging_profile="unbound-presentation")
-        with pytest.raises(TypeError, match="ProcessorFormatter"):
+        with u.Tests.raises(TypeError, match="ProcessorFormatter"):
             u.configure_structlog(
                 settings=m.StructlogOptions(handlers=(logging.StreamHandler(stream),))
             )
@@ -996,9 +996,9 @@ class TestsFlextLoggingNativeEmission:
         tm.ok(logger.info("rows %s", rows))
         event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
         tm.that(event[c.HandlerType.EVENT], eq=f"rows {rows}")
-        with pytest.raises(TypeError):
+        with u.Tests.raises(TypeError):
             logger.info("invalid numeric %d", rows)
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ConfigMap.model_validate({"rows": rows})
 
     @staticmethod
@@ -1009,13 +1009,13 @@ class TestsFlextLoggingNativeEmission:
         u.configure_structlog(settings=m.StructlogOptions(async_logging=True))
         logger = u.create_module_logger("tests.logging.async.failure")
         with redirect_stderr(stream):
-            with pytest.raises(ValueError, match="closed file") as first:
+            with u.Tests.raises(ValueError, match="closed file") as first:
                 _ = logger.info("first closed output")
-            with pytest.raises(ValueError, match="closed file") as second:
+            with u.Tests.raises(ValueError, match="closed file") as second:
                 _ = logger.info("second closed output")
         tm.ok(second.value is first.value)
         tm.ok(first.value.__traceback__ is not None)
-        with pytest.raises(ValueError, match="closed file") as teardown:
+        with u.Tests.raises(ValueError, match="closed file") as teardown:
             u.configure_structlog(settings=m.StructlogOptions(async_logging=False))
         tm.ok(teardown.value is first.value)
 
@@ -1069,7 +1069,7 @@ class TestsFlextLoggingNativeEmission:
                     raise TimeoutError(msg)
                 chunks = [os.read(read_fd, capacity)]
                 tm.ok(b"blocked pipe output" in chunks[0])
-                with pytest.raises(TimeoutError, match="shutdown timeout") as stopped:
+                with u.Tests.raises(TimeoutError, match="shutdown timeout") as stopped:
                     u.configure_structlog(
                         settings=m.StructlogOptions(async_logging=False)
                     )

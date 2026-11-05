@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-import flext_core
+from flext_core import c, t
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
@@ -34,7 +34,7 @@ class FlextProtocolsExceptionParamsBase:
             """Optional underlying error cause for this failure."""
             ...
 
-        error_code: flext_core.c.ErrorCode | None
+        error_code: c.ErrorCode | None
 
     @runtime_checkable
     class ExceptionInitOptions(ParamsModel, Protocol):
@@ -46,7 +46,7 @@ class FlextProtocolsExceptionParamsBase:
         def context(
             self,
         ) -> (
-            Mapping[str, flext_core.t.JsonPayload | None]
+            Mapping[str, t.JsonPayload | None]
             | FlextProtocolsResult.HasModelDump
             | None
         ):
@@ -56,11 +56,11 @@ class FlextProtocolsExceptionParamsBase:
         @property
         def metadata(
             self,
-        ) -> FlextProtocolsResult.HasModelDump | flext_core.t.JsonValue | None:
+        ) -> FlextProtocolsResult.HasModelDump | t.JsonValue | None:
             """Metadata payload or dumpable model for the exception."""
             ...
 
-        correlation_id: flext_core.t.StrictStr | None
+        correlation_id: t.StrictStr | None
         auto_correlation: bool
         auto_log: bool
 
@@ -68,7 +68,7 @@ class FlextProtocolsExceptionParamsBase:
         def merged_kwargs(
             self,
         ) -> (
-            Mapping[str, flext_core.t.JsonPayload | None]
+            Mapping[str, t.JsonPayload | None]
             | FlextProtocolsResult.HasModelDump
             | None
         ):
@@ -79,29 +79,29 @@ class FlextProtocolsExceptionParamsBase:
     class ResourceIdentityParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        resource_type: flext_core.t.StrictStr | None
-        resource_id: flext_core.t.StrictStr | None
+        resource_type: t.StrictStr | None
+        resource_id: t.StrictStr | None
 
     @runtime_checkable
     class ExpectedActualTypeParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        expected_type: flext_core.t.StrictStr | None
-        actual_type: flext_core.t.StrictStr | None
+        expected_type: t.StrictStr | None
+        actual_type: t.StrictStr | None
 
     @runtime_checkable
     class ValidationErrorParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        field: flext_core.t.StrictStr | None
-        value: flext_core.t.RuntimeData | None
+        field: t.StrictStr | None
+        value: t.RuntimeData | None
 
     @runtime_checkable
     class ConfigurationErrorParams(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        config_key: flext_core.t.StrictStr | None
-        config_source: flext_core.t.StrictStr | None
+        config_key: t.StrictStr | None
+        config_source: t.StrictStr | None
 
     @runtime_checkable
     class ConnectionErrorParams(ParamsModel, Protocol):
@@ -109,7 +109,7 @@ class FlextProtocolsExceptionParamsBase:
 
         host: str | None
         port: int | None
-        timeout: flext_core.t.Numeric | None
+        timeout: t.Numeric | None
 
         @property
         def connection_target(self) -> str:

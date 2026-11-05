@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols._project_metadata import (
     FlextProtocolsProjectMetadataContract,
     FlextProtocolsProjectMetadataPyprojectIngress,
@@ -65,17 +65,17 @@ class FlextProtocolsProjectMetadataAggregates:
             ...
 
         @property
-        def dependencies(self) -> flext_core.t.StrTuple:
+        def dependencies(self) -> t.StrTuple:
             """PEP 508 runtime dependency declarations."""
             ...
 
         @property
-        def classifiers(self) -> flext_core.t.StrTuple:
+        def classifiers(self) -> t.StrTuple:
             """Trove classifiers."""
             ...
 
         @property
-        def keywords(self) -> flext_core.t.StrTuple:
+        def keywords(self) -> t.StrTuple:
             """Project search keywords."""
             ...
 

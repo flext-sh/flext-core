@@ -83,7 +83,7 @@ class TestsFlextCoreModelsCqrs:
     )
     def test_pagination_rejects_size_outside_configured_bounds(size: int) -> None:
         """Configured pagination bounds reject values on either side."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Pagination(size=size)
 
     @staticmethod
@@ -93,7 +93,7 @@ class TestsFlextCoreModelsCqrs:
     )
     def test_pagination_rejects_non_positive_bounds(page: int, size: int) -> None:
         """Test pagination rejects non positive bounds."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Pagination(page=page, size=size)
 
     # ------------------------------------------------------------------ #
@@ -135,7 +135,7 @@ class TestsFlextCoreModelsCqrs:
     @staticmethod
     def test_query_rejects_invalid_pagination() -> None:
         """Invalid explicit pagination retains its native validation failure."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Query.model_validate({
                 "pagination": {"size": c.MAX_PAGE_SIZE + 1},
                 "filters": {},
@@ -224,7 +224,7 @@ class TestsFlextCoreModelsCqrs:
     @staticmethod
     def test_handler_rejects_empty_identity() -> None:
         """Test handler rejects empty identity."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.HandlerConfig(
                 handler_type=c.HandlerType.COMMAND,
                 handler_id="",

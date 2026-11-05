@@ -18,8 +18,7 @@ from typing import override
 
 import pytest
 
-from flext_core import p, t
-from tests import c, m, r, tm, u
+from tests import c, m, p, r, t, tm, u
 
 
 class TestsFlextCoreGuards:
@@ -83,7 +82,7 @@ class TestsFlextCoreGuards:
         tm.that(subject is mapping, truth=True)
         tm.that(events, eq=[])
         tm.that(1 in subject, truth=True)
-        with pytest.raises(LookupError) as raised:
+        with u.Tests.raises(LookupError) as raised:
             subject[1]
         tm.that(raised.value is failure, truth=True)
         tm.that(events, eq=["contains", "getitem"])
@@ -132,7 +131,7 @@ class TestsFlextCoreGuards:
         tm.that(subject is result, truth=True)
         tm.that(events, eq=[])
         tm.that(subject.success, truth=True)
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             _ = subject.value
         tm.that(raised.value is failure, truth=True)
         tm.that(events, eq=["success", "value"])
@@ -185,7 +184,7 @@ class TestsFlextCoreGuards:
         class Base(metaclass=NativeClassCheck):
             """Native base with an observable subclass-check failure."""
 
-        with pytest.raises(TypeError) as raised:
+        with u.Tests.raises(TypeError) as raised:
             u.subclass_view(str, Base)
         tm.that(raised.value is failure, truth=True)
 
@@ -433,7 +432,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(first.handled is second.handled, truth=False)
         first.handled.append("first")
         tm.that(second.handled, eq=[])
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Tests.PublicPayload.model_validate({})
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": " alice ",
@@ -534,7 +533,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
                 raise failure
 
         native = NativeMapping()
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             u.dict_non_empty(native)
         tm.that(raised.value is failure, truth=True)
         tm.that(events, eq=["bool"])

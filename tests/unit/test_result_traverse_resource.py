@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-import pytest
-
 from tests import c, m, p, r, t, tm, u
 
 
@@ -148,7 +146,7 @@ class TestsFlextResultTraverseResource:
     def test_value_property_failure() -> None:
         """Test value property raises RuntimeError on failure."""
         result: p.Result[str] = r[str].fail("error")
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             _ = result.value
         tm.that(str(raised.value), has=tm.not_none(result.error))
 
@@ -194,7 +192,7 @@ class TestsFlextResultTraverseResource:
     def test_unwrap_failure() -> None:
         """Test unwrap raises RuntimeError on failure."""
         result: p.Result[str] = r[str].fail("error")
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             result.unwrap()
         tm.that(str(raised.value), has=tm.not_none(result.error))
 

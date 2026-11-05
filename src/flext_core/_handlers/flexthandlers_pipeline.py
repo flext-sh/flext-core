@@ -11,12 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, p, r, u
 from flext_core._handlers import FlextHandlersExecution
 
 
@@ -26,8 +21,8 @@ class FlextHandlersPipeline[MessageT_contra, ResultT](
     def _run_pipeline(
         self,
         message: MessageT_contra,
-        operation: str = flext_core.c.HandlerMode.COMMAND,
-    ) -> flext_core.p.Result[ResultT]:
+        operation: str = c.HandlerMode.COMMAND,
+    ) -> p.Result[ResultT]:
         """Run the handler execution pipeline (internal).
 
         Internal implementation that executes the full handler pipeline including
@@ -48,40 +43,36 @@ class FlextHandlersPipeline[MessageT_contra, ResultT](
             self._config_model.handler_mode,
         )
         valid_operations = {
-            flext_core.c.HandlerMode.COMMAND,
-            flext_core.c.HandlerMode.QUERY,
-            flext_core.c.HandlerType.EVENT.value,
+            c.HandlerMode.COMMAND,
+            c.HandlerMode.QUERY,
+            c.HandlerType.EVENT.value,
         }
         if operation != handler_mode and operation in valid_operations:
-            error_msg = flext_core.c.ERR_HANDLER_INCOMPATIBLE_PIPELINE_MODE.format(
+            error_msg = c.ERR_HANDLER_INCOMPATIBLE_PIPELINE_MODE.format(
                 handler_mode=handler_mode,
                 operation=operation,
             )
-            return flext_core.r[ResultT].fail_op(
-                "validate handler pipeline mode", error_msg
-            )
+            return r[ResultT].fail_op("validate handler pipeline mode", error_msg)
         message_type = message.__class__
         if not self.can_handle(message_type):
             type_name = message_type.__name__
-            error_msg = flext_core.c.ERR_HANDLER_CANNOT_HANDLE_MESSAGE_TYPE.format(
+            error_msg = c.ERR_HANDLER_CANNOT_HANDLE_MESSAGE_TYPE.format(
                 type_name=type_name,
             )
-            return flext_core.r[ResultT].fail_op(
-                "validate handler message type", error_msg
-            )
+            return r[ResultT].fail_op("validate handler message type", error_msg)
         validation = self.validate_message(message)
         if validation.failure:
-            return flext_core.r[ResultT].from_failure(validation)
-        self._runtime_state = flext_core.u.start_execution(self._runtime_state)
+            return r[ResultT].from_failure(validation)
+        self._runtime_state = u.start_execution(self._runtime_state)
         _ = self.push_context(self._runtime_state.execution_context)
         try:
             result = self.handle(message)
-        except flext_core.c.EXC_BROAD_RUNTIME as exc:
-            self.logger.warning(flext_core.c.LOG_HANDLER_PIPELINE_FAILURE, exc_info=exc)
+        except c.EXC_BROAD_RUNTIME as exc:
+            self.logger.warning(c.LOG_HANDLER_PIPELINE_FAILURE, exc_info=exc)
             self._record_execution_metrics(success=False, error=str(exc))
-            return flext_core.r[ResultT].fail_op(
+            return r[ResultT].fail_op(
                 "run handler pipeline",
-                flext_core.c.ERR_HANDLER_CRITICAL_FAILURE.format(error=str(exc)),
+                c.ERR_HANDLER_CRITICAL_FAILURE.format(error=str(exc)),
             )
         else:
             self._record_execution_metrics(success=result.success)
@@ -92,8 +83,8 @@ class FlextHandlersPipeline[MessageT_contra, ResultT](
     def dispatch_message(
         self,
         message: MessageT_contra,
-        operation: str = flext_core.c.HandlerMode.COMMAND,
-    ) -> flext_core.p.Result[ResultT]:
+        operation: str = c.HandlerMode.COMMAND,
+    ) -> p.Result[ResultT]:
         """Dispatch message through the handler execution pipeline.
 
         Public method that executes the full handler pipeline including
@@ -113,7 +104,7 @@ class FlextHandlersPipeline[MessageT_contra, ResultT](
         """
         return self._run_pipeline(message, operation)
 
-    def execute(self, message: MessageT_contra) -> flext_core.p.Result[ResultT]:
+    def execute(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Execute handler with complete validation and error handling pipeline.
 
         Implements the railway-oriented programming pattern by first validating
@@ -144,7 +135,7 @@ class FlextHandlersPipeline[MessageT_contra, ResultT](
         """
         validation = self.validate_message(message)
         if validation.failure:
-            return flext_core.r[ResultT].from_failure(validation)
+            return r[ResultT].from_failure(validation)
         return self.handle(message)
 
 

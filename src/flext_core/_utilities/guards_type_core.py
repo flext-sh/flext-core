@@ -10,12 +10,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence, Sequence
-from typing import TYPE_CHECKING, TypeGuard, TypeIs
+from typing import TypeGuard, TypeIs
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, p, t
 
 
 class FlextUtilitiesGuardsTypeCore:
@@ -28,15 +25,15 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def _object_sequence(
-        value: flext_core.p.AttributeProbe,
-    ) -> TypeGuard[Sequence[flext_core.p.AttributeProbe]]:
+        value: p.AttributeProbe,
+    ) -> TypeGuard[Sequence[p.AttributeProbe]]:
         """Inspect a native list/tuple shape without validating its contents.
 
         Returns:
             Whether the opaque SDK value is a native list or tuple.
 
         """
-        return isinstance(value, flext_core.c.SEQUENCE_PAIR_TYPES)
+        return isinstance(value, c.SEQUENCE_PAIR_TYPES)
 
     @staticmethod
     def _all_container_sequence[ItemT](
@@ -69,7 +66,7 @@ class FlextUtilitiesGuardsTypeCore:
         return True
 
     @staticmethod
-    def dict_non_empty(value: flext_core.p.GuardInput | None) -> bool:
+    def dict_non_empty(value: p.GuardInput | None) -> bool:
         """Check if value is a non-empty mapping.
 
         Returns:
@@ -80,10 +77,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def empty_value(
-        value: flext_core.p.GuardInput
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue
-        | None,
+        value: p.GuardInput | t.JsonPayload | t.JsonValue | None,
     ) -> bool:
         """Check whether a FLEXT value is absent or an empty text/container.
 
@@ -95,14 +89,12 @@ class FlextUtilitiesGuardsTypeCore:
             return True
         if isinstance(value, (str, bytes, bytearray, Mapping)):
             return not value
-        if isinstance(value, Sequence) and not isinstance(
-            value, flext_core.c.STR_BINARY_TYPES
-        ):
+        if isinstance(value, Sequence) and not isinstance(value, c.STR_BINARY_TYPES):
             return not value
         return False
 
     @staticmethod
-    def container_value(value: flext_core.p.AttributeProbe) -> bool:
+    def container_value(value: p.AttributeProbe) -> bool:
         """Check recursive native container capability without asserting JSON.
 
         Scalars (including datetime), paths, lists, tuples and mapping values
@@ -115,7 +107,7 @@ class FlextUtilitiesGuardsTypeCore:
         """
         if value is None:
             return False
-        if isinstance(value, flext_core.c.CONTAINER_TYPES):
+        if isinstance(value, c.CONTAINER_TYPES):
             return True
         if FlextUtilitiesGuardsTypeCore._object_sequence(value):
             return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)
@@ -125,9 +117,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def list_value(
-        value: flext_core.p.GuardInput
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue,
+        value: p.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> bool:
         """Classify a native list without validating its items as JSON.
 
@@ -139,9 +129,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def mapping(
-        value: flext_core.p.GuardInput
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue,
+        value: p.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> bool:
         """Classify a native mapping without validating its keys or values.
 
@@ -153,8 +141,8 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def mapping_view(
-        value: flext_core.p.AttributeProbe,
-    ) -> TypeIs[Mapping[flext_core.p.AttributeProbe, flext_core.p.AttributeProbe]]:
+        value: p.AttributeProbe,
+    ) -> TypeIs[Mapping[p.AttributeProbe, p.AttributeProbe]]:
         """Refine an opaque SDK value to its native read-only mapping shape.
 
         Does not inspect keys or contents, require string keys, or validate JSON
@@ -168,7 +156,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def subclass_view[BaseT](
-        candidate: flext_core.p.AttributeProbe,
+        candidate: p.AttributeProbe,
         base: type[BaseT],
     ) -> TypeGuard[type[BaseT]]:
         """Inspect an opaque SDK value as a native subclass without constructing it.
@@ -181,39 +169,31 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def primitive(
-        value: flext_core.p.GuardInput
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue,
-    ) -> TypeIs[flext_core.t.Primitives]:
+        value: p.GuardInput | t.JsonPayload | t.JsonValue,
+    ) -> TypeIs[t.Primitives]:
         """Check if value is a primitive type (c.PRIMITIVES_TYPES).
 
         Returns:
             The resulting ``TypeIs[t.Primitives]``.
 
         """
-        return isinstance(value, flext_core.c.PRIMITIVES_TYPES)
+        return isinstance(value, c.PRIMITIVES_TYPES)
 
     @staticmethod
     def scalar(
-        value: flext_core.p.GuardInput
-        | flext_core.t.Scalar
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue,
-    ) -> TypeIs[flext_core.t.Scalar]:
+        value: p.GuardInput | t.Scalar | t.JsonPayload | t.JsonValue,
+    ) -> TypeIs[t.Scalar]:
         """Check if value is a scalar type (str, int, float, bool, datetime).
 
         Returns:
             The resulting ``TypeIs[t.Scalar]``.
 
         """
-        return isinstance(value, flext_core.c.SCALAR_TYPES)
+        return isinstance(value, c.SCALAR_TYPES)
 
     @staticmethod
     def type_name(
-        value: flext_core.p.GuardInput
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue
-        | None,
+        value: p.GuardInput | t.JsonPayload | t.JsonValue | None,
     ) -> str:
         """Return the concrete runtime type name for any FLEXT payload value.
 
@@ -225,9 +205,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def dict_like(
-        value: flext_core.p.GuardInput
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue,
+        value: p.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> bool:
         """Classify the native mapping shape without claiming payload validity.
 
@@ -239,9 +217,7 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def list_like(
-        value: flext_core.p.GuardInput
-        | flext_core.t.JsonPayload
-        | flext_core.t.JsonValue,
+        value: p.GuardInput | t.JsonPayload | t.JsonValue,
     ) -> bool:
         """Classify native lists/tuples without validating their items as JSON.
 
@@ -249,13 +225,13 @@ class FlextUtilitiesGuardsTypeCore:
             Whether the value is a native non-string list or tuple.
 
         """
-        return isinstance(value, flext_core.c.SEQUENCE_PAIR_TYPES) and not isinstance(
+        return isinstance(value, c.SEQUENCE_PAIR_TYPES) and not isinstance(
             value,
-            flext_core.c.STR_BYTES_TYPES,
+            c.STR_BYTES_TYPES,
         )
 
     @staticmethod
-    def string_non_empty(value: flext_core.p.GuardInput) -> TypeGuard[str]:
+    def string_non_empty(value: p.GuardInput) -> TypeGuard[str]:
         """Check if value is a non-empty string (after stripping whitespace).
 
         Returns:
@@ -265,7 +241,7 @@ class FlextUtilitiesGuardsTypeCore:
         return isinstance(value, str) and bool(value.strip())
 
     @staticmethod
-    def instance_of[T](value: flext_core.p.GuardInput | T, type_cls: type[T]) -> bool:
+    def instance_of[T](value: p.GuardInput | T, type_cls: type[T]) -> bool:
         """Check if value is instance of type class (handles generics).
 
         Returns:
@@ -276,8 +252,8 @@ class FlextUtilitiesGuardsTypeCore:
 
     @staticmethod
     def in_(
-        value: flext_core.p.GuardInput,
-        container: flext_core.p.GuardInput,
+        value: p.GuardInput,
+        container: p.GuardInput,
     ) -> bool:
         """Check if value is in container, handling TypeError gracefully.
 

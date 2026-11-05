@@ -9,16 +9,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import PurePosixPath
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols._project_metadata import (
     FlextProtocolsProjectMetadataContract,
     FlextProtocolsProjectMetadataPyprojectIngress,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextProtocolsProjectMetadataFields:
@@ -76,7 +73,7 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
         @property
-        def budget(self) -> flext_core.t.JsonMapping | None:
+        def budget(self) -> t.JsonMapping | None:
             """Structural member projected from the owning model.
 
             Per-gate resource budget table emitted by the flext-infra budget-gate
@@ -87,7 +84,7 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
         @property
-        def duplication(self) -> flext_core.t.JsonMapping | None:
+        def duplication(self) -> t.JsonMapping | None:
             """Structural member projected from the owning model.
 
             Duplication-gate scope overrides table read by the flext-infra duplication
@@ -132,7 +129,7 @@ class FlextProtocolsProjectMetadataFields:
         """Structural data contract projected from the owning model."""
 
         @property
-        def documentation_language(self) -> flext_core.t.DocumentationLanguage:
+        def documentation_language(self) -> t.DocumentationLanguage:
             """Generated documentation language."""
             ...
 
@@ -185,7 +182,7 @@ class FlextProtocolsProjectMetadataFields:
             ...
 
         @property
-        def scan_dirs(self) -> flext_core.t.StrTuple:
+        def scan_dirs(self) -> t.StrTuple:
             """Explicit namespace scan directories."""
             ...
 

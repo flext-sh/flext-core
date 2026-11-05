@@ -9,24 +9,20 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
-from typing import TYPE_CHECKING
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, p, r, t
 
 
 class FlextUtilitiesArgs:
     """Utilities for model-based option parsing."""
 
     @staticmethod
-    def parse_model[M: flext_core.t.BaseModelType](
-        kwargs: Mapping[str, flext_core.t.JsonPayload],
-        model_cls: flext_core.t.ModelClass[M],
+    def parse_model[M: t.BaseModelType](
+        kwargs: Mapping[str, t.JsonPayload],
+        model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
-    ) -> flext_core.p.Result[M]:
+    ) -> p.Result[M]:
         """Parse kwargs directly into a Pydantic model with detailed error collection.
 
         Args:
@@ -41,21 +37,21 @@ class FlextUtilitiesArgs:
 
         """
         if not kwargs and allow_empty:
-            empty_kwargs: flext_core.t.JsonMapping = {}
+            empty_kwargs: t.JsonMapping = {}
             kwargs = empty_kwargs
         try:
-            return flext_core.FlextResult[M].ok(model_cls.model_validate(kwargs))
-        except flext_core.c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return flext_core.FlextResult[M].fail_op("parse options model", exc)
+            return r[M].ok(model_cls.model_validate(kwargs))
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
+            return r[M].fail_op("parse options model", exc)
 
     @staticmethod
-    def resolve_options[P, M: flext_core.t.BaseModelType](
+    def resolve_options[P, M: t.BaseModelType](
         options: P | None,
-        kwargs: Mapping[str, flext_core.t.JsonPayload],
-        model_cls: flext_core.t.ModelClass[M],
+        kwargs: Mapping[str, t.JsonPayload],
+        model_cls: t.ModelClass[M],
         *,
         allow_empty: bool = True,
-    ) -> flext_core.p.Result[P | M]:
+    ) -> p.Result[P | M]:
         """Resolve options from a pre-instantiated model or kwargs concisely.
 
         Reduces boilerplate by returning an r[M] which callers can unwrap_or()
@@ -66,7 +62,7 @@ class FlextUtilitiesArgs:
 
         """
         if options is not None:
-            return flext_core.FlextResult[P | M].ok(options)
+            return r[P | M].ok(options)
         return FlextUtilitiesArgs.parse_model(
             kwargs,
             model_cls,

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import p, r, tm
+from tests import p, r, tm, u
 
 
 class TestsFlextCoreResult:
@@ -37,7 +37,7 @@ class TestsFlextCoreResult:
         """Accessing .value on a failure raises rather than inventing data."""
         result: p.Result[int] = r[int].fail("no value")
 
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             _ = result.value
 
     @staticmethod
@@ -221,15 +221,15 @@ class TestsFlextCoreResultIdentity:
     @staticmethod
     def test_ok_rejects_none_payload_explicitly() -> None:
         """Success with ``None`` is forbidden and raises immediately."""
-        with pytest.raises(ValueError, match="cannot be None"):
+        with u.Tests.raises(ValueError, match="cannot be None"):
             r.ok(None)
 
     @staticmethod
     def test_parameterized_none_and_object_are_forbidden() -> None:
         """``r[None]`` and ``r[object]`` specializations are rejected."""
-        with pytest.raises(ValueError, match="parameterized with None"):
+        with u.Tests.raises(ValueError, match="parameterized with None"):
             r[None].ok(value=True)
-        with pytest.raises(ValueError, match="parameterized with object"):
+        with u.Tests.raises(ValueError, match="parameterized with object"):
             r[object].ok({"k": "v"})
-        with pytest.raises(ValueError, match="parameterized with None"):
+        with u.Tests.raises(ValueError, match="parameterized with None"):
             r[None].fail("nope")

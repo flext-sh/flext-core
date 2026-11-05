@@ -126,13 +126,13 @@ class TestsFlextModelsProjectMetadata:
         metadata = self._metadata(tmp_path)
 
         field_name = "package_name"
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             setattr(metadata, field_name, "other")
 
     @staticmethod
     def test_project_metadata_rejects_unknown_fields(tmp_path: Path) -> None:
         """Test project metadata rejects unknown fields."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.ProjectMetadata.model_validate({
                 "root": tmp_path,
                 "package_name": "flext_ldif",
@@ -288,7 +288,7 @@ class TestsFlextModelsProjectMetadata:
         language: t.JsonValue,
     ) -> None:
         """Unknown locales and non-language values fail instead of falling back."""
-        with pytest.raises(c.ValidationError, match="literal_error"):
+        with u.Tests.raises(c.ValidationError, match="literal_error"):
             m.ProjectToolFlext.model_validate({
                 "docs": {"documentation_language": language},
             })
@@ -296,7 +296,7 @@ class TestsFlextModelsProjectMetadata:
     @staticmethod
     def test_documentation_language_preserves_forbidden_extras() -> None:
         """Adding the supported leaf does not loosen other documentation keys."""
-        with pytest.raises(c.ValidationError, match="extra_forbidden"):
+        with u.Tests.raises(c.ValidationError, match="extra_forbidden"):
             m.ProjectToolFlext.model_validate({
                 "docs": {"documentation_language": "pt-BR", "unknown_locale": "pt"},
             })

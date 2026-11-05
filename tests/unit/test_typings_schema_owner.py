@@ -12,9 +12,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import pydantic
-import pytest
 
-from tests import m, p, tm
+from tests import m, p, tm, u
 
 
 class TestsFlextCoreTypingsSchemaOwner:
@@ -33,7 +32,7 @@ class TestsFlextCoreTypingsSchemaOwner:
     @staticmethod
     def test_cross_module_heir_rejects_invalid_payload() -> None:
         """The real model's validation still rejects an invalid sibling payload."""
-        with pytest.raises(pydantic.ValidationError):
+        with u.Tests.raises(pydantic.ValidationError):
             m.Tests.SchemaOwnerHeirDeclarations.model_validate({
                 "label": "heir",
                 "leaves": ({"nome": "first"},),

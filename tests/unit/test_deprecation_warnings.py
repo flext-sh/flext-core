@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import p, r, tm, u
 
 
@@ -55,7 +53,7 @@ class TestsFlextCoreDeprecationWarnings:
         """Unwrapping a failed result raises instead of returning a value."""
         result: p.Result[int] = r[int].fail("boom")
 
-        with pytest.raises(RuntimeError, match="boom"):
+        with u.Tests.raises(RuntimeError, match="boom"):
             result.unwrap()
 
     @staticmethod

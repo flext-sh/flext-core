@@ -11,7 +11,7 @@ from types import ModuleType
 import pytest
 
 from flext_core.lazy import lazy, merge_lazy_imports, normalize_lazy_imports
-from tests import tm
+from tests import tm, u
 
 
 class TestsFlextCoreLazyRelativePackages:
@@ -58,7 +58,7 @@ class TestsFlextCoreLazyRelativePackages:
     @staticmethod
     def test_relative_path_cannot_escape_the_top_level_package() -> None:
         """An invalid parent traversal fails instead of manufacturing a module name."""
-        with pytest.raises(ImportError):
+        with u.Tests.raises(ImportError):
             normalize_lazy_imports("xml", {"module": "..dom"})
 
     @staticmethod
@@ -86,5 +86,5 @@ class TestsFlextCoreLazyRelativePackages:
     @staticmethod
     def test_merge_child_cannot_escape_the_top_level_package() -> None:
         """Child discovery rejects traversal beyond the containing package."""
-        with pytest.raises(ImportError):
+        with u.Tests.raises(ImportError):
             merge_lazy_imports(("..dom",), {}, module_name="xml")

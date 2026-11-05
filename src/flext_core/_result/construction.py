@@ -21,10 +21,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Never, Self
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, p, t
 from flext_core._result import FlextResultBase, FlextResultBehavior
 from flext_core._utilities import FlextUtilitiesMetadata
 
@@ -49,7 +46,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
 
     @staticmethod
     @abstractmethod
-    def _create_success[V](value: V) -> flext_core.p.Result[V]:
+    def _create_success[V](value: V) -> p.Result[V]:
         """Construct a validated success payload through the concrete facade.
 
         Args:
@@ -66,9 +63,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     def _create_failure(
         error: str,
         error_code: str | None,
-        error_data: flext_core.t.JsonDict | None,
+        error_data: t.JsonDict | None,
         exception: BaseException | None,
-    ) -> flext_core.p.Result[Never]:
+    ) -> p.Result[Never]:
         """Construct normalized failure state through the concrete facade.
 
         Args:
@@ -85,7 +82,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         raise NotImplementedError(msg)
 
     @staticmethod
-    def require_error(source: flext_core.p.FailureLike) -> str:
+    def require_error(source: p.FailureLike) -> str:
         """Extract the error description string from a failed result.
 
         Args:
@@ -99,7 +96,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return error or ""
 
     @classmethod
-    def ok[V](cls: type[Self], value: V) -> flext_core.p.Result[V]:
+    def ok[V](cls: type[Self], value: V) -> p.Result[V]:
         """Create a successful result carrying the provided payload.
 
         Args:
@@ -113,9 +110,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return cls._create_success(value)
 
     @classmethod
-    def from_failure(
-        cls: type[Self], source: flext_core.p.FailureLike
-    ) -> flext_core.p.Result[Never]:
+    def from_failure(cls: type[Self], source: p.FailureLike) -> p.Result[Never]:
         """Build a failure result copying error metadata from another failed result.
 
         Args:
@@ -129,7 +124,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
 
         """
         if source.success:
-            msg = flext_core.c.ERR_RESULT_FAILURE_REQUIRED
+            msg = c.ERR_RESULT_FAILURE_REQUIRED
             raise ValueError(msg)
         return cls.fail(
             cls.require_error(source),
@@ -159,7 +154,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
             The resulting ``frozenset[str]``.
 
         """
-        excluded: set[str] = set(flext_core.c.SENSITIVE_ERROR_DATA_KEYS)
+        excluded: set[str] = set(c.SENSITIVE_ERROR_DATA_KEYS)
         if exception is not None:
             class_excluded = getattr(type(exception), "excluded_context_keys", None)
             if class_excluded:
@@ -170,27 +165,23 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
     def _extract_exception_error_data(
         cls,
         exception: BaseException | None,
-    ) -> flext_core.t.JsonDict | None:
+    ) -> t.JsonDict | None:
         if exception is None:
             return None
-        payload: flext_core.t.JsonDict | None = None
+        payload: t.JsonDict | None = None
         metadata = getattr(exception, "metadata", None)
-        raw_attributes = getattr(metadata, flext_core.c.FIELD_ATTRIBUTES, None)
+        raw_attributes = getattr(metadata, c.FIELD_ATTRIBUTES, None)
         if raw_attributes is not None:
             payload = cls.validate_error_data(raw_attributes)
-        correlation_id = getattr(
-            exception, flext_core.c.ContextKey.CORRELATION_ID, None
-        )
+        correlation_id = getattr(exception, c.ContextKey.CORRELATION_ID, None)
         if isinstance(correlation_id, str) and correlation_id:
             if payload is None:
                 payload = {}
-            payload[flext_core.c.ContextKey.CORRELATION_ID] = correlation_id
+            payload[c.ContextKey.CORRELATION_ID] = correlation_id
         return payload or None
 
     @classmethod
-    def from_result[V](
-        cls: type[Self], source: flext_core.p.Result[V]
-    ) -> flext_core.p.Result[V]:
+    def from_result[V](cls: type[Self], source: p.Result[V]) -> p.Result[V]:
         """Convert or copy an abstract result into this concrete result family.
 
         Args:
@@ -209,9 +200,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return cls._copy_failure(source)
 
     @classmethod
-    def _copy_failure(
-        cls, source: flext_core.p.FailureLike
-    ) -> flext_core.p.Result[Never]:
+    def _copy_failure(cls, source: p.FailureLike) -> p.Result[Never]:
         """Copy failure state without coupling its absent payload to a type.
 
         Args:
@@ -233,7 +222,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         cls: type[Self],
         func: Callable[[], V | None],
         error_code: str | None = None,
-    ) -> flext_core.p.Result[V]:
+    ) -> p.Result[V]:
         """Invoke a callable, converting ``None`` returns and exceptions into failures.
 
         Args:
@@ -251,15 +240,15 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
             if value is None:
                 return cls._failure("Callable returned None", error_code=error_code)
             return cls._create_success(value)
-        except flext_core.c.EXC_BROAD_RUNTIME as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             return cls._failure(str(exc), error_code=error_code, exception=exc)
 
     @classmethod
     def _filter_sensitive_error_data(
         cls,
-        payload: flext_core.t.JsonDict | None,
+        payload: t.JsonDict | None,
         exception: BaseException | None = None,
-    ) -> flext_core.t.JsonDict | None:
+    ) -> t.JsonDict | None:
         """Drop sensitive keys from any error_data mapping before storage.
 
         Args:
@@ -285,11 +274,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         error: str | None,
         *,
         error_code: str | None = None,
-        error_data: flext_core.t.JsonMapping
-        | flext_core.p.ConfigModelInput
-        | None = None,
+        error_data: t.JsonMapping | p.ConfigModelInput | None = None,
         exception: BaseException | None = None,
-    ) -> flext_core.p.Result[Never]:
+    ) -> p.Result[Never]:
         """Build a failed result, resolving codes and redacting error data.
 
         A ``None`` error normalizes to the empty string; an omitted
@@ -318,11 +305,9 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         error: str | None,
         *,
         error_code: str | None = None,
-        error_data: flext_core.t.JsonMapping
-        | flext_core.p.ConfigModelInput
-        | None = None,
+        error_data: t.JsonMapping | p.ConfigModelInput | None = None,
         exception: BaseException | None = None,
-    ) -> flext_core.p.Result[Never]:
+    ) -> p.Result[Never]:
         """Normalize failure state before the concrete generic factory consumes it.
 
         Args:
@@ -356,7 +341,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         cls: type[Self],
         operation: str,
         exc: Exception | str | None = None,
-    ) -> flext_core.p.Result[Never]:
+    ) -> p.Result[Never]:
         """Build a failure with a standardized ``<operation> failed`` message.
 
         Args:
@@ -375,11 +360,11 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         return cls.fail(error_msg)
 
     @classmethod
-    def from_validation[ModelT: flext_core.t.BaseModelType](
+    def from_validation[ModelT: t.BaseModelType](
         cls: type[Self],
-        data: flext_core.p.ModelInput,
-        model: flext_core.t.ModelClass[ModelT],
-    ) -> flext_core.p.Result[ModelT]:
+        data: p.ModelInput,
+        model: t.ModelClass[ModelT],
+    ) -> p.Result[ModelT]:
         """Validate input data against a Pydantic model, capturing validation errors.
 
         Args:
@@ -394,12 +379,12 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
         try:
             validated: ModelT = model.model_validate(data)
             return cls._create_success(validated)
-        except flext_core.c.EXC_ATTR_RUNTIME_VALIDATION as exc:
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return cls._failure(str(exc), exception=exc)
 
     @staticmethod
     def successful_result(
-        obj: flext_core.p.SuccessCheckable | flext_core.t.JsonPayload,
+        obj: p.SuccessCheckable | t.JsonPayload,
     ) -> bool:
         """Determine whether an object is a successful result instance.
 
@@ -414,7 +399,7 @@ class FlextResultConstruction[T](FlextResultBehavior[T], ABC):
 
     @staticmethod
     def failed_result(
-        obj: flext_core.p.SuccessCheckable | flext_core.t.JsonPayload,
+        obj: p.SuccessCheckable | t.JsonPayload,
     ) -> bool:
         """Determine whether an object is a failed result instance.
 

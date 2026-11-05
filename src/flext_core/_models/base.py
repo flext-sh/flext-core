@@ -19,7 +19,7 @@ from typing import Annotated, ClassVar, Self, dataclass_transform, override
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
 
-import flext_core
+from flext_core import c, p, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
 
 
@@ -32,10 +32,10 @@ class FlextModelsBase:
         # Schema deferral remains an implementation gap under ADR-028 D14.
         # Its removal must preserve lazy module imports and complete declarations.
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra=flext_core.c.EXTRA_CONFIG_FORBID,
+            extra=c.EXTRA_CONFIG_FORBID,
             defer_build=True,
-            use_enum_values=flext_core.c.MODEL_USE_ENUM_VALUES,
-            validate_default=flext_core.c.MODEL_VALIDATE_DEFAULT,
+            use_enum_values=c.MODEL_USE_ENUM_VALUES,
+            validate_default=c.MODEL_VALIDATE_DEFAULT,
         )
 
         @classmethod
@@ -118,15 +118,15 @@ class FlextModelsBase:
         """Standard metadata model with timestamps, audit info, tags, attributes."""
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
-            extra=flext_core.c.EXTRA_CONFIG_FORBID,
+            extra=c.EXTRA_CONFIG_FORBID,
             frozen=True,
             validate_assignment=True,
             populate_by_name=True,
         )
         # Validate attributes with the explicit mapping type because
         # the checker does not accept TypeAliasType as a type form.
-        MAPPING_VALIDATOR: ClassVar[TypeAdapter[flext_core.t.JsonMapping]] = (
-            TypeAdapter(Mapping[str, flext_core.t.JsonValue])
+        MAPPING_VALIDATOR: ClassVar[TypeAdapter[t.JsonMapping]] = TypeAdapter(
+            Mapping[str, t.JsonValue]
         )
         created_at: Annotated[
             datetime,
@@ -153,14 +153,14 @@ class FlextModelsBase:
         version: Annotated[
             str,
             Field(
-                default=flext_core.c.METADATA_SCHEMA_VERSION_DEFAULT,
+                default=c.METADATA_SCHEMA_VERSION_DEFAULT,
                 description=(
                     "Semantic version string representing the metadata schema revision."
                 ),
                 title="Metadata Version",
                 examples=["1.0.0", "1.2.3"],
             ),
-        ] = flext_core.c.METADATA_SCHEMA_VERSION_DEFAULT
+        ] = c.METADATA_SCHEMA_VERSION_DEFAULT
         created_by: Annotated[
             str | None,
             Field(
@@ -195,7 +195,7 @@ class FlextModelsBase:
             validate_default=True,
         )
         attributes: Annotated[
-            flext_core.t.JsonMapping,
+            t.JsonMapping,
             Field(
                 description="Arbitrary metadata attributes stored as key-value pairs.",
                 title="Attributes",
@@ -206,15 +206,13 @@ class FlextModelsBase:
             validate_default=True,
         )
         metadata_value: Annotated[
-            flext_core.t.Scalar | None,
+            t.Scalar | None,
             Field(default=None, description="Scalar metadata value."),
         ] = None
 
         @field_validator("attributes", mode="before")
         @classmethod
-        def validate_metadata_attributes(
-            cls, value: flext_core.p.MetadataInput
-        ) -> flext_core.t.JsonMapping:
+        def validate_metadata_attributes(cls, value: p.MetadataInput) -> t.JsonMapping:
             """Validate attributes through the canonical metadata boundary.
 
             Returns:
@@ -226,7 +224,7 @@ class FlextModelsBase:
             """
             payload = (
                 value.model_dump(mode="json")
-                if isinstance(value, flext_core.p.HasModelDump)
+                if isinstance(value, p.HasModelDump)
                 else value
             )
             normalized = (
@@ -238,10 +236,8 @@ class FlextModelsBase:
                 return {}
             for key in normalized:
                 if key.startswith("_"):
-                    message = (
-                        flext_core.c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(
-                            key=key
-                        )
+                    message = c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(
+                        key=key
                     )
                     raise ValueError(message)
             return FlextModelsBase.Metadata.MAPPING_VALIDATOR.validate_python(
@@ -253,9 +249,9 @@ class FlextModelsBase:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             validate_return=True,
-            ser_json_timedelta=flext_core.c.SERIALIZATION_ISO8601,
-            ser_json_bytes=flext_core.c.SERIALIZATION_BASE64,
-            val_json_bytes=flext_core.c.SERIALIZATION_BASE64,
+            ser_json_timedelta=c.SERIALIZATION_ISO8601,
+            ser_json_bytes=c.SERIALIZATION_BASE64,
+            val_json_bytes=c.SERIALIZATION_BASE64,
             hide_input_in_errors=True,
             frozen=True,
         )
@@ -276,8 +272,8 @@ class FlextModelsBase:
         def __eq__(self, other: object) -> bool:
             if not isinstance(other, type(self)):
                 return NotImplemented
-            self_dump: flext_core.t.JsonMapping = self.model_dump()
-            other_dump: flext_core.t.JsonMapping = other.model_dump()
+            self_dump: t.JsonMapping = self.model_dump()
+            other_dump: t.JsonMapping = other.model_dump()
             return self_dump == other_dump
 
         def __hash__(self) -> int:
@@ -301,7 +297,7 @@ class FlextModelsBase:
         """Mixin for unique identifiers."""
 
         unique_id: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(description="Unique identifier", frozen=False),
         ] = Field(default_factory=lambda: str(uuid.uuid4()))
 
@@ -373,20 +369,20 @@ class FlextModelsBase:
 
             """
             if self.updated_at is not None and self.updated_at < self.created_at:
-                raise ValueError(flext_core.c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
+                raise ValueError(c.ERR_MODEL_UPDATED_AT_BEFORE_CREATED_AT)
             return self
 
     class VersionableMixin(MutableConfiguredMixin):
         """Mixin for versioning with optimistic locking."""
 
         version: Annotated[
-            flext_core.t.NonNegativeInt,
+            t.NonNegativeInt,
             FlextModelsPydantic.Field(
-                default=flext_core.c.DEFAULT_RETRY_DELAY_SECONDS,
+                default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Version number for optimistic locking",
                 frozen=False,
             ),
-        ] = flext_core.c.DEFAULT_RETRY_DELAY_SECONDS
+        ] = c.DEFAULT_RETRY_DELAY_SECONDS
 
         @FlextModelsPydantic.model_validator(mode="after")
         def validate_version_consistency(self) -> Self:
@@ -399,11 +395,11 @@ class FlextModelsBase:
                 ValueError: If ``self.version < c.DEFAULT_RETRY_DELAY_SECONDS``.
 
             """
-            if self.version < flext_core.c.DEFAULT_RETRY_DELAY_SECONDS:
+            if self.version < c.DEFAULT_RETRY_DELAY_SECONDS:
                 raise ValueError(
-                    flext_core.c.ERR_MODEL_VERSION_BELOW_MINIMUM.format(
+                    c.ERR_MODEL_VERSION_BELOW_MINIMUM.format(
                         version=self.version,
-                        minimum=flext_core.c.DEFAULT_RETRY_DELAY_SECONDS,
+                        minimum=c.DEFAULT_RETRY_DELAY_SECONDS,
                     ),
                 )
             return self
@@ -413,27 +409,27 @@ class FlextModelsBase:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(populate_by_name=True)
         max_retries: Annotated[
-            flext_core.t.NonNegativeInt,
+            t.NonNegativeInt,
             FlextModelsPydantic.Field(
-                default=flext_core.c.MAX_RETRY_ATTEMPTS,
+                default=c.MAX_RETRY_ATTEMPTS,
                 alias="max_attempts",
                 description="Maximum retry attempts",
             ),
-        ] = flext_core.c.MAX_RETRY_ATTEMPTS
+        ] = c.MAX_RETRY_ATTEMPTS
         initial_delay_seconds: Annotated[
-            flext_core.t.PositiveFloat,
+            t.PositiveFloat,
             FlextModelsPydantic.Field(
-                default=flext_core.c.DEFAULT_RETRY_DELAY_SECONDS,
+                default=c.DEFAULT_RETRY_DELAY_SECONDS,
                 description="Initial delay between retries",
             ),
-        ] = flext_core.c.DEFAULT_RETRY_DELAY_SECONDS
+        ] = c.DEFAULT_RETRY_DELAY_SECONDS
         max_delay_seconds: Annotated[
-            flext_core.t.PositiveFloat,
+            t.PositiveFloat,
             FlextModelsPydantic.Field(
-                default=flext_core.c.DEFAULT_MAX_DELAY_SECONDS,
+                default=c.DEFAULT_MAX_DELAY_SECONDS,
                 description="Maximum delay between retries",
             ),
-        ] = flext_core.c.DEFAULT_MAX_DELAY_SECONDS
+        ] = c.DEFAULT_MAX_DELAY_SECONDS
 
     class TimestampedModel(
         ArbitraryTypesModel,

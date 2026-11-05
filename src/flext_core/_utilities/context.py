@@ -11,21 +11,18 @@ from collections.abc import Generator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime, timedelta
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import structlog.contextvars
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesGenerators
 
 
 class FlextUtilitiesContext:
     """Context I/O, state transitions and singleton context-variable proxies."""
 
-    class StructlogProxyContextVar[ValueT: flext_core.t.JsonPayload | datetime]:
+    class StructlogProxyContextVar[ValueT: t.JsonPayload | datetime]:
         """ContextVar-like operations backed exclusively by structlog."""
 
         def __init__(self, key: str, default: ValueT | None = None) -> None:
@@ -34,7 +31,7 @@ class FlextUtilitiesContext:
             self._default = default
 
         @staticmethod
-        def reset(token: flext_core.p.ContextProxyToken) -> None:
+        def reset(token: p.ContextProxyToken) -> None:
             """Restore the value captured before a set operation."""
             if token.previous_value is None:
                 structlog.contextvars.unbind_contextvars(token.key)
@@ -43,20 +40,20 @@ class FlextUtilitiesContext:
                     token.key: token.previous_value
                 })
 
-        def get(self) -> flext_core.t.JsonPayload | datetime | None:
+        def get(self) -> t.JsonPayload | datetime | None:
             """Read the same backing value as structlog's context processors.
 
             Returns:
                 The bound value or this proxy's default.
 
             """
-            context: Mapping[str, flext_core.t.JsonPayload | datetime] = (
+            context: Mapping[str, t.JsonPayload | datetime] = (
                 structlog.contextvars.get_contextvars()
             )
             value = context.get(self._key)
             return self._default if value is None else value
 
-        def set(self, value: ValueT | None) -> flext_core.p.ContextProxyToken:
+        def set(self, value: ValueT | None) -> p.ContextProxyToken:
             """Set or unbind a value and return its validated reset token.
 
             Returns:
@@ -68,47 +65,41 @@ class FlextUtilitiesContext:
                 structlog.contextvars.unbind_contextvars(self._key)
             else:
                 _ = structlog.contextvars.bind_contextvars(**{self._key: value})
-            return flext_core.m.StructlogProxyToken(
-                key=self._key, previous_value=previous
-            )
+            return m.StructlogProxyToken(key=self._key, previous_value=previous)
 
-    CORRELATION_ID: ClassVar[flext_core.p.ContextProxy[str]] = StructlogProxyContextVar[
+    CORRELATION_ID: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[str](
+        c.ContextKey.CORRELATION_ID
+    )
+    PARENT_CORRELATION_ID: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[
         str
-    ](flext_core.c.ContextKey.CORRELATION_ID)
-    PARENT_CORRELATION_ID: ClassVar[flext_core.p.ContextProxy[str]] = (
-        StructlogProxyContextVar[str](flext_core.c.ContextKey.PARENT_CORRELATION_ID)
+    ](c.ContextKey.PARENT_CORRELATION_ID)
+    SERVICE_NAME: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[str](
+        c.ContextKey.SERVICE_NAME
     )
-    SERVICE_NAME: ClassVar[flext_core.p.ContextProxy[str]] = StructlogProxyContextVar[
-        str
-    ](flext_core.c.ContextKey.SERVICE_NAME)
-    SERVICE_VERSION: ClassVar[flext_core.p.ContextProxy[str]] = (
-        StructlogProxyContextVar[str](flext_core.c.ContextKey.SERVICE_VERSION)
+    SERVICE_VERSION: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[str](
+        c.ContextKey.SERVICE_VERSION
     )
-    USER_ID: ClassVar[flext_core.p.ContextProxy[str]] = StructlogProxyContextVar[str](
-        flext_core.c.ContextKey.USER_ID
+    USER_ID: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[str](
+        c.ContextKey.USER_ID
     )
-    REQUEST_ID: ClassVar[flext_core.p.ContextProxy[str]] = StructlogProxyContextVar[
-        str
-    ](flext_core.c.ContextKey.REQUEST_ID)
-    REQUEST_TIMESTAMP: ClassVar[flext_core.p.ContextProxy[datetime]] = (
-        StructlogProxyContextVar[datetime](flext_core.c.ContextKey.REQUEST_TIMESTAMP)
+    REQUEST_ID: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[str](
+        c.ContextKey.REQUEST_ID
     )
-    OPERATION_NAME: ClassVar[flext_core.p.ContextProxy[str]] = StructlogProxyContextVar[
-        str
-    ](flext_core.c.ContextKey.OPERATION_NAME)
-    OPERATION_START_TIME: ClassVar[flext_core.p.ContextProxy[datetime]] = (
-        StructlogProxyContextVar[datetime](flext_core.c.ContextKey.OPERATION_START_TIME)
+    REQUEST_TIMESTAMP: ClassVar[p.ContextProxy[datetime]] = StructlogProxyContextVar[
+        datetime
+    ](c.ContextKey.REQUEST_TIMESTAMP)
+    OPERATION_NAME: ClassVar[p.ContextProxy[str]] = StructlogProxyContextVar[str](
+        c.ContextKey.OPERATION_NAME
     )
-    OPERATION_METADATA: ClassVar[flext_core.p.ContextProxy[flext_core.t.JsonDict]] = (
-        StructlogProxyContextVar[flext_core.t.JsonDict](
-            flext_core.c.ContextKey.OPERATION_METADATA
-        )
-    )
+    OPERATION_START_TIME: ClassVar[p.ContextProxy[datetime]] = StructlogProxyContextVar[
+        datetime
+    ](c.ContextKey.OPERATION_START_TIME)
+    OPERATION_METADATA: ClassVar[p.ContextProxy[t.JsonDict]] = StructlogProxyContextVar[
+        t.JsonDict
+    ](c.ContextKey.OPERATION_METADATA)
 
     @staticmethod
-    def create_str_proxy(
-        key: str, default: str | None = None
-    ) -> flext_core.p.ContextProxy[str]:
+    def create_str_proxy(key: str, default: str | None = None) -> p.ContextProxy[str]:
         """Create a string proxy over the shared structlog storage.
 
         Returns:
@@ -120,7 +111,7 @@ class FlextUtilitiesContext:
     @staticmethod
     def create_datetime_proxy(
         key: str, default: datetime | None = None
-    ) -> flext_core.p.ContextProxy[datetime]:
+    ) -> p.ContextProxy[datetime]:
         """Create a timestamp proxy over the shared structlog storage.
 
         Returns:
@@ -131,17 +122,15 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def create_dict_proxy(
-        key: str, default: flext_core.t.JsonDict | None = None
-    ) -> flext_core.p.ContextProxy[flext_core.t.JsonDict]:
+        key: str, default: t.JsonDict | None = None
+    ) -> p.ContextProxy[t.JsonDict]:
         """Create a mapping proxy over the shared structlog storage.
 
         Returns:
             The mapping context proxy.
 
         """
-        return FlextUtilitiesContext.StructlogProxyContextVar[flext_core.t.JsonDict](
-            key, default
-        )
+        return FlextUtilitiesContext.StructlogProxyContextVar[t.JsonDict](key, default)
 
     @staticmethod
     def resolve_correlation_id() -> str | None:
@@ -235,7 +224,7 @@ class FlextUtilitiesContext:
     @contextmanager
     def timed_operation(
         operation_name: str | None = None,
-    ) -> Generator[flext_core.p.ConfigMap]:
+    ) -> Generator[p.ConfigMap]:
         """Scope operation timing and finalize the yielded metadata on exit.
 
         Yields:
@@ -244,11 +233,11 @@ class FlextUtilitiesContext:
         """
         start = FlextUtilitiesGenerators.generate_datetime_utc()
         perf = time.perf_counter()
-        payload: flext_core.t.JsonDict = {
-            str(flext_core.c.MetadataKey.START_TIME): start.isoformat(),
-            str(flext_core.c.ContextKey.OPERATION_NAME): operation_name or "",
+        payload: t.JsonDict = {
+            str(c.MetadataKey.START_TIME): start.isoformat(),
+            str(c.ContextKey.OPERATION_NAME): operation_name or "",
         }
-        metadata = flext_core.m.ConfigMap.model_validate(payload)
+        metadata = m.ConfigMap.model_validate(payload)
         start_token = FlextUtilitiesContext.OPERATION_START_TIME.set(start)
         meta_token = FlextUtilitiesContext.OPERATION_METADATA.set(payload)
         op_token = (
@@ -261,10 +250,10 @@ class FlextUtilitiesContext:
         finally:
             duration = time.perf_counter() - perf
             metadata.root.update({
-                flext_core.c.MetadataKey.END_TIME: (
+                c.MetadataKey.END_TIME: (
                     start + timedelta(seconds=duration)
                 ).isoformat(),
-                flext_core.c.MetadataKey.DURATION_SECONDS: duration,
+                c.MetadataKey.DURATION_SECONDS: duration,
             })
             FlextUtilitiesContext.OPERATION_START_TIME.reset(start_token)
             FlextUtilitiesContext.OPERATION_METADATA.reset(meta_token)
@@ -272,39 +261,39 @@ class FlextUtilitiesContext:
                 FlextUtilitiesContext.OPERATION_NAME.reset(op_token)
 
     @staticmethod
-    def export_full_context() -> Mapping[str, flext_core.t.Scalar]:
+    def export_full_context() -> Mapping[str, t.Scalar]:
         """Export active scalar context variables, formatting operation timestamps.
 
         Returns:
             The active scalar context snapshot.
 
         """
-        exported: MutableMapping[str, flext_core.t.Scalar] = {}
+        exported: MutableMapping[str, t.Scalar] = {}
         for key, proxy in (
             (
-                flext_core.c.ContextKey.CORRELATION_ID,
+                c.ContextKey.CORRELATION_ID,
                 FlextUtilitiesContext.CORRELATION_ID,
             ),
             (
-                flext_core.c.ContextKey.PARENT_CORRELATION_ID,
+                c.ContextKey.PARENT_CORRELATION_ID,
                 FlextUtilitiesContext.PARENT_CORRELATION_ID,
             ),
-            (flext_core.c.ContextKey.SERVICE_NAME, FlextUtilitiesContext.SERVICE_NAME),
+            (c.ContextKey.SERVICE_NAME, FlextUtilitiesContext.SERVICE_NAME),
             (
-                flext_core.c.ContextKey.SERVICE_VERSION,
+                c.ContextKey.SERVICE_VERSION,
                 FlextUtilitiesContext.SERVICE_VERSION,
             ),
-            (flext_core.c.ContextKey.USER_ID, FlextUtilitiesContext.USER_ID),
-            (flext_core.c.ContextKey.REQUEST_ID, FlextUtilitiesContext.REQUEST_ID),
+            (c.ContextKey.USER_ID, FlextUtilitiesContext.USER_ID),
+            (c.ContextKey.REQUEST_ID, FlextUtilitiesContext.REQUEST_ID),
             (
-                flext_core.c.ContextKey.OPERATION_NAME,
+                c.ContextKey.OPERATION_NAME,
                 FlextUtilitiesContext.OPERATION_NAME,
             ),
         ):
             if (value := proxy.get()) is not None:
                 exported[key] = str(value)
         if (value := FlextUtilitiesContext.OPERATION_START_TIME.get()) is not None:
-            exported[flext_core.c.ContextKey.OPERATION_START_TIME] = (
+            exported[c.ContextKey.OPERATION_START_TIME] = (
                 value.isoformat() if isinstance(value, datetime) else str(value)
             )
         return exported
@@ -328,8 +317,8 @@ class FlextUtilitiesContext:
 
     @staticmethod
     def create_context_runtime(
-        metadata: flext_core.p.ContextMetadata | None = None,
-    ) -> flext_core.p.ContextRuntimeState:
+        metadata: p.ContextMetadata | None = None,
+    ) -> p.ContextRuntimeState:
         """Create independent built-in scopes with an immutable metadata snapshot.
 
         Returns:
@@ -338,29 +327,29 @@ class FlextUtilitiesContext:
         """
         scope_vars: MutableMapping[
             str,
-            ContextVar[flext_core.p.MutableRootDict[flext_core.t.JsonPayload] | None],
+            ContextVar[p.MutableRootDict[t.JsonPayload] | None],
         ] = {
             scope: ContextVar(f"flext_{scope}_context", default=None)
             for scope in (
-                flext_core.c.ContextScope.GLOBAL,
-                flext_core.c.ContextScope.USER,
-                flext_core.c.ContextScope.SESSION,
+                c.ContextScope.GLOBAL,
+                c.ContextScope.USER,
+                c.ContextScope.SESSION,
             )
         }
         values = {"scope_vars": scope_vars}
         if metadata is not None:
-            return flext_core.m.ContextRuntimeState.model_validate({
+            return m.ContextRuntimeState.model_validate({
                 **values,
                 "metadata": metadata.model_copy(),
             })
-        return flext_core.m.ContextRuntimeState.model_validate(values)
+        return m.ContextRuntimeState.model_validate(values)
 
     @staticmethod
     def resolve_context_scope_var(
-        state: flext_core.p.ContextRuntimeState, scope: str
+        state: p.ContextRuntimeState, scope: str
     ) -> tuple[
-        flext_core.p.ContextRuntimeState,
-        ContextVar[flext_core.p.MutableRootDict[flext_core.t.JsonPayload] | None],
+        p.ContextRuntimeState,
+        ContextVar[p.MutableRootDict[t.JsonPayload] | None],
     ]:
         """Reuse a scope variable or add one without mutating the prior state.
 
@@ -371,17 +360,17 @@ class FlextUtilitiesContext:
         existing = state.scope_vars.get(scope)
         if existing is not None:
             return state, existing
-        scope_var: ContextVar[
-            flext_core.p.MutableRootDict[flext_core.t.JsonPayload] | None
-        ] = ContextVar(f"flext_{scope}_context", default=None)
+        scope_var: ContextVar[p.MutableRootDict[t.JsonPayload] | None] = ContextVar(
+            f"flext_{scope}_context", default=None
+        )
         updated = dict(state.scope_vars)
         updated[scope] = scope_var
         return state.model_copy(update={"scope_vars": updated}), scope_var
 
     @staticmethod
     def update_context_operation(
-        state: flext_core.p.ContextRuntimeState, operation: str
-    ) -> flext_core.p.ContextRuntimeState:
+        state: p.ContextRuntimeState, operation: str
+    ) -> p.ContextRuntimeState:
         """Copy state with the existing counter and operation-metric updates.
 
         Returns:
@@ -394,14 +383,14 @@ class FlextUtilitiesContext:
             "removes": state.statistics.removes,
             "clears": state.statistics.clears,
         }
-        updates: MutableMapping[str, flext_core.t.JsonPayload] = {}
+        updates: MutableMapping[str, t.JsonPayload] = {}
         counter = f"{operation}s"
         if counter in counters:
             updates[counter] = counters[counter] + 1
-        operations: flext_core.t.JsonDict = {
+        operations: t.JsonDict = {
             key: value
             for key, value in state.statistics.operations.items()
-            if isinstance(value, flext_core.c.PRIMITIVES_TYPES)
+            if isinstance(value, c.PRIMITIVES_TYPES)
         }
         current = operations.get(operation)
         if isinstance(current, int):

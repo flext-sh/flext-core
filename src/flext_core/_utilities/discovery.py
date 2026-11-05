@@ -26,10 +26,7 @@ from typing import (
 
 from pydantic import BaseModel
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, m, p, t
 from flext_core._utilities import FlextUtilitiesModelRuntime
 
 if TYPE_CHECKING:
@@ -43,19 +40,19 @@ class FlextUtilitiesDiscovery:
     def _factory_config_for(
         module: ModuleType,
         name: str,
-    ) -> flext_core.p.FactoryDecoratorConfig | None:
+    ) -> p.FactoryDecoratorConfig | None:
         func = vars(module).get(name)
         if func is None or not callable(func):
             return None
-        config_raw = vars(func).get(flext_core.c.FACTORY_ATTR)
-        if not isinstance(config_raw, flext_core.m.FactoryDecoratorConfig):
+        config_raw = vars(func).get(c.FACTORY_ATTR)
+        if not isinstance(config_raw, m.FactoryDecoratorConfig):
             return None
         return config_raw
 
     @staticmethod
     def scan_module(
         module: ModuleType,
-    ) -> Sequence[tuple[str, flext_core.p.FactoryDecoratorConfig]]:
+    ) -> Sequence[tuple[str, p.FactoryDecoratorConfig]]:
         """Scan module for @factory()-decorated functions, sorted by name.
 
         Returns:
@@ -79,10 +76,10 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     @functools.cache
     def service_operations(
-        service_type: type[flext_core.p.Service[flext_core.p.Base]],
+        service_type: type[p.Service[p.Base]],
         *,
         owner: type | None = None,
-    ) -> tuple[flext_core.p.ServiceOperation, ...]:
+    ) -> tuple[p.ServiceOperation, ...]:
         """Return the typed operations of a service class, sorted by name.
 
         An operation is a plain public function declared in a class of the MRO
@@ -140,7 +137,7 @@ class FlextUtilitiesDiscovery:
             )
         )
         if not operations:
-            msg = flext_core.c.ERR_SERVICE_NO_OPERATIONS.format(
+            msg = c.ERR_SERVICE_NO_OPERATIONS.format(
                 service=service_type.__qualname__,
                 module=service_type.__module__,
             )
@@ -162,17 +159,14 @@ class FlextUtilitiesDiscovery:
             TypeError: If no MRO class declares them.
 
         """
-        members = (
-            get_protocol_members(flext_core.p.Service)
-            & vars(flext_core.p.Service).keys()
-        )
+        members = get_protocol_members(p.Service) & vars(p.Service).keys()
         roots = [
             klass
             for klass in service_type.__mro__
             if not is_protocol(klass) and members <= vars(klass).keys()
         ]
         if not roots:
-            msg = flext_core.c.ERR_SERVICE_NOT_A_SERVICE.format(
+            msg = c.ERR_SERVICE_NOT_A_SERVICE.format(
                 service=service_type.__qualname__,
                 module=service_type.__module__,
                 members=", ".join(sorted(members)),
@@ -186,7 +180,7 @@ class FlextUtilitiesDiscovery:
         below: tuple[type, ...],
         name: str,
         func: FunctionType,
-    ) -> flext_core.p.ServiceOperation:
+    ) -> p.ServiceOperation:
         """Validate one operation's shape and build its typed description.
 
         Returns:
@@ -206,7 +200,7 @@ class FlextUtilitiesDiscovery:
             where,
             signature,
         )
-        return flext_core.m.ServiceOperation(
+        return m.ServiceOperation(
             name=name,
             summary=doc.strip().splitlines()[0],
             request=request,
@@ -225,14 +219,12 @@ class FlextUtilitiesDiscovery:
         owners = [owner for owner in below if func.__name__ in vars(owner)]
         if any(not issubclass(owners[0], owner) for owner in owners[1:]):
             siblings = ", ".join(owner.__qualname__ for owner in owners)
-            defect = flext_core.c.ERR_SERVICE_OPERATION_COLLISION.format(
-                owners=siblings
-            )
+            defect = c.ERR_SERVICE_OPERATION_COLLISION.format(owners=siblings)
             raise error(where, signature, defect)
         if inspect.iscoroutinefunction(func) or inspect.isasyncgenfunction(func):
-            raise error(where, signature, flext_core.c.ERR_SERVICE_OPERATION_ASYNC)
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_ASYNC)
         if func.__type_params__:
-            raise error(where, signature, flext_core.c.ERR_SERVICE_OPERATION_GENERIC)
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_GENERIC)
         params = tuple(signature.parameters.values())
         requests = params[1:]
         if (
@@ -244,7 +236,7 @@ class FlextUtilitiesDiscovery:
                 for param in params
             )
         ):
-            raise error(where, signature, flext_core.c.ERR_SERVICE_OPERATION_SIGNATURE)
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_SIGNATURE)
 
     @staticmethod
     def _require_operation_docstring(
@@ -264,7 +256,7 @@ class FlextUtilitiesDiscovery:
             raise error(
                 where,
                 signature,
-                flext_core.c.ERR_SERVICE_OPERATION_DOCSTRING,
+                c.ERR_SERVICE_OPERATION_DOCSTRING,
             )
         return doc
 
@@ -272,7 +264,7 @@ class FlextUtilitiesDiscovery:
     def _inherited_handler_metadata(
         func: FunctionType,
         where: tuple[type, str, str],
-    ) -> flext_core.p.DecoratorConfig | None:
+    ) -> p.DecoratorConfig | None:
         """Resolve the handler metadata, falling back to superclass overrides.
 
         Returns:
@@ -301,7 +293,7 @@ class FlextUtilitiesDiscovery:
         func: FunctionType,
         where: tuple[type, str, str],
         signature: inspect.Signature,
-    ) -> flext_core.t.ModelClass[flext_core.t.BaseModelType] | None:
+    ) -> t.ModelClass[t.BaseModelType] | None:
         """Resolve a request Protocol and its single explicit model declaration.
 
         Returns:
@@ -312,12 +304,10 @@ class FlextUtilitiesDiscovery:
         annotations = inspect.get_annotations(func)
         hints = get_type_hints(func)
         if "return" not in hints:
-            raise error(where, signature, flext_core.c.ERR_SERVICE_OPERATION_RESULT)
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_RESULT)
         returned = hints["return"]
-        if get_origin(returned) is not flext_core.p.Result:
-            raise error(
-                where, annotations["return"], flext_core.c.ERR_SERVICE_OPERATION_RESULT
-            )
+        if get_origin(returned) is not p.Result:
+            raise error(where, annotations["return"], c.ERR_SERVICE_OPERATION_RESULT)
         metadata = FlextUtilitiesDiscovery._inherited_handler_metadata(func, where)
         params = tuple(signature.parameters.values())[1:]
         if not params:
@@ -325,28 +315,26 @@ class FlextUtilitiesDiscovery:
                 raise error(
                     where,
                     signature,
-                    flext_core.c.ERR_SERVICE_OPERATION_INPUTLESS_COMMAND,
+                    c.ERR_SERVICE_OPERATION_INPUTLESS_COMMAND,
                 )
             return None
         param = params[0]
         if param.name not in hints:
-            raise error(where, signature, flext_core.c.ERR_SERVICE_OPERATION_REQUEST)
+            raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
         annotation = annotations[param.name]
         contract = hints[param.name]
         if not is_protocol(contract):
-            raise error(where, annotation, flext_core.c.ERR_SERVICE_OPERATION_REQUEST)
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
         if metadata is None:
-            raise error(where, annotation, flext_core.c.ERR_SERVICE_OPERATION_METADATA)
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_METADATA)
         request = metadata.command
         if not issubclass(request, BaseModel):
-            raise error(
-                where, annotation, flext_core.c.ERR_SERVICE_OPERATION_COMMAND_MODEL
-            )
+            raise error(where, annotation, c.ERR_SERVICE_OPERATION_COMMAND_MODEL)
         missing = get_protocol_members(contract) - (
             request.model_fields.keys() | set(dir(request))
         )
         if missing:
-            defect = flext_core.c.ERR_SERVICE_OPERATION_PROTOCOL.format(
+            defect = c.ERR_SERVICE_OPERATION_PROTOCOL.format(
                 missing=", ".join(sorted(missing))
             )
             raise error(where, annotation, defect)
@@ -355,7 +343,7 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def _error(
         where: tuple[type, str, str],
-        annotation: flext_core.t.TypeHintSpecifier | inspect.Signature,
+        annotation: t.TypeHintSpecifier | inspect.Signature,
         defect: str,
     ) -> TypeError:
         """Build the operation's ``TypeError`` naming annotation, module and fix.
@@ -366,7 +354,7 @@ class FlextUtilitiesDiscovery:
         """
         service_type, operation, module = where
         return TypeError(
-            flext_core.c.ERR_SERVICE_OPERATION.format(
+            c.ERR_SERVICE_OPERATION.format(
                 service=service_type.__qualname__,
                 operation=operation,
                 module=module,

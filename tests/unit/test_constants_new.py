@@ -26,7 +26,7 @@ class TestsFlextConstantsNew:
     @staticmethod
     def test_validation_error_catches_pydantic_v2_failures() -> None:
         """The constants facade catches the real Pydantic validation contract."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             u.int_adapter().validate_python("invalid")
 
     @staticmethod

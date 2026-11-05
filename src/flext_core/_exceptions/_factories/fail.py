@@ -8,14 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, m, p, r
 from flext_core._exceptions import FlextExceptionsTemplate
 
 if TYPE_CHECKING:
-    from flext_core import r
+    pass
 
 
 class FlextExceptionsFactoriesFail:
@@ -36,14 +33,14 @@ class FlextExceptionsFactoriesFail:
         """
         if result_type is not None:
             return result_type
-        result_cls: type[r[TValue]] = flext_core.FlextResult
+        result_cls: type[r[TValue]] = r
         return result_cls
 
     @staticmethod
     def _failure_message(
         operation: str,
         *,
-        params: flext_core.p.BaseModel | None = None,
+        params: p.BaseModel | None = None,
         error: Exception | str | None = None,
     ) -> str:
         """Render the canonical failure message with or without an error cause.
@@ -53,9 +50,7 @@ class FlextExceptionsFactoriesFail:
 
         """
         if error is None:
-            template_without_error = flext_core.c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(
-                ": ", 1
-            )[0]
+            template_without_error = c.ERR_TEMPLATE_FAILED_WITH_ERROR.split(": ", 1)[0]
             message: str = FlextExceptionsTemplate.render_template(
                 template_without_error,
                 operation=operation,
@@ -67,7 +62,7 @@ class FlextExceptionsFactoriesFail:
         # rendering str(error) alone would drop exactly that evidence.
         notes = getattr(error, "__notes__", ()) if isinstance(error, Exception) else ()
         message_with_error: str = FlextExceptionsTemplate.render_template(
-            flext_core.c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+            c.ERR_TEMPLATE_FAILED_WITH_ERROR,
             operation=operation,
             error="\n".join((str(error), *notes)),
             params=params,
@@ -76,22 +71,22 @@ class FlextExceptionsFactoriesFail:
 
     @staticmethod
     def _resolve_options(
-        options: flext_core.p.ExceptionFactoryOptions | None = None,
-    ) -> tuple[flext_core.p.ExceptionFactoryOptions, Exception | str | None]:
+        options: p.ExceptionFactoryOptions | None = None,
+    ) -> tuple[p.ExceptionFactoryOptions, Exception | str | None]:
         resolved_options = (
-            options if options is not None else flext_core.m.ExceptionFactoryOptions()
+            options if options is not None else m.ExceptionFactoryOptions()
         )
         return resolved_options, resolved_options.error
 
     @staticmethod
     def _fail_result[TResult](
         message: str,
-        params: flext_core.p.BaseModel | None,
+        params: p.BaseModel | None,
         *,
-        options: flext_core.p.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         default_error_code: str,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         options, error = FlextExceptionsFactoriesFail._resolve_options(options)
         return FlextExceptionsFactoriesFail._result_type(result_type).fail(
             message,
@@ -110,7 +105,7 @@ class FlextExceptionsFactoriesFail:
         *,
         error_code: str | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical operation-error message.
 
         Usage::
@@ -121,7 +116,7 @@ class FlextExceptionsFactoriesFail:
             R[T].fail with a canonical operation-error message.
 
         """
-        params = flext_core.m.OperationErrorParams(
+        params = m.OperationErrorParams(
             operation=operation,
             reason=str(exc) if exc is not None else None,
         )
@@ -133,10 +128,8 @@ class FlextExceptionsFactoriesFail:
         return FlextExceptionsFactoriesFail._fail_result(
             msg,
             params,
-            options=flext_core.m.ExceptionFactoryOptions(error=exc)
-            if exc is not None
-            else None,
-            default_error_code=error_code or flext_core.c.ErrorCode.OPERATION_ERROR,
+            options=m.ExceptionFactoryOptions(error=exc) if exc is not None else None,
+            default_error_code=error_code or c.ErrorCode.OPERATION_ERROR,
             result_type=result_type,
         )
 
@@ -147,7 +140,7 @@ class FlextExceptionsFactoriesFail:
         *,
         error_code: str | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical not-found message.
 
         Usage::
@@ -158,12 +151,12 @@ class FlextExceptionsFactoriesFail:
             R[T].fail with a canonical not-found message.
 
         """
-        params = flext_core.m.NotFoundErrorParams(
+        params = m.NotFoundErrorParams(
             resource_type=resource_type,
             resource_id=resource_id,
         )
         msg = FlextExceptionsTemplate.render_template(
-            flext_core.c.ERR_SERVICE_NOT_FOUND,
+            c.ERR_SERVICE_NOT_FOUND,
             name=resource_id,
             resource_type=resource_type.capitalize(),
             params=params,
@@ -171,18 +164,18 @@ class FlextExceptionsFactoriesFail:
         return FlextExceptionsFactoriesFail._fail_result(
             msg,
             params,
-            default_error_code=error_code or flext_core.c.ErrorCode.NOT_FOUND_ERROR,
+            default_error_code=error_code or c.ErrorCode.NOT_FOUND_ERROR,
             result_type=result_type,
         )
 
     @staticmethod
     def fail_type_mismatch[TResult](
-        details: flext_core.p.ServiceLookupParams | str,
+        details: p.ServiceLookupParams | str,
         actual: str | None = None,
         *,
         error_code: str | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical type-mismatch message.
 
         Usage::
@@ -201,35 +194,35 @@ class FlextExceptionsFactoriesFail:
 
         """
         params = (
-            flext_core.m.ServiceLookupParams(expected_type=details, actual_type=actual)
+            m.ServiceLookupParams(expected_type=details, actual_type=actual)
             if isinstance(details, str)
             else details
         )
         expected_type = (
             params.expected_type
             if params.expected_type is not None
-            else flext_core.c.DEFAULT_EMPTY_STRING
+            else c.DEFAULT_EMPTY_STRING
         )
         msg = FlextExceptionsTemplate.render_template(
-            flext_core.c.ERR_SERVICE_TYPE_MISMATCH,
+            c.ERR_SERVICE_TYPE_MISMATCH,
             type_name=expected_type,
             params=params,
         )
         return FlextExceptionsFactoriesFail._fail_result(
             msg,
             params,
-            default_error_code=error_code or flext_core.c.ErrorCode.TYPE_ERROR,
+            default_error_code=error_code or c.ErrorCode.TYPE_ERROR,
             result_type=result_type,
         )
 
     @staticmethod
     def fail_validation[TResult](
-        details: flext_core.p.ValidationErrorParams | str | None = None,
+        details: p.ValidationErrorParams | str | None = None,
         *,
         error_code: str | None = None,
         error: Exception | str | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical validation-failed message.
 
         Usage::
@@ -247,19 +240,19 @@ class FlextExceptionsFactoriesFail:
         params = (
             details
             if details is not None and not isinstance(details, str)
-            else flext_core.m.ValidationErrorParams(field=details)
+            else m.ValidationErrorParams(field=details)
         )
         field_name = params.field if params.field is not None else "input"
         base_msg = (
             FlextExceptionsTemplate.render_template(
-                flext_core.c.ERR_TEMPLATE_FAILED_WITH_ERROR,
+                c.ERR_TEMPLATE_FAILED_WITH_ERROR,
                 operation=f"validate {field_name}",
                 error=str(error),
                 params=params,
             )
             if error is not None
             else FlextExceptionsTemplate.render_template(
-                flext_core.c.ERR_TEMPLATE_VALIDATION_FAILED_FOR_FIELD,
+                c.ERR_TEMPLATE_VALIDATION_FAILED_FOR_FIELD,
                 field=field_name,
                 params=params,
             )
@@ -267,10 +260,10 @@ class FlextExceptionsFactoriesFail:
         return FlextExceptionsFactoriesFail._fail_result(
             base_msg,
             params,
-            options=flext_core.m.ExceptionFactoryOptions(error=error)
+            options=m.ExceptionFactoryOptions(error=error)
             if error is not None
             else None,
-            default_error_code=error_code or flext_core.c.ErrorCode.VALIDATION_ERROR,
+            default_error_code=error_code or c.ErrorCode.VALIDATION_ERROR,
             result_type=result_type,
         )
 
@@ -279,9 +272,9 @@ class FlextExceptionsFactoriesFail:
         config_key: str,
         config_source: str | None = None,
         *,
-        options: flext_core.p.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical configuration-error message.
 
         Usage::
@@ -293,7 +286,7 @@ class FlextExceptionsFactoriesFail:
 
         """
         options, error = FlextExceptionsFactoriesFail._resolve_options(options)
-        params = flext_core.m.ConfigurationErrorParams(
+        params = m.ConfigurationErrorParams(
             config_key=config_key,
             config_source=config_source,
         )
@@ -306,7 +299,7 @@ class FlextExceptionsFactoriesFail:
             msg,
             params,
             options=options,
-            default_error_code=flext_core.c.ErrorCode.CONFIGURATION_ERROR,
+            default_error_code=c.ErrorCode.CONFIGURATION_ERROR,
             result_type=result_type,
         )
 
@@ -314,10 +307,10 @@ class FlextExceptionsFactoriesFail:
     def fail_connection[TResult](
         host: str,
         *,
-        params: flext_core.p.ConnectionErrorParams | None = None,
-        options: flext_core.p.ExceptionFactoryOptions | None = None,
+        params: p.ConnectionErrorParams | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical connection-error message.
 
         Usage::
@@ -333,7 +326,7 @@ class FlextExceptionsFactoriesFail:
 
         """
         options, error = FlextExceptionsFactoriesFail._resolve_options(options)
-        params = params or flext_core.m.ConnectionErrorParams(host=host)
+        params = params or m.ConnectionErrorParams(host=host)
         msg = FlextExceptionsFactoriesFail._failure_message(
             f"connect to {host}",
             params=params,
@@ -343,7 +336,7 @@ class FlextExceptionsFactoriesFail:
             msg,
             params,
             options=options,
-            default_error_code=flext_core.c.ErrorCode.CONNECTION_ERROR,
+            default_error_code=c.ErrorCode.CONNECTION_ERROR,
             result_type=result_type,
         )
 
@@ -354,7 +347,7 @@ class FlextExceptionsFactoriesFail:
         *,
         error_code: str | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical timeout message.
 
         Usage::
@@ -365,11 +358,11 @@ class FlextExceptionsFactoriesFail:
             R[T].fail with a canonical timeout message.
 
         """
-        params = flext_core.m.TimeoutErrorParams(
+        params = m.TimeoutErrorParams(
             timeout_seconds=timeout_seconds,
             operation=operation,
         )
-        op_label = operation or flext_core.c.ContextScope.OPERATION
+        op_label = operation or c.ContextScope.OPERATION
         msg = FlextExceptionsFactoriesFail._failure_message(
             f"{op_label} (timeout={timeout_seconds}s)",
             params=params,
@@ -377,7 +370,7 @@ class FlextExceptionsFactoriesFail:
         return FlextExceptionsFactoriesFail._fail_result(
             msg,
             params,
-            default_error_code=error_code or flext_core.c.ErrorCode.TIMEOUT_ERROR,
+            default_error_code=error_code or c.ErrorCode.TIMEOUT_ERROR,
             result_type=result_type,
         )
 
@@ -386,9 +379,9 @@ class FlextExceptionsFactoriesFail:
         auth_method: str | None = None,
         user_id: str | None = None,
         *,
-        options: flext_core.p.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authentication-error message.
 
         Usage::
@@ -400,9 +393,7 @@ class FlextExceptionsFactoriesFail:
 
         """
         options, error = FlextExceptionsFactoriesFail._resolve_options(options)
-        params = flext_core.m.AuthenticationErrorParams(
-            auth_method=auth_method, user_id=user_id
-        )
+        params = m.AuthenticationErrorParams(auth_method=auth_method, user_id=user_id)
         msg = FlextExceptionsFactoriesFail._failure_message(
             f"authenticate user {user_id or 'unknown'}",
             params=params,
@@ -412,7 +403,7 @@ class FlextExceptionsFactoriesFail:
             msg,
             params,
             options=options,
-            default_error_code=flext_core.c.ErrorCode.AUTHENTICATION_ERROR,
+            default_error_code=c.ErrorCode.AUTHENTICATION_ERROR,
             result_type=result_type,
         )
 
@@ -422,9 +413,9 @@ class FlextExceptionsFactoriesFail:
         resource: str,
         permission: str | None = None,
         *,
-        options: flext_core.p.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical authorization-error message.
 
         Usage::
@@ -436,7 +427,7 @@ class FlextExceptionsFactoriesFail:
 
         """
         options, error = FlextExceptionsFactoriesFail._resolve_options(options)
-        params = flext_core.m.AuthorizationErrorParams(
+        params = m.AuthorizationErrorParams(
             user_id=user_id,
             resource=resource,
             permission=permission,
@@ -450,7 +441,7 @@ class FlextExceptionsFactoriesFail:
             msg,
             params,
             options=options,
-            default_error_code=flext_core.c.ErrorCode.AUTHORIZATION_ERROR,
+            default_error_code=c.ErrorCode.AUTHORIZATION_ERROR,
             result_type=result_type,
         )
 
@@ -460,9 +451,9 @@ class FlextExceptionsFactoriesFail:
         resource_id: str,
         reason: str | None = None,
         *,
-        options: flext_core.p.ExceptionFactoryOptions | None = None,
+        options: p.ExceptionFactoryOptions | None = None,
         result_type: type[r[TResult]] | None = None,
-    ) -> flext_core.p.Result[TResult]:
+    ) -> p.Result[TResult]:
         """Return r[T].fail with a canonical conflict message.
 
         Usage::
@@ -474,7 +465,7 @@ class FlextExceptionsFactoriesFail:
 
         """
         options, error = FlextExceptionsFactoriesFail._resolve_options(options)
-        params = flext_core.m.ConflictErrorParams(
+        params = m.ConflictErrorParams(
             resource_type=resource_type,
             resource_id=resource_id,
             conflict_reason=reason,
@@ -488,7 +479,7 @@ class FlextExceptionsFactoriesFail:
             msg,
             params,
             options=options,
-            default_error_code=flext_core.c.ErrorCode.ALREADY_EXISTS,
+            default_error_code=c.ErrorCode.ALREADY_EXISTS,
             result_type=result_type,
         )
 

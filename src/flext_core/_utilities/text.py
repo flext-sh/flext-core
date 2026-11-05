@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from pathlib import Path
 
-import flext_core
+from flext_core import c
 
 
 class FlextUtilitiesText:
@@ -55,17 +55,17 @@ class FlextUtilitiesText:
 
         """
         if text is None:
-            raise ValueError(flext_core.c.ERR_TEXT_NONE_NOT_ALLOWED)
+            raise ValueError(c.ERR_TEXT_NONE_NOT_ALLOWED)
         stripped = text.strip()
         if not stripped:
-            raise ValueError(flext_core.c.ERR_TEXT_EMPTY_NOT_ALLOWED)
+            raise ValueError(c.ERR_TEXT_EMPTY_NOT_ALLOWED)
         return stripped
 
     @staticmethod
     def write_file(
         path: str | Path,
         content: str,
-        encoding: str = flext_core.c.DEFAULT_ENCODING,
+        encoding: str = c.DEFAULT_ENCODING,
     ) -> None:
         """Write text content to a file path using explicit encoding."""
         Path(path).write_text(content, encoding=encoding)

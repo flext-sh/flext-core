@@ -151,7 +151,7 @@ class TestsFlextUtilitiesPydanticEmpty:
         ],
     ) -> None:
         """Constraints and fixed arity survive outer collection classification."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             factory()
 
     @staticmethod
@@ -183,7 +183,7 @@ class TestsFlextUtilitiesPydanticEmpty:
             t.TypeForm(list[TestsFlextUtilitiesPydanticEmpty._Item]),
         )
         tm.that(factory(), eq=[])
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextUtilitiesPydanticEmpty._Item.model_validate({"unexpected": True})
 
     @staticmethod
@@ -208,7 +208,7 @@ class TestsFlextUtilitiesPydanticEmpty:
             ),
         )
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             factory()
 
     @staticmethod
@@ -228,5 +228,5 @@ class TestsFlextUtilitiesPydanticEmpty:
         factory: Callable[[], int | str | TestsFlextUtilitiesPydanticEmpty._Item],
     ) -> None:
         """A contract with no empty collection value raises ``TypeError``."""
-        with pytest.raises(TypeError, match="requires a collection contract"):
+        with u.Tests.raises(TypeError, match="requires a collection contract"):
             factory()

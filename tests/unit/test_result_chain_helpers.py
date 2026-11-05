@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import p, r, tm
+from tests import p, r, tm, u
 
 
 class TestsFlextCoreResultChainHelpers:
@@ -46,7 +46,7 @@ class TestsFlextCoreResultChainHelpers:
         """Reading ``.value`` on a failure is a contract violation that raises."""
         result: p.Result[int] = r[int].fail("boom")
 
-        with pytest.raises(RuntimeError, match="boom"):
+        with u.Tests.raises(RuntimeError, match="boom"):
             _ = result.value
 
     @staticmethod
@@ -54,7 +54,7 @@ class TestsFlextCoreResultChainHelpers:
         """``unwrap`` on a failure raises rather than inventing a value."""
         result: p.Result[int] = r[int].fail("boom")
 
-        with pytest.raises(RuntimeError, match="Cannot unwrap failed result"):
+        with u.Tests.raises(RuntimeError, match="Cannot unwrap failed result"):
             result.unwrap()
 
     @staticmethod

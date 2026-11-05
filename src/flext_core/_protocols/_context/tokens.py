@@ -9,13 +9,10 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols import FlextProtocolsEntity
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextProtocolsContextTokens:
@@ -26,12 +23,12 @@ class FlextProtocolsContextTokens:
         """Structural data contract projected from the owning model."""
 
         @property
-        def key(self) -> flext_core.t.NonEmptyStr:
+        def key(self) -> t.NonEmptyStr:
             """Context variable key (alphanumeric, underscore)."""
             ...
 
         @property
-        def previous_value(self) -> flext_core.t.JsonPayload | datetime | None:
+        def previous_value(self) -> t.JsonPayload | datetime | None:
             """Previous value before set operation."""
             ...
 
@@ -40,12 +37,12 @@ class FlextProtocolsContextTokens:
         """Structural data contract projected from the owning model."""
 
         @property
-        def key(self) -> flext_core.t.NonEmptyStr:
+        def key(self) -> t.NonEmptyStr:
             """Unique key for the context variable."""
             ...
 
         @property
-        def old_value(self) -> flext_core.t.JsonPayload | None:
+        def old_value(self) -> t.JsonPayload | None:
             """Previous value before set operation."""
             ...
 

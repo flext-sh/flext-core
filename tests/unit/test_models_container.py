@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import m, t, tm
+from tests import m, t, tm, u
 
 
 class TestsFlextCoreModelsContainer:
@@ -42,7 +42,7 @@ class TestsFlextCoreModelsContainer:
     def test_config_map_rejects_non_mapping_root() -> None:
         # Pydantic ValidationError subclasses ValueError.
         """Test config map rejects non mapping root."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ConfigMap.model_validate(["not", "a", "mapping"])
 
     # ------------------------------------------------------------------ #
@@ -59,7 +59,7 @@ class TestsFlextCoreModelsContainer:
     def test_config_map_getitem_missing_key_raises() -> None:
         """Test config map getitem missing key raises."""
         cfg = m.ConfigMap(root={"a": 1})
-        with pytest.raises(KeyError):
+        with u.Tests.raises(KeyError):
             _ = cfg["absent"]
 
     @staticmethod
@@ -239,5 +239,5 @@ class TestsFlextCoreContainerSerialization:
     @staticmethod
     def test_object_list_rejects_non_sequence_root() -> None:
         """Test object list rejects non sequence root."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ObjectList.model_validate({"root": 12345})

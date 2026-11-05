@@ -15,13 +15,9 @@ import string
 import uuid
 from collections.abc import Mapping, Sequence
 from datetime import UTC, datetime, tzinfo
-from typing import TYPE_CHECKING
 from zoneinfo import ZoneInfo
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import FlextSettings, c, m, p, t
 
 
 class FlextUtilitiesGenerators:
@@ -48,12 +44,12 @@ class FlextUtilitiesGenerators:
         kind_prefix_map: Mapping[str, str] = {
             "correlation": "corr",
             "entity": "ent",
-            flext_core.c.ProcessingMode.BATCH: flext_core.c.ProcessingMode.BATCH,
-            flext_core.c.ContextScope.TRANSACTION: "txn",
-            flext_core.c.HandlerType.SAGA: flext_core.c.HandlerType.SAGA,
-            flext_core.c.HandlerType.EVENT: "evt",
-            flext_core.c.HandlerType.COMMAND: "cmd",
-            flext_core.c.HandlerType.QUERY: "qry",
+            c.ProcessingMode.BATCH: c.ProcessingMode.BATCH,
+            c.ContextScope.TRANSACTION: "txn",
+            c.HandlerType.SAGA: c.HandlerType.SAGA,
+            c.HandlerType.EVENT: "evt",
+            c.HandlerType.COMMAND: "cmd",
+            c.HandlerType.QUERY: "qry",
         }
         resolved_prefix = kind_prefix_map.get(kind)
         if resolved_prefix is None:
@@ -73,8 +69,8 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_prefixed_id(
         prefix: str,
-        *parts: flext_core.t.JsonValue,
-        length: int = flext_core.c.SHORT_UUID_LENGTH,
+        *parts: t.JsonValue,
+        length: int = c.SHORT_UUID_LENGTH,
     ) -> str:
         """Generate {prefix}_{parts}_{uuid[:length]} formatted ID.
 
@@ -84,23 +80,23 @@ class FlextUtilitiesGenerators:
         """
         uuid_part = str(uuid.uuid4())[:length]
         if parts:
-            middle = "_".join(str(flext_core.p) for p in parts)
+            middle = "_".join(str(p) for p in parts)
             return f"{prefix}_{middle}_{uuid_part}"
         return f"{prefix}_{uuid_part}"
 
     @staticmethod
     def _build_parts_list(
-        parts: tuple[flext_core.t.JsonValue, ...] | None,
+        parts: tuple[t.JsonValue, ...] | None,
         *,
         include_timestamp: bool,
-    ) -> Sequence[flext_core.t.JsonValue]:
+    ) -> Sequence[t.JsonValue]:
         """Collect ID parts including optional timestamp prefix.
 
         Returns:
             The resulting ``Sequence[t.JsonValue]``.
 
         """
-        all_parts: list[flext_core.t.JsonValue] = []
+        all_parts: list[t.JsonValue] = []
         if include_timestamp:
             all_parts.append(int(datetime.now(UTC).timestamp()))
         if parts:
@@ -110,7 +106,7 @@ class FlextUtilitiesGenerators:
     @staticmethod
     def _generate_custom_separator_id(
         actual_prefix: str,
-        all_parts: Sequence[flext_core.t.JsonValue],
+        all_parts: Sequence[t.JsonValue],
         separator: str,
         id_length: int,
     ) -> str:
@@ -122,7 +118,7 @@ class FlextUtilitiesGenerators:
         """
         uuid_part = str(uuid.uuid4())[:id_length]
         if all_parts:
-            middle = separator.join(str(flext_core.p) for p in all_parts)
+            middle = separator.join(str(p) for p in all_parts)
             return f"{actual_prefix}{separator}{middle}{separator}{uuid_part}"
         return f"{actual_prefix}{separator}{uuid_part}"
 
@@ -130,7 +126,7 @@ class FlextUtilitiesGenerators:
     def generate(
         kind: str | None = None,
         *,
-        options: flext_core.p.GenerateOptions | None = None,
+        options: p.GenerateOptions | None = None,
     ) -> str:
         """Generate ID by kind or custom prefix (the ONLY public ID generation method).
 
@@ -138,7 +134,7 @@ class FlextUtilitiesGenerators:
             The resulting ``str``.
 
         """
-        resolved_options = options or flext_core.m.GenerateOptions()
+        resolved_options = options or m.GenerateOptions()
         _prefix_resolved, actual_prefix = FlextUtilitiesGenerators._determine_prefix(
             kind,
             resolved_options.prefix,
@@ -152,7 +148,7 @@ class FlextUtilitiesGenerators:
                 short_length = (
                     resolved_options.length
                     if resolved_options.length is not None
-                    else flext_core.c.SHORT_UUID_LENGTH
+                    else c.SHORT_UUID_LENGTH
                 )
                 generated_id = "".join(
                     secrets.choice(alphabet) for _ in range(short_length)
@@ -167,7 +163,7 @@ class FlextUtilitiesGenerators:
                 id_length = (
                     resolved_options.length
                     if resolved_options.length is not None
-                    else flext_core.c.SHORT_UUID_LENGTH
+                    else c.SHORT_UUID_LENGTH
                 )
                 if (
                     resolved_options.separator != "_"
@@ -255,7 +251,7 @@ class FlextUtilitiesGenerators:
 
         """
         return FlextUtilitiesGenerators.resolve_timezone(
-            flext_core.FlextSettings.fetch_global().timezone,
+            FlextSettings.fetch_global().timezone,
         )
 
     @staticmethod

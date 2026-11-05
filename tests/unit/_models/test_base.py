@@ -15,7 +15,7 @@ from typing import Annotated
 
 import pytest
 
-from tests import c, m, t, tm
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreBase:
@@ -76,7 +76,7 @@ class TestsFlextCoreBase:
         self,
         payload: t.JsonMapping,
     ) -> None:
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             self.Sample.model_validate(payload)
 
     def test_value_objects_are_equal_when_all_fields_match(self) -> None:
@@ -121,5 +121,5 @@ class TestsFlextCoreBase:
         self,
         amount: str | float,
     ) -> None:
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             self.SampleValue.model_validate({"amount": amount, "label": "strict"})

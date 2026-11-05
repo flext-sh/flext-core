@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from flext_core.lazy import lazy_getattr
-from tests import tm
+from tests import tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -45,7 +45,7 @@ class TestsFlextCoreLazyFailureContract:
     @staticmethod
     def test_absent_symbol_on_a_loaded_module_stays_an_attribute_error() -> None:
         """A legal absence keeps hasattr and getattr-with-default probes working."""
-        with pytest.raises(AttributeError, match="has no attribute"):
+        with u.Tests.raises(AttributeError, match="has no attribute"):
             lazy_getattr(
                 "Missing",
                 {"Missing": ("xml.dom", "DoesNotExist")},

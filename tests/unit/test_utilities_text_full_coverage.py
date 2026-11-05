@@ -30,7 +30,7 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
         message: str,
     ) -> None:
         """Bootstrap inputs must fail fast when text is absent or blank."""
-        with pytest.raises(ValueError, match=message):
+        with u.Tests.raises(ValueError, match=message):
             u.safe_string(value)
 
     @staticmethod

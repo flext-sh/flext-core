@@ -10,19 +10,19 @@ import math
 
 import pytest
 
-from tests import c, m, t, tm
+from tests import c, m, t, tm, u
 
 
 class TestsFlextModelsExceptionParamsCore:
     @staticmethod
     def test_params_model_forbids_extra_fields() -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.ParamsModel.model_validate({"unknown_field": "value"})
 
     @staticmethod
     def test_strict_mode_rejects_type_coercion() -> None:
         """strict=True: a string is not coerced into an int port."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.ConnectionErrorParams.model_validate({"port": "5432"})
 
     @staticmethod

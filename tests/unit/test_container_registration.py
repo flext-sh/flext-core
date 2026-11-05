@@ -78,7 +78,7 @@ class TestsFlextCoreContainerRegistration:
     @staticmethod
     def test_bind_empty_name_raises(clean_container: p.Container) -> None:
         """An empty service name raises and registers nothing."""
-        with pytest.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
+        with u.Tests.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
             _ = clean_container.bind("", "service")
 
         tm.that(clean_container.names(), empty=True)
@@ -125,7 +125,7 @@ class TestsFlextCoreContainerRegistration:
     @staticmethod
     def test_factory_empty_name_raises(clean_container: p.Container) -> None:
         """An empty factory name raises and registers nothing."""
-        with pytest.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
+        with u.Tests.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
             clean_container.factory("", u.Tests.create_factory("value"))
 
         tm.that(clean_container.names(), empty=True)

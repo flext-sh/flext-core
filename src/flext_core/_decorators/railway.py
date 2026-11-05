@@ -10,7 +10,7 @@ import time
 from functools import wraps
 from typing import TYPE_CHECKING, TypeIs, overload
 
-import flext_core
+from flext_core import c, m, p, r
 from flext_core._decorators import FlextDecoratorsLogging
 from flext_core._exceptions import FlextExceptionsTypes
 
@@ -25,7 +25,7 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
     def railway(
         cls,
         error_code: str | None = None,
-    ) -> flext_core.p.RailwayDecorator:
+    ) -> p.RailwayDecorator:
         """Wrap a callable in the FLEXT railway result pattern.
 
         Returns:
@@ -35,45 +35,43 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
 
         @overload
         def decorator[**PCallback, TValue](
-            func: Callable[PCallback, flext_core.p.Result[TValue]],
+            func: Callable[PCallback, p.Result[TValue]],
             /,
-        ) -> Callable[PCallback, flext_core.p.Result[TValue]]: ...
+        ) -> Callable[PCallback, p.Result[TValue]]: ...
 
         @overload
         def decorator[**PCallback, TValue](
-            func: Callable[PCallback, TValue | flext_core.p.Result[TValue]],
+            func: Callable[PCallback, TValue | p.Result[TValue]],
             /,
-        ) -> Callable[PCallback, flext_core.p.Result[TValue]]: ...
+        ) -> Callable[PCallback, p.Result[TValue]]: ...
 
         def decorator[**PCallback, TValue](
-            func: Callable[PCallback, TValue | flext_core.p.Result[TValue]],
+            func: Callable[PCallback, TValue | p.Result[TValue]],
             /,
-        ) -> Callable[PCallback, flext_core.p.Result[TValue]]:
+        ) -> Callable[PCallback, p.Result[TValue]]:
             def is_result(
-                value: TValue | flext_core.p.Result[TValue],
-            ) -> TypeIs[flext_core.p.Result[TValue]]:
-                return isinstance(value, flext_core.p.Result)
+                value: TValue | p.Result[TValue],
+            ) -> TypeIs[p.Result[TValue]]:
+                return isinstance(value, p.Result)
 
             @wraps(func)
             def wrapper(
                 *args: PCallback.args,
                 **kwargs: PCallback.kwargs,
-            ) -> flext_core.p.Result[TValue]:
+            ) -> p.Result[TValue]:
                 try:
                     result = func(*args, **kwargs)
                     if is_result(result):
                         return result
-                    return flext_core.r[TValue].ok(result)
+                    return r[TValue].ok(result)
                 except cls._CAUGHT_EXCEPTIONS as exc:
                     effective_error_code = (
                         error_code
                         if error_code is not None
-                        else flext_core.c.ErrorCode.OPERATION_ERROR.value
+                        else c.ErrorCode.OPERATION_ERROR.value
                     )
                     error_msg = f"{func.__name__} failed: {type(exc).__name__}: {exc}"
-                    return flext_core.r[TValue].fail(
-                        error_msg, error_code=effective_error_code
-                    )
+                    return r[TValue].fail(error_msg, error_code=effective_error_code)
 
             return wrapper
 
@@ -94,20 +92,16 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                 TResult]]``.
 
         """
-        attempts = (
-            max_attempts
-            if max_attempts is not None
-            else flext_core.c.MAX_RETRY_ATTEMPTS
-        )
+        attempts = max_attempts if max_attempts is not None else c.MAX_RETRY_ATTEMPTS
         delay = (
             delay_seconds
             if delay_seconds is not None
-            else float(flext_core.c.DEFAULT_RETRY_DELAY_SECONDS)
+            else float(c.DEFAULT_RETRY_DELAY_SECONDS)
         )
         strategy = (
             backoff_strategy
             if backoff_strategy is not None
-            else flext_core.c.BackoffStrategy.EXPONENTIAL
+            else c.BackoffStrategy.EXPONENTIAL
         )
 
         def decorator(
@@ -124,11 +118,10 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     logger_carrier,
                     func_module=func.__module__,
                 )
-                retry_settings = flext_core.m.RetryConfiguration.model_validate({
+                retry_settings = m.RetryConfiguration.model_validate({
                     "max_retries": attempts,
                     "initial_delay_seconds": delay,
-                    "exponential_backoff": strategy
-                    == flext_core.c.BackoffStrategy.EXPONENTIAL,
+                    "exponential_backoff": strategy == c.BackoffStrategy.EXPONENTIAL,
                     "retry_on_exceptions": [],
                     "retry_on_status_codes": [],
                 })
@@ -149,16 +142,14 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     effective_error_code = (
                         error_code
                         if error_code is not None
-                        else flext_core.c.ErrorCode.TIMEOUT_ERROR.value
+                        else c.ErrorCode.TIMEOUT_ERROR.value
                     )
                     timeout_message = (
                         f"Operation {func.__name__} failed after {attempts} attempts"
                     )
                     raise FlextExceptionsTypes.FlextTimeoutError(
                         timeout_message,
-                        options=flext_core.m.ExceptionInitOptions(
-                            error_code=effective_error_code
-                        ),
+                        options=m.ExceptionInitOptions(error_code=effective_error_code),
                         operation=func.__name__,
                         attempts=attempts,
                         original_error=str(retry_result),
@@ -174,9 +165,9 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         cls,
         call: Callable[[], TResult],
         func_name: str,
-        logger: flext_core.p.Logger,
+        logger: p.Logger,
         *,
-        retry_settings: flext_core.p.RetryConfiguration,
+        retry_settings: p.RetryConfiguration,
     ) -> TResult | Exception:
         """Execute retry loop with closure; return last exception on exhaustion.
 
@@ -187,9 +178,9 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
         attempts = retry_settings.max_retries
         delay = retry_settings.initial_delay_seconds
         strategy = (
-            flext_core.c.BackoffStrategy.EXPONENTIAL
+            c.BackoffStrategy.EXPONENTIAL
             if retry_settings.exponential_backoff
-            else flext_core.c.BackoffStrategy.LINEAR
+            else c.BackoffStrategy.LINEAR
         )
         last_exception: Exception | None = None
         current_delay = delay
@@ -215,14 +206,14 @@ class FlextDecoratorsRailway(FlextDecoratorsLogging):
                     error=str(exc),
                     error_type=exc.__class__.__name__,
                 )
-                if strategy == flext_core.c.BackoffStrategy.EXPONENTIAL:
+                if strategy == c.BackoffStrategy.EXPONENTIAL:
                     current_delay *= 2
-                elif strategy == flext_core.c.BackoffStrategy.LINEAR:
+                elif strategy == c.BackoffStrategy.LINEAR:
                     current_delay += delay
                 if attempt == attempts:
                     break
         if last_exception is None:
-            msg = flext_core.c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
+            msg = c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
             return RuntimeError(msg)
         return last_exception
 

@@ -39,7 +39,7 @@ class TestsFlextLoggingScopes:
         try:
             with u.logging_scope("operation", run_id="outer"):
                 logger.info("outer")
-                with pytest.raises(ValueError, match="inner failed"):
+                with u.Tests.raises(ValueError, match="inner failed"):
                     inner_operation()
                 logger.info("restored")
             logger.info("outside")

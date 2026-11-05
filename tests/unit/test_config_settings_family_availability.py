@@ -21,7 +21,7 @@ from tests import tm
 
 _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.constants",
-    "flext_core.typings",
+    "typings",
     "flext_core.protocols",
     "flext_core.models",
     "flext_core.utilities",

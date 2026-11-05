@@ -11,7 +11,7 @@ from contextvars import ContextVar
 from types import MappingProxyType
 from typing import Annotated, ClassVar
 
-import flext_core
+from flext_core import p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context._scope import FlextModelsContextScopePart01
 
@@ -28,9 +28,9 @@ class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
             default_factory=FlextModelsBase.Metadata,
             description="Normalized metadata bound to the active context",
         )
-        hooks: flext_core.t.ContextHookMap = FlextModelsPydantic.Field(
+        hooks: t.ContextHookMap = FlextModelsPydantic.Field(
             default_factory=lambda: MappingProxyType[
-                str, Sequence[flext_core.t.ContextHookCallable]
+                str, Sequence[t.ContextHookCallable]
             ]({}),
             validate_default=True,
             description="Lifecycle hooks keyed by event name",
@@ -51,17 +51,11 @@ class FlextModelsContextScopePart02(FlextModelsContextScopePart01):
         )
         scope_vars: Mapping[
             str,
-            flext_core.t.Port[
-                ContextVar[
-                    flext_core.p.MutableRootDict[flext_core.t.JsonPayload] | None
-                ]
-            ],
+            t.Port[ContextVar[p.MutableRootDict[t.JsonPayload] | None]],
         ] = FlextModelsPydantic.Field(
             default_factory=lambda: MappingProxyType[
                 str,
-                ContextVar[
-                    flext_core.p.MutableRootDict[flext_core.t.JsonPayload] | None
-                ],
+                ContextVar[p.MutableRootDict[t.JsonPayload] | None],
             ]({}),
             validate_default=True,
             description="ContextVar registry keyed by scope name",

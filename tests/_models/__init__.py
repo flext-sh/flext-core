@@ -12,22 +12,14 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from tests._models.mixins import (
-        TestsFlextModelsMixins,
-        TestsFlextModelsNamespace,
-        m,
-    )
+    from tests._models.mixins import TestsFlextModelsMixins, TestsFlextModelsNamespace
 
 
-__all__: tuple[str, ...] = ("TestsFlextModelsMixins", "TestsFlextModelsNamespace", "m")
+__all__: tuple[str, ...] = ("TestsFlextModelsMixins", "TestsFlextModelsNamespace")
 
 install_lazy_exports(
     __name__,
     globals(),
-    {
-        "TestsFlextModelsMixins": ".mixins",
-        "TestsFlextModelsNamespace": ".mixins",
-        "m": ".mixins",
-    },
+    {"TestsFlextModelsMixins": ".mixins", "TestsFlextModelsNamespace": ".mixins"},
     public_exports=__all__,
 )

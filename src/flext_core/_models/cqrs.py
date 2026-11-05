@@ -16,7 +16,7 @@ from typing import Annotated, ClassVar, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-import flext_core
+from flext_core import c, t
 from flext_core._models import FlextModelsBase
 from flext_core._models._cqrs import FlextModelsCqrsPart01
 
@@ -32,22 +32,20 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
     class Command(FlextModelsBase.ArbitraryTypesModel):
         """Base class for CQRS commands with validation."""
 
-        tag: ClassVar[Literal[flext_core.c.HandlerMode.COMMAND]] = (
-            flext_core.c.HandlerMode.COMMAND
-        )
+        tag: ClassVar[Literal[c.HandlerMode.COMMAND]] = c.HandlerMode.COMMAND
         message_type: Annotated[
-            Literal[flext_core.c.HandlerMode.COMMAND],
+            Literal[c.HandlerMode.COMMAND],
             Field(
                 frozen=True,
                 description="Message type discriminator (always 'command')",
             ),
-        ] = flext_core.c.HandlerMode.COMMAND
+        ] = c.HandlerMode.COMMAND
         command_type: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(description="Command type identifier"),
-        ] = flext_core.c.DEFAULT_COMMAND_TYPE
+        ] = c.DEFAULT_COMMAND_TYPE
         command_id: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(
                 description=(
                     "Unique command identifier used for tracing and idempotency checks."
@@ -56,12 +54,10 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 examples=["cmd_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: (
-                "cmd_" + str(uuid.uuid4())[: flext_core.c.SHORT_UUID_LENGTH]
-            ),
+            default_factory=lambda: "cmd_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH],
         )
         issuer_id: Annotated[
-            flext_core.t.NonEmptyStr | None,
+            t.NonEmptyStr | None,
             Field(description="Identity of the principal that issued this command."),
         ] = None
 
@@ -74,15 +70,13 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 "description": "Query model for CQRS query operations",
             },
         )
-        tag: ClassVar[Literal[flext_core.c.HandlerMode.QUERY]] = (
-            flext_core.c.HandlerMode.QUERY
-        )
+        tag: ClassVar[Literal[c.HandlerMode.QUERY]] = c.HandlerMode.QUERY
         message_type: Annotated[
-            Literal[flext_core.c.HandlerMode.QUERY],
+            Literal[c.HandlerMode.QUERY],
             Field(frozen=True, description="Message type discriminator"),
-        ] = flext_core.c.HandlerMode.QUERY
+        ] = c.HandlerMode.QUERY
         filters: Annotated[
-            Mapping[str, flext_core.t.Scalar],
+            Mapping[str, t.Scalar],
             Field(
                 description=(
                     "Filter values that restrict"
@@ -92,7 +86,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 examples=[{"status": "active", "tenant": "acme"}],
             ),
         ] = Field(
-            default_factory=lambda: MappingProxyType[str, flext_core.t.Scalar]({}),
+            default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
         pagination: Annotated[
@@ -105,14 +99,14 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 title="Pagination",
                 examples=[
                     {
-                        "page": flext_core.c.FIRST_PAGE_INDEX,
-                        "size": flext_core.c.DEFAULT_PAGE_SIZE,
+                        "page": c.FIRST_PAGE_INDEX,
+                        "size": c.DEFAULT_PAGE_SIZE,
                     }
                 ],
             ),
         ] = Field(default_factory=FlextModelsCqrsPart01.Pagination)
         query_id: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(
                 description=(
                     "Unique query identifier used for tracing and cache correlation."
@@ -122,8 +116,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             ),
         ] = Field(
             default_factory=lambda: (
-                f"{flext_core.c.HandlerMode.QUERY}_"
-                + str(uuid.uuid4())[: flext_core.c.SHORT_UUID_LENGTH]
+                f"{c.HandlerMode.QUERY}_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH]
             ),
         )
         query_type: Annotated[
@@ -135,7 +128,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         @classmethod
         def validate_pagination(
             cls,
-            v: BaseModel | Mapping[str, flext_core.t.Scalar] | None,
+            v: BaseModel | Mapping[str, t.Scalar] | None,
         ) -> BaseModel:
             """Convert pagination to Pagination instance.
 
@@ -167,19 +160,19 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
             },
         )
         handler_id: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(frozen=True, description="Unique handler identifier"),
         ]
         handler_name: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(frozen=True, description="Human-readable handler name"),
         ]
-        handler_type: Annotated[
-            flext_core.c.HandlerType, Field(description="Handler type")
-        ] = flext_core.c.HandlerType.COMMAND
-        handler_mode: Annotated[
-            flext_core.c.HandlerType, Field(description="Handler mode")
-        ] = flext_core.c.HandlerType.COMMAND
+        handler_type: Annotated[c.HandlerType, Field(description="Handler type")] = (
+            c.HandlerType.COMMAND
+        )
+        handler_mode: Annotated[c.HandlerType, Field(description="Handler mode")] = (
+            c.HandlerType.COMMAND
+        )
         command_timeout: Annotated[
             int,
             Field(
@@ -188,7 +181,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                     " Models use Config values in initialization."
                 ),
             ),
-        ] = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         max_command_retries: Annotated[
             int,
             Field(
@@ -197,7 +190,7 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                     " Models use Config values in initialization."
                 ),
             ),
-        ] = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         metadata: Annotated[
             FlextModelsBase.Metadata | None,
             Field(description="Handler metadata (Pydantic model)"),
@@ -210,26 +203,22 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
         They are immutable records of what happened in the system.
         """
 
-        tag: ClassVar[Literal[flext_core.c.HandlerType.EVENT]] = (
-            flext_core.c.HandlerType.EVENT
-        )
+        tag: ClassVar[Literal[c.HandlerType.EVENT]] = c.HandlerType.EVENT
         message_type: Annotated[
-            Literal[flext_core.c.HandlerType.EVENT],
+            Literal[c.HandlerType.EVENT],
             Field(
                 frozen=True,
                 description="Message type discriminator (always 'event')",
             ),
-        ] = flext_core.c.HandlerType.EVENT
-        event_type: Annotated[
-            flext_core.t.NonEmptyStr, Field(description="Event type identifier")
-        ]
+        ] = c.HandlerType.EVENT
+        event_type: Annotated[t.NonEmptyStr, Field(description="Event type identifier")]
 
         aggregate_id: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(description="ID of the aggregate that generated this event"),
         ]
         event_id: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             Field(
                 description=(
                     "Unique event identifier used for deduplication and observability."
@@ -238,26 +227,24 @@ class FlextModelsCqrs(FlextModelsCqrsPart01):
                 examples=["evt_01HZX7Q0P5N6M2"],
             ),
         ] = Field(
-            default_factory=lambda: (
-                "evt_" + str(uuid.uuid4())[: flext_core.c.SHORT_UUID_LENGTH]
-            ),
+            default_factory=lambda: "evt_" + str(uuid.uuid4())[: c.SHORT_UUID_LENGTH],
         )
         data: Annotated[
-            Mapping[str, flext_core.t.Scalar],
+            Mapping[str, t.Scalar],
             Field(description="Event payload data"),
         ] = Field(
-            default_factory=lambda: MappingProxyType[str, flext_core.t.Scalar]({}),
+            default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
         metadata: Annotated[
-            Mapping[str, flext_core.t.Scalar],
+            Mapping[str, t.Scalar],
             Field(description="Event metadata (timestamps, correlation IDs, etc.)"),
         ] = Field(
-            default_factory=lambda: MappingProxyType[str, flext_core.t.Scalar]({}),
+            default_factory=lambda: MappingProxyType[str, t.Scalar]({}),
             validate_default=True,
         )
 
-    type FlextMessage = flext_core.t.MessageUnion[Command, Query, Event]
+    type FlextMessage = t.MessageUnion[Command, Query, Event]
 
 
 __all__: list[str] = ["FlextModelsCqrs"]

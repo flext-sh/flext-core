@@ -15,20 +15,17 @@ import re
 import tomllib
 from collections.abc import Mapping, MutableSequence
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import yaml
 from pydantic import ValidationError
 
-import flext_core
+from flext_core import FlextStrictYamlConfigSource, c, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesReliability,
     FlextUtilitiesTypingAdapterJson,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextUtilitiesConfig:
@@ -45,7 +42,7 @@ class FlextUtilitiesConfig:
         YAMLError = yaml.YAMLError
 
         @staticmethod
-        def safe_load(stream: str) -> flext_core.t.JsonValue:
+        def safe_load(stream: str) -> t.JsonValue:
             """Parse a YAML string → validated JSON value.
 
             Returns:
@@ -57,7 +54,7 @@ class FlextUtilitiesConfig:
 
         @staticmethod
         def safe_dump(
-            data: flext_core.t.JsonValue | flext_core.t.JsonMapping,
+            data: t.JsonValue | t.JsonMapping,
             *,
             sort_keys: bool = False,
             indent: int = 2,
@@ -83,7 +80,7 @@ class FlextUtilitiesConfig:
             )
 
         @staticmethod
-        def safe_load_file(path: Path) -> flext_core.t.JsonValue:
+        def safe_load_file(path: Path) -> t.JsonValue:
             """Load a YAML file → validated JSON value.
 
             Returns:
@@ -95,19 +92,19 @@ class FlextUtilitiesConfig:
                 return adapter.validate_python(yaml.safe_load(fh))
 
         @staticmethod
-        def unique_key_load(stream: str) -> flext_core.t.JsonValue:
+        def unique_key_load(stream: str) -> t.JsonValue:
             """Public door to the settings sources' strict unique-key YAML loader.
 
             Returns:
                 The parsed JSON value.
 
             """
-            return flext_core.FlextStrictYamlConfigSource.unique_key_load(stream)
+            return FlextStrictYamlConfigSource.unique_key_load(stream)
 
         @staticmethod
         def unique_key_load_all(
             text: str,
-        ) -> flext_core.p.Result[tuple[flext_core.t.JsonValue, ...]]:
+        ) -> p.Result[tuple[t.JsonValue, ...]]:
             """Read every YAML document through the strict loader → ``r[...]``.
 
             The one-way read path: YAML 1.2 scalars, unique keys, libyaml
@@ -117,11 +114,9 @@ class FlextUtilitiesConfig:
                 Every document in stream order, or the first parse failure.
 
             """
-            result = flext_core.r[tuple[flext_core.t.JsonValue, ...]]
+            result = r[tuple[t.JsonValue, ...]]
             try:
-                return result.ok(
-                    flext_core.FlextStrictYamlConfigSource.unique_key_load_all(text)
-                )
+                return result.ok(FlextStrictYamlConfigSource.unique_key_load_all(text))
             except yaml.YAMLError as exc:
                 return result.fail(f"YAML parse error: {exc}", exception=exc)
             except ValidationError as exc:
@@ -130,7 +125,7 @@ class FlextUtilitiesConfig:
                 )
 
         @staticmethod
-        def yaml_safe_load(path: Path) -> flext_core.p.Result[flext_core.t.JsonMapping]:
+        def yaml_safe_load(path: Path) -> p.Result[t.JsonMapping]:
             """Load a YAML file → ``r[JsonMapping]``.
 
             Returns:
@@ -138,40 +133,40 @@ class FlextUtilitiesConfig:
 
             """
             if not path.is_file():
-                return flext_core.r[flext_core.t.JsonMapping].fail(
+                return r[t.JsonMapping].fail(
                     f"YAML file not found: {path}",
                 )
             try:
                 loaded = FlextUtilitiesConfig.Yaml.safe_load_file(path)
             except yaml.YAMLError as exc:
-                return flext_core.r[flext_core.t.JsonMapping].fail(
+                return r[t.JsonMapping].fail(
                     f"YAML parse error: {exc}",
                     exception=exc,
                 )
             except OSError as exc:
-                return flext_core.r[flext_core.t.JsonMapping].fail(
+                return r[t.JsonMapping].fail(
                     f"YAML read error: {exc}",
                     exception=exc,
                 )
             except ValidationError as exc:
-                return flext_core.r[flext_core.t.JsonMapping].fail(
+                return r[t.JsonMapping].fail(
                     f"YAML value is not JSON-compatible: {path}: {exc}",
                     exception=exc,
                 )
             if not isinstance(loaded, Mapping):
-                return flext_core.r[flext_core.t.JsonMapping].fail(
+                return r[t.JsonMapping].fail(
                     f"YAML top level is not a mapping: {path}",
                 )
-            return flext_core.r[flext_core.t.JsonMapping].ok(loaded)
+            return r[t.JsonMapping].ok(loaded)
 
         @staticmethod
         def yaml_dump(
             path: Path,
-            data: flext_core.t.JsonMapping,
+            data: t.JsonMapping,
             *,
             sort_keys: bool = False,
             indent: int = 2,
-        ) -> flext_core.p.Result[bool]:
+        ) -> p.Result[bool]:
             """Write a payload as YAML file → ``r[bool]``.
 
             Returns:
@@ -187,18 +182,16 @@ class FlextUtilitiesConfig:
                 )
                 with path.open("w", encoding="utf-8") as fh:
                     fh.write(validated)
-                return flext_core.r[bool].ok(value=True)
+                return r[bool].ok(value=True)
             except OSError as exc:
-                return flext_core.r[bool].fail(
-                    f"YAML write error: {exc}", exception=exc
-                )
+                return r[bool].fail(f"YAML write error: {exc}", exception=exc)
 
-    _EXPAND_PATTERN: ClassVar[flext_core.t.RegexPattern] = re.compile(
+    _EXPAND_PATTERN: ClassVar[t.RegexPattern] = re.compile(
         r"\$\{(?P<name>[A-Za-z_][A-Za-z0-9_]*)(?::-(?P<default>[^{}]*))?\}",
     )
 
     @staticmethod
-    def _expand_one(match: flext_core.t.RegexMatch, env: Mapping[str, str]) -> str:
+    def _expand_one(match: t.RegexMatch, env: Mapping[str, str]) -> str:
         """Resolve one ``${VAR}`` / ``${VAR:-default}`` match against ``env``.
 
         Returns:
@@ -221,10 +214,10 @@ class FlextUtilitiesConfig:
         """
         current = value
 
-        def _expand_match(match: flext_core.t.RegexMatch) -> str:
+        def _expand_match(match: t.RegexMatch) -> str:
             return FlextUtilitiesConfig._expand_one(match, env)
 
-        for _ in range(flext_core.c.CONFIG_EXPAND_MAX_PASSES):
+        for _ in range(c.CONFIG_EXPAND_MAX_PASSES):
             expanded = FlextUtilitiesConfig._EXPAND_PATTERN.sub(_expand_match, current)
             if expanded == current:
                 return expanded
@@ -232,7 +225,7 @@ class FlextUtilitiesConfig:
         return current
 
     @staticmethod
-    def config_load(path: Path) -> flext_core.p.Result[flext_core.t.JsonMapping]:
+    def config_load(path: Path) -> p.Result[t.JsonMapping]:
         """Load and parse a TOML config source into a validated mapping.
 
         Fail-closed: a missing file, parse error, or non-mapping top level is a
@@ -243,44 +236,42 @@ class FlextUtilitiesConfig:
 
         """
         if not path.is_file():
-            return flext_core.r[flext_core.t.JsonMapping].fail(
-                f"{flext_core.c.ERR_CONFIG_READ_FAILED}: {path}",
+            return r[t.JsonMapping].fail(
+                f"{c.ERR_CONFIG_READ_FAILED}: {path}",
             )
         parsed = FlextUtilitiesReliability.try_(
             lambda: tomllib.loads(
-                path.read_text(encoding=flext_core.c.CONFIG_DEFAULT_ENCODING),
+                path.read_text(encoding=c.CONFIG_DEFAULT_ENCODING),
             ),
             catch=(OSError, tomllib.TOMLDecodeError),
             op_name="config_load",
         )
         if parsed.failure:
-            return flext_core.r[flext_core.t.JsonMapping].from_failure(parsed)
+            return r[t.JsonMapping].from_failure(parsed)
         payload = parsed.value
         if not FlextUtilitiesGuardsTypeCore.mapping(payload):
-            return flext_core.r[flext_core.t.JsonMapping].fail(
-                f"{flext_core.c.ERR_CONFIG_NOT_MAPPING}: {path}",
+            return r[t.JsonMapping].fail(
+                f"{c.ERR_CONFIG_NOT_MAPPING}: {path}",
             )
-        return flext_core.r[flext_core.t.JsonMapping].ok(payload)
+        return r[t.JsonMapping].ok(payload)
 
     @staticmethod
     def config_merge(
-        base: flext_core.t.JsonMapping,
-        override: flext_core.t.JsonMapping,
-    ) -> flext_core.t.JsonDict:
+        base: t.JsonMapping,
+        override: t.JsonMapping,
+    ) -> t.JsonDict:
         """Deep-merge ``override`` onto ``base``; ``override`` values replace lists.
 
         Returns:
             The merged mapping.
 
         """
-        return flext_core.FlextStrictYamlConfigSource.merge_values(
+        return FlextStrictYamlConfigSource.merge_values(
             base, override, concatenate_lists=False
         )
 
     @staticmethod
-    def config_env_override(
-        value: flext_core.t.JsonValue, env: Mapping[str, str]
-    ) -> flext_core.t.JsonValue:
+    def config_env_override(value: t.JsonValue, env: Mapping[str, str]) -> t.JsonValue:
         """Expand ``${VAR}`` / ``${VAR:-default}`` placeholders in string leaves.
 
         Recurses through mappings and sequences; non-string leaves pass through

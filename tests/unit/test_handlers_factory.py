@@ -94,7 +94,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
             )
 
         # Act / Assert
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             h.create_from_callable(
                 invalid_handler,
                 handler_name="invalid_handler",

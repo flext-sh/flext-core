@@ -18,7 +18,7 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
-import flext_core
+from flext_core import FlextContext, FlextDispatcher, FlextSettings, c, e, m, p, r, t, u
 from flext_core._container import FlextContainerTestingOps
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ if TYPE_CHECKING:
     from types import FrameType, ModuleType
 
 
-class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
+class FlextContainer(FlextContainerTestingOps, p.Container):
     """Process-wide registry of services, factories and resources.
 
     One mapping holds every registration; the core runtime names
@@ -36,31 +36,29 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
     services to their own settings and context.
     """
 
-    _settings_type: ClassVar[flext_core.p.SettingsType] = flext_core.FlextSettings
+    _settings_type: ClassVar[p.SettingsType] = FlextSettings
 
-    _context_type: ClassVar[flext_core.p.ContextType] = flext_core.FlextContext
+    _context_type: ClassVar[p.ContextType] = FlextContext
 
-    _context: flext_core.p.Context
+    _context: p.Context
 
-    _config: flext_core.p.Settings
+    _config: p.Settings
 
-    _user_overrides: flext_core.p.ConfigMap
+    _user_overrides: p.ConfigMap
 
     _initialized: bool = False
 
     _registrations: MutableMapping[
         str,
-        flext_core.m.ServiceRegistration
-        | flext_core.m.FactoryRegistration
-        | flext_core.m.ResourceRegistration,
+        m.ServiceRegistration | m.FactoryRegistration | m.ResourceRegistration,
     ]
 
-    _global_config: flext_core.p.ContainerConfig
+    _global_config: p.ContainerConfig
 
     def __new__(
         cls,
         *,
-        registration: flext_core.p.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create or return the global singleton instance.
 
@@ -78,13 +76,13 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
     def __init__(
         self,
         *,
-        registration: flext_core.p.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Initialize the singleton once; later calls apply the explicit spec."""
         if not self._initialized:
             self.initialize_registrations(registration=registration)
         elif registration is not None:
-            spec = flext_core.m.ServiceRegistrationSpec.model_validate(
+            spec = m.ServiceRegistrationSpec.model_validate(
                 registration, from_attributes=True
             )
             self._apply_explicit_bootstrap(spec)
@@ -92,19 +90,19 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
 
     @property
     @override
-    def settings(self) -> flext_core.p.Settings:
+    def settings(self) -> p.Settings:
         """Configuration bound to this container."""
         return self._config
 
     @property
     @override
-    def context(self) -> flext_core.p.Context:
+    def context(self) -> p.Context:
         """Execution context bound to this container."""
         return self._context
 
     @staticmethod
-    def _matches_service_type[T: flext_core.p.RegisterableService](
-        value: flext_core.p.RegisterableService,
+    def _matches_service_type[T: p.RegisterableService](
+        value: p.RegisterableService,
         expected: type[T],
     ) -> TypeGuard[T]:
         """Narrow a resolved service through its structural runtime type.
@@ -120,9 +118,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         name: str,
         build: Callable[
             [],
-            flext_core.m.ServiceRegistration
-            | flext_core.m.FactoryRegistration
-            | flext_core.m.ResourceRegistration,
+            m.ServiceRegistration | m.FactoryRegistration | m.ResourceRegistration,
         ],
         *,
         internal: bool = False,
@@ -143,28 +139,22 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
 
         """
         if not name:
-            raise flext_core.e.ValidationError(flext_core.c.ERR_CONTAINER_NAME_EMPTY)
-        reserved = name in flext_core.c.CONTAINER_RESERVED_NAMES
+            raise e.ValidationError(c.ERR_CONTAINER_NAME_EMPTY)
+        reserved = name in c.CONTAINER_RESERVED_NAMES
         if reserved != internal:
-            raise flext_core.e.ValidationError(
-                flext_core.c.ERR_CONTAINER_NAME_RESERVED.format(name=name)
-            )
+            raise e.ValidationError(c.ERR_CONTAINER_NAME_RESERVED.format(name=name))
         if not internal and name in self._registrations:
-            raise flext_core.e.ValidationError(
-                flext_core.c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name)
-            )
+            raise e.ValidationError(c.ERR_CONTAINER_NAME_DUPLICATE.format(name=name))
         try:
             record = build()
         except ValueError as exc:
-            raise flext_core.e.ValidationError(
-                flext_core.c.ERR_CONTAINER_REGISTRATION_FAILED.format(
-                    name=name, reason=exc
-                ),
+            raise e.ValidationError(
+                c.ERR_CONTAINER_REGISTRATION_FAILED.format(name=name, reason=exc),
             ) from exc
         self._registrations[name] = record
         return self
 
-    def _write_spec(self, spec: flext_core.p.ServiceRegistrationSpec) -> None:
+    def _write_spec(self, spec: p.ServiceRegistrationSpec) -> None:
         """Write every service, factory and resource declared by a spec."""
         for name, service in (spec.services or {}).items():
             _ = self.bind(name, service)
@@ -174,7 +164,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
             _ = self.resource(name, resource)
 
     @override
-    def bind(self, name: str, impl: flext_core.p.RegisterableService) -> Self:
+    def bind(self, name: str, impl: p.RegisterableService) -> Self:
         """Bind a concrete service instance or value.
 
         Returns:
@@ -183,11 +173,11 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         """
         return self._write(
             name,
-            partial(flext_core.m.ServiceRegistration, name=name, service=impl),
+            partial(m.ServiceRegistration, name=name, service=impl),
         )
 
     @override
-    def factory(self, name: str, impl: flext_core.p.FactoryCallable) -> Self:
+    def factory(self, name: str, impl: p.FactoryCallable) -> Self:
         """Bind a factory callable invoked on every resolve.
 
         Returns:
@@ -196,11 +186,11 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         """
         return self._write(
             name,
-            partial(flext_core.m.FactoryRegistration, name=name, factory=impl),
+            partial(m.FactoryRegistration, name=name, factory=impl),
         )
 
     @override
-    def resource(self, name: str, impl: flext_core.p.ResourceCallable) -> Self:
+    def resource(self, name: str, impl: p.ResourceCallable) -> Self:
         """Bind a resource factory invoked on every resolve.
 
         Returns:
@@ -209,15 +199,15 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         """
         return self._write(
             name,
-            partial(flext_core.m.ResourceRegistration, name=name, factory=impl),
+            partial(m.ResourceRegistration, name=name, factory=impl),
         )
 
     @staticmethod
     def _resolve_callable(
-        callable_obj: flext_core.p.FactoryCallable,
+        callable_obj: p.FactoryCallable,
         kind: str,
         name: str,
-    ) -> flext_core.p.Result[flext_core.p.RegisterableService]:
+    ) -> p.Result[p.RegisterableService]:
         """Validate factory/resource admission and return the original value.
 
         Returns:
@@ -226,24 +216,24 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         """
         try:
             resolved = callable_obj()
-            flext_core.m.ServiceRegistration(name=name, service=resolved)
-        except flext_core.c.EXC_BROAD_RUNTIME as exc:
-            return flext_core.r[flext_core.p.RegisterableService].from_result(
-                flext_core.e.fail_operation(
+            m.ServiceRegistration(name=name, service=resolved)
+        except c.EXC_BROAD_RUNTIME as exc:
+            return r[p.RegisterableService].from_result(
+                e.fail_operation(
                     f"resolve {kind}",
                     exc,
-                    result_type=flext_core.r[flext_core.p.RegisterableService],
+                    result_type=r[p.RegisterableService],
                 ),
             )
-        return flext_core.r[flext_core.p.RegisterableService].ok(resolved)
+        return r[p.RegisterableService].ok(resolved)
 
     @overload
-    def resolve[T: flext_core.p.RegisterableService](
+    def resolve[T: p.RegisterableService](
         self,
         name: str,
         *,
         type_cls: type[T],
-    ) -> flext_core.p.Result[T]: ...
+    ) -> p.Result[T]: ...
 
     @overload
     def resolve(
@@ -251,15 +241,15 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         name: str,
         *,
         type_cls: None = None,
-    ) -> flext_core.p.Result[flext_core.p.RegisterableService]: ...
+    ) -> p.Result[p.RegisterableService]: ...
 
     @override
-    def resolve[T: flext_core.p.RegisterableService](
+    def resolve[T: p.RegisterableService](
         self,
         name: str,
         *,
         type_cls: type[T] | None = None,
-    ) -> flext_core.p.Result[T] | flext_core.p.Result[flext_core.p.RegisterableService]:
+    ) -> p.Result[T] | p.Result[p.RegisterableService]:
         """Resolve a registered service, factory or resource by name.
 
         Args:
@@ -275,38 +265,36 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         """
         match self._registrations.get(name):
             case None:
-                return flext_core.r[flext_core.p.RegisterableService].from_result(
-                    flext_core.e.fail_not_found("service", name),
+                return r[p.RegisterableService].from_result(
+                    e.fail_not_found("service", name),
                 )
-            case flext_core.m.ServiceRegistration() as record:
-                result = flext_core.r[flext_core.p.RegisterableService].ok(
-                    record.service
-                )
-            case flext_core.m.FactoryRegistration() as record:
+            case m.ServiceRegistration() as record:
+                result = r[p.RegisterableService].ok(record.service)
+            case m.FactoryRegistration() as record:
                 result = self._resolve_callable(record.factory, "factory", name)
             case record:
                 result = self._resolve_callable(record.factory, "resource", name)
         if type_cls is None or result.failure:
             return result
         if self._matches_service_type(result.value, type_cls):
-            return flext_core.r[T].ok(result.value)
-        return flext_core.r[T].from_result(
-            flext_core.e.fail_type_mismatch(
+            return r[T].ok(result.value)
+        return r[T].from_result(
+            e.fail_type_mismatch(
                 type_cls.__name__,
                 type(result.value).__name__,
-                result_type=flext_core.r[T],
+                result_type=r[T],
             ),
         )
 
     @override
-    def snapshot(self) -> flext_core.p.ConfigMap:
+    def snapshot(self) -> p.ConfigMap:
         """Return the merged settings exposed by this container.
 
         Returns:
             The merged settings exposed by this container.
 
         """
-        return flext_core.m.ConfigMap.model_validate(self._global_config.model_dump())
+        return m.ConfigMap.model_validate(self._global_config.model_dump())
 
     @override
     def has(self, name: str) -> bool:
@@ -316,10 +304,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
             Whether a public service, factory, or resource is registered.
 
         """
-        return (
-            name in self._registrations
-            and name not in flext_core.c.CONTAINER_RESERVED_NAMES
-        )
+        return name in self._registrations and name not in c.CONTAINER_RESERVED_NAMES
 
     @override
     def names(self) -> Sequence[str]:
@@ -334,7 +319,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
     def initialize_registrations(
         self,
         *,
-        registration: flext_core.p.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> None:
         """Reset the registrations from a spec and register the core services.
 
@@ -344,25 +329,23 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
 
         """
         spec = (
-            flext_core.m.ServiceRegistrationSpec.model_validate(
-                registration, from_attributes=True
-            )
+            m.ServiceRegistrationSpec.model_validate(registration, from_attributes=True)
             if registration is not None
-            else flext_core.m.ServiceRegistrationSpec()
+            else m.ServiceRegistrationSpec()
         )
         self._registrations = {}
         self._global_config = (
-            cast("flext_core.m.ContainerConfig", spec.container_config)
+            cast("m.ContainerConfig", spec.container_config)
             if spec.container_config is not None
-            else flext_core.m.ContainerConfig()
+            else m.ContainerConfig()
         )
         overrides = spec.user_overrides
-        if isinstance(overrides, flext_core.m.ConfigMap):
+        if isinstance(overrides, m.ConfigMap):
             self._user_overrides = overrides
         elif isinstance(overrides, Mapping):
-            self._user_overrides = flext_core.m.ConfigMap.model_validate(overrides)
+            self._user_overrides = m.ConfigMap.model_validate(overrides)
         else:
-            self._user_overrides = flext_core.m.ConfigMap(root={})
+            self._user_overrides = m.ConfigMap(root={})
         self._config = (
             spec.settings
             if spec.settings is not None
@@ -376,50 +359,44 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         self._initialized = True
 
     @override
-    def register_core_services(
-        self, *, dispatcher: flext_core.p.Dispatcher | None = None
-    ) -> None:
+    def register_core_services(self, *, dispatcher: p.Dispatcher | None = None) -> None:
         """Register core services, retaining an explicitly injected command bus."""
         core = (
             (
-                flext_core.c.Directory.CONFIG,
+                c.Directory.CONFIG,
                 partial(
-                    flext_core.m.ServiceRegistration,
-                    name=flext_core.c.Directory.CONFIG,
+                    m.ServiceRegistration,
+                    name=c.Directory.CONFIG,
                     service=self._config,
                 ),
             ),
             (
-                flext_core.c.ServiceName.LOGGER,
+                c.ServiceName.LOGGER,
                 partial(
-                    flext_core.m.FactoryRegistration,
-                    name=flext_core.c.ServiceName.LOGGER,
-                    factory=partial(
-                        flext_core.u.fetch_logger, flext_core.c.LOGGER_NAME_FLEXT_CORE
-                    ),
+                    m.FactoryRegistration,
+                    name=c.ServiceName.LOGGER,
+                    factory=partial(u.fetch_logger, c.LOGGER_NAME_FLEXT_CORE),
                 ),
             ),
             (
-                flext_core.c.FIELD_CONTEXT,
+                c.FIELD_CONTEXT,
                 partial(
-                    flext_core.m.ServiceRegistration,
-                    name=flext_core.c.FIELD_CONTEXT,
+                    m.ServiceRegistration,
+                    name=c.FIELD_CONTEXT,
                     service=self._context,
                 ),
             ),
             (
-                flext_core.c.ServiceName.COMMAND_BUS,
-                lambda: flext_core.m.ServiceRegistration(
-                    name=flext_core.c.ServiceName.COMMAND_BUS,
-                    service=dispatcher
-                    if dispatcher is not None
-                    else flext_core.FlextDispatcher(),
+                c.ServiceName.COMMAND_BUS,
+                lambda: m.ServiceRegistration(
+                    name=c.ServiceName.COMMAND_BUS,
+                    service=dispatcher if dispatcher is not None else FlextDispatcher(),
                 ),
             ),
         )
         for name, build in core:
             if name not in self._registrations or (
-                name == flext_core.c.ServiceName.COMMAND_BUS and dispatcher is not None
+                name == c.ServiceName.COMMAND_BUS and dispatcher is not None
             ):
                 _ = self._write(name, build, internal=True)
 
@@ -428,7 +405,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         self,
         *,
         subproject: str | None = None,
-        registration: flext_core.p.ServiceRegistrationSpec | None = None,
+        registration: p.ServiceRegistrationSpec | None = None,
     ) -> Self:
         """Create an isolated scope inheriting the public registrations.
 
@@ -440,11 +417,9 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
 
         """
         spec = (
-            flext_core.m.ServiceRegistrationSpec.model_validate(
-                registration, from_attributes=True
-            )
+            m.ServiceRegistrationSpec.model_validate(registration, from_attributes=True)
             if registration is not None
-            else flext_core.m.ServiceRegistrationSpec()
+            else m.ServiceRegistrationSpec()
         )
         settings_source = (
             spec.settings if spec.settings is not None else self._config.clone()
@@ -453,9 +428,9 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         if subproject:
             _ = scoped_context.set("subproject", subproject)
         inherited = {name: self._registrations[name] for name in self.names()}
-        scoped = flext_core.u.create_instance(self.__class__)
+        scoped = u.create_instance(self.__class__)
         scoped.initialize_registrations(
-            registration=flext_core.m.ServiceRegistrationSpec(
+            registration=m.ServiceRegistrationSpec(
                 settings=settings_source,
                 context=scoped_context,
                 dispatcher=spec.dispatcher,
@@ -463,7 +438,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
                     **{
                         name: record.service
                         for name, record in inherited.items()
-                        if isinstance(record, flext_core.m.ServiceRegistration)
+                        if isinstance(record, m.ServiceRegistration)
                     },
                     **(spec.services or {}),
                 },
@@ -471,7 +446,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
                     **{
                         name: record.factory
                         for name, record in inherited.items()
-                        if isinstance(record, flext_core.m.FactoryRegistration)
+                        if isinstance(record, m.FactoryRegistration)
                     },
                     **(spec.factories or {}),
                 },
@@ -479,7 +454,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
                     **{
                         name: record.factory
                         for name, record in inherited.items()
-                        if isinstance(record, flext_core.m.ResourceRegistration)
+                        if isinstance(record, m.ResourceRegistration)
                     },
                     **(spec.resources or {}),
                 },
@@ -490,7 +465,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         return scoped
 
     @override
-    def drop(self, name: str) -> flext_core.p.Result[bool]:
+    def drop(self, name: str) -> p.Result[bool]:
         """Remove a public service, factory, or resource registration by name.
 
         Returns:
@@ -498,49 +473,47 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
 
         """
         if not self.has(name):
-            return flext_core.r[bool].from_result(
-                flext_core.e.fail_not_found(
-                    "service", name, result_type=flext_core.r[bool]
-                ),
+            return r[bool].from_result(
+                e.fail_not_found("service", name, result_type=r[bool]),
             )
         del self._registrations[name]
-        return flext_core.r[bool].ok(value=True)
+        return r[bool].ok(value=True)
 
     @override
-    def dispatcher(self) -> flext_core.p.Result[flext_core.p.Dispatcher]:
+    def dispatcher(self) -> p.Result[p.Dispatcher]:
         """Resolve the canonical dispatcher / command bus.
 
         Returns:
             The resulting ``p.Result[p.Dispatcher]``.
 
         """
-        result = self.resolve(flext_core.c.ServiceName.COMMAND_BUS)
+        result = self.resolve(c.ServiceName.COMMAND_BUS)
         if result.failure:
-            return flext_core.r[flext_core.p.Dispatcher].from_result(
-                flext_core.e.fail_not_found(
+            return r[p.Dispatcher].from_result(
+                e.fail_not_found(
                     "dispatcher",
-                    flext_core.c.ServiceName.COMMAND_BUS,
-                    result_type=flext_core.r[flext_core.p.Dispatcher],
+                    c.ServiceName.COMMAND_BUS,
+                    result_type=r[p.Dispatcher],
                 ),
             )
-        if isinstance(result.value, flext_core.p.Dispatcher):
-            return flext_core.r[flext_core.p.Dispatcher].ok(result.value)
-        return flext_core.r[flext_core.p.Dispatcher].from_result(
-            flext_core.e.fail_type_mismatch(
+        if isinstance(result.value, p.Dispatcher):
+            return r[p.Dispatcher].ok(result.value)
+        return r[p.Dispatcher].from_result(
+            e.fail_type_mismatch(
                 "dispatcher",
-                flext_core.u.type_name(result.value),
-                result_type=flext_core.r[flext_core.p.Dispatcher],
+                u.type_name(result.value),
+                result_type=r[p.Dispatcher],
             ),
         )
 
     @classmethod
     def build_service_runtime(
         cls,
-        source: flext_core.p.RuntimeBootstrapProvider
-        | flext_core.p.RuntimeBootstrapOptions
-        | flext_core.p.MixinsInfrastructure
+        source: p.RuntimeBootstrapProvider
+        | p.RuntimeBootstrapOptions
+        | p.MixinsInfrastructure
         | None = None,
-    ) -> flext_core.p.ServiceRuntime:
+    ) -> p.ServiceRuntime:
         """Materialize settings, context, container and dispatcher for one component.
 
         The container scopes the injected container, or the shared container,
@@ -555,34 +528,32 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
             ValidationError: If neither logging policy nor an explicit logger is given.
 
         """
-        options = flext_core.u.resolve_runtime_options(source)
-        settings = flext_core.u.resolve_runtime_settings(options)
+        options = u.resolve_runtime_options(source)
+        settings = u.resolve_runtime_settings(options)
         logger = options.logger
         if logger is None:
-            if not isinstance(settings, flext_core.p.LoggingSettings):
+            if not isinstance(settings, p.LoggingSettings):
                 msg = "Runtime settings must declare logging policy or inject a logger"
-                raise flext_core.e.ValidationError(msg)
-            logger = flext_core.u.create_module_logger(
+                raise e.ValidationError(msg)
+            logger = u.create_module_logger(
                 f"{type(source).__module__}.{type(source).__qualname__}",
                 runtime_settings=settings,
                 options=options.logging_options
                 if options.logging_options is not None
-                else flext_core.u.logging_options(),
+                else u.logging_options(),
             )
         context = (
-            options.context
-            if options.context is not None
-            else flext_core.FlextContext.create()
+            options.context if options.context is not None else FlextContext.create()
         )
         source_container = options.container or cls.shared()
         container = source_container.scope(
-            registration=flext_core.m.ServiceRegistrationSpec(
+            registration=m.ServiceRegistrationSpec(
                 settings=settings,
                 context=context,
                 dispatcher=options.dispatcher,
             ),
         )
-        return flext_core.m.ServiceRuntime(
+        return m.ServiceRuntime(
             settings=container.settings,
             context=container.context,
             container=container,
@@ -595,8 +566,8 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
     def shared(
         cls,
         *,
-        settings: flext_core.p.Settings | None = None,
-        context: flext_core.p.Context | None = None,
+        settings: p.Settings | None = None,
+        context: p.Context | None = None,
         auto_register_factories: bool = False,
     ) -> Self:
         """Return the canonical shared container instance.
@@ -612,9 +583,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         instance = cls()
         if settings is not None or context is not None:
             instance._apply_explicit_bootstrap(
-                flext_core.m.ServiceRegistrationSpec(
-                    settings=settings, context=context
-                ),
+                m.ServiceRegistrationSpec(settings=settings, context=context),
             )
         if auto_register_factories:
             caller_module = cls._resolve_caller_module(inspect.currentframe())
@@ -636,14 +605,12 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         module_name = caller.f_globals.get("__name__") if caller is not None else None
         module = sys.modules.get(module_name) if isinstance(module_name, str) else None
         if module is None:
-            raise flext_core.e.ValidationError(
-                flext_core.c.ERR_CONTAINER_CALLER_UNRESOLVED
-            )
+            raise e.ValidationError(c.ERR_CONTAINER_CALLER_UNRESOLVED)
         return module
 
     @staticmethod
     def _auto_register_module_factories(
-        instance: flext_core.p.Container,
+        instance: p.Container,
         caller_module: ModuleType,
     ) -> None:
         """Register every ``@d.factory()`` function of a module.
@@ -652,25 +619,23 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         non-callable, duplicate or reserved factory raises ``e.ValidationError``.
         """
         module_symbols = vars(caller_module)
-        factory_adapter = flext_core.u.type_adapter(
-            flext_core.t.TypeForm(flext_core.p.FactoryCallable)
-        )
-        for factory_name, factory_config in flext_core.u.scan_module(caller_module):
+        factory_adapter = u.type_adapter(t.TypeForm(p.FactoryCallable))
+        for factory_name, factory_config in u.scan_module(caller_module):
             impl = factory_adapter.validate_python(module_symbols[factory_name])
             _ = instance.factory(factory_config.name, impl)
 
     def _apply_explicit_bootstrap(
         self,
-        registration: flext_core.p.ServiceRegistrationSpec,
+        registration: p.ServiceRegistrationSpec,
     ) -> None:
         """Rebind explicitly selected core collaborators of an existing container."""
         if registration.settings is not None:
             self._config = registration.settings
             _ = self._write(
-                flext_core.c.Directory.CONFIG,
+                c.Directory.CONFIG,
                 partial(
-                    flext_core.m.ServiceRegistration,
-                    name=flext_core.c.Directory.CONFIG,
+                    m.ServiceRegistration,
+                    name=c.Directory.CONFIG,
                     service=self._config,
                 ),
                 internal=True,
@@ -681,10 +646,10 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         if registration.context is not None:
             self._context = registration.context
             _ = self._write(
-                flext_core.c.FIELD_CONTEXT,
+                c.FIELD_CONTEXT,
                 partial(
-                    flext_core.m.ServiceRegistration,
-                    name=flext_core.c.FIELD_CONTEXT,
+                    m.ServiceRegistration,
+                    name=c.FIELD_CONTEXT,
                     service=self._context,
                 ),
                 internal=True,
@@ -698,7 +663,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         self.register_core_services()
 
     @override
-    def apply(self, settings: flext_core.t.UserOverridesMapping | None = None) -> Self:
+    def apply(self, settings: t.UserOverridesMapping | None = None) -> Self:
         """Apply user-provided overrides to container configuration.
 
         Returns:
@@ -707,7 +672,7 @@ class FlextContainer(FlextContainerTestingOps, flext_core.p.Container):
         """
         if settings is None:
             return self
-        self._global_config = flext_core.m.ContainerConfig.model_validate(
+        self._global_config = m.ContainerConfig.model_validate(
             {
                 **self._global_config.model_dump(),
                 **self._user_overrides.root,

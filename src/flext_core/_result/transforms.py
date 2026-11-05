@@ -22,10 +22,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Self, overload
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, p, t
 from flext_core._result import FlextResultConstruction
 
 if TYPE_CHECKING:
@@ -48,7 +45,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
     """
 
     @abstractmethod
-    def _as_result(self) -> flext_core.p.Result[T]:
+    def _as_result(self) -> p.Result[T]:
         """Expose the complete public Result view from the composed MRO owner.
 
         Returns:
@@ -57,7 +54,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         """
         raise NotImplementedError
 
-    def filter(self: Self, predicate: Callable[[T], bool]) -> flext_core.p.Result[T]:
+    def filter(self: Self, predicate: Callable[[T], bool]) -> p.Result[T]:
         """Retain the success payload only when the predicate evaluates to True.
 
         If ``predicate(payload)`` evaluates to False or raises a catchable runtime
@@ -75,16 +72,12 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
             try:
                 if predicate(self._payload):
                     return self._as_result()
-                return self.__class__.fail(
-                    flext_core.c.ERR_RESULT_FILTER_PREDICATE_FAILED
-                )
-            except flext_core.c.EXC_BROAD_RUNTIME as exc:
+                return self.__class__.fail(c.ERR_RESULT_FILTER_PREDICATE_FAILED)
+            except c.EXC_BROAD_RUNTIME as exc:
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def flat_map[U](
-        self: Self, func: Callable[[T], flext_core.p.Result[U]]
-    ) -> flext_core.p.Result[U]:
+    def flat_map[U](self: Self, func: Callable[[T], p.Result[U]]) -> p.Result[U]:
         """Chain a result-returning callable over the success payload (monadic bind).
 
         Passes the payload to ``func`` on success, propagating any returned failure
@@ -102,24 +95,24 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
             return self._copy_failure(self._as_result())
         try:
             return self.from_result(func(self._payload))
-        except flext_core.c.EXC_BROAD_RUNTIME as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             return self._failure(str(exc), exception=exc)
 
     @overload
-    def flow_through(self: Self) -> flext_core.p.Result[T]: ...
+    def flow_through(self: Self) -> p.Result[T]: ...
 
     @overload
     def flow_through[U](
         self: Self,
-        first: Callable[[T | U], flext_core.p.Result[U]],
+        first: Callable[[T | U], p.Result[U]],
         /,
-        *funcs: Callable[[T | U], flext_core.p.Result[U]],
-    ) -> flext_core.p.Result[T | U]:
+        *funcs: Callable[[T | U], p.Result[U]],
+    ) -> p.Result[T | U]:
         raise NotImplementedError
 
     def flow_through[U](
-        self: Self, *funcs: Callable[[T | U], flext_core.p.Result[U]]
-    ) -> flext_core.p.Result[T | U]:
+        self: Self, *funcs: Callable[[T | U], p.Result[U]]
+    ) -> p.Result[T | U]:
         """Sequentially apply result-returning functions, stopping at the first failure.
 
         Args:
@@ -130,12 +123,12 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
                 failure encountered.
 
         """
-        current: flext_core.p.Result[T | U] = self._as_result()
+        current: p.Result[T | U] = self._as_result()
         for func in funcs:
             if current.success:
                 try:
                     current = self.from_result(func(current.value))
-                except flext_core.c.EXC_BROAD_RUNTIME as exc:
+                except c.EXC_BROAD_RUNTIME as exc:
                     current = self._failure(str(exc), exception=exc)
             else:
                 break
@@ -160,9 +153,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
             return on_success(self._payload)
         return on_failure(self.require_error(self._as_result()))
 
-    def lash[U](
-        self: Self, func: Callable[[str], flext_core.p.Result[U]]
-    ) -> flext_core.p.Result[T | U]:
+    def lash[U](self: Self, func: Callable[[str], p.Result[U]]) -> p.Result[T | U]:
         """Recover from a failure by chaining an error-handling result callable.
 
         If the current result succeeded, it is returned unchanged. If it failed,
@@ -178,11 +169,11 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         if self.failure:
             try:
                 return self.from_result(func(self.require_error(self._as_result())))
-            except flext_core.c.EXC_BROAD_RUNTIME as exc:
+            except c.EXC_BROAD_RUNTIME as exc:
                 return self._failure(str(exc), exception=exc)
         return self._as_result()
 
-    def map[U](self: Self, func: Callable[[T], U]) -> flext_core.p.Result[U]:
+    def map[U](self: Self, func: Callable[[T], U]) -> p.Result[U]:
         """Transform the success payload by applying a pure mapping function.
 
         If the current result is a failure, propagates the failure metadata
@@ -199,11 +190,11 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         if self.success:
             try:
                 return self._create_success(func(self._payload))
-            except flext_core.c.EXC_BROAD_RUNTIME as exc:
+            except c.EXC_BROAD_RUNTIME as exc:
                 return self._failure(str(exc), exception=exc)
         return self._copy_failure(self._as_result())
 
-    def map_error(self: Self, func: Callable[[str], str]) -> flext_core.p.Result[T]:
+    def map_error(self: Self, func: Callable[[str], str]) -> p.Result[T]:
         """Transform the failure message while preserving other error metadata.
 
         If the current result succeeded, returns it unchanged. If it failed,
@@ -224,7 +215,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
                     error_data=self.error_data,
                     exception=self._exception,
                 )
-            except flext_core.c.EXC_BROAD_RUNTIME as exc:
+            except c.EXC_BROAD_RUNTIME as exc:
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
@@ -254,7 +245,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
             return self._payload
         return default
 
-    def recover[U](self: Self, func: Callable[[str], U]) -> flext_core.p.Result[T | U]:
+    def recover[U](self: Self, func: Callable[[str], U]) -> p.Result[T | U]:
         """Transform a failure into a success by computing a fallback value.
 
         If the current result succeeded, returns it unchanged. If it failed,
@@ -271,10 +262,10 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
             return self._as_result()
         try:
             return self._create_success(func(self.require_error(self._as_result())))
-        except flext_core.c.EXC_BROAD_RUNTIME as exc:
+        except c.EXC_BROAD_RUNTIME as exc:
             return self._failure(str(exc), exception=exc)
 
-    def tap(self: Self, func: Callable[[T], None]) -> flext_core.p.Result[T]:
+    def tap(self: Self, func: Callable[[T], None]) -> p.Result[T]:
         """Execute a side effect on the success payload without altering the result.
 
         Args:
@@ -287,11 +278,11 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         if self.success:
             try:
                 func(self._payload)
-            except flext_core.c.EXC_BROAD_RUNTIME as exc:
+            except c.EXC_BROAD_RUNTIME as exc:
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def tap_error(self: Self, func: Callable[[str], None]) -> flext_core.p.Result[T]:
+    def tap_error(self: Self, func: Callable[[str], None]) -> p.Result[T]:
         """Execute a side effect on the failure error message without altering result.
 
         Args:
@@ -304,13 +295,11 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
         if self.failure:
             try:
                 func(self.require_error(self._as_result()))
-            except flext_core.c.EXC_BROAD_RUNTIME as exc:
+            except c.EXC_BROAD_RUNTIME as exc:
                 return self.__class__.fail(str(exc), exception=exc)
         return self._as_result()
 
-    def to_model[U: flext_core.t.BaseModelType](
-        self: Self, model: type[U]
-    ) -> flext_core.p.Result[U]:
+    def to_model[U: t.BaseModelType](self: Self, model: type[U]) -> p.Result[U]:
         """Validate and parse the success payload into an instance of a Pydantic model.
 
         Args:
@@ -325,7 +314,7 @@ class FlextResultTransforms[T](FlextResultConstruction[T], ABC):
             return self._copy_failure(self._as_result())
         try:
             return self._create_success(model.model_validate(self._payload))
-        except flext_core.c.EXC_ATTR_RUNTIME_VALIDATION as exc:
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
             return self._failure(str(exc), exception=exc)
 
 

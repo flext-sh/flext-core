@@ -62,7 +62,7 @@ class TestsFlextCoreResultFactoryDip:
     @staticmethod
     def test_from_failure_rejects_successful_source() -> None:
         """Test from failure rejects successful source."""
-        with pytest.raises(ValueError, match="successful result"):
+        with u.Tests.raises(ValueError, match="successful result"):
             _ = r[int].from_failure(r[int].ok(1))
 
     @staticmethod

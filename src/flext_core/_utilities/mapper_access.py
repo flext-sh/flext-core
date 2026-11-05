@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-import flext_core
+from flext_core import c, e, m, p, r, t
 from flext_core._models import FlextModelsContainers
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore, FlextUtilitiesPydantic
 
@@ -19,12 +19,8 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _normalize_accessible_value(
-        value: flext_core.t.JsonPayload
-        | flext_core.p.BaseModel
-        | flext_core.p.HasModelDump
-        | flext_core.p.ValidatorSpec
-        | None,
-    ) -> flext_core.t.JsonPayload | flext_core.t.JsonValue:
+        value: t.JsonPayload | p.BaseModel | p.HasModelDump | p.ValidatorSpec | None,
+    ) -> t.JsonPayload | t.JsonValue:
         """Normalize protocol-accessible values.
 
         Return canonical runtime/container shapes.
@@ -36,42 +32,35 @@ class FlextUtilitiesMapperAccess:
         if value is None:
             # Preserve nulls so the extraction contract decides fail/default policy.
             return None
-        if isinstance(value, flext_core.m.BaseModel):
+        if isinstance(value, m.BaseModel):
             return value
         model_dump_attr = getattr(value, "model_dump", None)
         if callable(model_dump_attr):
             return FlextUtilitiesPydantic.normalize_to_container(
-                flext_core.m.ConfigMap.model_validate(model_dump_attr()),
+                m.ConfigMap.model_validate(model_dump_attr()),
             )
         return FlextUtilitiesMapperAccess._normalize_payload_value(value)
 
     @staticmethod
     def _normalize_payload_value(
-        value: flext_core.t.JsonPayload
-        | flext_core.p.BaseModel
-        | flext_core.p.HasModelDump
-        | flext_core.p.ValidatorSpec
-        | None,
-    ) -> flext_core.t.JsonPayload | flext_core.t.JsonValue:
+        value: t.JsonPayload | p.BaseModel | p.HasModelDump | p.ValidatorSpec | None,
+    ) -> t.JsonPayload | t.JsonValue:
         """Normalize the payload shapes that never expose ``model_dump``.
 
         Returns:
             The resulting ``t.JsonPayload | t.JsonValue``.
 
         """
-        if isinstance(value, flext_core.p.ValidatorSpec):
+        if isinstance(value, p.ValidatorSpec):
             return str(value)
-        if isinstance(value, (*flext_core.c.SCALAR_TYPES, Path)):
+        if isinstance(value, (*c.SCALAR_TYPES, Path)):
             return value
         return FlextUtilitiesMapperAccess._container_or_string(value)
 
     @staticmethod
     def _container_or_string(
-        value: flext_core.t.JsonPayload
-        | flext_core.p.BaseModel
-        | flext_core.p.HasModelDump
-        | flext_core.p.ValidatorSpec,
-    ) -> flext_core.t.JsonPayload | flext_core.t.JsonValue:
+        value: t.JsonPayload | p.BaseModel | p.HasModelDump | p.ValidatorSpec,
+    ) -> t.JsonPayload | t.JsonValue:
         """Return container values as-is and everything else stringified.
 
         Returns:
@@ -95,9 +84,9 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _resolve_raw_value(
-        raw: flext_core.t.JsonPayload | None,
+        raw: t.JsonPayload | None,
         key_part: str,
-    ) -> flext_core.p.Result[flext_core.t.JsonPayload]:
+    ) -> p.Result[t.JsonPayload]:
         """Wrap a raw value, preserving null as an explicit failed contract.
 
         Returns:
@@ -105,44 +94,36 @@ class FlextUtilitiesMapperAccess:
 
         """
         if raw is None:
-            return flext_core.FlextResult[flext_core.t.JsonPayload].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "resolve extracted value",
-                flext_core.FlextExceptions.render_template(
-                    flext_core.c.ERR_TEMPLATE_PATH_IS_NONE, path=key_part
-                ),
+                e.render_template(c.ERR_TEMPLATE_PATH_IS_NONE, path=key_part),
             )
-        return flext_core.FlextResult[flext_core.t.JsonPayload].ok(
+        return r[t.JsonPayload].ok(
             raw if FlextUtilitiesGuardsTypeCore.container_value(raw) else str(raw),
         )
 
     @staticmethod
     def _extract_get_value(
-        current: flext_core.t.JsonPayload
-        | flext_core.t.JsonMapping
-        | flext_core.m.ConfigMap
-        | Sequence[flext_core.t.JsonValue | flext_core.t.JsonPayload]
+        current: t.JsonPayload
+        | t.JsonMapping
+        | m.ConfigMap
+        | Sequence[t.JsonValue | t.JsonPayload]
         | None,
         key_part: str,
-    ) -> flext_core.p.Result[flext_core.t.JsonPayload]:
+    ) -> p.Result[t.JsonPayload]:
         """Get a raw value from a mapping, model, or protocol object.
 
         Returns:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        not_found_result: flext_core.p.Result[flext_core.t.JsonPayload] = (
-            flext_core.FlextResult[flext_core.t.JsonPayload].fail_op(
-                "extract key",
-                flext_core.FlextExceptions.render_template(
-                    flext_core.c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part
-                ),
-            )
+        not_found_result: p.Result[t.JsonPayload] = r[t.JsonPayload].fail_op(
+            "extract key",
+            e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
-        result: flext_core.p.Result[flext_core.t.JsonPayload]
-        mapping_obj: (
-            Mapping[str, flext_core.t.JsonValue | flext_core.t.JsonPayload] | None
-        ) = None
-        if isinstance(current, flext_core.m.ConfigMap):
+        result: p.Result[t.JsonPayload]
+        mapping_obj: Mapping[str, t.JsonValue | t.JsonPayload] | None = None
+        if isinstance(current, m.ConfigMap):
             mapping_obj = current.root
         elif isinstance(current, Mapping):
             mapping_obj = current
@@ -153,11 +134,9 @@ class FlextUtilitiesMapperAccess:
                     key_part,
                 )
                 if key_part in mapping_obj
-                else flext_core.FlextResult[flext_core.t.JsonPayload].fail_op(
+                else r[t.JsonPayload].fail_op(
                     "extract mapping key",
-                    flext_core.FlextExceptions.render_template(
-                        flext_core.c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part
-                    )
+                    e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part)
                     + " in Mapping",
                 )
             )
@@ -172,12 +151,12 @@ class FlextUtilitiesMapperAccess:
 
     @staticmethod
     def _extract_handle_array_index(
-        current: flext_core.t.JsonPayload
-        | flext_core.t.JsonMapping
-        | Sequence[flext_core.t.JsonValue | flext_core.t.JsonPayload]
+        current: t.JsonPayload
+        | t.JsonMapping
+        | Sequence[t.JsonValue | t.JsonPayload]
         | FlextModelsContainers.ObjectList,
         array_match: str,
-    ) -> flext_core.p.Result[flext_core.t.JsonPayload | None]:
+    ) -> p.Result[t.JsonPayload | None]:
         """Handle array indexing with negative index support.
 
         Returns:
@@ -185,18 +164,16 @@ class FlextUtilitiesMapperAccess:
 
         """
         if isinstance(current, FlextModelsContainers.ObjectList):
-            sequence: Sequence[flext_core.t.JsonValue | flext_core.t.JsonPayload] = (
-                current.root
-            )
+            sequence: Sequence[t.JsonValue | t.JsonPayload] = current.root
         elif isinstance(current, Sequence) and not isinstance(
             current,
-            flext_core.c.STR_BYTES_TYPES,
+            c.STR_BYTES_TYPES,
         ):
             sequence = current
         else:
-            return flext_core.FlextResult[flext_core.t.JsonPayload | None].fail_op(
+            return r[t.JsonPayload | None].fail_op(
                 "extract array index",
-                flext_core.c.ERR_MAPPER_NOT_A_SEQUENCE,
+                c.ERR_MAPPER_NOT_A_SEQUENCE,
             )
         index_result = FlextUtilitiesMapperAccess._normalize_array_index(
             array_match,
@@ -205,33 +182,27 @@ class FlextUtilitiesMapperAccess:
         return index_result.map(lambda index: sequence[index])
 
     @staticmethod
-    def _normalize_array_index(
-        array_match: str, sequence_size: int
-    ) -> flext_core.p.Result[int]:
+    def _normalize_array_index(array_match: str, sequence_size: int) -> p.Result[int]:
         try:
             idx = int(array_match)
         except ValueError:
-            return flext_core.FlextResult[int].fail_op(
+            return r[int].fail_op(
                 "extract array index",
-                flext_core.FlextExceptions.render_template(
-                    flext_core.c.ERR_TEMPLATE_INVALID_INDEX, index=array_match
-                ),
+                e.render_template(c.ERR_TEMPLATE_INVALID_INDEX, index=array_match),
             )
         resolved_idx = sequence_size + idx if idx < 0 else idx
         if 0 <= resolved_idx < sequence_size:
-            return flext_core.FlextResult[int].ok(resolved_idx)
-        return flext_core.FlextResult[int].fail_op(
+            return r[int].ok(resolved_idx)
+        return r[int].fail_op(
             "extract array index",
-            flext_core.FlextExceptions.render_template(
-                flext_core.c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE, index=idx
-            ),
+            e.render_template(c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE, index=idx),
         )
 
     @staticmethod
     def _get_raw(
-        data: flext_core.p.AccessibleData | flext_core.p.ConfigModelInput,
+        data: p.AccessibleData | p.ConfigModelInput,
         key: str,
-    ) -> flext_core.t.JsonPayload | flext_core.t.JsonValue:
+    ) -> t.JsonPayload | t.JsonValue:
         """Get raw values without DSL conversion.
 
         Returns:
@@ -241,7 +212,7 @@ class FlextUtilitiesMapperAccess:
         match data:
             case dict() | Mapping() if key in data:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(data[key])
-            case flext_core.m.ConfigMap() | flext_core.m.Dict() if key in data.root:
+            case m.ConfigMap() | m.Dict() if key in data.root:
                 return FlextUtilitiesMapperAccess._normalize_accessible_value(
                     data.root[key],
                 )

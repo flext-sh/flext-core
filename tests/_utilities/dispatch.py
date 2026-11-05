@@ -9,9 +9,9 @@ from __future__ import annotations
 from types import ModuleType
 from typing import TYPE_CHECKING, override
 
-from flext_tests import h, r, s, u
+from flext_tests import u
 
-from tests import m, p, t
+from tests import h, m, p, r, s, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable

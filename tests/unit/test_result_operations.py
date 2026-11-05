@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import r, tm
+from tests import r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -53,9 +53,9 @@ class TestsFlextResultOperations:
         """Accessing value or unwrap on a failure raises with the error message."""
         result: p.Result[str] = r[str].fail(message)
 
-        with pytest.raises(RuntimeError, match=message):
+        with u.Tests.raises(RuntimeError, match=message):
             _ = result.value
-        with pytest.raises(RuntimeError, match=message):
+        with u.Tests.raises(RuntimeError, match=message):
             result.unwrap()
 
     # --- unwrap_or / | default ------------------------------------------

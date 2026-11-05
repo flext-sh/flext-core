@@ -10,8 +10,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from tests import TestsFlextModels
+
 if TYPE_CHECKING:
-    from tests import TestsFlextModels, TestsFlextProtocols
+    from tests import TestsFlextProtocols
 
     def model_protocol_1(
         value: (TestsFlextModels.Tests.AttrObject),

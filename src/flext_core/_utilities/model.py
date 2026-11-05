@@ -9,14 +9,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, overload
+from typing import overload
 
 from pydantic import TypeAdapter
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import FlextSettings, c, e, m, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
@@ -29,10 +26,10 @@ class FlextUtilitiesModel:
 
     @staticmethod
     def dump(
-        model: flext_core.p.BaseModel,
-        options: flext_core.p.ModelDumpOptions | None = None,
-        **kwargs: flext_core.t.JsonPayload,
-    ) -> Mapping[str, flext_core.t.JsonPayload]:
+        model: p.BaseModel,
+        options: p.ModelDumpOptions | None = None,
+        **kwargs: t.JsonPayload,
+    ) -> Mapping[str, t.JsonPayload]:
         """Unified Pydantic serialization with options.
 
         Generic replacement for: model.model_dump() with consistent return type.
@@ -50,54 +47,54 @@ class FlextUtilitiesModel:
         """
         opts = FlextUtilitiesArgs.parse_model(
             options.model_dump(exclude_none=True) if options is not None else kwargs,
-            flext_core.m.ModelDumpOptions,
+            m.ModelDumpOptions,
         ).unwrap()
         opts_dict = opts.model_dump(exclude_none=True)
         adapter = FlextUtilitiesTypingAdapterJson.json_mapping_adapter()
-        dumped: flext_core.t.JsonMapping = adapter.validate_python(
+        dumped: t.JsonMapping = adapter.validate_python(
             model.model_dump(mode="json", **opts_dict),
         )
         return dumped
 
     @staticmethod
-    def settings_base() -> flext_core.p.SettingsType:
+    def settings_base() -> p.SettingsType:
         """Return the canonical ``FlextSettings`` class (layer zero, static).
 
         Returns:
             The resulting ``p.SettingsType``.
 
         """
-        settings_cls: flext_core.p.SettingsType = flext_core.FlextSettings
+        settings_cls: p.SettingsType = FlextSettings
         return settings_cls
 
     @overload
     @staticmethod
     def validate_value[TValue](
         target: type[TValue],
-        data: flext_core.t.ValidationInput[flext_core.p.BaseModel],
+        data: t.ValidationInput[p.BaseModel],
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> flext_core.p.Result[TValue]: ...
+    ) -> p.Result[TValue]: ...
 
     @overload
     @staticmethod
     def validate_value[TValue](
-        target: flext_core.t.ValueAdapter[TValue],
-        data: flext_core.t.ValidationInput[flext_core.p.BaseModel],
+        target: t.ValueAdapter[TValue],
+        data: t.ValidationInput[p.BaseModel],
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> flext_core.p.Result[TValue]: ...
+    ) -> p.Result[TValue]: ...
 
     @staticmethod
     def validate_value[TValue](
-        target: flext_core.t.ValueAdapter[TValue] | type[TValue],
-        data: flext_core.t.ValidationInput[flext_core.p.BaseModel],
+        target: t.ValueAdapter[TValue] | type[TValue],
+        data: t.ValidationInput[p.BaseModel],
         *,
         from_json: bool = False,
         strict: bool | None = None,
-    ) -> flext_core.p.Result[TValue]:
+    ) -> p.Result[TValue]:
         """Validate one value through a model class or TypeAdapter.
 
         Python inputs retain their native types until the target validates them.
@@ -108,25 +105,21 @@ class FlextUtilitiesModel:
 
         """
         try:
-            adapter: flext_core.t.ValueAdapter[TValue] = (
+            adapter: t.ValueAdapter[TValue] = (
                 target
                 if isinstance(target, TypeAdapter)
                 else FlextUtilitiesBase.type_adapter(target)
             )
             if from_json:
-                if not isinstance(data, flext_core.c.STR_BINARY_TYPES):
-                    return flext_core.FlextExceptions.fail_validation(
+                if not isinstance(data, c.STR_BINARY_TYPES):
+                    return e.fail_validation(
                         "json_input",
                         error="JSON validation requires str or bytes input",
                     )
-                return flext_core.FlextResult[TValue].ok(
-                    adapter.validate_json(data, strict=strict)
-                )
-            return flext_core.FlextResult[TValue].ok(
-                adapter.validate_python(data, strict=strict)
-            )
-        except flext_core.c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return flext_core.FlextExceptions.fail_validation(error=exc)
+                return r[TValue].ok(adapter.validate_json(data, strict=strict))
+            return r[TValue].ok(adapter.validate_python(data, strict=strict))
+        except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
+            return e.fail_validation(error=exc)
 
 
 __all__: list[str] = ["FlextUtilitiesModel"]

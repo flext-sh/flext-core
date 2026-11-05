@@ -401,7 +401,7 @@ class TestsFlextCoreServiceOperations:
         defect: str,
     ) -> None:
         """Invalid schema associations fail lazily without annotation inference."""
-        with pytest.raises(TypeError, match=defect):
+        with u.Tests.raises(TypeError, match=defect):
             u.service_operations(service_type)
 
     def test_operations_are_frozen_models(self) -> None:
@@ -409,7 +409,7 @@ class TestsFlextCoreServiceOperations:
         operation = u.service_operations(self.CommandService)[0]
         field_name = next(iter(m.ServiceOperation.model_fields))
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             setattr(operation, field_name, operation.summary)
 
     def test_quoted_protocol_alias_uses_explicit_model_metadata(self) -> None:
@@ -462,7 +462,7 @@ class TestsFlextCoreServiceOperations:
         defect: str,
     ) -> None:
         """Each malformed shape names the operation, module and fix."""
-        with pytest.raises(TypeError) as raised:
+        with u.Tests.raises(TypeError) as raised:
             u.service_operations(service_type)
 
         message = str(raised.value)
@@ -472,7 +472,7 @@ class TestsFlextCoreServiceOperations:
 
     def test_type_checking_only_import_names_the_annotation(self) -> None:
         """An unbound request annotation is reported verbatim."""
-        with pytest.raises(TypeError) as raised:
+        with u.Tests.raises(TypeError) as raised:
             u.service_operations(self.TypeCheckingOnlyService)
 
         tm.that(
@@ -488,7 +488,7 @@ class TestsFlextCoreServiceOperations:
 
     def test_sibling_name_collision_raises(self) -> None:
         """Two sibling classes declaring one operation name fail discovery."""
-        with pytest.raises(TypeError) as raised:
+        with u.Tests.raises(TypeError) as raised:
             u.service_operations(self.CollidingService)
 
         owners = f"{self.ReadSide.__qualname__}, {self.WriteSide.__qualname__}"
@@ -507,7 +507,7 @@ class TestsFlextCoreServiceOperations:
 
     def test_non_service_class_raises_typed_error(self) -> None:
         """A class outside the service hierarchy fails with a typed TypeError."""
-        with pytest.raises(TypeError) as raised:
+        with u.Tests.raises(TypeError) as raised:
             u.service_operations(self.PlainWorker)
 
         tm.that(
@@ -521,7 +521,7 @@ class TestsFlextCoreServiceOperations:
 
     def test_service_without_operations_raises(self) -> None:
         """A service whose only public method is the kernel's has no operation."""
-        with pytest.raises(TypeError) as raised:
+        with u.Tests.raises(TypeError) as raised:
             u.service_operations(self.EmptyService)
 
         tm.that(

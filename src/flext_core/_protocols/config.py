@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import flext_core
-
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
 
@@ -23,6 +21,7 @@ if TYPE_CHECKING:
 
 from typing import Protocol, runtime_checkable
 
+from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
@@ -38,17 +37,15 @@ class FlextProtocolsConfig:
     class ConfigLoader(Protocol):
         """Structural contract for loading a config source into a mapping."""
 
-        def config_load(
-            self, path: Path
-        ) -> FlextProtocolsResult.Result[flext_core.t.JsonMapping]:
+        def config_load(self, path: Path) -> FlextProtocolsResult.Result[t.JsonMapping]:
             """Load and parse a config source into a validated mapping."""
             ...
 
         def config_merge(
             self,
-            base: flext_core.t.JsonMapping,
-            override: flext_core.t.JsonMapping,
-        ) -> flext_core.t.JsonMapping:
+            base: t.JsonMapping,
+            override: t.JsonMapping,
+        ) -> t.JsonMapping:
             """Deep-merge ``override`` onto ``base``, returning a new mapping."""
             ...
 
@@ -62,7 +59,7 @@ class FlextProtocolsConfig:
             ...
 
         @property
-        def completion(self) -> flext_core.t.LoggingWriteCompletion:
+        def completion(self) -> t.LoggingWriteCompletion:
             """Native completion receiving this job's result or first failure."""
             ...
 
@@ -111,7 +108,7 @@ class FlextProtocolsConfig:
         """Structural data contract projected from the owning model."""
 
         @property
-        def data(self) -> flext_core.t.JsonMapping:
+        def data(self) -> t.JsonMapping:
             """Parsed config mapping (execution parametrization)."""
             ...
 
@@ -170,7 +167,7 @@ class FlextProtocolsConfig:
             ...
 
         @property
-        def context(self) -> flext_core.t.JsonMapping:
+        def context(self) -> t.JsonMapping:
             """Sanitized structured event context."""
             ...
 

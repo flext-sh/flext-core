@@ -16,8 +16,8 @@ from collections.abc import Sequence
 
 import pytest
 
-from flext_core import m, t
-from tests import tm, u
+from flext_core import m, t, u
+from tests import tm
 
 
 class TestsFlextCoreMapper:

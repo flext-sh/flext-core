@@ -46,7 +46,7 @@ class TestTEMPLATECategory:
     - Zero circular dependencies
     """
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "test_data",
         [
             {"description": "basic_operation", "input": "test", "expected": "TEST"},

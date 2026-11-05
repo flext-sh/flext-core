@@ -48,7 +48,7 @@ class TestsFlextCoreRegistry:
     @pytest.mark.parametrize("payload", [{}, {"registry_runtime": "invalid"}])
     def test_registry_rejects_missing_or_invalid_runtime(payload: t.JsonDict) -> None:
         """Invalid ingress never bootstraps or silently replaces a required port."""
-        with pytest.raises((TypeError, ValueError)):
+        with u.Tests.raises((TypeError, ValueError)):
             FlextRegistry.model_validate(payload)
 
     @staticmethod
@@ -57,7 +57,7 @@ class TestsFlextCoreRegistry:
         runtime = FlextContainer.build_service_runtime()
         registry = FlextRegistry(registry_runtime=runtime)
         field_name = "registry_runtime"
-        with pytest.raises((TypeError, ValueError)):
+        with u.Tests.raises((TypeError, ValueError)):
             setattr(registry, field_name, "invalid")
         tm.that(registry.registry_runtime is runtime, truth=True)
 

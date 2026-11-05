@@ -67,7 +67,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def use(*, dependency: str = "unused-default") -> str:
             return dependency
 
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             use()
 
         tm.that(str(raised.value), has="'unregistered_key_xyz'")
@@ -130,7 +130,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def boom() -> None:
             raise exc_type(message)
 
-        with pytest.raises(exc_type, match=message):
+        with u.Tests.raises(exc_type, match=message):
             boom()
 
     @staticmethod
@@ -151,7 +151,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
                 settings=m.StructlogOptions(async_logging=False),
                 runtime_settings=selected,
             )
-            with pytest.raises(ValueError, match="kaboom"):
+            with u.Tests.raises(ValueError, match="kaboom"):
                 boom()
             captured = capsys.readouterr()
             tm.that("named_failure_op" in captured.err, truth=True)

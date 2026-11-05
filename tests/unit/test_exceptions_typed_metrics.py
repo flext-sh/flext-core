@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from tests import c, e, m, t, tm
+from tests import c, e, m, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -95,7 +95,7 @@ class TestsFlextCoreExceptionsTypedMetrics:
         tm.that(isinstance(error, expected_type), truth=True)
         tm.that(error, is_=Exception)
         tm.that(error.message, eq="Test message")
-        with pytest.raises(expected_type) as caught:
+        with u.Tests.raises(expected_type) as caught:
             raise error
         tm.that(caught.value is error, truth=True)
         tm.that(caught.value.message, eq="Test message")

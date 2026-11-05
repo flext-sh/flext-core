@@ -58,7 +58,7 @@ class TestsFlextCoreMigrationValidation:
         """Unwrapping a failure raises instead of inventing a value."""
         result: p.Result[int] = r[int].fail("boom")
 
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             result.unwrap()
 
     @staticmethod

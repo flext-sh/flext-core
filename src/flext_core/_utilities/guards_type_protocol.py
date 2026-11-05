@@ -6,12 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, m, p, t
 from flext_core._utilities._guards.type_protocol_specs import (
     FlextUtilitiesGuardsTypeProtocolSpecs,
 )
@@ -33,11 +28,11 @@ class FlextUtilitiesGuardsTypeProtocol(
 
     @staticmethod
     def matches_type(
-        value: flext_core.p.ProtocolGuardInput,
+        value: p.ProtocolGuardInput,
         type_spec: str
         | type
         | tuple[type, ...]
-        | flext_core.t.Scalar,  # Scalar arm handles invalid spec at runtime
+        | t.Scalar,  # Scalar arm handles invalid spec at runtime
     ) -> bool:
         """Check if value matches a type spec (string name, type, or tuple of types).
 
@@ -54,13 +49,13 @@ class FlextUtilitiesGuardsTypeProtocol(
                     value,
                     type_name,
                 )
-            elif type_name in flext_core.c.STRING_METHOD_MAP:
+            elif type_name in c.STRING_METHOD_MAP:
                 matched = not (
                     type_name
                     in {"string_non_empty", "dict_non_empty", "list_non_empty"}
                     and isinstance(
                         value,
-                        (flext_core.m.BaseModel, flext_core.m.RootModel),
+                        (m.BaseModel, m.RootModel),
                     )
                 ) and FlextUtilitiesGuardsTypeProtocol._run_string_type_check(
                     type_name,

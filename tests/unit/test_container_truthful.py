@@ -72,7 +72,7 @@ class TestsFlextCoreContainerTruthful:
             lambda: clean_container.factory(name, factory),
             lambda: clean_container.resource(name, factory),
         ):
-            with pytest.raises(e.ValidationError, match="reserved"):
+            with u.Tests.raises(e.ValidationError, match="reserved"):
                 _ = write()
         tm.ok(clean_container.resolve(name))
         tm.fail(clean_container.has(name))
@@ -90,7 +90,7 @@ class TestsFlextCoreContainerTruthful:
             clean_container, first, "shared_name", "first"
         )
 
-        with pytest.raises(e.ValidationError, match="shared_name"):
+        with u.Tests.raises(e.ValidationError, match="shared_name"):
             TestsFlextCoreContainerTruthful._register(
                 clean_container, second, "shared_name", "second"
             )
@@ -100,7 +100,7 @@ class TestsFlextCoreContainerTruthful:
     @staticmethod
     def test_resource_empty_name_raises(clean_container: p.Container) -> None:
         """An empty resource name raises instead of being ignored."""
-        with pytest.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
+        with u.Tests.raises(e.ValidationError, match=c.ERR_CONTAINER_NAME_EMPTY):
             _ = clean_container.resource("", u.Tests.create_factory("value"))
 
     @staticmethod
@@ -126,7 +126,7 @@ class TestsFlextCoreContainerTruthful:
                 container.resolve(c.ServiceName.LOGGER)
             )
             tm.ok(isinstance(logger, p.Logger))
-            with pytest.raises(e.ValidationError, match="reserved"):
+            with u.Tests.raises(e.ValidationError, match="reserved"):
                 _ = container.factory(
                     c.ServiceName.LOGGER,
                     u.Tests.create_factory("value"),
@@ -240,7 +240,7 @@ class TestsFlextCoreContainerTruthful:
         message = c.ERR_RUNTIME_CONTAINER_INVALID_TYPE.format(
             type_name=type(payload).__name__,
         )
-        with pytest.raises(TypeError, match=re.escape(message)):
+        with u.Tests.raises(TypeError, match=re.escape(message)):
             _ = u.normalize_to_container(payload)
 
     def test_auto_registration_without_imported_caller_raises(
@@ -250,7 +250,7 @@ class TestsFlextCoreContainerTruthful:
         """A caller module absent from ``sys.modules`` is never skipped."""
         caller = self._caller_in(types.ModuleType("tests_unimported_caller"))
 
-        with pytest.raises(e.ValidationError, match="caller module"):
+        with u.Tests.raises(e.ValidationError, match="caller module"):
             caller()
 
         tm.that(clean_container.names(), empty=True)

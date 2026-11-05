@@ -159,9 +159,9 @@ class TestsFlextCoreConfigSettingsCanonical:
             snapshot = published.model_copy(deep=True)
             original = published.model_dump()
             rules.write_text(contents, encoding="utf-8")
-            with pytest.raises(m.ValidationError, match="limit"):
+            with u.Tests.raises(m.ValidationError, match="limit"):
                 ValidatedConfig.reset_for_testing()
-            with pytest.raises(m.ValidationError, match="limit"):
+            with u.Tests.raises(m.ValidationError, match="limit"):
                 ValidatedConfig()
             tm.ok(published is ValidatedConfig.fetch_global())
             tm.that(published.model_dump(), eq=original)
@@ -193,9 +193,9 @@ class TestsFlextCoreConfigSettingsCanonical:
             },
         ):
             RequiredConfig.reset_for_testing()
-            with pytest.raises(m.ValidationError, match="required_value"):
+            with u.Tests.raises(m.ValidationError, match="required_value"):
                 RequiredConfig.model_validate({})
-            with pytest.raises(m.ValidationError, match="required_value"):
+            with u.Tests.raises(m.ValidationError, match="required_value"):
                 RequiredConfig.fetch_global()
             rules.write_text("required_value: 7\n", encoding="utf-8")
             direct = RequiredConfig(required_value=7)

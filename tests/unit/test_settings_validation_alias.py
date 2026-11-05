@@ -23,7 +23,7 @@ from typing import Annotated
 import pytest
 
 from flext_core import FlextSettings
-from tests import m, t, tm
+from tests import m, t, tm, u
 
 
 class TestsFlextCoreSettingsValidationAlias:
@@ -184,7 +184,7 @@ class TestsFlextCoreSettingsValidationAlias:
     def test_unknown_override_key_raises_value_error() -> None:
         # Act / Assert — typo guard rejects undeclared fields at the boundary.
         """Test unknown override key raises value error."""
-        with pytest.raises(ValueError, match="Unknown settings override"):
+        with u.Tests.raises(ValueError, match="Unknown settings override"):
             TestsFlextCoreSettingsValidationAlias._AliasFieldSettings.update_global(
                 not_a_field="x",
             )

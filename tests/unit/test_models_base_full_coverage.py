@@ -88,7 +88,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
                 f"({id(m.ValidationError)})"
             ),
         )
-        with pytest.raises(c.ValidationError) as failure:
+        with u.Tests.raises(c.ValidationError) as failure:
             m.Metadata.model_validate({"attributes": bad_value})
         tm.that(failure.value.errors()[0]["loc"], eq=("attributes",))
         tm.that(failure.value.errors()[0]["type"], eq="dict_type")
@@ -96,7 +96,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
     @staticmethod
     def test_metadata_attributes_broken_dump_object_rejected() -> None:
         """Test metadata attributes broken dump object rejected."""
-        with pytest.raises(TypeError):
+        with u.Tests.raises(TypeError):
             m.Metadata.model_validate({"attributes": m.Tests.BrokenDumpModel()})
 
     # --- Metadata defaults and immutability ------------------------------
@@ -121,7 +121,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
     @staticmethod
     def test_metadata_rejects_extra_fields() -> None:
         """Test metadata rejects extra fields."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.Metadata.model_validate({"unknown_field": 1})
 
     # --- FrozenValueModel value semantics --------------------------------
@@ -161,7 +161,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
 
     def test_identifiable_blank_unique_id_rejected(self) -> None:
         """Test identifiable blank unique id rejected."""
-        with pytest.raises(c.ValidationError) as failure:
+        with u.Tests.raises(c.ValidationError) as failure:
             self._Identifiable(unique_id="   ")
         tm.that(failure.value.errors()[0]["type"], eq="string_too_short")
 
@@ -187,7 +187,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
         """Test timestampable rejects updated before created."""
         created = datetime(2026, 1, 2, 12, 0, 0, tzinfo=UTC)
         earlier = created - timedelta(days=1)
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             self._Timestampable(created_at=created, updated_at=earlier)
 
     # --- TimestampedModel -------------------------------------------------

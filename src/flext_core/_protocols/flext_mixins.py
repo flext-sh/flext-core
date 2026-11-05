@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ class FlextProtocolsFlextMixins:
             ...
 
         @property
-        def settings_overrides(self) -> flext_core.t.JsonMapping | None:
+        def settings_overrides(self) -> t.JsonMapping | None:
             """Settings overrides applied at instantiation."""
             ...
 

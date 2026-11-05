@@ -16,9 +16,9 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, override
+from typing import override
 
-import flext_core
+from flext_core import p
 from flext_core._result import (
     FlextResultBehavior,
     FlextResultComposition,
@@ -26,9 +26,6 @@ from flext_core._result import (
     FlextResultTransforms,
     FlextResultUnwrap,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextResultComposed[T](
@@ -56,7 +53,7 @@ class FlextResultComposed[T](
     """
 
     @override
-    def _as_result(self) -> flext_core.p.Result[T]:
+    def _as_result(self) -> p.Result[T]:
         """Return the complete result view by direct self reference.
 
         Returns:

@@ -15,7 +15,7 @@ from collections.abc import Mapping
 
 import pytest
 
-from tests import m, t, tm
+from tests import m, t, tm, u
 
 
 class TestsFlextCoreModels:
@@ -71,7 +71,7 @@ class TestsFlextCoreModels:
 
     def test_value_object_rejects_wrong_field_type(self) -> None:
         """Test value object rejects wrong field type."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             self._SampleValue.model_validate({"x": "not-an-int", "y": "a"})
 
     # ----- Entity: value equality, explicit identity ---------------------------
@@ -95,7 +95,7 @@ class TestsFlextCoreModels:
         """Test a mutable entity is not hashable."""
         entity = self._SampleEntity(name="a")
 
-        with pytest.raises(TypeError):
+        with u.Tests.raises(TypeError):
             hash(entity)
 
     def test_entity_not_equal_to_non_entity_object(self) -> None:

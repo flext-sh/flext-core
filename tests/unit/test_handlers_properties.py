@@ -15,7 +15,7 @@ from typing import cast
 import pytest
 from hypothesis import given, strategies as st
 
-from tests import c, h, r, t, tm
+from tests import c, h, r, t, tm, u
 from tests.utilities import TestsFlextUtilities
 
 _TOKENS: st.SearchStrategy[str] = st.text(
@@ -121,7 +121,7 @@ class TestsFlextCoreHandlersProperties(
     @staticmethod
     def test_invalid_handler_type_is_rejected() -> None:
         """A handler type outside the HandlerType enum is rejected."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             h.create_from_callable(
                 str,
                 handler_name="bad",

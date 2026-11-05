@@ -31,7 +31,7 @@ class TestsFlextCoreJsonPayload:
         """Models must be serialized before crossing the JSON boundary."""
         model = m.ConfigMap(root={"name": "sample"})
         adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(t.TypeForm(t.JsonValue))
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python(model)
 
     @staticmethod
@@ -48,7 +48,7 @@ class TestsFlextCoreJsonPayload:
         """The JSON branch must not silently admit arbitrary model instances."""
         model = m.Metadata(attributes={"name": "sample"})
         adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(t.TypeForm(t.JsonValue))
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python({"items": [{"model": model}]})
 
     @staticmethod
@@ -58,7 +58,7 @@ class TestsFlextCoreJsonPayload:
             t.TypeForm(t.JsonPayload)
         )
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python(object())
 
 
@@ -84,7 +84,7 @@ class TestsFlextCoreTypingsContainers:
     def test_dict_getitem_missing_key_raises_key_error() -> None:
         """m.Dict[missing] raises KeyError, matching dict semantics."""
         d = m.Dict(root={"key": "value"})
-        with pytest.raises(KeyError):
+        with u.Tests.raises(KeyError):
             _ = d["missing"]
 
     @staticmethod
@@ -169,7 +169,7 @@ class TestsFlextCoreTypingsContainers:
     @staticmethod
     def test_dict_rejects_non_mapping_root() -> None:
         """Constructing m.Dict from a non-mapping value fails validation."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Dict.model_validate(["not", "a", "mapping"])
 
     # ---- m.ConfigMap: shares the mapping contract --------------------------
@@ -230,7 +230,7 @@ class TestsFlextCoreTypedCollectionAliases:
     @staticmethod
     def test_object_list_rejects_non_sequence_root() -> None:
         """Constructing m.ObjectList from a mapping fails validation."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ObjectList.model_validate({"not": "a list"})
 
     # ---- c.SCALAR_TYPES: runtime scalar contract ---------------------------
@@ -264,7 +264,7 @@ class TestsFlextCoreTypedCollectionAliases:
             t.TypeForm(tuple[int, str])
         )
         tm.that(adapter.validate_python((1, "x")), eq=(1, "x"))
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python((1, "x", "extra"))
 
     @staticmethod
@@ -274,7 +274,7 @@ class TestsFlextCoreTypedCollectionAliases:
             t.TypeForm(tuple[int, str, bool]),
         )
         tm.that(adapter.validate_python((1, "x", True)), eq=(1, "x", True))
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python((1, "x"))
 
     @staticmethod
@@ -284,7 +284,7 @@ class TestsFlextCoreTypedCollectionAliases:
             t.TypeForm(tuple[int, int])
         )
         tm.that(adapter.validate_python((1, 2)), eq=(1, 2))
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python((1, 2, 3))
 
     @staticmethod

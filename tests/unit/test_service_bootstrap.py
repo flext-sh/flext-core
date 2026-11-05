@@ -145,7 +145,7 @@ class TestsFlextCoreServiceBootstrap:
 
     def test_settings_seed_rejects_a_non_settings_value(self) -> None:
         """A runtime settings seed that is not ``p.Settings`` fails validation."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             self.ConcreteTestService.model_validate({
                 "runtime_settings": c.Tests.DEFAULT_ERROR_MESSAGE,
             })
@@ -232,7 +232,7 @@ class TestsFlextCoreServiceBootstrap:
     @staticmethod
     def test_port_rejects_a_non_conforming_value_on_construction() -> None:
         """A value that does not satisfy the port protocol fails validation."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             u.Tests.CountingService.model_validate({
                 c.MetricType.COUNTER: c.Tests.DEFAULT_ERROR_MESSAGE,
             })
@@ -247,13 +247,13 @@ class TestsFlextCoreServiceBootstrap:
             ),
         )
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             setattr(service, port_name, c.Tests.DEFAULT_ERROR_MESSAGE)
 
     @staticmethod
     def test_fetch_global_of_a_port_service_raises() -> None:
         """A service with a required port has no argument-free singleton."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             u.Tests.CountingService.fetch_global()
 
     def test_service_schema_lists_only_data_fields(self) -> None:
@@ -292,7 +292,7 @@ class TestsFlextCoreServiceBootstrap:
         tm.that(service.execute().unwrap(), eq=1)
         tm.that(SubscriptedPortService.model_json_schema().get("properties", {}), eq={})
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             SubscriptedPortService.model_validate({
                 "result": c.Tests.DEFAULT_ERROR_MESSAGE,
             })
@@ -332,11 +332,11 @@ class TestsFlextCoreServiceBootstrap:
         tm.that(service.execute().unwrap(), eq=2)
         tm.that(ConcretePortService.model_json_schema().get("properties", {}), eq={})
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             ConcretePortService.model_validate({
                 c.MetricType.COUNTER: c.Tests.DEFAULT_ERROR_MESSAGE,
             })
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             setattr(service, c.MetricType.COUNTER, c.Tests.DEFAULT_ERROR_MESSAGE)
 
         tm.ok(service.counter is counter)
@@ -360,7 +360,7 @@ class TestsFlextCoreServiceBootstrap:
         counter = u.Tests.MemoryCounter()
         tm.that(model.model_json_schema().get("properties", {}), eq={})
         if not has_contract:
-            with pytest.raises(m.ValidationError, match="requires specialization"):
+            with u.Tests.raises(m.ValidationError, match="requires specialization"):
                 model.model_validate({"counter": counter})
             return
 
@@ -373,7 +373,7 @@ class TestsFlextCoreServiceBootstrap:
             c.Tests.DEFAULT_ERROR_MESSAGE,
             expected=m.ValidationError,
         )
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             model.model_validate({"counter": c.Tests.DEFAULT_ERROR_MESSAGE})
 
 

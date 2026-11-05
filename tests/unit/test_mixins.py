@@ -20,7 +20,7 @@ from collections.abc import Mapping
 import pytest
 
 from flext_core import FlextContext
-from tests import c, m, p, t, tm, x
+from tests import c, m, p, t, tm, u, x
 
 
 class TestsFlextMixins:
@@ -117,7 +117,7 @@ class TestsFlextMixins:
         service = self._service()
         boom = ValueError("boom")
 
-        with pytest.raises(ValueError, match="boom"), service.track("fail"):
+        with u.Tests.raises(ValueError, match="boom"), service.track("fail"):
             raise boom
 
     def test_track_recovers_after_failed_operation(self) -> None:
@@ -125,7 +125,7 @@ class TestsFlextMixins:
         service = self._service()
         boom = ValueError("boom")
 
-        with pytest.raises(ValueError, match="boom"), service.track("op"):
+        with u.Tests.raises(ValueError, match="boom"), service.track("op"):
             raise boom
         with service.track("op") as metrics:
             recovered = metrics["operation_count"]
@@ -158,7 +158,7 @@ class TestsFlextMixins:
         tm.that(service.options.label, eq=expected)
         tm.that(service.model_dump()["options"], eq=service.options.model_dump())
         tm.that(service.settings, is_=p.Settings)
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             ComposedService.model_validate({"options": {"label": []}})
         tm.rejects_assignment(
             service.options,
@@ -186,7 +186,7 @@ class TestsFlextMixins:
         bad_value: p.GuardInput,
     ) -> None:
         """Test constructor rejects invalid bootstrap value."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             self._Service.model_validate({field_name: bad_value})
 
     @staticmethod

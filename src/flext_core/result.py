@@ -25,7 +25,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Never, override
 
-import flext_core
+from flext_core import p, t
 from flext_core._result import FlextResultComposed
 
 if TYPE_CHECKING:
@@ -60,7 +60,7 @@ class FlextResult[T](FlextResultComposed[T]):
 
     @staticmethod
     @override
-    def _create_success[V](value: V) -> flext_core.p.Result[V]:
+    def _create_success[V](value: V) -> p.Result[V]:
         """Construct a validated success result carrying the given payload.
 
         Args:
@@ -77,9 +77,9 @@ class FlextResult[T](FlextResultComposed[T]):
     def _create_failure(
         error: str,
         error_code: str | None,
-        error_data: flext_core.t.JsonDict | None,
+        error_data: t.JsonDict | None,
         exception: BaseException | None,
-    ) -> flext_core.p.Result[Never]:
+    ) -> p.Result[Never]:
         """Construct a normalized failure result with immutable error context.
 
         Args:

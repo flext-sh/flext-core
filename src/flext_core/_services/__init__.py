@@ -9,7 +9,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import flext_core
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
@@ -17,11 +16,7 @@ if TYPE_CHECKING:
     from flext_core._services.registry import FlextServiceRegistry
 
 
-__all__: tuple[str, ...] = (
-    "FlextServiceDispatcher",
-    "FlextServiceRegistry",
-    "flext_core",
-)
+__all__: tuple[str, ...] = ("FlextServiceDispatcher", "FlextServiceRegistry")
 
 install_lazy_exports(
     __name__,

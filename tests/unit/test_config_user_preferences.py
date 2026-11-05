@@ -341,7 +341,7 @@ class TestPackagedConfigWithUserPreferences:
                 encoding="utf-8",
             )
             module = lazy.load("synthpkg_missing.declared")
-            with pytest.raises(FileNotFoundError, match="declared config directory"):
+            with u.Tests.raises(FileNotFoundError, match="declared config directory"):
                 module.DeclaredConfig.fetch_global()
 
     @staticmethod

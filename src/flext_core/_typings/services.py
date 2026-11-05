@@ -23,7 +23,7 @@ from pathlib import Path
 from types import GenericAlias, ModuleType, TracebackType, UnionType
 from typing import BinaryIO, TextIO, TypeAliasType
 
-import flext_core
+from flext_core import c
 from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
@@ -94,7 +94,7 @@ class FlextTypesServices:
     type ScalarOrModel = FlextTypingBase.Scalar | FlextTypesPydantic.BaseModelType
     type ModelClass[T: FlextTypesPydantic.BaseModelType] = type[T]
 
-    type LogLevel = flext_core.c.LogLevel
+    type LogLevel = c.LogLevel
     type LoggingTraceback = TracebackType
     type LoggingExceptionInfo = tuple[
         type[BaseException], BaseException, LoggingTraceback | None

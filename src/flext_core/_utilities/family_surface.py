@@ -11,12 +11,9 @@ import importlib.metadata
 import sys
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import MappingProxyType
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, lazy, normalize_lazy_imports, t
 from flext_core._utilities import FlextUtilitiesProjectMetadata
 
 
@@ -55,9 +52,9 @@ class FlextUtilitiesFamilySurface:
 
         """
         return distribution_name.startswith(
-            flext_core.c.NAMESPACE_FAMILY_PREFIX,
+            c.NAMESPACE_FAMILY_PREFIX,
         ) or any(
-            requirement.startswith(flext_core.c.NAMESPACE_FAMILY_PREFIX)
+            requirement.startswith(c.NAMESPACE_FAMILY_PREFIX)
             for requirement in requirement_names
         )
 
@@ -78,7 +75,7 @@ class FlextUtilitiesFamilySurface:
             The resulting ``Mapping[str, str]``.
 
         """
-        module_names: flext_core.t.MutableStrMapping = {}
+        module_names: t.MutableStrMapping = {}
         for (
             module_name,
             distribution_names,
@@ -147,7 +144,7 @@ class FlextUtilitiesFamilySurface:
             module_name,
         ) in FlextUtilitiesFamilySurface.family_discovery_candidates():
             try:
-                module = flext_core.lazy.load(module_name)
+                module = lazy.load(module_name)
             except ImportError:
                 # The requirement edge only nominates the member; the published
                 # contract is the structural proof. A member whose root package
@@ -161,17 +158,17 @@ class FlextUtilitiesFamilySurface:
             raw_map = vars(module).get("_LAZY_IMPORTS")
             if published is None or raw_map is None:
                 continue
-            normalized = flext_core.normalize_lazy_imports(module.__name__, raw_map)
+            normalized = normalize_lazy_imports(module.__name__, raw_map)
             snapshot.append((
                 name,
                 frozenset(published),
                 MappingProxyType(dict(normalized)),
             ))
-        if len(snapshot) < flext_core.c.FAMILY_SURFACE_MIN_PUBLISHED:
+        if len(snapshot) < c.FAMILY_SURFACE_MIN_PUBLISHED:
             msg = (
                 "family-surface derivation found no distribution publishing "
                 "the lazy export contract under prefix "
-                f"{flext_core.c.NAMESPACE_FAMILY_PREFIX!r} or a "
+                f"{c.NAMESPACE_FAMILY_PREFIX!r} or a "
                 "requirement edge to it"
             )
             raise RuntimeError(msg)
@@ -192,9 +189,7 @@ class FlextUtilitiesFamilySurface:
             The resulting ``Mapping[str, tuple[str, ...]]``.
 
         """
-        declaration = tuple(
-            name[0].lower() for name in flext_core.c.NAMESPACE_LAYER_NAMES
-        )
+        declaration = tuple(name[0].lower() for name in c.NAMESPACE_LAYER_NAMES)
         owners = {
             name: tuple(alias for alias in declaration if alias in published)
             for name, published, _ in (FlextUtilitiesFamilySurface._surface_snapshot())
@@ -232,9 +227,7 @@ class FlextUtilitiesFamilySurface:
 
         """
         return [
-            alias
-            for alias in bucket["aliases"]
-            if alias in flext_core.c.FAMILY_CANONICAL_ALIASES
+            alias for alias in bucket["aliases"] if alias in c.FAMILY_CANONICAL_ALIASES
         ]
 
     @staticmethod
@@ -308,11 +301,11 @@ class FlextUtilitiesFamilySurface:
             ``(alias, module_path, family_suffix)`` for every one-letter alias.
 
         """
-        package = flext_core.lazy.load(package_name)
+        package = lazy.load(package_name)
         published = vars(package).get("_LAZY_IMPORTS")
         if published is None:
             return ()
-        lazy_imports = flext_core.normalize_lazy_imports(package.__name__, published)
+        lazy_imports = normalize_lazy_imports(package.__name__, published)
         return tuple(
             (
                 alias,

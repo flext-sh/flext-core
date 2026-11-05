@@ -9,11 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from flext_core import FlextSettings
-from tests import c, tm
+from tests import c, tm, u
 from tests.integration.settings_integration_factories import (
     TestsFlextFlextSettingsFactories,
 )
-from tests.utilities import u
 
 if TYPE_CHECKING:
     from pathlib import Path

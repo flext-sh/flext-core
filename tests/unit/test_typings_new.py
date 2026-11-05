@@ -38,7 +38,7 @@ class TestsFlextCoreTypingsNew:
     @staticmethod
     def test_primitives_adapter_rejects_collection() -> None:
         """primitives_adapter rejects a non-primitive collection."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             u.primitives_adapter().validate_python([1])
 
     @staticmethod
@@ -46,7 +46,7 @@ class TestsFlextCoreTypingsNew:
     def test_int_adapter_is_strict(valid: int, invalid: t.Scalar) -> None:
         """int_adapter accepts real ints and rejects coercible non-ints."""
         tm.that(u.int_adapter().validate_python(valid), eq=valid)
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             u.int_adapter().validate_python(invalid)
 
     @staticmethod
@@ -54,7 +54,7 @@ class TestsFlextCoreTypingsNew:
     def test_str_adapter_rejects_non_str(bad: t.Scalar) -> None:
         """str_adapter is strict: non-string inputs are rejected."""
         tm.that(u.str_adapter().validate_python("hi"), eq="hi")
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             u.str_adapter().validate_python(bad)
 
     @staticmethod
@@ -84,14 +84,14 @@ class TestsFlextCoreTypingsNew:
     def test_port_number_adapter_enforces_range(valid: int, invalid: int) -> None:
         """port_number_adapter accepts in-range ports and rejects out-of-range."""
         tm.that(u.port_number_adapter().validate_python(valid), eq=valid)
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             u.port_number_adapter().validate_python(invalid)
 
     @staticmethod
     def test_hostname_str_adapter_rejects_empty() -> None:
         """hostname_str_adapter accepts a hostname and rejects the empty string."""
         tm.that(u.hostname_str_adapter().validate_python("localhost"), eq="localhost")
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             u.hostname_str_adapter().validate_python("")
 
     @staticmethod
@@ -108,7 +108,7 @@ class TestsFlextCoreTypingsNew:
         adapter = u.str_sequence_adapter()
         tm.that(adapter.validate_python(["a", "b"]), eq=["a", "b"])
         tm.ok(adapter is u.str_sequence_adapter())
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(["a", 1])
 
     @staticmethod
@@ -117,9 +117,9 @@ class TestsFlextCoreTypingsNew:
         adapter = u.strict_str_tuple_adapter()
         tm.that(adapter.validate_python(("\n", "\r\n")), eq=("\n", "\r\n"))
         tm.ok(adapter is u.strict_str_tuple_adapter())
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(["\n"])
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(("\n", 1))
 
     @staticmethod

@@ -252,7 +252,7 @@ class TestsFlextCoreSettings:
                 env_vars={"FLEXT_TAP_ORACLE_STATE_DIR": "relative-state"},
             ):
                 FlextSettings.apply_app_namespace("flext-tap-oracle")
-                with pytest.raises(ValueError, match="must be absolute"):
+                with u.Tests.raises(ValueError, match="must be absolute"):
                     _ = FlextSettings.fetch_global().state_dir
 
     @staticmethod
@@ -287,7 +287,7 @@ class TestsFlextCoreSettings:
     @staticmethod
     def test_update_global_rejects_unknown_field() -> None:
         """update_global raises for keys that are not declared fields."""
-        with pytest.raises(ValueError, match="Unknown settings override"):
+        with u.Tests.raises(ValueError, match="Unknown settings override"):
             FlextSettings.update_global(typo_field="x")
 
     @staticmethod
@@ -344,9 +344,9 @@ class TestsFlextCoreSettings:
         """Failed reloads and isolated constructors cannot poison a bound root."""
         original = settings.model_dump()
         with u.Tests.env_vars_context(env_vars={"FLEXT_LOG_LEVEL": "invalid-level"}):
-            with pytest.raises(m.ValidationError, match="Invalid log level"):
+            with u.Tests.raises(m.ValidationError, match="Invalid log level"):
                 FlextSettings.reset_for_testing()
-            with pytest.raises(m.ValidationError, match="Invalid log level"):
+            with u.Tests.raises(m.ValidationError, match="Invalid log level"):
                 FlextSettings()
         tm.ok(settings is FlextSettings.fetch_global())
         tm.that(settings.model_dump(), eq=original)
@@ -387,12 +387,12 @@ class TestsFlextCoreSettings:
         published = NestedSettings.fetch_global()
         nested = published.window
         original = published.model_dump()
-        with pytest.raises(ValueError, match=r"."):
+        with u.Tests.raises(ValueError, match=r"."):
             NestedSettings.update_global(**overrides)
         tm.ok(published is NestedSettings.fetch_global())
         tm.ok(published.window is nested)
         tm.that(published.model_dump(), eq=original)
-        with pytest.raises(ValueError, match=r"."):
+        with u.Tests.raises(ValueError, match=r"."):
             published.clone(**overrides)
         tm.that(published.model_dump(), eq=original)
 
@@ -441,9 +441,9 @@ class TestsFlextCoreSettings:
             LazySettings.reset_for_testing()
             snapshot = LazySettings.fetch_global(overrides={})
             tm.that(snapshot.marker, eq="first")
-            with pytest.raises(m.ValidationError, match="Invalid log level"):
+            with u.Tests.raises(m.ValidationError, match="Invalid log level"):
                 LazySettings.update_global(log_level="invalid-level")
-            with pytest.raises(m.ValidationError, match="Invalid log level"):
+            with u.Tests.raises(m.ValidationError, match="Invalid log level"):
                 LazySettings(log_level="invalid-level")
         with u.Tests.env_vars_context(env_vars={"FLEXT_MARKER": "second"}):
             published = LazySettings.fetch_global()

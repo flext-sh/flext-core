@@ -8,13 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols._exception_params import FlextProtocolsExceptionParamsBase
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextProtocolsExceptionParamsServiceErrors:
@@ -24,7 +21,7 @@ class FlextProtocolsExceptionParamsServiceErrors:
     class TimeoutErrorParams(FlextProtocolsExceptionParamsBase.ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        timeout_seconds: flext_core.t.Numeric | None
+        timeout_seconds: t.Numeric | None
         operation: str | None
 
     @runtime_checkable
@@ -66,7 +63,7 @@ class FlextProtocolsExceptionParamsServiceErrors:
 
         limit: int | None
         window_seconds: int | None
-        retry_after: flext_core.t.Numeric | None
+        retry_after: t.Numeric | None
 
     @runtime_checkable
     class CircuitBreakerErrorParams(
@@ -76,7 +73,7 @@ class FlextProtocolsExceptionParamsServiceErrors:
 
         service_name: str | None
         failure_count: int | None
-        reset_timeout: flext_core.t.Numeric | None
+        reset_timeout: t.Numeric | None
 
     @runtime_checkable
     class TypeErrorParams(

@@ -208,7 +208,7 @@ class TestsFlextCoreUtilitiesReliability:
     @staticmethod
     def test_try_propagates_exception_outside_configured_catch() -> None:
         """Test try propagates exception outside configured catch."""
-        with pytest.raises(KeyError):
+        with u.Tests.raises(KeyError):
             u.try_(_raising_value_operation(KeyError("k")), catch=ValueError)
 
     # -- guard_result -----------------------------------------------------
@@ -245,7 +245,7 @@ class TestsFlextCoreUtilitiesReliability:
     @staticmethod
     def test_guard_result_propagates_exception_outside_configured_catch() -> None:
         """Test guard result propagates exception outside configured catch."""
-        with pytest.raises(KeyError):
+        with u.Tests.raises(KeyError):
             u.guard_result(_raising_result_operation(KeyError("k")), catch=ValueError)
 
     # -- RetryOptions model ----------------------------------------------

@@ -15,7 +15,7 @@ import time
 
 import pytest
 
-from tests import c, d, e, r, tm
+from tests import c, d, e, r, tm, u
 
 
 class TestsFlextCoreDecoratorsRailwayRetry:
@@ -188,7 +188,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
             raise ValueError(error_msg)
 
         # Act / Assert
-        with pytest.raises(
+        with u.Tests.raises(
             e.FlextTimeoutError,
             match="failed after 2 attempts",
         ) as info:
@@ -223,7 +223,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
             raise ValueError(msg)
 
         # Act / Assert
-        with pytest.raises(ValueError, match="fast-fail"):
+        with u.Tests.raises(ValueError, match="fast-fail"):
             fails_fast()
 
     @staticmethod
@@ -237,7 +237,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
             raise e.FlextTimeoutError(msg)
 
         # Act / Assert
-        with pytest.raises(e.FlextTimeoutError, match="already-timeout"):
+        with u.Tests.raises(e.FlextTimeoutError, match="already-timeout"):
             raises_timeout()
 
     @staticmethod
@@ -245,7 +245,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         # Arrange
         """Test timeout raises timeout error when duration exceeded."""
         # Act / Assert
-        with pytest.raises(e.FlextTimeoutError) as info:
+        with u.Tests.raises(e.FlextTimeoutError) as info:
             TestsFlextCoreDecoratorsRailwayRetry.slow_operation()
         tm.that(info.value.operation, eq="slow_operation")
 
@@ -254,6 +254,6 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         # Arrange
         """Test timeout uses default error code when none provided."""
         # Act / Assert
-        with pytest.raises(e.FlextTimeoutError) as info:
+        with u.Tests.raises(e.FlextTimeoutError) as info:
             TestsFlextCoreDecoratorsRailwayRetry.slow_operation()
         tm.that(info.value.error_code, eq=c.ErrorCode.TIMEOUT_ERROR.value)

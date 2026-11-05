@@ -79,7 +79,7 @@ class TestsFlextCoreLazyExports:
             ("flext_core.exceptions", "FlextExceptions", "e"),
             ("flext_core.models", "FlextModels", "m"),
             ("flext_core.protocols", "FlextProtocols", "p"),
-            ("flext_core.typings", "FlextTypes", "t"),
+            ("typings", "FlextTypes", "t"),
             ("flext_core.utilities", "FlextUtilities", "u"),
         ],
     )
@@ -160,7 +160,7 @@ class TestsFlextCoreLazyExports:
         script = (
             "import sys\n"
             f"sys.path.insert(0, {str(tmp_path)!r})\n"
-            "import flext_core\n"
+            "from flext_core import c,t,p,m,u,x,h,d\n"
             f"print(flext_core.__file__ == {str(candidate / '__init__.py')!r})\n"
             "from flext_core import c, p, t, m, u\n"
             "print(c is flext_core.FlextConstants, t is flext_core.FlextTypes, "
@@ -192,7 +192,7 @@ class TestsFlextCoreLazyExports:
             f"{first_import}\n"
             "from pathlib import Path\n"
             "from typing import get_args\n"
-            "import flext_core, flext_cli, flext_infra\n"
+            "from flext_core import c,t,p,m,u,x,h,d, flext_cli, flext_infra\n"
             "from flext_core import FlextSettings, c, m, p, t\n"
             f"workspace = Path({str(workspace)!r})\n"
             "for package in (flext_core, flext_cli, flext_infra):\n"
@@ -402,7 +402,7 @@ class TestsFlextCoreLazyExports:
         tm.that(callable(getattr_fn), truth=True)
 
         # Act / Assert
-        with pytest.raises(AttributeError, match="Missing"):
+        with u.Tests.raises(AttributeError, match="Missing"):
             getattr_fn("Missing")
 
     @staticmethod
@@ -559,7 +559,7 @@ class TestsFlextCoreLazyExportCaching:
         module_globals: t.ModuleGlobals = {}
 
         # Act / Assert
-        with pytest.raises(AttributeError, match="Missing"):
+        with u.Tests.raises(AttributeError, match="Missing"):
             lazy.get("Missing", {}, module_globals, "test_pkg")
 
     @staticmethod

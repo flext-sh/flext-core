@@ -14,17 +14,14 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
-import flext_core
+from flext_core import c, p, t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsContainers,
     FlextModelsPydantic,
 )
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextModelsContainer:
@@ -54,8 +51,8 @@ class FlextModelsContainer:
         @FlextModelsPydantic.field_validator("metadata", mode="before")
         @classmethod
         def validate_metadata_model_input(
-            cls, value: flext_core.p.MetadataInput
-        ) -> flext_core.p.Metadata | None:
+            cls, value: p.MetadataInput
+        ) -> p.Metadata | None:
             """Keep metadata identity and validate raw registration attributes.
 
             Returns:
@@ -67,9 +64,9 @@ class FlextModelsContainer:
             if isinstance(value, FlextModelsBase.Metadata):
                 return value
             return FlextModelsBase.Metadata.model_validate({
-                flext_core.c.FIELD_ATTRIBUTES: (
+                c.FIELD_ATTRIBUTES: (
                     value.model_dump(mode="json")
-                    if isinstance(value, flext_core.p.HasModelDump)
+                    if isinstance(value, p.HasModelDump)
                     else value
                 )
             })
@@ -78,11 +75,11 @@ class FlextModelsContainer:
         """Service registry entry following the declared service contract."""
 
         name: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(..., description="Service identifier/name"),
         ]
         service: Annotated[
-            flext_core.t.SkipJsonSchema[flext_core.p.RegisterableService],
+            t.SkipJsonSchema[p.RegisterableService],
             FlextModelsPydantic.Field(
                 ...,
                 description="Service instance (protocols, models, callables)",
@@ -110,11 +107,11 @@ class FlextModelsContainer:
         """
 
         name: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(..., description="Factory identifier/name"),
         ]
         factory: Annotated[
-            flext_core.p.FactoryCallable,
+            p.FactoryCallable,
             FlextModelsPydantic.Field(
                 ...,
                 description="Factory function that creates service instances",
@@ -131,11 +128,11 @@ class FlextModelsContainer:
         """
 
         name: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(..., description="Resource identifier/name"),
         ]
         factory: Annotated[
-            flext_core.p.ResourceCallable,
+            p.ResourceCallable,
             FlextModelsPydantic.Field(
                 ...,
                 description="Factory returning the lifecycle-managed resource",
@@ -164,21 +161,21 @@ class FlextModelsContainer:
             ),
         ] = True
         max_services: Annotated[
-            flext_core.t.PositiveInt,
+            t.PositiveInt,
             FlextModelsPydantic.Field(
-                flext_core.c.DEFAULT_SIZE,
-                le=flext_core.c.MAX_ITEMS,
+                c.DEFAULT_SIZE,
+                le=c.MAX_ITEMS,
                 description="Maximum number of services allowed in registry",
             ),
-        ] = flext_core.c.DEFAULT_SIZE
+        ] = c.DEFAULT_SIZE
         max_factories: Annotated[
-            flext_core.t.PositiveInt,
+            t.PositiveInt,
             FlextModelsPydantic.Field(
-                flext_core.c.DEFAULT_MAX_FACTORIES,
-                le=flext_core.c.MAX_FACTORIES,
+                c.DEFAULT_MAX_FACTORIES,
+                le=c.MAX_FACTORIES,
                 description="Maximum number of factories allowed in registry",
             ),
-        ] = flext_core.c.DEFAULT_MAX_FACTORIES
+        ] = c.DEFAULT_MAX_FACTORIES
         enable_auto_registration: Annotated[
             bool,
             FlextModelsPydantic.Field(
@@ -214,7 +211,7 @@ class FlextModelsContainer:
         )
 
         settings: Annotated[
-            flext_core.t.Port[flext_core.p.Settings] | None,
+            t.Port[p.Settings] | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Config",
@@ -222,25 +219,23 @@ class FlextModelsContainer:
             ),
         ] = None
         context: Annotated[
-            flext_core.t.Port[flext_core.p.Context] | None,
+            t.Port[p.Context] | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Context",
                 description="Execution context attached to the container.",
             ),
         ] = None
-        dispatcher: flext_core.t.Port[flext_core.p.Dispatcher | None] = (
-            FlextModelsPydantic.Field(
-                default=None,
-                exclude=True,
-                description=(
-                    "Explicit command bus retained by this scope; "
-                    "otherwise a fresh bus is built."
-                ),
-            )
+        dispatcher: t.Port[p.Dispatcher | None] = FlextModelsPydantic.Field(
+            default=None,
+            exclude=True,
+            description=(
+                "Explicit command bus retained by this scope; "
+                "otherwise a fresh bus is built."
+            ),
         )
         services: Annotated[
-            flext_core.p.ServiceMap | None,
+            p.ServiceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Services",
@@ -249,7 +244,7 @@ class FlextModelsContainer:
             ),
         ] = None
         factories: Annotated[
-            flext_core.p.FactoryMap | None,
+            p.FactoryMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Factories",
@@ -258,7 +253,7 @@ class FlextModelsContainer:
             ),
         ] = None
         resources: Annotated[
-            flext_core.p.ResourceMap | None,
+            p.ResourceMap | None,
             FlextModelsPydantic.Field(
                 None,
                 title="Resources",
@@ -266,23 +261,21 @@ class FlextModelsContainer:
                 validate_default=True,
             ),
         ] = None
-        user_overrides: (
-            flext_core.t.Port[flext_core.p.BaseModel]
-            | flext_core.t.UserOverridesMapping
-            | None
-        ) = FlextModelsPydantic.Field(
-            default=None,
-            title="User Overrides",
-            description=("User-level configuration overrides applied after defaults."),
-            validate_default=True,
-        )
-        container_config: flext_core.t.Port[flext_core.p.BaseModel] | None = (
+        user_overrides: t.Port[p.BaseModel] | t.UserOverridesMapping | None = (
             FlextModelsPydantic.Field(
                 default=None,
-                title="Container Config",
-                description="Container configuration model controlling DI behavior.",
+                title="User Overrides",
+                description=(
+                    "User-level configuration overrides applied after defaults."
+                ),
                 validate_default=True,
             )
+        )
+        container_config: t.Port[p.BaseModel] | None = FlextModelsPydantic.Field(
+            default=None,
+            title="Container Config",
+            description="Container configuration model controlling DI behavior.",
+            validate_default=True,
         )
 
     class FactoryDecoratorConfig(FlextModelsBase.ImmutableValueModel):
@@ -308,7 +301,7 @@ class FlextModelsContainer:
         """
 
         name: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(
                 ...,
                 description="Name to register this factory under in the container",

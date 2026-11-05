@@ -10,7 +10,7 @@ from typing import override
 
 import pytest
 
-from tests import c, m, p, r, s, t, tm
+from tests import c, m, p, r, s, t, tm, u
 
 
 class TestsFlextCoreEnumValueContracts:
@@ -98,7 +98,7 @@ class TestsFlextCoreEnumValueContracts:
             set(schema["$defs"]["HandlerType"]["enum"]),
             eq={member.value for member in c.HandlerType},
         )
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             model.model_validate_json('{"kind":null}')
 
     @staticmethod
@@ -121,7 +121,7 @@ class TestsFlextCoreEnumValueContracts:
         model: type[t.BaseModelType],
     ) -> None:
         """Defaults and factory results cannot bypass a constrained data contract."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             model.model_validate({})
 
     @staticmethod
@@ -153,7 +153,7 @@ class TestsFlextCoreEnumValueContracts:
         model: type[t.BaseModelType],
     ) -> None:
         """JSON enum values do not authorize coercion of a strict Python input."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             model.model_validate({"kind": c.DEFAULT_HANDLER_TYPE.value})
 
     @staticmethod

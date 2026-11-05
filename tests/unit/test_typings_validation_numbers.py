@@ -44,7 +44,7 @@ class TestsFlextCoreTypingsValidationNumbers:
             """An empty or whitespace-only value raises the public ValidationError."""
             adapter: t.TypeAdapter[str] = u.type_adapter(t.TypeForm(t.StrippedStr))
 
-            with pytest.raises(c.ValidationError):
+            with u.Tests.raises(c.ValidationError):
                 adapter.validate_python(value)
 
     @staticmethod
@@ -111,7 +111,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         """A value outside the constraint raises the public ValidationError."""
         adapter: t.TypeAdapter[str | int] = u.type_adapter(alias)
 
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     @staticmethod

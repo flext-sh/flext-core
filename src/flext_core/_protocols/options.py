@@ -8,13 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols import FlextProtocolsPydantic
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextProtocolsOptions:
@@ -25,7 +22,7 @@ class FlextProtocolsOptions:
         """Structural data contract projected from the owning model."""
 
         prefix: str | None
-        parts: tuple[flext_core.t.JsonValue, ...] | None
+        parts: tuple[t.JsonValue, ...] | None
         length: int | None
         include_timestamp: bool
         separator: str

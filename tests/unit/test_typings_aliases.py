@@ -22,7 +22,7 @@ import pydantic
 import pytest
 
 import flext_core
-from tests import c, m, p, t, tm
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCoreTypingsAliases:
@@ -166,5 +166,5 @@ class TestsFlextCoreTypingsAliases:
             value: t.Port[pydantic.JsonValue]
 
         tm.that(Holder(value="texto").value, eq="texto")
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             Holder.model_validate({"value": object()})

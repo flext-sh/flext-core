@@ -39,7 +39,7 @@ from typing import Annotated, ClassVar, Final
 
 from typing_extensions import TypeForm
 
-from tests import m, p, r, t, u
+from tests import c, m, p, r, t, u
 
 
 class TestsFlextCleanModels:

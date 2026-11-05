@@ -12,9 +12,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-import pytest
-
-from tests import c, m, tm
+from tests import c, m, tm, u
 
 
 class TestsFlextCoreModelsExternalContract:
@@ -30,7 +28,7 @@ class TestsFlextCoreModelsExternalContract:
 
     def test_validates_strictly(self) -> None:
         """A consumed field rejects lax coercion of the external payload."""
-        with pytest.raises(c.ValidationError) as failure:
+        with u.Tests.raises(c.ValidationError) as failure:
             self._External.model_validate({"number": "7"})
         tm.that(failure.value.errors()[0]["type"], eq="int_type")
 

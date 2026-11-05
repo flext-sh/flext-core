@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
@@ -35,7 +35,7 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart02:
             ...
 
         @property
-        def hooks(self) -> flext_core.t.ContextHookMap:
+        def hooks(self) -> t.ContextHookMap:
             """Lifecycle hooks keyed by event name."""
             ...
 
@@ -61,9 +61,7 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart02:
             self,
         ) -> Mapping[
             str,
-            ContextVar[
-                FlextProtocolsContainer.MutableRootDict[flext_core.t.JsonPayload] | None
-            ],
+            ContextVar[FlextProtocolsContainer.MutableRootDict[t.JsonPayload] | None],
         ]:
             """ContextVar registry keyed by scope name."""
             ...

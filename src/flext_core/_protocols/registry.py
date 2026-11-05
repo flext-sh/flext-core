@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
-import flext_core
+from flext_core import c, t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsEntity,
@@ -115,7 +115,7 @@ class FlextProtocolsRegistry:
         def register_bindings(
             self,
             bindings: Mapping[
-                flext_core.t.RegistryBindingKey,
+                t.RegistryBindingKey,
                 FlextProtocolsHandler.DispatchableHandler,
             ],
         ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
@@ -135,9 +135,7 @@ class FlextProtocolsRegistry:
                 FlextProtocolsResult.Result[bool],
             ]
             | None = None,
-            scope: flext_core.c.RegistrationScope = (
-                flext_core.c.RegistrationScope.INSTANCE
-            ),
+            scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
         ) -> FlextProtocolsResult.Result[bool]:
             """Register a plugin with optional validation."""
             ...
@@ -147,9 +145,7 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: flext_core.c.RegistrationScope = (
-                flext_core.c.RegistrationScope.INSTANCE
-            ),
+            scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
         ) -> FlextProtocolsResult.Result[bool]:
             """Unregister a plugin."""
             ...
@@ -159,9 +155,7 @@ class FlextProtocolsRegistry:
             category: str,
             name: str,
             *,
-            scope: flext_core.c.RegistrationScope = (
-                flext_core.c.RegistrationScope.INSTANCE
-            ),
+            scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
         ) -> FlextProtocolsResult.Result[FlextProtocolsContainer.RegisterableService]:
             """Get a registered plugin by category and name."""
             ...
@@ -170,9 +164,7 @@ class FlextProtocolsRegistry:
             self,
             category: str,
             *,
-            scope: flext_core.c.RegistrationScope = (
-                flext_core.c.RegistrationScope.INSTANCE
-            ),
+            scope: c.RegistrationScope = (c.RegistrationScope.INSTANCE),
         ) -> FlextProtocolsResult.Result[Sequence[str]]:
             """List all plugins in a category."""
             ...

@@ -8,13 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextProtocolsCqrsFlextmodelscqrsPart01:
@@ -24,8 +21,8 @@ class FlextProtocolsCqrsFlextmodelscqrsPart01:
     class Pagination(FlextProtocolsBase.FlexibleInternalModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        page: flext_core.t.PositiveInt
-        size: flext_core.t.PositiveInt
+        page: t.PositiveInt
+        size: t.PositiveInt
 
         @property
         def limit(self) -> int:

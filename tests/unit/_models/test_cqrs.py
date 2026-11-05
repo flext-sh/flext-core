@@ -18,7 +18,7 @@ from typing import Annotated
 import pytest
 
 from flext_core import t
-from tests import c, m, tm
+from tests import c, m, tm, u
 
 
 class TestsFlextCoreCqrs:
@@ -191,7 +191,7 @@ class TestsFlextCoreQuery:
     def test_query_rejects_invalid_pagination(
         invalid_pagination: Mapping[str, t.Scalar],
     ) -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.Query.model_validate({"pagination": invalid_pagination})
 
     @staticmethod
@@ -253,5 +253,5 @@ class TestsFlextCoreQuery:
         invalid_kwargs: t.IntMapping,
     ) -> None:
         # Act / Assert
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.Pagination(**invalid_kwargs)

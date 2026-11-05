@@ -128,5 +128,5 @@ class TestsFlextCoreLoggingThreshold:
     @staticmethod
     def test_unknown_level_name_fails_loud() -> None:
         """Test unknown level name fails loud."""
-        with pytest.raises(ValueError, match="LOUD"):
+        with u.Tests.raises(ValueError, match="LOUD"):
             u.apply_log_level(log_level="LOUD", debug=False, trace=False)

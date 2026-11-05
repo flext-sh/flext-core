@@ -147,7 +147,7 @@ class TestsFlextCoreLazyExportsMerge:
     @staticmethod
     def test_merge_relative_child_path_without_module_name_raises_value_error() -> None:
         """A relative child path with no parent module is an invalid request."""
-        with pytest.raises(ValueError, match="relative lazy-import paths"):
+        with u.Tests.raises(ValueError, match="relative lazy-import paths"):
             merge_lazy_imports((".child",), {})
 
     @staticmethod

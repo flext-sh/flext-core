@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 from flext_core.__version__ import FlextVersion, __version__, __version_info__
-from tests import c, tm
+from tests import c, tm, u
 
 
 def _write_version_metadata(tmp_path: Path, version: str) -> Path:
@@ -104,7 +104,7 @@ class TestsFlextCoreVersion:
         distribution_path = _write_version_metadata(tmp_path, version)
         package_metadata = PathDistribution(distribution_path).metadata
 
-        with pytest.raises(ValueError, match="three-part semantic version"):
+        with u.Tests.raises(ValueError, match="three-part semantic version"):
             type(
                 "InvalidVersionContract",
                 (FlextVersion,),

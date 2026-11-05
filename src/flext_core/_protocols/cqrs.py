@@ -9,14 +9,11 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
+from typing import Literal, Protocol, runtime_checkable
 
-import flext_core
+from flext_core import c, t
 from flext_core._protocols import FlextProtocolsBase
 from flext_core._protocols._cqrs import FlextProtocolsCqrsFlextmodelscqrsPart01
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
@@ -27,24 +24,24 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(self) -> Literal[flext_core.c.HandlerMode.COMMAND]:
+        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
             """Message type discriminator (always 'command')."""
             ...
 
-        command_type: flext_core.t.NonEmptyStr
-        command_id: flext_core.t.NonEmptyStr
-        issuer_id: flext_core.t.NonEmptyStr | None
+        command_type: t.NonEmptyStr
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
 
     @runtime_checkable
     class Query(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(self) -> Literal[flext_core.c.HandlerMode.QUERY]:
+        def message_type(self) -> Literal[c.HandlerMode.QUERY]:
             """Message type discriminator."""
             ...
 
-        filters: Mapping[str, flext_core.t.Scalar]
+        filters: Mapping[str, t.Scalar]
 
         @property
         def pagination(self) -> FlextProtocolsCqrsFlextmodelscqrsPart01.Pagination:
@@ -54,7 +51,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
             """
             ...
 
-        query_id: flext_core.t.NonEmptyStr
+        query_id: t.NonEmptyStr
         query_type: str | None
 
     @runtime_checkable
@@ -62,22 +59,22 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         """Structural data contract projected from the owning model."""
 
         @property
-        def handler_id(self) -> flext_core.t.NonEmptyStr:
+        def handler_id(self) -> t.NonEmptyStr:
             """Unique handler identifier."""
             ...
 
         @property
-        def handler_name(self) -> flext_core.t.NonEmptyStr:
+        def handler_name(self) -> t.NonEmptyStr:
             """Human-readable handler name."""
             ...
 
         @property
-        def handler_type(self) -> flext_core.c.HandlerType:
+        def handler_type(self) -> c.HandlerType:
             """Handler type."""
             ...
 
         @property
-        def handler_mode(self) -> flext_core.c.HandlerType:
+        def handler_mode(self) -> c.HandlerType:
             """Handler mode."""
             ...
 
@@ -109,17 +106,17 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(self) -> Literal[flext_core.c.HandlerType.EVENT]:
+        def message_type(self) -> Literal[c.HandlerType.EVENT]:
             """Message type discriminator (always 'event')."""
             ...
 
-        event_type: flext_core.t.NonEmptyStr
-        aggregate_id: flext_core.t.NonEmptyStr
-        event_id: flext_core.t.NonEmptyStr
-        data: Mapping[str, flext_core.t.Scalar]
-        metadata: Mapping[str, flext_core.t.Scalar]
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
+        event_id: t.NonEmptyStr
+        data: Mapping[str, t.Scalar]
+        metadata: Mapping[str, t.Scalar]
 
-    type FlextMessage = flext_core.t.MessageUnion[Command, Query, Event]
+    type FlextMessage = t.MessageUnion[Command, Query, Event]
 
 
 __all__: list[str] = [

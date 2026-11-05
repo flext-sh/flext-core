@@ -206,5 +206,5 @@ class TestsFlextCoreUtilitiesCoverage:
     @pytest.mark.parametrize("text", [None, "", "   ", "\t\n"])
     def test_safe_string_rejects_empty_input(text: str | None) -> None:
         """safe_string raises ValueError for None, empty, or whitespace input."""
-        with pytest.raises(ValueError, match="Text"):
+        with u.Tests.raises(ValueError, match="Text"):
             u.safe_string(text)

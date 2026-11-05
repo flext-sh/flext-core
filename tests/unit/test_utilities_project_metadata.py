@@ -17,8 +17,6 @@ from pathlib import Path
 from types import ModuleType
 from typing import override
 
-import pytest
-
 from tests import m, tm, u
 
 
@@ -91,7 +89,7 @@ class TestsFlextCoreUtilitiesProjectMetadata:
     def test_lazy_alias_suffixes_propagates_missing_package() -> None:
         """Test lazy alias suffixes propagates missing package."""
         package_name = "nonexistent_distribution_xyz"
-        with pytest.raises(ModuleNotFoundError) as raised:
+        with u.Tests.raises(ModuleNotFoundError) as raised:
             u.lazy_alias_suffixes(package_name)
         tm.that(raised.value.name, eq=package_name)
 

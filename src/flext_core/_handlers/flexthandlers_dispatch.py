@@ -14,10 +14,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, m, p
 from flext_core._handlers import FlextHandlersSettings
 
 if TYPE_CHECKING:
@@ -34,9 +31,9 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
     ](
         command: type,
         *,
-        priority: int = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES,
+        priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
         timeout: float | None = None,
-        middleware: Sequence[type[flext_core.p.Middleware]] | None = None,
+        middleware: Sequence[type[p.Middleware]] | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
         """Mark methods as handlers for commands.
 
@@ -85,16 +82,16 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
                 ValueError: If the callable already declares handler metadata.
 
             """
-            if hasattr(func, flext_core.c.HANDLER_ATTR):
+            if hasattr(func, c.HANDLER_ATTR):
                 msg = "Handler metadata is already declared on this callable"
                 raise ValueError(msg)
-            settings = flext_core.m.DecoratorConfig(
+            settings = m.DecoratorConfig(
                 command=command,
                 priority=priority,
                 timeout=timeout,
                 middleware=(),
             )
-            setattr(func, flext_core.c.HANDLER_ATTR, settings)
+            setattr(func, c.HANDLER_ATTR, settings)
             return func
 
         return decorator

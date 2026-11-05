@@ -8,13 +8,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
 
-import flext_core
+from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextProtocolsContextScopeFlextmodelscontextscopePart01:
@@ -25,27 +22,27 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart01:
         """Structural data contract projected from the owning model."""
 
         @property
-        def sets(self) -> flext_core.t.NonNegativeInt:
+        def sets(self) -> t.NonNegativeInt:
             """Number of set operations."""
             ...
 
         @property
-        def gets(self) -> flext_core.t.NonNegativeInt:
+        def gets(self) -> t.NonNegativeInt:
             """Number of get operations."""
             ...
 
         @property
-        def removes(self) -> flext_core.t.NonNegativeInt:
+        def removes(self) -> t.NonNegativeInt:
             """Number of remove operations."""
             ...
 
         @property
-        def clears(self) -> flext_core.t.NonNegativeInt:
+        def clears(self) -> t.NonNegativeInt:
             """Number of clear operations."""
             ...
 
         @property
-        def operations(self) -> flext_core.t.JsonMapping:
+        def operations(self) -> t.JsonMapping:
             """Additional metric counters and timing values grouped by metric key."""
             ...
 

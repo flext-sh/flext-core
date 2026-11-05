@@ -35,7 +35,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_batch_size_rejects_out_of_range(value: int) -> None:
         """BatchSize rejects integers below 1 or above 10000."""
         adapter: t.TypeAdapter[int] = u.type_adapter(t.TypeForm(t.BatchSize))
-        with pytest.raises(c.ValidationError) as exc:
+        with u.Tests.raises(c.ValidationError) as exc:
             adapter.validate_python(value)
         tm.that(exc.value.error_count(), gte=1)
 
@@ -51,7 +51,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_max_length_rejects_non_positive(value: int) -> None:
         """MaxLength rejects integers below 1."""
         adapter: t.TypeAdapter[int] = u.type_adapter(t.TypeForm(t.MaxLength))
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     # -- float constraints ---------------------------------------------------
@@ -68,7 +68,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_positive_float_rejects_non_positive(value: float) -> None:
         """PositiveFloat rejects zero and negative floats."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.PositiveFloat))
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     @staticmethod
@@ -83,7 +83,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_non_negative_float_rejects_negative(value: float) -> None:
         """NonNegativeFloat rejects any negative float."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.NonNegativeFloat))
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     @staticmethod
@@ -98,7 +98,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_positive_timeout_rejects_out_of_range(value: float) -> None:
         """PositiveTimeout rejects zero, negatives, and values above 300."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.PositiveTimeout))
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     @staticmethod
@@ -113,7 +113,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_backoff_multiplier_rejects_below_one(value: float) -> None:
         """BackoffMultiplier rejects floats below 1.0."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.BackoffMultiplier))
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     @staticmethod
@@ -128,7 +128,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_percentage_rejects_out_of_range(value: float) -> None:
         """Percentage rejects values below 0 or above 100."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.Percentage))
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     @staticmethod
@@ -143,7 +143,7 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_decimal_fraction_rejects_out_of_range(value: float) -> None:
         """DecimalFraction rejects values below 0 or above 1."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.DecimalFraction))
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python(value)
 
     # -- non-empty string constraints ----------------------------------------
@@ -175,5 +175,5 @@ class TestsFlextCoreTypingsValidationScalars:
     def test_non_empty_string_aliases_reject_empty(alias: type[str]) -> None:
         """Non-empty string aliases reject the empty string."""
         adapter: t.TypeAdapter[str] = u.type_adapter(alias)
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             adapter.validate_python("")

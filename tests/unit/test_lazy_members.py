@@ -10,10 +10,8 @@ import sys
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
-import pytest
-
 from flext_core import FlextLazyMember, lazy_member, resolve_lazy_members
-from tests import tm
+from tests import tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -109,7 +107,7 @@ class TestsFlextCoreLazyMembers:
             class Deferred:
                 missing = lazy_member(module, "Mixin", "missing")
 
-            with pytest.raises(ImportError, match="declares no member"):
+            with u.Tests.raises(ImportError, match="declares no member"):
                 _ = Deferred.missing
             tm.ok(isinstance(vars(Deferred)["missing"], FlextLazyMember))
 
@@ -124,7 +122,7 @@ class TestsFlextCoreLazyMembers:
             class Deferred:
                 VALUE = lazy_member(module, "Mixin", "VALUE")
 
-            with pytest.raises(ImportError, match="cannot load") as caught:
+            with u.Tests.raises(ImportError, match="cannot load") as caught:
                 _ = Deferred.VALUE
             tm.that(isinstance(caught.value.__cause__, AttributeError), truth=True)
 
@@ -138,5 +136,5 @@ class TestsFlextCoreLazyMembers:
 
             _ = Deferred
 
-        with pytest.raises(TypeError, match="is bound to attribute"):
+        with u.Tests.raises(TypeError, match="is bound to attribute"):
             _install_renamed()

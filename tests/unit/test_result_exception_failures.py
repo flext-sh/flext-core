@@ -18,7 +18,7 @@ from typing import Annotated
 
 import pytest
 
-from tests import c, m, p, r, t, tm
+from tests import c, m, p, r, t, tm, u
 
 
 class TestsFlextCoreResultExceptionFailures:
@@ -155,7 +155,7 @@ class TestsFlextCoreResultExceptionFailures:
             "pending_files": ["src/package/__init__.py"],
         }
         tm.that(result.error_data, eq=expected)
-        with pytest.raises(
+        with u.Tests.raises(
             ValueError, match="source changed during publication"
         ) as raised:
             result.unwrap()
@@ -245,7 +245,7 @@ class TestsFlextCoreResultExceptionFailures:
             msg = "capture failed"
             raise kind(msg) from cause
 
-        with pytest.raises(kind) as caught:
+        with u.Tests.raises(kind) as caught:
             fail_producer()
         original = caught.value
         producer = tm.not_none(original.__traceback__)
@@ -256,7 +256,7 @@ class TestsFlextCoreResultExceptionFailures:
             exception=original,
         )
 
-        with pytest.raises(kind) as raised:
+        with u.Tests.raises(kind) as raised:
             _ = failure.value if use_property else failure.unwrap()
 
         tm.ok(raised.value is original)
@@ -274,7 +274,7 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(details["error_code"], eq=failure.error_code)
         tm.that(details["error_data"], eq=failure.error_data)
 
-        with pytest.raises(kind):
+        with u.Tests.raises(kind):
             _ = failure.value if use_property else failure.unwrap()
         tm.that(raised.value.__notes__.count(note), eq=1)
 
@@ -290,7 +290,7 @@ class TestsFlextCoreResultExceptionFailures:
             error_code="CAPTURE_REJECTED",
             error_data={"target": "selected-observer"},
         )
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             _ = failure.value if use_property else failure.unwrap()
         details = m.ConfigMap.model_validate_json(raised.value.__notes__[-1])
         tm.that(details["error"], eq=failure.error)
@@ -338,7 +338,7 @@ class TestsFlextCoreResultExceptionFailures:
             exception=original,
             error_data=payload if explicit_data else None,
         )
-        with pytest.raises(PrivateError) as raised:
+        with u.Tests.raises(PrivateError) as raised:
             _ = failure.value if use_property else failure.unwrap()
         rendered = "".join(format_exception(raised.value))
         tm.ok(raised.value is original)

@@ -141,7 +141,7 @@ class TestsFlextCoreDocumentedPatterns:
         failure: p.Result[int] = r[int].fail("no value here")
 
         # Act / Assert
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             _ = failure.value
 
     @staticmethod
@@ -241,7 +241,7 @@ class TestsFlextCoreDocumentedPatterns:
                 ) from exc
 
         # Act / Assert
-        with pytest.raises(e.FlextTimeoutError) as raised:
+        with u.Tests.raises(e.FlextTimeoutError) as raised:
             fetch_remote_profile()
 
         error = raised.value

@@ -11,14 +11,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import flext_core
+from flext_core import c, p, r, t, u
 from flext_core._handlers import FlextHandlersDispatch
 
 
 class FlextHandlersExecution[MessageT_contra, ResultT](
     FlextHandlersDispatch[MessageT_contra, ResultT],
 ):
-    def handle(self, message: MessageT_contra) -> flext_core.p.Result[ResultT]:
+    def handle(self, message: MessageT_contra) -> p.Result[ResultT]:
         """Handle the message - abstract method to be implemented by subclasses.
 
         This is the core business logic method that must be implemented by all
@@ -41,56 +41,50 @@ class FlextHandlersExecution[MessageT_contra, ResultT](
 
     def pop_context(
         self,
-    ) -> flext_core.p.Result[flext_core.p.RootDict[flext_core.t.JsonPayload]]:
+    ) -> p.Result[p.RootDict[t.JsonPayload]]:
         """Pop execution context from the local handler stack.
 
         Returns:
             The resulting ``p.Result[p.RootDict[t.JsonPayload]]``.
 
         """
-        result = flext_core.u.pop_context(self._runtime_state)
+        result = u.pop_context(self._runtime_state)
         if result.failure:
-            return flext_core.r[
-                flext_core.p.RootDict[flext_core.t.JsonPayload]
-            ].fail_op(
+            return r[p.RootDict[t.JsonPayload]].fail_op(
                 "pop handler context",
                 result.error,
             )
         self._runtime_state, context = result.unwrap()
-        return flext_core.r.ok(context)
+        return r.ok(context)
 
-    def push_context(
-        self, ctx: flext_core.t.JsonMapping | flext_core.p.ExecutionContext
-    ) -> flext_core.p.Result[bool]:
+    def push_context(self, ctx: t.JsonMapping | p.ExecutionContext) -> p.Result[bool]:
         """Push execution context onto the local handler stack.
 
         Returns:
             The resulting ``p.Result[bool]``.
 
         """
-        result = flext_core.u.push_context(self._runtime_state, ctx)
+        result = u.push_context(self._runtime_state, ctx)
         if result.failure:
-            return flext_core.r[bool].fail_op("push handler context", result.error)
+            return r[bool].fail_op("push handler context", result.error)
         self._runtime_state = result.unwrap()
-        return flext_core.r.ok(value=True)
+        return r.ok(value=True)
 
-    def record_metric(
-        self, name: str, value: flext_core.t.JsonPayload
-    ) -> flext_core.p.Result[bool]:
+    def record_metric(self, name: str, value: t.JsonPayload) -> p.Result[bool]:
         """Record a metric value in the current handler state.
 
         Returns:
             The resulting ``p.Result[bool]``.
 
         """
-        return flext_core.u.record_metric(
+        return u.record_metric(
             self._runtime_state.execution_context,
             name,
             value,
         )
 
     @staticmethod
-    def validate_message(data: MessageT_contra) -> flext_core.p.Result[bool]:
+    def validate_message(data: MessageT_contra) -> p.Result[bool]:
         """Validate input data using extensible validation pipeline.
 
         Base validation method that can be overridden by subclasses to implement
@@ -118,11 +112,11 @@ class FlextHandlersExecution[MessageT_contra, ResultT](
 
         """
         if data is None:
-            return flext_core.r[bool].fail_op(
+            return r[bool].fail_op(
                 "validate handler message",
-                flext_core.c.ERR_MESSAGE_CANNOT_BE_NONE,
+                c.ERR_MESSAGE_CANNOT_BE_NONE,
             )
-        return flext_core.r[bool].ok(value=True)
+        return r[bool].ok(value=True)
 
     def _record_execution_metrics(
         self,
@@ -131,13 +125,11 @@ class FlextHandlersExecution[MessageT_contra, ResultT](
         error: str | None = None,
     ) -> None:
         """Record execution metrics (helper to reduce locals in _run_pipeline)."""
-        exec_time = flext_core.u.to_float(
-            self._runtime_state.execution_context.execution_time_ms
-        )
+        exec_time = u.to_float(self._runtime_state.execution_context.execution_time_ms)
         _ = self.record_metric("execution_time_ms", exec_time)
         _ = self.record_metric("success", success)
         if error is not None:
-            _ = self.record_metric(flext_core.c.WarningLevel.ERROR, error)
+            _ = self.record_metric(c.WarningLevel.ERROR, error)
 
 
 __all__: list[str] = ["FlextHandlersExecution"]

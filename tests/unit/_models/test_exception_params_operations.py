@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests import c, m, p, t, tm
+from tests import c, m, p, t, tm, u
 from tests.unit._models._exception_params_support import (
     TestsFlextModelsExceptionParamsSupport,
 )
@@ -42,7 +42,7 @@ class TestsFlextCoreExceptionParamsOperations:
     def test_unknown_field_is_rejected(
         model_cls: t.ModelClass[t.BaseModelType],
     ) -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             model_cls.model_validate({"bogus_field": "nope"})
 
     @staticmethod
@@ -107,7 +107,7 @@ class TestsFlextCoreExceptionParamsOperations:
         model_cls: t.ModelClass[t.BaseModelType],
         payload: t.JsonMapping,
     ) -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             model_cls.model_validate(payload)
 
     @staticmethod

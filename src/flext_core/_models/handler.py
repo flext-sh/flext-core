@@ -13,12 +13,9 @@ from __future__ import annotations
 
 import time
 from collections.abc import MutableSequence, Sequence
-from typing import TYPE_CHECKING, Annotated, ClassVar
+from typing import Annotated, ClassVar
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import c, p, t
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsContainers,
@@ -35,17 +32,13 @@ class FlextModelsHandler:
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True)
         )
-        handler: flext_core.t.Port[flext_core.p.DispatchableHandler] = (
-            FlextModelsPydantic.Field(
-                description="Original handler whose identity owns the binding",
-                exclude=True,
-            )
+        handler: t.Port[p.DispatchableHandler] = FlextModelsPydantic.Field(
+            description="Original handler whose identity owns the binding",
+            exclude=True,
         )
-        message_type: flext_core.t.RegistryBindingKey | None = (
-            FlextModelsPydantic.Field(
-                default=None,
-                description="Explicit message type or route name",
-            )
+        message_type: t.RegistryBindingKey | None = FlextModelsPydantic.Field(
+            default=None,
+            description="Explicit message type or route name",
         )
         is_event: bool = FlextModelsPydantic.Field(
             default=False,
@@ -58,17 +51,15 @@ class FlextModelsHandler:
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True)
         )
-        registered: tuple[flext_core.t.Port[flext_core.p.HandlerRegistration], ...] = (
+        registered: tuple[t.Port[p.HandlerRegistration], ...] = (
             FlextModelsPydantic.Field(
                 description="Bindings newly published by the batch",
                 exclude=True,
             )
         )
-        skipped: tuple[flext_core.t.Port[flext_core.p.HandlerRegistration], ...] = (
-            FlextModelsPydantic.Field(
-                description="Bindings already owned by the same handler",
-                exclude=True,
-            )
+        skipped: tuple[t.Port[p.HandlerRegistration], ...] = FlextModelsPydantic.Field(
+            description="Bindings already owned by the same handler",
+            exclude=True,
         )
 
     class RegistrationDetails(FlextModelsBase.ArbitraryTypesModel):
@@ -84,24 +75,24 @@ class FlextModelsHandler:
             )
         )
         registration_id: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(
                 description="Unique registration identifier",
                 examples=["reg-abc123", "handler-create-user-001"],
             ),
         ]
         handler_mode: Annotated[
-            flext_core.c.HandlerType,
+            c.HandlerType,
             FlextModelsPydantic.Field(
-                default=flext_core.c.HandlerType.COMMAND,
+                default=c.HandlerType.COMMAND,
                 description="Handler mode (command, query, or event)",
                 examples=[
-                    flext_core.c.HandlerMode.COMMAND,
-                    flext_core.c.HandlerMode.QUERY,
-                    flext_core.c.HandlerType.EVENT,
+                    c.HandlerMode.COMMAND,
+                    c.HandlerMode.QUERY,
+                    c.HandlerType.EVENT,
                 ],
             ),
-        ] = flext_core.c.HandlerType.COMMAND
+        ] = c.HandlerType.COMMAND
         timestamp: Annotated[
             str,
             FlextModelsPydantic.Field(
@@ -111,19 +102,17 @@ class FlextModelsHandler:
                 ),
                 title="Registration Timestamp",
                 examples=["2025-01-01T00:00:00Z", "2025-10-12T15:30:00+00:00"],
-                pattern=flext_core.c.PATTERN_ISO8601_TIMESTAMP,
+                pattern=c.PATTERN_ISO8601_TIMESTAMP,
             ),
-        ] = FlextModelsPydantic.Field(
-            default_factory=lambda: flext_core.c.DEFAULT_EMPTY_STRING
-        )
+        ] = FlextModelsPydantic.Field(default_factory=lambda: c.DEFAULT_EMPTY_STRING)
         status: Annotated[
-            flext_core.c.Status,
+            c.Status,
             FlextModelsPydantic.Field(
-                default=flext_core.c.Status.RUNNING,
+                default=c.Status.RUNNING,
                 description="Current registration status",
                 examples=["running", "stopped", "failed"],
             ),
-        ] = flext_core.c.Status.RUNNING
+        ] = c.Status.RUNNING
 
     class ExecutionContext(FlextModelsBase.ArbitraryTypesModel):
         """Handler execution state (identity + timing + metrics payload)."""
@@ -140,20 +129,20 @@ class FlextModelsHandler:
             )
         )
         handler_name: Annotated[
-            flext_core.t.NonEmptyStr,
+            t.NonEmptyStr,
             FlextModelsPydantic.Field(
                 description="Name of the handler being executed",
                 examples=["ProcessOrderCommand", "GetUserQuery", "OrderCreatedEvent"],
             ),
         ]
         handler_mode: Annotated[
-            flext_core.c.HandlerType,
+            c.HandlerType,
             FlextModelsPydantic.Field(
                 description="Mode of handler execution",
                 examples=[
-                    flext_core.c.HandlerMode.COMMAND,
-                    flext_core.c.HandlerMode.QUERY,
-                    flext_core.c.HandlerType.EVENT,
+                    c.HandlerMode.COMMAND,
+                    c.HandlerMode.QUERY,
+                    c.HandlerType.EVENT,
                 ],
             ),
         ]
@@ -181,7 +170,7 @@ class FlextModelsHandler:
             if self.started_at is None:
                 return 0.0
             elapsed: float = time.time() - self.started_at
-            return round(elapsed * flext_core.c.MS_PER_SECOND, 2)
+            return round(elapsed * c.MS_PER_SECOND, 2)
 
     class HandlerRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Aggregate runtime state for the active handler pipeline."""
@@ -210,7 +199,7 @@ class FlextModelsHandler:
 
         @FlextModelsPydantic.computed_field
         @property
-        def handler_mode(self) -> flext_core.c.HandlerType:
+        def handler_mode(self) -> c.HandlerType:
             """Active handler mode taken from the execution context."""
             return self.execution_context.handler_mode
 
@@ -229,12 +218,12 @@ class FlextModelsHandler:
             ),
         ]
         priority: Annotated[
-            flext_core.t.NonNegativeInt,
+            t.NonNegativeInt,
             FlextModelsPydantic.Field(
-                default=flext_core.c.DEFAULT_MAX_COMMAND_RETRIES,
+                default=c.DEFAULT_MAX_COMMAND_RETRIES,
                 description="Handler priority (higher = processed first)",
             ),
-        ] = flext_core.c.DEFAULT_MAX_COMMAND_RETRIES
+        ] = c.DEFAULT_MAX_COMMAND_RETRIES
         timeout: Annotated[
             float | None,
             FlextModelsPydantic.Field(
@@ -244,7 +233,7 @@ class FlextModelsHandler:
             ),
         ] = None
         middleware: Annotated[
-            Sequence[type[flext_core.p.Middleware]],
+            Sequence[type[p.Middleware]],
             FlextModelsPydantic.Field(
                 description="Middleware types to apply to this handler",
             ),

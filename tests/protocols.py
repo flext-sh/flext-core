@@ -24,7 +24,7 @@ from flext_core import c
 from tests._protocols import TestsFlextProtocolsMixins
 
 if TYPE_CHECKING:
-    from tests import p, t
+    from tests import c, p, t
     from tests._models import TestsFlextModelsMixins
 
 

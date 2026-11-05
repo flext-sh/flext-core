@@ -24,7 +24,7 @@ import pytest
 
 import flext_core
 from flext_core import FlextSettings
-from tests import e, p, r, t, tm
+from tests import e, p, r, t, tm, u
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: tuple[str, ...] = (
@@ -161,7 +161,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange
         result: p.Result[int] = r[int].fail("boom")
         # Act / Assert
-        with pytest.raises(RuntimeError, match="boom"):
+        with u.Tests.raises(RuntimeError, match="boom"):
             _ = result.value
 
     @staticmethod
@@ -170,7 +170,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange
         result: p.Result[int] = r[int].fail("boom")
         # Act / Assert
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             result.unwrap()
 
     @staticmethod
@@ -265,7 +265,7 @@ class TestsFlextCorePublicApiContract:
         tm.that(exc_type, where=Exception.__subclasscheck__)
         message = "broken invariant"
         # Act / Assert
-        with pytest.raises(exc_type, match="broken"):
+        with u.Tests.raises(exc_type, match="broken"):
             raise exc_type(message)
 
 

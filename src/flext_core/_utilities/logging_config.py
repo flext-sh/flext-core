@@ -29,10 +29,7 @@ from structlog.stdlib import PositionalArgumentsFormatter, add_log_level
 from structlog.tracebacks import ExceptionDictTransformer
 from structlog.typing import Processor
 
-import flext_core
-
-if TYPE_CHECKING:
-    pass
+from flext_core import FlextSettings, c, m, p, t
 from flext_core._utilities import FlextUtilitiesMetadata
 from flext_core._utilities._logging_config.logging_stream import (
     FlextUtilitiesLoggingStream,
@@ -46,16 +43,16 @@ class FlextUtilitiesLoggingConfig:
     """Compose logging configuration through its internal part hierarchy."""
 
     _log_threshold: ClassVar[int]
-    _runtime_settings: ClassVar[flext_core.p.LoggingSettings | None] = None
-    _options: ClassVar[flext_core.p.StructlogOptions | None] = None
+    _runtime_settings: ClassVar[p.LoggingSettings | None] = None
+    _options: ClassVar[p.StructlogOptions | None] = None
 
-    class _StreamHandler(logging.StreamHandler[flext_core.t.TextStream]):
+    class _StreamHandler(logging.StreamHandler[t.TextStream]):
         """Retain native rendering/locking while surfacing the native sink error."""
 
         include_callsite: bool = True
 
         @override
-        def handleError(self, record: flext_core.t.LoggingNativeRecord) -> None:
+        def handleError(self, record: t.LoggingNativeRecord) -> None:
             error = sys.exception()
             if error is not None:
                 raise error
@@ -64,10 +61,8 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def resolve_logging_exception_info(
-        value: flext_core.p.LoggingEventValue
-        | tuple[flext_core.p.AttributeProbe, ...]
-        | None,
-    ) -> flext_core.t.LoggingExceptionInfo | None:
+        value: p.LoggingEventValue | tuple[p.AttributeProbe, ...] | None,
+    ) -> t.LoggingExceptionInfo | None:
         """Resolve native exception inputs once, retaining a saved traceback.
 
         Returns:
@@ -114,13 +109,11 @@ class FlextUtilitiesLoggingConfig:
     class _AsyncLogWriter(FlextUtilitiesLoggingStream.TextStream):
         """Real text stream whose writes are queued to a background thread."""
 
-        def __init__(self, stream: flext_core.t.TextStream) -> None:
+        def __init__(self, stream: t.TextStream) -> None:
             super().__init__(stream)
             self._failure: BaseException | None = None
             self._admission = threading.Condition()
-            self.queue: queue.Queue[flext_core.p.AsyncLogJob] = queue.Queue(
-                maxsize=flext_core.c.MAX_ITEMS
-            )
+            self.queue: queue.Queue[p.AsyncLogJob] = queue.Queue(maxsize=c.MAX_ITEMS)
             self.stop_event = threading.Event()
             self.thread = threading.Thread(
                 target=self._worker,
@@ -159,7 +152,7 @@ class FlextUtilitiesLoggingConfig:
                 self.stop_event.set()
                 self._admission.notify_all()
             if self.thread.is_alive():
-                self.thread.join(timeout=flext_core.c.LOG_SHUTDOWN_JOIN_SECONDS)
+                self.thread.join(timeout=c.LOG_SHUTDOWN_JOIN_SECONDS)
             if self.thread.is_alive():
                 msg = "Async log writer did not finish before shutdown timeout"
                 raise TimeoutError(msg)
@@ -178,7 +171,7 @@ class FlextUtilitiesLoggingConfig:
             _ = self._admit(s)
             return len(s)
 
-        def _admit(self, text: str | None) -> flext_core.t.LoggingWriteCompletion:
+        def _admit(self, text: str | None) -> t.LoggingWriteCompletion:
             """Admit typed work atomically with worker failure and termination.
 
             Returns:
@@ -189,7 +182,7 @@ class FlextUtilitiesLoggingConfig:
                 ValueError: If the writer has stopped.
 
             """
-            completion: flext_core.t.LoggingWriteCompletion = Future()
+            completion: t.LoggingWriteCompletion = Future()
             with self._admission:
                 self._raise_failure()
                 self._check_open()
@@ -197,7 +190,7 @@ class FlextUtilitiesLoggingConfig:
                     msg = "I/O operation on stopped async log writer"
                     raise ValueError(msg)
                 while self.queue.full():
-                    if not flext_core.c.ASYNC_BLOCK_ON_FULL:
+                    if not c.ASYNC_BLOCK_ON_FULL:
                         raise queue.Full
                     self._admission.wait()
                     self._raise_failure()
@@ -205,7 +198,7 @@ class FlextUtilitiesLoggingConfig:
                     if self.stop_event.is_set():
                         msg = "I/O operation on stopped async log writer"
                         raise ValueError(msg)
-                job = flext_core.m.AsyncLogJob(text=text, completion=completion)
+                job = m.AsyncLogJob(text=text, completion=completion)
                 self.queue.put_nowait(job)
             return completion
 
@@ -219,7 +212,7 @@ class FlextUtilitiesLoggingConfig:
             while True:
                 try:
                     job = self.queue.get(
-                        timeout=flext_core.c.LOG_WORKER_POLL_SECONDS,
+                        timeout=c.LOG_WORKER_POLL_SECONDS,
                     )
                 except queue.Empty:
                     with self._admission:
@@ -248,7 +241,7 @@ class FlextUtilitiesLoggingConfig:
                     job.completion.set_result(written)
                 self.queue.task_done()
 
-        def _write_job(self, job: flext_core.p.AsyncLogJob) -> int:
+        def _write_job(self, job: p.AsyncLogJob) -> int:
             """Let a native Future retain every sink failure for the caller.
 
             Returns:
@@ -262,19 +255,19 @@ class FlextUtilitiesLoggingConfig:
     _async_writer: ClassVar[_AsyncLogWriter | None] = None
 
     @staticmethod
-    def selected_logging_settings() -> flext_core.p.LoggingSettings | None:
+    def selected_logging_settings() -> p.LoggingSettings | None:
         """Return the explicitly elected logging settings."""
         return FlextUtilitiesLoggingConfig._runtime_settings
 
     @staticmethod
-    def selected_logging_options() -> flext_core.p.StructlogOptions | None:
+    def selected_logging_options() -> p.StructlogOptions | None:
         """Return the elected composition, if configured."""
         return FlextUtilitiesLoggingConfig._options
 
     @staticmethod
     def configure_logging_state(
-        settings: flext_core.p.LoggingSettings,
-        options: flext_core.p.StructlogOptions,
+        settings: p.LoggingSettings,
+        options: p.StructlogOptions,
         threshold: int,
     ) -> None:
         """Publish the state owned by the shared logging configuration."""
@@ -285,9 +278,9 @@ class FlextUtilitiesLoggingConfig:
     @staticmethod
     def _resolve_logger_factory(
         *,
-        logger_factory: flext_core.p.OutputLoggerFactory | None,
+        logger_factory: p.OutputLoggerFactory | None,
         async_logging: bool,
-    ) -> flext_core.p.OutputLoggerFactory | None:
+    ) -> p.OutputLoggerFactory | None:
         """Keep the selected native factory or the acknowledged stderr writer.
 
         Returns:
@@ -316,10 +309,10 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def level_based_context_filter(
-        _logger: flext_core.p.OutputLogger | None,
+        _logger: p.OutputLogger | None,
         method_name: str,
-        event_dict: flext_core.p.LoggingEvent,
-    ) -> flext_core.p.LoggingEvent:
+        event_dict: p.LoggingEvent,
+    ) -> p.LoggingEvent:
         """Filter level-tagged context using the native severity mapping.
 
         Returns:
@@ -328,7 +321,7 @@ class FlextUtilitiesLoggingConfig:
         """
         level_hierarchy = logging.getLevelNamesMapping()
         current_level = level_hierarchy[method_name.upper()]
-        filtered_dict: flext_core.p.LoggingEvent = {}
+        filtered_dict: p.LoggingEvent = {}
         for key, value in event_dict.items():
             if not key.startswith("_level_"):
                 filtered_dict[key] = value
@@ -346,12 +339,12 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def drop_below_threshold(
-        logger: flext_core.p.OutputLogger | None,
+        logger: p.OutputLogger | None,
         method_name: str,
-        event_dict: flext_core.p.LoggingEvent,
+        event_dict: p.LoggingEvent,
         *,
         threshold: int | None = None,
-    ) -> flext_core.p.LoggingEvent:
+    ) -> p.LoggingEvent:
         """Apply the elected threshold before native enrichment and hooks.
 
         Returns:
@@ -375,12 +368,12 @@ class FlextUtilitiesLoggingConfig:
     @classmethod
     def _console_event(
         cls,
-        logger: flext_core.p.OutputLogger | None,
+        logger: p.OutputLogger | None,
         method_name: str,
-        event: flext_core.p.LoggingEvent,
+        event: p.LoggingEvent,
         *,
-        runtime_settings: flext_core.p.LoggingSettings | None = None,
-    ) -> flext_core.p.LoggingEvent:
+        runtime_settings: p.LoggingSettings | None = None,
+    ) -> p.LoggingEvent:
         """Select console detail without changing an observer or sibling sink.
 
         Returns:
@@ -400,10 +393,10 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def _exception_metadata(
-        logger: flext_core.p.OutputLogger,
+        logger: p.OutputLogger,
         method_name: str,
-        event: flext_core.p.LoggingEvent,
-    ) -> flext_core.p.LoggingEvent:
+        event: p.LoggingEvent,
+    ) -> p.LoggingEvent:
         """Keep causal metadata before the native processor consumes exc_info.
 
         Returns:
@@ -423,12 +416,12 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def _observe_event(
-        logger: flext_core.p.OutputLogger,
+        logger: p.OutputLogger,
         method_name: str,
-        event: flext_core.p.LoggingEvent,
+        event: p.LoggingEvent,
         *,
-        options: flext_core.p.StructlogOptions,
-    ) -> flext_core.p.LoggingEvent:
+        options: p.StructlogOptions,
+    ) -> p.LoggingEvent:
         """Sanitize the SDK boundary, then notify typed subscribers once.
 
         Returns:
@@ -442,24 +435,23 @@ class FlextUtilitiesLoggingConfig:
         # remain ordinary structured context, shared with JSON and observers.
         if isinstance(event.get("exception"), list):
             event["stack_trace"] = event.pop("exception")
-        record = flext_core.m.LoggingRecord.model_validate({
-            "message": str(event[flext_core.c.HandlerType.EVENT]),
+        record = m.LoggingRecord.model_validate({
+            "message": str(event[c.HandlerType.EVENT]),
             "level": str(event["level"]),
             "context": dict(event),
         })
-        sanitized: flext_core.p.LoggingEvent = dict(
+        sanitized: p.LoggingEvent = dict(
             FlextUtilitiesMetadata.redact_metadata(
                 record.context,
                 keys=tuple(
-                    flext_core.c.SENSITIVE_ERROR_DATA_KEYS
-                    | frozenset(options.redacted_keys)
+                    c.SENSITIVE_ERROR_DATA_KEYS | frozenset(options.redacted_keys)
                 ),
                 values=options.redacted_values,
                 replacement="[REDACTED]",
             )
         )
-        record = flext_core.m.LoggingRecord.model_validate({
-            "message": sanitized[flext_core.c.HandlerType.EVENT],
+        record = m.LoggingRecord.model_validate({
+            "message": sanitized[c.HandlerType.EVENT],
             "level": sanitized["level"],
             "context": sanitized,
             "exception": original_exception,
@@ -469,7 +461,7 @@ class FlextUtilitiesLoggingConfig:
         return sanitized
 
     @staticmethod
-    def _format_exception(exc_info: flext_core.t.LoggingExceptionInfo) -> str:
+    def _format_exception(exc_info: t.LoggingExceptionInfo) -> str:
         """Render native exception information without expanding its traceback.
 
         Returns:
@@ -483,9 +475,9 @@ class FlextUtilitiesLoggingConfig:
         cls,
         *,
         console_renderer: bool,
-        options: flext_core.p.StructlogOptions,
+        options: p.StructlogOptions,
         trace: bool,
-        runtime_settings: flext_core.p.LoggingSettings | None = None,
+        runtime_settings: p.LoggingSettings | None = None,
         debug: bool = False,
     ) -> Sequence[Processor]:
         """Compose one shared event pipeline and a native terminal renderer.
@@ -553,47 +545,39 @@ class FlextUtilitiesLoggingConfig:
     def resolve_effective_log_level(
         *,
         debug: bool,
-        log_level: flext_core.t.LogLevel,
+        log_level: t.LogLevel,
         log_level_explicit: bool = True,
-    ) -> flext_core.t.LogLevel:
+    ) -> t.LogLevel:
         """Keep trace detail independent of the configured logging threshold.
 
         Returns:
             The effective severity without changing trace detail.
 
         """
-        return (
-            flext_core.c.LogLevel.DEBUG
-            if debug and not log_level_explicit
-            else log_level
-        )
+        return c.LogLevel.DEBUG if debug and not log_level_explicit else log_level
 
     @classmethod
-    def logging_settings(cls) -> flext_core.p.LoggingSettings:
+    def logging_settings(cls) -> p.LoggingSettings:
         """Return the elected application provider, or the actual Core settings."""
         selected = cls.selected_logging_settings()
-        return (
-            selected
-            if selected is not None
-            else flext_core.FlextSettings.fetch_global()
-        )
+        return selected if selected is not None else FlextSettings.fetch_global()
 
     @classmethod
-    def logging_options(cls) -> flext_core.p.StructlogOptions:
+    def logging_options(cls) -> p.StructlogOptions:
         """Return the active composition for scoped lifecycle restoration."""
         selected = cls.selected_logging_options()
-        return selected if selected is not None else flext_core.m.StructlogOptions()
+        return selected if selected is not None else m.StructlogOptions()
 
     @classmethod
     def resolve_logging_settings(
         cls,
         *,
-        runtime_settings: flext_core.p.LoggingSettings | None = None,
+        runtime_settings: p.LoggingSettings | None = None,
         log_level: str | None = None,
         debug: bool | None = None,
         trace: bool | None = None,
         logging_profile: str | None = None,
-    ) -> flext_core.p.LoggingSettings:
+    ) -> p.LoggingSettings:
         """Validate optional overrides without I/O or process-wide mutation.
 
         Returns:
@@ -603,7 +587,7 @@ class FlextUtilitiesLoggingConfig:
         current = (
             runtime_settings if runtime_settings is not None else cls.logging_settings()
         )
-        overrides: MutableMapping[str, flext_core.p.SettingsOverride | None] = {
+        overrides: MutableMapping[str, p.SettingsOverride | None] = {
             key: value
             for key, value in (
                 ("log_level", log_level),
@@ -615,7 +599,7 @@ class FlextUtilitiesLoggingConfig:
         }
         selected = current.clone(**overrides)
         level = cls.resolve_effective_log_level(
-            log_level=flext_core.c.LogLevel(
+            log_level=c.LogLevel(
                 logging.getLevelName(cls.level_number(selected.log_level))
             ),
             debug=selected.debug,
@@ -631,9 +615,9 @@ class FlextUtilitiesLoggingConfig:
         cls,
         name: str,
         *,
-        runtime_settings: flext_core.p.LoggingSettings,
-        options: flext_core.p.StructlogOptions,
-    ) -> flext_core.p.NativeLoggingWrapper:
+        runtime_settings: p.LoggingSettings,
+        options: p.StructlogOptions,
+    ) -> p.NativeLoggingWrapper:
         """Compose a scoped logger without replacing the process configuration.
 
         Returns:
@@ -680,9 +664,7 @@ class FlextUtilitiesLoggingConfig:
         ).bind()
 
     @classmethod
-    def _handler_factory(
-        cls, options: flext_core.p.StructlogOptions
-    ) -> flext_core.p.OutputLoggerFactory:
+    def _handler_factory(cls, options: p.StructlogOptions) -> p.OutputLoggerFactory:
         """Own one native handler graph per composition.
 
         Returns:
@@ -693,10 +675,8 @@ class FlextUtilitiesLoggingConfig:
         root.handlers = cls._validated_native_handlers(options)
         manager = logging.Manager(root)
 
-        def factory(*names: str) -> flext_core.p.OutputLogger:
-            return manager.getLogger(
-                names[0] if names else flext_core.c.LOGGER_NAME_FLEXT_CORE
-            )
+        def factory(*names: str) -> p.OutputLogger:
+            return manager.getLogger(names[0] if names else c.LOGGER_NAME_FLEXT_CORE)
 
         return factory
 
@@ -704,11 +684,11 @@ class FlextUtilitiesLoggingConfig:
     def create_logging_handler(
         cls,
         *,
-        stream: flext_core.t.TextStream | None = None,
+        stream: t.TextStream | None = None,
         console_renderer: bool = False,
         log_level: str | None = None,
-        runtime_settings: flext_core.p.LoggingSettings | None = None,
-    ) -> flext_core.p.LoggingHandler:
+        runtime_settings: p.LoggingSettings | None = None,
+    ) -> p.LoggingHandler:
         """Compose native per-destination presentation with fail-loud delivery.
 
         Returns:
@@ -742,8 +722,8 @@ class FlextUtilitiesLoggingConfig:
     def configure_structlog(
         cls,
         *,
-        settings: flext_core.p.StructlogOptions | None = None,
-        runtime_settings: flext_core.p.LoggingSettings | None = None,
+        settings: p.StructlogOptions | None = None,
+        runtime_settings: p.LoggingSettings | None = None,
     ) -> None:
         """Initialize defaults once or apply explicitly supplied typed options.
 
@@ -761,7 +741,7 @@ class FlextUtilitiesLoggingConfig:
         selected = cls.resolve_logging_settings(runtime_settings=runtime_settings)
         if runtime_settings is not None and options.log_level is not None:
             if options.log_level != cls.level_number(selected.log_level):
-                options = flext_core.m.StructlogOptions.model_validate(
+                options = m.StructlogOptions.model_validate(
                     options,
                     from_attributes=True,
                 ).model_copy(update={"log_level": None})
@@ -813,8 +793,8 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def _validated_native_handlers(
-        options: flext_core.p.StructlogOptions,
-    ) -> flext_core.t.LoggingNativeHandlers:
+        options: p.StructlogOptions,
+    ) -> t.LoggingNativeHandlers:
         """Validate native sink contracts before replacing the active composition.
 
         Returns:
@@ -828,7 +808,7 @@ class FlextUtilitiesLoggingConfig:
         if options.handlers and options.logger_factory is not None:
             msg = "Select native handlers or a logger factory, not both"
             raise ValueError(msg)
-        handlers: flext_core.t.LoggingNativeHandlers = []
+        handlers: t.LoggingNativeHandlers = []
         for handler in options.handlers:
             if not isinstance(handler, logging.Handler):
                 msg = (
@@ -870,7 +850,7 @@ class FlextUtilitiesLoggingConfig:
             if isinstance(level, int)
             else logging.getLevelNamesMapping().get(level.strip().upper())
         )
-        if value is None or logging.getLevelName(value) not in flext_core.c.LogLevel:
+        if value is None or logging.getLevelName(value) not in c.LogLevel:
             msg = f"Invalid log level: {level}"
             raise ValueError(msg)
         return value

@@ -15,7 +15,7 @@ from collections.abc import Iterator, Sequence
 
 import pytest
 
-from tests import e, m, tm
+from tests import e, m, tm, u
 
 
 class TestsFlextCoreExceptionsPublicMetrics:
@@ -40,7 +40,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
     @staticmethod
     def test_invalid_metrics_preserve_native_validation_error() -> None:
         """Invalid public input must escape as the original Pydantic error."""
-        with pytest.raises(m.ValidationError) as caught:
+        with u.Tests.raises(m.ValidationError) as caught:
             m.ExceptionMetricsState.model_validate({"exception_counts": {"bad": "x"}})
 
         tm.that(caught.value.errors()[0]["loc"], eq=("exception_counts", "bad"))
