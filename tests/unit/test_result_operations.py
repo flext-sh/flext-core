@@ -8,9 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import r, tm, u
+from tests import c, r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -24,7 +22,7 @@ class TestsFlextResultOperations:
     # --- creation + terminal state --------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("value", ["success", "", "multi word value"])
+    @c.Tests.MARK.parametrize("value", ["success", "", "multi word value"])
     def test_ok_reports_success_and_exposes_value(value: str) -> None:
         """r.ok is success, carries the value, and has no error."""
         result: p.Result[str] = r[str].ok(value)
@@ -37,7 +35,7 @@ class TestsFlextResultOperations:
         tm.that(result.error, none=True)
 
     @staticmethod
-    @pytest.mark.parametrize("message", ["boom", "error message", "not found"])
+    @c.Tests.MARK.parametrize("message", ["boom", "error message", "not found"])
     def test_fail_reports_failure_and_preserves_error(message: str) -> None:
         """r.fail is failure, preserves the error message, and has no value."""
         result: p.Result[str] = r[str].fail(message)
@@ -48,7 +46,7 @@ class TestsFlextResultOperations:
         tm.that(result.error, eq=message)
 
     @staticmethod
-    @pytest.mark.parametrize("message", ["boom", "denied"])
+    @c.Tests.MARK.parametrize("message", ["boom", "denied"])
     def test_value_and_unwrap_raise_on_failure(message: str) -> None:
         """Accessing value or unwrap on a failure raises with the error message."""
         result: p.Result[str] = r[str].fail(message)
@@ -61,7 +59,7 @@ class TestsFlextResultOperations:
     # --- unwrap_or / | default ------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("result", "default", "expected"),
         [
             (r[str].ok("value"), "default", "value"),
@@ -178,7 +176,7 @@ class TestsFlextResultOperations:
     # --- boolean protocol ------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("result", "expected"),
         [(r[str].ok("value"), True), (r[str].fail("error"), False)],
         ids=["success-truthy", "failure-falsy"],

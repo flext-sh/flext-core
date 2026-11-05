@@ -12,9 +12,7 @@ from contextlib import redirect_stderr
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, NoReturn
 
-import pytest
-
-from tests import c, p, tm, u
+from tests import c, p, t, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -37,9 +35,9 @@ class TestsFlextLoggings:
     """
 
     # Exercise all standard severities, including trace, then restore the policy.
-    pytestmark: ClassVar[list[pytest.MarkDecorator]] = [
-        pytest.mark.usefixtures("restore_logging"),
-        pytest.mark.parametrize("logging_trace", [True]),
+    pytestmark: ClassVar[list[t.Tests.MarkDecorator]] = [
+        c.Tests.MARK.usefixtures("restore_logging"),
+        c.Tests.MARK.parametrize("logging_trace", [True]),
     ]
 
     @classmethod
@@ -64,7 +62,7 @@ class TestsFlextLoggings:
             tm.that(output, eq="")
         return result
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def logger() -> p.Logger:
         """Provide ``logger``.
@@ -177,7 +175,7 @@ class TestsFlextLoggings:
         _ = self._assert_log_output(emit, contains="operation_under_test success")
         tm.that(result, eq=2)
 
-    @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
+    @c.Tests.MARK.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_returns_success_result_with_value_true(
         self,
         logger: p.Logger,
@@ -194,7 +192,7 @@ class TestsFlextLoggings:
         tm.ok(result)
         tm.ok(result.value)
 
-    @pytest.mark.parametrize(("level", "expect_output"), LOG_LEVELS)
+    @c.Tests.MARK.parametrize(("level", "expect_output"), LOG_LEVELS)
     def test_every_log_level_accepts_structured_kwargs_and_returns_success(
         self,
         logger: p.Logger,

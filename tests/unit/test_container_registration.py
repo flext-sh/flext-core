@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_core import FlextContainer
 from tests import c, e, m, p, t, tm, u
 
@@ -43,7 +41,7 @@ class TestsFlextCoreContainerRegistration:
         tm.that(FlextContainer(), is_=p.Container)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "scenario",
         m.Tests.ContainerScenarios.SERVICE_SCENARIOS,
         ids=lambda s: s.name,
@@ -92,7 +90,7 @@ class TestsFlextCoreContainerRegistration:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "return_value",
         ["created_string", 42],
         ids=["string", "int"],

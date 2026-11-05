@@ -211,7 +211,7 @@ class TestsFlextCoreGuards:
     # matches_type — string specs
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "spec", "expected"),
         [
             ("x", "str", True),
@@ -235,7 +235,7 @@ class TestsFlextCoreGuards:
         tm.that(u.matches_type(value, spec) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "spec", "expected"),
         [
             (" a ", "string_non_empty", True),
@@ -282,7 +282,7 @@ class TestsFlextCoreGuards:
         tm.fail(u.matches_type(mapping, "no_such_spec"))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "spec",
         ["string_non_empty", "dict_non_empty", "list_non_empty"],
     )
@@ -300,7 +300,7 @@ class TestsFlextCoreGuards:
     # matches_type — type and tuple specs
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "spec", "expected"),
         [
             (5, int, True),
@@ -327,7 +327,7 @@ class TestsFlextCoreGuards:
     # container — recursive JSON-compatibility contract
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [
             "x",
@@ -348,7 +348,7 @@ class TestsFlextCoreGuards:
         tm.that(u.container_value(value) is True, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [None, object(), [1, object()], {"a": object()}, {"a": [object()]}],
     )
@@ -366,7 +366,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
     """Scalar classification and collection membership contracts."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             ("x", True),
@@ -386,7 +386,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(u.scalar(value) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             ("x", True),
@@ -448,7 +448,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             ([1], True),
@@ -475,7 +475,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
     # emptiness / non-empty guards
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             (None, True),
@@ -496,7 +496,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(u.empty_value(value) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("x", True), (" a ", True), ("", False), ("   ", False), (1, False)],
     )
@@ -547,7 +547,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(u.instance_of("x", int) is False, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "container", "expected"),
         [
             (1, [1, 2, 3], True),

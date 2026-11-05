@@ -34,7 +34,7 @@ if TYPE_CHECKING:
     from typing import Never
 
 
-pytestmark = pytest.mark.usefixtures("restore_logging")
+pytestmark = c.Tests.MARK.usefixtures("restore_logging")
 
 
 class TestsFlextLoggingStages:
@@ -283,7 +283,7 @@ class TestsFlextLoggingStages:
         tm.that(observed[1]["exception_type"], eq="ValueError")
         tm.ok('"stage_order": ["first", "second"]' in stream.getvalue())
 
-    @pytest.mark.parametrize("entrypoint", ["info", "exception", "trace"])
+    @c.Tests.MARK.parametrize("entrypoint", ["info", "exception", "trace"])
     @staticmethod
     def test_first_stage_failure_escapes_unchanged(entrypoint: str) -> None:
         """Failure stops the chain and preserves the original exception."""
@@ -374,7 +374,7 @@ class TestsFlextLoggingStages:
         with u.Tests.raises(ValidationError):
             _ = m.StructlogOptions.model_validate({"processing_stages": [1]})
 
-    @pytest.mark.parametrize("saved_tuple", [False, True])
+    @c.Tests.MARK.parametrize("saved_tuple", [False, True])
     def test_native_exception_admission_keeps_ordinary_fields_json(
         self, *, saved_tuple: bool
     ) -> None:
@@ -501,7 +501,7 @@ class TestsFlextLoggingStages:
         tm.ok("replacement chain" in stream.getvalue())
 
     @staticmethod
-    @pytest.mark.parametrize("initial_async", [True, False])
+    @c.Tests.MARK.parametrize("initial_async", [True, False])
     def test_explicit_synchronous_factory_replaces_previous_factory(
         *, initial_async: bool
     ) -> None:
@@ -1096,7 +1096,7 @@ class TestsFlextLoggingNativeEmission:
         finally:
             os.close(read_fd)
 
-    @pytest.mark.parametrize("scenario", ["stream_failure", "blocked_pipe"])
+    @c.Tests.MARK.parametrize("scenario", ["stream_failure", "blocked_pipe"])
     def test_async_public_failure_and_shutdown(self, scenario: str) -> None:
         """Original failures and bounded shutdown cross public boundaries.
 

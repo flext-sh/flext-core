@@ -12,9 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import p, r, tm, u
+from tests import c, p, r, tm, u
 from tests.utilities import TestsFlextUtilities
 
 
@@ -148,7 +146,7 @@ class TestsFlextCoreResultExceptionSafeCallable(
         tm.that(result.exception, is_=TypeError)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "exception_type",
         [OSError, IndexError],
         ids=("os-error", "lookup-index-error"),

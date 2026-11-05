@@ -12,8 +12,6 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 
-import pytest
-
 from tests import c, t, tm, u
 
 type _ConvValue = str | float | int | bool | None
@@ -23,7 +21,7 @@ class TestsFlextCoreUtilities:
     """Public-contract tests for the shared utilities facade."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "type_name", "expected"),
         [
             ("abc", "str", True),
@@ -45,7 +43,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.matches_type(value, type_name) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize("kind", ["ulid", "uuid4", "uuid", "id", "hex", "short"])
+    @c.Tests.MARK.parametrize("kind", ["ulid", "uuid4", "uuid", "id", "hex", "short"])
     def test_generate_returns_non_empty_string(kind: str) -> None:
         """Test generate returns non empty string."""
         generated = u.generate(kind)
@@ -65,7 +63,7 @@ class TestsFlextCoreUtilities:
         tm.that(parsed.version, eq=4)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             (c.ParserBooleanToken.TRUE, True),
@@ -86,7 +84,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.to_bool(value) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("5", 5), (3.9, 3), ("x", 0), ("", 0), (None, 0)],
     )
@@ -98,7 +96,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.to_int(value), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("1.5", 1.5), ("2", 2.0), ("x", 0.0)],
     )
@@ -110,7 +108,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.to_float(value), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(("value", "expected"), [(5, 5), (0, 0), (-1, 0)])
+    @c.Tests.MARK.parametrize(("value", "expected"), [(5, 5), (0, 0), (-1, 0)])
     def test_to_positive_int_clamps_negatives_to_zero(
         value: int,
         expected: int,
@@ -119,7 +117,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.to_positive_int(value), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(("value", "expected"), [(5, "5"), (None, "")])
+    @c.Tests.MARK.parametrize(("value", "expected"), [(5, "5"), (None, "")])
     def test_to_str_stringifies_with_empty_default(
         value: _ConvValue,
         expected: str,
@@ -128,7 +126,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.to_str(value), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(("value", "expected"), [("x", "x"), (None, None)])
+    @c.Tests.MARK.parametrize(("value", "expected"), [("x", "x"), (None, None)])
     def test_to_optional_str_preserves_none(
         value: str | None,
         expected: str | None,
@@ -137,7 +135,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.to_optional_str(value), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("Aa9!@ x", "aa9x"), ("abc", "abc"), ("!!!", "")],
     )
@@ -149,7 +147,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.normalize_alnum(value), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("left", "right", "expected"),
         [({"a": 1}, {"a": 1}, True), ({"a": 1}, {"a": 2}, False), ({}, {}, True)],
     )
@@ -163,7 +161,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.deep_eq(left, right) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("left", "right", "expected"),
         [(1, 2, True), (1, "a", False)],
     )
@@ -177,7 +175,7 @@ class TestsFlextCoreUtilities:
         tm.that(u.same_type(left, right) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [(1, "int"), ("a", "str"), ([], c.Action.LIST)],
     )

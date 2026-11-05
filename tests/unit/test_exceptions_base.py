@@ -9,8 +9,6 @@ from __future__ import annotations
 import time
 from typing import cast
 
-import pytest
-
 from tests import c, e, m, p, tm, u
 
 
@@ -18,7 +16,7 @@ class TestsFlextCoreExceptionsBase:
     """Tests for ``FlextCoreExceptionsBase``."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "subclass",
         [
             e.ValidationError,
@@ -135,7 +133,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(cast("dict[str, object]", result.error_data)["actual_type"], eq="str")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("field", "value", "cause"),
         [("name", "", "empty"), ("email", "bad", "invalid")],
     )

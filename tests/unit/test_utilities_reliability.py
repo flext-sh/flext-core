@@ -13,9 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final
 
-import pytest
-
-from tests import m, r, tm, u
+from tests import c, m, r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -154,7 +152,7 @@ class TestsFlextCoreUtilitiesReliability:
         tm.that("still broken" in (result.error or ""), truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize("invalid_attempts", [0, -1])
+    @c.Tests.MARK.parametrize("invalid_attempts", [0, -1])
     def test_retry_rejects_non_positive_max_attempts(
         invalid_attempts: int,
     ) -> None:

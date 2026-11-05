@@ -14,16 +14,14 @@ from collections import UserDict, UserList
 from collections.abc import Sequence
 from types import MappingProxyType
 
-import pytest
-
-from tests import t, tm, u
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreUtilitiesDomain:
     """Public-contract behavior of the value-conversion utilities."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [
             MappingProxyType({"native": [None, True]}),
@@ -40,7 +38,7 @@ class TestsFlextCoreUtilitiesDomain:
 
     # ----------------------------------------------------------------- join
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("values", "separator", "case", "expected"),
         [
             (["a", "b"], " ", None, "a b"),
@@ -69,7 +67,7 @@ class TestsFlextCoreUtilitiesDomain:
 
     # ------------------------------------------------------------ normalize
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "case", "expected"),
         [
             ("abc", None, "abc"),
@@ -92,7 +90,7 @@ class TestsFlextCoreUtilitiesDomain:
 
     # --------------------------------------------------------------- to_str
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("hello", "hello"), (42, "42"), (42.0, "42"), (9.876, "9.88"), (None, "")],
     )
@@ -115,7 +113,7 @@ class TestsFlextCoreUtilitiesDomain:
 
     # --------------------------------------------------------------- to_int
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             (5, 5),
@@ -142,14 +140,14 @@ class TestsFlextCoreUtilitiesDomain:
         tm.that(u.to_int("nope", default=99), eq=99)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [b"7", b"invalid"])
+    @c.Tests.MARK.parametrize("value", [b"7", b"invalid"])
     def test_to_int_bytes_retain_default_branch(value: bytes) -> None:
         """Bytes are not numeric strings in this conversion contract."""
         tm.that(u.to_int(value, default=99), eq=99)
 
     # ------------------------------------------------------------- to_float
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [(5, 5.0), (5.5, 5.5), ("2.5", 2.5), ("bad", 0.0), (None, 0.0), (True, 0.0)],
     )
@@ -164,11 +162,11 @@ class TestsFlextCoreUtilitiesDomain:
     @staticmethod
     def test_to_float_invalid_uses_default() -> None:
         """Test to float invalid uses default."""
-        tm.that(u.to_float("bad", default=1.5), eq=pytest.approx(1.5))
+        tm.that(u.to_float("bad", default=1.5), eq=u.Tests.approx(1.5))
 
     # -------------------------------------------------------------- to_bool
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             (True, True),
@@ -195,7 +193,7 @@ class TestsFlextCoreUtilitiesDomain:
 
     # ------------------------------------------------------ to_positive_int
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             (5, 5),
@@ -225,7 +223,7 @@ class TestsFlextCoreUtilitiesDomain:
 
     # ------------------------------------------------------ to_optional_str
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("value", "value"), ("", None), (None, None), (123, None)],
     )

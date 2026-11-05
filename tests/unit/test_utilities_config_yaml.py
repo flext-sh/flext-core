@@ -14,10 +14,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-import pytest
-
 from flext_core import FlextConfig, FlextStrictYamlConfigSource
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreUtilitiesYaml:
@@ -64,7 +62,7 @@ class TestsFlextCoreUtilitiesYaml:
         tm.that(parsed, eq={"first": ["one", "two"], "second": ["one", "two"]})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "document",
         [
             "value: !!timestamp 2026-01-01\n",

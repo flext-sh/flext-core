@@ -10,10 +10,8 @@ from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar
 from uuid import UUID
 
-import pytest
-
 from flext_core import FlextSettings
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -23,7 +21,7 @@ class TestsFlextCoreSettingsStateValidation:
     """Validate stored values independently of instance trust and serialization."""
 
     @staticmethod
-    @pytest.mark.parametrize("invalid_port", [0, 65536])
+    @c.Tests.MARK.parametrize("invalid_port", [0, 65536])
     def test_model_instance_overrides_revalidate_real_port_constraints(
         invalid_port: int,
     ) -> None:
@@ -259,7 +257,7 @@ class TestsFlextCoreSettingsStateValidation:
         tm.ok(snapshot.branch is not published.branch)
 
     @staticmethod
-    @pytest.mark.parametrize("tuple_key", [False, True])
+    @c.Tests.MARK.parametrize("tuple_key", [False, True])
     def test_invalid_mapping_keys_preserve_published_state(*, tuple_key: bool) -> None:
         """Frozen model keys, including tuple members, cannot bypass constraints."""
 

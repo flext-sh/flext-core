@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from typing import cast
 
-import pytest
 from hypothesis import given, strategies as st
 
 from tests import c, h, r, t, tm, u
@@ -97,7 +96,7 @@ class TestsFlextCoreHandlersProperties(
         tm.fail(result, contains=c.Tests.VALIDATION_FAILED_FOR_TEST)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "handler_type",
         [
             c.HandlerType.COMMAND,

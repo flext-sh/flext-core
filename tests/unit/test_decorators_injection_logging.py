@@ -12,16 +12,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_core import FlextContainer, FlextContext
-from tests import c, d, m, tm, u
+from tests import c, d, m, t, tm, u
 
 
 class TestsFlextCoreDecoratorsInjectionLogging:
     """Tests for ``FlextCoreDecoratorsInjectionLogging``."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def container() -> FlextContainer:
         """Provide ``container``.
@@ -91,7 +89,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
     # --- d.log_operation -------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize("payload", ["success", "", "multi word result"])
+    @c.Tests.MARK.parametrize("payload", ["success", "", "multi word result"])
     def test_log_operation_returns_wrapped_value_unchanged(payload: str) -> None:
         """Test log operation returns wrapped value unchanged."""
 
@@ -112,7 +110,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         tm.that(compute(), eq=42)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("exc_type", "message"),
         [
             (ValueError, "bad value"),
@@ -135,7 +133,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
     @staticmethod
     def test_log_operation_emits_operation_name_on_failure(
-        capsys: pytest.CaptureFixture[str],
+        capsys: t.Tests.CaptureFixture[str],
     ) -> None:
         """Test log operation emits operation name on failure."""
 

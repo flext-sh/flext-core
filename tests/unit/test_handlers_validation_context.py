@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from typing import Annotated, ClassVar
 
-import pytest
-
 from tests import c, m, t, tm, u
 
 
@@ -25,7 +23,7 @@ class TestsFlextCoreHandlersValidationContext(
 ):
     """Contract tests for the public handler validation/context behavior."""
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("handler_type", "handler_mode"),
         [
             (scenario.handler_type, scenario.handler_mode)
@@ -56,7 +54,7 @@ class TestsFlextCoreHandlersValidationContext(
         # Assert
         _ = u.Tests.assert_success(result, expected_value=True)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("type_name", "message"),
         u.TestsFlextFlextHandlers.VALIDATION_TYPES,
         ids=[item[0] for item in u.TestsFlextFlextHandlers.VALIDATION_TYPES],
@@ -95,7 +93,7 @@ class TestsFlextCoreHandlersValidationContext(
         error = u.Tests.assert_failure(result, c.ERR_MESSAGE_CANNOT_BE_NONE)
         tm.that(c.ERR_MESSAGE_CANNOT_BE_NONE in error, truth=True)
 
-    @pytest.mark.parametrize("falsy_message", ["", None], ids=["empty_string", "none"])
+    @c.Tests.MARK.parametrize("falsy_message", ["", None], ids=["empty_string", "none"])
     def test_validation_handler_rejects_falsy_message(
         self,
         falsy_message: t.JsonValue,
@@ -252,7 +250,7 @@ class TestsFlextCoreHandlersValidationContext(
         tm.that(handler.can_handle(str) is True, truth=True)
         tm.that(handler.can_handle(int) is True, truth=True)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "handler_type",
         [scenario.handler_type for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],
         ids=[scenario.name for scenario in u.TestsFlextFlextHandlers.HANDLER_TYPES],

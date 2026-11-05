@@ -18,7 +18,6 @@ import operator
 from collections.abc import Mapping
 from typing import override
 
-import pytest
 from flext_tests import FlextTestsCase, FlextTestsSettings
 
 from tests import c, m, p, r, s, tm
@@ -117,7 +116,7 @@ class TestsFlextService(FlextTestsCase):
     # --- ServiceUserData: public model state -----------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         (c.ContextKey.USER_ID, "name"),
         [(1, "test_user"), (2, "other"), (99, "édge-café")],
     )

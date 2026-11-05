@@ -12,7 +12,7 @@ from typing import Self, get_type_hints, is_protocol
 
 from flext_tests import tm
 
-from flext_core import m, p
+from tests import m, p
 
 
 class TestsFlextCoreModelCopyProtocol:

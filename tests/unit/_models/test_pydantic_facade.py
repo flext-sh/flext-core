@@ -14,9 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar, Literal
 
-import pytest
-
-from tests import m, p, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCorePydanticDeclarations:
@@ -83,7 +81,7 @@ class TestsFlextCorePydanticDeclarations:
         ]
 
     @staticmethod
-    @pytest.mark.parametrize("json_input", [False, True])
+    @c.Tests.MARK.parametrize("json_input", [False, True])
     def test_protocol_field_boundary(*, json_input: bool) -> None:
         box = (
             TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate_json(
@@ -133,7 +131,7 @@ class TestsFlextCorePydanticDeclarations:
             reject()
 
     @staticmethod
-    @pytest.mark.parametrize("mode", ["validation", "serialization"])
+    @c.Tests.MARK.parametrize("mode", ["validation", "serialization"])
     def test_protocol_field_preserves_owner_schema(
         mode: Literal["validation", "serialization"],
     ) -> None:

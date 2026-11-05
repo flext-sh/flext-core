@@ -17,8 +17,6 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-import pytest
-
 from flext_core import FlextContext
 from tests import c, m, p, t, tm, u, x
 
@@ -176,7 +174,7 @@ class TestsFlextMixins:
 
         tm.that(service.settings_overrides, eq=overrides)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("field_name", "bad_value"),
         [("settings_overrides", "not-a-mapping"), ("settings_type", str)],
     )

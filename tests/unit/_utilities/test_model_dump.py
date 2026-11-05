@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import e, m
-from tests import tm, u
+from tests import e, m, tm, u
 
 
 class TestsFlextCoreModelDump:

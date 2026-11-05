@@ -16,8 +16,6 @@ import sys
 from pathlib import Path
 from typing import Self
 
-import pytest
-
 from flext_core import FlextSettings, settings
 from tests import c, m, t, tm, u
 
@@ -72,7 +70,7 @@ class TestsFlextCoreSettings:
         def test_linux_honours_xdg_cache_home() -> None:
             """On Linux XDG_CACHE_HOME redirects the work_dir root."""
             if sys.platform not in {"linux", "linux2"}:
-                pytest.skip("XDG_CACHE_HOME is Linux-specific")
+                u.Tests.skip("XDG_CACHE_HOME is Linux-specific")
             FlextSettings.reset_for_testing()
             with u.Tests.env_vars_context(
                 env_vars={"XDG_CACHE_HOME": "/xdg/cache"},
@@ -98,7 +96,7 @@ class TestsFlextCoreSettings:
         def test_libraries_share_consuming_application_namespace() -> None:
             """Imported library settings resolve via the outer identity."""
             if sys.platform not in {"linux", "linux2"}:
-                pytest.skip("XDG directories are Linux-specific")
+                u.Tests.skip("XDG directories are Linux-specific")
             with u.Tests.env_vars_context(
                 env_vars={
                     "XDG_CACHE_HOME": "/xdg/cache",
@@ -158,7 +156,7 @@ class TestsFlextCoreSettings:
             fallback, purely from its ``env_prefix``.
             """
             if sys.platform not in {"linux", "linux2"}:
-                pytest.skip("XDG directories are Linux-specific")
+                u.Tests.skip("XDG directories are Linux-specific")
             with u.Tests.env_vars_context(
                 env_vars={"XDG_CACHE_HOME": "/xdg/cache", "XDG_DATA_HOME": "/xdg/data"},
                 vars_to_clear=("FLEXT_APP_NAMESPACE",),
@@ -201,7 +199,7 @@ class TestsFlextCoreSettings:
                 u.Tests.env_vars_context(
                     env_vars={"FLEXT_APP_NAMESPACE": "../outside"},
                 ),
-                pytest.raises(ValueError, match="one non-empty path segment"),
+                u.Tests.raises(ValueError, match="one non-empty path segment"),
             ):
                 _ = FlextSettings.fetch_global().data_dir
 
@@ -355,7 +353,7 @@ class TestsFlextCoreSettings:
         tm.that(settings.model_dump(), eq=original)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "overrides",
         [
             {"debug": "not-a-bool"},

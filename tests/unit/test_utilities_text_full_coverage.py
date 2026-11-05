@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from tests import c, m, tm, u, utilities
 
 
@@ -17,12 +15,12 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
     """Tests for ``FlextUtilitiesText``."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "message"),
         [
-            pytest.param(None, c.ERR_TEXT_NONE_NOT_ALLOWED, id="none"),
-            pytest.param("", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="empty"),
-            pytest.param("   ", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="blank"),
+            u.Tests.param(None, c.ERR_TEXT_NONE_NOT_ALLOWED, id="none"),
+            u.Tests.param("", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="empty"),
+            u.Tests.param("   ", c.ERR_TEXT_EMPTY_NOT_ALLOWED, id="blank"),
         ],
     )
     def test_public_text_helpers_reject_blank_bootstrap_inputs(
@@ -34,17 +32,17 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
             u.safe_string(value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw", "expected_id", "expected_key"),
         [
-            pytest.param(
+            u.Tests.param(
                 "  Fleet Sync_App v2  ",
                 "fleet-sync-app-v2",
                 "fleetsyncappv2",
                 id="mixed-space-underscore",
             ),
-            pytest.param("A B", "a-b", "ab", id="uppercase-space"),
-            pytest.param("__x__", "--x--", "x", id="underscore-padding"),
+            u.Tests.param("A B", "a-b", "ab", id="uppercase-space"),
+            u.Tests.param("__x__", "--x--", "x", id="underscore-padding"),
         ],
     )
     def test_public_text_helpers_derive_stable_identifiers(
@@ -66,12 +64,12 @@ class TestsFlextUtilitiesText(utilities.u.Tests.Contract):
         tm.that(normalized_key.isalnum() or not normalized_key, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [
-            pytest.param("  spaced  ", id="surrounding-space"),
-            pytest.param("a b", id="inner-space"),
-            pytest.param("Fleet Sync_App v2", id="app-name"),
+            u.Tests.param("  spaced  ", id="surrounding-space"),
+            u.Tests.param("a b", id="inner-space"),
+            u.Tests.param("Fleet Sync_App v2", id="app-name"),
         ],
     )
     def test_public_text_helpers_are_idempotent(value: str) -> None:

@@ -15,9 +15,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import r, tm
+from tests import c, r, tm
 
 if TYPE_CHECKING:
     from typing import Literal, Never
@@ -128,7 +126,7 @@ class TestsFlextCoreResultExceptionMapping:
         tm.ok(recovered.exception is recovery_exc)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "combinator",
         [
             "map",
@@ -173,7 +171,7 @@ class TestsFlextCoreResultExceptionMapping:
         tm.that(result.error, eq=str(exc))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "combinator", ["map_error", "recover", "lash", "tap_error"]
     )
     def test_error_callback_exception_becomes_carried_failure(

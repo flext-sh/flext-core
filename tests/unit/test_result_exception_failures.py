@@ -16,8 +16,6 @@ from pathlib import Path
 from traceback import format_exception, walk_tb
 from typing import Annotated
 
-import pytest
-
 from tests import c, m, p, r, t, tm, u
 
 
@@ -25,7 +23,7 @@ class TestsFlextCoreResultExceptionFailures:
     """Tests for ``FlextCoreResultExceptionFailures``."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("error_msg", "expected_error"),
         [
             ("Operation failed", "Operation failed"),
@@ -231,8 +229,8 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(failure.unwrap_or(99), eq=99)
 
     @staticmethod
-    @pytest.mark.parametrize("use_property", [False, True])
-    @pytest.mark.parametrize("kind", [ValueError, OSError, KeyboardInterrupt])
+    @c.Tests.MARK.parametrize("use_property", [False, True])
+    @c.Tests.MARK.parametrize("kind", [ValueError, OSError, KeyboardInterrupt])
     def test_failure_terminals_preserve_native_identity_and_result_context(
         *,
         use_property: bool,
@@ -279,7 +277,7 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(raised.value.__notes__.count(note), eq=1)
 
     @staticmethod
-    @pytest.mark.parametrize("use_property", [False, True])
+    @c.Tests.MARK.parametrize("use_property", [False, True])
     def test_logical_failure_terminal_retains_structured_context(
         *,
         use_property: bool,
@@ -298,8 +296,8 @@ class TestsFlextCoreResultExceptionFailures:
         tm.that(details["error_data"], eq=failure.error_data)
 
     @staticmethod
-    @pytest.mark.parametrize("use_property", [False, True])
-    @pytest.mark.parametrize("explicit_data", [False, True])
+    @c.Tests.MARK.parametrize("use_property", [False, True])
+    @c.Tests.MARK.parametrize("explicit_data", [False, True])
     def test_failure_metadata_is_private_before_native_traceback_rendering(
         *,
         use_property: bool,

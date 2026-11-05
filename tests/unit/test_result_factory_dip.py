@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 
 from flext_core import FlextResult
-from tests import e, m, p, r, tm, u
+from tests import c, e, m, p, r, tm, u
 
 
 class TestsFlextCoreResultFactoryDip:
@@ -124,7 +124,7 @@ class TestsFlextCoreResultFactoryDip:
         tm.ok(isinstance(final, FlextResult))
 
     @staticmethod
-    @pytest.mark.parametrize("failed", [False, True])
+    @c.Tests.MARK.parametrize("failed", [False, True])
     def test_empty_flow_preserves_original_identity(*, failed: bool) -> None:
         """A zero-step flow neither reconstructs state nor invokes a callback."""
         source: p.Result[int] = r[int].fail("stopped") if failed else r[int].ok(3)

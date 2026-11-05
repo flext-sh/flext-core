@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, m, p, t, tm, u
 
 
@@ -52,7 +50,7 @@ class TestsFlextLoggingScopes:
             u.configure_structlog(settings=m.StructlogOptions())
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scope", "context"),
         [
             (c.ContextScope.APPLICATION, {"app_name": "test-app"}),

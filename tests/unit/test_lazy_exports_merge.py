@@ -18,15 +18,13 @@ from collections.abc import Callable
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-import pytest
-
 from flext_core.lazy import (
     install_lazy_exports,
     lazy,
     merge_lazy_imports,
     normalize_lazy_imports,
 )
-from tests import tm, u
+from tests import c, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -52,7 +50,7 @@ class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw_literal", "accepted"),
         [
             ("{'Alpha': 'pkg.alpha'}", True),
@@ -151,28 +149,28 @@ class TestsFlextCoreLazyExportsMerge:
             merge_lazy_imports((".child",), {})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("module_path", "raw", "expected"),
         [
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": (".alpha", "Alpha")},
                 {"Alpha": ("pkg.parent.alpha", "Alpha")},
                 id="relative-pair-resolves-against-module",
             ),
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": ("other.pkg.mod", "Alpha")},
                 {"Alpha": ("other.pkg.mod", "Alpha")},
                 id="absolute-pair-unchanged",
             ),
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": ".alpha"},
                 {"Alpha": "pkg.parent.alpha"},
                 id="relative-string-resolves-against-module",
             ),
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": "other.pkg.mod"},
                 {"Alpha": "other.pkg.mod"},

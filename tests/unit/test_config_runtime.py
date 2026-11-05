@@ -12,10 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_core import FlextConfig, FlextCore, FlextSettings, config, settings
-from tests import m, tm, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -135,7 +133,7 @@ class TestsFlextCoreConfigSettingsCanonical:
         tm.ok(config is FlextConfig.fetch_global())
 
     @staticmethod
-    @pytest.mark.parametrize("contents", ["limit: invalid\n", "limit: -1\n"])
+    @c.Tests.MARK.parametrize("contents", ["limit: invalid\n", "limit: -1\n"])
     def test_invalid_config_reset_preserves_published_value_and_frozen_state(
         tmp_path: Path,
         contents: str,

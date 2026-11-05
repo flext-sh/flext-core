@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_core.lazy import lazy_getattr
 from tests import tm, u
 
@@ -36,7 +34,7 @@ class TestsFlextCoreLazyFailureContract:
         target = f"{package}.broken"
         with (
             tm.scope(python_paths=[str(tmp_path)]),
-            pytest.raises(ImportError, match="lazy import of") as caught,
+            u.Tests.raises(ImportError, match="lazy import of") as caught,
         ):
             lazy_getattr("broken", {"broken": target}, {}, package)
         tm.that(isinstance(caught.value.__cause__, AttributeError), truth=True)

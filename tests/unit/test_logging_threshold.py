@@ -10,8 +10,6 @@ import io
 from contextlib import redirect_stderr
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_core import FlextSettings
 from tests import c, m, p, tm, u
 
@@ -22,9 +20,9 @@ if TYPE_CHECKING:
 class TestsFlextCoreLoggingThreshold:
     """Tests for ``FlextCoreLoggingThreshold``."""
 
-    pytestmark = pytest.mark.usefixtures("restore_default_level")
+    pytestmark = c.Tests.MARK.usefixtures("restore_default_level")
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def restore_default_level() -> Generator[None]:
         """Restore the captured application policy, never today's defaults."""
@@ -78,7 +76,7 @@ class TestsFlextCoreLoggingThreshold:
         tm.ok("debug-at-debug" in debug_out)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("debug", "trace"),
         [
             (False, False),

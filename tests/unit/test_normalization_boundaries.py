@@ -20,7 +20,7 @@ class TestsFlextCoreNormalizationBoundaries:
     """Validate domain boundaries rather than preserving a retired facade."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [None, 42, "text", b"text", Path("relative/path"), [1, None], {"key": None}],
     )
@@ -70,7 +70,7 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.ok(isinstance(issues[0], Mapping))
 
     @staticmethod
-    @pytest.mark.parametrize("depth", [1, 3])
+    @c.Tests.MARK.parametrize("depth", [1, 3])
     def test_json_payload_accepts_native_json_at_recursive_collection_depths(
         depth: int,
     ) -> None:
@@ -82,7 +82,7 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.that(u.normalize_to_json_mapping(parsed), eq={"payload": payload})
 
     @staticmethod
-    @pytest.mark.parametrize("nested", [False, True])
+    @c.Tests.MARK.parametrize("nested", [False, True])
     def test_json_payload_rejects_non_string_mapping_keys(*, nested: bool) -> None:
         """Validation rejects invalid keys before native JSON can stringify them."""
         invalid = {1: "not a string key"}
@@ -90,7 +90,7 @@ class TestsFlextCoreNormalizationBoundaries:
             m.ConfigMap.model_validate({"issues": [invalid]} if nested else invalid)
 
     @staticmethod
-    @pytest.mark.parametrize("payload", [{1: "invalid-key"}, {"nested": {1: None}}])
+    @c.Tests.MARK.parametrize("payload", [{1: "invalid-key"}, {"nested": {1: None}}])
     def test_json_normalization_rejects_invalid_mapping_keys(
         payload: p.GuardInput,
     ) -> None:
@@ -236,7 +236,7 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.that(tm.ok(clean_container.resolve("identity")), where=resolves_payload)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "payload",
         [
             {1: "invalid-key"},
@@ -244,7 +244,7 @@ class TestsFlextCoreNormalizationBoundaries:
             [ModuleType("unsupported")],
         ],
     )
-    @pytest.mark.parametrize("registration_kind", ["factories", "resources"])
+    @c.Tests.MARK.parametrize("registration_kind", ["factories", "resources"])
     def test_factory_and_resource_reject_invalid_payloads(
         clean_container: p.Container,
         payload: p.GuardInput,

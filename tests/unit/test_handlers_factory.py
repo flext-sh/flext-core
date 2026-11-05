@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import cast
 
-import pytest
-
 from tests import c, h, m, p, r, t, tm, u
 
 
@@ -142,7 +140,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         tm.that(handler.mode, eq=c.HandlerType.EVENT)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "scenario",
         u.TestsFlextFlextHandlers.HANDLER_TYPES,
     )
@@ -273,7 +271,7 @@ class TestsFlextCoreHandlersFactory(u.TestsFlextFlextHandlers):
         # Act / Assert
         tm.that(handler.mode, eq=c.HandlerType.COMMAND)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("payload", "expected_success"),
         [("non_empty", True), ("", False)],
     )

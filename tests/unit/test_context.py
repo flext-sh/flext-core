@@ -15,16 +15,15 @@ from collections.abc import Iterator
 from contextvars import copy_context
 from typing import override
 
-import pytest
 import structlog.contextvars
 
-from flext_core import FlextContext, h, m, p, t
-from tests import c, r, tm, u
+from flext_core import FlextContext
+from tests import c, h, m, p, r, t, tm, u
 
-pytestmark = pytest.mark.usefixtures("isolate_process_context")
+pytestmark = c.Tests.MARK.usefixtures("isolate_process_context")
 
 
-@pytest.fixture
+@u.Tests.fixture
 def isolate_process_context() -> Iterator[None]:
     """Keep process-global contextvars from leaking across responsibility groups."""
     FlextContext.clear_context()

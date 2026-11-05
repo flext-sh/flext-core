@@ -13,9 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-import pytest
-
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreModels:
@@ -42,7 +40,7 @@ class TestsFlextCoreModels:
         tm.that(left, eq=right)
         tm.that(hash(left), eq=hash(right))
 
-    @pytest.mark.parametrize(("x", "y"), [(2, "a"), (1, "b"), (9, "z")])
+    @c.Tests.MARK.parametrize(("x", "y"), [(2, "a"), (1, "b"), (9, "z")])
     def test_value_objects_with_different_fields_are_unequal(
         self,
         x: int,
@@ -159,7 +157,7 @@ class TestsFlextCoreModels:
     # ----- Pagination value object -------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(("page", "size"), [(1, 10), (3, 25), (5, 100)])
+    @c.Tests.MARK.parametrize(("page", "size"), [(1, 10), (3, 25), (5, 100)])
     def test_pagination_exposes_page_and_size(page: int, size: int) -> None:
         """Test pagination exposes page and size."""
         pagination = m.Pagination(page=page, size=size)

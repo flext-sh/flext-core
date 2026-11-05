@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from typing import override
 
-import pytest
-
 from tests import c, h, m, p, r, t, tm, u
 
 
@@ -39,7 +37,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         tm.that(handler.mode, eq=c.HandlerType.QUERY)
         tm.that(handler.handler_name, eq="Query Handler")
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "scenario",
         u.TestsFlextFlextHandlers.HANDLER_TYPES,
         ids=lambda s: s.name,
@@ -128,7 +126,7 @@ class TestsFlextHandlersLifecycle(u.TestsFlextFlextHandlers):
         tm.that(result.error, none=False)
         tm.that(c.HandlerMode.QUERY in str(result.error), truth=True)
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("label", "message"),
         u.TestsFlextFlextHandlers.VALIDATION_TYPES,
         ids=[label for label, _ in u.TestsFlextFlextHandlers.VALIDATION_TYPES],

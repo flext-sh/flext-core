@@ -14,10 +14,8 @@ from __future__ import annotations
 
 from zoneinfo import ZoneInfo
 
-import pytest
-
 from flext_core import config, lazy, settings
-from tests import tm
+from tests import c, tm
 
 _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.constants",
@@ -45,7 +43,7 @@ class TestsConfigSettingsFamilyAvailability:
         tm.that(config, where=lambda current: current is owner_config)
 
     @staticmethod
-    @pytest.mark.parametrize("module_name", _FAMILY_SURFACES)
+    @c.Tests.MARK.parametrize("module_name", _FAMILY_SURFACES)
     def test_family_module_loads_alongside_config_settings(
         module_name: str,
     ) -> None:

@@ -8,17 +8,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-import pytest
-
 from flext_core import FlextContainer, FlextSettings
-from tests import m, p, t, tm
+from tests import c, m, p, t, tm
 
 
 class TestsFlextCoreContainerConfig:
     """Exercise the public container configuration contract."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "settings",
         m.Tests.ContainerScenarios.CONFIG_SCENARIOS,
         ids=str,

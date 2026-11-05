@@ -21,7 +21,7 @@ class TestsFlextHandlerDiscovery:
     """One behavioral suite replaces duplicated payload stubs and fixture engines."""
 
     @staticmethod
-    @pytest.mark.parametrize("priority", [0, 1, 10, 100])
+    @c.Tests.MARK.parametrize("priority", [0, 1, 10, 100])
     def test_declared_metadata_and_original_callable(priority: int) -> None:
         """Decorator and scanner preserve callable identity and declaration."""
         outcome = r[str].ok("created")
@@ -42,7 +42,7 @@ class TestsFlextHandlerDiscovery:
         tm.that(found(m.Command()) is outcome)
 
     @staticmethod
-    @pytest.mark.parametrize("explicit_empty", [False, True])
+    @c.Tests.MARK.parametrize("explicit_empty", [False, True])
     def test_defaults_come_from_the_model_owner(*, explicit_empty: bool) -> None:
         """Defaults are derived, never frozen to today's configured values."""
 
@@ -138,7 +138,7 @@ class TestsFlextHandlerDiscovery:
         tm.that(received[0] is request)
 
     @staticmethod
-    @pytest.mark.parametrize("timeout", [0.0, 1.0, 30.0])
+    @c.Tests.MARK.parametrize("timeout", [0.0, 1.0, 30.0])
     def test_unsupported_timeout_fails_before_application(timeout: float) -> None:
         """The executor never accepts a policy it cannot implement."""
         with u.Tests.raises(ValueError, match="timeout execution is not supported"):
@@ -161,7 +161,7 @@ class TestsFlextHandlerDiscovery:
             h.handler(command=m.Command, priority=-1)(operation)
 
     @staticmethod
-    @pytest.mark.parametrize(c.HandlerMode.COMMAND, [p.Command, m.Event])
+    @c.Tests.MARK.parametrize(c.HandlerMode.COMMAND, [p.Command, m.Event])
     def test_stacked_declarations_leave_original_metadata_unchanged(
         command: type,
     ) -> None:
@@ -224,7 +224,7 @@ class TestsFlextHandlerDiscovery:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "payload", [None, 7, "plain", [1], m.ConfigMap(root={"native": 1})]
     )
     def test_discovery_preserves_raw_payload_identity(payload: t.JsonPayload) -> None:
@@ -240,7 +240,7 @@ class TestsFlextHandlerDiscovery:
         tm.that(found(m.Command()) is payload)
 
     @staticmethod
-    @pytest.mark.parametrize("failure", [False, True])
+    @c.Tests.MARK.parametrize("failure", [False, True])
     def test_result_identity_cause_and_no_late_module_lookup(*, failure: bool) -> None:
         """Saved handlers survive replacement without a module-name lookup."""
         cause = RuntimeError("handler operation failed")
@@ -270,7 +270,7 @@ class TestsFlextHandlerDiscovery:
             tm.that(outcome.exception is cause)
 
     @staticmethod
-    @pytest.mark.parametrize("invalid", ["invalid", m.ConfigMap(root={})])
+    @c.Tests.MARK.parametrize("invalid", ["invalid", m.ConfigMap(root={})])
     def test_malformed_metadata_fails_before_registration(
         invalid: t.JsonPayload,
     ) -> None:
@@ -303,7 +303,7 @@ class TestsFlextHandlerDiscovery:
             )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("service_type", "names"),
         [
             (u.Tests.HandlerService, ("create", "delete", c.HandlerMode.QUERY)),

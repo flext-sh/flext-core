@@ -14,8 +14,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import cast
 
-import pytest
-
 from tests import c, m, tm, u
 
 
@@ -34,7 +32,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(page.size, eq=c.DEFAULT_PAGE_SIZE)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("page", "size"),
         [
             (c.FIRST_PAGE_INDEX, c.MIN_PAGE_SIZE),
@@ -48,7 +46,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(m.Pagination(page=page, size=size).limit, eq=size)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("completed_pages", "size"),
         [
             (0, c.MIN_PAGE_SIZE),
@@ -77,7 +75,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(dumped["offset"], eq=c.DEFAULT_PAGE_SIZE)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "size",
         [c.MIN_PAGE_SIZE - 1, c.MAX_PAGE_SIZE + 1, c.MAX_PAGE_SIZE + 2],
     )
@@ -87,7 +85,7 @@ class TestsFlextCoreModelsCqrs:
             m.Pagination(size=size)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("page", "size"),
         [(0, c.MIN_PAGE_SIZE), (c.FIRST_PAGE_INDEX, 0), (-1, c.MIN_PAGE_SIZE)],
     )
@@ -207,7 +205,7 @@ class TestsFlextCoreModelsCqrs:
         tm.that(handler.handler_mode, eq=c.HandlerType.COMMAND)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "handler_type",
         [c.HandlerType.COMMAND, c.HandlerType.QUERY, c.HandlerType.EVENT],
     )
@@ -235,7 +233,7 @@ class TestsFlextCoreModelsCqrs:
     # FlextMessage discriminated union                                   #
     # ------------------------------------------------------------------ #
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("payload", "expected_cls"),
         [
             ({"message_type": c.HandlerMode.COMMAND, "command_type": "run"}, m.Command),

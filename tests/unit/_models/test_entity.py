@@ -13,9 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import m, tm, u
+from tests import c, m, tm, u
 
 
 class TestsFlextCoreEntity:
@@ -120,7 +118,9 @@ class TestsFlextCoreEntity:
     def test_values_with_equal_fields_are_equal(self) -> None:
         tm.that(self._Coord(x=1, y=2), eq=self._Coord(x=1, y=2))
 
-    @pytest.mark.parametrize(("x_a", "y_a", "x_b", "y_b"), [(1, 2, 9, 2), (1, 2, 1, 9)])
+    @c.Tests.MARK.parametrize(
+        ("x_a", "y_a", "x_b", "y_b"), [(1, 2, 9, 2), (1, 2, 1, 9)]
+    )
     def test_values_with_differing_fields_are_not_equal(
         self,
         x_a: int,

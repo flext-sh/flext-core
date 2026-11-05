@@ -11,9 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import p, r, tm, u
+from tests import c, p, r, tm, u
 
 
 class TestsFlextCoreResultChainHelpers:
@@ -108,7 +106,7 @@ class TestsFlextCoreResultChainHelpers:
         tm.that(result.unwrap(), eq=8)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), 5), (r[int].fail("boom"), 99)],
     )
@@ -120,7 +118,7 @@ class TestsFlextCoreResultChainHelpers:
         tm.that(source.unwrap_or(99), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), 5), (r[int].fail("boom"), 7)],
     )
@@ -181,7 +179,7 @@ class TestsFlextCoreResultRecoveryAndObservation:
         tm.that(result.value, eq=5)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), "ok:5"), (r[int].fail("boom"), "err:boom")],
     )
@@ -219,7 +217,7 @@ class TestsFlextCoreResultRecoveryAndObservation:
         tm.that(seen_ok, eq=[])
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("source", "expected"),
         [(r[int].ok(5), 6), (r[int].fail("boom"), 0)],
     )

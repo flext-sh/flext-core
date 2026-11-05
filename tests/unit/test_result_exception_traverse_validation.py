@@ -10,8 +10,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, p, r, t, tm
 from tests.utilities import TestsFlextUtilities
 
@@ -22,7 +20,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
     """Tests for ``FlextCoreResultExceptionTraverseValidation``."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "raised",
         [ValueError("item error"), TypeError("bad type"), KeyError("missing")],
     )
@@ -209,7 +207,7 @@ class TestsFlextCoreResultExceptionTraverseValidation(
         tm.ok(result.exception is exc)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [(True, True), (False, False), (42, 42)],
     )

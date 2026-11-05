@@ -16,8 +16,6 @@ import types
 from datetime import UTC, datetime
 from pathlib import Path
 
-import pytest
-
 from flext_core import FlextContainer
 from tests import c, d, e, m, p, t, tm, u
 
@@ -60,7 +58,7 @@ class TestsFlextCoreContainerTruthful:
             _ = container.resource(name, factory)
 
     @staticmethod
-    @pytest.mark.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
+    @c.Tests.MARK.parametrize("name", sorted(c.CONTAINER_RESERVED_NAMES))
     def test_public_writes_reject_reserved_names(
         name: str,
         clean_container: p.Container,
@@ -78,8 +76,8 @@ class TestsFlextCoreContainerTruthful:
         tm.fail(clean_container.has(name))
 
     @staticmethod
-    @pytest.mark.parametrize("second", ["bind", "factory", "resource"])
-    @pytest.mark.parametrize("first", ["bind", "factory", "resource"])
+    @c.Tests.MARK.parametrize("second", ["bind", "factory", "resource"])
+    @c.Tests.MARK.parametrize("first", ["bind", "factory", "resource"])
     def test_duplicate_is_rejected_across_registration_kinds(
         first: str,
         second: str,

@@ -13,15 +13,13 @@ from __future__ import annotations
 
 from collections.abc import Iterator, Sequence
 
-import pytest
-
-from tests import e, m, tm, u
+from tests import c, e, m, tm, u
 
 
 class TestsFlextCoreExceptionsPublicMetrics:
     """Public-contract behavior of exception occurrence metrics."""
 
-    pytestmark = pytest.mark.usefixtures("_isolated_metrics")
+    pytestmark = c.Tests.MARK.usefixtures("_isolated_metrics")
 
     @staticmethod
     def test_model_defaults_are_independent_and_copy_updated() -> None:
@@ -46,7 +44,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         tm.that(caught.value.errors()[0]["loc"], eq=("exception_counts", "bad"))
         tm.that(caught.value.errors()[0]["type"], eq="int_type")
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def _isolated_metrics() -> Iterator[None]:
         """Guarantee each test observes a clean, isolated metrics state."""
@@ -77,7 +75,7 @@ class TestsFlextCoreExceptionsPublicMetrics:
         tm.that(dict(snapshot.exception_counts), eq={})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("recorded", "expected_total", "expected_unique"),
         [
             ((e.ValidationError,), 1, 1),

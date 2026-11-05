@@ -18,10 +18,7 @@ from collections.abc import Sequence
 from enum import StrEnum, unique
 from typing import Annotated, ClassVar
 
-import pytest
-
-from flext_core import t
-from tests import m, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreEnumUtilities:
@@ -95,7 +92,7 @@ class TestsFlextCoreEnumUtilities:
         ),
     ]
 
-    @pytest.mark.parametrize("scenario", PARSE, ids=lambda s: s.name)
+    @c.Tests.MARK.parametrize("scenario", PARSE, ids=lambda s: s.name)
     def test_parse_returns_expected_outcome(self, scenario: ParseScenario) -> None:
         """Parse yields success with the member, or a failure carrying the reason."""
         result = u.parse(scenario.value, self.Status)

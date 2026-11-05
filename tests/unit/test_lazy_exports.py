@@ -13,11 +13,9 @@ from pathlib import Path
 from types import ModuleType
 from typing import cast
 
-import pytest
-
 import flext_core
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
-from tests import t, tm, u
+from tests import c, t, tm, u
 
 
 def _install_alpha(
@@ -43,7 +41,7 @@ def _install_alpha(
     return module_globals
 
 
-@pytest.fixture
+@u.Tests.fixture
 def registered_alpha_module() -> Iterator[tuple[str, type]]:
     """Register a real child module exposing ``Alpha`` and return its name.
 
@@ -72,7 +70,7 @@ class TestsFlextCoreLazyExports:
     """Behavioral contract: what the lazy export surface promises callers."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("module_name", "facade_name", "alias_name"),
         [
             ("flext_core.constants", "FlextConstants", "c"),
@@ -175,7 +173,7 @@ class TestsFlextCoreLazyExports:
         tm.that(result.value.stdout, eq="True\nTrue True True True\nTrue\n")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "first_import",
         [
             "from flext_core import t, p, m",
@@ -464,7 +462,7 @@ class TestsFlextCoreLazyExports:
 class TestsFlextCoreLazyExportCaching:
     """In-progress import rebinding and completed export caching."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def rebinding_package(tmp_path: Path) -> Iterator[str]:
         """Write a real lazy package whose child rebinds ``u`` mid-body.

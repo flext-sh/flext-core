@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
 from tests import c, d, e, r, tm, u
 
 
@@ -47,7 +45,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         tm.that(result.unwrap(), eq="success")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raised", "message"),
         [
             (ValueError("bad value"), "bad value"),
@@ -80,7 +78,7 @@ class TestsFlextCoreDecoratorsRailwayRetry:
         tm.that(type(raised).__name__ in str(result.error), truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("error_code", "expected_code"),
         [(None, c.ErrorCode.OPERATION_ERROR.value), ("CUSTOM_ERROR", "CUSTOM_ERROR")],
     )

@@ -13,8 +13,6 @@ from __future__ import annotations
 
 from typing import Annotated
 
-import pytest
-
 from tests import c, m, t, tm, u
 
 
@@ -64,7 +62,7 @@ class TestsFlextCoreBase:
     def test_base_model_exposes_declared_fields(self) -> None:
         tm.that(set(self.Sample.model_fields), eq={"name", c.Aggregation.COUNT})
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "payload",
         [
             {c.Aggregation.COUNT: 1},
@@ -85,7 +83,7 @@ class TestsFlextCoreBase:
 
         tm.that(left, eq=right)
 
-    @pytest.mark.parametrize(("amount", "label"), [(6, "usd"), (5, "eur")])
+    @c.Tests.MARK.parametrize(("amount", "label"), [(6, "usd"), (5, "eur")])
     def test_value_objects_differ_when_any_field_differs(
         self,
         amount: int,
@@ -116,7 +114,7 @@ class TestsFlextCoreBase:
 
         tm.rejects_assignment(value, "amount", 3, expected=m.ValidationError)
 
-    @pytest.mark.parametrize("amount", [c.ParserBooleanToken.ONE, 1.5])
+    @c.Tests.MARK.parametrize("amount", [c.ParserBooleanToken.ONE, 1.5])
     def test_value_object_strictly_validates_field_types(
         self,
         amount: str | float,

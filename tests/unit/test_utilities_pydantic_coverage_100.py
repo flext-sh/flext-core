@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar
 
-import pytest
-
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextUtilitiesPydantic:
@@ -152,7 +150,7 @@ class TestsFlextUtilitiesPydantic:
         ]
 
     @staticmethod
-    @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
+    @c.Tests.MARK.parametrize("missing_name", ["model_values", "utility_values"])
     def test_required_collections_reject_missing_values(missing_name: str) -> None:
         """Required fields reject omission and retain the supplied values."""
         partial: t.JsonDict = {"model_values": {}, "utility_values": {}}
@@ -240,7 +238,7 @@ class TestsFlextUtilitiesPydantic:
             return self._reader is input
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw_name", "expected_name"),
         [
             ("  ada lovelace ", "Ada Lovelace"),

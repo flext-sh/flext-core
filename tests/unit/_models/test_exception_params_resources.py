@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, m, tm, u
 
 
@@ -70,7 +68,7 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(params.resource_id, eq="42")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("resource_type", "resource_id"),
         [
             (c.ContextScope.USER, "42"),
@@ -145,7 +143,7 @@ class TestsFlextModelsResourceLimitParams:
         tm.that(params.retry_after, eq=1.5)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "retry_after",
         [1, 1.5, 0, None],
         ids=["int", "float", "zero", "none"],

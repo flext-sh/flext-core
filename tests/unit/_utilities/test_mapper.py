@@ -14,10 +14,7 @@ from __future__ import annotations
 import operator
 from collections.abc import Sequence
 
-import pytest
-
-from flext_core import m, t, u
-from tests import tm
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreMapper:
@@ -98,7 +95,7 @@ class TestsFlextCoreMapper:
 
     # ------------------------------------------------------------------ deep_eq
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("left", "right", "expected"),
         [
             ({"a": {"b": [1, 2]}}, {"a": {"b": [1, 2]}}, True),

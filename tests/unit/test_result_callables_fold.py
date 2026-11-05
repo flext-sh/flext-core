@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, p, r, t, tm
 
 
@@ -31,7 +29,7 @@ class TestsFlextCoreResultCallablesFold:
         tm.that(result | "unused", eq=payload)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [True, False, 0, 1, "", "value"])
+    @c.Tests.MARK.parametrize("value", [True, False, 0, 1, "", "value"])
     def test_ok_carries_value_as_success(*, value: bool | int | str) -> None:
         """ok() yields a success whose value is the wrapped payload."""
         result = r[bool | int | str].ok(value)

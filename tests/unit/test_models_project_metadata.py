@@ -17,8 +17,6 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from typing import Literal
 
-import pytest
-
 from tests import c, m, p, t, tm, u
 
 
@@ -29,7 +27,7 @@ class TestsFlextModelsProjectMetadata:
     """Tests for ``FlextModelsProjectMetadata``."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("project_name", "expected_stem"),
         [
             (c.Tests.SAMPLE_PROJECT_NAME, c.Tests.SAMPLE_PROJECT_CLASS_STEM),
@@ -47,7 +45,7 @@ class TestsFlextModelsProjectMetadata:
         tm.that(u.derive_class_stem(project_name), eq=expected_stem)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("slug", "expected"),
         [
             ("", ""),
@@ -69,7 +67,7 @@ class TestsFlextModelsProjectMetadata:
         tm.that(u.derive_class_stem(slug), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("project_name", "declared_stem"),
         c.SPECIAL_NAME_OVERRIDES,
     )
@@ -258,7 +256,7 @@ class TestsFlextModelsProjectMetadata:
         tm.that(tool_config.project.budget, none=True)
 
     @staticmethod
-    @pytest.mark.parametrize("payload", [{}, {"docs": {}}])
+    @c.Tests.MARK.parametrize("payload", [{}, {"docs": {}}])
     def test_documentation_language_defaults_for_existing_metadata(
         payload: t.JsonMapping,
     ) -> None:
@@ -270,7 +268,7 @@ class TestsFlextModelsProjectMetadata:
         tm.that(rebuilt, eq=tool_config)
 
     @staticmethod
-    @pytest.mark.parametrize("language", ["en", "pt-BR"])
+    @c.Tests.MARK.parametrize("language", ["en", "pt-BR"])
     def test_documentation_language_round_trips(
         language: t.DocumentationLanguage,
     ) -> None:
@@ -283,7 +281,7 @@ class TestsFlextModelsProjectMetadata:
         tm.that(rebuilt.tool.flext.docs.documentation_language, eq=language)
 
     @staticmethod
-    @pytest.mark.parametrize("language", ["pt", "pt-br", "fr", "", None, 1])
+    @c.Tests.MARK.parametrize("language", ["pt", "pt-br", "fr", "", None, 1])
     def test_documentation_language_rejects_unsupported_values(
         language: t.JsonValue,
     ) -> None:
@@ -302,7 +300,7 @@ class TestsFlextModelsProjectMetadata:
             })
 
     @staticmethod
-    @pytest.mark.parametrize("mode", ["validation", "serialization"])
+    @c.Tests.MARK.parametrize("mode", ["validation", "serialization"])
     def test_documentation_language_schema_is_finite(
         mode: Literal["validation", "serialization"],
     ) -> None:

@@ -15,10 +15,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Annotated
 
-import pytest
-
-from flext_core import t
-from tests import c, m, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreCqrs:
@@ -184,7 +181,7 @@ class TestsFlextCoreQuery:
         tm.that(query.pagination.offset, eq=5)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "invalid_pagination",
         [{"page": 0, "size": -5}, {"size": c.MAX_PAGE_SIZE + 1}, {"page": -1}],
     )
@@ -229,7 +226,7 @@ class TestsFlextCoreQuery:
         tm.that(pagination.limit, eq=25)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("page", "size", "expected_offset"),
         [(1, 10, 0), (2, 10, 10), (3, 20, 40), (5, 50, 200)],
     )
@@ -245,7 +242,7 @@ class TestsFlextCoreQuery:
         tm.that(pagination.offset, eq=expected_offset)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "invalid_kwargs",
         [{"size": c.MAX_PAGE_SIZE + 1}, {"page": 0}, {"page": -3}, {"size": 0}],
     )

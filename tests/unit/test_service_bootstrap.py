@@ -343,7 +343,7 @@ class TestsFlextCoreServiceBootstrap:
         tm.that(service.execute().unwrap(), eq=3)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("model", "has_contract"),
         [
             (GenericPort, False),

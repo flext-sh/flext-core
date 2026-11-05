@@ -14,8 +14,6 @@ from __future__ import annotations
 import operator
 from collections.abc import Mapping
 
-import pytest
-
 from tests import c, e, p, tm, u
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
@@ -25,7 +23,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
     """Public-contract behavior of structured errors and failure results."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
@@ -53,7 +51,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
             tm.that(error.metadata.attributes[key], eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
@@ -139,7 +137,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
             tm.that(error.metadata.attributes[key], eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
@@ -166,7 +164,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
             tm.that(result_data[key], eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )

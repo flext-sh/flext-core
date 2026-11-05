@@ -18,8 +18,6 @@ import math
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 
-import pytest
-
 from tests import c, m, t, tm, u
 
 
@@ -88,7 +86,7 @@ class TestsFlextCoreTypingsContainers:
             _ = d["missing"]
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("present", "expected"),
         [("key", True), ("missing", False)],
     )
@@ -236,7 +234,7 @@ class TestsFlextCoreTypedCollectionAliases:
     # ---- c.SCALAR_TYPES: runtime scalar contract ---------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "scalar",
         ["text", 42, math.pi, True, datetime(2025, 1, 1, tzinfo=UTC)],
     )
@@ -248,7 +246,7 @@ class TestsFlextCoreTypedCollectionAliases:
         tm.ok(isinstance(scalar, c.SCALAR_TYPES))
 
     @staticmethod
-    @pytest.mark.parametrize("nonscalar", [[c.Action.LIST], {"dict": 1}, ("tuple",)])
+    @c.Tests.MARK.parametrize("nonscalar", [[c.Action.LIST], {"dict": 1}, ("tuple",)])
     def test_scalar_types_rejects_containers(
         nonscalar: list[str] | Mapping[str, int] | tuple[str],
     ) -> None:

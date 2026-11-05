@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import p, r, tm, u
+from tests import c, p, r, tm, u
 
 
 class TestsFlextCoreResult:
@@ -56,7 +54,7 @@ class TestsFlextCoreResult:
         tm.that(result.exception is cause, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("success", "default", "expected"),
         [(True, 0, 7), (False, 0, 0), (False, 99, 99)],
     )
@@ -151,7 +149,7 @@ class TestsFlextCoreResult:
         tm.ok(recovered, eq=-1)
 
     @staticmethod
-    @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
+    @c.Tests.MARK.parametrize(("value", "keeps"), [(9, True), (2, False)])
     def test_filter_keeps_or_rejects_by_predicate(
         *,
         value: int,

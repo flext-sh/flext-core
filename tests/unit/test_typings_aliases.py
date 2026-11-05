@@ -19,7 +19,6 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pydantic
-import pytest
 
 import flext_core
 from tests import c, m, p, t, tm, u
@@ -56,7 +55,7 @@ class TestsFlextCoreTypingsAliases:
         tm.that(values, eq={"first": 1, "second": 2, "third": 3})
 
     @staticmethod
-    @pytest.mark.parametrize("alias_name", c.Tests.PUBLIC_ALIAS_NAMES)
+    @c.Tests.MARK.parametrize("alias_name", c.Tests.PUBLIC_ALIAS_NAMES)
     def test_public_alias_reachable_through_facade(alias_name: str) -> None:
         """Every declared public alias resolves to a real object on ``t``."""
         # Arrange / Act
@@ -65,14 +64,14 @@ class TestsFlextCoreTypingsAliases:
         tm.that(resolved, ne=None)
 
     @staticmethod
-    @pytest.mark.parametrize("alias_name", c.Tests.FLAT_ALIAS_NAMES)
+    @c.Tests.MARK.parametrize("alias_name", c.Tests.FLAT_ALIAS_NAMES)
     def test_flat_mapping_alias_reachable_through_facade(alias_name: str) -> None:
         """Every flat mapping alias resolves to a real object on ``t``."""
         resolved = getattr(t, alias_name)
         tm.that(resolved, ne=None)
 
     @staticmethod
-    @pytest.mark.parametrize("legacy_name", c.Tests.LEGACY_GENERIC_NAMES)
+    @c.Tests.MARK.parametrize("legacy_name", c.Tests.LEGACY_GENERIC_NAMES)
     def test_flext_core_hides_shared_generic_helpers(legacy_name: str) -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
         tm.fail(hasattr(flext_core, legacy_name))
@@ -106,7 +105,7 @@ class TestsFlextCoreTypingsAliases:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "is_primitive", "is_numeric", "is_scalar"),
         [
             ("text", True, False, True),
@@ -131,7 +130,7 @@ class TestsFlextCoreTypingsAliases:
         tm.that(isinstance(value, c.SCALAR_TYPES), eq=is_scalar)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [
             "text",

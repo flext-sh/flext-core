@@ -14,10 +14,8 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import override
 
-import pytest
-
 from flext_core import FlextContainer, FlextDispatcher, FlextRegistry, FlextService
-from tests import m, p, r, t, tm, u
+from tests import c, m, p, r, t, tm, u
 from tests.integration.migration_validation_cases import capture_output
 
 _OBSERVED_VALUE = 5
@@ -29,7 +27,7 @@ class TestsFlextCoreMigrationValidation:
     # Section: Result contract
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("user_123", "user_123"), ("", ""), ("A B C", "A B C")],
     )
@@ -62,7 +60,7 @@ class TestsFlextCoreMigrationValidation:
             result.unwrap()
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("result", "default", "expected"),
         [(r[int].ok(42), 0, 42), (r[int].fail("missing"), 7, 7)],
     )

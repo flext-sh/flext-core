@@ -14,16 +14,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import t, tm, u
+from tests import c, t, tm, u
 
 
 class TestsFlextCoreUtilitiesCoverage:
     """Behavioral contract of the FlextUtilities conversion and text helpers."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "default", "expected"),
         [
             ("42", 0, 42),
@@ -45,7 +43,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.to_int(value, default=default), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "default", "expected"),
         [
             ("1.5", 0.0, 1.5),
@@ -64,7 +62,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.to_float(value, default=default), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "default", "expected"),
         [
             (1, False, True),
@@ -85,7 +83,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.to_bool(value, default=default) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "default", "expected"),
         [
             (5, 0, 5),
@@ -108,7 +106,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.to_positive_int(value, default=default), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [(None, ""), ("hello", "hello"), (3.0, "3"), (2.5, "2.50"), (10, "10")],
     )
@@ -125,7 +123,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.to_str(None, default="fallback"), eq="fallback")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("", None), ("value", "value"), (None, None), (123, None)],
     )
@@ -137,7 +135,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.to_optional_str(value), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("values", "separator", "case", "expected"),
         [
             (["A", "b"], " ", "lower", "a b"),
@@ -156,7 +154,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.join(values, separator=separator, case=case), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "case", "expected"),
         [
             ("Hi", "upper", "HI"),
@@ -174,7 +172,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.normalize(value, case=case), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("name", "expected"),
         [
             ("My App", "my-app"),
@@ -191,7 +189,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.format_app_id(name), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("text", "expected"),
         [("  hi  ", "hi"), ("value", "value"), ("\ttrimmed\n", "trimmed")],
     )
@@ -203,7 +201,7 @@ class TestsFlextCoreUtilitiesCoverage:
         tm.that(u.safe_string(text), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize("text", [None, "", "   ", "\t\n"])
+    @c.Tests.MARK.parametrize("text", [None, "", "   ", "\t\n"])
     def test_safe_string_rejects_empty_input(text: str | None) -> None:
         """safe_string raises ValueError for None, empty, or whitespace input."""
         with u.Tests.raises(ValueError, match="Text"):

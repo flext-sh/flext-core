@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, t, tm, u
 
 
@@ -26,7 +24,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         """
 
         @staticmethod
-        @pytest.mark.parametrize(
+        @c.Tests.MARK.parametrize(
             ("value", "expected"),
             [("hello", "hello"), ("  hello  ", "hello"), ("\tspaced\n", "spaced")],
         )
@@ -39,7 +37,7 @@ class TestsFlextCoreTypingsValidationNumbers:
             tm.that(result, eq=expected)
 
         @staticmethod
-        @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
+        @c.Tests.MARK.parametrize("value", ["", "   ", "\t\n"])
         def test_rejects_blank_or_whitespace_only(value: str) -> None:
             """An empty or whitespace-only value raises the public ValidationError."""
             adapter: t.TypeAdapter[str] = u.type_adapter(t.TypeForm(t.StrippedStr))
@@ -48,7 +46,7 @@ class TestsFlextCoreTypingsValidationNumbers:
                 adapter.validate_python(value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("alias", "value"),
         [
             (t.NonEmptyStr, "hello"),
@@ -85,7 +83,7 @@ class TestsFlextCoreTypingsValidationNumbers:
         tm.that(result, eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("alias", "value"),
         [
             (t.NonEmptyStr, ""),
@@ -115,7 +113,7 @@ class TestsFlextCoreTypingsValidationNumbers:
             adapter.validate_python(value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "alias",
         [t.PositiveInt, t.NonNegativeInt, t.PortNumber, t.HttpStatusCode],
     )

@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import m, p, tm, u
+from tests import c, m, p, tm, u
 
 
 class TestsFlextContainerResolution:
@@ -36,7 +34,7 @@ class TestsFlextContainerResolution:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "scenario",
         m.Tests.ContainerScenarios.TYPED_RETRIEVAL_SCENARIOS,
         ids=lambda s: s.name,
@@ -84,7 +82,7 @@ class TestsFlextContainerResolution:
         u.Tests.assert_failure(result, expected_error="not found")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("has_service", "expected"),
         [(True, True), (False, False)],
         ids=["exists", "not_exists"],

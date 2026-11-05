@@ -10,10 +10,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from hypothesis import given, settings, strategies as st
 
-from tests import p, r, tm, u
+from tests import c, p, r, tm, u
 
 
 class TestsFlextCoreResultLaws:
@@ -53,7 +52,7 @@ class TestsFlextCoreResultLaws:
             result.unwrap()
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("result", "default", "expected"),
         [(r[int].ok(7), 99, 7), (r[int].fail("nope"), 99, ...)],
     )
@@ -146,7 +145,7 @@ class TestsFlextCoreResultLaws:
         tm.that(lashed.value, eq=1)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("result", "expected"),
         [(r[int].ok(4), "ok:4"), (r[int].fail("boom"), "err:boom")],
     )

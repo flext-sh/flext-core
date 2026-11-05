@@ -6,16 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import m, tm
+from tests import c, m, tm
 
 
 class TestsFlextCoreContractBytes:
     """JSON persistence retains the exact bytes supplied by a caller."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "payload",
         [b"", b"source content\n", bytes(range(256))],
         ids=["empty", "text", "binary"],

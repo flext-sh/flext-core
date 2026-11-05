@@ -13,8 +13,6 @@ from __future__ import annotations
 
 import math
 
-import pytest
-
 from tests import c, t, tm, u
 
 
@@ -24,14 +22,14 @@ class TestsFlextCoreTypingsValidationScalars:
     # -- integer constraints -------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("value", [1, 2, 5000, 9999, 10000])
+    @c.Tests.MARK.parametrize("value", [1, 2, 5000, 9999, 10000])
     def test_batch_size_accepts_in_range(value: int) -> None:
         """BatchSize round-trips integers within its inclusive 1..10000 range."""
         adapter: t.TypeAdapter[int] = u.type_adapter(t.TypeForm(t.BatchSize))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0, -1, 10001, 20000])
+    @c.Tests.MARK.parametrize("value", [0, -1, 10001, 20000])
     def test_batch_size_rejects_out_of_range(value: int) -> None:
         """BatchSize rejects integers below 1 or above 10000."""
         adapter: t.TypeAdapter[int] = u.type_adapter(t.TypeForm(t.BatchSize))
@@ -40,14 +38,14 @@ class TestsFlextCoreTypingsValidationScalars:
         tm.that(exc.value.error_count(), gte=1)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [1, 2, 9999, 1_000_000])
+    @c.Tests.MARK.parametrize("value", [1, 2, 9999, 1_000_000])
     def test_max_length_accepts_positive(value: int) -> None:
         """MaxLength round-trips any integer >= 1."""
         adapter: t.TypeAdapter[int] = u.type_adapter(t.TypeForm(t.MaxLength))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0, -1, -100])
+    @c.Tests.MARK.parametrize("value", [0, -1, -100])
     def test_max_length_rejects_non_positive(value: int) -> None:
         """MaxLength rejects integers below 1."""
         adapter: t.TypeAdapter[int] = u.type_adapter(t.TypeForm(t.MaxLength))
@@ -57,14 +55,14 @@ class TestsFlextCoreTypingsValidationScalars:
     # -- float constraints ---------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.1, 1.0, math.pi, 1e6])
+    @c.Tests.MARK.parametrize("value", [0.1, 1.0, math.pi, 1e6])
     def test_positive_float_accepts_positive(value: float) -> None:
         """PositiveFloat round-trips strictly positive floats."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.PositiveFloat))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.0, -0.1, -100.0])
+    @c.Tests.MARK.parametrize("value", [0.0, -0.1, -100.0])
     def test_positive_float_rejects_non_positive(value: float) -> None:
         """PositiveFloat rejects zero and negative floats."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.PositiveFloat))
@@ -72,14 +70,14 @@ class TestsFlextCoreTypingsValidationScalars:
             adapter.validate_python(value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.0, 0.5, math.pi, 1e9])
+    @c.Tests.MARK.parametrize("value", [0.0, 0.5, math.pi, 1e9])
     def test_non_negative_float_accepts_zero_and_positive(value: float) -> None:
         """NonNegativeFloat round-trips zero and positive floats."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.NonNegativeFloat))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [-0.1, -1.0, -1e6])
+    @c.Tests.MARK.parametrize("value", [-0.1, -1.0, -1e6])
     def test_non_negative_float_rejects_negative(value: float) -> None:
         """NonNegativeFloat rejects any negative float."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.NonNegativeFloat))
@@ -87,14 +85,14 @@ class TestsFlextCoreTypingsValidationScalars:
             adapter.validate_python(value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.001, 1.0, 150.0, 300.0])
+    @c.Tests.MARK.parametrize("value", [0.001, 1.0, 150.0, 300.0])
     def test_positive_timeout_accepts_in_range(value: float) -> None:
         """PositiveTimeout round-trips values in the exclusive-lower 0..300 range."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.PositiveTimeout))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.0, -1.0, 300.1, 1000.0])
+    @c.Tests.MARK.parametrize("value", [0.0, -1.0, 300.1, 1000.0])
     def test_positive_timeout_rejects_out_of_range(value: float) -> None:
         """PositiveTimeout rejects zero, negatives, and values above 300."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.PositiveTimeout))
@@ -102,14 +100,14 @@ class TestsFlextCoreTypingsValidationScalars:
             adapter.validate_python(value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [1.0, 1.5, 2.5, 100.0])
+    @c.Tests.MARK.parametrize("value", [1.0, 1.5, 2.5, 100.0])
     def test_backoff_multiplier_accepts_at_or_above_one(value: float) -> None:
         """BackoffMultiplier round-trips floats >= 1.0 (lower bound inclusive)."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.BackoffMultiplier))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.9, 0.0, -1.0])
+    @c.Tests.MARK.parametrize("value", [0.9, 0.0, -1.0])
     def test_backoff_multiplier_rejects_below_one(value: float) -> None:
         """BackoffMultiplier rejects floats below 1.0."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.BackoffMultiplier))
@@ -117,14 +115,14 @@ class TestsFlextCoreTypingsValidationScalars:
             adapter.validate_python(value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.0, 50.0, 99.9, 100.0])
+    @c.Tests.MARK.parametrize("value", [0.0, 50.0, 99.9, 100.0])
     def test_percentage_accepts_in_range(value: float) -> None:
         """Percentage round-trips values in the inclusive 0..100 range."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.Percentage))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [-0.1, 100.1, 1000.0])
+    @c.Tests.MARK.parametrize("value", [-0.1, 100.1, 1000.0])
     def test_percentage_rejects_out_of_range(value: float) -> None:
         """Percentage rejects values below 0 or above 100."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.Percentage))
@@ -132,14 +130,14 @@ class TestsFlextCoreTypingsValidationScalars:
             adapter.validate_python(value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [0.0, 0.25, 0.5, 1.0])
+    @c.Tests.MARK.parametrize("value", [0.0, 0.25, 0.5, 1.0])
     def test_decimal_fraction_accepts_in_range(value: float) -> None:
         """DecimalFraction round-trips values in the inclusive 0..1 range."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.DecimalFraction))
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize("value", [-0.1, 1.1, 2.0])
+    @c.Tests.MARK.parametrize("value", [-0.1, 1.1, 2.0])
     def test_decimal_fraction_rejects_out_of_range(value: float) -> None:
         """DecimalFraction rejects values below 0 or above 1."""
         adapter: t.TypeAdapter[float] = u.type_adapter(t.TypeForm(t.DecimalFraction))
@@ -149,12 +147,12 @@ class TestsFlextCoreTypingsValidationScalars:
     # -- non-empty string constraints ----------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "alias",
         [t.HostnameStr, t.UriString, t.TimestampStr],
         ids=["hostname", "uri", "timestamp"],
     )
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [c.LOCALHOST, "https://example.com", "2025-01-01T00:00:00Z"],
     )
@@ -167,7 +165,7 @@ class TestsFlextCoreTypingsValidationScalars:
         tm.that(adapter.validate_python(value), eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "alias",
         [t.HostnameStr, t.UriString, t.TimestampStr],
         ids=["hostname", "uri", "timestamp"],

@@ -15,8 +15,6 @@ import re
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar, Self, override
 
-import pytest
-
 from tests import c, h, m, p, r, s, t, tm, u
 
 if TYPE_CHECKING:
@@ -380,7 +378,7 @@ class TestsFlextCoreServiceOperations:
         tm.ok(operations[0].handler is self.CommandService.dispatch)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("service_type", "defect"),
         [
             (MissingMetadataService, re.escape(c.ERR_SERVICE_OPERATION_METADATA)),
@@ -441,7 +439,7 @@ class TestsFlextCoreServiceOperations:
     # --- Failures --------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("service_type", c.ContextScope.OPERATION, "defect"),
         [
             (AsyncService, "fetch", c.ERR_SERVICE_OPERATION_ASYNC),

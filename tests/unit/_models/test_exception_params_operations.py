@@ -21,7 +21,7 @@ from tests.unit._models._exception_params_support import (
 
 class TestsFlextCoreExceptionParamsOperations:
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "model_cls",
         TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
@@ -34,7 +34,7 @@ class TestsFlextCoreExceptionParamsOperations:
             tm.that(value, none=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "model_cls",
         TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_MODELS,
         ids=TestsFlextModelsExceptionParamsSupport.ALL_PARAMS_IDS,
@@ -46,7 +46,7 @@ class TestsFlextCoreExceptionParamsOperations:
             model_cls.model_validate({"bogus_field": "nope"})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("expected", "actual"),
         [("str", "int"), (c.Action.LIST, "dict"), ("BaseModel", "NoneType")],
         ids=["str-int", "list-dict", "model-none"],
@@ -76,7 +76,7 @@ class TestsFlextCoreExceptionParamsOperations:
         tm.that(params.attribute_context, eq={"owner": c.ContextScope.SESSION})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("host", "port", "expected_target"),
         [
             ("db.internal", 5432, "db.internal:5432"),
@@ -94,7 +94,7 @@ class TestsFlextCoreExceptionParamsOperations:
         tm.that(params.connection_target, eq=expected_target)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("model_cls", "payload"),
         [
             (m.ValidationErrorParams, {"field": 123}),
@@ -117,7 +117,7 @@ class TestsFlextCoreExceptionParamsOperations:
         tm.rejects_assignment(params, "field", wrong_value, expected=c.ValidationError)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "params",
         [
             m.ConnectionErrorParams(host="db.internal", port=5432, timeout=5),

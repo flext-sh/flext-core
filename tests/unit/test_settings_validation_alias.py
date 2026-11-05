@@ -20,10 +20,8 @@ from __future__ import annotations
 
 from typing import Annotated
 
-import pytest
-
 from flext_core import FlextSettings
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreSettingsValidationAlias:
@@ -64,7 +62,7 @@ class TestsFlextCoreSettingsValidationAlias:
         tm.that(settings.pandoc_bin, eq="pandoc")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "override_value",
         ["custom_pandoc", "/usr/bin/pandoc", "pandoc-3.1", "pandoc"],
     )

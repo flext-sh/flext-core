@@ -8,17 +8,15 @@ from __future__ import annotations
 
 from types import ModuleType
 
-import pytest
-
 from flext_core.lazy import lazy, merge_lazy_imports, normalize_lazy_imports
-from tests import tm, u
+from tests import c, tm, u
 
 
 class TestsFlextCoreLazyRelativePackages:
     """Resolve real standard-library modules through the public lazy mapping API."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("package", "relative", "absolute"),
         [
             ("xml.etree", "..dom", "xml.dom"),
@@ -62,7 +60,7 @@ class TestsFlextCoreLazyRelativePackages:
             normalize_lazy_imports("xml", {"module": "..dom"})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("package", "relative"),
         [
             ("xml.etree", "..dom"),

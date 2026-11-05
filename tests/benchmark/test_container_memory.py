@@ -17,10 +17,8 @@ import gc
 import sys
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_core import FlextContainer
-from tests import tm
+from tests import c, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -41,7 +39,7 @@ class TestsFlextContainerMemory:
     """Memory usage benchmarks for container operations."""
 
     @staticmethod
-    @pytest.mark.benchmark
+    @c.Tests.MARK.benchmark
     def test_memory_with_services() -> None:
         """Benchmark memory usage with registered services."""
         container = FlextContainer.shared()
@@ -59,7 +57,7 @@ class TestsFlextContainerMemory:
         )
 
     @staticmethod
-    @pytest.mark.benchmark
+    @c.Tests.MARK.benchmark
     def test_memory_with_factories() -> None:
         """Benchmark memory usage with registered factories."""
         container = FlextContainer.shared()
@@ -87,7 +85,7 @@ class TestsFlextContainerMemory:
         )
 
     @staticmethod
-    @pytest.mark.benchmark
+    @c.Tests.MARK.benchmark
     def test_memory_leak_detection() -> None:
         """Detect potential memory leaks in resource lifecycle."""
         gc.collect()

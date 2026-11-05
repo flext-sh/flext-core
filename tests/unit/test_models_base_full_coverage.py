@@ -15,8 +15,6 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Annotated
 
-import pytest
-
 from tests import c, m, t, tm, u
 
 
@@ -74,7 +72,7 @@ class TestsFlextCoreModelsBaseFullCoverage:
         tm.that(from_kwargs.attributes, eq={"b": 2})
 
     @staticmethod
-    @pytest.mark.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
+    @c.Tests.MARK.parametrize("bad_value", [123, "text", 4.5, ["a", "b"]])
     def test_metadata_attributes_non_mapping_rejected(
         bad_value: t.Scalar | Sequence[str],
     ) -> None:

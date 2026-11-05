@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
-import pytest
-
 from tests import c, m, t, tm, u
 
 
@@ -63,7 +61,7 @@ class TestsFlextCoreUtilitiesCollection:
     # --- map -------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("items", "mapper", "expected"),
         [
             ([1, 2, 3], u.Tests.double, [2, 4, 6]),
@@ -85,7 +83,7 @@ class TestsFlextCoreUtilitiesCollection:
     # --- find ------------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("items", "predicate", "expected", "expect_found"),
         [
             ([1, 2, 3], (2).__eq__, 2, True),
@@ -121,7 +119,7 @@ class TestsFlextCoreUtilitiesCollection:
     # --- filter ----------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("items", "predicate", "mapper", "expected"),
         [
             ([1, 2, 3, 4], u.Tests.is_even, None, [2, 4]),
@@ -157,7 +155,7 @@ class TestsFlextCoreUtilitiesCollection:
     # --- count -----------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("items", "predicate", "expected"),
         [([1, 2, 3, 4], None, 4), ([1, 2, 3, 4], u.Tests.is_even, 2)],
     )
@@ -172,7 +170,7 @@ class TestsFlextCoreUtilitiesCollection:
     # --- process ---------------------------------------------------------
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("items", "processor", "predicate", "expected"),
         [
             ([1, 2, 3], u.Tests.double, None, [2, 4, 6]),

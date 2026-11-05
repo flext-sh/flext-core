@@ -12,9 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreModelsContainer:
@@ -63,7 +61,7 @@ class TestsFlextCoreModelsContainer:
             _ = cfg["absent"]
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("key", "default", "expected"),
         [("a", None, 1), ("absent", None, None), ("absent", 99, 99)],
     )
@@ -77,7 +75,7 @@ class TestsFlextCoreModelsContainer:
         tm.that(cfg.get(key, default), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("key", "present"),
         [("a", True), ("b", True), ("missing", False)],
     )
@@ -96,7 +94,7 @@ class TestsFlextCoreModelsContainer:
         tm.that(len(m.ConfigMap(root={"a": 1, "b": 2, "c": 3})), eq=3)
 
     @staticmethod
-    @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
+    @c.Tests.MARK.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
     def test_config_map_bool_reflects_emptiness(
         root: t.UserOverridesMapping,
         *,
@@ -221,7 +219,7 @@ class TestsFlextCoreContainerSerialization:
         tm.that(len(m.ObjectList(root=["a", 1])), eq=2)
 
     @staticmethod
-    @pytest.mark.parametrize(("root", "truthy"), [([], False), (["a"], True)])
+    @c.Tests.MARK.parametrize(("root", "truthy"), [([], False), (["a"], True)])
     def test_object_list_bool_reflects_emptiness(
         root: list[t.JsonPayload],
         *,

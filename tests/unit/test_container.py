@@ -12,10 +12,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_core import FlextContainer
-from tests import m, p, t, tm
+from tests import c, m, p, t, tm
 
 
 class TestsFlextCoreContainer:
@@ -72,7 +70,7 @@ class TestsFlextCoreContainer:
         tm.ok(scoped.settings is not parent_settings)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "overrides",
         [None, {"custom_key": "custom_value"}],
         ids=["none", "mapping"],
