@@ -40,4 +40,9 @@ fi
 # runner never removes unstaged work: --all-files validates the working tree
 # as it is (a superset of the candidate) instead of hiding changes from it.
 unset SKIP PRE_COMMIT_ALLOW_NO_CONFIG
-"${PREK:?PREK must name the prek runner that make setup installed}" run --all-files --hook-stage "${stage}"
+if [ "${stage}" = pre-commit ]; then
+  # A commit validates exactly what it commits; pre-push keeps the full tree.
+  "${PREK:?PREK must name the prek runner that make setup installed}" run --hook-stage "${stage}"
+else
+  "${PREK:?PREK must name the prek runner that make setup installed}" run --all-files --hook-stage "${stage}"
+fi

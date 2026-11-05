@@ -30,8 +30,7 @@ class FlextProtocolsContainers:
 
     @runtime_checkable
     class _MappingRootBase(
-        FlextProtocolsPydantic.RootModel[MutableMapping[str, t.JsonPayload]],
-        Protocol,
+        FlextProtocolsPydantic.RootModel[MutableMapping[str, t.JsonPayload]], Protocol
     ):
         """Structural data contract projected from the owning model."""
 

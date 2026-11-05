@@ -61,9 +61,7 @@ class FlextProtocolsService:
             ...
 
         @property
-        def request(
-            self,
-        ) -> t.ModelClass[t.BaseModelType] | None:
+        def request(self) -> t.ModelClass[t.BaseModelType] | None:
             """Pydantic request model, or None for an input-less operation."""
             ...
 

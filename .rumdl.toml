@@ -3,7 +3,7 @@
 # @flext-ssot: flext-infra/config/tooling.yaml + flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/markdown.toml.j2
 # @flext-maintenance: do not edit generated projections; edit the SSOT and regenerate
 [global]
-exclude = ["**/*.bak", "**/*.egg-info/**", "**/*.orig", "**/*.rej", "**/*.swp", "**/.agents-sync-home/**", "**/.agents/**", "**/.archive/**", "**/.beads/**", "**/.benchmarks/**", "**/.bkp/**", "**/.cache/**", "**/.claude/**", "**/.codex/**", "**/.cursor/**", "**/.gemini/**", "**/.git/**", "**/.hypothesis/**", "**/.kilo/**", "**/.mypy_cache/**", "**/.omo/**", "**/.opencode/**", "**/.pylance_cache/**", "**/.pyrefly_cache/**", "**/.pytest_cache/**", "**/.reports/**", "**/.ruff_cache/**", "**/.serena/**", "**/.snapshots/**", "**/.test-tmp/**", "**/.tmp/**", "**/.tox/**", "**/.venv.*/**", "**/.venv/**", "**/.vscode/**", "**/.worktrees/**", "**/__pycache__/**", "**/__pyrefly_virtual__/**", "**/_tmp_*/**", "**/build/**", "**/dist-packages/**", "**/dist/**", "**/htmlcov/**", "**/incoming/**", "**/legado/**", "**/node_modules/**", "**/reports/**", "**/site-packages/**", "**/site/**", "**/target/**", "**/tests/fixtures/**", "**/venv/**", ".zcode/**", "CHANGELOG.md", "CLAUDE.md", "GEMINI.md", "docs/api-reference/generated/**", "docs/architecture/communities/index.md", "docs/architecture/crg-reports/**", "docs/knowledge-index.md", "docs/plans/2026-09-14-stabilization-handoff/previous-handoff-source.md", "docs/plans/2026-09-22-pipeline-integracao-continua-plano.md", "docs/plans/2026-09-22-rope-generator-stabilization/02-achados-codegen.md", "docs/plans/2026-09-23-handoff-mypy-stabilization-e-integracao.md", "docs/plans/2026-09-25-v8-flext-service-base/05-phases.md", "docs/plans/2026-09-25-v8-flext-service-base/07-sessions-guide.md", "docs/projects/generated/**", "docs/standards/consumption-law.md"]
+exclude = ["**/*.bak", "**/*.egg-info/**", "**/*.orig", "**/*.rej", "**/*.swp", "**/.agents-sync-home/**", "**/.agents/**", "**/.archive/**", "**/.beads/**", "**/.benchmarks/**", "**/.bkp/**", "**/.cache/**", "**/.claude/**", "**/.codex/**", "**/.cursor/**", "**/.gemini/**", "**/.git/**", "**/.hypothesis/**", "**/.kilo/**", "**/.mypy_cache/**", "**/.omo/**", "**/.opencode/**", "**/.pylance_cache/**", "**/.pyrefly_cache/**", "**/.pytest_cache/**", "**/.reports/**", "**/.ruff_cache/**", "**/.serena/**", "**/.snapshots/**", "**/.test-tmp/**", "**/.tmp/**", "**/.tox/**", "**/.venv.*/**", "**/.venv/**", "**/.vscode/**", "**/.worktrees/**", "**/__pycache__/**", "**/__pyrefly_virtual__/**", "**/_tmp_*/**", "**/build/**", "**/dist-packages/**", "**/dist/**", "**/htmlcov/**", "**/incoming/**", "**/legado/**", "**/node_modules/**", "**/reports/**", "**/site-packages/**", "**/site/**", "**/target/**", "**/tests/fixtures/**", "**/venv/**", ".github/agents/**", ".github/hooks/**", ".github/instructions/**", ".github/skills/**", ".zcode/**", "CHANGELOG.md", "CLAUDE.md", "GEMINI.md", "docs/api-reference/generated/**", "docs/architecture/communities/index.md", "docs/architecture/crg-reports/**", "docs/knowledge-index.md", "docs/plans/2026-09-14-stabilization-handoff/previous-handoff-source.md", "docs/plans/2026-09-22-pipeline-integracao-continua-plano.md", "docs/plans/2026-09-22-rope-generator-stabilization/02-achados-codegen.md", "docs/plans/2026-09-23-handoff-mypy-stabilization-e-integracao.md", "docs/plans/2026-09-25-v8-flext-service-base/05-phases.md", "docs/plans/2026-09-25-v8-flext-service-base/07-sessions-guide.md", "docs/plans/collected/**", "docs/projects/generated/**", "docs/standards/consumption-law.md"]
 disable = ["MD036", "MD041", "MD042", "MD051", "MD057"]
 extend-enable = ["MD060"]
 
@@ -15,6 +15,9 @@ style = "atx"
 
 [MD004]
 style = "dash"
+
+[MD007]
+indent = 2
 
 [MD013]
 line_length = 88
@@ -28,7 +31,7 @@ siblings_only = true
 
 [MD025]
 level = 1
-front-matter-title = "title"
+front_matter_title = "title"
 
 [MD029]
 style = "one_or_ordered"

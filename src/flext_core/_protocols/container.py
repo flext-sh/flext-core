@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from typing import TYPE_CHECKING, Protocol, Self, overload, override, runtime_checkable
 
-from flext_core import p, t
+from flext_core import t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsContext,
@@ -25,6 +25,7 @@ from flext_core._protocols import (
 if TYPE_CHECKING:
     from datetime import datetime
 
+    from flext_core import p
     from flext_core._protocols import FlextProtocolsContainers
 
 

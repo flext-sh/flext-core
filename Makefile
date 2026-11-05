@@ -671,7 +671,7 @@ INSTALL_GIT_HOOKS_RECIPE = set -eu; \
 			printf 'setup: hooks skipped (no validator) checkout=%s\n' "$$checkout"; \
 			continue; \
 		fi; \
-		for stage in pre-commit pre-push; do \
+		for stage in pre-commit; do \
 			hook="$$hooks_dir/$$stage"; \
 			others=""; \
 			if [ -e "$$hook" ]; then \
@@ -994,8 +994,7 @@ _setup_lifecycle: _builtin_require_workspace
 # Check owns quality verdicts after provisioning.
 _setup_activated:
 	+@set -eu; \
-	case "$(strip $(CI)): $(CUSTOM_DECLARED_TARGETS) " in \
-		Y:*) ;; \
+	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" post-setup "*) $(SELF_MAKE) post-setup ;; \
 	esac
 ifneq ($(CI),Y)

@@ -9,13 +9,15 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import PurePosixPath
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
 from flext_core._protocols._project_metadata import (
     FlextProtocolsProjectMetadataContract,
     FlextProtocolsProjectMetadataPyprojectIngress,
 )
+
+if TYPE_CHECKING:
+    from flext_core import t
 
 
 class FlextProtocolsProjectMetadataFields:

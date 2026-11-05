@@ -12,10 +12,10 @@ from collections.abc import Mapping
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
+    from flext_core import t
     from flext_core._protocols import FlextProtocolsContainer
     from flext_core._protocols._context._scope import (
         FlextProtocolsContextScopeFlextmodelscontextscopePart01,
