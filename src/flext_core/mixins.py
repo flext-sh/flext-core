@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from contextlib import contextmanager
 
-from flext_core import FlextContainer, FlextContext, c, m, p, t, u, x
+from flext_core import FlextContainer, FlextContext, c, m, p, t, u
 
 
 class FlextMixins(m.ServiceState):
