@@ -499,15 +499,16 @@ class TestsFlextCoreLazyExportCaching:
         first_access = package.u
         child = lazy.load(f"{rebinding_package}.child")
 
-        # Assert — the mid-body resolution saw the current binding, uncached;
-        # the completed module's final binding is what gets cached.
-        def resolves_first_alias(value: object) -> bool:
-            return value is child.FirstAlias
+        # Assert — a letter alias whose target is mid-execution resolves to
+        # the partial module (1f15515b25), uncached; the completed module's
+        # final binding is what gets cached.
+        def is_partial_child(value: object) -> bool:
+            return value is child
 
         def resolves_final_alias(value: object) -> bool:
             return value is child.FinalAlias
 
-        tm.that(child.RESOLVED_DURING_INIT, where=resolves_first_alias)
+        tm.that(child.RESOLVED_DURING_INIT, where=is_partial_child)
         tm.that(child.CACHED_DURING_INIT, is_=bool, eq=False)
         tm.that(first_access, where=resolves_final_alias)
         tm.that(vars(package)["u"], where=resolves_final_alias)
