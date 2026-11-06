@@ -24,6 +24,8 @@ class FlextProtocolsDomainEvent:
     class DomainEvent(FlextProtocolsBase.TimestampedModel, Protocol):
         """Structural data contract projected from the owning model."""
 
+        unique_id: t.NonEmptyStr
+
         @property
         def message_type(self) -> Literal[c.HandlerType.EVENT]:
             """Immutable event discriminator for union routing."""

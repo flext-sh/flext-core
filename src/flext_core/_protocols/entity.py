@@ -25,6 +25,9 @@ class FlextProtocolsEntity:
     class Entity(FlextProtocolsBase.TimestampedModel, Protocol):
         """Structural data contract projected from the owning model."""
 
+        version: t.NonNegativeInt
+        unique_id: t.NonEmptyStr
+
         @property
         def domain_events(self) -> Sequence[FlextProtocolsDomainEvent.DomainEvent]:
             """List of uncommitted domain events for event sourcing."""
