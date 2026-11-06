@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from datetime import datetime
 
-    from flext_core import p
+    from flext_core import m
 
 
 from collections.abc import Callable, Iterable, MutableSequence
@@ -199,7 +199,7 @@ class FlextProtocolsBase:
         """
 
         unique_id: str
-        domain_events: MutableSequence[p.DomainEvent]
+        domain_events: MutableSequence[m.DomainEvent]
 
     @runtime_checkable
     class EnforcedModel(FlextProtocolsPydantic.BaseModel, Protocol):
