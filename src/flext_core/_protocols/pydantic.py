@@ -106,6 +106,37 @@ class FlextProtocolsPydantic:
             """Serialize through the native JSON options structural consumers use."""
             ...
 
+        @classmethod
+        def model_validate(
+            cls,
+            obj: object,
+            *,
+            strict: bool | None = None,
+            from_attributes: bool | None = None,
+            context: Mapping[str, object] | None = None,
+        ) -> Self:
+            """Validate an external payload into the concrete model.
+
+            Mirrors the native ``model_validate`` boundary so a protocol-typed
+            model class validates exactly as its concrete declaration does.
+            """
+            ...
+
+        @classmethod
+        def model_validate_json(
+            cls,
+            json_data: str | bytes | bytearray,
+            *,
+            strict: bool | None = None,
+            context: Mapping[str, object] | None = None,
+        ) -> Self:
+            """Validate a serialized payload into the concrete model.
+
+            Mirrors the native ``model_validate_json`` boundary for protocol-typed
+            model classes.
+            """
+            ...
+
     @runtime_checkable
     class ModelField(Protocol):
         """Declared field annotation consumed by schema and protocol generators."""
