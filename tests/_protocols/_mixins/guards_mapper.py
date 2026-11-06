@@ -8,6 +8,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
@@ -43,6 +44,14 @@ class TestsFlextProtocolsMixinsGuardsMapper:
     @runtime_checkable
     class UserCreatedEvent(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
+
+        @property
+        def created_at(self) -> datetime:
+            """Creation timestamp (configured timezone)."""
+            ...
+
+        updated_at: datetime | None
+        unique_id: t.NonEmptyStr
 
         @property
         def message_type(self) -> Literal[c.HandlerType.EVENT]:

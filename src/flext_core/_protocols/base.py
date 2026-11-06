@@ -332,5 +332,12 @@ class FlextProtocolsBase:
     class TimestampedModel(ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
+        @property
+        def created_at(self) -> datetime:
+            """Creation timestamp (configured timezone)."""
+            ...
+
+        updated_at: datetime | None
+
 
 __all__: list[str] = ["FlextProtocolsBase"]
