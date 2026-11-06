@@ -78,13 +78,20 @@ class FlextProtocolsPydantic:
             self,
             *,
             mode: str = "python",
+            include: set[str] | None = None,
             exclude: set[str] | None = None,
             by_alias: bool | None = None,
+            exclude_unset: bool = False,
             exclude_defaults: bool = False,
             exclude_computed_fields: bool = False,
             exclude_none: bool = False,
+            round_trip: bool = False,
         ) -> DumpT:
-            """Dump the validated model at an external serialization boundary."""
+            """Dump the validated model at an external serialization boundary.
+
+            Mirrors the native ``model_dump`` keywords the fleet passes, so a
+            protocol-typed value dumps exactly as its model does.
+            """
             ...
 
         def model_dump_json(
