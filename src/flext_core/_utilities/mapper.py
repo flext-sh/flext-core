@@ -239,7 +239,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def transform(
-        source: t.JsonMapping | m.ConfigMap,
+        source: t.JsonMapping | p.ConfigMap,
         *,
         options: p.TransformOptions | None = None,
         filter_keys: set[str] | None = None,
@@ -261,7 +261,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 k: FlextUtilitiesPydantic.normalize_to_json_value(v)
                 for k, v in source.root.items()
             }
-            if isinstance(source, m.ConfigMap)
+            if isinstance(source, p.ConfigMap)
             else source
         )
 
