@@ -202,7 +202,6 @@ class TestsFlextCoreLazyExportsMerge:
                 package_name,
                 module_globals,
                 {"module": module_name},
-                publish_all=False,
             )
 
             getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
@@ -233,7 +232,6 @@ class TestsFlextCoreLazyExportsMerge:
                 package_name,
                 module_globals,
                 {"module": module_name},
-                publish_all=False,
             )
             getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)

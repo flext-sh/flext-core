@@ -252,7 +252,7 @@ class TestsFlextCoreNormalizationBoundaries:
     ) -> None:
         """Untrusted callable outputs cross the canonical admission model."""
         spec = m.ServiceRegistrationSpec.model_validate({
-            registration_kind: {"invalid-payload": lambda: m.yload},
+            registration_kind: {"invalid-payload": lambda: payload},
         })
         scope = clean_container.scope(registration=spec)
         tm.fail(scope.resolve("invalid-payload"))

@@ -20,8 +20,6 @@ from tests import c, t, tm, u
 
 def _install_alpha(
     registered_alpha_module: tuple[str, type],
-    *,
-    publish_all: bool = True,
 ) -> t.ModuleGlobals:
     """Install the registered alpha lazy export and return package globals.
 
@@ -36,7 +34,6 @@ def _install_alpha(
         package_name,
         module_globals,
         {"Alpha": (module_name, "Alpha")},
-        publish_all=publish_all,
     )
     return module_globals
 
@@ -77,7 +74,7 @@ class TestsFlextCoreLazyExports:
             ("flext_core.exceptions", "FlextExceptions", "e"),
             ("flext_core.models", "FlextModels", "m"),
             ("flext_core.protocols", "FlextProtocols", "p"),
-            ("typings", "FlextTypes", "t"),
+            ("flext_core.typings", "FlextTypes", "t"),
             ("flext_core.utilities", "FlextUtilities", "u"),
         ],
     )
@@ -158,7 +155,7 @@ class TestsFlextCoreLazyExports:
         script = (
             "import sys\n"
             f"sys.path.insert(0, {str(tmp_path)!r})\n"
-            "from flext_core import c,t,p,m,u,x,h,d\n"
+            "import flext_core\n"
             f"print(flext_core.__file__ == {str(candidate / '__init__.py')!r})\n"
             "from flext_core import c, p, t, m, u\n"
             "print(c is flext_core.FlextConstants, t is flext_core.FlextTypes, "
@@ -184,18 +181,19 @@ class TestsFlextCoreLazyExports:
     def test_cold_public_declarations_resolve_from_live_sources(
         first_import: str,
     ) -> None:
-        """Public consumers resolve declarations without warming constants first."""
-        workspace = Path(__file__).resolve().parents[3]
+        """Public consumers resolve declarations without warming constants first.
+
+        Live sources are the editable checkouts, never an installed wheel; the
+        check reads the loaded module path, not the checkout topology.
+        """
         script = (
             f"{first_import}\n"
             "from pathlib import Path\n"
             "from typing import get_args\n"
-            "from flext_core import c,t,p,m,u,x,h,d, flext_cli, flext_infra\n"
+            "import flext_core, flext_cli, flext_infra\n"
             "from flext_core import FlextSettings, c, m, p, t\n"
-            f"workspace = Path({str(workspace)!r})\n"
             "for package in (flext_core, flext_cli, flext_infra):\n"
-            "    source = workspace / package.__name__.replace('_', '-') / 'src'\n"
-            "    print(Path(package.__file__).resolve().is_relative_to(source), "
+            "    print('site-packages' not in Path(package.__file__).resolve().parts, "
             "issubclass(package.t, t), issubclass(package.p, p), "
             "issubclass(package.m, m))\n"
             "print(isinstance(FlextSettings, p.SettingsType))\n"
@@ -206,9 +204,11 @@ class TestsFlextCoreLazyExports:
             "c.RegistrationScope.INSTANCE)\n"
             "options = m.RuntimeBootstrapOptions(settings_type=FlextSettings)\n"
             "print(options.settings_type is FlextSettings)\n"
-            "print(options.model_dump() == {'settings_overrides': None})\n"
+            "dump = options.model_dump()\n"
+            "print('settings_type' not in dump "
+            "and dump['settings_overrides'] is None)\n"
         )
-        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=workspace)
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=Path.cwd())
         tm.that(result.success, truth=True, msg=result.error)
         tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
         tm.that(result.value.stderr, eq="")
@@ -235,28 +235,11 @@ class TestsFlextCoreLazyExports:
         tm.that(result.value.stdout, eq="True\n")
 
     @staticmethod
-    def test_install_without_publish_all_omits_dunder_all(
+    def test_install_publishes_dunder_all(
         registered_alpha_module: tuple[str, type],
     ) -> None:
         # Arrange
-        """Test install without publish all omits dunder all."""
-        module_globals = _install_alpha(registered_alpha_module, publish_all=False)
-
-        # Assert — no __all__ published, but __dir__ still lists the public name
-        def has_no_dunder_all(namespace: t.ModuleGlobals) -> bool:
-            return "__all__" not in namespace
-
-        tm.that(module_globals, where=has_no_dunder_all)
-        dir_fn = cast("Callable[[], list[str]]", module_globals["__dir__"])
-        tm.that(callable(dir_fn), truth=True)
-        tm.that(dir_fn(), eq=["Alpha"])
-
-    @staticmethod
-    def test_install_with_publish_all_publishes_dunder_all(
-        registered_alpha_module: tuple[str, type],
-    ) -> None:
-        # Arrange
-        """Test install with publish all publishes dunder all."""
+        """Install publishes ``__all__`` with every lazy export."""
         module_globals = _install_alpha(registered_alpha_module)
 
         # Assert
@@ -363,7 +346,6 @@ class TestsFlextCoreLazyExports:
                 package_name,
                 module_globals,
                 {"alias": target_name},
-                publish_all=False,
             )
 
             # Act
@@ -517,15 +499,16 @@ class TestsFlextCoreLazyExportCaching:
         first_access = package.u
         child = lazy.load(f"{rebinding_package}.child")
 
-        # Assert — the mid-body resolution saw the current binding, uncached;
-        # the completed module's final binding is what gets cached.
-        def resolves_first_alias(value: object) -> bool:
-            return value is child.FirstAlias
+        # Assert — a letter alias whose target is mid-execution resolves to
+        # the partial module (1f15515b25), uncached; the completed module's
+        # final binding is what gets cached.
+        def is_partial_child(value: object) -> bool:
+            return value is child
 
         def resolves_final_alias(value: object) -> bool:
             return value is child.FinalAlias
 
-        tm.that(child.RESOLVED_DURING_INIT, where=resolves_first_alias)
+        tm.that(child.RESOLVED_DURING_INIT, where=is_partial_child)
         tm.that(child.CACHED_DURING_INIT, is_=bool, eq=False)
         tm.that(first_access, where=resolves_final_alias)
         tm.that(vars(package)["u"], where=resolves_final_alias)

@@ -17,6 +17,7 @@ from __future__ import annotations
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 import pydantic
 
@@ -167,3 +168,33 @@ class TestsFlextCoreTypingsAliases:
         tm.that(Holder(value="texto").value, eq="texto")
         with u.Tests.raises(m.ValidationError):
             Holder.model_validate({"value": object()})
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("mode", ["validation", "serialization"])
+    def test_shared_skipped_alias_is_omitted_from_json_schema(
+        mode: Literal["validation", "serialization"],
+    ) -> None:
+        """Two fields sharing one skipped alias leave the JSON Schema, not break it.
+
+        The alias becomes one shared schema definition (the FlextCli prompt
+        readers declare it twice); the schema keeps every other field.
+        """
+
+        class Reader:
+            """Opaque collaborator with no JSON representation."""
+
+        class Holder(m.BaseModel):
+            """Model declaring the same skipped alias on two fields."""
+
+            model_config = m.ConfigDict(arbitrary_types_allowed=True)
+
+            first: t.SkipJsonSchema[Reader] = m.Field(
+                default_factory=Reader, exclude=True
+            )
+            second: t.SkipJsonSchema[Reader] = m.Field(
+                default_factory=Reader, exclude=True
+            )
+            label: str = "visible"
+
+        schema = Holder.model_json_schema(mode=mode)
+        tm.that(sorted(schema["properties"]), eq=["label"])
