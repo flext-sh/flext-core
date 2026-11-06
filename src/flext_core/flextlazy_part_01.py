@@ -64,7 +64,7 @@ class FlextLazyPart01:
             ],
         ] = {}
         self.install_cache: MutableMapping[
-            str, tuple[tuple[int, int, int, bool], t.LazyExportHooks]
+            str, tuple[tuple[int, int, int, int], t.LazyExportHooks]
         ] = {}
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
 

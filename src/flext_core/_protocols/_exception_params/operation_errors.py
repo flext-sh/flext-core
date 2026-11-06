@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols._exception_params import FlextProtocolsExceptionParamsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
+    from flext_core import t
 
 
 class FlextProtocolsExceptionParamsOperationErrors:
@@ -49,11 +49,7 @@ class FlextProtocolsExceptionParamsOperationErrors:
         """Structural data contract projected from the owning model."""
 
         attribute_name: str | None
-
-        @property
-        def attribute_context(self) -> FlextTypingBase.RuntimeData | None:
-            """Context payload describing the state during access failure."""
-            ...
+        attribute_context: t.RuntimeData | None
 
 
 __all__: list[str] = [

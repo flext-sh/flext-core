@@ -13,9 +13,7 @@ from __future__ import annotations
 
 import types
 
-import pytest
-
-from tests import d, p, r, tm, u
+from tests import c, d, p, r, tm, u
 
 
 class TestsFlextDecoratorsDiscovery:
@@ -84,7 +82,7 @@ class TestsFlextDecoratorsDiscovery:
         tm.that(u.scan_module(mod), eq=[])
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("singleton", "lazy"),
         [(False, True), (True, False), (True, True), (False, False)],
     )

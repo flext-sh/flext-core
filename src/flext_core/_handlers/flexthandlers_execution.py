@@ -39,7 +39,9 @@ class FlextHandlersExecution[MessageT_contra, ResultT](
         _ = self, message
         raise NotImplementedError
 
-    def pop_context(self) -> p.Result[p.RootDict[t.JsonPayload]]:
+    def pop_context(
+        self,
+    ) -> p.Result[p.RootDict[t.JsonPayload]]:
         """Pop execution context from the local handler stack.
 
         Returns:

@@ -13,9 +13,7 @@ from __future__ import annotations
 
 from collections.abc import MutableSequence
 
-import pytest
-
-from tests import p, r, tm, u
+from tests import c, p, r, tm, u
 
 
 def _floor_divide(dividend: int, divisor: int) -> int:
@@ -191,7 +189,7 @@ class TestsFlextResultTransforms:
         tm.that(result.error, eq="stop")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("result", "fallback", "expected"),
         [(r[int].ok(7), 42, 7), (r[int].fail("missing"), 42, 42)],
     )

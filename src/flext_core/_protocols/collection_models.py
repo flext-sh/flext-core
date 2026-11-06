@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
+    from flext_core import t
 
 
 class FlextProtocolsCollectionModels:
@@ -35,33 +35,16 @@ class FlextProtocolsCollectionModels:
     class GuardCheckSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def eq(self) -> FlextTypesPydantic.JsonValue | None:
-            """Require the value to equal this value."""
-            ...
-
-        @property
-        def ne(self) -> FlextTypesPydantic.JsonValue | None:
-            """Require the value to differ from this value."""
-            ...
-
+        eq: t.JsonValue | None
+        ne: t.JsonValue | None
         gt: float | str | None
         gte: float | str | None
         lt: float | str | None
         lte: float | str | None
         is_: type | None
         not_: type | None
-
-        @property
-        def in_(self) -> FlextTypingBase.JsonList | None:
-            """Require the value to be present in this sequence."""
-            ...
-
-        @property
-        def not_in(self) -> FlextTypingBase.JsonList | None:
-            """Require the value to not be present in this sequence."""
-            ...
-
+        in_: t.JsonList | None
+        not_in: t.JsonList | None
         none: bool | None
         empty: bool | None
         contains: str | None

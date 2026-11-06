@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core import c, t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsPydantic,
@@ -23,14 +23,7 @@ from flext_core._protocols import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import c
-    from flext_core._constants import FlextConstantsCqrs, FlextConstantsStatus
     from flext_core._protocols import FlextProtocolsContainer, FlextProtocolsContainers
-    from flext_core._typings import (
-        FlextTypesAnnotateds,
-        FlextTypesCore,
-        FlextTypesPydantic,
-    )
 
 
 class FlextProtocolsHandler:
@@ -64,16 +57,8 @@ class FlextProtocolsHandler:
     class ExecutionContext(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def handler_name(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Name of the handler being executed."""
-            ...
-
-        @property
-        def handler_mode(self) -> FlextConstantsCqrs.HandlerType:
-            """Mode of handler execution."""
-            ...
-
+        handler_name: t.NonEmptyStr
+        handler_mode: c.HandlerType
         started_at: float | None
 
         @property
@@ -106,7 +91,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def handler_mode(self) -> FlextConstantsCqrs.HandlerType:
+        def handler_mode(self) -> c.HandlerType:
             """Active handler mode taken from the execution context."""
             ...
 
@@ -120,7 +105,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def priority(self) -> FlextTypesPydantic.NonNegativeInt:
+        def priority(self) -> t.NonNegativeInt:
             """Handler priority (higher = processed first)."""
             ...
 
@@ -270,7 +255,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def message_type(self) -> FlextTypesCore.RegistryBindingKey | None:
+        def message_type(self) -> t.RegistryBindingKey | None:
             """Explicit message type or route name."""
             ...
 
@@ -390,12 +375,12 @@ class FlextProtocolsHandler:
         """Structural data contract projected from the owning model."""
 
         @property
-        def registration_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
+        def registration_id(self) -> t.NonEmptyStr:
             """Unique registration identifier."""
             ...
 
         @property
-        def handler_mode(self) -> FlextConstantsCqrs.HandlerType:
+        def handler_mode(self) -> c.HandlerType:
             """Handler mode (command, query, or event)."""
             ...
 
@@ -405,7 +390,7 @@ class FlextProtocolsHandler:
             ...
 
         @property
-        def status(self) -> FlextConstantsStatus.Status:
+        def status(self) -> c.Status:
             """Current registration status."""
             ...
 

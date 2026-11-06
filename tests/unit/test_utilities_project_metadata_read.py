@@ -14,8 +14,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import cast
 
-import pytest
-
 from tests import c, m, p, r, tm, u
 from tests.unit._project_metadata_support import write_pyproject
 
@@ -46,7 +44,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
     """Tests for ``FlextUtilitiesProjectMetadataRead``."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("project_name", "expected_stem"),
         [
             (c.Tests.SAMPLE_PROJECT_NAME, c.Tests.SAMPLE_PROJECT_CLASS_STEM),
@@ -189,7 +187,7 @@ class TestsFlextUtilitiesProjectMetadataRead:
         tm.ok(result.failure)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("body", "match_pattern"),
         [
             ('[project]\nversion="0.12.0"\n', "name"),

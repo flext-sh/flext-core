@@ -14,10 +14,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-import pytest
-
 from flext_core import FlextConfig, FlextStrictYamlConfigSource
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreUtilitiesYaml:
@@ -64,7 +62,7 @@ class TestsFlextCoreUtilitiesYaml:
         tm.that(parsed, eq={"first": ["one", "two"], "second": ["one", "two"]})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "document",
         [
             "value: !!timestamp 2026-01-01\n",
@@ -75,13 +73,13 @@ class TestsFlextCoreUtilitiesYaml:
     )
     def test_unique_key_load_rejects_non_json_yaml_values(document: str) -> None:
         """Safe YAML's non-JSON constructors cannot escape the typed boundary."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             u.Yaml.unique_key_load(document)
 
     @staticmethod
     def test_unique_key_load_rejects_duplicate_keys_at_depth() -> None:
         """Test unique key load rejects duplicate keys at depth."""
-        with pytest.raises(u.Yaml.YAMLError, match="duplicate config key"):
+        with u.Tests.raises(u.Yaml.YAMLError, match="duplicate config key"):
             u.Yaml.unique_key_load("top:\n  dup: 1\n  dup: 2\n")
 
     @staticmethod
@@ -105,13 +103,13 @@ class TestsFlextCoreUtilitiesYaml:
     ) -> None:
         """Flattening a merge never forgives a duplicated explicit key."""
         document = fixture_tree("yaml_merge_keys") / "duplicate_beside_merge.yaml"
-        with pytest.raises(u.Yaml.YAMLError, match="duplicate config key"):
+        with u.Tests.raises(u.Yaml.YAMLError, match="duplicate config key"):
             u.Yaml.unique_key_load(document.read_text(encoding="utf-8"))
 
     @staticmethod
     def test_unique_key_load_rejects_non_string_keys() -> None:
         """Configuration ingress requires string keys before model validation."""
-        with pytest.raises(
+        with u.Tests.raises(
             u.Yaml.YAMLError,
             match="config mapping keys must be strings",
         ):
@@ -120,17 +118,17 @@ class TestsFlextCoreUtilitiesYaml:
     @staticmethod
     def test_unique_key_load_rejects_recursive_aliases() -> None:
         """Retain rejection of YAML graphs outside the JSON tree contract."""
-        with pytest.raises(u.Yaml.YAMLError):
+        with u.Tests.raises(u.Yaml.YAMLError):
             u.Yaml.unique_key_load("top: &entry\n  reference: *entry\n")
 
     @staticmethod
     def test_unique_key_load_rejects_malformed_input() -> None:
         """Test unique key load rejects malformed input."""
-        with pytest.raises(u.Yaml.YAMLError):
+        with u.Tests.raises(u.Yaml.YAMLError):
             u.Yaml.unique_key_load("top: [unclosed\n")
 
     @staticmethod
     def test_unique_key_load_rejects_python_object_tags() -> None:
         """Reject constructors outside the safe YAML protocol."""
-        with pytest.raises(u.Yaml.YAMLError):
+        with u.Tests.raises(u.Yaml.YAMLError):
             u.Yaml.unique_key_load("!!python/object/apply:builtins.str [value]\n")

@@ -157,7 +157,11 @@ class FlextDispatcher:
 
         """
         prepared: list[
-            tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]
+            tuple[
+                str | None,
+                p.DispatcherRouteEntry,
+                p.HandlerRegistration,
+            ]
         ] = []
         try:
             for binding in bindings:
@@ -199,7 +203,8 @@ class FlextDispatcher:
 
     @staticmethod
     def _normalize_binding(
-        binding: p.HandlerRegistration, accepted: tuple[t.TypeHintSpecifier, ...]
+        binding: p.HandlerRegistration,
+        accepted: tuple[t.TypeHintSpecifier, ...],
     ) -> p.Result[p.HandlerRegistration]:
         """Resolve declarations without publishing an incomplete route.
 
@@ -231,7 +236,8 @@ class FlextDispatcher:
             route = u.resolve_message_route(accepted[0])
         if not route and (route is not None or not autodiscoverable):
             return r[p.HandlerRegistration].fail_op(
-                "discover handler route", c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED
+                "discover handler route",
+                c.ERR_HANDLER_ROUTE_DISCOVERY_REQUIRED,
             )
         return r[p.HandlerRegistration].ok(
             m.HandlerRegistration(
@@ -249,7 +255,13 @@ class FlextDispatcher:
     def _prepare_binding(
         binding: p.AttributeProbe,
         index: int,
-    ) -> p.Result[tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]]:
+    ) -> p.Result[
+        tuple[
+            str | None,
+            p.DispatcherRouteEntry,
+            p.HandlerRegistration,
+        ]
+    ]:
         """Prepare one validated binding before acquiring the publication lock.
 
         Returns:
@@ -258,7 +270,11 @@ class FlextDispatcher:
         """
         if not isinstance(binding, p.HandlerRegistration):
             return r[
-                tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]
+                tuple[
+                    str | None,
+                    p.DispatcherRouteEntry,
+                    p.HandlerRegistration,
+                ]
             ].fail_op("register handlers", "Invalid handler registration")
         handler = binding.handler
         resolved: p.RoutedHandlerCallable
@@ -273,13 +289,21 @@ class FlextDispatcher:
                 resolved = callable_handler
             case _:
                 return r[
-                    tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]
+                    tuple[
+                        str | None,
+                        p.DispatcherRouteEntry,
+                        p.HandlerRegistration,
+                    ]
                 ].fail_op("register handler", c.ERR_HANDLER_MUST_BE_CALLABLE)
         accepted = tuple(u.compute_accepted_message_types(type(handler)))
         normalized = FlextDispatcher._normalize_binding(binding, accepted)
         if normalized.failure:
             return r[
-                tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]
+                tuple[
+                    str | None,
+                    p.DispatcherRouteEntry,
+                    p.HandlerRegistration,
+                ]
             ].from_failure(normalized)
         result = normalized.value
         route = (
@@ -287,7 +311,13 @@ class FlextDispatcher:
             if result.message_type is not None
             else None
         )
-        return r[tuple[str | None, p.DispatcherRouteEntry, p.HandlerRegistration]].ok((
+        return r[
+            tuple[
+                str | None,
+                p.DispatcherRouteEntry,
+                p.HandlerRegistration,
+            ]
+        ].ok((
             route,
             (handler, resolved, accepted, result.is_event, index),
             result,

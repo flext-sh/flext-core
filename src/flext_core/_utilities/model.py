@@ -13,7 +13,7 @@ from typing import overload
 
 from pydantic import TypeAdapter
 
-from flext_core import FlextExceptions, FlextResult, FlextSettings, c, m, p, t
+from flext_core import FlextSettings, c, e, m, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesArgs,
     FlextUtilitiesBase,
@@ -112,16 +112,14 @@ class FlextUtilitiesModel:
             )
             if from_json:
                 if not isinstance(data, c.STR_BINARY_TYPES):
-                    return FlextExceptions.fail_validation(
+                    return e.fail_validation(
                         "json_input",
                         error="JSON validation requires str or bytes input",
                     )
-                return FlextResult[TValue].ok(
-                    adapter.validate_json(data, strict=strict)
-                )
-            return FlextResult[TValue].ok(adapter.validate_python(data, strict=strict))
+                return r[TValue].ok(adapter.validate_json(data, strict=strict))
+            return r[TValue].ok(adapter.validate_python(data, strict=strict))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return FlextExceptions.fail_validation(error=exc)
+            return e.fail_validation(error=exc)
 
 
 __all__: list[str] = ["FlextUtilitiesModel"]

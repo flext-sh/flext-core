@@ -15,16 +15,15 @@ from collections.abc import Iterator
 from contextvars import copy_context
 from typing import override
 
-import pytest
 import structlog.contextvars
 
-from flext_core import FlextContext, h, m, p, t, u
-from tests import c, r, tm
+from flext_core import FlextContext
+from tests import c, h, m, p, r, t, tm, u
 
-pytestmark = pytest.mark.usefixtures("isolate_process_context")
+pytestmark = c.Tests.MARK.usefixtures("isolate_process_context")
 
 
-@pytest.fixture
+@u.Tests.fixture
 def isolate_process_context() -> Iterator[None]:
     """Keep process-global contextvars from leaking across responsibility groups."""
     FlextContext.clear_context()
@@ -451,7 +450,7 @@ class TestsFlextCoreContextIsolation:
                 raise ValueError(msg)
 
         try:
-            with pytest.raises(ValueError, match="nested failure"):
+            with u.Tests.raises(ValueError, match="nested failure"):
                 fail_nested_scope()
             tm.that(FlextContext.resolve_correlation_id(), eq="outer")
             tm.that(u.PARENT_CORRELATION_ID.get(), eq="ancestor")
@@ -484,7 +483,7 @@ class TestsFlextCoreContextIsolation:
                 raise ValueError(msg)
 
         with FlextContext.service_context("outer-service", "outer-version"):
-            with pytest.raises(ValueError, match="timed failure"):
+            with u.Tests.raises(ValueError, match="timed failure"):
                 fail_timed_scope()
             tm.that(FlextContext.resolve_operation_name(), eq="outer-operation")
             tm.that(

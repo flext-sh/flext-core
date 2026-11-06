@@ -15,7 +15,7 @@ esac
 # on stdin. A push whose every remote ref is inside a declared preservation
 # namespace carries WIP and runs no gate matrix; any other ref, including a
 # deletion outside those namespaces, selects the full matrix.
-if [ "${stage}" = pre-push ]; then
+if [[ "${stage}" = pre-push ]]; then
   preservation_namespaces=('refs/heads/preserve/' 'refs/heads/wip/sweep-preserve/' 'refs/ai-hub/wip/' )
   preservation_only=0
   while read -r _local_ref _local_sha remote_ref _remote_sha; do
@@ -25,13 +25,13 @@ if [ "${stage}" = pre-push ]; then
         "${namespace}"*) in_namespace=1 ;;
       esac
     done
-    if [ "${in_namespace}" -eq 0 ]; then
+    if [[ "${in_namespace}" -eq 0 ]]; then
       preservation_only=0
       break
     fi
     preservation_only=1
   done
-  if [ "${preservation_only}" -eq 1 ]; then
+  if [[ "${preservation_only}" -eq 1 ]]; then
     printf 'pre-push: preservation refs only, gate matrix not selected\n' >&2
     exit 0
   fi
@@ -40,4 +40,9 @@ fi
 # runner never removes unstaged work: --all-files validates the working tree
 # as it is (a superset of the candidate) instead of hiding changes from it.
 unset SKIP PRE_COMMIT_ALLOW_NO_CONFIG
-"${PREK:?PREK must name the prek runner that make setup installed}" run --all-files --hook-stage "${stage}"
+if [[ "${stage}" = pre-commit ]]; then
+  # A commit validates exactly what it commits; pre-push keeps the full tree.
+  "${PREK:?PREK must name the prek runner that make setup installed}" run --hook-stage "${stage}"
+else
+  "${PREK:?PREK must name the prek runner that make setup installed}" run --all-files --hook-stage "${stage}"
+fi

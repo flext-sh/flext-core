@@ -10,10 +10,8 @@ from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar
 from uuid import UUID
 
-import pytest
-
 from flext_core import FlextSettings
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -23,7 +21,7 @@ class TestsFlextCoreSettingsStateValidation:
     """Validate stored values independently of instance trust and serialization."""
 
     @staticmethod
-    @pytest.mark.parametrize("invalid_port", [0, 65536])
+    @c.Tests.MARK.parametrize("invalid_port", [0, 65536])
     def test_model_instance_overrides_revalidate_real_port_constraints(
         invalid_port: int,
     ) -> None:
@@ -39,9 +37,9 @@ class TestsFlextCoreSettingsStateValidation:
         nested = published.Ldap
         original = published.model_dump()
         bad = nested.model_copy(update={"port": invalid_port})
-        with pytest.raises(m.ValidationError, match="port"):
+        with u.Tests.raises(m.ValidationError, match="port"):
             Owner.update_global(Ldap=bad)
-        with pytest.raises(m.ValidationError, match="port"):
+        with u.Tests.raises(m.ValidationError, match="port"):
             published.clone(Ldap=bad)
         tm.ok(published is Owner.fetch_global())
         tm.ok(published.Ldap is nested)
@@ -65,7 +63,7 @@ class TestsFlextCoreSettingsStateValidation:
         bad = nested.model_copy(
             update={"entries": [Connection().model_copy(update={"port": 0})]}
         )
-        with pytest.raises(m.ValidationError, match="port"):
+        with u.Tests.raises(m.ValidationError, match="port"):
             Owner.update_global(connections=bad)
         tm.ok(published is Owner.fetch_global())
         tm.ok(published.connections is nested)
@@ -120,9 +118,9 @@ class TestsFlextCoreSettingsStateValidation:
         with u.Tests.env_vars_context(
             env_vars={}, vars_to_clear=("FLEXT_REQUIRED_VALUE",)
         ):
-            with pytest.raises(m.ValidationError, match="required_value"):
+            with u.Tests.raises(m.ValidationError, match="required_value"):
                 Owner.update_global(required_value=0)
-            with pytest.raises(m.ValidationError, match="required_value"):
+            with u.Tests.raises(m.ValidationError, match="required_value"):
                 Owner.fetch_global()
             selected = 11
             published = Owner.update_global(required_value=selected)
@@ -259,7 +257,7 @@ class TestsFlextCoreSettingsStateValidation:
         tm.ok(snapshot.branch is not published.branch)
 
     @staticmethod
-    @pytest.mark.parametrize("tuple_key", [False, True])
+    @c.Tests.MARK.parametrize("tuple_key", [False, True])
     def test_invalid_mapping_keys_preserve_published_state(*, tuple_key: bool) -> None:
         """Frozen model keys, including tuple members, cannot bypass constraints."""
 
@@ -288,7 +286,7 @@ class TestsFlextCoreSettingsStateValidation:
             update={"entries": {bad_mapping_key: "invalid"}}
         )
         for operation in (Owner.update_global, published.clone):
-            with pytest.raises(m.ValidationError, match="port"):
+            with u.Tests.raises(m.ValidationError, match="port"):
                 operation(branch=bad_branch)
             tm.ok(published is Owner.fetch_global())
             tm.ok(published.branch is original_branch)

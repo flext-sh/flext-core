@@ -8,17 +8,15 @@ from __future__ import annotations
 
 from types import ModuleType
 
-import pytest
-
 from flext_core.lazy import lazy, merge_lazy_imports, normalize_lazy_imports
-from tests import tm
+from tests import c, tm, u
 
 
 class TestsFlextCoreLazyRelativePackages:
     """Resolve real standard-library modules through the public lazy mapping API."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("package", "relative", "absolute"),
         [
             ("xml.etree", "..dom", "xml.dom"),
@@ -58,11 +56,11 @@ class TestsFlextCoreLazyRelativePackages:
     @staticmethod
     def test_relative_path_cannot_escape_the_top_level_package() -> None:
         """An invalid parent traversal fails instead of manufacturing a module name."""
-        with pytest.raises(ImportError):
+        with u.Tests.raises(ImportError):
             normalize_lazy_imports("xml", {"module": "..dom"})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("package", "relative"),
         [
             ("xml.etree", "..dom"),
@@ -86,5 +84,5 @@ class TestsFlextCoreLazyRelativePackages:
     @staticmethod
     def test_merge_child_cannot_escape_the_top_level_package() -> None:
         """Child discovery rejects traversal beyond the containing package."""
-        with pytest.raises(ImportError):
+        with u.Tests.raises(ImportError):
             merge_lazy_imports(("..dom",), {}, module_name="xml")

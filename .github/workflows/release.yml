@@ -121,6 +121,14 @@ jobs:
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
+      - name: Align bootstrap submodules
+        working-directory: .
+        run: |
+          set -eu
+          git -C flext-core fetch --no-tags origin upload-20261007
+          git -C flext-cli fetch --no-tags origin upload-20261007
+          git -C flext-core checkout --detach 1a6241ffebdfe16b76909dc64cab739872a134f3
+          git -C flext-cli checkout --detach b8f0dc5863f3deb1e71c46038dfab1c9d19dca68
       - name: Pin flext-core at the tested commit
         working-directory: .
         run: |
@@ -190,6 +198,14 @@ jobs:
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
+      - name: Align bootstrap submodules
+        working-directory: .
+        run: |
+          set -eu
+          git -C flext-core fetch --no-tags origin upload-20261007
+          git -C flext-cli fetch --no-tags origin upload-20261007
+          git -C flext-core checkout --detach 1a6241ffebdfe16b76909dc64cab739872a134f3
+          git -C flext-cli checkout --detach b8f0dc5863f3deb1e71c46038dfab1c9d19dca68
       - name: Pin flext-core at the tested commit
         working-directory: .
         run: |

@@ -20,11 +20,21 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from typing import cast
 
-import pytest
-
 import flext_core
 from flext_core import FlextSettings
-from tests import e, p, r, t, tm
+from tests import (
+    FlextCore,
+    build_lazy_import_map,
+    c,
+    core,
+    e,
+    install_lazy_exports,
+    p,
+    r,
+    t,
+    tm,
+    u,
+)
 
 # Public facade names a caller can import from ``flext_core``.
 _FACADES: tuple[str, ...] = (
@@ -81,8 +91,8 @@ class TestsFlextCorePublicApiContract:
     @staticmethod
     def test_root_lazy_helpers_publish_a_consumer_export() -> None:
         """Generated consumers can compose lazy exports from the foundation root."""
-        build_map = flext_core.build_lazy_import_map
-        install = flext_core.install_lazy_exports
+        build_map = build_lazy_import_map
+        install = install_lazy_exports
         tm.that(
             flext_core.__all__,
             has=["build_lazy_import_map", "install_lazy_exports"],
@@ -102,7 +112,7 @@ class TestsFlextCorePublicApiContract:
         tm.that(cast("type", counter).__name__, eq="Counter")
 
     @staticmethod
-    @pytest.mark.parametrize("name", _FACADES)
+    @c.Tests.MARK.parametrize("name", _FACADES)
     def test_named_facade_is_importable(name: str) -> None:
         """Every advertised facade is reachable from the package root."""
         tm.that(
@@ -120,7 +130,7 @@ class TestsFlextCorePublicApiContract:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(("alias", "facade_name"), _ALIASES)
+    @c.Tests.MARK.parametrize(("alias", "facade_name"), _ALIASES)
     def test_single_letter_alias_is_its_facade(
         alias: str,
         facade_name: str,
@@ -161,7 +171,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange
         result: p.Result[int] = r[int].fail("boom")
         # Act / Assert
-        with pytest.raises(RuntimeError, match="boom"):
+        with u.Tests.raises(RuntimeError, match="boom"):
             _ = result.value
 
     @staticmethod
@@ -170,7 +180,7 @@ class TestsFlextCorePublicApiContract:
         # Arrange
         result: p.Result[int] = r[int].fail("boom")
         # Act / Assert
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             result.unwrap()
 
     @staticmethod
@@ -255,7 +265,7 @@ class TestsFlextCorePublicApiContract:
         tm.that(repr(r[int].fail("z")), eq="r[T].fail('z')")
 
     @staticmethod
-    @pytest.mark.parametrize("exc_name", ["MroViolationError", "SmellViolationError"])
+    @c.Tests.MARK.parametrize("exc_name", ["MroViolationError", "SmellViolationError"])
     def test_exception_family_members_are_raisable_and_catchable(
         exc_name: str,
     ) -> None:
@@ -265,7 +275,7 @@ class TestsFlextCorePublicApiContract:
         tm.that(exc_type, where=Exception.__subclasscheck__)
         message = "broken invariant"
         # Act / Assert
-        with pytest.raises(exc_type, match="broken"):
+        with u.Tests.raises(exc_type, match="broken"):
             raise exc_type(message)
 
 
@@ -285,7 +295,7 @@ class TestsFlextCoreFacadeLifecycle:
     def test_settings_facade_exposes_base_class() -> None:
         """``FlextSettings.Base`` is the canonical settings base class."""
         # Arrange / Act
-        base = flext_core.FlextSettings
+        base = FlextSettings
         # Assert
         tm.that(base is FlextSettings, truth=True)
 
@@ -297,7 +307,7 @@ class TestsFlextCoreFacadeLifecycle:
         only admits ``Warning`` subclasses; the smell class is its own category.
         """
         for categoria in (e.MroViolationError, e.SmellViolationError):
-            with pytest.warns(categoria, match="contrato"):
+            with u.Tests.warns(categoria, match="contrato"):
                 warnings.warn("contrato", categoria, stacklevel=1)
 
     @staticmethod
@@ -314,17 +324,17 @@ class TestsFlextCoreFacadeLifecycle:
             msg="core not importable from flext_core",
         )
         # The singleton should be an instance of FlextCore
-        tm.that(flext_core.core, is_=flext_core.FlextCore)
+        tm.that(core, is_=FlextCore)
         # core should have container access via MRO
-        tm.that(hasattr(flext_core.core, "container"), truth=True)
-        tm.that(hasattr(flext_core.core, "registry"), truth=True)
-        tm.that(hasattr(flext_core.core, "dispatcher"), truth=True)
-        tm.that(hasattr(flext_core.core, "settings"), truth=True)
+        tm.that(hasattr(core, "container"), truth=True)
+        tm.that(hasattr(core, "registry"), truth=True)
+        tm.that(hasattr(core, "dispatcher"), truth=True)
+        tm.that(hasattr(core, "settings"), truth=True)
 
     @staticmethod
     def test_facade_registry_keeps_instance_plugins_between_accesses() -> None:
         """Repeated public registry access preserves instance registrations."""
-        facade = flext_core.FlextCore()
+        facade = FlextCore()
         plugin = "public-registry-plugin"
         tm.ok(facade.registry.register_plugin("public-api", "plugin", plugin))
         tm.that(
@@ -338,8 +348,8 @@ class TestsFlextCoreFacadeLifecycle:
         """Registry bindings reach the facade container, never a sibling runtime."""
         custom_settings = FlextSettings.fetch_global().clone()
         custom_settings.debug = not custom_settings.debug
-        facade = flext_core.FlextCore(runtime_settings=custom_settings)
-        sibling = flext_core.FlextCore()
+        facade = FlextCore(runtime_settings=custom_settings)
+        sibling = FlextCore()
         binding = "public-api-runtime-binding"
         tm.ok(facade.registry.register(binding, "registered-value"))
         tm.that(facade.container.resolve(binding).unwrap(), eq="registered-value")
@@ -350,7 +360,7 @@ class TestsFlextCoreFacadeLifecycle:
     @staticmethod
     def test_concurrent_registry_access_preserves_plugin_lifecycle() -> None:
         """Concurrent first access shares one registry and all plugin ownership."""
-        facade = flext_core.FlextCore()
+        facade = FlextCore()
         barrier = Barrier(4)
 
         def register(index: int) -> p.Registry:

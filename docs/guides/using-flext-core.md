@@ -58,17 +58,17 @@ The examples below import only the aliases they consume from `flext_core`.
 The alphabet groups reusable declarations and behavior. The public root also exposes
 named capabilities and singletons with distinct responsibilities:
 
-| Surface | Responsibility | Consumer boundary |
-| --- | --- | --- |
-| `FlextCore`, `core` | Compose the foundation's registry and dispatcher services | Use the composed public facade; inject application dependencies at the application root |
-| `FlextSettings`, `settings` | Read and validate external inputs | Reuse the process singleton or an explicitly constructed isolated settings class |
-| `FlextConfig`, `config` | Load and derive typed configuration | Consume the validated owner rather than parsing the same configuration again |
-| `FlextStrictYamlConfigSource` | Supply strict YAML settings input | Configure at the settings owner; do not create a competing YAML loader |
-| `FlextContainer` | Manage explicitly named infrastructure registrations | Restrict construction and lookup to composition |
-| `FlextContext` | Carry execution context and metadata | Pass the context explicitly to the consuming boundary |
-| `FlextRegistry` | Register services, plugins and handler bindings against an explicit runtime | Preserve payload identity and registry ownership |
-| `FlextDispatcher` | Register and execute handlers and event subscribers | Preserve the Result, original callable and first failure |
-| `FlextLazy` | Install generated PEP 562 export hooks | Bootstrap infrastructure; ordinary application imports use generated package exports |
+| Surface                       | Responsibility                                                              | Consumer boundary                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `FlextCore`, `core`           | Compose the foundation's registry and dispatcher services                   | Use the composed public facade; inject application dependencies at the application root |
+| `FlextSettings`, `settings`   | Read and validate external inputs                                           | Reuse the process singleton or an explicitly constructed isolated settings class        |
+| `FlextConfig`, `config`       | Load and derive typed configuration                                         | Consume the validated owner rather than parsing the same configuration again            |
+| `FlextStrictYamlConfigSource` | Supply strict YAML settings input                                           | Configure at the settings owner; do not create a competing YAML loader                  |
+| `FlextContainer`              | Manage explicitly named infrastructure registrations                        | Restrict construction and lookup to composition                                         |
+| `FlextContext`                | Carry execution context and metadata                                        | Pass the context explicitly to the consuming boundary                                   |
+| `FlextRegistry`               | Register services, plugins and handler bindings against an explicit runtime | Preserve payload identity and registry ownership                                        |
+| `FlextDispatcher`             | Register and execute handlers and event subscribers                         | Preserve the Result, original callable and first failure                                |
+| `FlextLazy`                   | Install generated PEP 562 export hooks                                      | Bootstrap infrastructure; ordinary application imports use generated package exports    |
 
 This is a responsibility map, not a second export registry. The declaring modules'
 explicit `__all__`, native inheritance and generated public reference determine the
@@ -320,8 +320,8 @@ Pydantic way the operator ruled on 2026-10-25 (tracker memory
 
 ## What flext-core must not absorb
 
-| Public capability declaration | Accepted decision |
-| --- | --- |
+| Public capability declaration                                                                                                             | Accepted decision         |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
 | This section directs consumers to generic workspace-analysis and structural-refactoring capabilities, not their implementation libraries. | FLEXT ADR-028 Decision 15 |
 
 - CLI frameworks and command rendering belong to `flext-cli`.

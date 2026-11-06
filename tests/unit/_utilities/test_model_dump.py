@@ -10,10 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from flext_core import e, m
-from tests import tm, u
+from tests import e, m, tm, u
 
 
 class TestsFlextCoreModelDump:
@@ -29,7 +26,7 @@ class TestsFlextCoreModelDump:
     def test_dump_fails_loud_on_invalid_inline_options() -> None:
         model = m.Pagination()
 
-        with pytest.raises(e.PydanticValidationError) as raised:
+        with u.Tests.raises(e.PydanticValidationError) as raised:
             u.dump(model, include=123)
 
         tm.that(

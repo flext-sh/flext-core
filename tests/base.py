@@ -10,8 +10,7 @@ from typing import override
 
 from flext_tests import FlextTestsServiceBase
 
-from tests import c
-from tests.protocols import p
+from tests import c, p
 
 
 class TestsFlextServiceBase[TDomainResult: p.Base = p.Base](

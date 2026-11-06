@@ -14,9 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar, Literal
 
-import pytest
-
-from tests import m, p, t, tm, u
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCorePydanticDeclarations:
@@ -62,9 +60,9 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(constructed.defaulted, eq=3)
         tm.ok(constructed.nullable is None)
         tm.that(constructed.generated, eq=())
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             Payload.model_validate({"input": {"value": "alias"}})
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             Payload.model_validate({"required": "present", "aliased": "wrong route"})
 
     class _DetailedPayload(m.Tests.PublicPayload):
@@ -83,7 +81,7 @@ class TestsFlextCorePydanticDeclarations:
         ]
 
     @staticmethod
-    @pytest.mark.parametrize("json_input", [False, True])
+    @c.Tests.MARK.parametrize("json_input", [False, True])
     def test_protocol_field_boundary(*, json_input: bool) -> None:
         box = (
             TestsFlextCorePydanticDeclarations._ProtocolBox.model_validate_json(
@@ -129,11 +127,11 @@ class TestsFlextCorePydanticDeclarations:
                     {"item": {"rawName": "alice", "visits": "invalid"}},
                 )
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             reject()
 
     @staticmethod
-    @pytest.mark.parametrize("mode", ["validation", "serialization"])
+    @c.Tests.MARK.parametrize("mode", ["validation", "serialization"])
     def test_protocol_field_preserves_owner_schema(
         mode: Literal["validation", "serialization"],
     ) -> None:
@@ -382,7 +380,7 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(credentials.token.get_secret_value(), eq="s3cret")
         tm.fail("s3cret" in repr(credentials))
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Credentials.model_validate({})
 
     @staticmethod
@@ -392,10 +390,10 @@ class TestsFlextCorePydanticDeclarations:
             eq="abc",
         )
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Constrained(code="ab")
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Constrained(code="ABC")
 
     @staticmethod
@@ -408,7 +406,7 @@ class TestsFlextCorePydanticDeclarations:
         if isinstance(pet.animal, TestsFlextCorePydanticDeclarations._Dog):
             tm.that(pet.animal.bark, eq="woof")
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._Pet.model_validate({
                 "animal": {"kind": "cow", "moo": "moo"},
             })
@@ -432,7 +430,7 @@ class TestsFlextCorePydanticDeclarations:
         validated = adapter.validate_python(sample_value)
 
         tm.that(validated, eq=sample_value)
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python("not an integer")
 
     @staticmethod
@@ -443,7 +441,7 @@ class TestsFlextCorePydanticDeclarations:
 
         tm.that(adapter.validate_python([1, 2]), eq=[1, 2])
 
-        with pytest.raises(m.ValidationError) as exc_info:
+        with u.Tests.raises(m.ValidationError) as exc_info:
             adapter.validate_python(["first", "second"])
 
         tm.that(exc_info.value.errors(), length=1)
@@ -455,7 +453,7 @@ class TestsFlextCorePydanticDeclarations:
 
         tm.ok(card.payload is greeter)
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextCorePydanticDeclarations._GreetingCard.model_validate({
                 "payload": object(),
             })
@@ -482,5 +480,5 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(vector, is_=TestsFlextCorePydanticDeclarations._Vector)
         tm.that((vector.x, vector.y), eq=(1, 2))
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             adapter.validate_python({"x": "no-int", "y": 2})

@@ -13,9 +13,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final
 
-import pytest
-
-from tests import m, r, tm, u
+from tests import c, m, r, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -154,7 +152,7 @@ class TestsFlextCoreUtilitiesReliability:
         tm.that("still broken" in (result.error or ""), truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize("invalid_attempts", [0, -1])
+    @c.Tests.MARK.parametrize("invalid_attempts", [0, -1])
     def test_retry_rejects_non_positive_max_attempts(
         invalid_attempts: int,
     ) -> None:
@@ -208,7 +206,7 @@ class TestsFlextCoreUtilitiesReliability:
     @staticmethod
     def test_try_propagates_exception_outside_configured_catch() -> None:
         """Test try propagates exception outside configured catch."""
-        with pytest.raises(KeyError):
+        with u.Tests.raises(KeyError):
             u.try_(_raising_value_operation(KeyError("k")), catch=ValueError)
 
     # -- guard_result -----------------------------------------------------
@@ -245,7 +243,7 @@ class TestsFlextCoreUtilitiesReliability:
     @staticmethod
     def test_guard_result_propagates_exception_outside_configured_catch() -> None:
         """Test guard result propagates exception outside configured catch."""
-        with pytest.raises(KeyError):
+        with u.Tests.raises(KeyError):
             u.guard_result(_raising_result_operation(KeyError("k")), catch=ValueError)
 
     # -- RetryOptions model ----------------------------------------------

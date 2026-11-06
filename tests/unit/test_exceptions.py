@@ -13,16 +13,14 @@ from __future__ import annotations
 
 from typing import cast
 
-import pytest
-
-from tests import c, e, m, p, tm
+from tests import c, e, m, p, tm, u
 
 
 class TestsFlextCoreExceptions:
     """Behavioral contract of the FlextExceptions facade."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "subclass",
         [
             e.ValidationError,
@@ -50,7 +48,7 @@ class TestsFlextCoreExceptions:
         tm.that(subclass, where=Exception.__subclasscheck__)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("error", "expected_domain"),
         [
             (e.ValidationError("bad", field="email"), c.ErrorDomain.VALIDATION),
@@ -90,7 +88,7 @@ class TestsFlextCoreExceptions:
 
         """
         message = "not found"
-        with pytest.raises(e.BaseError) as excinfo:
+        with u.Tests.raises(e.BaseError) as excinfo:
             raise e.NotFoundError(
                 message, resource_type=c.ContextScope.USER, resource_id="u-1"
             )
@@ -113,7 +111,7 @@ class TestsFlextCoreExceptions:
         tm.that(str(error.correlation_id).startswith("exc_"), truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("declared", "expected"),
         [("int", int), (str, str), ("dict", dict)],
     )
@@ -144,7 +142,7 @@ class TestsFlextCoreExceptions:
     def test_render_template_fails_fast_on_missing_placeholder() -> None:
         # Assert — a missing placeholder is a loud ValueError, never silent.
         """Test render template fails fast on missing placeholder."""
-        with pytest.raises(ValueError, match="missing"):
+        with u.Tests.raises(ValueError, match="missing"):
             e.render_template("Hi {missing}")
 
     @staticmethod
@@ -209,11 +207,11 @@ class TestsFlextCoreExceptions:
         )
         tm.that(
             cast("dict[str, object]", result.error_data)["timeout_seconds"],
-            eq=pytest.approx(30.0),
+            eq=u.Tests.approx(30.0),
         )
 
     @staticmethod
-    @pytest.mark.parametrize("violation", [e.MroViolationError, e.SmellViolationError])
+    @c.Tests.MARK.parametrize("violation", [e.MroViolationError, e.SmellViolationError])
     def test_enforcement_violations_are_raisable_exception_types(
         violation: type[Exception],
     ) -> None:
@@ -221,5 +219,5 @@ class TestsFlextCoreExceptions:
         """Test enforcement violations are raisable exception types."""
         tm.that(violation, where=Exception.__subclasscheck__)
         message = "enforcement breach"
-        with pytest.raises(violation):
+        with u.Tests.raises(violation):
             raise violation(message)

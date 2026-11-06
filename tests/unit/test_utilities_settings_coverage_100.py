@@ -9,7 +9,6 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import pytest
 from pydantic import ValidationError
 
 from flext_core import FlextContainer, FlextSettings
@@ -32,7 +31,7 @@ class TestsFlextCoreUtilitiesSettings:
         FlextContainer.reset_for_testing()
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("debug", "requested", "log_level_explicit", "expected"),
         [
             (True, c.LogLevel.WARNING, True, c.LogLevel.WARNING),
@@ -121,7 +120,7 @@ class TestsFlextCoreUtilitiesSettings:
         sentinel = "sentinel-bool-violation-secret"
         with (
             u.Tests.env_vars_context(env_vars={"FLEXT_DEBUG": sentinel}),
-            pytest.raises(ValidationError) as caught,
+            u.Tests.raises(ValidationError) as caught,
         ):
             FlextSettings()
 

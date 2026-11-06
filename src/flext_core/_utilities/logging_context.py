@@ -12,7 +12,7 @@ from contextvars import ContextVar
 from types import MappingProxyType
 from typing import ClassVar
 
-from flext_core import FlextExceptions, FlextResult, c, m, p, t
+from flext_core import c, e, m, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesLoggingConfig,
@@ -63,11 +63,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 **scopes,
                 scope: scopes.get(scope, frozenset()) | context.keys(),
             })
-            return FlextResult[bool].ok(value=True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(
-                f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc
-            )
+            return e.fail_operation(f"{c.LoggingOperation.BIND_CONTEXT} '{scope}'", exc)
 
     @classmethod
     def bind_global_context(cls, **context: t.JsonPayload) -> p.Result[bool]:
@@ -79,9 +77,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         """
         try:
             cls.structlog().contextvars.bind_contextvars(**context)
-            return FlextResult[bool].ok(value=True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
+            return e.fail_operation(c.LoggingOperation.BIND_GLOBAL, exc)
 
     @classmethod
     def clear_global_context(cls) -> p.Result[bool]:
@@ -94,9 +92,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
         try:
             cls.structlog().contextvars.clear_contextvars()
             cls._scope_keys.set({})
-            return FlextResult[bool].ok(value=True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
+            return e.fail_operation(c.LoggingOperation.CLEAR_GLOBAL, exc)
 
     @classmethod
     def clear_scope(cls, scope: str) -> p.Result[bool]:
@@ -110,11 +108,9 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             scopes = dict(cls._scope_keys.get())
             cls.structlog().contextvars.unbind_contextvars(*scopes.pop(scope, ()))
             cls._scope_keys.set(scopes)
-            return FlextResult[bool].ok(value=True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(
-                f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc
-            )
+            return e.fail_operation(f"{c.LoggingOperation.CLEAR_SCOPE} '{scope}'", exc)
 
     @classmethod
     def unbind_global_context(cls, *keys: str) -> p.Result[bool]:
@@ -130,12 +126,14 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
                 scope: owned.difference(keys)
                 for scope, owned in cls._scope_keys.get().items()
             })
-            return FlextResult[bool].ok(value=True)
+            return r[bool].ok(value=True)
         except c.CONTEXT_EXCEPTIONS as exc:
-            return FlextExceptions.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
+            return e.fail_operation(c.LoggingOperation.UNBIND_GLOBAL, exc)
 
     @staticmethod
-    def to_container_value(value: p.LogValue | t.JsonValue) -> t.JsonValue:
+    def to_container_value(
+        value: p.LogValue | t.JsonValue,
+    ) -> t.JsonValue:
         """Admit ordinary fields before canonical JSON normalization.
 
         Native exception triples belong to reserved ``exc_info`` and bypass

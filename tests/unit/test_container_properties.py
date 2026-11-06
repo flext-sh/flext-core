@@ -8,11 +8,10 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
-import pytest
 from hypothesis import assume, given, settings, strategies as st
 
 from flext_core import FlextContainer
-from tests import c, tm
+from tests import c, tm, u
 
 
 class TestsFlextCoreContainerProperties:
@@ -24,7 +23,7 @@ class TestsFlextCoreContainerProperties:
     never internal registries or DI wiring.
     """
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def container() -> Iterator[FlextContainer]:
         """Yield the shared container and reset the singleton afterwards.

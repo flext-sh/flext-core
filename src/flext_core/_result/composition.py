@@ -1,7 +1,20 @@
-"""Composition helpers for FlextResult.
+"""Sequence combinators and functional composition helpers for FlextResult.
+
+Supplies operations to combine multiple results (``accumulate_errors``), map
+result-producing functions across collections with fail-fast or accumulation semantics
+(``traverse``), manage resource lifetimes safely (``with_resource``), and wrap
+arbitrary callables to capture exceptions into railway failures (``safe``).
+
+See Also:
+    - Workspace ADR-001 (Railway-Oriented Programming):
+      ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+    - Workspace ADR-027 (Facade Single-Owner Law):
+      ``flext/docs/architecture/adr/027-facade-single-owner-law.md``
+    - :mod:`flext_core._result.transforms`: Monadic transformation operations.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -10,22 +23,26 @@ from abc import ABC
 from collections.abc import MutableSequence, Sequence
 from typing import TYPE_CHECKING, Self
 
-from flext_core import c, m
+from flext_core import c, m, p
 from flext_core._result import FlextResultTransforms
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import p
-
 
 class FlextResultComposition[T](FlextResultTransforms[T], ABC):
-    """Sequence, resource, and decorator composition helpers.
+    """Sequence, resource management, and functional decorator composition helpers.
 
-    Combines many results (``accumulate_errors``, ``traverse``), wraps
-    resource acquisition and cleanup around result-producing operations
-    (``with_resource``), and guards plain functions via ``safe`` so runtime
-    exceptions become ``r.Fail`` instead of raising.
+    Provides multi-result combination, collection traversal, transactional
+    resource scopes, and exception-shielding decorators.
+
+    Type Parameters:
+        T: The payload type carried upon successful completion.
+
+    See Also:
+        - Workspace ADR-001 (Railway-Oriented Programming):
+          ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+
     """
 
     @classmethod
@@ -33,16 +50,18 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         cls: type[Self],
         *results: p.Result[ValueT],
     ) -> p.Result[Sequence[ValueT]]:
-        """Collect payloads or retain the first failure's causal context.
+        """Collect success payloads into a sequence or retain failure context.
 
-        A single failure retains its original message, code, data and exception.
-        Multiple failures retain that first context alongside every error message.
+        If a single failure is encountered, its original error message, code,
+        metadata, and causal exception are preserved. If multiple failures occur,
+        all error messages are joined while preserving the first failure's context.
 
         Args:
-            *results: The results to combine.
+            *results: Variable number of result instances to combine.
 
         Returns:
-            The resulting ``p.Result[Sequence[ValueT]]``.
+            p.Result[Sequence[ValueT]]: A success result containing all payloads if all
+                succeeded, or a combined failure result if any failed.
 
         """
         successes: MutableSequence[ValueT] = []
@@ -76,22 +95,17 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         fail_fast: bool = True,
         exceptions: tuple[type[Exception], ...] = c.CATCHABLE_RUNTIME_EXCEPTIONS,
     ) -> p.Result[Sequence[U]]:
-        """Map a result-returning function over every item.
-
-        With ``fail_fast`` the first failure or selected exception returns
-        immediately; otherwise every item runs and failures accumulate. The
-        default exception policy remains the canonical runtime family; an
-        operation boundary may explicitly select additional ``Exception`` types.
-        Process cancellation and other ``BaseException`` signals propagate.
+        """Map a result-returning callable across a sequence of items.
 
         Args:
-            items: The input sequence mapped over.
-            func: The result-returning function applied to each item.
-            fail_fast: Whether to stop at the first failure.
-            exceptions: Exception types converted into failures at this boundary.
+            items: The input sequence to iterate over.
+            func: A callable mapping each item to a result instance.
+            fail_fast: Whether to abort immediately at the first encountered failure.
+            exceptions: Tuple of exception types to convert into failures.
 
         Returns:
-            The resulting ``p.Result[Sequence[U]]``.
+            p.Result[Sequence[U]]: A success result carrying the mapped sequence, or
+                the earliest failure encountered (if fail_fast) / accumulated failures.
 
         """
         if fail_fast:
@@ -127,18 +141,16 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         op: Callable[[R], p.Result[U]],
         cleanup: Callable[[R], None] | None = None,
     ) -> p.Result[U]:
-        """Run an operation over an acquired resource with optional cleanup.
-
-        Any catchable exception raised while acquiring, operating, or cleaning
-        up becomes a failure; a cleanup failure discards the operation result.
+        """Execute an operation over an acquired resource with guaranteed cleanup.
 
         Args:
-            factory: The callable acquiring the resource.
-            op: The result-returning operation over the resource.
-            cleanup: The optional callable releasing the resource.
+            factory: Callable producing or acquiring the managed resource.
+            op: Operation executing over the acquired resource and returning a Result.
+            cleanup: Optional callable releasing the resource upon completion.
 
         Returns:
-            The resulting ``p.Result[U]``.
+            p.Result[U]: The result of the operation, or a failure if acquisition,
+                execution, or cleanup raises an exception.
 
         """
         try:
@@ -173,19 +185,14 @@ class FlextResultComposition[T](FlextResultTransforms[T], ABC):
         *,
         exceptions: tuple[type[Exception], ...] = c.CATCHABLE_RUNTIME_EXCEPTIONS,
     ) -> Callable[PFunc, p.Result[U]]:
-        """Convert explicitly selected runtime exceptions into causal failures.
-
-        The default policy remains the canonical runtime family. A composition
-        boundary may opt into additional ``Exception`` types without changing
-        other consumers. Process cancellation and other ``BaseException``
-        signals propagate; ordinary returned values are never failure signals.
+        """Wrap a function to intercept runtime exceptions and return Result instances.
 
         Args:
-            func: The callable to guard.
-            exceptions: Exception types converted into failures at this boundary.
+            func: The callable function to decorate and shield.
+            exceptions: Tuple of catchable exception classes to convert into failures.
 
         Returns:
-            The resulting ``Callable[PFunc, p.Result[U]]``.
+            Callable[PFunc, p.Result[U]]: Decorated callable returning ``p.Result[U]``.
 
         """
 

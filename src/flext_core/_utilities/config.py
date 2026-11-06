@@ -15,20 +15,17 @@ import re
 import tomllib
 from collections.abc import Mapping, MutableSequence
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar
+from typing import ClassVar
 
 import yaml
 from pydantic import ValidationError
 
-from flext_core import FlextStrictYamlConfigSource, c, r, t
+from flext_core import FlextStrictYamlConfigSource, c, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesReliability,
     FlextUtilitiesTypingAdapterJson,
 )
-
-if TYPE_CHECKING:
-    from flext_core import p
 
 
 class FlextUtilitiesConfig:

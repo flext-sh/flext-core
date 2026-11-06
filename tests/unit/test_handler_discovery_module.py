@@ -21,7 +21,7 @@ class TestsFlextHandlerDiscovery:
     """One behavioral suite replaces duplicated payload stubs and fixture engines."""
 
     @staticmethod
-    @pytest.mark.parametrize("priority", [0, 1, 10, 100])
+    @c.Tests.MARK.parametrize("priority", [0, 1, 10, 100])
     def test_declared_metadata_and_original_callable(priority: int) -> None:
         """Decorator and scanner preserve callable identity and declaration."""
         outcome = r[str].ok("created")
@@ -42,7 +42,7 @@ class TestsFlextHandlerDiscovery:
         tm.that(found(m.Command()) is outcome)
 
     @staticmethod
-    @pytest.mark.parametrize("explicit_empty", [False, True])
+    @c.Tests.MARK.parametrize("explicit_empty", [False, True])
     def test_defaults_come_from_the_model_owner(*, explicit_empty: bool) -> None:
         """Defaults are derived, never frozen to today's configured values."""
 
@@ -138,16 +138,16 @@ class TestsFlextHandlerDiscovery:
         tm.that(received[0] is request)
 
     @staticmethod
-    @pytest.mark.parametrize("timeout", [0.0, 1.0, 30.0])
+    @c.Tests.MARK.parametrize("timeout", [0.0, 1.0, 30.0])
     def test_unsupported_timeout_fails_before_application(timeout: float) -> None:
         """The executor never accepts a policy it cannot implement."""
-        with pytest.raises(ValueError, match="timeout execution is not supported"):
+        with u.Tests.raises(ValueError, match="timeout execution is not supported"):
             h.handler(command=m.Command, timeout=timeout)
 
     @staticmethod
     def test_unsupported_middleware_fails_before_application() -> None:
         """Requested middleware requires an actual executor capability."""
-        with pytest.raises(ValueError, match="middleware execution is not supported"):
+        with u.Tests.raises(ValueError, match="middleware execution is not supported"):
             h.handler(command=m.Command, middleware=(u.Tests.Middleware,))
 
     @staticmethod
@@ -157,11 +157,11 @@ class TestsFlextHandlerDiscovery:
         def operation(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("created")
 
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             h.handler(command=m.Command, priority=-1)(operation)
 
     @staticmethod
-    @pytest.mark.parametrize(c.HandlerMode.COMMAND, [p.Command, m.Event])
+    @c.Tests.MARK.parametrize(c.HandlerMode.COMMAND, [p.Command, m.Event])
     def test_stacked_declarations_leave_original_metadata_unchanged(
         command: type,
     ) -> None:
@@ -173,7 +173,7 @@ class TestsFlextHandlerDiscovery:
 
         module = u.Tests.handler_module("single_declaration", operation=operation)
         original = h.Discovery.scan_module(module)[0][2]
-        with pytest.raises(ValueError, match="metadata is already declared"):
+        with u.Tests.raises(ValueError, match="metadata is already declared"):
             h.handler(command=command)(operation)
         tm.that(h.Discovery.scan_module(module)[0][2] is original)
 
@@ -224,7 +224,7 @@ class TestsFlextHandlerDiscovery:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "payload", [None, 7, "plain", [1], m.ConfigMap(root={"native": 1})]
     )
     def test_discovery_preserves_raw_payload_identity(payload: t.JsonPayload) -> None:
@@ -240,7 +240,7 @@ class TestsFlextHandlerDiscovery:
         tm.that(found(m.Command()) is payload)
 
     @staticmethod
-    @pytest.mark.parametrize("failure", [False, True])
+    @c.Tests.MARK.parametrize("failure", [False, True])
     def test_result_identity_cause_and_no_late_module_lookup(*, failure: bool) -> None:
         """Saved handlers survive replacement without a module-name lookup."""
         cause = RuntimeError("handler operation failed")
@@ -270,7 +270,7 @@ class TestsFlextHandlerDiscovery:
             tm.that(outcome.exception is cause)
 
     @staticmethod
-    @pytest.mark.parametrize("invalid", ["invalid", m.ConfigMap(root={})])
+    @c.Tests.MARK.parametrize("invalid", ["invalid", m.ConfigMap(root={})])
     def test_malformed_metadata_fails_before_registration(
         invalid: t.JsonPayload,
     ) -> None:
@@ -284,7 +284,7 @@ class TestsFlextHandlerDiscovery:
         diagnostic = c.ERR_HANDLER_METADATA_INVALID.format(
             name=f"{module.__name__}.{operation.__name__}"
         )
-        with pytest.raises(TypeError, match=escape(diagnostic)):
+        with u.Tests.raises(TypeError, match=escape(diagnostic)):
             h.Discovery.scan_module(module)
 
     @staticmethod
@@ -297,13 +297,13 @@ class TestsFlextHandlerDiscovery:
         setattr(
             operation, c.HANDLER_ATTR, m.DecoratorConfig(command=m.Command, timeout=1.0)
         )
-        with pytest.raises(ValueError, match=escape(c.ERR_HANDLER_POLICY_UNSUPPORTED)):
+        with u.Tests.raises(ValueError, match=escape(c.ERR_HANDLER_POLICY_UNSUPPORTED)):
             h.Discovery.scan_module(
                 u.Tests.handler_module("unsupported_handlers", operation=operation)
             )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("service_type", "names"),
         [
             (u.Tests.HandlerService, ("create", "delete", c.HandlerMode.QUERY)),

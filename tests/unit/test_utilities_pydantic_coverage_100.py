@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar
 
-import pytest
-
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextUtilitiesPydantic:
@@ -63,7 +61,7 @@ class TestsFlextUtilitiesPydantic:
         tm.that(label, eq="native")
         tm.that(attempts, eq=3)
         tm.ok(optional is None)
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextUtilitiesPydantic._FieldDefaultsContract.model_validate({
                 "label": "",
                 "attempts": -1,
@@ -80,7 +78,7 @@ class TestsFlextUtilitiesPydantic:
         utility_label: str = model.utility_label
         tm.that(model_label == "model", truth=True)
         tm.that(utility_label == "utility", truth=True)
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextUtilitiesPydantic._RequiredFieldContract.model_validate({})
 
     @staticmethod
@@ -103,7 +101,7 @@ class TestsFlextUtilitiesPydantic:
             == first,
             truth=True,
         )
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextUtilitiesPydantic._FieldFactoryContract.model_validate({})
 
     class _AnnotatedFactoryContract(m.BaseModel):
@@ -152,12 +150,12 @@ class TestsFlextUtilitiesPydantic:
         ]
 
     @staticmethod
-    @pytest.mark.parametrize("missing_name", ["model_values", "utility_values"])
+    @c.Tests.MARK.parametrize("missing_name", ["model_values", "utility_values"])
     def test_required_collections_reject_missing_values(missing_name: str) -> None:
         """Required fields reject omission and retain the supplied values."""
         partial: t.JsonDict = {"model_values": {}, "utility_values": {}}
         del partial[missing_name]
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextUtilitiesPydantic._RequiredCollectionContract.model_validate(
                 partial,
             )
@@ -240,7 +238,7 @@ class TestsFlextUtilitiesPydantic:
             return self._reader is input
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw_name", "expected_name"),
         [
             ("  ada lovelace ", "Ada Lovelace"),
@@ -320,7 +318,7 @@ class TestsFlextUtilitiesPydantic:
             return doubled
 
         tm.that(double_positive(4), eq=8)
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             double_positive(-1)
 
     @staticmethod
@@ -336,7 +334,7 @@ class TestsFlextUtilitiesPydantic:
 
         checksum: int = positive_checksum(value="  value  ")
         tm.that(checksum == sum(ord(character) for character in "value"), truth=True)
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             positive_checksum(value="  ")
 
     @staticmethod

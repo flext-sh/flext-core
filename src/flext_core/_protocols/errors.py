@@ -13,8 +13,8 @@ from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
+    from flext_core import t
     from flext_core._protocols import FlextProtocolsResult
-    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 class FlextProtocolsErrors:
@@ -30,7 +30,7 @@ class FlextProtocolsErrors:
         @property
         def error_data(
             self,
-        ) -> FlextTypingBase.JsonMapping | FlextProtocolsResult.ConfigModelInput | None:
+        ) -> t.JsonMapping | FlextProtocolsResult.ConfigModelInput | None:
             """Structured error payload attached to the failure."""
             ...
 
@@ -54,29 +54,17 @@ class FlextProtocolsErrors:
     class ExceptionMetricsSnapshot(FlextProtocolsBase.StrictModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def total_exceptions(self) -> FlextTypesPydantic.NonNegativeInt:
-            """Total recorded exception occurrences."""
-            ...
-
-        @property
-        def exception_counts(self) -> FlextTypingBase.IntMapping:
-            """Per-exception occurrence totals keyed by type name."""
-            ...
-
+        total_exceptions: t.NonNegativeInt
+        exception_counts: t.IntMapping
         exception_counts_summary: str
-
-        @property
-        def unique_exception_types(self) -> FlextTypesPydantic.NonNegativeInt:
-            """Number of unique exception types recorded."""
-            ...
+        unique_exception_types: t.NonNegativeInt
 
         @property
         def has_exceptions(self) -> bool:
             """Whether the metrics snapshot contains recorded exceptions."""
             ...
 
-        def to_config_map(self) -> FlextTypingBase.JsonMapping:
+        def to_config_map(self) -> t.JsonMapping:
             """Expose the snapshot through the canonical flat config contract."""
             ...
 
@@ -84,10 +72,7 @@ class FlextProtocolsErrors:
     class ExceptionMetricsState(FlextProtocolsBase.StrictModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def exception_counts(self) -> FlextTypingBase.IntMapping:
-            """Recorded counts keyed by exception type name."""
-            ...
+        exception_counts: t.IntMapping
 
         @property
         def total_exceptions(self) -> int:

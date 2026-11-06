@@ -25,7 +25,7 @@ from typing import Annotated
 import pytest
 from typing_extensions import TypeForm
 
-from tests import m, t, tm, u
+from tests import c, m, t, tm, u
 
 
 class TestsFlextUtilitiesPydanticEmpty:
@@ -123,26 +123,28 @@ class TestsFlextUtilitiesPydanticEmpty:
         tm.that(defaults.model_copy(deep=True), eq=defaults)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "factory",
         [
-            pytest.param(
+            u.Tests.param(
                 u.empty(t.TypeForm(_AnnotatedList)),
                 id="annotated-list",
             ),
-            pytest.param(
+            u.Tests.param(
                 u.empty(
                     t.TypeForm(_AnnotatedMapping),
                 ),
                 id="annotated-mapping",
             ),
-            pytest.param(
+            u.Tests.param(
                 u.empty(t.TypeForm(_AnnotatedSet)),
                 id="annotated-set",
             ),
-            pytest.param(u.empty(t.TypeForm(tuple[int, str])), id="fixed-tuple"),
-            pytest.param(u.empty(t.TypeForm(_NonEmptyAlias)), id="nested-alias"),
-            pytest.param(u.empty(t.TypeForm(_NonEmptyValues[int])), id="generic-alias"),
+            u.Tests.param(u.empty(t.TypeForm(tuple[int, str])), id="fixed-tuple"),
+            u.Tests.param(u.empty(t.TypeForm(_NonEmptyAlias)), id="nested-alias"),
+            u.Tests.param(
+                u.empty(t.TypeForm(_NonEmptyValues[int])), id="generic-alias"
+            ),
         ],
     )
     def test_full_contract_rejects_invalid_empty_input(
@@ -151,7 +153,7 @@ class TestsFlextUtilitiesPydanticEmpty:
         ],
     ) -> None:
         """Constraints and fixed arity survive outer collection classification."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             factory()
 
     @staticmethod
@@ -183,7 +185,7 @@ class TestsFlextUtilitiesPydanticEmpty:
             t.TypeForm(list[TestsFlextUtilitiesPydanticEmpty._Item]),
         )
         tm.that(factory(), eq=[])
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             TestsFlextUtilitiesPydanticEmpty._Item.model_validate({"unexpected": True})
 
     @staticmethod
@@ -208,25 +210,25 @@ class TestsFlextUtilitiesPydanticEmpty:
             ),
         )
 
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             factory()
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "factory",
         [
-            pytest.param(u.empty(t.TypeForm(int)), id="scalar"),
-            pytest.param(u.empty(t.TypeForm(str)), id="text"),
-            pytest.param(
+            u.Tests.param(u.empty(t.TypeForm(int)), id="scalar"),
+            u.Tests.param(u.empty(t.TypeForm(str)), id="text"),
+            u.Tests.param(
                 u.empty(contract_factory=lambda: TypeForm(int)),
                 id="deferred-scalar",
             ),
-            pytest.param(u.empty(t.TypeForm(_Item)), id="model"),
+            u.Tests.param(u.empty(t.TypeForm(_Item)), id="model"),
         ],
     )
     def test_non_collection_contract_fails_loud(
         factory: Callable[[], int | str | TestsFlextUtilitiesPydanticEmpty._Item],
     ) -> None:
         """A contract with no empty collection value raises ``TypeError``."""
-        with pytest.raises(TypeError, match="requires a collection contract"):
+        with u.Tests.raises(TypeError, match="requires a collection contract"):
             factory()

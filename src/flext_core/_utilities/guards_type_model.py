@@ -60,7 +60,7 @@ class FlextUtilitiesGuardsTypeModel:
     @staticmethod
     def pydantic_model(
         value: p.GuardInput | p.BaseModel | t.JsonValue | PydanticBaseModel | None,
-    ) -> TypeIs[t.BaseModelType]:
+    ) -> TypeIs[p.BaseModel]:
         """Narrow value to the canonical Pydantic model carrier.
 
         Accepts both ``m.BaseModel`` and

@@ -16,8 +16,6 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 
-import pytest
-
 from flext_core import FlextContainer
 from tests import c, e, p, r, t, tm, u
 
@@ -60,7 +58,7 @@ class TestsFlextCoreSystem:
         tm.that(r[str].fail("boom").unwrap_or("default"), eq="default")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("start", "expected"),
         [("dados_iniciais", "processado-DADOS-INICIAIS"), ("abc", "processado-ABC")],
     )
@@ -89,7 +87,7 @@ class TestsFlextCoreSystem:
         tm.that(result.error, eq="boom")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("data", "expect_success", "expected"),
         [
             ("dados_iniciais", True, "validado_dados_iniciais"),
@@ -166,7 +164,7 @@ class TestsFlextCoreSystem:
         tm.that(c.DEFAULT_TIMEOUT_SECONDS, is_=(int, float), gt=0)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("code", "expected"),
         [
             (c.ErrorCode.VALIDATION_ERROR, "VALIDATION_ERROR"),
@@ -186,7 +184,7 @@ class TestsFlextCoreSystem:
     # ------------------------------------------------------------------ #
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("factory", "message", "code"),
         [
             (e.ValidationError, "campo_invalido", "VALIDATION_ERROR"),
@@ -231,7 +229,7 @@ class TestsFlextCoreSystem:
         tm.that(timestamp, is_=str, empty=False)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("payload", True), ("", False), ("   ", False)],
     )

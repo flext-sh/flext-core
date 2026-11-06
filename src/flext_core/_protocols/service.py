@@ -10,21 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsConfig, FlextProtocolsHandler
-    from flext_core._typings import (
-        FlextTypesPydantic,
-        FlextTypesServices,
-        FlextTypingBase,
-    )
-
-
 from collections.abc import Mapping
 from contextlib import AbstractContextManager
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
+from flext_core import t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsPydantic,
@@ -32,10 +22,11 @@ from flext_core._protocols import (
 )
 
 if TYPE_CHECKING:
-    from flext_core import t
     from flext_core._protocols import (
+        FlextProtocolsConfig,
         FlextProtocolsContainer,
         FlextProtocolsContext,
+        FlextProtocolsHandler,
         FlextProtocolsLogging,
         FlextProtocolsResult,
     )
@@ -70,9 +61,7 @@ class FlextProtocolsService:
             ...
 
         @property
-        def request(
-            self,
-        ) -> FlextTypesServices.ModelClass[FlextTypesPydantic.BaseModelType] | None:
+        def request(self) -> t.ModelClass[t.BaseModelType] | None:
             """Pydantic request model, or None for an input-less operation."""
             ...
 
@@ -233,7 +222,7 @@ class FlextProtocolsService:
             ...
 
         @property
-        def settings_overrides(self) -> FlextTypingBase.JsonMapping | None:
+        def settings_overrides(self) -> t.JsonMapping | None:
             """Key-value overrides applied on top of the loaded configuration."""
             ...
 

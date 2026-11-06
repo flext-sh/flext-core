@@ -1,47 +1,69 @@
-"""Internal data model for FlextResult.
+"""Data model and validation contracts for the FlextResult railway container.
+
+Defines the fundamental Pydantic data schema, field constraints, immutability
+guarantees, and parameterization guards for all result instances across the platform.
+
+See Also:
+    - Workspace ADR-001 (Railway-Oriented Programming):
+      ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+    - Workspace ADR-005 (Config, Settings, Constants, Templates, Schemas SSOT):
+      ``flext/docs/architecture/adr/005-config-settings-constants-templates-schemas-ssot.md``
+    - :mod:`flext_core._result.behavior`: Behavioral extensions and property accessors.
 
 Copyright (c) 2025 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 from typing import Self
 
-from flext_core import c, m, p, t
+from flext_core import p, t
+from flext_core._constants.errors import FlextConstantsErrors
+from flext_core._models.pydantic import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesPydantic,
     FlextUtilitiesTypingAdapterJson,
 )
 
 
-class FlextResultBase[T](m.BaseModel):
-    """Internal data container for FlextResult.
+class FlextResultBase[T](FlextModelsPydantic.BaseModel):
+    """Underlying data container and strict validator for railway results.
 
-    Population keeps pydantic's own ``(**data)`` contract; the result family
-    builds instances only through ``create_success`` and ``create_failure``,
-    which validate the public fields and then bind the private payload.
+    Enforces payload constraints, schema invariants, and explicit parameterization
+    guards (forbidding untyped ``object`` and bare ``None``).
+
+    Type Parameters:
+        T: The payload type carried upon successful completion.
+
+    Attributes:
+        success: Whether the result indicates a successful outcome.
+        error: Descriptive failure message, or ``None`` when successful.
+        error_code: Standardized error code identifier, or ``None``.
+        error_data: Structured context dictionary associated with failures.
+
     """
 
-    model_config = m.ConfigDict(extra="forbid")
+    model_config = FlextModelsPydantic.ConfigDict(extra="forbid")
 
     success: bool = True
     error: str | None = None
     error_code: str | None = None
     error_data: t.JsonDict | None = None
 
-    _payload: T = m.PrivateAttr()
-    _exception: BaseException | None = m.PrivateAttr(default=None)
+    _payload: T = FlextModelsPydantic.PrivateAttr()
+    _exception: BaseException | None = FlextModelsPydantic.PrivateAttr(default=None)
 
     @classmethod
     def create_success(cls, value: T) -> Self:
-        """Build a successful result carrying ``value``.
+        """Instantiate a validated successful result binding the provided payload.
 
         Args:
-            value: The success payload to bind.
+            value: The success payload to carry within the result.
 
         Returns:
-            The validated success instance.
+            Self: A newly created success instance.
 
         """
         cls.reject_banned_result_parameterization()
@@ -58,16 +80,16 @@ class FlextResultBase[T](m.BaseModel):
         error_data: t.JsonDict | None,
         exception: BaseException | None,
     ) -> Self:
-        """Build a failed result from already-normalized failure state.
+        """Instantiate a validated failure result binding normalized error state.
 
         Args:
-            error: The human-readable error message.
+            error: Descriptive failure message.
             error_code: Optional machine-readable error code.
-            error_data: Optional structured error payload.
-            exception: Optional exception bound to the failure.
+            error_data: Optional structured JSON-compatible context dictionary.
+            exception: Optional underlying exception causing the failure.
 
         Returns:
-            The validated failure instance.
+            Self: A newly created failure instance.
 
         """
         cls.reject_banned_result_parameterization()
@@ -82,11 +104,13 @@ class FlextResultBase[T](m.BaseModel):
 
     @classmethod
     def reject_banned_result_parameterization(cls) -> None:
-        """Reject ``FlextResult[None]`` and ``FlextResult[object]`` specializations.
+        """Enforce strict typing by rejecting banned generic parameters.
+
+        Guarantees that results are never parameterized with bare ``None`` or
+        untargeted ``object`` types, ensuring static type checking remains sound.
 
         Raises:
-            ValueError: If the first type argument is ``None``/``NoneType`` or
-                ``object``.
+            ValueError: If the type argument is ``None``, ``type(None)``, or ``object``.
 
         """
         args = cls.__pydantic_generic_metadata__["args"]
@@ -94,35 +118,41 @@ class FlextResultBase[T](m.BaseModel):
             return
         arg0 = args[0]
         if arg0 is None or arg0 is type(None):
-            raise ValueError(c.ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN)
+            raise ValueError(FlextConstantsErrors.ERR_RESULT_TYPE_PARAM_NONE_FORBIDDEN)
         if arg0 is object:
-            raise ValueError(c.ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN)
+            raise ValueError(
+                FlextConstantsErrors.ERR_RESULT_TYPE_PARAM_OBJECT_FORBIDDEN
+            )
 
     @staticmethod
     def reject_banned_success_payload(value: T) -> None:
-        """Reject ``None`` and bare ``object()`` as success payloads.
+        """Validate that a success payload does not contain disallowed values.
 
         Raises:
-            ValueError: If ``value`` is ``None`` or its exact type is ``object``.
+            ValueError: If ``value`` is ``None`` or an instance of exact ``object``.
 
         """
         if value is None:
-            raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE)
+            raise ValueError(
+                FlextConstantsErrors.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_NONE
+            )
         if type(value) is object:
-            raise ValueError(c.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT)
+            raise ValueError(
+                FlextConstantsErrors.ERR_RESULT_SUCCESS_PAYLOAD_CANNOT_BE_OBJECT
+            )
 
     @staticmethod
     def validate_error_data(
         error_data: t.JsonMapping | p.ConfigModelInput | None,
     ) -> t.JsonDict | None:
-        """Validate and normalize error data into a plain JSON mapping.
+        """Normalize structured error context into a strict JSON-compatible dictionary.
 
         Args:
-            error_data: The model, mapping, or config input to normalize.
+            error_data: Raw error metadata mapping or Pydantic model input.
 
         Returns:
-            The resulting ``JsonDict``, or ``None`` when ``error_data``
-            normalizes to ``None``.
+            t.JsonDict | None: A normalized JSON dictionary, or ``None`` if input
+                normalizes to None.
 
         """
         if error_data is None:

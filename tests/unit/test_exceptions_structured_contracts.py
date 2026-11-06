@@ -14,9 +14,7 @@ from __future__ import annotations
 import operator
 from collections.abc import Mapping
 
-import pytest
-
-from tests import c, e, p, tm
+from tests import c, e, p, tm, u
 from tests.unit._exceptions_failure_support import FAILURES, FailureFactory
 from tests.unit._exceptions_structured_support import STRUCTURED_ERRORS, ErrorFactory
 
@@ -25,12 +23,12 @@ class TestsFlextCoreExceptionsStructuredContracts:
     """Public-contract behavior of structured errors and failure results."""
 
     @staticmethod
-    @pytest.mark.parametrize(
-        ("_name", "factory", "expected_domain", "expected_code", "expected_payload"),
+    @c.Tests.MARK.parametrize(
+        ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_expose_public_contract(
-        _name: str,
+        name: str,
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
@@ -41,7 +39,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         error = factory()
 
         # Assert: structured protocol surface
-        tm.that(error, is_=p.StructuredError)
+        tm.that(error, is_=p.StructuredError, msg=name)
         tm.that(error.error_domain, eq=expected_domain)
         tm.that(error.error_code, eq=expected_code)
         tm.that(error.error_message, eq=error.message)
@@ -53,21 +51,23 @@ class TestsFlextCoreExceptionsStructuredContracts:
             tm.that(error.metadata.attributes[key], eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
-        ("_name", "factory", "expected_domain", "expected_code", "_expected_payload"),
+    @c.Tests.MARK.parametrize(
+        ("name", "factory", "expected_domain", "expected_code", "expected_payload"),
         STRUCTURED_ERRORS,
     )
     def test_structured_errors_are_raisable_and_preserve_contract(
-        _name: str,
+        name: str,
         factory: ErrorFactory,
         expected_domain: str,
         expected_code: str,
-        _expected_payload: Mapping[str, str | int | None],
+        expected_payload: Mapping[str, str | int | None],
     ) -> None:
         # Act / Assert: the error is a real exception that callers can catch,
         # and its structured contract survives raise/except unchanged.
         """Test structured errors are raisable and preserve contract."""
-        with pytest.raises(e.BaseError) as caught:
+        tm.that(name, truth=True)
+        tm.that(expected_payload, none=False)
+        with u.Tests.raises(e.BaseError) as caught:
             raise factory()
 
         error = caught.value
@@ -76,6 +76,8 @@ class TestsFlextCoreExceptionsStructuredContracts:
         tm.that(error.matches_error_domain(expected_domain), truth=True)
         tm.that(error.message in str(error), truth=True)
         tm.that(error.error_message, eq=error.message)
+        for key, value in expected_payload.items():
+            tm.that(error.metadata.attributes[key], eq=value)
 
     @staticmethod
     def test_base_error_defaults_to_unknown_domain_protocol_surface() -> None:
@@ -99,7 +101,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
             resource_type="User",
             resource_id="123",
         )
-        with pytest.raises(e.BaseError) as caught:
+        with u.Tests.raises(e.BaseError) as caught:
             raise not_found
 
         error = caught.value
@@ -135,12 +137,12 @@ class TestsFlextCoreExceptionsStructuredContracts:
             tm.that(error.metadata.attributes[key], eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
-        ("_name", "factory", "expected_fragment", "expected_code", "expected_data"),
+    @c.Tests.MARK.parametrize(
+        ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
     def test_failure_factories_return_public_result_contract(
-        _name: str,
+        name: str,
         factory: FailureFactory,
         expected_fragment: str,
         expected_code: str,
@@ -152,7 +154,7 @@ class TestsFlextCoreExceptionsStructuredContracts:
         result_data = result.error_data or {}
 
         # Assert: r[T] failure contract
-        tm.that(result.failure, truth=True)
+        tm.that(result.failure, truth=True, msg=name)
         tm.that(result.success, truth=False)
         tm.that(result.error, none=False)
         tm.that(expected_fragment in str(result.error), truth=True)
@@ -162,33 +164,39 @@ class TestsFlextCoreExceptionsStructuredContracts:
             tm.that(result_data[key], eq=value)
 
     @staticmethod
-    @pytest.mark.parametrize(
-        ("_name", "factory", "_expected_fragment", "expected_code", "_expected_data"),
+    @c.Tests.MARK.parametrize(
+        ("name", "factory", "expected_fragment", "expected_code", "expected_data"),
         FAILURES,
     )
     def test_failure_results_honor_combinator_contract(
-        _name: str,
+        name: str,
         factory: FailureFactory,
-        _expected_fragment: str,
+        expected_fragment: str,
         expected_code: str,
-        _expected_data: Mapping[str, str | int | None],
+        expected_data: Mapping[str, str | int | None],
     ) -> None:
         # Arrange
         """Test failure results honor combinator contract."""
         result = factory()
 
-        # Act / Assert: map short-circuits, preserving the failure and its code.
+        # Act / Assert: map short-circuits, preserving the failure, its code,
+        # message and data.
         mapped = result.map(operator.not_)
-        tm.that(mapped.failure, truth=True)
+        tm.that(mapped.failure, truth=True, msg=name)
         tm.that(mapped.error_code, eq=expected_code)
+        tm.that(expected_fragment in str(mapped.error), truth=True)
+        tm.that(
+            {key: (mapped.error_data or {})[key] for key in expected_data},
+            eq=dict(expected_data),
+        )
 
         # Strict extraction preserves the failure instead of inventing a value.
         if result.exception is not None:
-            with pytest.raises(type(result.exception)) as raised:
+            with u.Tests.raises(type(result.exception)) as raised:
                 result.unwrap()
             tm.that(raised.value is result.exception, truth=True)
         else:
-            with pytest.raises(RuntimeError) as logical:
+            with u.Tests.raises(RuntimeError) as logical:
                 result.unwrap()
             tm.that(
                 str(logical.value),

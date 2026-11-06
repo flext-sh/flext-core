@@ -8,8 +8,6 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-import pytest
-
 from flext_core import FlextContainer, FlextDispatcher, FlextRegistry
 from tests import c, h, m, p, r, t, tm, u
 
@@ -45,10 +43,10 @@ class TestsFlextCoreRegistry:
         )
 
     @staticmethod
-    @pytest.mark.parametrize("payload", [{}, {"registry_runtime": "invalid"}])
+    @c.Tests.MARK.parametrize("payload", [{}, {"registry_runtime": "invalid"}])
     def test_registry_rejects_missing_or_invalid_runtime(payload: t.JsonDict) -> None:
         """Invalid ingress never bootstraps or silently replaces a required port."""
-        with pytest.raises((TypeError, ValueError)):
+        with u.Tests.raises((TypeError, ValueError)):
             FlextRegistry.model_validate(payload)
 
     @staticmethod
@@ -57,11 +55,11 @@ class TestsFlextCoreRegistry:
         runtime = FlextContainer.build_service_runtime()
         registry = FlextRegistry(registry_runtime=runtime)
         field_name = "registry_runtime"
-        with pytest.raises((TypeError, ValueError)):
+        with u.Tests.raises((TypeError, ValueError)):
             setattr(registry, field_name, "invalid")
         tm.that(registry.registry_runtime is runtime, truth=True)
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def registry() -> p.Registry:
         """Build a registry backed by an accepting dispatcher.
@@ -117,7 +115,7 @@ class TestsFlextCoreRegistry:
         )
 
     @staticmethod
-    @pytest.mark.parametrize("kind", ["handlers", "bindings"])
+    @c.Tests.MARK.parametrize("kind", ["handlers", "bindings"])
     def test_register_batch_reports_every_success(
         kind: str,
         registry: p.Registry,
@@ -189,7 +187,7 @@ class TestsFlextCoreRegistry:
         tm.that(registry.fetch_plugin("validators", "local").value, eq="replacement")
 
     @staticmethod
-    @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
+    @c.Tests.MARK.parametrize("scope", tuple(c.RegistrationScope))
     def test_plugin_identity_and_conflicts(scope: c.RegistrationScope) -> None:
         """Models remain live collaborators, not dumps or equality-based aliases."""
         registry = FlextRegistry.create()
@@ -225,7 +223,7 @@ class TestsFlextCoreRegistry:
             )
 
     @staticmethod
-    @pytest.mark.parametrize("scope", tuple(c.RegistrationScope))
+    @c.Tests.MARK.parametrize("scope", tuple(c.RegistrationScope))
     def test_bound_plugin_method_is_idempotent(scope: c.RegistrationScope) -> None:
         """Repeated bound-method access preserves the same receiver and function."""
         registry = FlextRegistry.create()
@@ -338,7 +336,7 @@ class TestsFlextCoreRegistry:
         tm.that(registry.unregister_plugin("validators", "absent").failure, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("errors", "expected_success"),
         [((), True), (("boom",), False)],
     )

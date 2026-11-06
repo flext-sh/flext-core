@@ -81,6 +81,14 @@ jobs:
           submodules: recursive
           persist-credentials: false
           fetch-depth: 0
+      - name: Align bootstrap submodules
+        working-directory: .
+        run: |
+          set -eu
+          git -C flext-core fetch --no-tags origin upload-20261007
+          git -C flext-cli fetch --no-tags origin upload-20261007
+          git -C flext-core checkout --detach 1a6241ffebdfe16b76909dc64cab739872a134f3
+          git -C flext-cli checkout --detach b8f0dc5863f3deb1e71c46038dfab1c9d19dca68
       - name: Pin flext-core at the tested commit
         working-directory: .
         run: |
@@ -225,10 +233,11 @@ jobs:
                 ' sh {} +
             fi
           done
-      # Reports exist only once check executed; uploading after an earlier
-      # failure would only add a second, misleading error.
+      # Reports exist once any approval row after setup executed, whichever
+      # row failed first (a failed tests row skips every later check row);
+      # uploading after a setup failure would only add a second, misleading error.
       - name: Upload execution reports
-        if: ${{ !cancelled() && (steps.approval-check.outcome == 'success' || steps.approval-check.outcome == 'failure') }}
+        if: ${{ !cancelled() && (steps.approval-check-primary.outcome == 'success' || steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'success' || steps.approval-tests-primary.outcome == 'failure' || steps.approval-check.outcome == 'success' || steps.approval-check.outcome == 'failure' || steps.approval-tests.outcome == 'success' || steps.approval-tests.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-ci-reports-${{ github.run_id }}
@@ -251,29 +260,19 @@ jobs:
             flext-core/.reports/codegen-publication.json
             flext-core/.reports/codegen-publication/**/*.json
             flext-core/.reports/setup-operations/*.json
-            flext-core/.reports/tests/**/suite-outcome.json
-            flext-core/.reports/tests/**/selection-outcome.json
-            flext-core/.reports/tests/**/inventory-outcome.json
-            flext-core/.reports/tests/**/run-context.json
-            flext-core/.reports/tests/**/selection-plan.json
-            flext-core/.reports/tests/**/testmon-selection.json
-            flext-core/.reports/tests/**/testmon-inventory.json
-            flext-core/.reports/tests/**/run-accounting.json
-            flext-core/.reports/tests/**/diagnostics.json
-            flext-core/.reports/tests/**/original-receipt.json
-            flext-core/.reports/tests/**/cache-before.json
-            flext-core/.reports/tests/**/cache-after.json
-            flext-core/.reports/tests/**/cache-policy.json
-            flext-core/.reports/tests/**/markdown-reconciliation.json
+            flext-core/.reports/tests/**/*.json
+            flext-core/.reports/tests/**/summary.txt
+            flext-core/.reports/tests/**/failed-tests.txt
+            flext-core/.reports/tests/**/errors.txt
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
       # Why: a failed gate's job log prints only counts; its raw receipts under
-      # the declared gate receipts directory are the evidence. Only the step
-      # that captures receipts can produce them, so the upload runs exactly
-      # when that step failed, never after an earlier failure that left none.
+      # the declared gate receipts directory are the evidence. Only approval
+      # rows capture receipts, so the upload runs exactly when one of them
+      # failed (tests included), never after a setup failure that left none.
       - name: Upload gate receipts on failure
-        if: ${{ failure() && steps.approval-check.outcome == 'failure' }}
+        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'failure' || steps.approval-check.outcome == 'failure' || steps.approval-tests.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-gate-receipts-${{ github.job }}-${{ github.run_id }}

@@ -10,7 +10,7 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, c, m, p, t
+from flext_core import c, m, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeModel,
     FlextUtilitiesModel,
@@ -80,7 +80,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
             )
 
         def _on_success(parsed: T) -> p.Result[T]:
-            return FlextResult[T].ok(parsed)
+            return r[T].ok(parsed)
 
         parsed_direct: p.Result[T] = FlextUtilitiesModel.validate_value(
             target,
@@ -92,7 +92,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         return parsed_direct.unwrap()
 
     @staticmethod
-    @FlextResult.safe
+    @r.safe
     def _parse_try_enum[T](
         value: t.JsonPayload,
         target: type[T],
@@ -158,7 +158,7 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         )
 
     @staticmethod
-    @FlextResult.safe
+    @r.safe
     def _parse_try_model[T](
         value: t.JsonPayload,
         target: type[T],
@@ -231,7 +231,10 @@ class FlextUtilitiesParserTargets(FlextUtilitiesParserCoerce):
         cls = FlextUtilitiesParserTargets
         coerce_map: Mapping[
             type[T | int | float | bool],
-            Callable[[t.JsonPayload], p.Result[int] | p.Result[float] | p.Result[bool]],
+            Callable[
+                [t.JsonPayload],
+                p.Result[int] | p.Result[float] | p.Result[bool],
+            ],
         ] = {
             int: cls._coerce_to_int,
             float: cls._coerce_to_float,

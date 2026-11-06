@@ -19,9 +19,9 @@ if TYPE_CHECKING:
 class TestsFlextModelsGuardsMapper:
     """Guard mapper and event model helpers."""
 
-    # --- from test_models_context_full_coverage.py ---
+    # --- from test_models_context_ful_coverage ---
 
-    # --- from test_utilities_mapper_full_coverage.py ---
+    # --- from test_utilities_mapper_ful_coverage ---
 
     class PortModel(m.BaseModel):
         """Model with port/nested for mapper take/extract tests."""
@@ -55,7 +55,7 @@ class TestsFlextModelsGuardsMapper:
             msg = "bad items"
             raise RuntimeError(msg)
 
-    # --- from test_architectural_patterns.py ---
+    # --- from test_architectura_patterns ---
 
     class UserCreatedEvent(m.DomainEvent):
         """Domain event for user creation using FlextModels foundation."""

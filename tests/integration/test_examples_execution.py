@@ -18,15 +18,13 @@ import re
 import sys
 from pathlib import Path
 
-import pytest
-
 from tests import c, m, p, tm, u
 
 
 class TestsFlextExamplesExecution:
     """Assert the observable execution contract of every public example script."""
 
-    @pytest.mark.parametrize("module_name", c.Tests.NON_GOLDEN_EXAMPLE_MODULES)
+    @c.Tests.MARK.parametrize("module_name", c.Tests.NON_GOLDEN_EXAMPLE_MODULES)
     def test_non_golden_example_module_executes(self, module_name: str) -> None:
         """The module executes its class entry without a free-function shim."""
         output: p.Cli.CommandOutput = tm.ok(
@@ -56,7 +54,7 @@ class TestsFlextExamplesExecution:
         """
         return Path(__file__).resolve().parents[c.Tests.REPO_ROOT_PARENT_DEPTH]
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("example_name", "module_name", "script_name"),
         c.Tests.PUBLIC_EXAMPLES,
     )

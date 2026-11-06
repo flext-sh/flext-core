@@ -10,19 +10,7 @@ from collections.abc import Mapping, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, Self, Unpack, override
 
-from flext_core import (
-    FlextContainer,
-    FlextDispatcher,
-    FlextHandlers,
-    c,
-    e,
-    m,
-    p,
-    r,
-    s,
-    t,
-    u,
-)
+from flext_core import FlextContainer, FlextDispatcher, c, e, h, m, p, r, s, t, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -64,7 +52,7 @@ class FlextRegistry(s[bool], m.RegistryOptions):
                     m.HandlerRegistration(
                         handler=handler, message_type=metadata.command
                     )
-                    for _, handler, metadata in FlextHandlers.Discovery.scan_module(
+                    for _, handler, metadata in h.Discovery.scan_module(
                         discovery_module
                     )
                 )

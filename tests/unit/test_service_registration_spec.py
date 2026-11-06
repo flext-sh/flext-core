@@ -6,10 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_core import FlextContainer
-from tests import c, e, m, p, tm
+from tests import c, e, m, p, tm, u
 
 
 def _factory() -> str:
@@ -22,13 +20,13 @@ class TestsFlextServiceRegistrationSpecOwner:
     @staticmethod
     def test_spec_rejects_non_mapping_services() -> None:
         """A service collection that is not a mapping fails validation."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             _ = m.ServiceRegistrationSpec.model_validate({"services": ["invalid"]})
 
     @staticmethod
     def test_spec_rejects_non_callable_factory() -> None:
         """A factory declaration that is not callable fails validation."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             _ = m.ServiceRegistrationSpec.model_validate({
                 "factories": {"factory": "not-callable"},
             })
@@ -57,7 +55,7 @@ class TestsFlextServiceRegistrationSpecOwner:
         """A spec declares raw values only; a registration record is not one."""
         record = m.FactoryRegistration(name="factory", factory=_factory)
 
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             _ = m.ServiceRegistrationSpec.model_validate({
                 "factories": {"factory": record},
             })
@@ -70,7 +68,7 @@ class TestsFlextServiceRegistrationSpecOwner:
         spec = m.ServiceRegistrationSpec(services={"service": "value"})
         _ = clean_container.bind("service", "first")
 
-        with pytest.raises(e.ValidationError, match="service"):
+        with u.Tests.raises(e.ValidationError, match="service"):
             _ = FlextContainer(registration=spec)
 
         tm.ok(clean_container.resolve("service"), eq="first")

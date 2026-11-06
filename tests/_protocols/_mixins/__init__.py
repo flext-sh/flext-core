@@ -20,6 +20,12 @@ if TYPE_CHECKING:
     from tests._protocols._mixins.guards_mapper import (
         TestsFlextProtocolsMixinsGuardsMapper,
     )
+    from tests._protocols._mixins.schema_owner import (
+        TestsFlextProtocolsMixinsSchemaOwner,
+    )
+    from tests._protocols._mixins.schema_owner_heir import (
+        TestsFlextProtocolsMixinsSchemaOwnerHeir,
+    )
     from tests._protocols._mixins.service_case_core import (
         TestsFlextProtocolsMixinsServiceCaseCore,
     )
@@ -44,6 +50,8 @@ __all__: tuple[str, ...] = (
     "TestsFlextProtocolsMixinsCoreState",
     "TestsFlextProtocolsMixinsDomain",
     "TestsFlextProtocolsMixinsGuardsMapper",
+    "TestsFlextProtocolsMixinsSchemaOwner",
+    "TestsFlextProtocolsMixinsSchemaOwnerHeir",
     "TestsFlextProtocolsMixinsServiceCaseCore",
     "TestsFlextProtocolsMixinsServiceCaseReliability",
     "TestsFlextProtocolsMixinsServiceCaseValidation",
@@ -61,6 +69,8 @@ install_lazy_exports(
         "TestsFlextProtocolsMixinsCoreState": ".core_state",
         "TestsFlextProtocolsMixinsDomain": ".domain",
         "TestsFlextProtocolsMixinsGuardsMapper": ".guards_mapper",
+        "TestsFlextProtocolsMixinsSchemaOwner": ".schema_owner",
+        "TestsFlextProtocolsMixinsSchemaOwnerHeir": ".schema_owner_heir",
         "TestsFlextProtocolsMixinsServiceCaseCore": ".service_case_core",
         "TestsFlextProtocolsMixinsServiceCaseReliability": ".service_case_reliability",
         "TestsFlextProtocolsMixinsServiceCaseValidation": ".service_case_validation",

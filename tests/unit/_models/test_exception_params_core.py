@@ -8,21 +8,19 @@ from __future__ import annotations
 
 import math
 
-import pytest
-
-from tests import c, m, t, tm
+from tests import c, m, t, tm, u
 
 
 class TestsFlextModelsExceptionParamsCore:
     @staticmethod
     def test_params_model_forbids_extra_fields() -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.ParamsModel.model_validate({"unknown_field": "value"})
 
     @staticmethod
     def test_strict_mode_rejects_type_coercion() -> None:
         """strict=True: a string is not coerced into an int port."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.ConnectionErrorParams.model_validate({"port": "5432"})
 
     @staticmethod
@@ -55,7 +53,7 @@ class TestsFlextModelsExceptionParamsCore:
         tm.that(params.value, eq="bad@")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("field", "value"),
         [
             ("username", "john"),
@@ -122,7 +120,7 @@ class TestsFlextModelsConnectionAndAuthenticationParams:
         tm.that(params.timeout, eq=5.5)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "timeout_val",
         [5, 5.5, 0, None],
         ids=["int-timeout", "float-timeout", "zero", "none"],
@@ -134,7 +132,7 @@ class TestsFlextModelsConnectionAndAuthenticationParams:
         tm.that(params.timeout, eq=timeout_val)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("host", "port", "expected"),
         [
             ("db.internal", 5432, "db.internal:5432"),
@@ -173,7 +171,7 @@ class TestsFlextModelsConnectionAndAuthenticationParams:
         tm.that(params.operation, eq="dispatch")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "seconds",
         [30, 30.0, 0.5],
         ids=["int", "float", "fraction"],

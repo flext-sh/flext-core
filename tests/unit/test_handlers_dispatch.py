@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import override
 
-import pytest
-
 from tests import c, h, m, p, r, t, tm, u
 
 
@@ -88,7 +86,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
 
         _ = u.Tests.assert_success(result, expected_value="processed_test_message")
 
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         (c.ContextScope.OPERATION, "expected_error"),
         [
             (
@@ -201,7 +199,7 @@ class TestsFlextHandlersDispatch(u.TestsFlextFlextHandlers):
             expected_error="Critical handler failure: Test exception in handler",
         )
 
-    @pytest.mark.parametrize("message_type", [str, int, dict])
+    @c.Tests.MARK.parametrize("message_type", [str, int, dict])
     def test_flexible_handler_accepts_any_message_type(
         self,
         message_type: type,

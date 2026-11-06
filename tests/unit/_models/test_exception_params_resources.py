@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import c, m, tm
+from tests import c, m, tm, u
 
 
 class TestsFlextModelsExceptionParamsResources:
@@ -52,7 +50,7 @@ class TestsFlextModelsExceptionParamsResources:
 
     @staticmethod
     def test_authorization_error_params_forbids_extra_field() -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.AuthorizationErrorParams.model_validate({"role": "admin"})
 
     @staticmethod
@@ -70,7 +68,7 @@ class TestsFlextModelsExceptionParamsResources:
         tm.that(params.resource_id, eq="42")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("resource_type", "resource_id"),
         [
             (c.ContextScope.USER, "42"),
@@ -93,7 +91,7 @@ class TestsFlextModelsExceptionParamsResources:
 
     @staticmethod
     def test_not_found_error_params_forbids_extra_field() -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.NotFoundErrorParams.model_validate({"resource_name": "x"})
 
     @staticmethod
@@ -145,7 +143,7 @@ class TestsFlextModelsResourceLimitParams:
         tm.that(params.retry_after, eq=1.5)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "retry_after",
         [1, 1.5, 0, None],
         ids=["int", "float", "zero", "none"],
@@ -159,7 +157,7 @@ class TestsFlextModelsResourceLimitParams:
     @staticmethod
     def test_rate_limit_error_params_strict_rejects_string_limit() -> None:
         """strict=True: a numeric string is not coerced into an int limit."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.RateLimitErrorParams.model_validate({"limit": "100"})
 
     @staticmethod
@@ -200,5 +198,5 @@ class TestsFlextModelsResourceLimitParams:
 
     @staticmethod
     def test_circuit_breaker_error_params_forbids_extra_field() -> None:
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             m.CircuitBreakerErrorParams.model_validate({"threshold": 1})

@@ -22,11 +22,9 @@ from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 
-import pytest
-
 from flext_core import lazy
 from flext_core.config_sources import FlextStrictYamlConfigSource
-from tests import tm, u
+from tests import c, tm, u
 
 _SUBCLASS_SOURCE = '''
 from __future__ import annotations
@@ -77,7 +75,7 @@ def _install_package(root: Path, package: str, defaults: str) -> ModuleType:
     return lazy.load(f"{package}._config")
 
 
-@pytest.fixture
+@u.Tests.fixture
 def isolate_import_state() -> Iterator[None]:
     """Drop synthetic packages from the import cache between tests."""
     original_path = list(sys.path)
@@ -94,7 +92,7 @@ def isolate_import_state() -> Iterator[None]:
 class TestPackagedConfigWithUserPreferences:
     """Packaged defaults plus optional user overlay, keyed by package namespace."""
 
-    pytestmark = pytest.mark.usefixtures("isolate_import_state")
+    pytestmark = c.Tests.MARK.usefixtures("isolate_import_state")
 
     @staticmethod
     def _install_packaged(
@@ -203,7 +201,7 @@ class TestPackagedConfigWithUserPreferences:
             tm.that(epsilon.SynthConfig.fetch_global().greeting, eq="packaged")
 
     @staticmethod
-    @pytest.mark.parametrize("layout", ["site-packages", "src", "member/src"])
+    @c.Tests.MARK.parametrize("layout", ["site-packages", "src", "member/src"])
     def test_nested_mro_declaration_uses_its_package_resource(
         tmp_path: Path,
         layout: str,
@@ -237,7 +235,7 @@ class TestPackagedConfigWithUserPreferences:
             tm.that(config is not parent.SynthConfig.fetch_global(), truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize("layout", ["site-packages", "src", "member/src"])
+    @c.Tests.MARK.parametrize("layout", ["site-packages", "src", "member/src"])
     def test_inherited_yaml_and_child_overrides_share_one_source_chain(
         tmp_path: Path,
         layout: str,
@@ -341,13 +339,13 @@ class TestPackagedConfigWithUserPreferences:
                 encoding="utf-8",
             )
             module = lazy.load("synthpkg_missing.declared")
-            with pytest.raises(FileNotFoundError, match="declared config directory"):
+            with u.Tests.raises(FileNotFoundError, match="declared config directory"):
                 module.DeclaredConfig.fetch_global()
 
     @staticmethod
-    @pytest.mark.parametrize("layout", ["site-packages", "src"])
-    @pytest.mark.parametrize("installed", [True, False])
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize("layout", ["site-packages", "src"])
+    @c.Tests.MARK.parametrize("installed", [True, False])
+    @c.Tests.MARK.parametrize(
         "owner_names",
         [("resource-owner",), ("resource-owner", "competing-owner")],
     )

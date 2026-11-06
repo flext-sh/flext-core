@@ -11,8 +11,6 @@ import sys
 import time
 from types import ModuleType
 
-import pytest
-
 import flext_core
 from flext_core.lazy import install_lazy_exports, lazy
 from tests import c, tm
@@ -61,7 +59,6 @@ class TestsFlextLazyPerformance:
                         module_name,
                         virtual_module.__dict__,
                         lazy_map,
-                        publish_all=index % 2 == 0,
                     )
                 finally:
                     del sys.modules[module_name]
@@ -84,7 +81,7 @@ class TestsFlextLazyPerformance:
                 )
             return time.perf_counter() - start
 
-    @pytest.mark.benchmark
+    @c.Tests.MARK.benchmark
     def test_lazy_install_and_resolution_cold_path(self) -> None:
         """Benchmark cold path with cache reset before each iteration."""
         lazy.reset()
@@ -92,7 +89,7 @@ class TestsFlextLazyPerformance:
         tm.that(elapsed, gt=0.0)
         tm.that(lazy.cache_stats["install_cache"], gt=0)
 
-    @pytest.mark.benchmark
+    @c.Tests.MARK.benchmark
     def test_lazy_install_and_resolution_warm_path(self) -> None:
         """Benchmark warm path with cache reuse across iterations."""
         lazy.reset()

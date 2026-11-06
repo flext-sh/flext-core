@@ -9,9 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
-from flext_tests.models import m
-from flext_tests.typings import t
-from flext_tests.utilities import u
+from tests import m, t, u
 
 if TYPE_CHECKING:
     from pathlib import Path

@@ -9,16 +9,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
 
 from flext_core import t
-
-if TYPE_CHECKING:
-    from collections.abc import Sequence
-
-    from flext_core._typings import FlextTypesAnnotateds, FlextTypesPydantic
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsPydantic,
     FlextProtocolsResult,
 )
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 
 class FlextProtocolsSettings:
@@ -140,18 +138,9 @@ class FlextProtocolsSettings:
     class RetryConfiguration(FlextProtocolsBase.RetryConfigurationMixin, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def max_retries(self) -> FlextTypesPydantic.PositiveInt:
-            """Maximum retry attempts from c (Constants default)."""
-            ...
-
+        max_retries: t.PositiveInt
         exponential_backoff: bool
-
-        @property
-        def backoff_multiplier(self) -> FlextTypesAnnotateds.BackoffMultiplier:
-            """Backoff multiplier for exponential backoff."""
-            ...
-
+        backoff_multiplier: t.BackoffMultiplier
         retry_on_exceptions: Sequence[type[BaseException]]
         retry_on_status_codes: Sequence[int]
 

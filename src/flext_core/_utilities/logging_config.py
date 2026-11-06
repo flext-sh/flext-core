@@ -266,7 +266,9 @@ class FlextUtilitiesLoggingConfig:
 
     @staticmethod
     def configure_logging_state(
-        settings: p.LoggingSettings, options: p.StructlogOptions, threshold: int
+        settings: p.LoggingSettings,
+        options: p.StructlogOptions,
+        threshold: int,
     ) -> None:
         """Publish the state owned by the shared logging configuration."""
         FlextUtilitiesLoggingConfig._runtime_settings = settings

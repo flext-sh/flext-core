@@ -15,8 +15,6 @@ from __future__ import annotations
 import enum
 import re
 
-import pytest
-
 from tests import c, tm, u
 
 
@@ -26,11 +24,11 @@ class TestsFlextConstantsNew:
     @staticmethod
     def test_validation_error_catches_pydantic_v2_failures() -> None:
         """The constants facade catches the real Pydantic validation contract."""
-        with pytest.raises(c.ValidationError):
+        with u.Tests.raises(c.ValidationError):
             u.int_adapter().validate_python("invalid")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("domain", "valid"),
         [
             ("namespace", True),
@@ -82,7 +80,7 @@ class TestsFlextConstantsNew:
 
     # -------------------------------------------------- StrEnum wire semantics
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "domain_enum",
         [
             c.Status,
@@ -112,7 +110,7 @@ class TestsFlextConstantsNew:
             tm.that(str(member), eq=member.value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "domain_enum",
         [c.Status, c.ErrorDomain, c.LogLevel, c.Environment, c.SerializationFormat],
     )
@@ -139,7 +137,7 @@ class TestsFlextConstantsNew:
         tm.ok(truthy.isdisjoint(falsy))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "token",
         sorted(c.PARSER_BOOLEAN_TRUTHY | c.PARSER_BOOLEAN_FALSY),
     )
@@ -150,7 +148,7 @@ class TestsFlextConstantsNew:
 
     # -------------------------------------------------- identifier regex rules
     @staticmethod
-    @pytest.mark.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
+    @c.Tests.MARK.parametrize(("raw_app_id", "normalized"), c.Tests.FORMAT_APP_ID_CASES)
     def test_app_id_cases_match_core_identifier_regex(
         raw_app_id: str,
         normalized: str,
@@ -163,7 +161,7 @@ class TestsFlextConstantsNew:
         tm.ok(bool(c.PATTERN_IDENTIFIER_LOWERCASE_RE.fullmatch(normalized)))
 
     @staticmethod
-    @pytest.mark.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
+    @c.Tests.MARK.parametrize(("raw", "expected"), c.Tests.SAFE_STRING_VALID_CASES)
     def test_safe_string_valid_cases_align_with_parser_tokens(
         raw: str,
         expected: str,
@@ -177,20 +175,21 @@ class TestsFlextConstantsNew:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(("raw", "_reason"), c.Tests.SAFE_STRING_INVALID_CASES)
+    @c.Tests.MARK.parametrize(("raw", "reason"), c.Tests.SAFE_STRING_INVALID_CASES)
     def test_safe_string_invalid_cases_do_not_match_identifier_regex(
         raw: str | None,
-        _reason: str,
+        reason: str,
     ) -> None:
         """Invalid fixture values should fail core identifier matching."""
         candidate = "" if raw is None else raw.strip()
         tm.that(
             bool(c.PATTERN_IDENTIFIER_WITH_UNDERSCORE_RE.fullmatch(candidate)),
             eq=False,
+            msg=reason,
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "version",
         [
             "0.12.0",
@@ -208,7 +207,7 @@ class TestsFlextConstantsNew:
         tm.ok(bool(c.PATTERN_SEMVER_RE.fullmatch(version)))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "version",
         ["1.2", "1.2.3rc", "1.2.3+", "1.2.3..rc0", "1.2.3-"],
     )
@@ -217,7 +216,7 @@ class TestsFlextConstantsNew:
         tm.fail(bool(c.PATTERN_SEMVER_RE.fullmatch(version)))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "distinguished_name",
         [
             "CN=John Doe",
@@ -232,7 +231,7 @@ class TestsFlextConstantsNew:
         tm.ok(bool(c.PATTERN_LDAP_DN_RE.fullmatch(distinguished_name)))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "distinguished_name",
         ["", "=value", "CN=", "CN=   ", "CN=value,", "1CN=value"],
     )

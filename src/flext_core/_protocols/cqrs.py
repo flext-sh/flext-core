@@ -15,8 +15,7 @@ from flext_core._protocols import FlextProtocolsBase
 from flext_core._protocols._cqrs import FlextProtocolsCqrsFlextmodelscqrsPart01
 
 if TYPE_CHECKING:
-    from flext_core._constants import FlextConstantsCqrs, FlextConstantsInfrastructure
-    from flext_core._typings import FlextTypesAnnotateds, FlextTypingBase
+    from flext_core import c, t
 
 
 class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
@@ -27,42 +26,24 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(
-            self,
-        ) -> Literal[FlextConstantsInfrastructure.HandlerMode.COMMAND]:
+        def message_type(self) -> Literal[c.HandlerMode.COMMAND]:
             """Message type discriminator (always 'command')."""
             ...
 
-        @property
-        def command_type(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Command type identifier."""
-            ...
-
-        @property
-        def command_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Unique command identifier used for tracing and idempotency checks."""
-            ...
-
-        @property
-        def issuer_id(self) -> FlextTypesAnnotateds.NonEmptyStr | None:
-            """Identity of the principal that issued this command."""
-            ...
+        command_type: t.NonEmptyStr
+        command_id: t.NonEmptyStr
+        issuer_id: t.NonEmptyStr | None
 
     @runtime_checkable
     class Query(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(
-            self,
-        ) -> Literal[FlextConstantsInfrastructure.HandlerMode.QUERY]:
+        def message_type(self) -> Literal[c.HandlerMode.QUERY]:
             """Message type discriminator."""
             ...
 
-        @property
-        def filters(self) -> Mapping[str, FlextTypingBase.Scalar]:
-            """Filter values that restrict which records are returned by the query."""
-            ...
+        filters: Mapping[str, t.Scalar]
 
         @property
         def pagination(self) -> FlextProtocolsCqrsFlextmodelscqrsPart01.Pagination:
@@ -72,11 +53,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
             """
             ...
 
-        @property
-        def query_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Unique query identifier used for tracing and cache correlation."""
-            ...
-
+        query_id: t.NonEmptyStr
         query_type: str | None
 
     @runtime_checkable
@@ -84,22 +61,22 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         """Structural data contract projected from the owning model."""
 
         @property
-        def handler_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
+        def handler_id(self) -> t.NonEmptyStr:
             """Unique handler identifier."""
             ...
 
         @property
-        def handler_name(self) -> FlextTypesAnnotateds.NonEmptyStr:
+        def handler_name(self) -> t.NonEmptyStr:
             """Human-readable handler name."""
             ...
 
         @property
-        def handler_type(self) -> FlextConstantsCqrs.HandlerType:
+        def handler_type(self) -> c.HandlerType:
             """Handler type."""
             ...
 
         @property
-        def handler_mode(self) -> FlextConstantsCqrs.HandlerType:
+        def handler_mode(self) -> c.HandlerType:
             """Handler mode."""
             ...
 
@@ -131,36 +108,17 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         """Structural data contract projected from the owning model."""
 
         @property
-        def message_type(self) -> Literal[FlextConstantsCqrs.HandlerType.EVENT]:
+        def message_type(self) -> Literal[c.HandlerType.EVENT]:
             """Message type discriminator (always 'event')."""
             ...
 
-        @property
-        def event_type(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Event type identifier."""
-            ...
+        event_type: t.NonEmptyStr
+        aggregate_id: t.NonEmptyStr
+        event_id: t.NonEmptyStr
+        data: Mapping[str, t.Scalar]
+        metadata: Mapping[str, t.Scalar]
 
-        @property
-        def aggregate_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """ID of the aggregate that generated this event."""
-            ...
-
-        @property
-        def event_id(self) -> FlextTypesAnnotateds.NonEmptyStr:
-            """Unique event identifier used for deduplication and observability."""
-            ...
-
-        @property
-        def data(self) -> Mapping[str, FlextTypingBase.Scalar]:
-            """Event payload data."""
-            ...
-
-        @property
-        def metadata(self) -> Mapping[str, FlextTypingBase.Scalar]:
-            """Event metadata (timestamps, correlation IDs, etc.)."""
-            ...
-
-    type FlextMessage = FlextTypesAnnotateds.MessageUnion[Command, Query, Event]
+    type FlextMessage = t.MessageUnion[Command, Query, Event]
 
 
 __all__: list[str] = [

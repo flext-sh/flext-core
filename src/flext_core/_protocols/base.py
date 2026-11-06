@@ -13,7 +13,6 @@ if TYPE_CHECKING:
     from datetime import datetime
 
     from flext_core import p
-    from flext_core._typings import FlextTypesPydantic, FlextTypingBase
 
 
 from collections.abc import Callable, Iterable, MutableSequence
@@ -300,12 +299,12 @@ class FlextProtocolsBase:
             ...
 
         @property
-        def attributes(self) -> FlextTypingBase.JsonMapping:
+        def attributes(self) -> t.JsonMapping:
             """Arbitrary metadata attributes stored as key-value pairs."""
             ...
 
         @property
-        def metadata_value(self) -> FlextTypingBase.Scalar | None:
+        def metadata_value(self) -> t.Scalar | None:
             """Scalar metadata value."""
             ...
 
@@ -325,20 +324,9 @@ class FlextProtocolsBase:
     class RetryConfigurationMixin(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def max_retries(self) -> FlextTypesPydantic.NonNegativeInt:
-            """Maximum retry attempts."""
-            ...
-
-        @property
-        def initial_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
-            """Initial delay between retries."""
-            ...
-
-        @property
-        def max_delay_seconds(self) -> FlextTypesPydantic.PositiveFloat:
-            """Maximum delay between retries."""
-            ...
+        max_retries: t.NonNegativeInt
+        initial_delay_seconds: t.PositiveFloat
+        max_delay_seconds: t.PositiveFloat
 
     @runtime_checkable
     class TimestampedModel(ArbitraryTypesModel, Protocol):

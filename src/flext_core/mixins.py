@@ -67,7 +67,8 @@ class FlextMixins(m.ServiceState):
                         )
                 except c.EXC_BROAD_RUNTIME as exc:
                     self.logger.debug(
-                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION, exc_info=exc
+                        c.LOG_TRACKED_OPERATION_EXPECTED_EXCEPTION,
+                        exc_info=exc,
                     )
                     stats["error_count"] = u.to_int(stats.get("error_count", 0)) + 1
                     raise

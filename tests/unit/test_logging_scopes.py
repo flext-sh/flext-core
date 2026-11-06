@@ -6,8 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, m, p, t, tm, u
 
 
@@ -39,7 +37,7 @@ class TestsFlextLoggingScopes:
         try:
             with u.logging_scope("operation", run_id="outer"):
                 logger.info("outer")
-                with pytest.raises(ValueError, match="inner failed"):
+                with u.Tests.raises(ValueError, match="inner failed"):
                     inner_operation()
                 logger.info("restored")
             logger.info("outside")
@@ -52,7 +50,7 @@ class TestsFlextLoggingScopes:
             u.configure_structlog(settings=m.StructlogOptions())
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("scope", "context"),
         [
             (c.ContextScope.APPLICATION, {"app_name": "test-app"}),

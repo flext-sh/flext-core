@@ -13,12 +13,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, ClassVar, Unpack
 
-from flext_core import c, e, m, u, x
+from flext_core import c, e, m, p, u, x
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
-
-    from flext_core import p
 
 
 class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
@@ -127,7 +125,9 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
         return self._runtime_state.execution_context.handler_mode
 
     @staticmethod
-    def _handler_type_to_literal(handler_type: c.HandlerType | str) -> c.HandlerType:
+    def _handler_type_to_literal(
+        handler_type: c.HandlerType | str,
+    ) -> c.HandlerType:
         """Coerce string or StrEnum to canonical HandlerType.
 
         Returns:

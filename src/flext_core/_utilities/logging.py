@@ -112,12 +112,18 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
         """
         return cls._direct_logger().log(
-            level if level is not None else c.LogLevel.INFO, message, *args, **context
+            level if level is not None else c.LogLevel.INFO,
+            message,
+            *args,
+            **context,
         )
 
     @classmethod
     def debug(
-        cls, message: str, *args: p.LogValue, **context: p.LogValue
+        cls,
+        message: str,
+        *args: p.LogValue,
+        **context: p.LogValue,
     ) -> p.LogResult:
         """Emit a DEBUG event without allocating a consumer-owned logger.
 
@@ -129,7 +135,10 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
     @classmethod
     def trace(
-        cls, message: str, *args: p.LogValue, **context: p.LogValue
+        cls,
+        message: str,
+        *args: p.LogValue,
+        **context: p.LogValue,
     ) -> p.LogResult:
         """Emit opt-in high-volume detail at DEBUG, never another severity.
 
@@ -141,7 +150,10 @@ class FlextUtilitiesLogging(FlextUtilitiesLoggingContext):
 
     @classmethod
     def warning(
-        cls, message: str, *args: p.LogValue, **context: p.LogValue
+        cls,
+        message: str,
+        *args: p.LogValue,
+        **context: p.LogValue,
     ) -> p.LogResult:
         """Emit a WARNING event through the same pipeline.
 

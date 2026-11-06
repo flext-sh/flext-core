@@ -14,14 +14,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from flext_core import FlextResult, c, p, t
+from flext_core import c, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesGuardsTypeCore,
     FlextUtilitiesGuardsTypeModel,
 )
 
 if TYPE_CHECKING:
-    from flext_core import r
+    pass
 
 
 class FlextUtilitiesDispatcherExecute:
@@ -70,7 +70,7 @@ class FlextUtilitiesDispatcherExecute:
         raw_candidate: t.JsonPayload | p.ResultView[t.JsonPayload] | None,
         dispatch_result: type[r[t.JsonPayload]],
     ) -> t.JsonPayload | p.Result[t.JsonPayload] | None:
-        if isinstance(raw_candidate, FlextResult):
+        if isinstance(raw_candidate, r):
             return cast("p.Result[t.JsonPayload]", raw_candidate)
         if raw_candidate is None:
             return None
@@ -132,7 +132,7 @@ class FlextUtilitiesDispatcherExecute:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        dispatch_result = FlextResult[t.JsonPayload]
+        dispatch_result = r[t.JsonPayload]
         try:
             raw_candidate = resolved_handler(message)
             raw_output = FlextUtilitiesDispatcherExecute._normalize_dispatcher_output(

@@ -14,8 +14,6 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import NoReturn
 
-import pytest
-
 from tests import c, d, e, m, p, r, tm, u
 
 
@@ -35,7 +33,7 @@ class TestsFlextCoreDocumentedPatterns:
         tm.that(second, eq=expected.value)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("seed", "transform", "expected"),
         [(1, (1).__add__, 2), (10, (3).__mul__, 30), (-5, abs, 5)],
     )
@@ -96,7 +94,7 @@ class TestsFlextCoreDocumentedPatterns:
         tm.that(result.error, eq="stopped")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("result", "expected"),
         [(r[str].ok("flext"), 5), (r[str].fail("missing"), 0)],
     )
@@ -141,7 +139,7 @@ class TestsFlextCoreDocumentedPatterns:
         failure: p.Result[int] = r[int].fail("no value here")
 
         # Act / Assert
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             _ = failure.value
 
     @staticmethod
@@ -180,7 +178,7 @@ class TestsFlextCoreDocumentedPatterns:
         tm.that(error_data["resource_id"], eq="u-2")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw_email", "expect_success", "expected_value"),
         [
             (" Ada@example.com ", True, "ada@example.com"),
@@ -241,7 +239,7 @@ class TestsFlextCoreDocumentedPatterns:
                 ) from exc
 
         # Act / Assert
-        with pytest.raises(e.FlextTimeoutError) as raised:
+        with u.Tests.raises(e.FlextTimeoutError) as raised:
             fetch_remote_profile()
 
         error = raised.value

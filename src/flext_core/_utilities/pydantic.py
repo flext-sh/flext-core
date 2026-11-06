@@ -58,7 +58,9 @@ class FlextUtilitiesPydantic(
     to_jsonable_python = FlextTypingNativeExport(to_jsonable_python)
 
     @staticmethod
-    def normalize_to_container(value: p.GuardInput) -> t.JsonPayload:
+    def normalize_to_container(
+        value: p.GuardInput,
+    ) -> t.JsonPayload:
         """Preserve model identity and use native JSON for supported data shapes.
 
         Returns:
@@ -104,7 +106,9 @@ class FlextUtilitiesPydantic(
         return adapter.validate_python(to_jsonable_python(payload), strict=True)
 
     @staticmethod
-    def normalize_to_json_value(value: p.GuardInput | p.ModelInput) -> t.JsonValue:
+    def normalize_to_json_value(
+        value: p.GuardInput | p.ModelInput,
+    ) -> t.JsonValue:
         """Serialize through the native SDK and validate the JSON value contract.
 
         Returns:
@@ -116,7 +120,9 @@ class FlextUtilitiesPydantic(
         )
 
     @staticmethod
-    def normalize_to_json_mapping(value: p.GuardInput | p.ModelInput) -> t.JsonMapping:
+    def normalize_to_json_mapping(
+        value: p.GuardInput | p.ModelInput,
+    ) -> t.JsonMapping:
         """Serialize through the same SDK pipeline and require a JSON object.
 
         Returns:

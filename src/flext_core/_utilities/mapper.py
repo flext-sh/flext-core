@@ -10,7 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from itertools import starmap
 from typing import cast
 
-from flext_core import FlextResult, c, m, p, t
+from flext_core import c, m, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesCollection,
     FlextUtilitiesGuardsTypeCore,
@@ -32,7 +32,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
             The resulting ``p.Result[t.JsonMapping]``.
 
         """
-        transform_result: p.Result[t.JsonMapping] = FlextResult[
+        transform_result: p.Result[t.JsonMapping] = r[
             t.JsonMapping
         ].create_from_callable(
             pipeline,
@@ -43,7 +43,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 if isinstance(transform_result.exception, Exception)
                 else transform_result.error
             )
-            return FlextResult[t.JsonMapping].fail_op("transform", failure_reason)
+            return r[t.JsonMapping].fail_op("transform", failure_reason)
         return transform_result
 
     @staticmethod
@@ -216,7 +216,12 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
         )
 
     @staticmethod
-    def prop(key: str) -> Callable[[p.ConfigModelInput], t.JsonPayload | t.JsonValue]:
+    def prop(
+        key: str,
+    ) -> Callable[
+        [p.ConfigModelInput],
+        t.JsonPayload | t.JsonValue,
+    ]:
         """Return an accessor function that extracts the named property from an object.
 
         Returns:
@@ -224,7 +229,9 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
         """
 
-        def accessor(obj: p.ConfigModelInput) -> t.JsonPayload | t.JsonValue:
+        def accessor(
+            obj: p.ConfigModelInput,
+        ) -> t.JsonPayload | t.JsonValue:
             result = FlextUtilitiesMapper._get_raw(obj, key)
             return result if result is not None else ""
 
@@ -232,7 +239,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
 
     @staticmethod
     def transform(
-        source: t.JsonMapping | m.ConfigMap,
+        source: t.JsonMapping | p.ConfigMap,
         *,
         options: p.TransformOptions | None = None,
         filter_keys: set[str] | None = None,
@@ -254,7 +261,7 @@ class FlextUtilitiesMapper(FlextUtilitiesMapperExtract):
                 k: FlextUtilitiesPydantic.normalize_to_json_value(v)
                 for k, v in source.root.items()
             }
-            if isinstance(source, m.ConfigMap)
+            if isinstance(source, p.ConfigMap)
             else source
         )
 

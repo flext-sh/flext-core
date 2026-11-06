@@ -17,7 +17,7 @@
 
 ## Contexto
 
-Este documento identifica _bad patterns_ observados no uso de `Protocol` e na integração
+Este documento identifica *bad patterns* observados no uso de `Protocol` e na integração
 com Pydantic no projeto, seguido de práticas recomendadas (“Pydantic way” + princípios
 SOLID).
 

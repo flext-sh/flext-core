@@ -9,13 +9,13 @@ from __future__ import annotations
 from collections.abc import Mapping, MutableMapping, Sequence
 from typing import Self
 
-from flext_core import FlextExceptions, FlextResult, FlextUtilities, c, m, p, t
+from flext_core import c, e, m, p, r, t, u
 from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextContext(
     m.ContextState,
-    FlextUtilities,
+    u,
 ):
     """Scoped store, metadata and shared structlog context-variable operations."""
 
@@ -52,7 +52,9 @@ class FlextContext(
         )
 
     @staticmethod
-    def fetch_service(service_name: str) -> p.Result[p.RegisterableService]:
+    def fetch_service(
+        service_name: str,
+    ) -> p.Result[p.RegisterableService]:
         """Resolve a named service through the configured container.
 
         Returns:
@@ -74,9 +76,9 @@ class FlextContext(
         """
         try:
             _ = FlextContext.resolve_container().bind(service_name, service)
-        except FlextExceptions.ValidationError as exc:
-            return FlextResult[bool].fail_op("register service", exc)
-        return FlextResult[bool].ok(value=True)
+        except e.ValidationError as exc:
+            return r[bool].fail_op("register service", exc)
+        return r[bool].ok(value=True)
 
     def set(self, key: str, value: t.JsonPayload) -> p.Result[bool]:
         """Store a value in this context's scope.
@@ -86,16 +88,16 @@ class FlextContext(
 
         """
         self.data.root[key] = value
-        return FlextResult[bool].ok(value=True)
+        return r[bool].ok(value=True)
 
     def get(self, key: str) -> p.Result[t.JsonPayload]:
         """Return a stored value or an explicit missing/null failure."""
         if key not in self.data.root:
-            return FlextResult[t.JsonPayload].fail(f"Key '{key}' not found in context")
+            return r[t.JsonPayload].fail(f"Key '{key}' not found in context")
         value = self.data.root[key]
         if value is None:
-            return FlextResult[t.JsonPayload].fail(f"Key '{key}' has no value")
-        return FlextResult[t.JsonPayload].ok(value)
+            return r[t.JsonPayload].fail(f"Key '{key}' has no value")
+        return r[t.JsonPayload].ok(value)
 
     def has(self, key: str) -> bool:
         """Whether the scope contains the key, including null-valued entries.
@@ -121,11 +123,11 @@ class FlextContext(
     def resolve_metadata(self, key: str) -> p.Result[t.JsonPayload]:
         """Return a metadata attribute or an explicit missing/null failure."""
         if key not in self.metadata.attributes:
-            return FlextResult[t.JsonPayload].fail(f"Metadata key '{key}' not found")
+            return r[t.JsonPayload].fail(f"Metadata key '{key}' not found")
         value = self.metadata.attributes[key]
         if value is None:
-            return FlextResult[t.JsonPayload].fail(f"Metadata key '{key}' has no value")
-        return FlextResult[t.JsonPayload].ok(value)
+            return r[t.JsonPayload].fail(f"Metadata key '{key}' has no value")
+        return r[t.JsonPayload].ok(value)
 
     def apply_metadata(self, key: str, value: t.JsonValue) -> None:
         """Replace metadata with a snapshot containing the supplied attribute."""

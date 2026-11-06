@@ -18,15 +18,13 @@ from collections.abc import Callable
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-import pytest
-
 from flext_core.lazy import (
     install_lazy_exports,
     lazy,
     merge_lazy_imports,
     normalize_lazy_imports,
 )
-from tests import tm, u
+from tests import c, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -52,7 +50,7 @@ class TestsFlextCoreLazyExportsMerge:
     """Behavior contract for merge/cache/normalize/build-map helpers."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("raw_literal", "accepted"),
         [
             ("{'Alpha': 'pkg.alpha'}", True),
@@ -147,32 +145,32 @@ class TestsFlextCoreLazyExportsMerge:
     @staticmethod
     def test_merge_relative_child_path_without_module_name_raises_value_error() -> None:
         """A relative child path with no parent module is an invalid request."""
-        with pytest.raises(ValueError, match="relative lazy-import paths"):
+        with u.Tests.raises(ValueError, match="relative lazy-import paths"):
             merge_lazy_imports((".child",), {})
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("module_path", "raw", "expected"),
         [
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": (".alpha", "Alpha")},
                 {"Alpha": ("pkg.parent.alpha", "Alpha")},
                 id="relative-pair-resolves-against-module",
             ),
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": ("other.pkg.mod", "Alpha")},
                 {"Alpha": ("other.pkg.mod", "Alpha")},
                 id="absolute-pair-unchanged",
             ),
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": ".alpha"},
                 {"Alpha": "pkg.parent.alpha"},
                 id="relative-string-resolves-against-module",
             ),
-            pytest.param(
+            u.Tests.param(
                 "pkg.parent",
                 {"Alpha": "other.pkg.mod"},
                 {"Alpha": "other.pkg.mod"},
@@ -204,7 +202,6 @@ class TestsFlextCoreLazyExportsMerge:
                 package_name,
                 module_globals,
                 {"module": module_name},
-                publish_all=False,
             )
 
             getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
@@ -235,7 +232,6 @@ class TestsFlextCoreLazyExportsMerge:
                 package_name,
                 module_globals,
                 {"module": module_name},
-                publish_all=False,
             )
             getattr_fn = cast("Callable[[str], object]", module_globals["__getattr__"])
             tm.that(callable(getattr_fn), truth=True)

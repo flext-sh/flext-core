@@ -56,22 +56,22 @@ class FlextExceptionsBase:
         args: tuple[str, ...]
 
         _error_domains: ClassVar[Mapping[str, c.ErrorDomain]] = {
-            c.ErrorCode.VALIDATION_ERROR: c.ErrorDomain.VALIDATION,
-            c.ErrorCode.TYPE_ERROR: c.ErrorDomain.VALIDATION,
+            c.ErrorCode.VALIDATION_ERROR: (c.ErrorDomain.VALIDATION),
+            c.ErrorCode.TYPE_ERROR: (c.ErrorDomain.VALIDATION),
             c.ErrorCode.ALREADY_EXISTS: c.ErrorDomain.VALIDATION,
             c.ErrorCode.CONFIG_ERROR: c.ErrorDomain.INTERNAL,
-            c.ErrorCode.CONFIGURATION_ERROR: c.ErrorDomain.INTERNAL,
+            c.ErrorCode.CONFIGURATION_ERROR: (c.ErrorDomain.INTERNAL),
             c.ErrorCode.ATTRIBUTE_ERROR: c.ErrorDomain.INTERNAL,
             c.ErrorCode.OPERATION_ERROR: c.ErrorDomain.INTERNAL,
-            c.ErrorCode.AUTHENTICATION_ERROR: c.ErrorDomain.AUTH,
+            c.ErrorCode.AUTHENTICATION_ERROR: (c.ErrorDomain.AUTH),
             c.ErrorCode.AUTHORIZATION_ERROR: c.ErrorDomain.AUTH,
             c.ErrorCode.PERMISSION_ERROR: c.ErrorDomain.AUTH,
             c.ErrorCode.CONNECTION_ERROR: c.ErrorDomain.NETWORK,
-            c.ErrorCode.EXTERNAL_SERVICE_ERROR: c.ErrorDomain.NETWORK,
+            c.ErrorCode.EXTERNAL_SERVICE_ERROR: (c.ErrorDomain.NETWORK),
             c.ErrorCode.TIMEOUT_ERROR: c.ErrorDomain.TIMEOUT,
             c.ErrorCode.NOT_FOUND_ERROR: c.ErrorDomain.NOT_FOUND,
             c.ErrorCode.NOT_FOUND: c.ErrorDomain.NOT_FOUND,
-            c.ErrorCode.RESOURCE_NOT_FOUND: c.ErrorDomain.NOT_FOUND,
+            c.ErrorCode.RESOURCE_NOT_FOUND: (c.ErrorDomain.NOT_FOUND),
             c.ErrorCode.UNKNOWN_ERROR: c.ErrorDomain.UNKNOWN,
         }
 

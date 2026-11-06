@@ -13,11 +13,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from functools import partial
 from types import GenericAlias, NoneType, UnionType
 from typing import (
-    TYPE_CHECKING,
     Annotated,
     Never,
     TypeAliasType,
@@ -35,10 +34,7 @@ import typing_extensions
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
 
-from flext_core import c
-
-if TYPE_CHECKING:
-    from flext_core import p
+from flext_core import c, p
 
 
 class FlextTypesPydantic:
@@ -210,6 +206,7 @@ class FlextTypesPydantic:
     @staticmethod
     def _document_input_schema(
         source: type | GenericAlias | TypeAliasType,
+        *,
         handler: pydantic.GetCoreSchemaHandler,
     ) -> core_schema.CoreSchema:
         """Decode an elected document representation before its strict schema.
@@ -281,7 +278,11 @@ class FlextTypesPydantic:
 
     type DocumentInput[ValueT] = Annotated[
         ValueT,
-        pydantic.GetPydanticSchema(FlextTypesPydantic._document_input_schema),
+        pydantic.GetPydanticSchema(
+            lambda source, handler: FlextTypesPydantic._document_input_schema(
+                source, handler=handler
+            )
+        ),
     ]
 
     # A port target as pydantic hands it over: a class, a PEP 695 alias (from
@@ -382,24 +383,77 @@ class FlextTypesPydantic:
         return schema
 
     @staticmethod
-    def schema_for_model(
-        model: type[p.BaseModel],
-    ) -> FlextTypesPydantic.GetPydanticSchema:
-        """Delegate a protocol payload to its authenticated native model schema.
+    def _model_schema_owner(owner: type | TypeAliasType) -> bool:
+        """Return whether ``owner`` names models only: one class or a union alias.
+
+        A union alias may carry ``Annotated`` metadata (its discriminator) and
+        nest further union aliases; every member must be a Pydantic model class.
 
         Returns:
-            Native metadata preserving the model's validation and serialization.
-
-        Raises:
-            TypeError: The supplied schema owner is not a Pydantic model class.
+            Whether the owner's native schema is built from model classes only.
 
         """
-        if not issubclass(model, pydantic.BaseModel):
-            message = "payload schema owner must be a Pydantic model class"
-            raise TypeError(message)
-        return pydantic.GetPydanticSchema(
-            lambda _source, handler: handler.generate_schema(model)
+        if isinstance(owner, type):
+            return issubclass(owner, pydantic.BaseModel)
+        if not isinstance(owner, (TypeAliasType, typing_extensions.TypeAliasType)):
+            return False
+        value = owner.__value__
+        if get_origin(value) is Annotated:
+            value = get_args(value)[0]
+        return get_origin(value) in {Union, UnionType} and all(
+            FlextTypesPydantic._model_schema_owner(member) for member in get_args(value)
         )
+
+    @staticmethod
+    def schema_for_model(
+        model: Callable[[], type[p.BaseModel] | TypeAliasType],
+    ) -> pydantic.GetPydanticSchema:
+        """Delegate a protocol payload to its native model schema, resolved lazily.
+
+        The owner is a zero-argument callable returning the model class, or the
+        alias of a union of model classes (a discriminated union keeps its
+        ``Annotated`` discriminator). It is called when the schema is
+        generated, never when the annotation is evaluated, so a field may name
+        a sibling through its holder class while that holder's body is still
+        executing: the field stays complete at class creation and subclasses in
+        other modules inherit it unchanged.
+
+        Returns:
+            Native metadata preserving the models' validation and serialization.
+
+        """
+
+        def generate(
+            _source: type | GenericAlias | TypeAliasType,
+            handler: pydantic.GetCoreSchemaHandler,
+        ) -> core_schema.CoreSchema:
+            """Generate the owner's native schema when the field schema is built.
+
+            Returns:
+                The resolved owner's native core schema.
+
+            Raises:
+                PydanticUndefinedAnnotation: The owner names a holder that is
+                    not bound yet, so Pydantic defers the schema.
+                TypeError: The owner resolves to neither a Pydantic model class
+                    nor an alias of a union of them.
+
+            """
+            try:
+                owner = model if isinstance(model, type) else model()
+            except NameError as error:
+                raise pydantic.errors.PydanticUndefinedAnnotation(
+                    name=error.name, message=str(error)
+                ) from error
+            if not FlextTypesPydantic._model_schema_owner(owner):
+                message = (
+                    "payload schema owner must be a Pydantic model class or an "
+                    "alias of a union of them"
+                )
+                raise TypeError(message)
+            return handler.generate_schema(owner)
+
+        return pydantic.GetPydanticSchema(generate)
 
     # Dependency port: a field typed by a class, normally a
     # ``@runtime_checkable`` Protocol from ``p``, or an alias over such classes.

@@ -8,11 +8,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, c, m, p
+from flext_core import c, m, p, r
 from flext_core._exceptions import FlextExceptionsTemplate
 
 if TYPE_CHECKING:
-    from flext_core import r
+    pass
 
 
 class FlextExceptionsFactoriesFail:
@@ -33,7 +33,7 @@ class FlextExceptionsFactoriesFail:
         """
         if result_type is not None:
             return result_type
-        result_cls: type[r[TValue]] = FlextResult
+        result_cls: type[r[TValue]] = r
         return result_cls
 
     @staticmethod
@@ -229,7 +229,8 @@ class FlextExceptionsFactoriesFail:
 
             return e.fail_validation("config_key", error=exc)
             return e.fail_validation(
-                m.ValidationErrorParams(field="config_key", value=raw_value), error=exc
+                m.ValidationErrorParams(field="config_key", value=raw_value),
+                error=exc,
             )
 
         Returns:

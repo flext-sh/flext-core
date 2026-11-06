@@ -128,7 +128,7 @@ class FlextService[TDomainResult = p.Base](x):
     def with_settings(cls, settings: p.Settings) -> Self:
         """Return an isolated service snapshot with one runtime settings clone.
 
-        Uses the structural `p.Settings.clone()` contract already consumed by the
+        Uses the structural `m.Settings.clone()` contract already consumed by the
         runtime bootstrap path so callers can inject a settings snapshot without
         coupling this service kernel to `FlextSettings`.
 

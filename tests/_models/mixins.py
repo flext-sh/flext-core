@@ -12,6 +12,7 @@ from tests._models._mixins import (
     TestsFlextModelsDomain,
     TestsFlextModelsFixtureDicts,
     TestsFlextModelsGuardsMapper,
+    TestsFlextModelsSchemaOwnerHeir,
     TestsFlextModelsServiceCases,
     TestsFlextModelsTestData,
 )
@@ -29,6 +30,7 @@ class TestsFlextModelsNamespace:
             TestsFlextModelsDomain,
             TestsFlextModelsFixtureDicts,
             TestsFlextModelsGuardsMapper,
+            TestsFlextModelsSchemaOwnerHeir,
             TestsFlextModelsServiceCases,
             TestsFlextModelsTestData,
         ):
@@ -87,10 +89,9 @@ class TestsFlextModelsNamespace:
 
 TestsFlextModelsNamespace.populate_container_scenarios()
 
-m = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
 # Flat name restored (the consumers and the tests lazy map resolve it):
 # commit 0958021717 had accidentally double-prefixed the namespace owner.
 TestsFlextModelsMixins = TestsFlextModelsNamespace.TestsFlextModelsMixins
 
-__all__: list[str] = ["TestsFlextModelsMixins", "TestsFlextModelsNamespace", "m"]
+__all__: list[str] = ["TestsFlextModelsMixins", "TestsFlextModelsNamespace"]

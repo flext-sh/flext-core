@@ -10,9 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import d, tm
+from tests import d, tm, u
 
 
 class TestsFlextCoreDecorators:
@@ -26,7 +24,7 @@ class TestsFlextCoreDecorators:
         def legacy() -> str:
             return "still works"
 
-        with pytest.warns(DeprecationWarning, match="use the replacement"):
+        with u.Tests.warns(DeprecationWarning, match="use the replacement"):
             tm.that(legacy(), eq="still works")
 
     @staticmethod

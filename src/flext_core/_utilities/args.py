@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
 
-from flext_core import FlextResult, c, p, t
+from flext_core import c, p, r, t
 
 
 class FlextUtilitiesArgs:
@@ -40,9 +40,9 @@ class FlextUtilitiesArgs:
             empty_kwargs: t.JsonMapping = {}
             kwargs = empty_kwargs
         try:
-            return FlextResult[M].ok(model_cls.model_validate(kwargs))
+            return r[M].ok(model_cls.model_validate(kwargs))
         except c.EXC_ATTR_RUNTIME_VALIDATION as exc:
-            return FlextResult[M].fail_op("parse options model", exc)
+            return r[M].fail_op("parse options model", exc)
 
     @staticmethod
     def resolve_options[P, M: t.BaseModelType](
@@ -62,7 +62,7 @@ class FlextUtilitiesArgs:
 
         """
         if options is not None:
-            return FlextResult[P | M].ok(options)
+            return r[P | M].ok(options)
         return FlextUtilitiesArgs.parse_model(
             kwargs,
             model_cls,

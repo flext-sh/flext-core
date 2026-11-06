@@ -9,13 +9,13 @@ from __future__ import annotations
 from inspect import getattr_static
 from types import MethodType
 
-from flext_core import FlextModels, c, m, p, r
+from flext_core import c, m, p, r
 from flext_core._utilities import FlextUtilitiesModel, FlextUtilitiesModelOptions
 
 
 class FlextUtilitiesModelRuntime(
     FlextUtilitiesModelOptions,
-    FlextModels,
+    m,
 ):
     """Runtime DSL: registry comparison, plugin keys and settings election.
 

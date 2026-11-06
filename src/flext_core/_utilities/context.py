@@ -270,16 +270,25 @@ class FlextUtilitiesContext:
         """
         exported: MutableMapping[str, t.Scalar] = {}
         for key, proxy in (
-            (c.ContextKey.CORRELATION_ID, FlextUtilitiesContext.CORRELATION_ID),
+            (
+                c.ContextKey.CORRELATION_ID,
+                FlextUtilitiesContext.CORRELATION_ID,
+            ),
             (
                 c.ContextKey.PARENT_CORRELATION_ID,
                 FlextUtilitiesContext.PARENT_CORRELATION_ID,
             ),
             (c.ContextKey.SERVICE_NAME, FlextUtilitiesContext.SERVICE_NAME),
-            (c.ContextKey.SERVICE_VERSION, FlextUtilitiesContext.SERVICE_VERSION),
+            (
+                c.ContextKey.SERVICE_VERSION,
+                FlextUtilitiesContext.SERVICE_VERSION,
+            ),
             (c.ContextKey.USER_ID, FlextUtilitiesContext.USER_ID),
             (c.ContextKey.REQUEST_ID, FlextUtilitiesContext.REQUEST_ID),
-            (c.ContextKey.OPERATION_NAME, FlextUtilitiesContext.OPERATION_NAME),
+            (
+                c.ContextKey.OPERATION_NAME,
+                FlextUtilitiesContext.OPERATION_NAME,
+            ),
         ):
             if (value := proxy.get()) is not None:
                 exported[key] = str(value)
@@ -317,7 +326,8 @@ class FlextUtilitiesContext:
 
         """
         scope_vars: MutableMapping[
-            str, ContextVar[p.MutableRootDict[t.JsonPayload] | None]
+            str,
+            ContextVar[p.MutableRootDict[t.JsonPayload] | None],
         ] = {
             scope: ContextVar(f"flext_{scope}_context", default=None)
             for scope in (
@@ -338,7 +348,8 @@ class FlextUtilitiesContext:
     def resolve_context_scope_var(
         state: p.ContextRuntimeState, scope: str
     ) -> tuple[
-        p.ContextRuntimeState, ContextVar[p.MutableRootDict[t.JsonPayload] | None]
+        p.ContextRuntimeState,
+        ContextVar[p.MutableRootDict[t.JsonPayload] | None],
     ]:
         """Reuse a scope variable or add one without mutating the prior state.
 

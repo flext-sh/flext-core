@@ -14,7 +14,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from functools import partial
 
-from flext_core import FlextResult, c, p
+from flext_core import c, p, r
 from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
 from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
 
@@ -54,14 +54,14 @@ class FlextUtilitiesCollection(
         if isinstance(items, Mapping):
             for v in items.values():
                 if predicate(v):
-                    return FlextResult[TItem].ok(v)
-            return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+                    return r[TItem].ok(v)
+            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
         if isinstance(items, c.SEQUENCE_PAIR_TYPES):
             for item in items:
                 if predicate(item):
-                    return FlextResult[TItem].ok(item)
-            return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
-        return FlextResult[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+                    return r[TItem].ok(item)
+            return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
+        return r[TItem].fail(c.ERR_COLLECTION_NO_MATCHING_ITEM_FOUND)
 
     @staticmethod
     def process[TItem, TMapped](
@@ -83,11 +83,9 @@ class FlextUtilitiesCollection(
         for item in items:
             if predicate is not None and not predicate(item):
                 continue
-            process_result = FlextResult[TMapped].create_from_callable(
-                partial(processor, item)
-            )
+            process_result = r[TMapped].create_from_callable(partial(processor, item))
             if process_result.failure:
-                return FlextResult[Sequence[TMapped]].fail(
+                return r[Sequence[TMapped]].fail(
                     c.ERR_COLLECTION_PROCESSING_FAILED_FOR_ITEM.format(
                         item=item,
                         error=process_result.error,
@@ -96,7 +94,7 @@ class FlextUtilitiesCollection(
                     exception=process_result.exception,
                 )
             results.append(process_result.unwrap())
-        return FlextResult[Sequence[TMapped]].ok(results)
+        return r[Sequence[TMapped]].ok(results)
 
 
 __all__: list[str] = ["FlextUtilitiesCollection"]

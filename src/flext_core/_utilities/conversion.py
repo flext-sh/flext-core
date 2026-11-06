@@ -80,7 +80,11 @@ class FlextUtilitiesConversion:
         return str(value)
 
     @staticmethod
-    def to_int(value: t.JsonPayload | t.Scalar | None, *, default: int = 0) -> int:
+    def to_int(
+        value: t.JsonPayload | t.Scalar | None,
+        *,
+        default: int = 0,
+    ) -> int:
         """Convert value to int with safe fallback; bool returns default.
 
         Returns:

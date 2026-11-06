@@ -6,11 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
 from hypothesis import given, settings, strategies as st
 
 from flext_core import FlextContainer
-from tests import d, p, r, tm
+from tests import c, d, p, r, tm
 
 
 class TestsFlextCoreDecoratorsCombined:
@@ -82,8 +81,8 @@ class TestsFlextCoreDecoratorsCombined:
         tm.that(business_operation.__name__, eq="business_operation")
 
     @staticmethod
-    @pytest.mark.parametrize("succeeds", [True, False])
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize("succeeds", [True, False])
+    @c.Tests.MARK.parametrize(
         "decorator",
         [d.railway(), d.combined(railway_enabled=True)],
     )
@@ -110,7 +109,7 @@ class TestsFlextCoreDecoratorsCombined:
             tm.fail(outcome)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "decorator",
         [d.railway(), d.combined(railway_enabled=True)],
     )

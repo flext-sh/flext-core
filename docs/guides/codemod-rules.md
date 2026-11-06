@@ -62,11 +62,11 @@ family imports remain forbidden. Family declarations composing upstream same-let
 facades follow ADR-028 Decision 10; they are not layer-zero self-imports.
 Generation and native-scan agreement require runtime validation after source changes.
 
-| Layer | ast-grep rules | Text rules |
-|---|---|---|
-| Universal (every project) | `flext-infra/src/flext_infra/config/rules/ast-grep/` (`sgconfig.yml` with `scope: universal`) | `flext-infra/src/flext_infra/config/rules/mod/sed.yaml` |
-| Runtime (consumers of a provider) | an installed package's `sgconfig.yml` with `scope: runtime` | none |
-| Project overlay | `<repo>/config/rules/ast-grep/sgconfig.yml` | `<repo>/config/rules/mod/sed.yaml` |
+| Layer                             | ast-grep rules                                                                                | Text rules                                              |
+| --------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| Universal (every project)         | `flext-infra/src/flext_infra/config/rules/ast-grep/` (`sgconfig.yml` with `scope: universal`) | `flext-infra/src/flext_infra/config/rules/mod/sed.yaml` |
+| Runtime (consumers of a provider) | an installed package's `sgconfig.yml` with `scope: runtime`                                   | none                                                    |
+| Project overlay                   | `<repo>/config/rules/ast-grep/sgconfig.yml`                                                   | `<repo>/config/rules/mod/sed.yaml`                      |
 
 The engine composes the providers in that order:
 `flext_infra/_utilities/codemod_rules.py`, `codemod_rule_plan`. Rule ids are unique across
@@ -91,11 +91,11 @@ Common verbs are declared in
 its owned snapshot operation in `flext-infra/config/codegen.yaml`
 (`repository.extra_verbs`), with the native handler in `flext-infra/custom.mk`.
 
-| Surface | Effect |
-|---|---|
-| `make mod` | Apply ast-grep, semantic and text rules to a proven fixed point; committed snapshots are verified, never rewritten. |
-| `make check` | Run the root's declared read-only admission and retain native findings. |
-| `make tests` | Exercise the public transformation and consumer contracts through the persistent incremental test owner. |
+| Surface      | Effect                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------- |
+| `make mod`   | Apply ast-grep, semantic and text rules to a proven fixed point; committed snapshots are verified, never rewritten. |
+| `make check` | Run the root's declared read-only admission and retain native findings.                                             |
+| `make tests` | Exercise the public transformation and consumer contracts through the persistent incremental test owner.            |
 
 Snapshot refresh has an existing Infra extension declaration, `mod-snapshots`,
 whose handler invokes the native refresh owner with the repository root and
@@ -153,10 +153,10 @@ repository. The workspace coordinator visits repositories in dependency order in
 process, and each stage scans only its repository's owned sources. `ast-grep scan -c`
 on the staged provider reproduces the run.
 
-| Workspace declaration | Infra implementation |
-| --- | --- |
+| Workspace declaration                                             | Infra implementation                                                                                                                        |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/_codemod/native_utilities.py) |
-| ADR-028 Decision 18 owns one generalized source rule per law. | The authored catalog is the single rule owner; repository plans bind computed facts to it. |
+| ADR-028 Decision 18 owns one generalized source rule per law.     | The authored catalog is the single rule owner; repository plans bind computed facts to it.                                                  |
 
 Every finding is the native match; no Python admission runs after the scan. A
 project fact a catalog rule needs is a computed fact utility (`own-package`,
@@ -261,14 +261,14 @@ references through `matches:`, `transform`, `fix`). Shared guards live in
 The engine reads these `metadata` keys, declared in
 `flext-infra/src/flext_infra/_constants/refactor.py` (`CODEMOD_RULE_*`):
 
-| Key | Meaning |
-|---|---|
-| `scope` | File scopes as computed fact selectors: `{in: [selector], not-in: [selector]}` narrows the rule's `files`/`ignores`. No rule is partitioned or rendered per package. |
-| `owner` | The distribution that owns the law; that project's own plan drops the rule. |
-| `consumers_of` | The rule applies only to projects whose runtime closure includes that distribution. |
-| `relocation` | A detection-only rule names the Rope relocation that repairs it and captures the symbol as `$NAME`. `family-declaration` also captures the owning facade letter as `$FAMILY` (see below). |
-| `expected` | The exact finding count receipt; any other count fails. |
-| `owned_path_suffix` | Reject owned `.pyi` paths from discovery even without a syntax tree; detection-only, with no exemption. |
+| Key                 | Meaning                                                                                                                                                                                   |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `scope`             | File scopes as computed fact selectors: `{in: [selector], not-in: [selector]}` narrows the rule's `files`/`ignores`. No rule is partitioned or rendered per package.                      |
+| `owner`             | The distribution that owns the law; that project's own plan drops the rule.                                                                                                               |
+| `consumers_of`      | The rule applies only to projects whose runtime closure includes that distribution.                                                                                                       |
+| `relocation`        | A detection-only rule names the Rope relocation that repairs it and captures the symbol as `$NAME`. `family-declaration` also captures the owning facade letter as `$FAMILY` (see below). |
+| `expected`          | The exact finding count receipt; any other count fails.                                                                                                                                   |
+| `owned_path_suffix` | Reject owned `.pyi` paths from discovery even without a syntax tree; detection-only, with no exemption.                                                                                   |
 
 ### One relocation law: every declaration lives in its family
 
@@ -337,8 +337,8 @@ protocol contract this rule enforces.
 
 ### One rule per law
 
-| Workspace declaration | Accepted decision |
-| --- | --- |
+| Workspace declaration                                                     | Accepted decision         |
+| ------------------------------------------------------------------------- | ------------------------- |
 | This section, One rule per law; the generated Infra copy links back here. | FLEXT ADR-028 Decision 18 |
 
 For semantic discovery and refactoring, ADR-028 Decision 17
@@ -370,19 +370,19 @@ duplicates are exterminated. `--laws <set>` diagnoses or repairs one law; the im
 always runs. Violating sources are never edited by hand. The law sets below are tracked
 under bead `flext-brr3y`:
 
-| Theme | Rules (unified into one law) | Bead |
-| --- | --- | --- |
-| T0 law selector | engine: `--laws`, per-repo expansion by `enforce` | `flext-brr3y.4` |
-| TH1 protocol construction | `ban-protocol-constructor` | `flext-brr3y.5` |
-| TH2 letter binding, import header | the authored letter-binding rule (import header, own letter, duplicate and foreign origins, module path, module object, aliases); `add-facade-module-*-alias`; missing-import companions | `flext-brr3y.6` |
-| TH3 protocol projection | model-to-protocol generator; holder composition; duplicate retirement | `flext-brr3y.7` |
-| TH4 Pydantic ConfigDict | `config-dict-type-from-typings`, `rewire-relaxed-*` | `flext-brr3y.8` |
-| TH5 deep import | `rewire-deep-import-to-package`, `ban-consumer-submodule-import`, `ban-test-deep-module-import` | `flext-brr3y.9` |
-| TH6 private import | `ban-private-import`, `ban-own-family-internal-import`, `ban-test-own-private-import` | `flext-brr3y.10` |
-| TH7 pytest to tests facade | `rewire-pytest-*`, `rewire-test-monkeypatch-*`, `rewire-test-assert-*` | `flext-brr3y.11` |
-| TH8 family placement | `namespace-law`, `namespace-structure`, layer and placement bans, `relocate-facade-*` | `flext-brr3y.12` |
-| TH9 `m.` in type positions | `rewire-model-protocol-field-to-port`, `ban-model-typing-in-protocol-projection` | `flext-brr3y.13` |
-| TH10 exceptions to axioms | exemption and ignore owners | `flext-brr3y.14` |
+| Theme                             | Rules (unified into one law)                                                                                                                                                             | Bead             |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| T0 law selector                   | engine: `--laws`, per-repo expansion by `enforce`                                                                                                                                        | `flext-brr3y.4`  |
+| TH1 protocol construction         | `ban-protocol-constructor`                                                                                                                                                               | `flext-brr3y.5`  |
+| TH2 letter binding, import header | the authored letter-binding rule (import header, own letter, duplicate and foreign origins, module path, module object, aliases); `add-facade-module-*-alias`; missing-import companions | `flext-brr3y.6`  |
+| TH3 protocol projection           | model-to-protocol generator; holder composition; duplicate retirement                                                                                                                    | `flext-brr3y.7`  |
+| TH4 Pydantic ConfigDict           | `config-dict-type-from-typings`, `rewire-relaxed-*`                                                                                                                                      | `flext-brr3y.8`  |
+| TH5 deep import                   | `rewire-deep-import-to-package`, `ban-consumer-submodule-import`, `ban-test-deep-module-import`                                                                                          | `flext-brr3y.9`  |
+| TH6 private import                | `ban-private-import`, `ban-own-family-internal-import`, `ban-test-own-private-import`                                                                                                    | `flext-brr3y.10` |
+| TH7 pytest to tests facade        | `rewire-pytest-*`, `rewire-test-monkeypatch-*`, `rewire-test-assert-*`                                                                                                                   | `flext-brr3y.11` |
+| TH8 family placement              | `namespace-law`, `namespace-structure`, layer and placement bans, `relocate-facade-*`                                                                                                    | `flext-brr3y.12` |
+| TH9 `m.` in type positions        | `rewire-model-protocol-field-to-port`, `ban-model-typing-in-protocol-projection`                                                                                                         | `flext-brr3y.13` |
+| TH10 exceptions to axioms         | exemption and ignore owners                                                                                                                                                              | `flext-brr3y.14` |
 
 - **One authored rule per law.** Facts that vary per package, letter or namespace
   are bound as fact utilities and parameters of one authored rule, never rendered
@@ -477,15 +477,15 @@ plans. Retirement uses `CodegenFilePlan` with absent desired bytes and mode;
 `sed.yaml` holds `rules:`, a list of entries. The keys are the `CODEMOD_TEXT_KEY_*`
 constants in `_constants/refactor.py`; any other key fails:
 
-| Key | Meaning |
-|---|---|
-| `id`, `description` | Unique identity and the law it states. |
-| `find`, `replace` | Python `re` pattern and replacement (`\g<name>` groups). |
-| `flags` | Any of `IGNORECASE`, `MULTILINE`, `DOTALL`. |
+| Key                  | Meaning                                                                  |
+| -------------------- | ------------------------------------------------------------------------ |
+| `id`, `description`  | Unique identity and the law it states.                                   |
+| `find`, `replace`    | Python `re` pattern and replacement (`\g<name>` groups).                 |
+| `flags`              | Any of `IGNORECASE`, `MULTILINE`, `DOTALL`.                              |
 | `include`, `exclude` | Repository-relative globs. Markdown targets must be included explicitly. |
-| `distributions` | Project names the rule targets; empty means all. |
-| `expected` | Exact match count receipt. |
-| `capture_equals` | Required equality between captures. |
+| `distributions`      | Project names the rule targets; empty means all.                         |
+| `expected`           | Exact match count receipt.                                               |
+| `capture_equals`     | Required equality between captures.                                      |
 
 The engine refuses findings in generated files (fix the generator instead), and a
 rewritten Python file must still parse (`codemod/text_gates.py`). Select native

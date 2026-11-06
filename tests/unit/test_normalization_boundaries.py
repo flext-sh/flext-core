@@ -20,7 +20,7 @@ class TestsFlextCoreNormalizationBoundaries:
     """Validate domain boundaries rather than preserving a retired facade."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [None, 42, "text", b"text", Path("relative/path"), [1, None], {"key": None}],
     )
@@ -50,13 +50,13 @@ class TestsFlextCoreNormalizationBoundaries:
         )
         tm.that(u.normalize_to_json_mapping(supported), eq=expected)
         unsupported: Mapping[str, t.Scalar] = {"encoded": b"native"}
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ConfigMap.model_validate(unsupported)
 
     @staticmethod
     def test_json_serialization_rejects_unknown_input() -> None:
         """Unsupported native values fail at JSON admission."""
-        with pytest.raises(ValueError, match="Unable to serialize unknown type"):
+        with u.Tests.raises(ValueError, match="Unable to serialize unknown type"):
             u.normalize_to_json_value(type)
 
     @staticmethod
@@ -70,7 +70,7 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.ok(isinstance(issues[0], Mapping))
 
     @staticmethod
-    @pytest.mark.parametrize("depth", [1, 3])
+    @c.Tests.MARK.parametrize("depth", [1, 3])
     def test_json_payload_accepts_native_json_at_recursive_collection_depths(
         depth: int,
     ) -> None:
@@ -82,28 +82,28 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.that(u.normalize_to_json_mapping(parsed), eq={"payload": payload})
 
     @staticmethod
-    @pytest.mark.parametrize("nested", [False, True])
+    @c.Tests.MARK.parametrize("nested", [False, True])
     def test_json_payload_rejects_non_string_mapping_keys(*, nested: bool) -> None:
         """Validation rejects invalid keys before native JSON can stringify them."""
         invalid = {1: "not a string key"}
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ConfigMap.model_validate({"issues": [invalid]} if nested else invalid)
 
     @staticmethod
-    @pytest.mark.parametrize("payload", [{1: "invalid-key"}, {"nested": {1: None}}])
+    @c.Tests.MARK.parametrize("payload", [{1: "invalid-key"}, {"nested": {1: None}}])
     def test_json_normalization_rejects_invalid_mapping_keys(
         payload: p.GuardInput,
     ) -> None:
         """Both JSON boundaries reject keys before they can be stringified."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             u.normalize_to_json_value(payload)
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             u.normalize_to_json_mapping(payload)
 
     @staticmethod
     def test_json_payload_rejects_unsupported_nested_values() -> None:
         """Unknown values cannot be accepted as empty abstract model instances."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ConfigMap.model_validate({
                 "issues": [{"invalid": ModuleType("invalid")}],
             })
@@ -113,7 +113,7 @@ class TestsFlextCoreNormalizationBoundaries:
         """The public SDK provider constructs an adapter, not a type-only alias."""
         adapter = u.type_adapter(t.TypeForm(MutableMapping[str, int]))
         tm.that(adapter.validate_json(b'{"value": 1}'), eq={"value": 1})
-        with pytest.raises(m.ValidationError, match="int_parsing"):
+        with u.Tests.raises(m.ValidationError, match="int_parsing"):
             adapter.validate_json(b'{"value": "not an integer"}')
 
     @staticmethod
@@ -121,7 +121,7 @@ class TestsFlextCoreNormalizationBoundaries:
         """The native provider does not relax the caller's declared policy."""
         adapter = u.type_adapter(t.TypeForm(int), config=m.ConfigDict(strict=True))
         tm.that(adapter.validate_python(1), eq=1)
-        with pytest.raises(m.ValidationError, match="int_type"):
+        with u.Tests.raises(m.ValidationError, match="int_type"):
             adapter.validate_python(c.ParserBooleanToken.ONE)
 
     @staticmethod
@@ -147,7 +147,7 @@ class TestsFlextCoreNormalizationBoundaries:
             "attributes": {"path": path, "absent": None, "nested": [None]}
         })
         tm.that(metadata.attributes, eq={"path": str(path), "nested": [None]})
-        with pytest.raises(m.ValidationError, match="_private"):
+        with u.Tests.raises(m.ValidationError, match="_private"):
             m.Metadata.model_validate({"attributes": {"_private": 1}})
 
     @staticmethod
@@ -203,7 +203,7 @@ class TestsFlextCoreNormalizationBoundaries:
             is_=m.Metadata,
             attr_eq={"attributes": {"tag": "value"}},
         )
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ServiceRegistration.model_validate({
                 "name": "invalid",
                 "service": ModuleType("unsupported"),
@@ -236,7 +236,7 @@ class TestsFlextCoreNormalizationBoundaries:
         tm.that(tm.ok(clean_container.resolve("identity")), where=resolves_payload)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "payload",
         [
             {1: "invalid-key"},
@@ -244,7 +244,7 @@ class TestsFlextCoreNormalizationBoundaries:
             [ModuleType("unsupported")],
         ],
     )
-    @pytest.mark.parametrize("registration_kind", ["factories", "resources"])
+    @c.Tests.MARK.parametrize("registration_kind", ["factories", "resources"])
     def test_factory_and_resource_reject_invalid_payloads(
         clean_container: p.Container,
         payload: p.GuardInput,
@@ -274,7 +274,7 @@ class TestsFlextCoreRuntimeNormalization:
     @staticmethod
     def test_invalid_pagination_does_not_become_a_default() -> None:
         """Invalid explicit pagination is rejected rather than defaulted."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Query.model_validate({"pagination": {"page": "invalid"}})
 
     @staticmethod

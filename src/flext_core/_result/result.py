@@ -1,14 +1,24 @@
-"""Composed private generic result base over the _result pyramid.
+"""Composed internal base unifying the FlextResult feature hierarchy.
+
+Assembles the unwrapping, composition, transformation, construction, and
+behavioral layers into a single abstract base class through C3 linearization.
+
+See Also:
+    - Workspace ADR-001 (Railway-Oriented Programming):
+      ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+    - :mod:`result`: Public concrete result facade.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
 
 from abc import ABC
-from typing import TYPE_CHECKING, override
+from typing import override
 
+from flext_core import p
 from flext_core._result import (
     FlextResultBehavior,
     FlextResultComposition,
@@ -16,9 +26,6 @@ from flext_core._result import (
     FlextResultTransforms,
     FlextResultUnwrap,
 )
-
-if TYPE_CHECKING:
-    from flext_core import p
 
 
 class FlextResultComposed[T](
@@ -29,20 +36,28 @@ class FlextResultComposed[T](
     FlextResultBehavior[T],
     ABC,
 ):
-    """Type-safe result with monadic railway-oriented operations.
+    """Monadic railway container uniting all result capabilities.
 
-    Composes the unwrap, composition, transform, construction and behavior
-    layers into the single concrete base published as ``FlextResult``; every
-    layer contributes one orthogonal slice of the result API and the MRO is
-    the only composition mechanism.
+    Integrates unwrap helpers, sequence combinators, functional transforms,
+    factory methods, and pythonic behavioral protocols into the primary base
+    consumed by ``FlextResult``.
+
+    Type Parameters:
+        T: The type of payload carried on success.
+
+    See Also:
+        - Workspace ADR-001 (Railway-Oriented Programming):
+          ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+        - :class:`result.FlextResult`: Concrete public facade.
+
     """
 
     @override
     def _as_result(self) -> p.Result[T]:
-        """Return the complete public family by reference, without protocol scans.
+        """Return the complete result view by direct self reference.
 
         Returns:
-            This result with its original identity, payload, and native failure.
+            p.Result[T]: This instance cast to its structural protocol contract.
 
         """
         return self

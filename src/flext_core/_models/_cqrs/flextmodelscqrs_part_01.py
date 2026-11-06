@@ -45,7 +45,11 @@ class FlextModelsCqrsPart01:
                 ge=c.MIN_PAGE_SIZE,
                 le=c.MAX_PAGE_SIZE,
                 description="Number of items per page within the configured bounds",
-                examples=[c.MIN_PAGE_SIZE, c.DEFAULT_PAGE_SIZE, c.MAX_PAGE_SIZE],
+                examples=[
+                    c.MIN_PAGE_SIZE,
+                    c.DEFAULT_PAGE_SIZE,
+                    c.MAX_PAGE_SIZE,
+                ],
             ),
         ] = c.DEFAULT_PAGE_SIZE
 

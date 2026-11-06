@@ -22,6 +22,8 @@ if TYPE_CHECKING:
     from tests._models._mixins.fixture_suite import TestsFlextModelsFixtureSuite
     from tests._models._mixins.fixtures import TestsFlextModelsFixtureDicts
     from tests._models._mixins.guards_mapper import TestsFlextModelsGuardsMapper
+    from tests._models._mixins.schema_owner import TestsFlextModelsSchemaOwner
+    from tests._models._mixins.schema_owner_heir import TestsFlextModelsSchemaOwnerHeir
     from tests._models._mixins.service_case_core import TestsFlextModelsServiceCaseCore
     from tests._models._mixins.service_case_reliability import (
         TestsFlextModelsServiceCaseReliability,
@@ -48,6 +50,8 @@ __all__: tuple[str, ...] = (
     "TestsFlextModelsFixturePayloads",
     "TestsFlextModelsFixtureSuite",
     "TestsFlextModelsGuardsMapper",
+    "TestsFlextModelsSchemaOwner",
+    "TestsFlextModelsSchemaOwnerHeir",
     "TestsFlextModelsServiceCaseCore",
     "TestsFlextModelsServiceCaseReliability",
     "TestsFlextModelsServiceCaseValidation",
@@ -71,6 +75,8 @@ install_lazy_exports(
         "TestsFlextModelsFixturePayloads": ".fixture_payloads",
         "TestsFlextModelsFixtureSuite": ".fixture_suite",
         "TestsFlextModelsGuardsMapper": ".guards_mapper",
+        "TestsFlextModelsSchemaOwner": ".schema_owner",
+        "TestsFlextModelsSchemaOwnerHeir": ".schema_owner_heir",
         "TestsFlextModelsServiceCaseCore": ".service_case_core",
         "TestsFlextModelsServiceCaseReliability": ".service_case_reliability",
         "TestsFlextModelsServiceCaseValidation": ".service_case_validation",

@@ -312,7 +312,11 @@ class FlextUtilitiesDiscovery:
         params = tuple(signature.parameters.values())[1:]
         if not params:
             if metadata is not None:
-                raise error(where, signature, c.ERR_SERVICE_OPERATION_INPUTLESS_COMMAND)
+                raise error(
+                    where,
+                    signature,
+                    c.ERR_SERVICE_OPERATION_INPUTLESS_COMMAND,
+                )
             return None
         param = params[0]
         if param.name not in hints:

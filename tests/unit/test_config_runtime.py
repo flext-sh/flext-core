@@ -12,10 +12,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
 from flext_core import FlextConfig, FlextCore, FlextSettings, config, settings
-from tests import m, tm, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -135,7 +133,7 @@ class TestsFlextCoreConfigSettingsCanonical:
         tm.ok(config is FlextConfig.fetch_global())
 
     @staticmethod
-    @pytest.mark.parametrize("contents", ["limit: invalid\n", "limit: -1\n"])
+    @c.Tests.MARK.parametrize("contents", ["limit: invalid\n", "limit: -1\n"])
     def test_invalid_config_reset_preserves_published_value_and_frozen_state(
         tmp_path: Path,
         contents: str,
@@ -159,9 +157,9 @@ class TestsFlextCoreConfigSettingsCanonical:
             snapshot = published.model_copy(deep=True)
             original = published.model_dump()
             rules.write_text(contents, encoding="utf-8")
-            with pytest.raises(m.ValidationError, match="limit"):
+            with u.Tests.raises(m.ValidationError, match="limit"):
                 ValidatedConfig.reset_for_testing()
-            with pytest.raises(m.ValidationError, match="limit"):
+            with u.Tests.raises(m.ValidationError, match="limit"):
                 ValidatedConfig()
             tm.ok(published is ValidatedConfig.fetch_global())
             tm.that(published.model_dump(), eq=original)
@@ -193,9 +191,9 @@ class TestsFlextCoreConfigSettingsCanonical:
             },
         ):
             RequiredConfig.reset_for_testing()
-            with pytest.raises(m.ValidationError, match="required_value"):
+            with u.Tests.raises(m.ValidationError, match="required_value"):
                 RequiredConfig.model_validate({})
-            with pytest.raises(m.ValidationError, match="required_value"):
+            with u.Tests.raises(m.ValidationError, match="required_value"):
                 RequiredConfig.fetch_global()
             rules.write_text("required_value: 7\n", encoding="utf-8")
             direct = RequiredConfig(required_value=7)

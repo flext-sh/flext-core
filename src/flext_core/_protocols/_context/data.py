@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsBase
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypingBase
+    from flext_core import t
 
 
 class FlextProtocolsContextData:
@@ -24,15 +24,12 @@ class FlextProtocolsContextData:
     class ContextData(FlextProtocolsBase.FlexibleInternalModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def data(self) -> Mapping[str, FlextTypingBase.Scalar]:
-            """Initial context data as key-value pairs."""
-            ...
+        data: Mapping[str, t.Scalar]
 
         @property
         def metadata(
             self,
-        ) -> FlextProtocolsBase.Metadata | Mapping[str, FlextTypingBase.Scalar] | None:
+        ) -> FlextProtocolsBase.Metadata | Mapping[str, t.Scalar] | None:
             """Context metadata (creation info, source, etc.)."""
             ...
 

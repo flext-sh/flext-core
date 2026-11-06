@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 from collections.abc import Mapping, Sequence
 from typing import Protocol, runtime_checkable
 
-from flext_core import c
+from flext_core import c, t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsEntity,
@@ -30,7 +30,6 @@ from flext_core._protocols import (
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from flext_core import t
     from flext_core._protocols import (
         FlextProtocolsContainer,
         FlextProtocolsHandler,
@@ -116,7 +115,8 @@ class FlextProtocolsRegistry:
         def register_bindings(
             self,
             bindings: Mapping[
-                t.RegistryBindingKey, FlextProtocolsHandler.DispatchableHandler
+                t.RegistryBindingKey,
+                FlextProtocolsHandler.DispatchableHandler,
             ],
         ) -> FlextProtocolsResult.Result[FlextProtocolsRegistry.RegistrySummary]:
             """Register message-to-handler bindings."""

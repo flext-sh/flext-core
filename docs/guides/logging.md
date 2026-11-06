@@ -13,12 +13,12 @@
 
 Use the public Core `u` facade over native `structlog` and logging handlers:
 
-| Call | Meaning |
-| --- | --- |
-| `u.log(message, *args, level=None, **context)` | Ordinary INFO; `level` selects another standard severity. |
-| `u.debug(...)` / `u.warning(...)` | DEBUG / WARNING through the same pipeline. |
-| `u.trace(...)` | DEBUG detail, admitted only when `trace` is enabled and the threshold permits DEBUG. |
-| `u.failure(..., exception=cause)` | ERROR with the original `BaseException`, including its saved traceback. |
+| Call                                           | Meaning                                                                              |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `u.log(message, *args, level=None, **context)` | Ordinary INFO; `level` selects another standard severity.                            |
+| `u.debug(...)` / `u.warning(...)`              | DEBUG / WARNING through the same pipeline.                                           |
+| `u.trace(...)`                                 | DEBUG detail, admitted only when `trace` is enabled and the threshold permits DEBUG. |
+| `u.failure(..., exception=cause)`              | ERROR with the original `BaseException`, including its saved traceback.              |
 
 An explicit `log_level` wins over `debug`; debug selects DEBUG only without an
 explicit level. Trace changes detail, never severity or threshold: ERROR plus

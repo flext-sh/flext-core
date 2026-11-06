@@ -8,20 +8,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import pytest
-
-from tests import tm, u
+from tests import c, tm, u
 from tests.integration.service_fixtures import TestsFlextFlextServiceFixtures
 
 if TYPE_CHECKING:
     from pathlib import Path
 
 
-@pytest.mark.usefixtures("clean_container")
+@c.Tests.MARK.usefixtures("clean_container")
 class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
     """Exercise lifecycle service behavior with an isolated container."""
 
-    @pytest.mark.integration
+    @c.Tests.MARK.integration
     def test_lifecycle_service_execution(self) -> None:
         """Test lifecycle service execution."""
         lifecycle_service = self.LifecycleService()
@@ -30,7 +28,7 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         tm.that(result.value, eq="ready")
         tm.fail(lifecycle_service.initialized)
 
-    @pytest.mark.integration
+    @c.Tests.MARK.integration
     def test_lifecycle_service_initialization(self, temp_dir: Path) -> None:
         """Test lifecycle service initialization with settings."""
         lifecycle_service = self.LifecycleService()
@@ -46,7 +44,7 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         effective_config = tm.not_none(lifecycle_service.service_config)
         tm.that(effective_config.name, eq="test_service")
 
-    @pytest.mark.integration
+    @c.Tests.MARK.integration
     def test_lifecycle_service_health_check(self, temp_dir: Path) -> None:
         """Test lifecycle service health check."""
         lifecycle_service = self.LifecycleService()
@@ -61,7 +59,7 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         tm.fail(health_before)
         tm.ok(health_after)
 
-    @pytest.mark.integration
+    @c.Tests.MARK.integration
     def test_lifecycle_service_shutdown(self, temp_dir: Path) -> None:
         """Test lifecycle service shutdown."""
         lifecycle_service = self.LifecycleService()
@@ -77,7 +75,7 @@ class TestsFlextFlextServiceLifecycleCases(TestsFlextFlextServiceFixtures):
         tm.ok(lifecycle_service.shutdown_called)
         tm.fail(lifecycle_service.health_check())
 
-    @pytest.mark.integration
+    @c.Tests.MARK.integration
     def test_lifecycle_service_failure_modes(self, temp_dir: Path) -> None:
         """Test lifecycle service failure modes."""
         lifecycle_service = self.LifecycleService()

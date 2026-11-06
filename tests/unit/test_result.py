@@ -6,9 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import p, r, tm
+from tests import c, p, r, tm, u
 
 
 class TestsFlextCoreResult:
@@ -37,7 +35,7 @@ class TestsFlextCoreResult:
         """Accessing .value on a failure raises rather than inventing data."""
         result: p.Result[int] = r[int].fail("no value")
 
-        with pytest.raises(RuntimeError):
+        with u.Tests.raises(RuntimeError):
             _ = result.value
 
     @staticmethod
@@ -56,7 +54,7 @@ class TestsFlextCoreResult:
         tm.that(result.exception is cause, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("success", "default", "expected"),
         [(True, 0, 7), (False, 0, 0), (False, 99, 99)],
     )
@@ -151,7 +149,7 @@ class TestsFlextCoreResult:
         tm.ok(recovered, eq=-1)
 
     @staticmethod
-    @pytest.mark.parametrize(("value", "keeps"), [(9, True), (2, False)])
+    @c.Tests.MARK.parametrize(("value", "keeps"), [(9, True), (2, False)])
     def test_filter_keeps_or_rejects_by_predicate(
         *,
         value: int,
@@ -221,15 +219,15 @@ class TestsFlextCoreResultIdentity:
     @staticmethod
     def test_ok_rejects_none_payload_explicitly() -> None:
         """Success with ``None`` is forbidden and raises immediately."""
-        with pytest.raises(ValueError, match="cannot be None"):
+        with u.Tests.raises(ValueError, match="cannot be None"):
             r.ok(None)
 
     @staticmethod
     def test_parameterized_none_and_object_are_forbidden() -> None:
         """``r[None]`` and ``r[object]`` specializations are rejected."""
-        with pytest.raises(ValueError, match="parameterized with None"):
+        with u.Tests.raises(ValueError, match="parameterized with None"):
             r[None].ok(value=True)
-        with pytest.raises(ValueError, match="parameterized with object"):
+        with u.Tests.raises(ValueError, match="parameterized with object"):
             r[object].ok({"k": "v"})
-        with pytest.raises(ValueError, match="parameterized with None"):
+        with u.Tests.raises(ValueError, match="parameterized with None"):
             r[None].fail("nope")

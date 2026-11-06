@@ -12,9 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
-from tests import m, t, tm
+from tests import c, m, t, tm, u
 
 
 class TestsFlextCoreModelsContainer:
@@ -42,7 +40,7 @@ class TestsFlextCoreModelsContainer:
     def test_config_map_rejects_non_mapping_root() -> None:
         # Pydantic ValidationError subclasses ValueError.
         """Test config map rejects non mapping root."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ConfigMap.model_validate(["not", "a", "mapping"])
 
     # ------------------------------------------------------------------ #
@@ -59,11 +57,11 @@ class TestsFlextCoreModelsContainer:
     def test_config_map_getitem_missing_key_raises() -> None:
         """Test config map getitem missing key raises."""
         cfg = m.ConfigMap(root={"a": 1})
-        with pytest.raises(KeyError):
+        with u.Tests.raises(KeyError):
             _ = cfg["absent"]
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("key", "default", "expected"),
         [("a", None, 1), ("absent", None, None), ("absent", 99, 99)],
     )
@@ -77,7 +75,7 @@ class TestsFlextCoreModelsContainer:
         tm.that(cfg.get(key, default), eq=expected)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("key", "present"),
         [("a", True), ("b", True), ("missing", False)],
     )
@@ -96,7 +94,7 @@ class TestsFlextCoreModelsContainer:
         tm.that(len(m.ConfigMap(root={"a": 1, "b": 2, "c": 3})), eq=3)
 
     @staticmethod
-    @pytest.mark.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
+    @c.Tests.MARK.parametrize(("root", "truthy"), [({}, False), ({"a": 1}, True)])
     def test_config_map_bool_reflects_emptiness(
         root: t.UserOverridesMapping,
         *,
@@ -221,7 +219,7 @@ class TestsFlextCoreContainerSerialization:
         tm.that(len(m.ObjectList(root=["a", 1])), eq=2)
 
     @staticmethod
-    @pytest.mark.parametrize(("root", "truthy"), [([], False), (["a"], True)])
+    @c.Tests.MARK.parametrize(("root", "truthy"), [([], False), (["a"], True)])
     def test_object_list_bool_reflects_emptiness(
         root: list[t.JsonPayload],
         *,
@@ -239,5 +237,5 @@ class TestsFlextCoreContainerSerialization:
     @staticmethod
     def test_object_list_rejects_non_sequence_root() -> None:
         """Test object list rejects non sequence root."""
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.ObjectList.model_validate({"root": 12345})

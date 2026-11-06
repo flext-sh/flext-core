@@ -33,6 +33,64 @@ class FlextLazyPart02(FlextLazyPart01):
         """
         return FlextLazyMember(module, owner, member, self.load)
 
+    def deferred(self, module: str, owner: str, members: Sequence[str]) -> type:
+        """Return a stand-in for ``module.owner`` whose members load on first use.
+
+        Every member is a ``FlextLazyMember`` descriptor, so composing the
+        stand-in by MRO imports nothing. The first member access loads
+        ``module`` and caches the real member on the stand-in.
+
+        Returns:
+            A class named ``owner`` that defers each of ``members``.
+
+        """
+        namespace: dict[str, str | FlextLazyMember] = {
+            "__module__": module,
+            "__qualname__": owner,
+        }
+        namespace.update({name: self.member(module, owner, name) for name in members})
+        return type(owner, (), namespace)
+
+    def _deferred_export(
+        self,
+        name: str,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
+        members: Sequence[str],
+        module_globals: t.ModuleGlobals,
+    ) -> type:
+        """Publish the stand-in of one deferred export into its package globals.
+
+        Returns:
+            The stand-in class, cached so every importer shares its identity.
+
+        """
+        entry = lazy_imports[name]
+        module_path, attr = (entry, name) if isinstance(entry, str) else entry
+        standin = self.deferred(module_path, attr, members)
+        module_globals[name] = standin
+        return standin
+
+    @staticmethod
+    def _require_deferred(
+        module_name: str,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
+        deferred_members: Mapping[str, Sequence[str]],
+    ) -> None:
+        """Reject a deferred export that names no class export of the package.
+
+        Raises:
+            ValueError: If a deferred name is not a class export in the map.
+
+        """
+        for name, members in deferred_members.items():
+            entry = lazy_imports.get(name)
+            if entry is None or (not isinstance(entry, str) and not entry[1]):
+                msg = f"module {module_name!r} defers {name!r} without a class export"
+                raise ValueError(msg)
+            if not members:
+                msg = f"module {module_name!r} defers {name!r} with no members"
+                raise ValueError(msg)
+
     @staticmethod
     def resolve_members(target: type) -> tuple[str, ...]:
         """Resolve every lazy member along ``target``'s MRO; return their names.
@@ -93,6 +151,13 @@ class FlextLazyPart02(FlextLazyPart01):
         if not attr:
             if not self._module_is_initializing(mod):
                 module_globals[name] = mod
+            return mod
+
+        if isinstance(entry, str) and self._module_is_initializing(mod):
+            # A letter alias whose target module is mid-execution (package
+            # __init__ importing a subtree that imports the facade back) is the
+            # module being initialized: hand back the partial module instead of
+            # failing the alias. No other deferred-import form is allowed.
             return mod
 
         try:
@@ -181,8 +246,8 @@ class FlextLazyPart02(FlextLazyPart01):
         module_globals: t.ModuleGlobals,
         lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
-        publish_all: bool = True,
         public_exports: Sequence[str] | None = None,
+        deferred_members: Mapping[str, Sequence[str]] | None = None,
     ) -> t.LazyExportHooks:
         """Install __getattr__/__dir__/__all__ and publish _LAZY_IMPORTS.
 
@@ -194,21 +259,27 @@ class FlextLazyPart02(FlextLazyPart01):
         module-level literal or inline call — satisfy that contract from
         the single owner.
 
+        ``deferred_members`` maps a class export to its member names. That
+        export resolves to its ``deferred`` stand-in without loading its
+        module, so a facade composing it loads no heavy capability.
+
         Returns:
             The installed PEP 562 hooks, reused for identical installation inputs.
 
         """
-        pre_signature: tuple[int, int, int, bool] = (
+        pre_signature: tuple[int, int, int, int] = (
             id(module_globals),
             id(lazy_imports),
             0 if public_exports is None else id(public_exports),
-            publish_all,
+            0 if deferred_members is None else id(deferred_members),
         )
         cached = self.install_cache.get(module_name)
         if cached is not None and cached[0] == pre_signature:
             return cached[1]
 
         normalized = self._norm_map(module_name, lazy_imports)
+        deferred = {} if deferred_members is None else deferred_members
+        self._require_deferred(module_name, normalized, deferred)
         for name in normalized:
             module_globals.pop(name, None)
         if public_exports is not None:
@@ -219,6 +290,9 @@ class FlextLazyPart02(FlextLazyPart01):
         module_globals["_LAZY_IMPORTS"] = normalized
 
         def _module_getattr(name: str) -> t.ModuleGlobalValue:
+            members = deferred.get(name)
+            if members is not None:
+                return self._deferred_export(name, normalized, members, module_globals)
             return self.get(name, normalized, module_globals, module_name)
 
         def _module_dir() -> list[str]:
@@ -232,8 +306,7 @@ class FlextLazyPart02(FlextLazyPart01):
         if target is not None:
             vars(target)["__getattr__"] = _module_getattr
         module_globals["__dir__"] = _module_dir
-        if publish_all:
-            module_globals["__all__"] = names
+        module_globals["__all__"] = names
 
         self.cleanup(module_name, normalized)
         hooks = (_module_getattr, _module_dir)

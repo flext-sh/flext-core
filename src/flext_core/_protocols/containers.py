@@ -11,8 +11,8 @@ from __future__ import annotations
 from collections.abc import ItemsView, KeysView, Mapping, MutableMapping, ValuesView
 from typing import Protocol, runtime_checkable
 
+from flext_core import t
 from flext_core._protocols import FlextProtocolsPydantic
-from flext_core._typings import FlextTypesServices
 
 
 class FlextProtocolsContainers:
@@ -20,30 +20,25 @@ class FlextProtocolsContainers:
 
     @runtime_checkable
     class ValidatorCallable(
-        FlextProtocolsPydantic.RootModel[FlextTypesServices.ValidatorCallable], Protocol
+        FlextProtocolsPydantic.RootModel[t.ValidatorCallable], Protocol
     ):
         """Structural data contract projected from the owning model."""
 
-        def __call__(
-            self, value: FlextTypesServices.ScalarOrModel
-        ) -> FlextTypesServices.ScalarOrModel:
+        def __call__(self, value: t.ScalarOrModel) -> t.ScalarOrModel:
             """Structural member projected from the owning model."""
             ...
 
     @runtime_checkable
     class _MappingRootBase(
-        FlextProtocolsPydantic.RootModel[
-            MutableMapping[str, FlextTypesServices.JsonPayload]
-        ],
-        Protocol,
+        FlextProtocolsPydantic.RootModel[MutableMapping[str, t.JsonPayload]], Protocol
     ):
         """Structural data contract projected from the owning model."""
 
-        def __getitem__(self, key: str) -> FlextTypesServices.JsonPayload:
+        def __getitem__(self, key: str) -> t.JsonPayload:
             """Structural member projected from the owning model."""
             ...
 
-        def __setitem__(self, key: str, value: FlextTypesServices.JsonPayload) -> None:
+        def __setitem__(self, key: str, value: t.JsonPayload) -> None:
             """Structural member projected from the owning model."""
             ...
 
@@ -67,21 +62,19 @@ class FlextProtocolsContainers:
             """Return a view over the mapping's string keys."""
             ...
 
-        def values(self) -> ValuesView[FlextTypesServices.JsonPayload]:
+        def values(self) -> ValuesView[t.JsonPayload]:
             """Return a view over the stored JSON payloads."""
             ...
 
-        def items(self) -> ItemsView[str, FlextTypesServices.JsonPayload]:
+        def items(self) -> ItemsView[str, t.JsonPayload]:
             """Return a view over the key-payload pairs."""
             ...
 
-        def get(
-            self, key: str, default: FlextTypesServices.JsonPayload = None
-        ) -> FlextTypesServices.JsonPayload:
+        def get(self, key: str, default: t.JsonPayload = None) -> t.JsonPayload:
             """Return the payload stored under ``key``."""
             ...
 
-        def update(self, other: Mapping[str, FlextTypesServices.JsonPayload]) -> None:
+        def update(self, other: Mapping[str, t.JsonPayload]) -> None:
             """Merge ``other`` into the mapping, overwriting existing keys."""
             ...
 
@@ -89,19 +82,15 @@ class FlextProtocolsContainers:
             """Remove every key-payload pair from the mapping."""
             ...
 
-        def pop(
-            self, key: str, *args: FlextTypesServices.JsonPayload
-        ) -> FlextTypesServices.JsonPayload:
+        def pop(self, key: str, *args: t.JsonPayload) -> t.JsonPayload:
             """Remove ``key`` and return its payload."""
             ...
 
-        def popitem(self) -> tuple[str, FlextTypesServices.JsonPayload]:
+        def popitem(self) -> tuple[str, t.JsonPayload]:
             """Remove the most recently inserted key-payload pair."""
             ...
 
-        def setdefault(
-            self, key: str, default: FlextTypesServices.JsonPayload
-        ) -> FlextTypesServices.JsonPayload:
+        def setdefault(self, key: str, default: t.JsonPayload) -> t.JsonPayload:
             """Return the payload under ``key``, storing ``default`` if absent."""
             ...
 
@@ -114,9 +103,7 @@ class FlextProtocolsContainers:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ObjectList(
-        FlextProtocolsPydantic.RootModel[list[FlextTypesServices.JsonPayload]], Protocol
-    ):
+    class ObjectList(FlextProtocolsPydantic.RootModel[list[t.JsonPayload]], Protocol):
         """Structural data contract projected from the owning model."""
 
         def __len__(self) -> int:

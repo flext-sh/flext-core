@@ -18,8 +18,7 @@ from typing import override
 
 import pytest
 
-from flext_core import p, t
-from tests import c, m, r, tm, u
+from tests import c, m, p, r, t, tm, u
 
 
 class TestsFlextCoreGuards:
@@ -83,7 +82,7 @@ class TestsFlextCoreGuards:
         tm.that(subject is mapping, truth=True)
         tm.that(events, eq=[])
         tm.that(1 in subject, truth=True)
-        with pytest.raises(LookupError) as raised:
+        with u.Tests.raises(LookupError) as raised:
             subject[1]
         tm.that(raised.value is failure, truth=True)
         tm.that(events, eq=["contains", "getitem"])
@@ -132,7 +131,7 @@ class TestsFlextCoreGuards:
         tm.that(subject is result, truth=True)
         tm.that(events, eq=[])
         tm.that(subject.success, truth=True)
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             _ = subject.value
         tm.that(raised.value is failure, truth=True)
         tm.that(events, eq=["success", "value"])
@@ -185,7 +184,7 @@ class TestsFlextCoreGuards:
         class Base(metaclass=NativeClassCheck):
             """Native base with an observable subclass-check failure."""
 
-        with pytest.raises(TypeError) as raised:
+        with u.Tests.raises(TypeError) as raised:
             u.subclass_view(str, Base)
         tm.that(raised.value is failure, truth=True)
 
@@ -212,7 +211,7 @@ class TestsFlextCoreGuards:
     # matches_type — string specs
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "spec", "expected"),
         [
             ("x", "str", True),
@@ -236,7 +235,7 @@ class TestsFlextCoreGuards:
         tm.that(u.matches_type(value, spec) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "spec", "expected"),
         [
             (" a ", "string_non_empty", True),
@@ -283,7 +282,7 @@ class TestsFlextCoreGuards:
         tm.fail(u.matches_type(mapping, "no_such_spec"))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "spec",
         ["string_non_empty", "dict_non_empty", "list_non_empty"],
     )
@@ -301,7 +300,7 @@ class TestsFlextCoreGuards:
     # matches_type — type and tuple specs
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "spec", "expected"),
         [
             (5, int, True),
@@ -328,7 +327,7 @@ class TestsFlextCoreGuards:
     # container — recursive JSON-compatibility contract
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [
             "x",
@@ -349,7 +348,7 @@ class TestsFlextCoreGuards:
         tm.that(u.container_value(value) is True, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [None, object(), [1, object()], {"a": object()}, {"a": [object()]}],
     )
@@ -367,7 +366,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
     """Scalar classification and collection membership contracts."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             ("x", True),
@@ -387,7 +386,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(u.scalar(value) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             ("x", True),
@@ -433,7 +432,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(first.handled is second.handled, truth=False)
         first.handled.append("first")
         tm.that(second.handled, eq=[])
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             m.Tests.PublicPayload.model_validate({})
         payload = m.Tests.PublicPayload.model_validate({
             "rawName": " alice ",
@@ -449,7 +448,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             ([1], True),
@@ -476,7 +475,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
     # emptiness / non-empty guards
     # ------------------------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [
             (None, True),
@@ -497,7 +496,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(u.empty_value(value) is expected, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "expected"),
         [("x", True), (" a ", True), ("", False), ("   ", False), (1, False)],
     )
@@ -534,7 +533,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
                 raise failure
 
         native = NativeMapping()
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             u.dict_non_empty(native)
         tm.that(raised.value is failure, truth=True)
         tm.that(events, eq=["bool"])
@@ -548,7 +547,7 @@ class TestsFlextCoreScalarAndCollectionGuards:
         tm.that(u.instance_of("x", int) is False, truth=True)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "container", "expected"),
         [
             (1, [1, 2, 3], True),

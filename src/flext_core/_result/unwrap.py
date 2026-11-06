@@ -1,7 +1,18 @@
-"""Value extraction operations for FlextResult.
+"""Terminal value unwrapping and extraction helpers for FlextResult.
+
+Supplies operations to extract payloads from railway results, allowing controlled
+exit from the railway track either by raising explicit causal exceptions (``unwrap``)
+or by falling back to static or dynamically computed defaults (``unwrap_or``,
+``unwrap_or_else``).
+
+See Also:
+    - Workspace ADR-001 (Railway-Oriented Programming):
+      ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+    - :mod:`flext_core._result.behavior`: Property accessors for value and state.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
+
 """
 
 from __future__ import annotations
@@ -16,30 +27,37 @@ if TYPE_CHECKING:
 
 
 class FlextResultUnwrap[T](FlextResultComposition[T], ABC):
-    """Value extraction helpers for results.
+    """Terminal value extraction helpers for railway results.
 
-    Provides the terminal operations of the railway: ``unwrap`` (raises on
-    failure), ``unwrap_or`` (default on failure) and ``unwrap_or_else``
-    (lazily computed default on failure).
+    Provides boundary extraction methods enabling consumers to safely retrieve
+    underlying success values or handle failures with defaults or explicit exceptions.
+
+    Type Parameters:
+        T: The payload type carried upon successful completion.
+
+    See Also:
+        - Workspace ADR-001 (Railway-Oriented Programming):
+          ``flext/docs/architecture/adr/001-railway-oriented-programming.md``
+
     """
 
     def unwrap(self) -> T:
-        """Return the success payload.
+        """Extract the success payload, raising a causal exception on failure.
 
-        The value property propagates a failure's original exception, or raises
-        RuntimeError when a logical failure carries no original exception.
+        Returns:
+            T: The underlying success payload.
 
         """
         return self.value
 
     def unwrap_or[DefaultT](self, default: DefaultT) -> T | DefaultT:
-        """Return the payload on success, otherwise ``default``.
+        """Return payload on success, otherwise return the provided default fallback.
 
         Args:
-            default: The fallback value used when this result is a failure.
+            default: The fallback value to return if this result is a failure.
 
         Returns:
-            The success payload or ``default``.
+            T | DefaultT: The success payload or ``default``.
 
         """
         if self.success:
@@ -47,13 +65,13 @@ class FlextResultUnwrap[T](FlextResultComposition[T], ABC):
         return default
 
     def unwrap_or_else[DefaultT](self, func: Callable[[], DefaultT]) -> T | DefaultT:
-        """Return the payload on success, otherwise ``func()``.
+        """Return payload on success, otherwise invoke ``func()`` for a fallback.
 
         Args:
-            func: The callable producing the fallback value on failure.
+            func: A zero-argument callable invoked lazily on failure to compute value.
 
         Returns:
-            The success payload or the ``func()`` result.
+            T | DefaultT: The success payload or the result of ``func()``.
 
         """
         if self.success:

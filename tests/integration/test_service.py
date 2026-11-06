@@ -11,8 +11,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from tests import c, p, tm, u
 from tests.integration.service_lifecycle_cases import (
     TestsFlextFlextServiceLifecycleCases,
@@ -21,8 +19,8 @@ from tests.integration.service_lifecycle_cases import (
 _FETCH_CALL_COUNT = 2
 
 
-@pytest.mark.integration
-@pytest.mark.usefixtures("clean_container")
+@c.Tests.MARK.integration
+@c.Tests.MARK.usefixtures("clean_container")
 class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
     """Behavioral contract of the user/notification/lifecycle services.
 
@@ -50,7 +48,7 @@ class TestsFlextCoreService(TestsFlextFlextServiceLifecycleCases):
     # ------------------------------------------------------------------ #
     # UserQueryService.fetch_user — value derivation contract
     # ------------------------------------------------------------------ #
-    @pytest.mark.parametrize(c.ContextKey.USER_ID, ["test_user_123", "abc", "user-42"])
+    @c.Tests.MARK.parametrize(c.ContextKey.USER_ID, ["test_user_123", "abc", "user-42"])
     def test_fetch_user_derives_default_entity(self, user_id: str) -> None:
         """fetch_user() derives a default entity from the requested id."""
         service = self.UserQueryService()

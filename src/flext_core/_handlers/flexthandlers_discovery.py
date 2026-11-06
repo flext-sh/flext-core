@@ -118,7 +118,11 @@ class FlextHandlersDiscovery[MessageT_contra, ResultT](
 
             """
             handlers: list[
-                tuple[str, p.ResolvedHandlerCallable, p.DecoratorConfig]
+                tuple[
+                    str,
+                    p.ResolvedHandlerCallable,
+                    p.DecoratorConfig,
+                ]
             ] = []
             callable_adapter = u.type_adapter(t.TypeForm(p.ResolvedHandlerCallable))
             for name, func in vars(module).items():

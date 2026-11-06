@@ -1,6 +1,6 @@
 """Reliability helpers aligned with dispatcher-centric CQRS flows.
 
-Utilities extracted from ``flext_core.utilities`` to keep retry and
+Utilities extracted from ``utilities`` to keep retry and
 timeout behaviors modular. All helpers return ``p.Result``-compatible
 implementations so dispatcher handlers can compose reliability policies
 without raising exceptions or leaking thread-local state.
@@ -18,7 +18,7 @@ import time
 from collections.abc import MutableSequence
 from typing import TYPE_CHECKING
 
-from flext_core import FlextResult, c, m, p, t
+from flext_core import c, m, p, r, t
 from flext_core._utilities import FlextUtilitiesArgs
 
 if TYPE_CHECKING:
@@ -66,9 +66,9 @@ class FlextUtilitiesReliability:
         """
         handled = FlextUtilitiesReliability._resolve_handled(catch)
         try:
-            return FlextResult[TResult].ok(operation())
+            return r[TResult].ok(operation())
         except handled as exc:
-            return FlextResult[TResult].fail_op(op_name, exc)
+            return r[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def guard_result[TResult](
@@ -96,7 +96,7 @@ class FlextUtilitiesReliability:
         try:
             return operation()
         except handled as exc:
-            return FlextResult[TResult].fail_op(op_name, exc)
+            return r[TResult].fail_op(op_name, exc)
 
     @staticmethod
     def retry[TResult](
@@ -124,7 +124,7 @@ class FlextUtilitiesReliability:
         )
         if opts_res.failure:
             # Preserve the validated options failure metadata for every consumer.
-            return FlextResult[TResult].from_failure(opts_res)
+            return r[TResult].from_failure(opts_res)
         opts = opts_res.value
         max_att = (
             opts.max_attempts if opts.max_attempts is not None else c.MAX_RETRY_ATTEMPTS
@@ -139,7 +139,7 @@ class FlextUtilitiesReliability:
             try:
                 result = operation()
             except c.EXC_BROAD_RUNTIME_OS as exc:
-                result = FlextResult[TResult].fail_op("execute retry operation", exc)
+                result = r[TResult].fail_op("execute retry operation", exc)
             if result.success:
                 return result
             last_failure = result
@@ -151,11 +151,9 @@ class FlextUtilitiesReliability:
                 if current_delay > 0:
                     time.sleep(current_delay)
         if last_failure is None:
-            return FlextResult[TResult].fail(
-                c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT
-            )
+            return r[TResult].fail(c.ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT)
         return (
-            FlextResult[TResult]
+            r[TResult]
             .from_failure(last_failure)
             .map_error(
                 lambda error: f"Operation failed after {max_att} attempts: {error}",

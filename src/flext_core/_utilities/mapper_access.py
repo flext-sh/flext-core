@@ -9,7 +9,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 
-from flext_core import FlextExceptions, FlextResult, c, m, p, t
+from flext_core import c, e, m, p, r, t
 from flext_core._models import FlextModelsContainers
 from flext_core._utilities import FlextUtilitiesGuardsTypeCore, FlextUtilitiesPydantic
 
@@ -94,13 +94,11 @@ class FlextUtilitiesMapperAccess:
 
         """
         if raw is None:
-            return FlextResult[t.JsonPayload].fail_op(
+            return r[t.JsonPayload].fail_op(
                 "resolve extracted value",
-                FlextExceptions.render_template(
-                    c.ERR_TEMPLATE_PATH_IS_NONE, path=key_part
-                ),
+                e.render_template(c.ERR_TEMPLATE_PATH_IS_NONE, path=key_part),
             )
-        return FlextResult[t.JsonPayload].ok(
+        return r[t.JsonPayload].ok(
             raw if FlextUtilitiesGuardsTypeCore.container_value(raw) else str(raw),
         )
 
@@ -119,9 +117,9 @@ class FlextUtilitiesMapperAccess:
             The resulting ``p.Result[t.JsonPayload]``.
 
         """
-        not_found_result: p.Result[t.JsonPayload] = FlextResult[t.JsonPayload].fail_op(
+        not_found_result: p.Result[t.JsonPayload] = r[t.JsonPayload].fail_op(
             "extract key",
-            FlextExceptions.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
+            e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part),
         )
         result: p.Result[t.JsonPayload]
         mapping_obj: Mapping[str, t.JsonValue | t.JsonPayload] | None = None
@@ -136,11 +134,9 @@ class FlextUtilitiesMapperAccess:
                     key_part,
                 )
                 if key_part in mapping_obj
-                else FlextResult[t.JsonPayload].fail_op(
+                else r[t.JsonPayload].fail_op(
                     "extract mapping key",
-                    FlextExceptions.render_template(
-                        c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part
-                    )
+                    e.render_template(c.ERR_TEMPLATE_KEY_NOT_FOUND, key=key_part)
                     + " in Mapping",
                 )
             )
@@ -175,7 +171,7 @@ class FlextUtilitiesMapperAccess:
         ):
             sequence = current
         else:
-            return FlextResult[t.JsonPayload | None].fail_op(
+            return r[t.JsonPayload | None].fail_op(
                 "extract array index",
                 c.ERR_MAPPER_NOT_A_SEQUENCE,
             )
@@ -190,20 +186,16 @@ class FlextUtilitiesMapperAccess:
         try:
             idx = int(array_match)
         except ValueError:
-            return FlextResult[int].fail_op(
+            return r[int].fail_op(
                 "extract array index",
-                FlextExceptions.render_template(
-                    c.ERR_TEMPLATE_INVALID_INDEX, index=array_match
-                ),
+                e.render_template(c.ERR_TEMPLATE_INVALID_INDEX, index=array_match),
             )
         resolved_idx = sequence_size + idx if idx < 0 else idx
         if 0 <= resolved_idx < sequence_size:
-            return FlextResult[int].ok(resolved_idx)
-        return FlextResult[int].fail_op(
+            return r[int].ok(resolved_idx)
+        return r[int].fail_op(
             "extract array index",
-            FlextExceptions.render_template(
-                c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE, index=idx
-            ),
+            e.render_template(c.ERR_TEMPLATE_INDEX_OUT_OF_RANGE, index=idx),
         )
 
     @staticmethod

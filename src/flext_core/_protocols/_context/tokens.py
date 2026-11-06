@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Protocol, runtime_checkable
 from flext_core._protocols import FlextProtocolsEntity
 
 if TYPE_CHECKING:
-    from flext_core._typings import FlextTypesAnnotateds, FlextTypesServices
+    from flext_core import t
 
 
 class FlextProtocolsContextTokens:
@@ -25,12 +25,12 @@ class FlextProtocolsContextTokens:
         """Structural data contract projected from the owning model."""
 
         @property
-        def key(self) -> FlextTypesAnnotateds.NonEmptyStr:
+        def key(self) -> t.NonEmptyStr:
             """Context variable key (alphanumeric, underscore)."""
             ...
 
         @property
-        def previous_value(self) -> FlextTypesServices.JsonPayload | datetime | None:
+        def previous_value(self) -> t.JsonPayload | datetime | None:
             """Previous value before set operation."""
             ...
 
@@ -39,12 +39,12 @@ class FlextProtocolsContextTokens:
         """Structural data contract projected from the owning model."""
 
         @property
-        def key(self) -> FlextTypesAnnotateds.NonEmptyStr:
+        def key(self) -> t.NonEmptyStr:
             """Unique key for the context variable."""
             ...
 
         @property
-        def old_value(self) -> FlextTypesServices.JsonPayload | None:
+        def old_value(self) -> t.JsonPayload | None:
             """Previous value before set operation."""
             ...
 

@@ -16,7 +16,7 @@ from collections.abc import Mapping, MutableSequence
 from datetime import datetime
 from pathlib import Path
 
-from flext_core import FlextResult, c, m, p, t
+from flext_core import c, m, p, r, t
 from flext_core._utilities.pydantic import FlextUtilitiesPydantic
 
 
@@ -42,7 +42,9 @@ class FlextUtilitiesHandler:
         )
 
     @staticmethod
-    def start_execution(state: p.HandlerRuntimeState) -> p.HandlerRuntimeState:
+    def start_execution(
+        state: p.HandlerRuntimeState,
+    ) -> p.HandlerRuntimeState:
         """Stamp the current monotonic time on the active execution context.
 
         Returns:
@@ -72,7 +74,7 @@ class FlextUtilitiesHandler:
             if isinstance(normalized, (str, int, float, bool, datetime, Path))
             else str(normalized)
         )
-        return FlextResult.ok(value=True)
+        return r.ok(value=True)
 
     @staticmethod
     def push_context(
@@ -88,15 +90,15 @@ class FlextUtilitiesHandler:
         if not isinstance(ctx, Mapping):
             pushed_context = ctx.model_copy()
         else:
-            validated = FlextResult.from_validation(ctx, m.ExecutionContext)
+            validated = r.from_validation(ctx, m.ExecutionContext)
             if validated.failure:
-                return FlextResult[p.HandlerRuntimeState].fail_op(
+                return r[p.HandlerRuntimeState].fail_op(
                     "push handler context",
                     validated.error,
                 )
             execution_context: p.ExecutionContext = validated.unwrap()
             pushed_context = execution_context
-        return FlextResult.ok(
+        return r.ok(
             state.model_copy(
                 update={"context_stack": (*state.context_stack, pushed_context)},
             ),
@@ -105,7 +107,12 @@ class FlextUtilitiesHandler:
     @staticmethod
     def pop_context(
         state: p.HandlerRuntimeState,
-    ) -> p.Result[tuple[p.HandlerRuntimeState, p.RootDict[t.JsonPayload]]]:
+    ) -> p.Result[
+        tuple[
+            p.HandlerRuntimeState,
+            p.RootDict[t.JsonPayload],
+        ]
+    ]:
         """Return state without the top context plus its validated identity.
 
         Returns:
@@ -114,7 +121,7 @@ class FlextUtilitiesHandler:
         """
         if not state.context_stack:
             empty_context: p.RootDict[t.JsonPayload] = m.ConfigMap(root={})
-            return FlextResult.ok((state, empty_context))
+            return r.ok((state, empty_context))
         popped = state.context_stack[-1]
         next_state = state.model_copy(
             update={"context_stack": state.context_stack[:-1]},
@@ -125,7 +132,7 @@ class FlextUtilitiesHandler:
                 c.FIELD_HANDLER_MODE: popped.handler_mode.value,
             },
         )
-        return FlextResult.ok((next_state, popped_context))
+        return r.ok((next_state, popped_context))
 
 
 __all__: MutableSequence[str] = ["FlextUtilitiesHandler"]

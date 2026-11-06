@@ -14,10 +14,8 @@ from __future__ import annotations
 from importlib.metadata import PackageMetadata, PathDistribution
 from pathlib import Path
 
-import pytest
-
 from flext_core.__version__ import FlextVersion, __version__, __version_info__
-from tests import c, tm
+from tests import c, tm, u
 
 
 def _write_version_metadata(tmp_path: Path, version: str) -> Path:
@@ -68,7 +66,7 @@ class TestsFlextCoreVersion:
         tm.ok(FlextVersion.__version__.startswith(release))
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "version",
         [
             "1.2.3",
@@ -95,7 +93,7 @@ class TestsFlextCoreVersion:
         tm.that(VersionContract.__version_info__, eq=(1, 2, 3))
 
     @staticmethod
-    @pytest.mark.parametrize("version", ["1.2", "1.2.3.4", "1.2.3garbage"])
+    @c.Tests.MARK.parametrize("version", ["1.2", "1.2.3.4", "1.2.3garbage"])
     def test_subclass_rejects_non_semantic_release_metadata(
         version: str,
         tmp_path: Path,
@@ -104,7 +102,7 @@ class TestsFlextCoreVersion:
         distribution_path = _write_version_metadata(tmp_path, version)
         package_metadata = PathDistribution(distribution_path).metadata
 
-        with pytest.raises(ValueError, match="three-part semantic version"):
+        with u.Tests.raises(ValueError, match="three-part semantic version"):
             type(
                 "InvalidVersionContract",
                 (FlextVersion,),

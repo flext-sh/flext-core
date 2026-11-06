@@ -9,16 +9,14 @@ from __future__ import annotations
 import time
 from typing import cast
 
-import pytest
-
-from tests import c, e, m, p, tm
+from tests import c, e, m, p, tm, u
 
 
 class TestsFlextCoreExceptionsBase:
     """Tests for ``FlextCoreExceptionsBase``."""
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "subclass",
         [
             e.ValidationError,
@@ -69,7 +67,7 @@ class TestsFlextCoreExceptionsBase:
     def test_typed_exception_raises_and_is_caught_as_base_error() -> None:
         """Test typed exception raises and is caught as base error."""
         error = e.ValidationError("bad", field="email")
-        with pytest.raises(e.BaseError) as excinfo:
+        with u.Tests.raises(e.BaseError) as excinfo:
             raise error
         raised = excinfo.value
         tm.ok(raised is error)
@@ -135,7 +133,7 @@ class TestsFlextCoreExceptionsBase:
         tm.that(cast("dict[str, object]", result.error_data)["actual_type"], eq="str")
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("field", "value", "cause"),
         [("name", "", "empty"), ("email", "bad", "invalid")],
     )

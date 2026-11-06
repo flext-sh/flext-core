@@ -51,17 +51,17 @@ Two operator rulings bind every FLEXT model (root `AGENTS.md`
 
 ## Where each Pydantic concern lives
 
-| Concern | FLEXT owner | Consumer form |
-| --- | --- | --- |
-| Model configuration | Existing `m.*` presets in Core | Inherit the preset matching the contract; do not copy its `ConfigDict` |
-| Reusable constrained types | `t` aliases over native annotations | `field: t.NonEmptyStr`; metadata and hooks come from their existing owners |
-| Closed domains | `StrEnum` classes in `c` | Declare the owning enum directly; a union tag uses its declared subset |
-| Dependency-typed fields | Minimal runtime-checkable capabilities in `p` | Use the existing `t.Port` contract and exclude the dependency from serialization |
-| Payload and service protocols | Source-derived projection owner under ADR-018 | Generate from actual declarations; never hand-mirror models |
-| Non-model validation | Existing adapter owner, with its typed contracts | Reuse an adapter for the actual scalar, collection or union contract |
-| Outcomes | `r` / `p.Result[T]` | Convert `ValidationError` once at the declared ingress boundary; preserve its cause |
-| Runtime knobs | `settings.<Namespace>.*` (pydantic-settings) | read through the singleton, never `os.environ` |
-| Static rules | `config.<Namespace>.*` from `config/*.yaml` | read through the singleton |
+| Concern                       | FLEXT owner                                      | Consumer form                                                                       |
+| ----------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Model configuration           | Existing `m.*` presets in Core                   | Inherit the preset matching the contract; do not copy its `ConfigDict`              |
+| Reusable constrained types    | `t` aliases over native annotations              | `field: t.NonEmptyStr`; metadata and hooks come from their existing owners          |
+| Closed domains                | `StrEnum` classes in `c`                         | Declare the owning enum directly; a union tag uses its declared subset              |
+| Dependency-typed fields       | Minimal runtime-checkable capabilities in `p`    | Use the existing `t.Port` contract and exclude the dependency from serialization    |
+| Payload and service protocols | Source-derived projection owner under ADR-018    | Generate from actual declarations; never hand-mirror models                         |
+| Non-model validation          | Existing adapter owner, with its typed contracts | Reuse an adapter for the actual scalar, collection or union contract                |
+| Outcomes                      | `r` / `p.Result[T]`                              | Convert `ValidationError` once at the declared ingress boundary; preserve its cause |
+| Runtime knobs                 | `settings.<Namespace>.*` (pydantic-settings)     | read through the singleton, never `os.environ`                                      |
+| Static rules                  | `config.<Namespace>.*` from `config/*.yaml`      | read through the singleton                                                          |
 
 Only flext-core imports `pydantic`, `pydantic_settings` or `pydantic_core`.
 
@@ -138,15 +138,15 @@ an API. Upstream references: [standard types](https://docs.pydantic.dev/latest/a
 
 Choose an owner by meaning and change authority, not by the Python value's shape:
 
-| Question | Owner and boundary |
-| --- | --- |
-| Is this a closed vocabulary or invariant? | `c` owns the enum or invariant once; configurable catalogs are not constant tables |
-| Is this a reviewed rule or catalog entry? | Governed data is loaded into frozen typed `config`; consumers do not mutate it |
-| Can an operator vary it by deployment or process? | The owning `settings` source validates it; services do not reread the environment |
-| Is this a reusable type expression? | `t` names the existing constraint or specialization without copying data |
-| What capability does this consumer require? | `p` declares that capability independently of the adapter implementing it |
-| What data and invariants cross this boundary? | `m` declares the payload and native validation once |
-| What calculation or external effect must happen? | `u` or the service owns the behavior, using injected validated inputs |
+| Question                                          | Owner and boundary                                                                 |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Is this a closed vocabulary or invariant?         | `c` owns the enum or invariant once; configurable catalogs are not constant tables |
+| Is this a reviewed rule or catalog entry?         | Governed data is loaded into frozen typed `config`; consumers do not mutate it     |
+| Can an operator vary it by deployment or process? | The owning `settings` source validates it; services do not reread the environment  |
+| Is this a reusable type expression?               | `t` names the existing constraint or specialization without copying data           |
+| What capability does this consumer require?       | `p` declares that capability independently of the adapter implementing it          |
+| What data and invariants cross this boundary?     | `m` declares the payload and native validation once                                |
+| What calculation or external effect must happen?  | `u` or the service owns the behavior, using injected validated inputs              |
 
 The family declaration order is `c`, `t`, `p`, `m`, `u`. Runtime imports of later
 families use earlier owners; an invariant cannot depend back on the model facade
@@ -255,8 +255,11 @@ invalid: ADR-018 requires retaining its runtime class and closure while deriving
 a deterministic lexical protocol identity. Do not hoist it generically or call
 `model_rebuild` to hide an unresolved declaration. Repair the actual dependency
 or export, and prove a fresh public import. The enclosing family class is not
-bound while its body executes, so a self-qualified sibling reference needs its
-real declaring owner, not a fabricated namespace.
+bound while its body executes, so a self-qualified sibling reference is never
+evaluated eagerly: type the field by the sibling's protocol and defer the schema
+owner, `Annotated[p.X, t.schema_for_model(lambda: Holder.X)]`. The field is then
+complete at class creation, and a subclass in another module inherits it without
+re-resolving any name.
 
 ## Library boundaries
 
@@ -403,16 +406,16 @@ selected checker's own strict-mode defaults. The following review groups the
 diagnostics relevant to this investigation; it is not another configuration
 catalog. No row authorizes a severity change.
 
-| Rule family | What it establishes | Required diagnosis and disposition |
-| --- | --- | --- |
-| Missing imports and module sources | The analyzer can resolve a declaration | Verify interpreter, environment parent, editable origins and execution-environment order before investigating MRO |
-| Missing third-party stubs | Availability of an external typing contract | Preserve the existing approved policy; source inference does not make every external API precise |
-| Unknown types and untyped bases/decorators | Type information survived the boundary | Follow the first unknown symbol through its declaring export; retaining an overload at runtime does not prove static field/decorator identity |
-| Constructor calls and argument types | Requiredness, aliases and declared input types | Compare required/default/factory/alias forms with actual validation; preserve typed constructors and public field semantics |
-| Assignment, generic arguments and overrides | Substitution and mutability contracts | Inspect inherited specialization, variance and effective model configuration; a successful coercion is not proof of substitutability |
-| Optional and unbound access | A value is present before use | Prove the public invariant and narrow at its owner; do not silence these checks because a model validates other fields |
-| Unnecessary operations and unused declarations | Reachability and redundant/dead code | Inspect the inferred type first; fix lost precision before interpreting a cascade as redundant code |
-| Mypy plugin diagnostics | Pydantic-specific field and model semantics | Keep the plugin and current two-code exception; assess each diagnostic against the native model and the public facade |
+| Rule family                                    | What it establishes                            | Required diagnosis and disposition                                                                                                            |
+| ---------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Missing imports and module sources             | The analyzer can resolve a declaration         | Verify interpreter, environment parent, editable origins and execution-environment order before investigating MRO                             |
+| Missing third-party stubs                      | Availability of an external typing contract    | Preserve the existing approved policy; source inference does not make every external API precise                                              |
+| Unknown types and untyped bases/decorators     | Type information survived the boundary         | Follow the first unknown symbol through its declaring export; retaining an overload at runtime does not prove static field/decorator identity |
+| Constructor calls and argument types           | Requiredness, aliases and declared input types | Compare required/default/factory/alias forms with actual validation; preserve typed constructors and public field semantics                   |
+| Assignment, generic arguments and overrides    | Substitution and mutability contracts          | Inspect inherited specialization, variance and effective model configuration; a successful coercion is not proof of substitutability          |
+| Optional and unbound access                    | A value is present before use                  | Prove the public invariant and narrow at its owner; do not silence these checks because a model validates other fields                        |
+| Unnecessary operations and unused declarations | Reachability and redundant/dead code           | Inspect the inferred type first; fix lost precision before interpreting a cascade as redundant code                                           |
+| Mypy plugin diagnostics                        | Pydantic-specific field and model semantics    | Keep the plugin and current two-code exception; assess each diagnostic against the native model and the public facade                         |
 
 Relevant native options include mypy's import-following, package-base, re-export,
 untyped-body, equality, reachability and unused-ignore checks, and Pyright's
@@ -440,19 +443,19 @@ file; the running invocation and configuration identity still require a receipt.
 [Mypy's configuration reference](https://mypy.readthedocs.io/en/stable/config_file.html)
 defines option precedence and notes that the strict bundle can change by release.
 
-| Declaration or diagnostic | Inspected selection | Detection impact and evidence needed |
-| --- | --- | --- |
-| `plugins` | Explicit `[pydantic.mypy]` | Verify the plugin actually loads from the selected environment; compare the same upstream and facade model |
-| `init_typed`, `init_forbid_extra`, `warn_required_dynamic_aliases` | All explicitly `true` in `pydantic-mypy` | Preserve typed inputs, extra-argument policy and dynamic-alias checking; compare synthesized constructor, effective model configuration and real validation |
-| `disable_error_code` | Derived from the declared `[call-arg, prop-decorator]` suspension | Missing/unexpected constructor arguments and property-decorator findings cannot prove detection through these suspended codes; retain invalid sentinels in the complete analyzer comparison |
-| `arg-type`, `assignment`, `override` | Native diagnostics; not suspended by this declaration | Require precise field/method types and an incompatible public consumer; runtime coercion alone does not invalidate a constructor finding |
-| `attr-defined`, `name-defined`, `misc`, `no-redef` | Native diagnostics; no suspension for these codes in the inspected owner | Trace exports and namespace bindings; older historical exceptions do not establish today's configuration |
-| `allow_redefinition`, `local_partial_types` | Explicitly `true` | Do not infer that variable-redefinition support permits every class or facade binding; retain the exact offending declaration and inferred identity |
-| `no_implicit_reexport` | Explicitly `true` | Inspect the generated public export and its static declaration rather than assuming an imported name is exported |
-| `namespace_packages`, `explicit_package_bases` | Explicitly `true` | Record module identities and source roots when investigating missing or duplicate modules |
-| `follow_imports`, `follow_untyped_imports` | Explicit `normal`, `true`; the `rope.*` override also selects `true` | Record the actual imported source and typing marker before attributing lost types to inheritance |
-| `check_untyped_defs`, `extra_checks`, `strict_equality`, `warn_redundant_casts`, `warn_return_any`, `warn_unreachable`, `warn_unused_ignores` | Explicitly `true` | Inspect the earliest type loss before classifying downstream findings; these selections do not imply every optional Mypy check is enabled |
-| `python_version`, `mypy_path`, `exclude`, `overrides` | Derived by the existing projection owners | Obtain the selected project's rendered configuration and import trace; the base declaration alone does not prove the effective search scope |
+| Declaration or diagnostic                                                                                                                     | Inspected selection                                                      | Detection impact and evidence needed                                                                                                                                                        |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `plugins`                                                                                                                                     | Explicit `[pydantic.mypy]`                                               | Verify the plugin actually loads from the selected environment; compare the same upstream and facade model                                                                                  |
+| `init_typed`, `init_forbid_extra`, `warn_required_dynamic_aliases`                                                                            | All explicitly `true` in `pydantic-mypy`                                 | Preserve typed inputs, extra-argument policy and dynamic-alias checking; compare synthesized constructor, effective model configuration and real validation                                 |
+| `disable_error_code`                                                                                                                          | Derived from the declared `[call-arg, prop-decorator]` suspension        | Missing/unexpected constructor arguments and property-decorator findings cannot prove detection through these suspended codes; retain invalid sentinels in the complete analyzer comparison |
+| `arg-type`, `assignment`, `override`                                                                                                          | Native diagnostics; not suspended by this declaration                    | Require precise field/method types and an incompatible public consumer; runtime coercion alone does not invalidate a constructor finding                                                    |
+| `attr-defined`, `name-defined`, `misc`, `no-redef`                                                                                            | Native diagnostics; no suspension for these codes in the inspected owner | Trace exports and namespace bindings; older historical exceptions do not establish today's configuration                                                                                    |
+| `allow_redefinition`, `local_partial_types`                                                                                                   | Explicitly `true`                                                        | Do not infer that variable-redefinition support permits every class or facade binding; retain the exact offending declaration and inferred identity                                         |
+| `no_implicit_reexport`                                                                                                                        | Explicitly `true`                                                        | Inspect the generated public export and its static declaration rather than assuming an imported name is exported                                                                            |
+| `namespace_packages`, `explicit_package_bases`                                                                                                | Explicitly `true`                                                        | Record module identities and source roots when investigating missing or duplicate modules                                                                                                   |
+| `follow_imports`, `follow_untyped_imports`                                                                                                    | Explicit `normal`, `true`; the `rope.*` override also selects `true`     | Record the actual imported source and typing marker before attributing lost types to inheritance                                                                                            |
+| `check_untyped_defs`, `extra_checks`, `strict_equality`, `warn_redundant_casts`, `warn_return_any`, `warn_unreachable`, `warn_unused_ignores` | Explicitly `true`                                                        | Inspect the earliest type loss before classifying downstream findings; these selections do not imply every optional Mypy check is enabled                                                   |
+| `python_version`, `mypy_path`, `exclude`, `overrides`                                                                                         | Derived by the existing projection owners                                | Obtain the selected project's rendered configuration and import trace; the base declaration alone does not prove the effective search scope                                                 |
 
 The [native Mypy diagnostic reference](https://mypy.readthedocs.io/en/stable/error_code_list.html)
 distinguishes argument count/name checking from argument type checking. It also
@@ -471,18 +474,18 @@ below distinguishes explicit selections from relevant inherited defaults in the
 That reference matches the investigation's declared version; it does not prove
 the version launched by the CLI or editor.
 
-| Declaration or diagnostic | Inspected selection | Detection impact and evidence needed |
-| --- | --- | --- |
-| `reportCallIssue`, `reportInconsistentConstructor` | Explicit `error` | Compare generated calls and `__init__`/`__new__` signatures through both import surfaces |
-| `reportIncompatibleMethodOverride` | Explicit `error` | Compare inherited signatures and the invalid override sentinel |
-| `reportArgumentType`, `reportAssignmentType`, `reportAttributeAccessIssue`, `reportIncompatibleVariableOverride`, `reportInvalidTypeArguments` | Inherited strict `error` | Check input, field, specialization and mutability contracts with precise inferred types |
-| `reportUnknownArgumentType`, `reportUnknownLambdaType`, `reportUnknownMemberType`, `reportUnknownParameterType`, `reportUnknownVariableType` | Inherited strict `error` | Locate the first unknown declaration and its resolved source before interpreting cascades |
-| `reportUntypedBaseClass`, `reportUntypedClassDecorator`, `reportUntypedFunctionDecorator`, `reportMissingTypeArgument`, `reportMissingParameterType` | Inherited strict `error` | Inspect base/decorator identity, preserved overloads and generic arguments |
-| `strictListInference`, `strictDictionaryInference`, `strictSetInference` | Inherited strict `true` | Compare collection inference when checking factories and generic model fields |
-| `reportMissingImports`, `reportMissingModuleSource` | Explicit `error` | Prove interpreter, search roots and installed source identity first |
-| `reportMissingTypeStubs`, `useLibraryCodeForTypes` | Explicit `none`, `true` | Preserve the existing exception; source inference still needs a typed public boundary |
-| `reportPrivateUsage`, `reportConstantRedefinition`, `reportUnnecessaryCast`, `reportUnnecessaryComparison`, `reportUnnecessaryIsInstance`, `reportUnusedClass`, `reportUnusedFunction`, `reportUnusedImport`, `reportUnusedVariable` | Explicit `error` | Inspect the public export and inferred type before treating a finding as an inheritance defect |
-| `venv`, `venvPath`, `extraPaths`, `executionEnvironments`, `include`, `exclude`, `pythonVersion` | Derived by existing topology and configuration owners | Verify the selected physical environment and per-file environment order in root, attached-member and standalone contexts |
+| Declaration or diagnostic                                                                                                                                                                                                            | Inspected selection                                   | Detection impact and evidence needed                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `reportCallIssue`, `reportInconsistentConstructor`                                                                                                                                                                                   | Explicit `error`                                      | Compare generated calls and `__init__`/`__new__` signatures through both import surfaces                                 |
+| `reportIncompatibleMethodOverride`                                                                                                                                                                                                   | Explicit `error`                                      | Compare inherited signatures and the invalid override sentinel                                                           |
+| `reportArgumentType`, `reportAssignmentType`, `reportAttributeAccessIssue`, `reportIncompatibleVariableOverride`, `reportInvalidTypeArguments`                                                                                       | Inherited strict `error`                              | Check input, field, specialization and mutability contracts with precise inferred types                                  |
+| `reportUnknownArgumentType`, `reportUnknownLambdaType`, `reportUnknownMemberType`, `reportUnknownParameterType`, `reportUnknownVariableType`                                                                                         | Inherited strict `error`                              | Locate the first unknown declaration and its resolved source before interpreting cascades                                |
+| `reportUntypedBaseClass`, `reportUntypedClassDecorator`, `reportUntypedFunctionDecorator`, `reportMissingTypeArgument`, `reportMissingParameterType`                                                                                 | Inherited strict `error`                              | Inspect base/decorator identity, preserved overloads and generic arguments                                               |
+| `strictListInference`, `strictDictionaryInference`, `strictSetInference`                                                                                                                                                             | Inherited strict `true`                               | Compare collection inference when checking factories and generic model fields                                            |
+| `reportMissingImports`, `reportMissingModuleSource`                                                                                                                                                                                  | Explicit `error`                                      | Prove interpreter, search roots and installed source identity first                                                      |
+| `reportMissingTypeStubs`, `useLibraryCodeForTypes`                                                                                                                                                                                   | Explicit `none`, `true`                               | Preserve the existing exception; source inference still needs a typed public boundary                                    |
+| `reportPrivateUsage`, `reportConstantRedefinition`, `reportUnnecessaryCast`, `reportUnnecessaryComparison`, `reportUnnecessaryIsInstance`, `reportUnusedClass`, `reportUnusedFunction`, `reportUnusedImport`, `reportUnusedVariable` | Explicit `error`                                      | Inspect the public export and inferred type before treating a finding as an inheritance defect                           |
+| `venv`, `venvPath`, `extraPaths`, `executionEnvironments`, `include`, `exclude`, `pythonVersion`                                                                                                                                     | Derived by existing topology and configuration owners | Verify the selected physical environment and per-file environment order in root, attached-member and standalone contexts |
 
 Every row remains unchanged by this audit. A proposed change requires a reproduced
 diagnostic, upstream/facade comparison, preserved invalid-case detection, and the

@@ -17,12 +17,12 @@ from __future__ import annotations
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Literal
 
 import pydantic
-import pytest
 
 import flext_core
-from tests import c, m, p, t, tm
+from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCoreTypingsAliases:
@@ -56,7 +56,7 @@ class TestsFlextCoreTypingsAliases:
         tm.that(values, eq={"first": 1, "second": 2, "third": 3})
 
     @staticmethod
-    @pytest.mark.parametrize("alias_name", c.Tests.PUBLIC_ALIAS_NAMES)
+    @c.Tests.MARK.parametrize("alias_name", c.Tests.PUBLIC_ALIAS_NAMES)
     def test_public_alias_reachable_through_facade(alias_name: str) -> None:
         """Every declared public alias resolves to a real object on ``t``."""
         # Arrange / Act
@@ -65,14 +65,14 @@ class TestsFlextCoreTypingsAliases:
         tm.that(resolved, ne=None)
 
     @staticmethod
-    @pytest.mark.parametrize("alias_name", c.Tests.FLAT_ALIAS_NAMES)
+    @c.Tests.MARK.parametrize("alias_name", c.Tests.FLAT_ALIAS_NAMES)
     def test_flat_mapping_alias_reachable_through_facade(alias_name: str) -> None:
         """Every flat mapping alias resolves to a real object on ``t``."""
         resolved = getattr(t, alias_name)
         tm.that(resolved, ne=None)
 
     @staticmethod
-    @pytest.mark.parametrize("legacy_name", c.Tests.LEGACY_GENERIC_NAMES)
+    @c.Tests.MARK.parametrize("legacy_name", c.Tests.LEGACY_GENERIC_NAMES)
     def test_flext_core_hides_shared_generic_helpers(legacy_name: str) -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
         tm.fail(hasattr(flext_core, legacy_name))
@@ -106,7 +106,7 @@ class TestsFlextCoreTypingsAliases:
         )
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("value", "is_primitive", "is_numeric", "is_scalar"),
         [
             ("text", True, False, True),
@@ -131,7 +131,7 @@ class TestsFlextCoreTypingsAliases:
         tm.that(isinstance(value, c.SCALAR_TYPES), eq=is_scalar)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         "value",
         [
             "text",
@@ -166,5 +166,35 @@ class TestsFlextCoreTypingsAliases:
             value: t.Port[pydantic.JsonValue]
 
         tm.that(Holder(value="texto").value, eq="texto")
-        with pytest.raises(m.ValidationError):
+        with u.Tests.raises(m.ValidationError):
             Holder.model_validate({"value": object()})
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("mode", ["validation", "serialization"])
+    def test_shared_skipped_alias_is_omitted_from_json_schema(
+        mode: Literal["validation", "serialization"],
+    ) -> None:
+        """Two fields sharing one skipped alias leave the JSON Schema, not break it.
+
+        The alias becomes one shared schema definition (the FlextCli prompt
+        readers declare it twice); the schema keeps every other field.
+        """
+
+        class Reader:
+            """Opaque collaborator with no JSON representation."""
+
+        class Holder(m.BaseModel):
+            """Model declaring the same skipped alias on two fields."""
+
+            model_config = m.ConfigDict(arbitrary_types_allowed=True)
+
+            first: t.SkipJsonSchema[Reader] = m.Field(
+                default_factory=Reader, exclude=True
+            )
+            second: t.SkipJsonSchema[Reader] = m.Field(
+                default_factory=Reader, exclude=True
+            )
+            label: str = "visible"
+
+        schema = Holder.model_json_schema(mode=mode)
+        tm.that(sorted(schema["properties"]), eq=["label"])

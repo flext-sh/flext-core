@@ -9,8 +9,6 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from concurrent.futures import ThreadPoolExecutor
 
-import pytest
-
 from flext_core import FlextDispatcher
 from tests import c, h, m, p, r, t, tm, u
 
@@ -48,7 +46,7 @@ class TestsFlextCoreDispatcher:
         tm.that(received[0] is message)
 
     @staticmethod
-    @pytest.mark.parametrize("wrapped", [False, True])
+    @c.Tests.MARK.parametrize("wrapped", [False, True])
     def test_public_execution_preserves_model_payload(*, wrapped: bool) -> None:
         """Neither a native model nor a successful Result is converted to JSON text."""
         dispatcher = FlextDispatcher()
@@ -61,7 +59,7 @@ class TestsFlextCoreDispatcher:
         tm.that(tm.ok(dispatcher.dispatch(m.Command(command_type="model"))) is payload)
 
     @staticmethod
-    @pytest.mark.parametrize("registered", [False, True])
+    @c.Tests.MARK.parametrize("registered", [False, True])
     def test_unmatched_route_never_invokes_a_handler(*, registered: bool) -> None:
         """Missing routes fail without executing another route's handler."""
         dispatcher = FlextDispatcher()
@@ -96,7 +94,7 @@ class TestsFlextCoreDispatcher:
         tm.that(received, empty=True)
 
     @staticmethod
-    @pytest.mark.parametrize("sequence", [False, True])
+    @c.Tests.MARK.parametrize("sequence", [False, True])
     def test_publication_delivers_original_events_in_input_order(
         *, sequence: bool
     ) -> None:
@@ -188,7 +186,7 @@ class TestsFlextCoreDispatcher:
         tm.that(other.handled, empty=True)
 
     @staticmethod
-    @pytest.mark.parametrize("existing", [False, True])
+    @c.Tests.MARK.parametrize("existing", [False, True])
     def test_batch_conflict_never_publishes_an_earlier_binding(
         *, existing: bool
     ) -> None:
@@ -367,7 +365,7 @@ class TestsFlextCoreDispatcher:
         )
 
     @staticmethod
-    @pytest.mark.parametrize("auto_first", [False, True])
+    @c.Tests.MARK.parametrize("auto_first", [False, True])
     def test_auto_and_explicit_subscribers_follow_registration_order(
         *, auto_first: bool
     ) -> None:

@@ -16,7 +16,7 @@ import tempfile
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextResult, p
+from flext_core import p, r
 
 
 class FlextUtilitiesFiles:
@@ -44,18 +44,18 @@ class FlextUtilitiesFiles:
         except OSError as exc:
             return cast(
                 "p.ResultView[int]",
-                FlextResult.fail(f"atomic append open failed: {exc}", exception=exc),
+                r.fail(f"atomic append open failed: {exc}", exception=exc),
             )
         try:
             written = os.write(descriptor, data.encode(encoding))
         except OSError as exc:
             return cast(
                 "p.ResultView[int]",
-                FlextResult.fail(f"atomic append write failed: {exc}", exception=exc),
+                r.fail(f"atomic append write failed: {exc}", exception=exc),
             )
         finally:
             os.close(descriptor)
-        return cast("p.ResultView[int]", FlextResult[int].ok(written))
+        return cast("p.ResultView[int]", r[int].ok(written))
 
     @staticmethod
     def write_atomic(
@@ -85,7 +85,7 @@ class FlextUtilitiesFiles:
         except OSError as exc:
             return cast(
                 "p.ResultView[int]",
-                FlextResult.fail(f"atomic write stage failed: {exc}", exception=exc),
+                r.fail(f"atomic write stage failed: {exc}", exception=exc),
             )
         try:
             staged.replace(path)
@@ -93,9 +93,9 @@ class FlextUtilitiesFiles:
             staged.unlink(missing_ok=True)
             return cast(
                 "p.ResultView[int]",
-                FlextResult.fail(f"atomic write rename failed: {exc}", exception=exc),
+                r.fail(f"atomic write rename failed: {exc}", exception=exc),
             )
-        return cast("p.ResultView[int]", FlextResult[int].ok(len(payload)))
+        return cast("p.ResultView[int]", r[int].ok(len(payload)))
 
 
 __all__: list[str] = ["FlextUtilitiesFiles"]

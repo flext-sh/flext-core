@@ -16,10 +16,10 @@ from flext_core._protocols._project_metadata import (
 )
 
 if TYPE_CHECKING:
+    from flext_core import t
     from flext_core._protocols._project_metadata import (
         FlextProtocolsProjectMetadataFields,
     )
-    from flext_core._typings import FlextTypingBase
 
 
 class FlextProtocolsProjectMetadataAggregates:
@@ -65,17 +65,17 @@ class FlextProtocolsProjectMetadataAggregates:
             ...
 
         @property
-        def dependencies(self) -> FlextTypingBase.StrTuple:
+        def dependencies(self) -> t.StrTuple:
             """PEP 508 runtime dependency declarations."""
             ...
 
         @property
-        def classifiers(self) -> FlextTypingBase.StrTuple:
+        def classifiers(self) -> t.StrTuple:
             """Trove classifiers."""
             ...
 
         @property
-        def keywords(self) -> FlextTypingBase.StrTuple:
+        def keywords(self) -> t.StrTuple:
             """Project search keywords."""
             ...
 

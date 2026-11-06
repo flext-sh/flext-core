@@ -10,13 +10,18 @@ import sys
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
-import pytest
-
-from flext_core import FlextLazyMember, lazy_member, resolve_lazy_members
-from tests import tm
+from flext_core import (
+    FlextLazyMember,
+    install_lazy_exports,
+    lazy_member,
+    resolve_lazy_members,
+)
+from tests import tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from tests import p, t
 
 
 class TestsFlextCoreLazyMembers:
@@ -109,7 +114,7 @@ class TestsFlextCoreLazyMembers:
             class Deferred:
                 missing = lazy_member(module, "Mixin", "missing")
 
-            with pytest.raises(ImportError, match="declares no member"):
+            with u.Tests.raises(ImportError, match="declares no member"):
                 _ = Deferred.missing
             tm.ok(isinstance(vars(Deferred)["missing"], FlextLazyMember))
 
@@ -124,7 +129,7 @@ class TestsFlextCoreLazyMembers:
             class Deferred:
                 VALUE = lazy_member(module, "Mixin", "VALUE")
 
-            with pytest.raises(ImportError, match="cannot load") as caught:
+            with u.Tests.raises(ImportError, match="cannot load") as caught:
                 _ = Deferred.VALUE
             tm.that(isinstance(caught.value.__cause__, AttributeError), truth=True)
 
@@ -138,5 +143,56 @@ class TestsFlextCoreLazyMembers:
 
             _ = Deferred
 
-        with pytest.raises(TypeError, match="is bound to attribute"):
+        with u.Tests.raises(TypeError, match="is bound to attribute"):
             _install_renamed()
+
+    @staticmethod
+    def _deferred_capability(
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> str:
+        """Materialize the capability scenario as a package no test imported yet.
+
+        Returns:
+            The dotted path of the materialized capability module.
+
+        """
+        package = f"lazy_deferred_{tmp_path.name.replace('-', '_')}"
+        fixture_tree("lazy-deferred-capability", destination=tmp_path / package)
+        return f"{package}.capability"
+
+    def test_deferred_export_composes_without_loading_its_module(
+        self,
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """A facade composes the stand-in; resolving its members loads the module."""
+        module = self._deferred_capability(fixture_tree, tmp_path)
+        members = ("VALUE", "Nested", "twice", "who")
+        with tm.scope(python_paths=[str(tmp_path)]):
+            package_globals: t.ModuleGlobals = {}
+            resolve, _ = install_lazy_exports(
+                "lazy_deferred_consumer",
+                package_globals,
+                {"Capability": (module, "Capability")},
+                deferred_members={"Capability": members},
+            )
+            standin = cast("type", resolve("Capability"))
+            tm.ok(package_globals["Capability"] is standin)
+            namespace = type("Namespace", (standin,), {})
+            tm.fail(module in sys.modules)
+            tm.that(resolve_lazy_members(namespace), eq=members)
+            tm.ok(module in sys.modules)
+            tm.that(vars(standin)["VALUE"], eq=7)
+            tm.ok(isinstance(vars(standin)["who"], classmethod))
+
+    @staticmethod
+    def test_deferred_name_without_class_export_fails_at_install() -> None:
+        """Deferring a name the lazy map does not export is a generator defect."""
+        with u.Tests.raises(ValueError, match="without a class export"):
+            install_lazy_exports(
+                "lazy_deferred_invalid",
+                {},
+                {},
+                deferred_members={"Capability": ("VALUE",)},
+            )

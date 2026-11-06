@@ -57,7 +57,9 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
 
         Example:
             >>> @FlextHandlers.handler(command=m.Command)
-            ... def handle_command(request: p.CommandRoutable) -> p.Result[str]:
+            ... def handle_command(
+            ...     request: p.CommandRoutable,
+            ... ) -> p.Result[str]:
             ...     return r[str].ok(request.command_type)
 
         """

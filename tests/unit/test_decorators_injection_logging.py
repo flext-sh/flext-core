@@ -12,16 +12,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import pytest
-
 from flext_core import FlextContainer, FlextContext
-from tests import c, d, m, tm, u
+from tests import c, d, m, t, tm, u
 
 
 class TestsFlextCoreDecoratorsInjectionLogging:
     """Tests for ``FlextCoreDecoratorsInjectionLogging``."""
 
-    @pytest.fixture
+    @u.Tests.fixture
     @staticmethod
     def container() -> FlextContainer:
         """Provide ``container``.
@@ -67,7 +65,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def use(*, dependency: str = "unused-default") -> str:
             return dependency
 
-        with pytest.raises(RuntimeError) as raised:
+        with u.Tests.raises(RuntimeError) as raised:
             use()
 
         tm.that(str(raised.value), has="'unregistered_key_xyz'")
@@ -91,7 +89,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
 
     # --- d.log_operation -------------------------------------------------
     @staticmethod
-    @pytest.mark.parametrize("payload", ["success", "", "multi word result"])
+    @c.Tests.MARK.parametrize("payload", ["success", "", "multi word result"])
     def test_log_operation_returns_wrapped_value_unchanged(payload: str) -> None:
         """Test log operation returns wrapped value unchanged."""
 
@@ -112,7 +110,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         tm.that(compute(), eq=42)
 
     @staticmethod
-    @pytest.mark.parametrize(
+    @c.Tests.MARK.parametrize(
         ("exc_type", "message"),
         [
             (ValueError, "bad value"),
@@ -130,12 +128,12 @@ class TestsFlextCoreDecoratorsInjectionLogging:
         def boom() -> None:
             raise exc_type(message)
 
-        with pytest.raises(exc_type, match=message):
+        with u.Tests.raises(exc_type, match=message):
             boom()
 
     @staticmethod
     def test_log_operation_emits_operation_name_on_failure(
-        capsys: pytest.CaptureFixture[str],
+        capsys: t.Tests.CaptureFixture[str],
     ) -> None:
         """Test log operation emits operation name on failure."""
 
@@ -151,7 +149,7 @@ class TestsFlextCoreDecoratorsInjectionLogging:
                 settings=m.StructlogOptions(async_logging=False),
                 runtime_settings=selected,
             )
-            with pytest.raises(ValueError, match="kaboom"):
+            with u.Tests.raises(ValueError, match="kaboom"):
                 boom()
             captured = capsys.readouterr()
             tm.that("named_failure_op" in captured.err, truth=True)
