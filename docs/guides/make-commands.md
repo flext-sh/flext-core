@@ -231,21 +231,21 @@ Each verb enters its existing domain owner. Generation and conformance share the
 same projection planner and transaction publisher; they do not share permission
 to repair authored declarations.
 
-| Verb | Owned operation | Inputs |
-| --- | --- | --- |
-| `setup` | Install the declared frozen locks, synchronize the physical environment and configure local integrations; FLEXT=<path> reinstalls the FLEXT distributions that workspace provides as editable (local only). | FLEXT, RECREATE |
-| `upg` | Resolve declared dependency and tool updates and publish their resolution metadata and locks. | — |
-| `gen` | Materialize explicitly declared new projects and publish every applicable generated projection. | — |
-| `gen-scope` | Run the focal generation surface (WHAT, MODULE for facades, SCOPE) through the same engine, lock and budget as gen. | WHAT, MODULE, SCOPE |
-| `mod` | Refactor declared source structure through the shared pipeline and publish the complete coherent change; LAWS (ENFORCE ids) or RULES (rule ids) diagnose or repair one law (ADR-028 Decision 18 item 2). | LAWS, RULES |
-| `fix` | Apply declared repairs to authored inputs through their canonical owners. | — |
-| `fmt` | Format authored content through the configured formatters. | — |
-| `check` | Validate declarations, projections, environment, documentation and configured gates without repairs or publication. | CHECK_PHASE |
-| `tests` | Discover the complete global pytest inventory and execute testmon-selected cases with the persistent external database. | — |
-| `tests-full` | Execute the complete applicable population once without Testmon or a preliminary incremental run, preserving the existing database untouched. | — |
-| `help` | Discover the declared public interface without effects. | — |
-| `build` | Build local distribution and documentation artifacts without publishing them. | — |
-| `clean` | Remove only declared disposable resources owned by the selected target. | — |
+| Verb         | Owned operation                                                                                                                                                                                             | Inputs              |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `setup`      | Install the declared frozen locks, synchronize the physical environment and configure local integrations; FLEXT=<path> reinstalls the FLEXT distributions that workspace provides as editable (local only). | FLEXT, RECREATE     |
+| `upg`        | Resolve declared dependency and tool updates and publish their resolution metadata and locks.                                                                                                               | —                   |
+| `gen`        | Materialize explicitly declared new projects and publish every applicable generated projection.                                                                                                             | —                   |
+| `gen-scope`  | Run the focal generation surface (WHAT, MODULE for facades, SCOPE) through the same engine, lock and budget as gen.                                                                                         | WHAT, MODULE, SCOPE |
+| `mod`        | Refactor declared source structure through the shared pipeline and publish the complete coherent change; LAWS (ENFORCE ids) or RULES (rule ids) diagnose or repair one law (ADR-028 Decision 18 item 2).    | LAWS, RULES         |
+| `fix`        | Apply declared repairs to authored inputs through their canonical owners.                                                                                                                                   | —                   |
+| `fmt`        | Format authored content through the configured formatters.                                                                                                                                                  | —                   |
+| `check`      | Validate declarations, projections, environment, documentation and configured gates without repairs or publication.                                                                                         | CHECK_PHASE         |
+| `tests`      | Discover the complete global pytest inventory and execute testmon-selected cases with the persistent external database.                                                                                     | —                   |
+| `tests-full` | Execute the complete applicable population once without Testmon or a preliminary incremental run, preserving the existing database untouched.                                                               | —                   |
+| `help`       | Discover the declared public interface without effects.                                                                                                                                                     | —                   |
+| `build`      | Build local distribution and documentation artifacts without publishing them.                                                                                                                               | —                   |
+| `clean`      | Remove only declared disposable resources owned by the selected target.                                                                                                                                     | —                   |
 
 ### Profiling and Semantic Publication Boundaries
 

@@ -24,6 +24,11 @@ from tests._utilities import (
     TestsFlextUtilitiesRailway,
     TestsFlextUtilitiesResultCombinators,
     TestsFlextUtilitiesValidationFactories,
+    TestsFlextUtilitiesValidationNetworkScenarios,
+    TestsFlextUtilitiesValidationNumericScenarios,
+    TestsFlextUtilitiesValidationPatternScenarios,
+    TestsFlextUtilitiesValidationStringScenarios,
+    TestsFlextUtilitiesValidationUriScenarios,
 )
 from tests._utilities.decorators import TestsFlextDecoratorsLegacy
 from tests._utilities.handlers import TestsFlextFlextHandlers
@@ -32,19 +37,6 @@ from tests._utilities.reliability_scenarios import (
     TestsFlextUtilitiesReliabilityScenarios,
 )
 from tests._utilities.result_exception_carrying import TestsFlextResultExceptionCarrying
-from tests._utilities.validation_network import (
-    TestsFlextUtilitiesValidationNetworkScenarios,
-)
-from tests._utilities.validation_numeric import (
-    TestsFlextUtilitiesValidationNumericScenarios,
-)
-from tests._utilities.validation_pattern import (
-    TestsFlextUtilitiesValidationPatternScenarios,
-)
-from tests._utilities.validation_string import (
-    TestsFlextUtilitiesValidationStringScenarios,
-)
-from tests._utilities.validation_uri import TestsFlextUtilitiesValidationUriScenarios
 
 
 class TestsFlextUtilities(flext_tests_u):
@@ -403,6 +395,11 @@ class TestsFlextUtilities(flext_tests_u):
         TestsFlextUtilitiesRailway,
         TestsFlextUtilitiesResultCombinators,
         TestsFlextUtilitiesValidationFactories,
+        TestsFlextUtilitiesValidationNetworkScenarios,
+        TestsFlextUtilitiesValidationNumericScenarios,
+        TestsFlextUtilitiesValidationPatternScenarios,
+        TestsFlextUtilitiesValidationStringScenarios,
+        TestsFlextUtilitiesValidationUriScenarios,
     ):
         """flext-core test utilities namespace."""
 

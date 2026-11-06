@@ -153,8 +153,8 @@ repository. The workspace coordinator visits repositories in dependency order in
 process, and each stage scans only its repository's owned sources. `ast-grep scan -c`
 on the staged provider reproduces the run.
 
-| Workspace declaration                                                                                                                                             | Infra implementation                                                                                                                        |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workspace declaration                                             | Infra implementation                                                                                                                        |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | ADR-028 Decision 17 requires one snapshot/planner per repository. | [Codemod native utilities](https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/src/flext_infra/_utilities/_codemod/native_utilities.py) |
 | ADR-028 Decision 18 owns one generalized source rule per law.     | The authored catalog is the single rule owner; repository plans bind computed facts to it.                                                  |
 
@@ -337,8 +337,8 @@ protocol contract this rule enforces.
 
 ### One rule per law
 
-| Workspace declaration                                                     | Accepted decision                                                                                                         |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Workspace declaration                                                     | Accepted decision         |
+| ------------------------------------------------------------------------- | ------------------------- |
 | This section, One rule per law; the generated Infra copy links back here. | FLEXT ADR-028 Decision 18 |
 
 For semantic discovery and refactoring, ADR-028 Decision 17

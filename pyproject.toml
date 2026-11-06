@@ -620,6 +620,9 @@ force-single-line = false
 known-first-party = ["flext_core"]
 split-on-trailing-comma = false
 
+[tool.ruff.lint.per-file-ignores]
+"**/_protocols/pydantic.py" = ["too-many-arguments"]
+
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
@@ -654,7 +657,7 @@ constraint-dependencies = [
   "uv>=0.13.4",
 ]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
-link-mode = "copy"
+link-mode = "clone"
 override-dependencies = [
   "rope @ git+https://github.com/marlon-costa-dc/rope.git@5ebf6d5c477fbf8fc66191bd991a27ca1b9eed7a",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
