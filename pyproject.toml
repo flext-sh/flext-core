@@ -627,7 +627,12 @@ split-on-trailing-comma = false
 convention = "google"
 
 [tool.ruff.lint.pylint]
-allow-dunder-method-names = ["__base__", "__bases__"]
+allow-dunder-method-names = [
+  "__base__",
+  "__bases__",
+  "__get_pydantic_core_schema__",
+  "__get_pydantic_json_schema__",
+]
 
 [tool.tomlsort]
 all = true
