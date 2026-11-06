@@ -158,7 +158,7 @@ class FlextProtocolsPydantic:
             *,
             strict: bool | None = None,
             from_attributes: bool | None = None,
-            context: Mapping[str, object] | None = None,
+            context: dict[str, object] | None = None,
         ) -> Self:
             """Validate an external payload into the concrete model.
 
@@ -173,7 +173,7 @@ class FlextProtocolsPydantic:
             json_data: str | bytes | bytearray,
             *,
             strict: bool | None = None,
-            context: Mapping[str, object] | None = None,
+            context: dict[str, object] | None = None,
         ) -> Self:
             """Validate a serialized payload into the concrete model.
 

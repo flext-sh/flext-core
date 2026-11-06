@@ -100,19 +100,19 @@ inesperados e debugging mais caro.
 2. **Cachear `TypeAdapter` em `ClassVar`/módulo nos validadores quentes**
 
     - Arquivos iniciais:
-      - `src/flext_core/_models/cqrs.py` (`validate_pagination`)
-      - `src/flext_core/_models/settings.py` (`validate_batch`)
+    - `src/flext_core/_models/cqrs.py` (`validate_pagination`)
+    - `src/flext_core/_models/settings.py` (`validate_batch`)
     - Ação: mover adapters para constantes de classe/módulo
       (`ClassVar[TypeAdapter[...]]`).
     - Critério de aceite: zero criação dinâmica de adapter nesses métodos.
 
 3. **Eliminar `Field(default=[])` em modelos Pydantic**
     - Arquivos alvo:
-      - `src/flext_core/_models/entity.py`
-      - `src/flext_core/_models/service.py`
-      - `src/flext_core/_models/generic.py`
-      - `src/flext_core/_models/containers.py`
-      - `src/flext_core/_models/settings.py`
+    - `src/flext_core/_models/entity.py`
+    - `src/flext_core/_models/service.py`
+    - `src/flext_core/_models/generic.py`
+    - `src/flext_core/_models/containers.py`
+    - `src/flext_core/_models/settings.py`
     - Ação: substituir por `Field(default_factory=list)`.
     - Critério de aceite: `rg "default=\[\]" src/flext_core/_models` sem ocorrências em
       modelos.
@@ -123,8 +123,8 @@ inesperados e debugging mais caro.
 
     - Arquivo: `src/flext_core/protocols.py`.
     - Ação:
-      - cache para membros exigidos por protocolo;
-      - cache para resultado de conformidade `(target_cls, protocol) -> bool`.
+    - cache para membros exigidos por protocolo;
+    - cache para resultado de conformidade `(target_cls, protocol) -> bool`.
     - Observação: invalidar cache quando subclasses dinâmicas forem registradas.
     - Critério de aceite: redução mensurável de tempo em testes de bootstrap/import.
 
@@ -138,15 +138,15 @@ inesperados e debugging mais caro.
 1. **Definir guideline oficial de Pydantic v2 para o projeto**
 
     - Documento interno com regras obrigatórias:
-      - `default_factory` para coleções mutáveis;
-      - `TypeAdapter` cacheado fora de loops/validators quentes;
-      - validação estrita apenas na fronteira de entrada.
+    - `default_factory` para coleções mutáveis;
+    - `TypeAdapter` cacheado fora de loops/validators quentes;
+    - validação estrita apenas na fronteira de entrada.
 
 2. **Criar microbenchmarks e budget no CI**
     - Cenários mínimos:
-      - dispatch com/sem resolução pré-compilada;
-      - validação com adapter inline vs cacheado;
-      - import/cold-start de módulos com protocolos/metaclass.
+    - dispatch com/sem resolução pré-compilada;
+    - validação com adapter inline vs cacheado;
+    - import/cold-start de módulos com protocolos/metaclass.
     - Budget sugerido inicial: regressão máxima de 5% em throughput e 10% em p95.
 
 ---
