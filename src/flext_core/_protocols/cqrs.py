@@ -118,8 +118,6 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         data: Mapping[str, t.Scalar]
         metadata: Mapping[str, t.Scalar]
 
-    type FlextMessage = t.MessageUnion[Command, Query, Event]
-
 
 __all__: list[str] = [
     "FlextProtocolsCqrs",
