@@ -14,10 +14,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from collections.abc import Mapping, MutableSequence
+from typing import TYPE_CHECKING
 
 from flext_tests import FlextTestsTypes
 
-from tests import p
+if TYPE_CHECKING:
+    from tests import p
 
 
 class TestsFlextTypes(FlextTestsTypes):
