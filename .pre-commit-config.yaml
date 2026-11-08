@@ -20,3 +20,7 @@ repos:
         entry: >-
           bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; FLEXT=${FLEXT_INFRA_BIN:-$(command -v flext-infra || true)}; [ -n "$FLEXT" ] || FLEXT=./.venv/bin/flext-infra; args=(); md=(); argc=0; md_count=0; for f in "$@"; do case "$f" in /*) continue;; esac; [ -f "$f" ] && [ ! -L "$f" ] || continue; case "$f" in *.py) args+=(--file "$f"); argc=$((argc+1));; *.md) md+=("$f"); md_count=$((md_count+1));; esac; done; if [ "$argc" -gt 0 ]; then CI=C "$FLEXT" check run --repository-root . "${args[@]}" --gates lint --gates format; fi; if [ "$md_count" -gt 0 ]; then RUMDL=./.venv/bin/rumdl; [ -x "$RUMDL" ] || RUMDL=rumdl; "$RUMDL" check --config .rumdl.toml "${md[@]}"; "$RUMDL" fmt --check --config .rumdl.toml "${md[@]}"; fi; git diff --cached --check' --
         pass_filenames: true
+        # Scenario-data roots are no gate's input (codegen.exclusions); the
+        # hook's native filter keeps them out instead of a gate refusing an
+        # excluded path.
+        exclude: '(^|/)(tests/fixtures)/'

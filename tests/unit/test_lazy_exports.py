@@ -183,18 +183,16 @@ class TestsFlextCoreLazyExports:
     ) -> None:
         """Public consumers resolve declarations without warming constants first.
 
-        Live sources are the editable checkouts, never an installed wheel; the
-        check reads the loaded module path, not the checkout topology.
+        The check is independent of install topology: CI installs the
+        workspace members noneditable while local setups may be editable.
         """
         script = (
             f"{first_import}\n"
-            "from pathlib import Path\n"
             "from typing import get_args\n"
             "import flext_core, flext_cli, flext_infra\n"
             "from flext_core import FlextSettings, c, m, p, t\n"
             "for package in (flext_core, flext_cli, flext_infra):\n"
-            "    print('site-packages' not in Path(package.__file__).resolve().parts, "
-            "issubclass(package.t, t), issubclass(package.p, p), "
+            "    print(issubclass(package.t, t), issubclass(package.p, p), "
             "issubclass(package.m, m))\n"
             "print(isinstance(FlextSettings, p.SettingsType))\n"
             "for operation in ('register_plugin', 'unregister_plugin', "
@@ -214,7 +212,7 @@ class TestsFlextCoreLazyExports:
         tm.that(result.value.stderr, eq="")
         tm.that(
             result.value.stdout,
-            eq="True True True True\n" * 3 + "True\n" * 7,
+            eq="True True True\n" * 3 + "True\n" * 7,
         )
 
     @staticmethod
