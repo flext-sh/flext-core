@@ -18,7 +18,6 @@ from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, dataclass_transform, override
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
-from pydantic_core import to_jsonable_python
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
@@ -128,6 +127,11 @@ class FlextModelsBase:
         # the checker does not accept TypeAliasType as a type form.
         MAPPING_VALIDATOR: ClassVar[TypeAdapter[t.JsonMapping]] = TypeAdapter(
             Mapping[str, t.JsonValue]
+        )
+        # Renders JSON-able attribute values (for example ``Path``) in JSON mode;
+        # an unknown type fails serialization loudly.
+        JSONABLE_MAPPING: ClassVar[TypeAdapter[Mapping[str, object]]] = TypeAdapter(
+            Mapping[str, object]
         )
         created_at: Annotated[
             datetime,
@@ -239,7 +243,9 @@ class FlextModelsBase:
             # Native SDK serialization renders path-like and other JSON-able
             # values before the strict JSON container admits them.
             normalized = FlextModelsContainers.ConfigMap.model_validate(
-                to_jsonable_python(dict(payload))
+                FlextModelsBase.Metadata.JSONABLE_MAPPING.dump_python(
+                    dict(payload), mode="json"
+                )
             ).root
             for key in normalized:
                 if key.startswith("_"):
