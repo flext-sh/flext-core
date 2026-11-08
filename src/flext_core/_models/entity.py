@@ -76,8 +76,12 @@ class FlextModelsEntity:
                 The validated entity.
 
             """
-            if self.updated_at is None:
-                self.updated_at = datetime.now(UTC)
+            # Assign through the declaring base: a ``self.updated_at`` write here
+            # makes pyright infer a narrower ``datetime`` member on Entity, which
+            # breaks conformance to the ``updated_at: datetime | None`` protocols.
+            stamped: FlextModelsBase.TimestampedModel = self
+            if stamped.updated_at is None:
+                stamped.updated_at = datetime.now(UTC)
             return self
 
     class Value(FlextModelsBase.FrozenValueModel):
