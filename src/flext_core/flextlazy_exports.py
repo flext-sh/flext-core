@@ -12,13 +12,13 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 from flext_core.flextlazy_member import FlextLazyMember
-from flext_core.flextlazy_part_01 import FlextLazyPart01
+from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
 
 if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextLazyPart02(FlextLazyPart01):
+class FlextLazyExports(FlextLazyBootstrap):
     """Install and resolve exports without generated-package bootstrap imports."""
 
     def member(self, module: str, owner: str, member: str) -> FlextLazyMember:
@@ -314,4 +314,4 @@ class FlextLazyPart02(FlextLazyPart01):
         return hooks
 
 
-__all__: list[str] = ["FlextLazyPart02"]
+__all__: list[str] = ["FlextLazyExports"]

@@ -17,7 +17,7 @@ from flext_core import c, t
 from flext_core._models import FlextModelsBase
 
 
-class FlextModelsCqrsPart01:
+class FlextModelsCqrsPagination:
     """First CQRS namespace part: the models the query contract references."""
 
     class Pagination(FlextModelsBase.FlexibleInternalModel):
@@ -66,4 +66,4 @@ class FlextModelsCqrsPart01:
             return (self.page - c.FIRST_PAGE_INDEX) * self.size
 
 
-__all__: list[str] = ["FlextModelsCqrsPart01"]
+__all__: list[str] = ["FlextModelsCqrsPagination"]

@@ -16,15 +16,11 @@ from flext_core._models import FlextModelsBase, FlextModelsPydantic
 from flext_core._models._context import FlextModelsContextData
 
 
-class FlextModelsContextScope:
-    """Namespace for context scope and statistics models."""
+class FlextModelsContextScopeBase:
+    """Namespace for context scope statistics models."""
 
     class ContextStatistics(FlextModelsBase.ArbitraryTypesModel):
-        """Statistics tracking for context operations.
-
-        Enforcement exemption: counters and the ``operations`` map are
-        incremented throughout the context lifecycle; fresh per-instance.
-        """
+        """Statistics tracking for context operations."""
 
         model_config: ClassVar[FlextModelsPydantic.ConfigDict] = (
             FlextModelsPydantic.ConfigDict(frozen=True)
@@ -74,6 +70,10 @@ class FlextModelsContextScope:
             validate_default=True,
         )
 
+
+class FlextModelsContextScopeRuntime(FlextModelsContextScopeBase):
+    """Namespace for context runtime state models."""
+
     class ContextRuntimeState(FlextModelsBase.ArbitraryTypesModel):
         """Mutable context metadata, hooks, statistics and scope-variable registry."""
 
@@ -93,12 +93,12 @@ class FlextModelsContextScope:
             description="Lifecycle hooks keyed by event name",
         )
         statistics: Annotated[
-            ContextStatistics,
+            FlextModelsContextScopeBase.ContextStatistics,
             FlextModelsPydantic.Field(
                 description="Operation counters for this context instance"
             ),
         ] = FlextModelsPydantic.Field(
-            default_factory=ContextStatistics,
+            default_factory=FlextModelsContextScopeBase.ContextStatistics,
         )
         active: bool = FlextModelsPydantic.Field(
             default=True, description="Whether the context accepts operations"
@@ -118,6 +118,10 @@ class FlextModelsContextScope:
             description="ContextVar registry keyed by scope name",
         )
 
+
+class FlextModelsContextScope(FlextModelsContextScopeRuntime):
+    """Public facade for FlextModelsContextScope."""
+
     class ContextContainerState(FlextModelsBase.ArbitraryTypesModel):
         """Centralized container binding state for `FlextContext`."""
 
@@ -132,12 +136,8 @@ class FlextModelsContextScope:
         @FlextModelsPydantic.computed_field
         @property
         def configured(self) -> bool:
-            """Whether a container is configured for service access.
+            """Whether a container is configured for service access."""
 
-            Returns:
-                The resulting ``bool``.
-
-            """
             return self.container is not None
 
 

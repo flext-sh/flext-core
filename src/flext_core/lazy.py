@@ -8,10 +8,10 @@ from __future__ import annotations
 
 from flext_core.flextlazy_attribute import FlextLazyAttribute
 from flext_core.flextlazy_member import FlextLazyMember
-from flext_core.flextlazy_part_02 import FlextLazyPart02
+from flext_core.flextlazy_exports import FlextLazyExports
 
 
-class FlextLazy(FlextLazyPart02):
+class FlextLazy(FlextLazyExports):
     """Public lazy export facade."""
 
 
