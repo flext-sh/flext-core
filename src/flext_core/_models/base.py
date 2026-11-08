@@ -212,7 +212,9 @@ class FlextModelsBase:
 
         @field_validator("attributes", mode="before")
         @classmethod
-        def validate_metadata_attributes(cls, value: p.MetadataInput) -> t.JsonMapping:
+        def validate_metadata_attributes(
+            cls, value: p.MetadataInput
+        ) -> t.JsonMapping | p.MetadataInput:
             """Validate attributes through the canonical metadata boundary.
 
             Returns:
@@ -227,13 +229,13 @@ class FlextModelsBase:
                 if isinstance(value, p.HasModelDump)
                 else value
             )
-            normalized = (
-                FlextModelsContainers.ConfigMap.model_validate(payload).root
-                if isinstance(payload, Mapping)
-                else payload
-            )
-            if normalized is None:
+            if payload is None:
                 return {}
+            if not isinstance(payload, Mapping):
+                # Any other shape is the field's own mapping validation to
+                # reject (dict_type at ``attributes``), never iterated here.
+                return payload
+            normalized = FlextModelsContainers.ConfigMap.model_validate(payload).root
             for key in normalized:
                 if key.startswith("_"):
                     message = c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(
