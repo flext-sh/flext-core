@@ -11,7 +11,8 @@ from typing import TYPE_CHECKING, override
 
 from flext_tests import u
 
-from tests import h, m, p, r, s, t
+from flext_core import h, r, s
+from tests import m, p, t
 
 if TYPE_CHECKING:
     from collections.abc import Callable

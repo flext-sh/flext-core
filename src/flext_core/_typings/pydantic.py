@@ -17,6 +17,7 @@ from collections.abc import Callable, Mapping, Sequence
 from functools import partial
 from types import GenericAlias, NoneType, UnionType
 from typing import (
+    TYPE_CHECKING,
     Annotated,
     Never,
     TypeAliasType,
@@ -34,7 +35,10 @@ import typing_extensions
 from pydantic import JsonValue, json_schema as pydantic_json_schema
 from pydantic_core import core_schema
 
-from flext_core import c, p
+from flext_core import c
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 class FlextTypesPydantic:

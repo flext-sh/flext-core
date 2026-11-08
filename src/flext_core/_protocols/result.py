@@ -8,11 +8,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, Self, TypeVar, overload, runtime_checkable
 
-from flext_core import p, t
+from flext_core import t
 
 if TYPE_CHECKING:
     from collections.abc import Callable
     from types import TracebackType
+
+    from flext_core._protocols import FlextProtocolsBase
 
 
 _ResultViewT_co = TypeVar("_ResultViewT_co", covariant=True)
@@ -197,7 +199,7 @@ class FlextProtocolsResult:
         @property
         def message(self) -> str: ...
         @property
-        def metadata(self) -> p.Metadata: ...
+        def metadata(self) -> FlextProtocolsBase.Metadata: ...
 
         def matches_error_domain(self, domain: str) -> bool: ...
 
