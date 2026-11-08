@@ -10,7 +10,8 @@ from typing import Annotated, ClassVar, override
 
 from flext_tests import r
 
-from tests import c, m, p, s, t
+from flext_core import s
+from tests import c, m, p, t
 from tests._utilities import TestsFlextUtilitiesRailwayServices
 
 

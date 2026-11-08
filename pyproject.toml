@@ -448,16 +448,6 @@ venv = ".venv"
 venvPath = ".."
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = ["src", "."]
-reportPrivateUsage = "error"
-root = "src"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportPrivateUsage = "error"
-root = "tests"
-
-[[tool.pyright.executionEnvironments]]
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
 root = "examples"
@@ -466,6 +456,16 @@ root = "examples"
 extraPaths = [".", "src"]
 reportPrivateUsage = "error"
 root = "scripts"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = ["src", "."]
+reportPrivateUsage = "error"
+root = "src"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportPrivateUsage = "error"
+root = "tests"
 
 [tool.pytest.ini_options]
 addopts = [
