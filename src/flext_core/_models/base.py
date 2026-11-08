@@ -18,6 +18,7 @@ from datetime import UTC, datetime
 from typing import Annotated, ClassVar, Self, dataclass_transform, override
 
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, field_validator
+from pydantic_core import to_jsonable_python
 
 from flext_core import c, p, t
 from flext_core._models import FlextModelsContainers, FlextModelsPydantic
@@ -235,7 +236,11 @@ class FlextModelsBase:
                 # Any other shape is the field's own mapping validation to
                 # reject (dict_type at ``attributes``), never iterated here.
                 return payload
-            normalized = FlextModelsContainers.ConfigMap.model_validate(payload).root
+            # Native SDK serialization renders path-like and other JSON-able
+            # values before the strict JSON container admits them.
+            normalized = FlextModelsContainers.ConfigMap.model_validate(
+                to_jsonable_python(dict(payload))
+            ).root
             for key in normalized:
                 if key.startswith("_"):
                     message = c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(
