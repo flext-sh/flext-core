@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._container.flextcontainertestingops import (
-        FlextContainerTestingOps,
-    )
+    from flext_core._container.flextcontainertestingops import FlextContainerTestingOps
 
 
 __all__: tuple[str, ...] = ("FlextContainerTestingOps",)
