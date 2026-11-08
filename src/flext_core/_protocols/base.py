@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from datetime import datetime
 
 
-from collections.abc import Callable, Iterable, MutableSequence
+from collections.abc import Callable, Iterable
 from typing import Literal, Protocol, overload, runtime_checkable
 
 from typing_extensions import TypeForm
@@ -187,17 +187,6 @@ class FlextProtocolsBase:
         ) -> None:
             """Context manager exit."""
             ...
-
-    @runtime_checkable
-    class HasDomainEvents(Protocol):
-        """Protocol for DDD aggregate roots that buffer uncommitted domain events.
-
-        Every entity that carries a ``domain_events`` list and an identity
-        satisfies this protocol. Use with ``u.add_domain_event`` utility.
-        """
-
-        unique_id: str
-        domain_events: MutableSequence[FlextProtocolsBase.DomainEvent]
 
     @runtime_checkable
     class EnforcedModel(FlextProtocolsPydantic.BaseModel, Protocol):

@@ -137,7 +137,6 @@ class FlextModelsContextScope(FlextModelsContextScopeRuntime):
         @property
         def configured(self) -> bool:
             """Whether a container is configured for service access."""
-
             return self.container is not None
 
 

@@ -7,8 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core.flextlazy_attribute import FlextLazyAttribute
-from flext_core.flextlazy_member import FlextLazyMember
 from flext_core.flextlazy_exports import FlextLazyExports
+from flext_core.flextlazy_member import FlextLazyMember
 
 
 class FlextLazy(FlextLazyExports):

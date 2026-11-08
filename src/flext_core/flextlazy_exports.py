@@ -11,8 +11,8 @@ from collections.abc import Mapping, MutableMapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING
 
-from flext_core.flextlazy_member import FlextLazyMember
 from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
+from flext_core.flextlazy_member import FlextLazyMember
 
 if TYPE_CHECKING:
     from flext_core import t
