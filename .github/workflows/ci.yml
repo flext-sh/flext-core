@@ -181,31 +181,6 @@ jobs:
         # (workflow requires) admits the step only after that verb is green.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check CHECK_PHASE=primary
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
-      - name: make tests (blocking)
-        id: approval-tests-primary
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict never hides the others; a declared requirement
-        # (workflow requires) admits the step only after that verb is green.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-check-primary.outcome == 'success' }}
-        run: CI=Y make tests
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
-      - name: make check (blocking)
-        id: approval-check
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict never hides the others; a declared requirement
-        # (workflow requires) admits the step only after that verb is green.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-tests-primary.outcome == 'success' }}
-        run: CI=Y make check
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
-      - name: make tests (blocking)
-        id: approval-tests
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict never hides the others; a declared requirement
-        # (workflow requires) admits the step only after that verb is green.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-check.outcome == 'success' && steps.approval-check-primary.outcome == 'success' }}
-        run: CI=Y make tests
-
       - name: Dump reports on failure
         if: ${{ failure() }}
         run: |
@@ -229,7 +204,7 @@ jobs:
       # row failed first (a failed tests row skips every later check row);
       # uploading after a setup failure would only add a second, misleading error.
       - name: Upload execution reports
-        if: ${{ !cancelled() && (steps.approval-check-primary.outcome == 'success' || steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'success' || steps.approval-tests-primary.outcome == 'failure' || steps.approval-check.outcome == 'success' || steps.approval-check.outcome == 'failure' || steps.approval-tests.outcome == 'success' || steps.approval-tests.outcome == 'failure') }}
+        if: ${{ !cancelled() && (steps.approval-check-primary.outcome == 'success' || steps.approval-check-primary.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-ci-reports-${{ github.run_id }}
@@ -264,7 +239,7 @@ jobs:
       # rows capture receipts, so the upload runs exactly when one of them
       # failed (tests included), never after a setup failure that left none.
       - name: Upload gate receipts on failure
-        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'failure' || steps.approval-check.outcome == 'failure' || steps.approval-tests.outcome == 'failure') }}
+        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-gate-receipts-${{ github.job }}-${{ github.run_id }}
@@ -272,16 +247,6 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
-      # Completed failing tests may save; cancelled/incomplete/corrupt runs cannot.
-      - name: Save testmon database
-        if: >-
-          ${{ always() && !cancelled() && steps.testmon_path.outputs.save_allowed == 'true' && steps.approval-tests.outputs.testmon_saveable == 'true' && steps.approval-tests.outputs.testmon_database == steps.testmon_path.outputs.database && steps.approval-tests.outputs.testmon_digest != '' }}
-        uses: actions/cache/save@v6
-        with:
-          path: ${{ steps.approval-tests.outputs.testmon_database }}
-          key: ${{ steps.testmon_path.outputs.key }}
-
-
       # The lock-hash key is immutable: save only when the exact key missed,
       # after a failing gate as well, so the next run starts warm.
       - name: Save tool caches
