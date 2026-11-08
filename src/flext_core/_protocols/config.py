@@ -69,37 +69,13 @@ class FlextProtocolsConfig:
 
         log_level: int | None
         console_renderer: bool | None
-
-        @property
-        def processing_stages(self) -> Sequence[FlextProtocolsLogging.LoggingStage]:
-            """Ordered typed event stages executed before rendering."""
-            ...
-
-        @property
-        def observers(self) -> Sequence[FlextProtocolsLogging.LoggingObserver]:
-            """Typed observers notified with each sanitized event."""
-            ...
-
-        @property
-        def handlers(self) -> Sequence[FlextProtocolsLogging.LoggingHandler]:
-            """Native logging handlers attached to the runtime."""
-            ...
-
+        processing_stages: Sequence[FlextProtocolsLogging.LoggingStage]
+        observers: Sequence[FlextProtocolsLogging.LoggingObserver]
+        handlers: Sequence[FlextProtocolsLogging.LoggingHandler]
         redacted_keys: Sequence[str]
         redacted_values: Sequence[str]
-
-        @property
-        def wrapper_class_factory(
-            self,
-        ) -> FlextProtocolsLogging.LoggerWrapperFactory | None:
-            """Factory building the bound-logger wrapper class."""
-            ...
-
-        @property
-        def logger_factory(self) -> FlextProtocolsLogging.OutputLoggerFactory | None:
-            """Factory building the logger."""
-            ...
-
+        wrapper_class_factory: FlextProtocolsLogging.LoggerWrapperFactory | None
+        logger_factory: FlextProtocolsLogging.OutputLoggerFactory | None
         cache_logger_on_first_use: bool
         async_logging: bool | None
 

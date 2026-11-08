@@ -177,10 +177,7 @@ class FlextProtocolsRegistry:
     class RegistryOptions(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def registry_runtime(self) -> FlextProtocolsService.ServiceRuntime:
-            """Explicit runtime shared by registration and execution."""
-            ...
+        registry_runtime: FlextProtocolsService.ServiceRuntime
 
 
 __all__: list[str] = ["FlextProtocolsRegistry"]

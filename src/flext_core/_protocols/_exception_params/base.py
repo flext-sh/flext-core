@@ -29,11 +29,7 @@ class FlextProtocolsExceptionParamsBase:
     class ExceptionFactoryOptions(ParamsModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def error(self) -> Exception | str | None:
-            """Optional underlying error cause for this failure."""
-            ...
-
+        error: Exception | str | None
         error_code: c.ErrorCode | None
 
     @runtime_checkable
@@ -41,37 +37,20 @@ class FlextProtocolsExceptionParamsBase:
         """Structural data contract projected from the owning model."""
 
         error_code: str
-
-        @property
-        def context(
-            self,
-        ) -> (
+        context: (
             Mapping[str, t.JsonPayload | None]
             | FlextProtocolsResult.HasModelDump
             | None
-        ):
-            """Structured context mapping or dumpable payload."""
-            ...
-
-        @property
-        def metadata(self) -> FlextProtocolsResult.HasModelDump | t.JsonValue | None:
-            """Metadata payload or dumpable model for the exception."""
-            ...
-
+        )
+        metadata: FlextProtocolsResult.HasModelDump | t.JsonValue | None
         correlation_id: t.StrictStr | None
         auto_correlation: bool
         auto_log: bool
-
-        @property
-        def merged_kwargs(
-            self,
-        ) -> (
+        merged_kwargs: (
             Mapping[str, t.JsonPayload | None]
             | FlextProtocolsResult.HasModelDump
             | None
-        ):
-            """Pre-merged keyword payload forwarded by factories."""
-            ...
+        )
 
     @runtime_checkable
     class ResourceIdentityParams(ParamsModel, Protocol):

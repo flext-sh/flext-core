@@ -110,6 +110,11 @@ jobs:
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
       # saving never evicts the testmon cache with duplicate generations.
+      # Only that exact key restores. A prefix fallback restored the previous
+      # lock state, whose superseded installs and wheels the next save kept:
+      # the entry grew with every lock change (algar-oud-mig: 3.06 to
+      # 3.65 GiB) until its restore filled the runner disk. A lock change
+      # installs cold and saves exactly the new state.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -122,58 +127,22 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', '.mise.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-3.13-tools-
 
       # Setup obtains any remaining declared members after authentication,
       # then installs the native shared workspace noneditable. It acquires Mise
       # officially and installs the toolchain and dependencies from their locks,
       # publishes that environment through GITHUB_PATH, and prepares the
       # project runtime. CI never runs `make upg`: it never re-resolves.
-      # make tests executes the complete suite once while retaining the
-      # persistent testmon database (make.testmon_cache) outside the checkout.
-      # Restore its project history; the runner verifies its integrity and
-      # complete inventory before accepting or publishing the database.
-      - name: Resolve project testmon database
-        id: testmon_path
-        env:
-          CACHE_BRANCH: ${{ github.head_ref || github.ref_name }}
-          CACHE_SEED_BRANCH: ${{ github.base_ref || github.event.repository.default_branch }}
-          CACHE_WRITE_ALLOWED: ${{ (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) }}
-          CACHE_INPUTS: ${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}
-          CACHE_PLATFORM: ${{ runner.os }}-${{ runner.arch }}
-          CACHE_GENERATION: ${{ github.run_id }}-${{ github.run_attempt }}
-        run: |
-          set -eu
-          cache_home="${XDG_CACHE_HOME:-${HOME}/.cache}"
-          database="$(realpath -m "${cache_home}/flext/infra/testmon/flext-core/.testmondata")"
-          case "${database}" in /*) ;; *) exit 2 ;; esac
-          printf 'database=%s\n' "${database}" >> "${GITHUB_OUTPUT}"
-          branch_digest="$(printf '%s' "${CACHE_BRANCH}" | sha256sum)"
-          seed_digest="$(printf '%s' "${CACHE_SEED_BRANCH}" | sha256sum)"
-          namespace="${CACHE_PLATFORM}-3.13-flext-testmon-flext-core-${branch_digest%% *}-"
-          seed_namespace="${CACHE_PLATFORM}-3.13-flext-testmon-flext-core-${seed_digest%% *}-"
-          printf 'namespace=%s\nseed_namespace=%s\nsave_allowed=%s\n' "${namespace}" "${seed_namespace}" "${CACHE_WRITE_ALLOWED}" >> "${GITHUB_OUTPUT}"
-          printf 'key=%s%s-%s\n' "${namespace}" "${CACHE_INPUTS}" "${CACHE_GENERATION}" >> "${GITHUB_OUTPUT}"
-      - name: Restore testmon database
-        uses: actions/cache/restore@v6
-        with:
-          path: ${{ steps.testmon_path.outputs.database }}
-          key: ${{ steps.testmon_path.outputs.key }}
-          restore-keys: |
-            ${{ steps.testmon_path.outputs.namespace }}${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', 'config/**') }}-
-            ${{ steps.testmon_path.outputs.namespace }}
-            ${{ steps.testmon_path.outputs.seed_namespace }}
-
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
+      # CI approval, one visible step per ci workflow row (setup -> check).
       - name: make setup (blocking)
         id: approval-setup
         run: CI=Y make setup
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests -> check -> tests).
+      # CI approval, one visible step per ci workflow row (setup -> check).
       - name: make check CHECK_PHASE=primary (blocking)
         id: approval-check-primary
         # Every approval verb reports once setup provisioned the environment,
@@ -181,25 +150,6 @@ jobs:
         # (workflow requires) admits the step only after that verb is green.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check CHECK_PHASE=primary
-      - name: Dump reports on failure
-        if: ${{ failure() }}
-        run: |
-          set -eu
-          # Structured reports only — a subset of Upload reports (no raw
-          # pytest/tool logs: those may carry connection strings / env secrets).
-          for report_root in .reports apps; do
-            if [ -d "${report_root}" ]; then
-              find "${report_root}" \
-                \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' -o -path '*/audit-summary.json' -o -path '*/audit-report.md' -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
-                -type f -exec sh -eu -c '
-                  for report_file do
-                    printf "::group::%s\n" "${report_file}"
-                    cat "${report_file}"
-                    printf "::endgroup::\n"
-                  done
-                ' sh {} +
-            fi
-          done
       # Reports exist once any approval row after setup executed, whichever
       # row failed first (a failed tests row skips every later check row);
       # uploading after a setup failure would only add a second, misleading error.
@@ -247,6 +197,7 @@ jobs:
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
+
       # The lock-hash key is immutable: save only when the exact key missed,
       # after a failing gate as well, so the next run starts warm.
       - name: Save tool caches
@@ -265,6 +216,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims

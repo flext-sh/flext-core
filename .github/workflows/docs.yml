@@ -25,6 +25,8 @@ jobs:
     name: docs-quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # packages: read only for distributions declared in codegen
+    # ci_package_registry_read: make gen/check resolve their GitHub Packages.
     permissions:
       contents: read
     # Why: GitHub-hosted runners share egress IPs, so the unauthenticated
@@ -66,6 +68,11 @@ jobs:
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
       # saving never evicts the testmon cache with duplicate generations.
+      # Only that exact key restores. A prefix fallback restored the previous
+      # lock state, whose superseded installs and wheels the next save kept:
+      # the entry grew with every lock change (algar-oud-mig: 3.06 to
+      # 3.65 GiB) until its restore filled the runner disk. A lock change
+      # installs cold and saves exactly the new state.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -78,12 +85,11 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', '.mise.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-3.13-tools-
 
 
       - name: Sync workspace toolchain
@@ -107,6 +113,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
@@ -203,6 +210,11 @@ jobs:
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
       # saving never evicts the testmon cache with duplicate generations.
+      # Only that exact key restores. A prefix fallback restored the previous
+      # lock state, whose superseded installs and wheels the next save kept:
+      # the entry grew with every lock change (algar-oud-mig: 3.06 to
+      # 3.65 GiB) until its restore filled the runner disk. A lock change
+      # installs cold and saves exactly the new state.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -215,12 +227,11 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', '.mise.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-3.13-tools-
 
 
       - name: Sync workspace toolchain
@@ -241,6 +252,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims

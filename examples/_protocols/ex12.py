@@ -24,11 +24,7 @@ class ExamplesFlextProtocolsEx12:
     class RegistryLookupOptions(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def registry(self) -> p.Registry:
-            """Registry instance for plugin lookup."""
-            ...
-
+        registry: p.Registry
         category: str
         plugin_name: str
 

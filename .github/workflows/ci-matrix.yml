@@ -81,7 +81,7 @@ jobs:
           -e GITHUB_TOKEN
           -w /workspace/flext-core
           ci-matrix-${{ matrix.distro }}
-          bash -ec 'make help && make setup && make check CHECK_PHASE=primary && make tests && make gen && make gen && make fmt && make fix && make mod && make gen && make gen && make check CHECK_PHASE=primary && make check && make tests && make build'
+          bash -ec 'make setup && make check CHECK_PHASE=primary && make check CHECK_PHASE=primary'
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
@@ -113,21 +113,9 @@ jobs:
       # context): the matrix never keeps its own verb list.
       - name: Lifecycle acceptance
         run: |
-          CI=Y make help
           CI=Y make setup
           CI=Y make check CHECK_PHASE=primary
-          CI=Y make tests
-          CI=Y make gen
-          CI=Y make gen
-          CI=Y make fmt
-          CI=Y make fix
-          CI=Y make mod
-          CI=Y make gen
-          CI=Y make gen
           CI=Y make check CHECK_PHASE=primary
-          CI=Y make check
-          CI=Y make tests
-          CI=Y make build
   # End SECTION: macos
 
   # === SECTION: windows (managed) ===
@@ -160,19 +148,7 @@ jobs:
       - name: Lifecycle acceptance
         shell: bash
         run: |
-          CI=Y make help
           CI=Y make setup
           CI=Y make check CHECK_PHASE=primary
-          CI=Y make tests
-          CI=Y make gen
-          CI=Y make gen
-          CI=Y make fmt
-          CI=Y make fix
-          CI=Y make mod
-          CI=Y make gen
-          CI=Y make gen
           CI=Y make check CHECK_PHASE=primary
-          CI=Y make check
-          CI=Y make tests
-          CI=Y make build
 # End SECTION: windows

@@ -12,8 +12,6 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
     from datetime import datetime
 
-    from flext_core import m
-
 
 from collections.abc import Callable, Iterable, MutableSequence
 from typing import Literal, Protocol, overload, runtime_checkable
@@ -199,7 +197,7 @@ class FlextProtocolsBase:
         """
 
         unique_id: str
-        domain_events: MutableSequence[m.DomainEvent]
+        domain_events: MutableSequence[FlextProtocolsBase.DomainEvent]
 
     @runtime_checkable
     class EnforcedModel(FlextProtocolsPydantic.BaseModel, Protocol):

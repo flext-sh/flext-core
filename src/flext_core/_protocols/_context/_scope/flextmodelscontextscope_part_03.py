@@ -23,10 +23,7 @@ class FlextProtocolsContextScopeFlextmodelscontextscopePart03:
     class ContextContainerState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def container(self) -> FlextProtocolsContainer.Container | None:
-            """Container configured for service namespace resolution."""
-            ...
+        container: FlextProtocolsContainer.Container | None
 
         @property
         def configured(self) -> bool:
