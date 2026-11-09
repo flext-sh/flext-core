@@ -63,6 +63,11 @@ jobs:
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
       # saving never evicts the testmon cache with duplicate generations.
+      # Only that exact key restores. A prefix fallback restored the previous
+      # lock state, whose superseded installs and wheels the next save kept:
+      # the entry grew with every lock change (algar-oud-mig: 3.06 to
+      # 3.65 GiB) until its restore filled the runner disk. A lock change
+      # installs cold and saves exactly the new state.
       - name: Restore tool caches
         id: tool-cache
         uses: actions/cache/restore@v6
@@ -75,12 +80,11 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
           key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml', '.mise.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-3.13-tools-
 
       - name: Boot
         run: CI=Y make setup
@@ -104,6 +108,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
+            .bin
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims

@@ -40,25 +40,10 @@ class TestsFlextProtocolsMixinsServiceCaseCore:
     class ServiceUserService(FlextTestsProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def settings_type(self) -> p.SettingsType | None:
-            """FlextSettings class used to initialize the service runtime."""
-            ...
-
-        @property
-        def runtime_settings(self) -> p.Settings | None:
-            """Pre-built settings instance used directly for the runtime."""
-            ...
-
-        @property
-        def settings_overrides(self) -> t.JsonMapping | None:
-            """Settings overrides applied at instantiation."""
-            ...
-
-        @property
-        def initial_context(self) -> p.Context | None:
-            """Initial context for the service scope."""
-            ...
+        settings_type: p.SettingsType | None
+        runtime_settings: p.Settings | None
+        settings_overrides: t.JsonMapping | None
+        initial_context: p.Context | None
 
     @runtime_checkable
     class ServiceTestCase(FlextTestsProtocols.BaseModel, Protocol):

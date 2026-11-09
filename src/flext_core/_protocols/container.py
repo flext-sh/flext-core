@@ -51,50 +51,14 @@ class FlextProtocolsContainer:
     class ServiceRegistrationSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def settings(self) -> FlextProtocolsSettings.Settings | None:
-            """Settings instance bound to the container runtime."""
-            ...
-
-        @property
-        def context(self) -> FlextProtocolsContext.Context | None:
-            """Execution context attached to the container."""
-            ...
-
-        @property
-        def dispatcher(self) -> FlextProtocolsHandler.Dispatcher | None:
-            """Structural member projected from the owning model.
-
-            Explicit command bus retained by this scope; otherwise a fresh bus is built.
-            """
-            ...
-
-        @property
-        def services(self) -> FlextProtocolsContainer.ServiceMap | None:
-            """Pre-registered service instances for bootstrap."""
-            ...
-
-        @property
-        def factories(self) -> FlextProtocolsContainer.FactoryMap | None:
-            """Pre-registered factory callables for bootstrap."""
-            ...
-
-        @property
-        def resources(self) -> FlextProtocolsContainer.ResourceMap | None:
-            """Pre-registered resource factories for bootstrap."""
-            ...
-
-        @property
-        def user_overrides(
-            self,
-        ) -> FlextProtocolsPydantic.BaseModel | t.UserOverridesMapping | None:
-            """User-level configuration overrides applied after defaults."""
-            ...
-
-        @property
-        def container_config(self) -> FlextProtocolsPydantic.BaseModel | None:
-            """Container configuration model controlling DI behavior."""
-            ...
+        settings: FlextProtocolsSettings.Settings | None
+        context: FlextProtocolsContext.Context | None
+        dispatcher: FlextProtocolsHandler.Dispatcher | None
+        services: FlextProtocolsContainer.ServiceMap | None
+        factories: FlextProtocolsContainer.FactoryMap | None
+        resources: FlextProtocolsContainer.ResourceMap | None
+        user_overrides: FlextProtocolsPydantic.BaseModel | t.UserOverridesMapping | None
+        container_config: FlextProtocolsPydantic.BaseModel | None
 
     @runtime_checkable
     class RegistrationEnvelope(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
@@ -114,12 +78,7 @@ class FlextProtocolsContainer:
         """Structural data contract projected from the owning model."""
 
         name: t.NonEmptyStr
-
-        @property
-        def service(self) -> FlextProtocolsContainer.RegisterableService:
-            """Service instance (protocols, models, callables)."""
-            ...
-
+        service: FlextProtocolsContainer.RegisterableService
         tags: Sequence[str]
 
         @property
@@ -334,22 +293,14 @@ class FlextProtocolsContainer:
         """Structural data contract projected from the owning model."""
 
         name: t.NonEmptyStr
-
-        @property
-        def factory(self) -> FlextProtocolsContainer.FactoryCallable:
-            """Factory function that creates service instances."""
-            ...
+        factory: FlextProtocolsContainer.FactoryCallable
 
     @runtime_checkable
     class ResourceRegistration(RegistrationEnvelope, Protocol):
         """Structural data contract projected from the owning model."""
 
         name: t.NonEmptyStr
-
-        @property
-        def factory(self) -> FlextProtocolsContainer.ResourceCallable:
-            """Factory returning the lifecycle-managed resource."""
-            ...
+        factory: FlextProtocolsContainer.ResourceCallable
 
     @runtime_checkable
     class ContainerConfig(FlextProtocolsBase.FlexibleInternalModel, Protocol):

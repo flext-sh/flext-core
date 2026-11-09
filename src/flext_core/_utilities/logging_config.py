@@ -230,7 +230,7 @@ class FlextUtilitiesLoggingConfig:
                     written = self._write_job(job)
                 # A user-owned sink can raise any Exception. Deliver that exact
                 # object to the caller's Future, rather than logging or hiding it.
-                except Exception as failure:  # ruff: ignore[blind-except]
+                except Exception as failure:  # ruff: ignore[blind-except] - deliver any sink error to the caller's Future
                     with self._admission:
                         self._failure = failure
                         self.stop_event.set()

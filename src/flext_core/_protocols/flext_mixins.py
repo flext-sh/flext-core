@@ -24,25 +24,10 @@ class FlextProtocolsFlextMixins:
     class ServiceState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
         """Structural data contract projected from the owning model."""
 
-        @property
-        def settings_type(self) -> FlextProtocolsSettings.SettingsType | None:
-            """FlextSettings class used to initialize the service runtime."""
-            ...
-
-        @property
-        def runtime_settings(self) -> FlextProtocolsSettings.Settings | None:
-            """Pre-built settings instance used directly for the runtime."""
-            ...
-
-        @property
-        def settings_overrides(self) -> t.JsonMapping | None:
-            """Settings overrides applied at instantiation."""
-            ...
-
-        @property
-        def initial_context(self) -> FlextProtocolsContext.Context | None:
-            """Initial context for the service scope."""
-            ...
+        settings_type: FlextProtocolsSettings.SettingsType | None
+        runtime_settings: FlextProtocolsSettings.Settings | None
+        settings_overrides: t.JsonMapping | None
+        initial_context: FlextProtocolsContext.Context | None
 
 
 __all__: list[str] = [

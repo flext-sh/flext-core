@@ -37,8 +37,6 @@ if TYPE_CHECKING:
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_member import FlextLazyMember
     from flext_core.flextlazy_native_export import FlextTypingNativeExport
-    from flext_core.flextlazy_part_01 import FlextLazyPart01
-    from flext_core.flextlazy_part_02 import FlextLazyPart02
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
         FlextLazy,
@@ -74,8 +72,6 @@ __all__: tuple[str, ...] = (
     "FlextLazy",
     "FlextLazyAttribute",
     "FlextLazyMember",
-    "FlextLazyPart01",
-    "FlextLazyPart02",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -139,8 +135,6 @@ install_lazy_exports(
         "FlextLazy": ".lazy",
         "FlextLazyAttribute": ".flextlazy_attribute",
         "FlextLazyMember": ".flextlazy_member",
-        "FlextLazyPart01": ".flextlazy_part_01",
-        "FlextLazyPart02": ".flextlazy_part_02",
         "FlextMixins": ".mixins",
         "FlextModels": ".models",
         "FlextProtocols": ".protocols",

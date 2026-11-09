@@ -26,18 +26,8 @@ class FlextProtocolsErrors:
 
         error: str | None
         error_code: str | None
-
-        @property
-        def error_data(
-            self,
-        ) -> t.JsonMapping | FlextProtocolsResult.ConfigModelInput | None:
-            """Structured error payload attached to the failure."""
-            ...
-
-        @property
-        def exception(self) -> BaseException | None:
-            """Underlying exception captured by the failure."""
-            ...
+        error_data: t.JsonMapping | FlextProtocolsResult.ConfigModelInput | None
+        exception: BaseException | None
 
     @runtime_checkable
     class LoggedCallSpec(FlextProtocolsBase.ArbitraryTypesModel, Protocol):

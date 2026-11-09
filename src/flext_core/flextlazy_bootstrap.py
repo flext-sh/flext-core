@@ -21,7 +21,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextLazyPart01:
+class FlextLazyBootstrap:
     """Canonical lazy API as a container with runtime reuse caches.
 
     This bootstrap loader sits below the generated typing and model packages it
@@ -238,4 +238,4 @@ class FlextLazyPart01:
         return {name: out[name] for name in sorted(out)} if sort_keys else out
 
 
-__all__: list[str] = ["FlextLazyPart01"]
+__all__: list[str] = ["FlextLazyBootstrap"]
