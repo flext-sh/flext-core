@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, ClassVar, override
 
+from typing_extensions import TypeForm
+
 from flext_core import m, r, s, u
 from tests import p, t
 
@@ -82,7 +84,7 @@ class TestsFlextModelsServiceCaseCore:
         operations: Annotated[
             Sequence[str],
             m.Field(description="Pipeline operations to execute"),
-        ] = m.Field(default_factory=u.empty(t.TypeForm(Sequence[str])))
+        ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
         expected_pipeline_length: Annotated[
             int,
             m.Field(description="Expected number of pipeline stages"),

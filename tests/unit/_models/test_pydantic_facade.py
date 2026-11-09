@@ -14,6 +14,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar, Literal
 
+from typing_extensions import TypeForm
+
 from tests import c, m, p, t, tm, u
 
 
@@ -313,7 +315,7 @@ class TestsFlextCorePydanticDeclarations:
         }
         tm.that(payload.model_dump(mode="json"), eq=expected_json)
         tm.that(
-            u.type_adapter(t.TypeForm(t.JsonDict)).validate_json(
+            u.type_adapter(TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json()
             ),
             eq=expected_json,
@@ -364,7 +366,7 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(payload.model_dump(by_alias=True), eq=expected)
         tm.that(payload.model_dump(mode="json", by_alias=True), eq=expected)
         tm.that(
-            u.type_adapter(t.TypeForm(t.JsonDict)).validate_json(
+            u.type_adapter(TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json(by_alias=True)
             ),
             eq=expected,

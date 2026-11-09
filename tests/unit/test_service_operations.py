@@ -13,12 +13,10 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar, Self, override
+from typing import ClassVar, Self, override
 
+from flext_core import FlextSettings
 from tests import c, h, m, p, r, s, t, tm, u
-
-if TYPE_CHECKING:
-    from flext_core import FlextSettings
 
 
 class TestsFlextCoreServiceOperations:
@@ -309,18 +307,18 @@ class TestsFlextCoreServiceOperations:
             """
             return r[str].ok(self.response_prefix + request.command_name)
 
-    class ConcreteRequestService(OperationService):
-        """A model annotation cannot replace the public Protocol contract."""
+    class MetadataScalarRequestService(OperationService):
+        """A scalar annotation cannot replace the public Protocol contract."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: str) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
                 The requested command name in a successful result.
 
             """
-            return r[str].ok(self.response_prefix + request.command_name)
+            return r[str].ok(self.response_prefix + request)
 
     class MismatchedMetadataService(OperationService):
         """The explicit schema must provide every consumed Protocol member."""
@@ -382,7 +380,7 @@ class TestsFlextCoreServiceOperations:
         ("service_type", "defect"),
         [
             (MissingMetadataService, re.escape(c.ERR_SERVICE_OPERATION_METADATA)),
-            (ConcreteRequestService, "Protocol"),
+            (MetadataScalarRequestService, "Protocol"),
             (MismatchedMetadataService, "command_name"),
             (
                 NonModelMetadataService,

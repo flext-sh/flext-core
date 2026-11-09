@@ -262,11 +262,15 @@ case "$${OS:-}" in (Windows_NT) reader_mise="$${reader_root}/.bin/mise.exe" ;; (
 if [ -L "$${reader_root}/.bin" ] || [ -L "$${reader_mise}" ]; then printf 'ERROR: Mise acquisition must be physical: %s\n' "$${reader_mise}" >&2; exit 2; fi; \
 reader_mise="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which mise)"; \
 if [ "$${OS:-}" = Windows_NT ]; then reader_mise="$$(cygpath --unix "$${reader_mise}")"; fi; \
-uv_binary="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which "uv")"; \
-if [ "$${OS:-}" = Windows_NT ]; then uv_binary="$$(cygpath --unix "$${uv_binary}")"; fi; \
-if [ ! -x "$${uv_binary}" ]; then printf 'ERROR: native workspace reader is not provisioned; run make setup\n' >&2; exit 2; fi; \
-owner="$$("$${uv_binary}" workspace dir --project "$${project_root}")"; \
-if [ "$${OS:-}" = Windows_NT ]; then owner="$$(cygpath --unix "$${owner}")"; fi; \
+if [ "$${reader_root}" != "$${project_root}" ]; then \
+	owner="$${reader_root}"; \
+else \
+	uv_binary="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which "uv")"; \
+	if [ "$${OS:-}" = Windows_NT ]; then uv_binary="$$(cygpath --unix "$${uv_binary}")"; fi; \
+	if [ ! -x "$${uv_binary}" ]; then printf 'ERROR: native workspace reader is not provisioned; run make setup\n' >&2; exit 2; fi; \
+	owner="$$("$${uv_binary}" workspace dir --project "$${project_root}")"; \
+	if [ "$${OS:-}" = Windows_NT ]; then owner="$$(cygpath --unix "$${owner}")"; fi; \
+fi; \
 case "$${owner}" in (/*) ;; (*) printf 'ERROR: native UV workspace owner is not absolute: %s\n' "$${owner}" >&2; exit 2 ;; esac; \
 owner="$$(cd "$${owner}" && pwd -P)"; \
 case "$${owner}/" in ("$${scope}/"*) ;; (*) printf 'ERROR: native UV workspace owner leaves its Git scope: %s\n' "$${owner}" >&2; exit 2 ;; esac; \
@@ -440,7 +444,7 @@ _bootstrap_setup_tools:
 	bootstrap_stage=source-identity; bootstrap_completed=false; bootstrap_sha=null; bootstrap_git_status=null; mise_stage=; \
 	bootstrap_report="$(PROJECT_ROOT)/.reports/setup-operations/tool-bootstrap.json"; \
 	bootstrap_publish_report() { \
-		if mkdir -p "$$(dirname "$${bootstrap_report}")"; then :; else return $$?; fi; \
+		if [ -d "$$(dirname "$${bootstrap_report}")" ]; then :; else mkdir -p "$$(dirname "$${bootstrap_report}")" 2>/dev/null || true; fi; \
 		if printf '%s\n' '{"root":".","operation":"tool-bootstrap","scope":["."],"receipts":[{"native_tool_qualifications":[],"runtime_context":null,"root":".","executed":true,"outcome":null,"native_exit_code":@@EXIT@@,"stage":"@@STAGE@@","completed":@@COMPLETE@@,"applicability":"","files":[],"issues":[]}],"candidate_read_exit_code":@@GIT_EXIT@@,"candidate_sha":@@SHA@@}' | sed \
 			-e "s/@@SHA@@/$${bootstrap_sha}/" \
 			-e "s/@@GIT_EXIT@@/$${bootstrap_git_status}/" \
@@ -485,7 +489,7 @@ _bootstrap_setup_tools:
 		fi; \
 	fi; \
 	bootstrap_stage=acquisition; \
-	mkdir -p "$(PROJECT_ROOT)/.bin"; \
+	if [ -L "$(PROJECT_ROOT)/.bin" ] && [ ! -e "$(PROJECT_ROOT)/.bin" ]; then rm -f "$(PROJECT_ROOT)/.bin"; fi; mkdir -p "$(PROJECT_ROOT)/.bin"; \
 	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_HELP=0; \
 	export MISE_VERSION="2026.10.3"; \
 	mise_acquired=false; \
@@ -585,7 +589,7 @@ INSTALL_RUNTIME_RECIPE = set -eu; \
 	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $$sync_args; \
 	if [ -n "$(strip $(FLEXT))" ]; then \
 		if [ "$(CI)" = "Y" ]; then printf 'ERROR[setup] local editable sources are forbidden in CI\n' >&2; exit 2; fi; \
-		(cd "$(FLEXT)"; $(UV) pip install --python "$$install_python" --requirement "requirements-infra.txt"); \
+		(cd "$(FLEXT)"; $(UV) pip install --no-config --python "$$install_python" --no-deps --requirement "requirements-infra.txt"); \
 		$(UV) pip install --python "$$install_python" --no-deps --editable "$(RUNTIME_ROOT)"; \
 	fi; \
 	env -u MYPYPATH -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH "$$install_python" -m flext_infra workspace flext-editable --repository-root "$(RUNTIME_ROOT)" --candidate-environment "$$install_environment"$(if $(strip $(FLEXT)), --flext-root "$(FLEXT)"); \
@@ -706,7 +710,7 @@ REQUIRE_WORKSPACE_ENVIRONMENT = case "$(PROJECT_ROOT)/" in \
 	"$(RUNTIME_ROOT)/"*) ;; \
 	*) printf 'ERROR: runtime workspace does not contain this project: %s\n' "$(RUNTIME_ROOT)" >&2; exit 2 ;; \
 	esac; \
-	for environment_path in "$$(dirname "$(RUNTIME_VENV)")" "$(RUNTIME_VENV)" "$(RUNTIME_BIN)" "$(PROJECT_ROOT)/.venv" "$(PROJECT_ROOT)/.venv/bin" "$(PROJECT_ROOT)/.venv/Scripts" "$(SETUP_BIN)" "$(BOOTSTRAP_MISE)" "$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")" "$(FLEXT_INFRA_EXECUTOR_VENV)"; do \
+	for environment_path in "$$(dirname "$(RUNTIME_VENV)")" "$(RUNTIME_VENV)" "$(RUNTIME_BIN)" "$(PROJECT_ROOT)/.venv" "$(PROJECT_ROOT)/.venv/bin" "$(PROJECT_ROOT)/.venv/Scripts" "$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")" "$(FLEXT_INFRA_EXECUTOR_VENV)"; do \
 		if [ -L "$$environment_path" ]; then \
 			printf 'ERROR: workspace environment must be physical, not a symlink: %s\n' "$$environment_path" >&2; exit 2; \
 		fi; \
@@ -887,7 +891,7 @@ setup:
 lifecycle_state="$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")"; \
 lifecycle_lock="$$lifecycle_state/$(notdir $(RUNTIME_VENV)).lifecycle.lock"; \
 if [ -L "$$lifecycle_state" ] || [ -L "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease paths must be physical\n' >&2; exit 2; fi; \
-mkdir -p "$$lifecycle_state"; \
+mkdir -p "$$lifecycle_state" 2>/dev/null || true; \
 if [ -e "$$lifecycle_lock" ] && [ ! -f "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease is not a regular file\n' >&2; exit 2; fi; \
 : >>"$$lifecycle_lock"; \
 lifecycle_identity="$$(stat -c '%d:%i' "$$lifecycle_lock")"; \
@@ -926,7 +930,7 @@ upg:
 lifecycle_state="$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")"; \
 lifecycle_lock="$$lifecycle_state/$(notdir $(RUNTIME_VENV)).lifecycle.lock"; \
 if [ -L "$$lifecycle_state" ] || [ -L "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease paths must be physical\n' >&2; exit 2; fi; \
-mkdir -p "$$lifecycle_state"; \
+mkdir -p "$$lifecycle_state" 2>/dev/null || true; \
 if [ -e "$$lifecycle_lock" ] && [ ! -f "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease is not a regular file\n' >&2; exit 2; fi; \
 : >>"$$lifecycle_lock"; \
 lifecycle_identity="$$(stat -c '%d:%i' "$$lifecycle_lock")"; \
@@ -1194,7 +1198,7 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac; \
 	bootstrap_stage=acquisition; \
-	mkdir -p "$(PROJECT_ROOT)/.bin"; \
+	if [ -L "$(PROJECT_ROOT)/.bin" ] && [ ! -e "$(PROJECT_ROOT)/.bin" ]; then rm -f "$(PROJECT_ROOT)/.bin"; fi; mkdir -p "$(PROJECT_ROOT)/.bin"; \
 	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_HELP=0; \
 	export MISE_VERSION="2026.10.3"; \
 	mise_acquired=false; \

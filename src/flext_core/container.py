@@ -18,6 +18,8 @@ from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from functools import partial
 from typing import TYPE_CHECKING, ClassVar, Self, TypeGuard, cast, overload, override
 
+from typing_extensions import TypeForm
+
 from flext_core import FlextContext, FlextDispatcher, FlextSettings, c, e, m, p, r, t, u
 from flext_core._container import FlextContainerTestingOps
 
@@ -619,7 +621,7 @@ class FlextContainer(FlextContainerTestingOps, p.Container):
         non-callable, duplicate or reserved factory raises ``e.ValidationError``.
         """
         module_symbols = vars(caller_module)
-        factory_adapter = u.type_adapter(t.TypeForm(p.FactoryCallable))
+        factory_adapter = u.type_adapter(TypeForm(p.FactoryCallable))
         for factory_name, factory_config in u.scan_module(caller_module):
             impl = factory_adapter.validate_python(module_symbols[factory_name])
             _ = instance.factory(factory_config.name, impl)

@@ -14,7 +14,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, dataclass_transform, override
+from typing import Literal, override
 
 import pydantic
 import pydantic_settings
@@ -164,10 +164,6 @@ class FlextModelsPydantic:
                 raise TypeError(msg)
             return ref
 
-    @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(pydantic.Field, pydantic.PrivateAttr),
-    )
     class BaseModel(pydantic.BaseModel):
         """Canonical BaseModel exported through the FLEXT models facade."""
 
@@ -208,10 +204,6 @@ class FlextModelsPydantic:
     class EnvSettingsSource(pydantic_settings.EnvSettingsSource):
         """Canonical environment source exported through the FLEXT models facade."""
 
-    @dataclass_transform(
-        kw_only_default=True,
-        field_specifiers=(pydantic.Field, pydantic.PrivateAttr),
-    )
     class RootModel[RootValueT](pydantic.RootModel[RootValueT]):
         """Canonical RootModel exported through the FLEXT models facade."""
 

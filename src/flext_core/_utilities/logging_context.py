@@ -12,6 +12,8 @@ from contextvars import ContextVar
 from types import MappingProxyType
 from typing import ClassVar
 
+from typing_extensions import TypeForm
+
 from flext_core import c, e, m, p, r, t
 from flext_core._utilities import (
     FlextUtilitiesBase,
@@ -147,7 +149,7 @@ class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingConfig):
             return str(value)
         if isinstance(value, tuple):
             admitted = FlextUtilitiesBase.type_adapter(
-                t.TypeForm(t.JsonPayload),
+                TypeForm(t.JsonPayload),
                 config=m.ArbitraryTypesModel.model_config,
             ).validate_python(list(value))
             return FlextUtilitiesPydantic.normalize_to_json_value(admitted)

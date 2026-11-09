@@ -12,6 +12,7 @@ from pathlib import Path
 from types import MappingProxyType, ModuleType
 
 import pytest
+from typing_extensions import TypeForm
 
 from tests import c, e, m, p, r, t, tm, u
 
@@ -111,7 +112,7 @@ class TestsFlextCoreNormalizationBoundaries:
     @staticmethod
     def test_native_adapter_is_constructible_through_the_model_provider() -> None:
         """The public SDK provider constructs an adapter, not a type-only alias."""
-        adapter = u.type_adapter(t.TypeForm(MutableMapping[str, int]))
+        adapter = u.type_adapter(TypeForm(MutableMapping[str, int]))
         tm.that(adapter.validate_json(b'{"value": 1}'), eq={"value": 1})
         with u.Tests.raises(m.ValidationError, match="int_parsing"):
             adapter.validate_json(b'{"value": "not an integer"}')
@@ -119,7 +120,7 @@ class TestsFlextCoreNormalizationBoundaries:
     @staticmethod
     def test_native_adapter_preserves_explicit_validation_policy() -> None:
         """The native provider does not relax the caller's declared policy."""
-        adapter = u.type_adapter(t.TypeForm(int), config=m.ConfigDict(strict=True))
+        adapter = u.type_adapter(TypeForm(int), config=m.ConfigDict(strict=True))
         tm.that(adapter.validate_python(1), eq=1)
         with u.Tests.raises(m.ValidationError, match="int_type"):
             adapter.validate_python(c.ParserBooleanToken.ONE)
@@ -174,7 +175,7 @@ class TestsFlextCoreNormalizationBoundaries:
             model,
             MappingProxyType({"attributes": attributes}),
         ]
-        adapter = u.type_adapter(t.TypeForm(MutableSequence[p.Metadata]))
+        adapter = u.type_adapter(TypeForm(MutableSequence[p.Metadata]))
         validated: MutableSequence[p.Metadata] = tm.ok(
             u.validate_value(adapter, inputs)
         )

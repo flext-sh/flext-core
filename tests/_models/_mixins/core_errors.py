@@ -23,7 +23,7 @@ class TestsFlextModelsCoreErrors:
         error: str
         error_code: str | None = None
         error_data: t.JsonMapping | None = None
-        exception: BaseException | None = None
+        exception: t.Port[BaseException] | None = None
         success: Literal[False] = False
         failure: Literal[True] = True
 
