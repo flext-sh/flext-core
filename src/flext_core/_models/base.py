@@ -128,6 +128,11 @@ class FlextModelsBase:
         MAPPING_VALIDATOR: ClassVar[TypeAdapter[t.JsonMapping]] = TypeAdapter(
             Mapping[str, t.JsonValue]
         )
+        # Renders JSON-able attribute values (for example ``Path``) in JSON mode;
+        # an unknown type fails serialization loudly.
+        JSONABLE_MAPPING: ClassVar[TypeAdapter[Mapping[str, object]]] = TypeAdapter(
+            Mapping[str, object]
+        )
         created_at: Annotated[
             datetime,
             Field(
@@ -212,7 +217,9 @@ class FlextModelsBase:
 
         @field_validator("attributes", mode="before")
         @classmethod
-        def validate_metadata_attributes(cls, value: p.MetadataInput) -> t.JsonMapping:
+        def validate_metadata_attributes(
+            cls, value: p.MetadataInput
+        ) -> t.JsonMapping | p.MetadataInput:
             """Validate attributes through the canonical metadata boundary.
 
             Returns:
@@ -227,13 +234,19 @@ class FlextModelsBase:
                 if isinstance(value, p.HasModelDump)
                 else value
             )
-            normalized = (
-                FlextModelsContainers.ConfigMap.model_validate(payload).root
-                if isinstance(payload, Mapping)
-                else payload
-            )
-            if normalized is None:
+            if payload is None:
                 return {}
+            if not isinstance(payload, Mapping):
+                # Any other shape is the field's own mapping validation to
+                # reject (dict_type at ``attributes``), never iterated here.
+                return payload
+            # Native SDK serialization renders path-like and other JSON-able
+            # values before the strict JSON container admits them.
+            normalized = FlextModelsContainers.ConfigMap.model_validate(
+                FlextModelsBase.Metadata.JSONABLE_MAPPING.dump_python(
+                    dict(payload), mode="json"
+                )
+            ).root
             for key in normalized:
                 if key.startswith("_"):
                     message = c.ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED.format(

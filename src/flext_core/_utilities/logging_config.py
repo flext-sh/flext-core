@@ -12,7 +12,7 @@ import queue
 import sys
 import threading
 from collections.abc import MutableMapping, MutableSequence, Sequence
-from concurrent.futures import Future
+from concurrent.futures import Future, wait
 from functools import partial
 from types import TracebackType
 from typing import TYPE_CHECKING, ClassVar, override
@@ -137,6 +137,19 @@ class FlextUtilitiesLoggingConfig:
         def flush(self) -> None:
             """Wait for submitted writes and propagate the first native failure."""
             completion = self._admit(None)
+            _ = completion.result()
+
+        def drain(self) -> None:
+            """Wait for submitted writes within the shutdown deadline.
+
+            Raises:
+                TimeoutError: If the stream does not accept them in time.
+
+            """
+            completion = self._admit(None)
+            if not wait((completion,), timeout=c.LOG_SHUTDOWN_JOIN_SECONDS).done:
+                msg = "Async log writer did not finish before shutdown timeout"
+                raise TimeoutError(msg)
             _ = completion.result()
 
         def shutdown(self) -> None:
@@ -291,8 +304,10 @@ class FlextUtilitiesLoggingConfig:
             not async_logging or logger_factory is not None
         ) and FlextUtilitiesLoggingConfig._async_writer is not None:
             # Existing runtime loggers still own bindings to this transport.
-            # A new composition drains it; process shutdown closes it.
-            FlextUtilitiesLoggingConfig._async_writer.flush()
+            # A new composition drains it within the shutdown deadline, so a
+            # blocked stream fails the transition instead of hanging it;
+            # process shutdown closes it.
+            FlextUtilitiesLoggingConfig._async_writer.drain()
         if logger_factory is not None:
             return logger_factory
         if not async_logging:
