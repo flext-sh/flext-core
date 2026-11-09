@@ -122,7 +122,6 @@ if TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
-    from tests.unit import TestsDataContractSchema
     from tests.utilities import TestsFlextUtilities, u
 
 
@@ -166,7 +165,6 @@ __all__: tuple[str, ...] = (
     "ScriptsFlextProtocols",
     "ScriptsFlextTypes",
     "ScriptsFlextUtilities",
-    "TestsDataContractSchema",
     "TestsFlextConstants",
     "TestsFlextConstantsDomain",
     "TestsFlextConstantsEnums",
@@ -284,7 +282,6 @@ install_lazy_exports(
         "ScriptsFlextProtocols": "scripts",
         "ScriptsFlextTypes": "scripts",
         "ScriptsFlextUtilities": "scripts",
-        "TestsDataContractSchema": ".unit",
         "TestsFlextConstants": ".constants",
         "TestsFlextConstantsDomain": "._constants",
         "TestsFlextConstantsEnums": "._constants",

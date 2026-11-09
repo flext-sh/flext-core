@@ -175,7 +175,7 @@ class TestsFlextCoreNormalizationBoundaries:
             model,
             MappingProxyType({"attributes": attributes}),
         ]
-        adapter = u.type_adapter(TypeForm(MutableSequence[p.Metadata]))
+        adapter = u.type_adapter(TypeForm(MutableSequence[m.Metadata]))
         validated: MutableSequence[p.Metadata] = tm.ok(
             u.validate_value(adapter, inputs)
         )
