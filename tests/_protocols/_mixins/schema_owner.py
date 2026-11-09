@@ -49,7 +49,12 @@ class TestsFlextProtocolsMixinsSchemaOwner:
         """Structural data contract projected from the owning model."""
 
         @property
-        def variant(self) -> TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerVariant:
+        def variant(
+            self,
+        ) -> (
+            TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerText
+            | TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerCount
+        ):
             """Variant validated by the model its tag names."""
             ...
 

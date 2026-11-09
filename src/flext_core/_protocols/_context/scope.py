@@ -17,9 +17,6 @@ from flext_core._protocols import FlextProtocolsBase
 if TYPE_CHECKING:
     from flext_core import t
     from flext_core._protocols import FlextProtocolsContainer
-    from flext_core._protocols._context._scope import (
-        FlextProtocolsContextScopeFlextmodelscontextscopePart01,
-    )
 
 
 class FlextProtocolsContextScope:
@@ -69,9 +66,7 @@ class FlextProtocolsContextScope:
             ...
 
         @property
-        def statistics(
-            self,
-        ) -> FlextProtocolsContextScopeFlextmodelscontextscopePart01.ContextStatistics:
+        def statistics(self) -> FlextProtocolsContextScope.ContextStatistics:
             """Operation counters for this context instance."""
             ...
 
