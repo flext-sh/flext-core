@@ -221,11 +221,12 @@ class TestsFlextCoreSettings:
             work_dir = tmp_path / "work"
             with u.Tests.env_vars_context(
                 env_vars={"FLEXT_WORK_DIR": str(work_dir)},
-                vars_to_clear=("XDG_RUNTIME_DIR",),
+                vars_to_clear=("XDG_RUNTIME_DIR", "FLEXT_RUNTIME_DIR"),
             ):
                 FlextSettings.apply_app_namespace("flext")
                 FlextSettings.reset_for_testing()
                 tm.that(FlextSettings.fetch_global().runtime_dir, eq=work_dir / "run")
+                tm.that(FlextSettings.resolve_runtime_dir(), eq=work_dir / "run")
             FlextSettings.reset_for_testing()
 
         @staticmethod
@@ -236,11 +237,13 @@ class TestsFlextCoreSettings:
                 env_vars={
                     "XDG_RUNTIME_DIR": "/xdg/runtime",
                     "FLEXT_RUNTIME_DIR": str(runtime_dir),
+                    "FLEXT_WORK_DIR": "relative-unused-work",
                 },
             ):
                 FlextSettings.apply_app_namespace("flext")
                 FlextSettings.reset_for_testing()
                 tm.that(FlextSettings.fetch_global().runtime_dir, eq=runtime_dir)
+                tm.that(FlextSettings.resolve_runtime_dir(), eq=runtime_dir)
             FlextSettings.reset_for_testing()
 
         @staticmethod

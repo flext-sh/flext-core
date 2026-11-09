@@ -153,6 +153,12 @@ default or the absence of environment overrides.
 
 FLEXT settings are environment-aware through Pydantic settings.
 
+`runtime_dir` and class-level `resolve_runtime_dir()` share the native application
+directory resolver. An application runtime override precedes `XDG_RUNTIME_DIR`,
+then the application work directory. Instance resolution passes its `work_dir`;
+consumers assembling nested settings before an instance exists use the class
+resolver instead of deriving a provisional directory from `HOME`.
+
 ```bash
 export FLEXT_LOG_LEVEL=DEBUG
 export FLEXT_DEBUG=true

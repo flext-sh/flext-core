@@ -34,7 +34,7 @@ import logging
 import os
 import sys
 import threading
-from collections.abc import Generator, Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Generator, Mapping, MutableMapping, Sequence
 from contextlib import contextmanager
 from copy import deepcopy
 from datetime import datetime
@@ -730,13 +730,26 @@ class FlextSettings(BaseSettings):
     @computed_field
     @property
     def runtime_dir(self) -> Path:
-        """Consuming application's ephemeral runtime directory.
+        """Consuming application's ephemeral runtime directory."""
+        return self.resolve_runtime_dir(work_directory=lambda: self.work_dir)
+
+    @classmethod
+    def resolve_runtime_dir(
+        cls, *, work_directory: Callable[[], Path] | None = None
+    ) -> Path:
+        """Resolve the application runtime before or after settings construction.
+
+        An instance supplies its work directory lazily so an explicit runtime
+        override never evaluates an unused work-directory setting.
+
+        Returns:
+            The absolute application runtime directory.
 
         Raises:
             ValueError: If runtime_dir must be absolute.
 
         """
-        namespace = self._current_app_namespace()
+        namespace = cls._current_app_namespace()
         override = os.environ.get(
             f"{FlextSettings.app_env_prefix(namespace)}RUNTIME_DIR"
         )
@@ -744,11 +757,17 @@ class FlextSettings(BaseSettings):
             path = Path(override)
         else:
             xdg_runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
-            path = (
-                Path(xdg_runtime_dir) / namespace
-                if xdg_runtime_dir
-                else self.work_dir / "run"
-            )
+            if xdg_runtime_dir:
+                path = Path(xdg_runtime_dir) / namespace
+            else:
+                work = (
+                    work_directory()
+                    if work_directory is not None
+                    else cls._absolute_app_dir(
+                        "work", FlextSettings._platform_cache_root()
+                    )
+                )
+                path = work / "run"
         if not path.is_absolute():
             msg = "runtime_dir must be absolute"
             raise ValueError(msg)

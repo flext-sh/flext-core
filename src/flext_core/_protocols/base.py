@@ -12,8 +12,6 @@ if TYPE_CHECKING:
     from collections.abc import MutableSequence, Sequence
     from datetime import datetime
 
-    from flext_core import p
-
 
 from collections.abc import Callable, Iterable
 from typing import Literal, Protocol, overload, runtime_checkable
@@ -41,13 +39,13 @@ class FlextProtocolsBase:
     """Hierarchical protocol namespace organized by Interface Segregation Principle."""
 
     @runtime_checkable
-    class HasDomainEvents(Protocol):
+    class HasDomainEvents[EventT](Protocol):
         """Identity and writable event buffer consumed by domain orchestration."""
 
         unique_id: str
 
         @property
-        def domain_events(self) -> MutableSequence[p.DomainEvent]:
+        def domain_events(self) -> MutableSequence[EventT]:
             """Expose the event sink without requiring unrelated entity fields."""
             ...
 
