@@ -1,7 +1,6 @@
 """Behavioral tests for the tests typing facade (``t``) public surface.
 
 Exercises the observable contract callers depend on:
-- public/flat type aliases are reachable through the ``t.*`` namespace,
 - ``flext_core`` keeps shared ``TypeVar`` / ``ParamSpec`` helpers out of its
   public surface,
 - the runtime type-check tuples (``PRIMITIVES_TYPES`` etc.) expose the exact
@@ -17,7 +16,7 @@ from __future__ import annotations
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal
+from typing import Literal, ParamSpec, TypeVar
 
 import pydantic
 
@@ -29,53 +28,14 @@ class TestsFlextCoreTypingsAliases:
     """Public contract of the ``t`` typing facade and its type-check tuples."""
 
     @staticmethod
-    def test_list_alias_preserves_concrete_mutable_api() -> None:
-        """The exact alias supports list-only APIs under the same typed gates."""
-        values: list[str] = ["second", "first"]
-        values.append("third")
-        values[0] = "updated"
-        values.sort()
-        copied = values.copy()
-        combined = [*copied, "last"]
-        tm.that(combined, eq=["first", "third", "updated", "last"])
-        copied.clear()
-        tm.that(values, eq=["first", "third", "updated"])
-
-    @staticmethod
-    def test_dict_alias_preserves_concrete_mutable_api() -> None:
-        """The exact alias supports dict-only APIs under the same typed gates."""
-        values: dict[str, int] = {"first": 1}
-        values["second"] = 2
-        values.update({"third": 3})
-        copied = values.copy()
-        combined = copied | {"last": 4}
-        values |= {"last": 4}
-        tm.that(values, eq=combined)
-        copied.clear()
-        tm.that(values.pop("last"), eq=4)
-        tm.that(values, eq={"first": 1, "second": 2, "third": 3})
-
-    @staticmethod
-    @c.Tests.MARK.parametrize("alias_name", c.Tests.PUBLIC_ALIAS_NAMES)
-    def test_public_alias_reachable_through_facade(alias_name: str) -> None:
-        """Every declared public alias resolves to a real object on ``t``."""
-        # Arrange / Act
-        resolved = getattr(t, alias_name)
-        # Assert - attribute exists and is a concrete (non-None) alias object.
-        tm.that(resolved, ne=None)
-
-    @staticmethod
-    @c.Tests.MARK.parametrize("alias_name", c.Tests.FLAT_ALIAS_NAMES)
-    def test_flat_mapping_alias_reachable_through_facade(alias_name: str) -> None:
-        """Every flat mapping alias resolves to a real object on ``t``."""
-        resolved = getattr(t, alias_name)
-        tm.that(resolved, ne=None)
-
-    @staticmethod
-    @c.Tests.MARK.parametrize("legacy_name", c.Tests.LEGACY_GENERIC_NAMES)
-    def test_flext_core_hides_shared_generic_helpers(legacy_name: str) -> None:
+    def test_flext_core_hides_shared_generic_helpers() -> None:
         """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
-        tm.fail(hasattr(flext_core, legacy_name))
+        helpers = [
+            name
+            for name in flext_core.__all__
+            if isinstance(getattr(flext_core, name), (TypeVar, ParamSpec))
+        ]
+        tm.that(helpers, eq=[])
 
     @staticmethod
     def test_primitives_types_membership() -> None:

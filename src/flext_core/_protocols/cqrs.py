@@ -11,7 +11,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
 from flext_core._protocols._cqrs import FlextProtocolsCqrsFlextmodelscqrsPagination
 
 if TYPE_CHECKING:
@@ -57,7 +57,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPagination):
         query_type: str | None
 
     @runtime_checkable
-    class HandlerConfig(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class HandlerConfig(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

@@ -96,7 +96,7 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class DecoratorConfig(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class DecoratorConfig(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -246,7 +246,7 @@ class FlextProtocolsHandler:
     # ------------------------------------------------------------------
 
     @runtime_checkable
-    class HandlerRegistration(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class HandlerRegistration(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -265,7 +265,7 @@ class FlextProtocolsHandler:
             ...
 
     @runtime_checkable
-    class HandlerRegistrationReport(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class HandlerRegistrationReport(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -371,7 +371,7 @@ class FlextProtocolsHandler:
         ) -> FlextProtocolsResult.Result[TResult]: ...
 
     @runtime_checkable
-    class RegistrationDetails(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class RegistrationDetails(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

@@ -226,7 +226,7 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FrozenModel(StrictModel, Protocol):
+    class FrozenModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
@@ -242,7 +242,7 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ImmutableValueModel(ManagedModel, Protocol):
+    class ImmutableValueModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
@@ -258,7 +258,7 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FrozenDynamicModel(DynamicModel, Protocol):
+    class FrozenDynamicModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
@@ -309,7 +309,7 @@ class FlextProtocolsBase:
             ...
 
     @runtime_checkable
-    class ContractModel(StrictModel, Protocol):
+    class ContractModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable

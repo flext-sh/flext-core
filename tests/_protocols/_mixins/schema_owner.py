@@ -8,9 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
+
+if TYPE_CHECKING:
+    pass
 
 
 class TestsFlextProtocolsMixinsSchemaOwner:
@@ -75,7 +78,7 @@ class TestsFlextProtocolsMixinsSchemaOwner:
         def leaves(
             self,
         ) -> tuple[TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerLeaf, ...]:
-            """Sibling leaves validated by their real model."""
+            """Structural member projected from the owning model."""
             ...
 
     type SchemaOwnerVariant = SchemaOwnerText | SchemaOwnerCount

@@ -18,6 +18,7 @@ from collections.abc import Sequence
 from types import FunctionType
 from typing import (
     TYPE_CHECKING,
+    TypeAliasType,
     get_origin,
     get_protocol_members,
     get_type_hints,
@@ -319,11 +320,11 @@ class FlextUtilitiesDiscovery:
                 )
             return None
         param = params[0]
-        if param.name not in hints:
-            raise error(where, signature, c.ERR_SERVICE_OPERATION_REQUEST)
-        annotation = annotations[param.name]
-        contract = hints[param.name]
-        if not is_protocol(contract):
+        annotation = annotations.get(param.name, signature)
+        contract = hints.get(param.name)
+        while isinstance(contract, TypeAliasType):
+            contract = contract.__value__
+        if not isinstance(contract, type) or not is_protocol(contract):
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_REQUEST)
         if metadata is None:
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_METADATA)

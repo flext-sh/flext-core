@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping, MutableMapping, MutableSequence
+from collections.abc import Mapping, MutableMapping, MutableSequence, Sequence
 from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 from types import MappingProxyType, ModuleType
@@ -176,9 +176,7 @@ class TestsFlextCoreNormalizationBoundaries:
             MappingProxyType({"attributes": attributes}),
         ]
         adapter = u.type_adapter(TypeForm(MutableSequence[m.Metadata]))
-        validated: MutableSequence[p.Metadata] = tm.ok(
-            u.validate_value(adapter, inputs)
-        )
+        validated: Sequence[p.Metadata] = tm.ok(u.validate_value(adapter, inputs))
         tm.ok(validated[0] is metadata)
         tm.that(validated[1].attributes, eq=attributes)
         encoded = b"native"

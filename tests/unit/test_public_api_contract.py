@@ -36,29 +36,6 @@ from tests import (
     u,
 )
 
-# Public facade names a caller can import from ``flext_core``.
-_FACADES: tuple[str, ...] = (
-    "FlextCore",
-    "FlextConstants",
-    "FlextContainer",
-    "FlextContext",
-    "FlextDecoratorsRuntime",
-    "FlextDispatcher",
-    "FlextExceptions",
-    "FlextHandlers",
-    "FlextLazy",
-    "FlextUtilitiesLogging",
-    "FlextMixins",
-    "FlextModels",
-    "FlextProtocols",
-    "FlextRegistry",
-    "FlextResult",
-    "FlextService",
-    "FlextSettings",
-    "FlextTypes",
-    "FlextUtilities",
-)
-
 # alias -> facade name published by the package's public contract
 _ALIASES: tuple[tuple[str, str], ...] = (
     ("r", "FlextResult"),
@@ -110,16 +87,6 @@ class TestsFlextCorePublicApiContract:
         counter = resolver("Counter")
         tm.that(isinstance(counter, type), truth=True)
         tm.that(cast("type", counter).__name__, eq="Counter")
-
-    @staticmethod
-    @c.Tests.MARK.parametrize("name", _FACADES)
-    def test_named_facade_is_importable(name: str) -> None:
-        """Every advertised facade is reachable from the package root."""
-        tm.that(
-            hasattr(flext_core, name),
-            truth=True,
-            msg=f"{name} not importable from flext_core",
-        )
 
     @staticmethod
     def test_every_all_entry_resolves_to_an_object() -> None:

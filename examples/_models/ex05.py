@@ -8,8 +8,8 @@ from __future__ import annotations
 
 from typing import override
 
-from examples import c
-from flext_core import m, p
+from examples import c, p
+from flext_core import m
 
 
 class ExamplesFlextModelsEx05:
@@ -36,7 +36,7 @@ class ExamplesFlextModelsEx05:
         """Marker model that is not a valid handler."""
 
     class HandlerLike(m.Value):
-        data: p.ConfigMap = m.Field(
+        data: m.ConfigMap = m.Field(
             default_factory=lambda: m.ConfigMap(root={}),
             description="Handler payload map",
         )

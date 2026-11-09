@@ -122,7 +122,7 @@ class FlextTypingBase(FlextTypesPydantic):
     TypeForm = typing_extensions.TypeForm
     """PEP 747 ``TypeForm`` re-bound from its canonical owner (ADR-028, operator
     order 2026-10-29): usable both in annotations and in call position
-    (``t.TypeForm(Mapping[str, int])``), without importing typing_extensions
+    (``TypeForm(Mapping[str, int])``), without importing typing_extensions
     outside the facades. A PEP 695 ``type`` alias is not callable; the owner's
     special form is."""
 

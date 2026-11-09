@@ -73,14 +73,9 @@ class TestsFlextCorePydanticDeclarations:
         detail: str
 
     class _ProtocolBox(m.ContractModel):
-        """Protocol annotations retain the model owner's native schema."""
+        """A data boundary retains the schema of its concrete model owner."""
 
-        item: Annotated[
-            p.Tests.PublicPayload,
-            m.GetPydanticSchema(
-                lambda _source, handler: handler.generate_schema(m.Tests.PublicPayload),
-            ),
-        ]
+        item: m.Tests.PublicPayload
 
     @staticmethod
     @c.Tests.MARK.parametrize("json_input", [False, True])
@@ -139,7 +134,7 @@ class TestsFlextCorePydanticDeclarations:
     ) -> None:
         model_type = TestsFlextCorePydanticDeclarations._ProtocolBox
         field = model_type.model_fields["item"]
-        tm.ok(field.annotation is p.Tests.PublicPayload)
+        tm.ok(field.annotation is m.Tests.PublicPayload)
         tm.that(
             model_type.model_config.get("frozen", False),
             eq=m.ContractModel.model_config.get("frozen", False),

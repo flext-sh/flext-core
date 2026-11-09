@@ -549,18 +549,6 @@ class FlextConstantsErrors:
     ERR_SERVICE_OPERATION_DOCSTRING: Final[str] = (
         "must have a docstring. Fix: add a one-line summary docstring."
     )
-    ERR_SERVICE_OPERATION_NAME: Final[str] = (
-        "must annotate with a dotted name. Fix: use a module-level name such as "
-        "p.Ns.Request, or p.Result[...] for the return."
-    )
-    ERR_SERVICE_OPERATION_EVALUATED: Final[str] = (
-        "is evaluated instead of a string annotation. Fix: add "
-        "`from __future__ import annotations` to the module."
-    )
-    ERR_SERVICE_OPERATION_UNBOUND: Final[str] = (
-        "names a symbol unbound in the module at runtime (imported only under "
-        "TYPE_CHECKING, or undefined). Fix: import it at module runtime."
-    )
     ERR_SERVICE_OPERATION_REQUEST: Final[str] = (
         "must take a request Protocol with a Pydantic model declared in operation "
         "metadata. Fix: annotate with p.Request and declare "

@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from contextvars import ContextVar
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -23,7 +23,7 @@ class FlextProtocolsContextScope:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
-    class ContextStatistics(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class ContextStatistics(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -52,7 +52,7 @@ class FlextProtocolsContextScope:
             ...
 
     @runtime_checkable
-    class ContextRuntimeState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class ContextRuntimeState(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
