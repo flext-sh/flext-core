@@ -1,4 +1,4 @@
-# flext_core.flextlazy_part_01
+# flext_core.flextlazy_exports
 
 <!-- TOC START -->
 
@@ -6,7 +6,7 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-::: flext_core.flextlazy_part_01
+::: flext_core.flextlazy_exports
 
     options:
       show_root_heading: true

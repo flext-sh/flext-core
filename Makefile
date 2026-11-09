@@ -230,9 +230,14 @@ $(error Cannot resolve the physical bootstrap scope for $(MAKEFILE_ROOT))
 endif
 # Setup and upg provision the toolchain the native workspace reader needs, so
 # they elect the physical bootstrap scope without running that reader.
+# When attached to a workspace (BOOTSTRAP_ROOT != PROJECT_ROOT), all verbs use
+# the workspace root so they share the workspace's .venv. Standalone checkouts
+# use the native uv workspace reader for non-setup/upg/help verbs.
 ifneq ($(strip $(VERB_CONTRACT) $(filter setup upg _setup_locked _upg_locked,$(MAKECMDGOALS))),)
 override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
 else ifeq ($(strip $(filter-out help _builtin-help _setup_native_prepare pre-upg post-upg,$(MAKECMDGOALS))),)
+override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
+else ifneq ($(BOOTSTRAP_ROOT),$(PROJECT_ROOT))
 override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
 else
 override REPOSITORY_ROOT := $(shell set -eu; \

@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from flext_core import m, t
-from tests import p
+from flext_core import m
 
 
 class TestsFlextModelsSchemaOwner:
@@ -35,10 +34,9 @@ class TestsFlextModelsSchemaOwner:
     class SchemaOwnerVariantCell(m.FrozenModel):
         """Payload typed by the variant union, validated by its models."""
 
-        variant: Annotated[
-            p.Tests.SchemaOwnerVariant,
-            t.schema_for_model(lambda: TestsFlextModelsSchemaOwner.SchemaOwnerVariant),
-        ] = m.Field(description="Variant validated by the model its tag names")
+        variant: Annotated[TestsFlextModelsSchemaOwner.SchemaOwnerVariant,] = m.Field(
+            description="Variant validated by the model its tag names"
+        )
 
     class SchemaOwnerLeaf(m.FrozenModel):
         """Leaf payload referenced by a sibling of the same holder."""
@@ -50,12 +48,7 @@ class TestsFlextModelsSchemaOwner:
 
         leaves: Annotated[
             tuple[
-                Annotated[
-                    p.Tests.SchemaOwnerLeaf,
-                    t.schema_for_model(
-                        lambda: TestsFlextModelsSchemaOwner.SchemaOwnerLeaf
-                    ),
-                ],
+                Annotated[TestsFlextModelsSchemaOwner.SchemaOwnerLeaf,],
                 ...,
             ],
             m.Field(description="Sibling leaves validated by their real model"),

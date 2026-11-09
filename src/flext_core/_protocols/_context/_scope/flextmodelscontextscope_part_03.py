@@ -8,27 +8,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
-
-from flext_core._protocols import FlextProtocolsBase
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from flext_core._protocols import FlextProtocolsContainer
+    pass
 
 
 class FlextProtocolsContextScopeFlextmodelscontextscopePart03:
     """Own the structural contracts declared by its model source."""
-
-    @runtime_checkable
-    class ContextContainerState(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
-        """Structural data contract projected from the owning model."""
-
-        container: FlextProtocolsContainer.Container | None
-
-        @property
-        def configured(self) -> bool:
-            """Whether a container is configured for service access."""
-            ...
 
 
 __all__: list[str] = [
