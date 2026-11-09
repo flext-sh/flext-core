@@ -8,11 +8,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    pass
-
 
 class FlextProtocolsCqrsFlextmodelscqrsPart01:
     """Own the structural contracts declared by its model source."""

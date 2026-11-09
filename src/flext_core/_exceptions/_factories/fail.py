@@ -6,13 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from flext_core import c, m, p, r
 from flext_core._exceptions import FlextExceptionsTemplate
-
-if TYPE_CHECKING:
-    pass
 
 
 class FlextExceptionsFactoriesFail:
