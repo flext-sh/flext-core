@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from importlib.metadata import PackageMetadata, metadata
 
-from flext_core._utilities import FlextUtilitiesProjectMetadata
+from flext_core._utilities.package_version import FlextUtilitiesPackageVersion
 
 
-class FlextVersion(FlextUtilitiesProjectMetadata.PackageVersion):
+class FlextVersion(FlextUtilitiesPackageVersion.PackageVersion):
     """Package metadata facade recomputed for subclasses through MRO."""
 
     _metadata: PackageMetadata = metadata("flext-core")

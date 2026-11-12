@@ -140,6 +140,29 @@ class TestsFlextCoreLazyExports:
         tm.that(result.value.stdout, eq="True True True\n")
 
     @staticmethod
+    def test_fresh_root_import_binds_version_without_loading_a_facade(
+        tmp_path: Path,
+    ) -> None:
+        """Importing the root package binds its version and loads no facade."""
+        script = (
+            "import sys\n"
+            "import flext_core\n"
+            "facades = ('constants', 'typings', 'protocols', 'models', "
+            "'utilities')\n"
+            "print(isinstance(flext_core.__version__, str), "
+            "[n for n in facades if f'flext_core.{n}' in sys.modules])\n"
+            "from flext_core import u\n"
+            "print(u.PackageVersion.__name__, "
+            "u.package_version_info(flext_core.__version__) == "
+            "flext_core.__version_info__)\n"
+        )
+        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
+        tm.that(result.success, truth=True, msg=result.error)
+        tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
+        tm.that(result.value.stderr, eq="")
+        tm.that(result.value.stdout, eq="True []\nPackageVersion True\n")
+
+    @staticmethod
     def test_fresh_root_supports_bootstrap_public_facade_dependency(
         tmp_path: Path,
     ) -> None:
