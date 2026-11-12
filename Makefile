@@ -4,7 +4,7 @@
 # @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/Makefile.j2
 # @flext-adjust: edit the owner configuration or template; never this projection
 # @flext-regenerate: make gen
-# flext-core — selector-free generated project interface.
+# flext-core — generated project interface.
 # Managed by flext-infra codegen conform for new and existing repositories.
 # === SECTION: header (managed) ===
 # Source: template (base/Makefile.j2)
@@ -95,7 +95,7 @@ unexport GITHUB_API_TOKEN
 # === SECTION: project identity (managed) ===
 # Source: config:dist / config:make_profile / config:repository_root_rel / config:uv_link_mode
 PROJECT_NAME := flext-core
-MAKE_PROFILE := standalone
+MAKE_PROFILE := workspace
 REPOSITORY_ROOT_REL := .
 # === SECTION: workspace subprojects (managed) ===
 # Source: config:workspace_subprojects (list), config:workspace_repositories (list)
@@ -230,9 +230,14 @@ $(error Cannot resolve the physical bootstrap scope for $(MAKEFILE_ROOT))
 endif
 # Setup and upg provision the toolchain the native workspace reader needs, so
 # they elect the physical bootstrap scope without running that reader.
+# When attached to a workspace (BOOTSTRAP_ROOT != PROJECT_ROOT), all verbs use
+# the workspace root so they share the workspace's .venv. Standalone checkouts
+# use the native uv workspace reader for non-setup/upg/help verbs.
 ifneq ($(strip $(VERB_CONTRACT) $(filter setup upg _setup_locked _upg_locked,$(MAKECMDGOALS))),)
 override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
 else ifeq ($(strip $(filter-out help _builtin-help _setup_native_prepare pre-upg post-upg,$(MAKECMDGOALS))),)
+override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
+else ifneq ($(BOOTSTRAP_ROOT),$(PROJECT_ROOT))
 override REPOSITORY_ROOT := $(BOOTSTRAP_ROOT)
 else
 override REPOSITORY_ROOT := $(shell set -eu; \
@@ -257,11 +262,15 @@ case "$${OS:-}" in (Windows_NT) reader_mise="$${reader_root}/.bin/mise.exe" ;; (
 if [ -L "$${reader_root}/.bin" ] || [ -L "$${reader_mise}" ]; then printf 'ERROR: Mise acquisition must be physical: %s\n' "$${reader_mise}" >&2; exit 2; fi; \
 reader_mise="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which mise)"; \
 if [ "$${OS:-}" = Windows_NT ]; then reader_mise="$$(cygpath --unix "$${reader_mise}")"; fi; \
-uv_binary="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which "uv")"; \
-if [ "$${OS:-}" = Windows_NT ]; then uv_binary="$$(cygpath --unix "$${uv_binary}")"; fi; \
-if [ ! -x "$${uv_binary}" ]; then printf 'ERROR: native workspace reader is not provisioned; run make setup\n' >&2; exit 2; fi; \
-owner="$$("$${uv_binary}" workspace dir --project "$${project_root}")"; \
-if [ "$${OS:-}" = Windows_NT ]; then owner="$$(cygpath --unix "$${owner}")"; fi; \
+if [ "$${reader_root}" != "$${project_root}" ]; then \
+	owner="$${reader_root}"; \
+else \
+	uv_binary="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which "uv")"; \
+	if [ "$${OS:-}" = Windows_NT ]; then uv_binary="$$(cygpath --unix "$${uv_binary}")"; fi; \
+	if [ ! -x "$${uv_binary}" ]; then printf 'ERROR: native workspace reader is not provisioned; run make setup\n' >&2; exit 2; fi; \
+	owner="$$("$${uv_binary}" workspace dir --project "$${project_root}")"; \
+	if [ "$${OS:-}" = Windows_NT ]; then owner="$$(cygpath --unix "$${owner}")"; fi; \
+fi; \
 case "$${owner}" in (/*) ;; (*) printf 'ERROR: native UV workspace owner is not absolute: %s\n' "$${owner}" >&2; exit 2 ;; esac; \
 owner="$$(cd "$${owner}" && pwd -P)"; \
 case "$${owner}/" in ("$${scope}/"*) ;; (*) printf 'ERROR: native UV workspace owner leaves its Git scope: %s\n' "$${owner}" >&2; exit 2 ;; esac; \
@@ -435,7 +444,7 @@ _bootstrap_setup_tools:
 	bootstrap_stage=source-identity; bootstrap_completed=false; bootstrap_sha=null; bootstrap_git_status=null; mise_stage=; \
 	bootstrap_report="$(PROJECT_ROOT)/.reports/setup-operations/tool-bootstrap.json"; \
 	bootstrap_publish_report() { \
-		if mkdir -p "$$(dirname "$${bootstrap_report}")"; then :; else return $$?; fi; \
+		if [ -d "$$(dirname "$${bootstrap_report}")" ]; then :; else mkdir -p "$$(dirname "$${bootstrap_report}")" 2>/dev/null || true; fi; \
 		if printf '%s\n' '{"root":".","operation":"tool-bootstrap","scope":["."],"receipts":[{"native_tool_qualifications":[],"runtime_context":null,"root":".","executed":true,"outcome":null,"native_exit_code":@@EXIT@@,"stage":"@@STAGE@@","completed":@@COMPLETE@@,"applicability":"","files":[],"issues":[]}],"candidate_read_exit_code":@@GIT_EXIT@@,"candidate_sha":@@SHA@@}' | sed \
 			-e "s/@@SHA@@/$${bootstrap_sha}/" \
 			-e "s/@@GIT_EXIT@@/$${bootstrap_git_status}/" \
@@ -480,7 +489,7 @@ _bootstrap_setup_tools:
 		fi; \
 	fi; \
 	bootstrap_stage=acquisition; \
-	mkdir -p "$(PROJECT_ROOT)/.bin"; \
+	if [ -L "$(PROJECT_ROOT)/.bin" ] && [ ! -e "$(PROJECT_ROOT)/.bin" ]; then rm -f "$(PROJECT_ROOT)/.bin"; fi; mkdir -p "$(PROJECT_ROOT)/.bin"; \
 	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_HELP=0; \
 	export MISE_VERSION="2026.10.3"; \
 	mise_acquired=false; \
@@ -522,7 +531,7 @@ _bootstrap_setup_tools: _builtin_require_workspace
 # process the root and every governed member together in one checker run
 # (operator ruling 2026-10-25: never member by member); each multi-root tool
 # runs once over their union.
-GATE_SCOPE := self
+GATE_SCOPE := $(if $(filter Y,$(CI)),self,all)
 # Local and CI consume the same native project/workspace declarations and lock.
 # Setup always bootstraps: `uv sync --frozen` installs exactly the committed
 # uv.lock without re-resolving or rewriting it, so manifest drift never blocks
@@ -580,7 +589,7 @@ INSTALL_RUNTIME_RECIPE = set -eu; \
 	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $$sync_args; \
 	if [ -n "$(strip $(FLEXT))" ]; then \
 		if [ "$(CI)" = "Y" ]; then printf 'ERROR[setup] local editable sources are forbidden in CI\n' >&2; exit 2; fi; \
-		(cd "$(FLEXT)"; $(UV) pip install --python "$$install_python" --requirement "requirements-infra.txt"); \
+		(cd "$(FLEXT)"; $(UV) pip install --no-config --python "$$install_python" --no-deps --requirement "requirements-infra.txt"); \
 		$(UV) pip install --python "$$install_python" --no-deps --editable "$(RUNTIME_ROOT)"; \
 	fi; \
 	env -u MYPYPATH -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH "$$install_python" -m flext_infra workspace flext-editable --repository-root "$(RUNTIME_ROOT)" --candidate-environment "$$install_environment"$(if $(strip $(FLEXT)), --flext-root "$(FLEXT)"); \
@@ -701,7 +710,7 @@ REQUIRE_WORKSPACE_ENVIRONMENT = case "$(PROJECT_ROOT)/" in \
 	"$(RUNTIME_ROOT)/"*) ;; \
 	*) printf 'ERROR: runtime workspace does not contain this project: %s\n' "$(RUNTIME_ROOT)" >&2; exit 2 ;; \
 	esac; \
-	for environment_path in "$$(dirname "$(RUNTIME_VENV)")" "$(RUNTIME_VENV)" "$(RUNTIME_BIN)" "$(PROJECT_ROOT)/.venv" "$(PROJECT_ROOT)/.venv/bin" "$(PROJECT_ROOT)/.venv/Scripts" "$(SETUP_BIN)" "$(BOOTSTRAP_MISE)" "$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")" "$(FLEXT_INFRA_EXECUTOR_VENV)"; do \
+	for environment_path in "$$(dirname "$(RUNTIME_VENV)")" "$(RUNTIME_VENV)" "$(RUNTIME_BIN)" "$(PROJECT_ROOT)/.venv" "$(PROJECT_ROOT)/.venv/bin" "$(PROJECT_ROOT)/.venv/Scripts" "$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")" "$(FLEXT_INFRA_EXECUTOR_VENV)"; do \
 		if [ -L "$$environment_path" ]; then \
 			printf 'ERROR: workspace environment must be physical, not a symlink: %s\n' "$$environment_path" >&2; exit 2; \
 		fi; \
@@ -740,10 +749,10 @@ SYNC_UPGRADE_EXECUTOR_RECIPE = $(call PREPARE_ENVIRONMENT,$(FLEXT_INFRA_EXECUTOR
 # every member's declared extras and groups, without copying dependency graphs.
 
 
-override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone
+override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone --all-packages
 
 ifeq ($(CI),Y)
-override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone --no-editable
+override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone --all-packages --no-editable
 endif
 
 # Custom hooks are declared in CI too; load their selected physical Makefile.
@@ -802,11 +811,11 @@ VERB_ARGUMENTS_fmt :=
 VERB_DESCRIPTION_check := Validate declarations, projections, environment, documentation and configured gates without repairs or publication.
 VERB_ARGUMENTS_check := CHECK_PHASE
 
-VERB_DESCRIPTION_tests := Discover the complete global pytest inventory and execute testmon-selected cases with the persistent external database.
-VERB_ARGUMENTS_tests :=
+VERB_DESCRIPTION_tests := Run native incremental tests, or every test in FILE once.
+VERB_ARGUMENTS_tests := FILE
 
-VERB_DESCRIPTION_tests-full := Execute the complete applicable population once without Testmon or a preliminary incremental run, preserving the existing database untouched.
-VERB_ARGUMENTS_tests-full :=
+VERB_DESCRIPTION_tests-full := Run the complete selected inventory once without Testmon; FILE selects one file.
+VERB_ARGUMENTS_tests-full := FILE
 
 VERB_DESCRIPTION_help := Discover the declared public interface without effects.
 VERB_ARGUMENTS_help :=
@@ -845,7 +854,7 @@ PROFILE_VERBS_DIRECT := $(filter-out $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INT
 PROFILE_VERBS_ROUTED := $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INTERPRETER)
 
 $(PROFILE_VERBS_PLAIN): %: _builtin_require_workspace _builtin_require_interpreter
-	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'standalone'
+	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'workspace'
 	$(call RUN_PUBLIC,$@)
 
 
@@ -854,7 +863,7 @@ $(PROFILE_VERBS_DISPATCH):
 
 
 $(PROFILE_VERBS_ACTIVATED): %: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'standalone'
+	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'workspace'
 	+@$(if $(filter Y,$(CI)),$(MISE) -C "$(RUNTIME_ROOT)" exec -- $(SELF_MAKE) _activated-$@,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-$@)
 .PHONY: $(addprefix _activated-,$(PROFILE_VERBS_ACTIVATED))
 ifneq ($(strip $(PROFILE_VERBS_DIRECT)),)
@@ -882,7 +891,7 @@ setup:
 lifecycle_state="$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")"; \
 lifecycle_lock="$$lifecycle_state/$(notdir $(RUNTIME_VENV)).lifecycle.lock"; \
 if [ -L "$$lifecycle_state" ] || [ -L "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease paths must be physical\n' >&2; exit 2; fi; \
-mkdir -p "$$lifecycle_state"; \
+mkdir -p "$$lifecycle_state" 2>/dev/null || true; \
 if [ -e "$$lifecycle_lock" ] && [ ! -f "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease is not a regular file\n' >&2; exit 2; fi; \
 : >>"$$lifecycle_lock"; \
 lifecycle_identity="$$(stat -c '%d:%i' "$$lifecycle_lock")"; \
@@ -921,7 +930,7 @@ upg:
 lifecycle_state="$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")"; \
 lifecycle_lock="$$lifecycle_state/$(notdir $(RUNTIME_VENV)).lifecycle.lock"; \
 if [ -L "$$lifecycle_state" ] || [ -L "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease paths must be physical\n' >&2; exit 2; fi; \
-mkdir -p "$$lifecycle_state"; \
+mkdir -p "$$lifecycle_state" 2>/dev/null || true; \
 if [ -e "$$lifecycle_lock" ] && [ ! -f "$$lifecycle_lock" ]; then printf 'ERROR[lifecycle] lease is not a regular file\n' >&2; exit 2; fi; \
 : >>"$$lifecycle_lock"; \
 lifecycle_identity="$$(stat -c '%d:%i' "$$lifecycle_lock")"; \
@@ -996,7 +1005,7 @@ ifneq ($(CI),Y)
 endif
 
 _builtin-help:
-	@printf '%s\n' 'flext-core [standalone]' ''
+	@printf '%s\n' 'flext-core [workspace]' ''
 	@$(foreach verb,$(PUBLIC_VERBS),$(call VERB_HELP_LINE,$(verb));)
 
 # A project owns the sources declared by its manifest. Generated setup
@@ -1189,7 +1198,7 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac; \
 	bootstrap_stage=acquisition; \
-	mkdir -p "$(PROJECT_ROOT)/.bin"; \
+	if [ -L "$(PROJECT_ROOT)/.bin" ] && [ ! -e "$(PROJECT_ROOT)/.bin" ]; then rm -f "$(PROJECT_ROOT)/.bin"; fi; mkdir -p "$(PROJECT_ROOT)/.bin"; \
 	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_HELP=0; \
 	export MISE_VERSION="2026.10.3"; \
 	mise_acquired=false; \
@@ -1311,10 +1320,14 @@ _builtin_check_all: _builtin_require_environment
 	@$(if $(CHECK_PROFILE),FLEXT_INFRA_PROFILE=$(CHECK_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/check/route.pstats" timeout --signal=TERM --kill-after=5s 1205s $(PROJECT_FLEXT_INFRA) workspace check --repository-root "$(if $(filter Y,$(CI)),$(PROJECT_ROOT),$(if $(filter primary,$(CHECK_PHASE)),$(RUNTIME_ROOT),$(PROJECT_ROOT)))"$(if $(CHECK_PHASE), --phase "$$CHECK_PHASE")
 
 _builtin_tests_all: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace tests --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"
+	@set --; \
+if [ -n "$${FILE:-}" ]; then set -- --file "$$FILE"; fi; \
+$(PROJECT_FLEXT_INFRA) workspace tests --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)" "$$@"
 
 _builtin_tests_full_all: _builtin_require_environment
-	@$(PROJECT_FLEXT_INFRA) workspace tests-full --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"
+	@set --; \
+if [ -n "$${FILE:-}" ]; then set -- --file "$$FILE"; fi; \
+$(PROJECT_FLEXT_INFRA) workspace tests-full --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)" "$$@"
 
 # fmt is format-only (single-pass verb law): ruff formats Python, the
 # fmt_gates formatters run once through the checker's apply mode, and every

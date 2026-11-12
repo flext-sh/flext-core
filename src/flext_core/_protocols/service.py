@@ -174,7 +174,7 @@ class FlextProtocolsService:
             ...
 
     @runtime_checkable
-    class ServiceRuntime(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class ServiceRuntime(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property
@@ -208,7 +208,7 @@ class FlextProtocolsService:
             ...
 
     @runtime_checkable
-    class RuntimeBootstrapOptions(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class RuntimeBootstrapOptions(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

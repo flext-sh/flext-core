@@ -14,6 +14,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Annotated, ClassVar, Literal
 
+from typing_extensions import TypeForm
+
 from tests import c, m, p, t, tm, u
 
 
@@ -71,14 +73,9 @@ class TestsFlextCorePydanticDeclarations:
         detail: str
 
     class _ProtocolBox(m.ContractModel):
-        """Protocol annotations retain the model owner's native schema."""
+        """A data boundary retains the schema of its concrete model owner."""
 
-        item: Annotated[
-            p.Tests.PublicPayload,
-            m.GetPydanticSchema(
-                lambda _source, handler: handler.generate_schema(m.Tests.PublicPayload),
-            ),
-        ]
+        item: m.Tests.PublicPayload
 
     @staticmethod
     @c.Tests.MARK.parametrize("json_input", [False, True])
@@ -137,7 +134,7 @@ class TestsFlextCorePydanticDeclarations:
     ) -> None:
         model_type = TestsFlextCorePydanticDeclarations._ProtocolBox
         field = model_type.model_fields["item"]
-        tm.ok(field.annotation is p.Tests.PublicPayload)
+        tm.ok(field.annotation is m.Tests.PublicPayload)
         tm.that(
             model_type.model_config.get("frozen", False),
             eq=m.ContractModel.model_config.get("frozen", False),
@@ -313,7 +310,7 @@ class TestsFlextCorePydanticDeclarations:
         }
         tm.that(payload.model_dump(mode="json"), eq=expected_json)
         tm.that(
-            u.type_adapter(t.TypeForm(t.JsonDict)).validate_json(
+            u.type_adapter(TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json()
             ),
             eq=expected_json,
@@ -364,7 +361,7 @@ class TestsFlextCorePydanticDeclarations:
         tm.that(payload.model_dump(by_alias=True), eq=expected)
         tm.that(payload.model_dump(mode="json", by_alias=True), eq=expected)
         tm.that(
-            u.type_adapter(t.TypeForm(t.JsonDict)).validate_json(
+            u.type_adapter(TypeForm(t.JsonDict)).validate_json(
                 payload.model_dump_json(by_alias=True)
             ),
             eq=expected,

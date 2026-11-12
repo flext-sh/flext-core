@@ -42,6 +42,8 @@ if TYPE_CHECKING:
         FlextHandlers,
         FlextLazy,
         FlextLazyAttribute,
+        FlextLazyBootstrap,
+        FlextLazyExports,
         FlextLazyMember,
         FlextMixins,
         FlextModels,
@@ -120,7 +122,6 @@ if TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
-    from tests.unit import TestsDataContractSchema
     from tests.utilities import TestsFlextUtilities, u
 
 
@@ -143,6 +144,8 @@ __all__: tuple[str, ...] = (
     "FlextHandlers",
     "FlextLazy",
     "FlextLazyAttribute",
+    "FlextLazyBootstrap",
+    "FlextLazyExports",
     "FlextLazyMember",
     "FlextMixins",
     "FlextModels",
@@ -162,7 +165,6 @@ __all__: tuple[str, ...] = (
     "ScriptsFlextProtocols",
     "ScriptsFlextTypes",
     "ScriptsFlextUtilities",
-    "TestsDataContractSchema",
     "TestsFlextConstants",
     "TestsFlextConstantsDomain",
     "TestsFlextConstantsEnums",
@@ -259,6 +261,8 @@ install_lazy_exports(
         "FlextHandlers": "flext_core",
         "FlextLazy": "flext_core",
         "FlextLazyAttribute": "flext_core",
+        "FlextLazyBootstrap": "flext_core",
+        "FlextLazyExports": "flext_core",
         "FlextLazyMember": "flext_core",
         "FlextMixins": "flext_core",
         "FlextModels": "flext_core",
@@ -278,7 +282,6 @@ install_lazy_exports(
         "ScriptsFlextProtocols": "scripts",
         "ScriptsFlextTypes": "scripts",
         "ScriptsFlextUtilities": "scripts",
-        "TestsDataContractSchema": ".unit",
         "TestsFlextConstants": ".constants",
         "TestsFlextConstantsDomain": "._constants",
         "TestsFlextConstantsEnums": "._constants",

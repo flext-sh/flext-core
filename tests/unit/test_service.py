@@ -145,8 +145,10 @@ class TestsFlextService(FlextTestsCase):
 
     @staticmethod
     def test_settings_expose_tests_namespace() -> None:
-        """Test settings expose tests namespace."""
-        settings = m.Tests.ServiceUserService().settings
+        """Explicit test settings injection exposes the test namespace."""
+        settings = m.Tests.ServiceUserService(
+            settings_type=FlextTestsSettings,
+        ).settings
 
         tm.that(settings, is_=FlextTestsSettings)
         if isinstance(settings, FlextTestsSettings):

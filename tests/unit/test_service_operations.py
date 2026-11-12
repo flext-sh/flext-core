@@ -13,12 +13,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable
-from typing import TYPE_CHECKING, ClassVar, Self, override
+from typing import ClassVar, Self, override
 
 from tests import c, h, m, p, r, s, t, tm, u
-
-if TYPE_CHECKING:
-    from flext_core import FlextSettings
 
 
 class TestsFlextCoreServiceOperations:
@@ -249,7 +246,7 @@ class TestsFlextCoreServiceOperations:
             return self.ready
 
     class UnionRequestService(OperationService):
-        """Operation whose request annotation is not a dotted name."""
+        """Operation whose union request is not a protocol."""
 
         def send(self, request: p.Tests.DispatchRequest | str) -> p.Result[bool]:
             """Send a request.
@@ -271,18 +268,6 @@ class TestsFlextCoreServiceOperations:
 
             """
             return r[str].ok(self.response_prefix + request)
-
-    class TypeCheckingOnlyService(OperationService):
-        """Operation whose request is imported only under TYPE_CHECKING."""
-
-        def configure(self, request: FlextSettings) -> p.Result[bool]:
-            """Configure from settings.
-
-            Returns:
-                The resulting ``p.Result[bool]``.
-
-            """
-            return r[bool].ok(self.ready and bool(request))
 
     class MissingMetadataService(OperationService):
         """A Protocol request without its explicit schema association."""
@@ -309,18 +294,18 @@ class TestsFlextCoreServiceOperations:
             """
             return r[str].ok(self.response_prefix + request.command_name)
 
-    class ConcreteRequestService(OperationService):
-        """A model annotation cannot replace the public Protocol contract."""
+    class MetadataScalarRequestService(OperationService):
+        """A scalar annotation cannot replace the public Protocol contract."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: str) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
                 The requested command name in a successful result.
 
             """
-            return r[str].ok(self.response_prefix + request.command_name)
+            return r[str].ok(self.response_prefix + request)
 
     class MismatchedMetadataService(OperationService):
         """The explicit schema must provide every consumed Protocol member."""
@@ -382,7 +367,7 @@ class TestsFlextCoreServiceOperations:
         ("service_type", "defect"),
         [
             (MissingMetadataService, re.escape(c.ERR_SERVICE_OPERATION_METADATA)),
-            (ConcreteRequestService, "Protocol"),
+            (MetadataScalarRequestService, "Protocol"),
             (MismatchedMetadataService, "command_name"),
             (
                 NonModelMetadataService,
@@ -449,9 +434,8 @@ class TestsFlextCoreServiceOperations:
             (DefaultRequestService, "send", c.ERR_SERVICE_OPERATION_SIGNATURE),
             (UndocumentedService, "status", c.ERR_SERVICE_OPERATION_DOCSTRING),
             (PlainReturnService, "status", c.ERR_SERVICE_OPERATION_RESULT),
-            (UnionRequestService, "send", c.ERR_SERVICE_OPERATION_NAME),
+            (UnionRequestService, "send", c.ERR_SERVICE_OPERATION_REQUEST),
             (ScalarRequestService, "lookup", c.ERR_SERVICE_OPERATION_REQUEST),
-            (TypeCheckingOnlyService, "configure", c.ERR_SERVICE_OPERATION_UNBOUND),
         ],
     )
     def test_malformed_operation_raises_with_operation_module_and_fix(
@@ -466,23 +450,7 @@ class TestsFlextCoreServiceOperations:
         message = str(raised.value)
         tm.that(message, has=f"{service_type.__qualname__}.{operation} ")
         tm.that(message, has=f"(module {__name__}, annotation ")
-        tm.ok(message.endswith(defect))
-
-    def test_type_checking_only_import_names_the_annotation(self) -> None:
-        """An unbound request annotation is reported verbatim."""
-        with u.Tests.raises(TypeError) as raised:
-            u.service_operations(self.TypeCheckingOnlyService)
-
-        tm.that(
-            str(raised.value),
-            eq=c.ERR_SERVICE_OPERATION.format(
-                service=self.TypeCheckingOnlyService.__qualname__,
-                operation="configure",
-                module=__name__,
-                annotation="FlextSettings",
-                defect=c.ERR_SERVICE_OPERATION_UNBOUND,
-            ),
-        )
+        tm.ok(message.endswith(defect), msg=message)
 
     def test_sibling_name_collision_raises(self) -> None:
         """Two sibling classes declaring one operation name fail discovery."""

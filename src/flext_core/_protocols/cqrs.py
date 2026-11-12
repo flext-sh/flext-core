@@ -11,14 +11,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
-from flext_core._protocols import FlextProtocolsBase
-from flext_core._protocols._cqrs import FlextProtocolsCqrsFlextmodelscqrsPart01
+from flext_core._protocols import FlextProtocolsBase, FlextProtocolsPydantic
+from flext_core._protocols._cqrs import FlextProtocolsCqrsFlextmodelscqrsPagination
 
 if TYPE_CHECKING:
     from flext_core import c, t
 
 
-class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
+class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPagination):
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
@@ -46,7 +46,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         filters: Mapping[str, t.Scalar]
 
         @property
-        def pagination(self) -> FlextProtocolsCqrsFlextmodelscqrsPart01.Pagination:
+        def pagination(self) -> FlextProtocolsCqrsFlextmodelscqrsPagination.Pagination:
             """Structural member projected from the owning model.
 
             Pagination settings controlling page number and page size for query results.
@@ -57,7 +57,7 @@ class FlextProtocolsCqrs(FlextProtocolsCqrsFlextmodelscqrsPart01):
         query_type: str | None
 
     @runtime_checkable
-    class HandlerConfig(FlextProtocolsBase.ArbitraryTypesModel, Protocol):
+    class HandlerConfig(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
         @property

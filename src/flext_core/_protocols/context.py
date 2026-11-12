@@ -34,10 +34,10 @@ class FlextProtocolsContext(
     FlextProtocolsContextData,
     FlextProtocolsContextExport,
     FlextProtocolsContextScope,
+    FlextProtocolsContextTokens,
     FlextProtocolsContextScopeFlextmodelscontextscopePart03,
     FlextProtocolsContextScopeFlextmodelscontextscopePart02,
     FlextProtocolsContextScopeFlextmodelscontextscopePart01,
-    FlextProtocolsContextTokens,
 ):
     """Public facade for FlextProtocolsContext."""
 

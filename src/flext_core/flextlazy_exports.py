@@ -153,13 +153,6 @@ class FlextLazyExports(FlextLazyBootstrap):
                 module_globals[name] = mod
             return mod
 
-        if isinstance(entry, str) and self._module_is_initializing(mod):
-            # A letter alias whose target module is mid-execution (package
-            # __init__ importing a subtree that imports the facade back) is the
-            # module being initialized: hand back the partial module instead of
-            # failing the alias. No other deferred-import form is allowed.
-            return mod
-
         try:
             value: t.ModuleGlobalValue = getattr(mod, attr)
         except AttributeError as exc:

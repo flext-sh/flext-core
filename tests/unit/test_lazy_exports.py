@@ -442,6 +442,46 @@ class TestsFlextCoreLazyExports:
 class TestsFlextCoreLazyExportCaching:
     """In-progress import rebinding and completed export caching."""
 
+    @staticmethod
+    def test_cold_class_export_retains_identity_while_provider_initializes(
+        tmp_path: Path,
+    ) -> None:
+        """A real recursive public import returns its declared class, not a module."""
+        package = tmp_path / "lazy_class_identity_probe"
+        package.mkdir()
+        (package / "__init__.py").write_text(
+            "from flext_core.lazy import install_lazy_exports\n"
+            "install_lazy_exports(__name__, globals(), {'Export': '.provider'})\n",
+            encoding=c.DEFAULT_ENCODING,
+        )
+        (package / "provider.py").write_text(
+            "class Export: pass\n"
+            "import lazy_class_identity_probe\n"
+            "DURING = lazy_class_identity_probe.Export\n"
+            "CACHED = 'Export' in vars(lazy_class_identity_probe)\n",
+            encoding=c.DEFAULT_ENCODING,
+        )
+        result = u.Cli.run_raw(
+            [
+                sys.executable,
+                "-c",
+                (
+                    "import lazy_class_identity_probe as package\n"
+                    "from flext_core.lazy import lazy\n"
+                    "export = package.Export\n"
+                    "provider = lazy.load('lazy_class_identity_probe.provider')\n"
+                    "assert export is provider.Export is provider.DURING\n"
+                    "assert not provider.CACHED\n"
+                    "assert package.Export is export\n"
+                    "print('class identity preserved')\n"
+                ),
+            ],
+            cwd=tmp_path,
+        )
+        observed = tm.ok(result)
+        tm.that(observed.outcome.raw_return_code, eq=0, msg=observed.stderr)
+        tm.that(observed.stdout, eq="class identity preserved\n")
+
     @u.Tests.fixture
     @staticmethod
     def rebinding_package(tmp_path: Path) -> Iterator[str]:
@@ -497,16 +537,14 @@ class TestsFlextCoreLazyExportCaching:
         first_access = package.u
         child = lazy.load(f"{rebinding_package}.child")
 
-        # Assert — a letter alias whose target is mid-execution resolves to
-        # the partial module (1f15515b25), uncached; the completed module's
-        # final binding is what gets cached.
-        def is_partial_child(value: object) -> bool:
-            return value is child
+        # The first declared class is available without caching an in-flight value.
+        def resolves_first_alias(value: object) -> bool:
+            return value is child.FirstAlias
 
         def resolves_final_alias(value: object) -> bool:
             return value is child.FinalAlias
 
-        tm.that(child.RESOLVED_DURING_INIT, where=is_partial_child)
+        tm.that(child.RESOLVED_DURING_INIT, where=resolves_first_alias)
         tm.that(child.CACHED_DURING_INIT, is_=bool, eq=False)
         tm.that(first_access, where=resolves_final_alias)
         tm.that(vars(package)["u"], where=resolves_final_alias)

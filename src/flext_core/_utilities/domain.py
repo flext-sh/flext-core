@@ -161,7 +161,7 @@ class FlextUtilitiesDomain:
 
     @staticmethod
     def add_domain_event(
-        entity: p.HasDomainEvents,
+        entity: p.HasDomainEvents[m.DomainEvent],
         event_type: str,
         data: p.ConfigMap | Mapping[str, t.JsonPayload | None] | None = None,
         aggregate_id: str | None = None,

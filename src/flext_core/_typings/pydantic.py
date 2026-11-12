@@ -339,54 +339,6 @@ class FlextTypesPydantic:
         return core_schema.no_info_plain_validator_function(require_specialization)
 
     @staticmethod
-    def port_instance_schema(
-        target: PortTarget,
-        bound: Mapping[TypeVar, PortTarget] | None = None,
-    ) -> core_schema.CoreSchema:
-        """Resolve a port target to the ``isinstance`` schema pydantic runs.
-
-        Pydantic's ``InstanceOf`` needs one class and does not see through
-        PEP 695 aliases (``t.LoggingWriteCompletion``, ``p.*`` aliases). This
-        resolves aliases (substituting ``bound`` type parameters of an
-        enclosing generic alias), generic origins, ``Annotated`` and unions to
-        the classes ``isinstance`` accepts, so no model needs
-        ``arbitrary_types_allowed``.
-
-        A generic declaration may retain an unresolved parameter, but cannot
-        validate a concrete port until specialization, a declared default,
-        constraints or a bound supplies its instance contract.
-
-        Returns:
-            The ``is_instance``/``none``/``union`` core schema for ``target``.
-
-        """
-        scope = bound or {}
-        origin = get_origin(target)
-        args = get_args(target)
-        resolve = FlextTypesPydantic.port_instance_schema
-        schema: core_schema.CoreSchema
-        if isinstance(target, TypeVar):
-            schema = FlextTypesPydantic._port_parameter_schema(target, scope)
-        elif isinstance(target, (TypeAliasType, typing_extensions.TypeAliasType)):
-            schema = resolve(target.__value__, scope)
-        elif isinstance(origin, (TypeAliasType, typing_extensions.TypeAliasType)):
-            parameters = {
-                parameter: scope.get(arg, arg)
-                for parameter, arg in zip(origin.__type_params__, args, strict=False)
-                if isinstance(parameter, TypeVar)
-            }
-            schema = resolve(origin.__value__, {**scope, **parameters})
-        elif origin in {Union, UnionType}:
-            schema = core_schema.union_schema([resolve(arg, scope) for arg in args])
-        elif origin is Annotated:
-            schema = resolve(args[0], scope)
-        elif target is None or target is NoneType:
-            schema = core_schema.none_schema()
-        else:
-            schema = core_schema.is_instance_schema(origin or target)
-        return schema
-
-    @staticmethod
     def _model_schema_owner(owner: type | TypeAliasType) -> bool:
         """Return whether ``owner`` names models only: one class or a union alias.
 
@@ -458,6 +410,54 @@ class FlextTypesPydantic:
             return handler.generate_schema(owner)
 
         return pydantic.GetPydanticSchema(generate)
+
+    @staticmethod
+    def port_instance_schema(
+        target: PortTarget,
+        bound: Mapping[TypeVar, PortTarget] | None = None,
+    ) -> core_schema.CoreSchema:
+        """Resolve a port target to the ``isinstance`` schema pydantic runs.
+
+        Pydantic's ``InstanceOf`` needs one class and does not see through
+        PEP 695 aliases (``t.LoggingWriteCompletion``, ``p.*`` aliases). This
+        resolves aliases (substituting ``bound`` type parameters of an
+        enclosing generic alias), generic origins, ``Annotated`` and unions to
+        the classes ``isinstance`` accepts, so no model needs
+        ``arbitrary_types_allowed``.
+
+        A generic declaration may retain an unresolved parameter, but cannot
+        validate a concrete port until specialization, a declared default,
+        constraints or a bound supplies its instance contract.
+
+        Returns:
+            The ``is_instance``/``none``/``union`` core schema for ``target``.
+
+        """
+        scope = bound or {}
+        origin = get_origin(target)
+        args = get_args(target)
+        resolve = FlextTypesPydantic.port_instance_schema
+        schema: core_schema.CoreSchema
+        if isinstance(target, TypeVar):
+            schema = FlextTypesPydantic._port_parameter_schema(target, scope)
+        elif isinstance(target, (TypeAliasType, typing_extensions.TypeAliasType)):
+            schema = resolve(target.__value__, scope)
+        elif isinstance(origin, (TypeAliasType, typing_extensions.TypeAliasType)):
+            parameters = {
+                parameter: scope.get(arg, arg)
+                for parameter, arg in zip(origin.__type_params__, args, strict=False)
+                if isinstance(parameter, TypeVar)
+            }
+            schema = resolve(origin.__value__, {**scope, **parameters})
+        elif origin in {Union, UnionType}:
+            schema = core_schema.union_schema([resolve(arg, scope) for arg in args])
+        elif origin is Annotated:
+            schema = resolve(args[0], scope)
+        elif target is None or target is NoneType:
+            schema = core_schema.none_schema()
+        else:
+            schema = core_schema.is_instance_schema(origin or target)
+        return schema
 
     # Dependency port: a field typed by a class, normally a
     # ``@runtime_checkable`` Protocol from ``p``, or an alias over such classes.

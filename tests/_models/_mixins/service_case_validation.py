@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Sequence
 from typing import Annotated, ClassVar
 
+from typing_extensions import TypeForm
+
 from flext_core import m, u
 from tests import t
 
@@ -62,7 +64,7 @@ class TestsFlextModelsServiceCaseValidation:
         metadata: Annotated[
             t.JsonMapping,
             m.Field(description="Additional operation metadata"),
-        ] = m.Field(default_factory=u.empty(t.TypeForm(t.JsonMapping)))
+        ] = m.Field(default_factory=u.empty(TypeForm(t.JsonMapping)))
 
     class Conversion(m.BaseModel):
         """Generic conversion progress model used by tests utilities."""
@@ -70,22 +72,22 @@ class TestsFlextModelsServiceCaseValidation:
         model_config: ClassVar[t.ConfigDict] = m.ConfigDict(frozen=True)
 
         converted: Annotated[t.JsonList, m.Field(description="Converted records")] = (
-            m.Field(default_factory=u.empty(t.TypeForm(t.JsonList)))
+            m.Field(default_factory=u.empty(TypeForm(t.JsonList)))
         )
         errors: Annotated[Sequence[str], m.Field(description="Conversion errors")] = (
-            m.Field(default_factory=u.empty(t.TypeForm(Sequence[str])))
+            m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
         )
         warnings: Annotated[
             Sequence[str],
             m.Field(description="Conversion warnings"),
-        ] = m.Field(default_factory=u.empty(t.TypeForm(Sequence[str])))
+        ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
         skipped: Annotated[t.JsonList, m.Field(description="Skipped records")] = (
-            m.Field(default_factory=u.empty(t.TypeForm(t.JsonList)))
+            m.Field(default_factory=u.empty(TypeForm(t.JsonList)))
         )
         metadata: Annotated[
             t.JsonMapping,
             m.Field(description="Additional conversion metadata"),
-        ] = m.Field(default_factory=u.empty(t.TypeForm(t.JsonMapping)))
+        ] = m.Field(default_factory=u.empty(TypeForm(t.JsonMapping)))
 
     class ParserScenario(m.BaseModel):
         """Single scenario for parser testing."""

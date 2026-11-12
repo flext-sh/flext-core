@@ -1,4 +1,4 @@
-# flext_core.flextlazy_part_02
+# flext_core.flextlazy_bootstrap
 
 <!-- TOC START -->
 
@@ -6,7 +6,7 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-::: flext_core.flextlazy_part_02
+::: flext_core.flextlazy_bootstrap
 
     options:
       show_root_heading: true

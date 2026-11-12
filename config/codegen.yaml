@@ -1,7 +1,6 @@
 Infra:
   codegen:
     repository:
-      kind: internal_flext
       examples_module: examples.ex_12_flext_registry
       namespace_scan_dirs:
       - src

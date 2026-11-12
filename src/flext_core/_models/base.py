@@ -29,20 +29,11 @@ class FlextModelsBase:
     class EnforcedModel(FlextModelsPydantic.BaseModel):
         """Base model that enforces architectural rules on subclasses."""
 
-        # Schema deferral remains an implementation gap under ADR-028 D14.
-        # Its removal must preserve lazy module imports and complete declarations.
         model_config: ClassVar[ConfigDict] = ConfigDict(
             extra=c.EXTRA_CONFIG_FORBID,
-            defer_build=True,
             use_enum_values=c.MODEL_USE_ENUM_VALUES,
             validate_default=c.MODEL_VALIDATE_DEFAULT,
         )
-
-        @classmethod
-        @override
-        def __pydantic_on_complete__(cls) -> None:
-            """Enforce resolved field contracts at the native schema boundary."""
-            super().__pydantic_on_complete__()
 
     class ManagedModel(EnforcedModel):
         """Shared preset for assignment validation with forbidden extra fields."""

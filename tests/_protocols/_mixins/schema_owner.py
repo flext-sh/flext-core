@@ -49,7 +49,12 @@ class TestsFlextProtocolsMixinsSchemaOwner:
         """Structural data contract projected from the owning model."""
 
         @property
-        def variant(self) -> TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerVariant:
+        def variant(
+            self,
+        ) -> (
+            TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerText
+            | TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerCount
+        ):
             """Variant validated by the model its tag names."""
             ...
 
@@ -70,7 +75,7 @@ class TestsFlextProtocolsMixinsSchemaOwner:
         def leaves(
             self,
         ) -> tuple[TestsFlextProtocolsMixinsSchemaOwner.SchemaOwnerLeaf, ...]:
-            """Sibling leaves validated by their real model."""
+            """Structural member projected from the owning model."""
             ...
 
     type SchemaOwnerVariant = SchemaOwnerText | SchemaOwnerCount

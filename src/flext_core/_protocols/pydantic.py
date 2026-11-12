@@ -10,21 +10,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 from collections.abc import Callable, Mapping
-from functools import reduce
-from typing import (
-    TYPE_CHECKING,
-    ClassVar,
-    Literal,
-    Protocol,
-    Self,
-    overload,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, Literal, Protocol, Self, overload, runtime_checkable
 
 import pydantic
-from pydantic_core import CoreSchema, PydanticUndefinedType
+from pydantic_core import PydanticUndefinedType
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -62,41 +52,6 @@ class FlextProtocolsPydantic:
         """Structural contract for runtime symbols that expose owner module."""
 
         __module__: str
-
-    @runtime_checkable
-    class DataContract(Protocol):
-        """Structural data contract validated through its owning model.
-
-        A field annotated with a projected data contract must validate exactly
-        as the concrete model does while the annotation stays model-free. The
-        projectors emit ``__contract_model__`` (module plus attribute route) and
-        a one-line ``__get_pydantic_core_schema__`` hook per leaf contract,
-        delegating here. Consumers never import ``m`` merely to type, and
-        Pydantic still validates, serializes, and rejects the same payloads as
-        the owning model.
-        """
-
-        __contract_model__: ClassVar[tuple[str, ...]]
-
-        @staticmethod
-        def contract_schema(
-            route: tuple[str, ...], handler: pydantic.GetCoreSchemaHandler
-        ) -> CoreSchema:
-            """Resolve the owning model by route and return its core schema.
-
-            Returns:
-                The core schema of the owning concrete model.
-
-            Raises:
-                TypeError: If the contract declares no owning model route.
-
-            """
-            if not route:
-                msg = "data contract declares no owning model for validation"
-                raise TypeError(msg)
-            module = importlib.import_module(route[0])
-            model = reduce(getattr, route[1:], module)
-            return handler(model)
 
     @runtime_checkable
     class ModelCopy(Protocol):

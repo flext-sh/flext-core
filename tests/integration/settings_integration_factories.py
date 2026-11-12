@@ -9,6 +9,8 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Annotated, ClassVar
 
+from typing_extensions import TypeForm
+
 from tests import m, t, u
 
 if TYPE_CHECKING:
@@ -28,14 +30,14 @@ class TestsFlextSettingsConfigTestCase(m.BaseModel):
     expected_values: Annotated[
         t.JsonMapping,
         m.Field(description="Expected effective values"),
-    ] = m.Field(default_factory=u.empty(t.TypeForm(t.JsonMapping)))
+    ] = m.Field(default_factory=u.empty(TypeForm(t.JsonMapping)))
     file_format: Annotated[str, m.Field(description="Configuration file format")] = (
         "json"
     )
     env_vars: Annotated[
         Mapping[str, str],
         m.Field(description="Environment variable overrides"),
-    ] = m.Field(default_factory=u.empty(t.TypeForm(Mapping[str, str])))
+    ] = m.Field(default_factory=u.empty(TypeForm(Mapping[str, str])))
     description: Annotated[
         str,
         m.Field(description="Human-readable test description"),

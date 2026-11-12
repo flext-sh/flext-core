@@ -23,7 +23,7 @@ overrides = [
     { name = "flext-cli", git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev" },
     { name = "flext-infra", git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev" },
     { name = "flext-tests", git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev" },
-    { name = "rope", git = "https://github.com/marlon-costa-dc/rope.git?rev=64cbd65bc458c689880be41182c52715397b143a" },
+    { name = "rope", git = "https://github.com/marlon-costa-dc/rope.git?rev=41b960329bb0c189be872f24ebe81bbeabfe5a66" },
 ]
 excludes = [
     { package = { name = "flext-cli" }, dependencies = ["flext-core"] },
@@ -412,7 +412,7 @@ wheels = [
 [[package]]
 name = "flext-cli"
 version = "0.12.1"
-source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#114651a020cabab83434538e42cffcafc52c808b" }
+source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#b1e073c06a730000ad87722fd629c0458fc3ef69" }
 dependencies = [
     { name = "click" },
     { name = "defusedxml" },
@@ -594,7 +594,7 @@ dev = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#ac7afd1b7ffb8a7ed36b3651d56c796a3f8d3916" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#7195eb7122dd26a8e3f7bbec942490e423508010" }
 dependencies = [
     { name = "defusedxml" },
     { name = "flext-cli" },
@@ -617,7 +617,7 @@ dependencies = [
 [[package]]
 name = "flext-tests"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#8edeffb0716929ff5dceae8b7dfa2c237194f662" }
+source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#109f2551de3c62a66a1f1ee8134009304c6d751c" }
 dependencies = [
     { name = "docker" },
     { name = "flext-cli" },
@@ -1411,15 +1411,15 @@ wheels = [
 
 [[package]]
 name = "pymdown-extensions"
-version = "12.3"
+version = "13.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f3/fe/ac50ee24a80a1b344e643f6fb626063cc7041b978cd1dd9a7f9963ae1cd1/pymdown_extensions-12.3.tar.gz", hash = "sha256:a7f2a4e0bc60c6e6babfa7922cfb3b01cd640eb00fb208f3c582e12bae00ea67", size = 870532, upload-time = "2026-10-14T22:40:43.252Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c6/ef/6496e7e9fb63427ace8636a481b3f8151e0dfaa6a76512e6b01f7c815a4b/pymdown_extensions-13.0.tar.gz", hash = "sha256:092524bea4fb3e62891204495de9e56b98603912df167ddd90d4f91bf2cd0414", size = 881230, upload-time = "2026-11-08T14:20:29.437Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/d0/758afe732c2da502c051b4d03ff88daa3c0fc1a1e671e6c5a6318177bab4/pymdown_extensions-12.3-py3-none-any.whl", hash = "sha256:345493a8e3497e24382902903a1c43a28e34a52f2b7571a1c9641429b820ca74", size = 277597, upload-time = "2026-10-14T22:40:41.543Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/47/e96d2b3439b9fab6dc085747f25aee0cbae2bae16743e86ca60907bd0d59/pymdown_extensions-13.0-py3-none-any.whl", hash = "sha256:c68f6e69b14604fb55227735bd0c4c4d3d1d9299a2d1314352190c48aa0d1040", size = 280470, upload-time = "2026-11-08T14:20:27.756Z" },
 ]
 
 [[package]]
@@ -1520,14 +1520,14 @@ wheels = [
 
 [[package]]
 name = "pytest-randomly"
-version = "5.0.0"
+version = "5.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pytest" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/01/3b/6a40e1b9d925651e601e056a97f60d8a1daeddeac03d5609be60cb4362ce/pytest_randomly-5.0.0.tar.gz", hash = "sha256:e9c575a5873ef168ddbe340ed9e97ce9edb4492ccc821e4b2ac6bb1f0ed515d2", size = 8542, upload-time = "2026-09-01T22:34:20.441Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4b/59/d9f088bdf2bdafd7b5305d2be5f2e73d330756e092c448e4e534a30d9bda/pytest_randomly-5.1.0.tar.gz", hash = "sha256:cdf8af20419969d273b97c8e7c8d688200807e815bdc733cf2a6af183080ad58", size = 9010, upload-time = "2026-11-08T23:48:13.168Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/b4/47e939285caad9a623d021512912ac08dc92a467ad075d179f43729d2934/pytest_randomly-5.0.0-py3-none-any.whl", hash = "sha256:8a0d4703115c0c25b38b6e129fc16b1947b9643ff26a41bc1d185d7e5a7689c1", size = 8920, upload-time = "2026-09-01T22:34:19.227Z" },
+    { url = "https://files.pythonhosted.org/packages/67/ef/9979eae8db530930873d15fb16043ef6d72b5042f2636de4d85568eb3df4/pytest_randomly-5.1.0-py3-none-any.whl", hash = "sha256:fb9004e6821422291087d0294fd62f45ff304094db11fbdff8f2fe1ed20764d8", size = 8969, upload-time = "2026-11-08T23:48:11.833Z" },
 ]
 
 [[package]]
@@ -1763,8 +1763,8 @@ wheels = [
 
 [[package]]
 name = "rope"
-version = "1.15.2+dc.4"
-source = { git = "https://github.com/marlon-costa-dc/rope.git?rev=64cbd65bc458c689880be41182c52715397b143a#64cbd65bc458c689880be41182c52715397b143a" }
+version = "1.15.2+dc.6"
+source = { git = "https://github.com/marlon-costa-dc/rope.git?rev=41b960329bb0c189be872f24ebe81bbeabfe5a66#41b960329bb0c189be872f24ebe81bbeabfe5a66" }
 dependencies = [
     { name = "pytoolconfig", extra = ["global"] },
 ]

@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import MutableSequence, Sequence
     from datetime import datetime
 
 
@@ -37,6 +37,17 @@ if TYPE_CHECKING:
 
 class FlextProtocolsBase:
     """Hierarchical protocol namespace organized by Interface Segregation Principle."""
+
+    @runtime_checkable
+    class HasDomainEvents[EventT](Protocol):
+        """Identity and writable event buffer consumed by domain orchestration."""
+
+        unique_id: str
+
+        @property
+        def domain_events(self) -> MutableSequence[EventT]:
+            """Expose the event sink without requiring unrelated entity fields."""
+            ...
 
     @runtime_checkable
     class FieldSerializerFactory(Protocol):
@@ -213,7 +224,7 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FrozenModel(StrictModel, Protocol):
+    class FrozenModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
@@ -229,7 +240,7 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class ImmutableValueModel(ManagedModel, Protocol):
+    class ImmutableValueModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
@@ -245,7 +256,7 @@ class FlextProtocolsBase:
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
-    class FrozenDynamicModel(DynamicModel, Protocol):
+    class FrozenDynamicModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable
@@ -296,7 +307,7 @@ class FlextProtocolsBase:
             ...
 
     @runtime_checkable
-    class ContractModel(StrictModel, Protocol):
+    class ContractModel(FlextProtocolsPydantic.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
 
     @runtime_checkable

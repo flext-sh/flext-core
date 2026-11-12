@@ -18,6 +18,8 @@ import math
 from collections.abc import Mapping, MutableMapping
 from datetime import UTC, datetime
 
+from typing_extensions import TypeForm
+
 from tests import c, m, t, tm, u
 
 
@@ -28,7 +30,7 @@ class TestsFlextCoreJsonPayload:
     def test_models_are_not_accepted_as_json_payloads() -> None:
         """Models must be serialized before crossing the JSON boundary."""
         model = m.ConfigMap(root={"name": "sample"})
-        adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(t.TypeForm(t.JsonValue))
+        adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(TypeForm(t.JsonValue))
         with u.Tests.raises(m.ValidationError):
             adapter.validate_python(model)
 
@@ -36,25 +38,21 @@ class TestsFlextCoreJsonPayload:
     def test_nested_json_survives_runtime_payload_validation() -> None:
         """Nested collections use the existing canonical JsonValue contract."""
         payload: t.JsonPayload = {"items": [{"name": "sample"}]}
-        adapter: t.TypeAdapter[t.JsonPayload] = u.type_adapter(
-            t.TypeForm(t.JsonPayload)
-        )
+        adapter: t.TypeAdapter[t.JsonPayload] = u.type_adapter(TypeForm(t.JsonPayload))
         tm.that(adapter.validate_python(payload), eq=payload)
 
     @staticmethod
     def test_models_inside_json_collections_require_an_owned_model_contract() -> None:
         """The JSON branch must not silently admit arbitrary model instances."""
         model = m.Metadata(attributes={"name": "sample"})
-        adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(t.TypeForm(t.JsonValue))
+        adapter: t.TypeAdapter[t.JsonValue] = u.type_adapter(TypeForm(t.JsonValue))
         with u.Tests.raises(m.ValidationError):
             adapter.validate_python({"items": [{"model": model}]})
 
     @staticmethod
     def test_runtime_payload_rejects_unmodeled_values() -> None:
         """An unconstrained value must not enter through an unrestricted branch."""
-        adapter: t.TypeAdapter[t.JsonPayload] = u.type_adapter(
-            t.TypeForm(t.JsonPayload)
-        )
+        adapter: t.TypeAdapter[t.JsonPayload] = u.type_adapter(TypeForm(t.JsonPayload))
 
         with u.Tests.raises(m.ValidationError):
             adapter.validate_python(object())
@@ -259,7 +257,7 @@ class TestsFlextCoreTypedCollectionAliases:
     def test_pair_alias_enforces_two_element_arity() -> None:
         """Tuble validates a 2-tuple and rejects other arities."""
         adapter: t.TypeAdapter[tuple[int, str]] = u.type_adapter(
-            t.TypeForm(tuple[int, str])
+            TypeForm(tuple[int, str])
         )
         tm.that(adapter.validate_python((1, "x")), eq=(1, "x"))
         with u.Tests.raises(m.ValidationError):
@@ -269,7 +267,7 @@ class TestsFlextCoreTypedCollectionAliases:
     def test_triple_alias_enforces_three_element_arity() -> None:
         """Tuble validates a 3-tuple and rejects shorter tuples."""
         adapter: t.TypeAdapter[tuple[int, str, bool]] = u.type_adapter(
-            t.TypeForm(tuple[int, str, bool]),
+            TypeForm(tuple[int, str, bool]),
         )
         tm.that(adapter.validate_python((1, "x", True)), eq=(1, "x", True))
         with u.Tests.raises(m.ValidationError):
@@ -279,7 +277,7 @@ class TestsFlextCoreTypedCollectionAliases:
     def test_int_pair_alias_validates_two_ints() -> None:
         """tuple[int, int] coerces and validates a pair, rejecting wrong arity."""
         adapter: t.TypeAdapter[tuple[int, int]] = u.type_adapter(
-            t.TypeForm(tuple[int, int])
+            TypeForm(tuple[int, int])
         )
         tm.that(adapter.validate_python((1, 2)), eq=(1, 2))
         with u.Tests.raises(m.ValidationError):
@@ -289,7 +287,7 @@ class TestsFlextCoreTypedCollectionAliases:
     def test_variadic_tuple_alias_accepts_any_length() -> None:
         """t.VariadicTuple validates homogeneous tuples of arbitrary length."""
         adapter: t.TypeAdapter[tuple[int, ...]] = u.type_adapter(
-            t.TypeForm(tuple[int, ...]),
+            TypeForm(tuple[int, ...]),
         )
         tm.that(adapter.validate_python(()), eq=())
         tm.that(adapter.validate_python((1, 2, 3)), eq=(1, 2, 3))
