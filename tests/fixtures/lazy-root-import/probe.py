@@ -8,15 +8,15 @@ from __future__ import annotations
 
 import sys
 
-import flext_core
+from flext_core import __version__, __version_info__
 
 facades = ("constants", "typings", "protocols", "models", "utilities")
 loaded = [name for name in facades if f"flext_core.{name}" in sys.modules]
-sys.stdout.write(f"{isinstance(flext_core.__version__, str)} {loaded}\n")
+sys.stdout.write(f"{isinstance(__version__, str)} {loaded}\n")
 
 from flext_core import u
 
 sys.stdout.write(
     f"{u.PackageVersion.__name__} "
-    f"{u.package_version_info(flext_core.__version__) == flext_core.__version_info__}\n"
+    f"{u.package_version_info(__version__) == __version_info__}\n"
 )
