@@ -144,21 +144,19 @@ class TestsFlextCoreLazyExports:
         tmp_path: Path,
     ) -> None:
         """Importing the root package binds its version and loads no facade."""
-        script = (
-            "import sys\n"
-            "import flext_core\n"
-            "facades = ('constants', 'typings', 'protocols', 'models', "
-            "'utilities')\n"
-            "print(isinstance(flext_core.__version__, str), "
-            "[n for n in facades if f'flext_core.{n}' in sys.modules])\n"
-            "from flext_core import u\n"
-            "print(u.PackageVersion.__name__, "
-            "u.package_version_info(flext_core.__version__) == "
-            "flext_core.__version_info__)\n"
+        probe = (
+            Path(__file__).resolve().parents[1]
+            / "fixtures"
+            / "lazy-root-import"
+            / "probe.py"
         )
-        result = u.Cli.run_raw([sys.executable, "-c", script], cwd=tmp_path)
+        result = u.Cli.run_raw([sys.executable, str(probe)], cwd=tmp_path)
         tm.that(result.success, truth=True, msg=result.error)
-        tm.that(result.value.outcome.raw_return_code, eq=0, msg=result.value.stderr)
+        tm.that(
+            u.Cli.process_succeeded(result.value.outcome),
+            eq=True,
+            msg=result.value.stderr,
+        )
         tm.that(result.value.stderr, eq="")
         tm.that(result.value.stdout, eq="True []\nPackageVersion True\n")
 

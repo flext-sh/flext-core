@@ -122,5 +122,4 @@ class FlextUtilitiesPackageVersion:
             cls.__url__ = owner.package_homepage(package_metadata)
 
 
-
 __all__: list[str] = ["FlextUtilitiesPackageVersion"]
