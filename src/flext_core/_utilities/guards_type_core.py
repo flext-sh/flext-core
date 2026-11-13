@@ -98,16 +98,16 @@ class FlextUtilitiesGuardsTypeCore:
         """Check recursive native container capability without asserting JSON.
 
         Scalars (including datetime), paths, lists, tuples and mapping values
-        retain their native behavior. None is rejected at every depth; mapping
-        keys are not inspected. Accepted data is not converted or narrowed.
+        retain their native behavior. None is JSON null, a member of
+        ``t.JsonValue``, and is accepted at every depth; mapping keys are not
+        inspected. Accepted data is not converted or narrowed. A bare ``None``
+        returned by a handler is rejected earlier by the dispatcher, not here.
 
         Returns:
             Whether all values recursively satisfy the native container predicate.
 
         """
-        if value is None:
-            return False
-        if isinstance(value, c.CONTAINER_TYPES):
+        if value is None or isinstance(value, c.CONTAINER_TYPES):
             return True
         if FlextUtilitiesGuardsTypeCore._object_sequence(value):
             return FlextUtilitiesGuardsTypeCore._all_container_sequence(value)

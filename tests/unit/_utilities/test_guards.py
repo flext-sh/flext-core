@@ -337,23 +337,26 @@ class TestsFlextCoreGuards:
             {"k": "v"},
             [1, "x", True],
             {"a": {"b": [1, 2]}},
+            {"a": None},
+            [None, {"b": [None]}],
+            None,
             [[1], [2, 3]],
             [],
             {},
         ],
     )
     def test_container_accepts_scalars_and_nested_json(
-        value: p.ProtocolGuardInput,
+        value: p.ProtocolGuardInput | None,
     ) -> None:
         tm.that(u.container_value(value) is True, truth=True)
 
     @staticmethod
     @c.Tests.MARK.parametrize(
         "value",
-        [None, object(), [1, object()], {"a": object()}, {"a": [object()]}],
+        [object(), [1, object()], {"a": object()}, {"a": [object()]}],
     )
-    def test_container_rejects_none_and_non_json_members(
-        value: p.ProtocolGuardInput | None,
+    def test_container_rejects_non_json_members(
+        value: p.ProtocolGuardInput,
     ) -> None:
         tm.that(u.container_value(value) is False, truth=True)
 
