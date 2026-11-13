@@ -12,6 +12,7 @@
 
 ## Pull requests since last release
 
+fix(lazy): a facade composed from a stand-in resolves an unlisted member (#776)
 chore(deps): apply the uv dependency cooldown and relock (#775)
 fix(lazy): a stale stand-in resolves an unlisted member from its class (flext-df0b6)
 (#774)
