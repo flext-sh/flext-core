@@ -70,6 +70,11 @@ named capabilities and singletons with distinct responsibilities:
 | `FlextDispatcher`             | Register and execute handlers and event subscribers                         | Preserve the Result, original callable and first failure                                |
 | `FlextLazy`                   | Install generated PEP 562 export hooks                                      | Bootstrap infrastructure; ordinary application imports use generated package exports    |
 
+The dispatcher admits a handler's success value when it is a `t.JsonValue`
+(including JSON null at any depth, such as `{"x": None}`), a scalar or path, or a
+Pydantic model. A handler that returns a bare `None` fails with its own cause; any
+other value fails as a non-container success result.
+
 This is a responsibility map, not a second export registry. The declaring modules'
 explicit `__all__`, native inheritance and generated public reference determine the
 available names. An accepted migration target is not proof that every installed

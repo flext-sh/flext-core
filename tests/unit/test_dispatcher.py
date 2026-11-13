@@ -59,6 +59,19 @@ class TestsFlextCoreDispatcher:
         tm.that(tm.ok(dispatcher.dispatch(m.Command(command_type="model"))) is payload)
 
     @staticmethod
+    def test_nested_json_null_is_a_valid_success_value() -> None:
+        """A JSON null nested in a successful payload round-trips unchanged."""
+        dispatcher = FlextDispatcher()
+        payload: t.JsonValue = {"x": None, "items": [None, {"y": None}]}
+
+        def handler(_message: p.Routable) -> p.Result[t.JsonValue]:
+            return r[t.JsonValue].ok(payload)
+
+        tm.ok(dispatcher.register_handler(handler, message_type="nested-null"))
+        value = tm.ok(dispatcher.dispatch(m.Command(command_type="nested-null")))
+        tm.that(value, eq=payload)
+
+    @staticmethod
     @c.Tests.MARK.parametrize("registered", [False, True])
     def test_unmatched_route_never_invokes_a_handler(*, registered: bool) -> None:
         """Missing routes fail without executing another route's handler."""
