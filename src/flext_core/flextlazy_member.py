@@ -126,4 +126,46 @@ class FlextLazyMember:
         raise ImportError(msg, name=self._module)
 
 
-__all__: list[str] = ["FlextLazyMember"]
+class FlextLazyStandIn(type):
+    """Metaclass of a deferred stand-in: a name it does not list reads the class.
+
+    The listed members are ``FlextLazyMember`` descriptors so a facade can
+    compose the stand-in by MRO without importing anything. A name read
+    directly on the stand-in that it does not list, such as a member added to
+    the source after the initializer was generated, resolves from the real
+    class, so a stale initializer never hides a member of the class it stands
+    for. Classes composed from a stand-in keep the normal lookup.
+    """
+
+    def __getattr__(cls, name: str) -> t.ModuleGlobalValue:
+        """Resolve an unlisted name from the class this stand-in stands for.
+
+        Returns:
+            The real class's member, cached on the stand-in and bound as a
+            class read binds it.
+
+        Raises:
+            AttributeError: For a dunder, for a class composed from a stand-in,
+                or when the real class has no such attribute.
+
+        """
+        target = cls.__dict__.get("__flext_lazy_target__")
+        if target is None or (name.startswith("__") and name.endswith("__")):
+            msg = f"type object {cls.__name__!r} has no attribute {name!r}"
+            raise AttributeError(msg)
+        module, owner, load = cast(
+            "tuple[str, str, Callable[[str], ModuleType]]", target
+        )
+        real = cast("type", getattr(load(module), owner))
+        for klass in real.__mro__:
+            namespace = cast("t.ModuleGlobals", vars(klass))
+            if name in namespace:
+                # Cache the raw member on the stand-in, as a listed member does,
+                # so the next read is a plain class attribute.
+                setattr(cls, name, namespace[name])
+                return cast("t.ModuleGlobalValue", type.__getattribute__(cls, name))
+        msg = f"type object {owner!r} has no attribute {name!r}"
+        raise AttributeError(msg)
+
+
+__all__: list[str] = ["FlextLazyMember", "FlextLazyStandIn"]
