@@ -12,8 +12,11 @@
 
 ## Pull requests since last release
 
+feat(lazy): defer a configuration root to its first attribute read (#777)
+Merge branch '0.12.0-dev' into perf/lazy-instance-export-20261113
 fix(lazy): a facade composed from a stand-in resolves an unlisted member (#776)
 chore(deps): apply the uv dependency cooldown and relock (#775)
+merge: adopt 0.12.0-dev (#774 lazy stand-in resolution) into the lazy-instance lane
 fix(lazy): a stale stand-in resolves an unlisted member from its class (flext-df0b6)
 (#774)
 fix(dispatcher): JSON null is a valid nested success value (#773)
