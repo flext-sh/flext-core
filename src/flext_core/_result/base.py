@@ -17,6 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from functools import cache
 from typing import Self
 
 from flext_core import p, t
@@ -54,6 +55,25 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
 
     _payload: T = FlextModelsPydantic.PrivateAttr()
     _exception: BaseException | None = FlextModelsPydantic.PrivateAttr(default=None)
+
+    @classmethod
+    @cache
+    def __class_getitem__(
+        cls,
+        typevar_values: t.TypeForm[object] | tuple[t.TypeForm[object], ...],
+    ) -> type[FlextModelsPydantic.BaseModel]:
+        """Keep one strong parametrized result class per declared parameter.
+
+        Pydantic caches parametrized generic models weakly, so a transient
+        ``r[T]`` is collected between uses and rebuilt on the next one. The
+        declared parametrizations are finite, so each is built once and held
+        for the life of the process.
+
+        Returns:
+            The parametrized result class for ``typevar_values``.
+
+        """
+        return super().__class_getitem__(typevar_values)
 
     @classmethod
     def create_success(cls, value: T) -> Self:
