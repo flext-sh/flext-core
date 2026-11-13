@@ -3,9 +3,10 @@
 repos:
   - repo: local
     hooks:
-    # Each hook invokes its declared public operation once. The commit row
-    # passes make.ci.pre_commit_value, so check runs only the fast
-    # commit-stage gates; pre-push rows run their complete declared verbs.
+    # Each hook invokes its declared public operation once. The commit rows
+    # run setup, then check with make.ci.pre_commit_value, so check runs only
+    # the fast commit-stage gates; pre-push rows run their complete declared
+    # verbs.
 
 
 
@@ -30,9 +31,10 @@ repos:
         # file runs the canonical markdown gates, never a raw rumdl pass: the
         # gate reads foreign projected blocks (tooling projected-blocks) the
         # way make check and make fmt do. Pre-push keeps the complete declared
-        # verbs.
+        # verbs. The engine is the runtime the setup hook just provisioned: the
+        # attached superproject's environment, else this checkout's own.
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; FLEXT=${FLEXT_INFRA_BIN:-$(command -v flext-infra || true)}; [ -n "$FLEXT" ] || FLEXT=./.venv/bin/flext-infra; args=(); argc=0; md_count=0; for f in "$@"; do case "$f" in /*) continue;; esac; [ -f "$f" ] && [ ! -L "$f" ] || continue; case "$f" in *.py) args+=(--file "$f"); argc=$((argc+1));; *.md) md_count=$((md_count+1));; esac; done; if [ "$argc" -gt 0 ]; then CI=C "$FLEXT" check run --repository-root . "${args[@]}" --gates lint --gates format; fi; if [ "$md_count" -gt 0 ]; then CI=C "$FLEXT" check run --repository-root . --gates markdown --gates markdown-format; fi; git diff --cached --check' --
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; root=$(git rev-parse --show-superproject-working-tree); FLEXT=${root:-.}/.venv/bin/flext-infra; args=(); argc=0; md_count=0; for f in "$@"; do case "$f" in /*) continue;; esac; [ -f "$f" ] && [ ! -L "$f" ] || continue; case "$f" in *.py) args+=(--file "$f"); argc=$((argc+1));; *.md) md_count=$((md_count+1));; esac; done; if [ "$argc" -gt 0 ]; then CI=C "$FLEXT" check run --repository-root . "${args[@]}" --gates lint --gates format; fi; if [ "$md_count" -gt 0 ]; then CI=C "$FLEXT" check run --repository-root . --gates markdown --gates markdown-format; fi; git diff --cached --check' --
         pass_filenames: true
         # Scenario-data roots are no gate's input (codegen.exclusions); the
         # hook's native filter keeps them out instead of a gate refusing an

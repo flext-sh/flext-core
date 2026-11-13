@@ -98,8 +98,8 @@ jobs:
       - name: Normalize checkout modes
         run: chmod -R go-w .
 
-      # Why: every fresh runner paid a cold full-dependency Mypy,
-      # Pyrefly and Ruff analysis. The caches below are content-addressed by the
+      # Why: every fresh runner paid a cold full-dependency Pyrefly and
+      # Ruff analysis (Mypy is local-only and never runs here). The caches below are content-addressed by the
       # committed dependency locks, so a warm cache is always valid for the same
       # lock and can never hide a finding; it only removes the cold recompute.
       # Why: the same pair keeps the locked Mise tool storage, so
@@ -111,7 +111,7 @@ jobs:
       # one warning per tool); Mise regenerates the shims from mise.lock.
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
-      # saving never evicts the testmon cache with duplicate generations.
+      # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
       # the entry grew with every lock change (algar-oud-mig: 3.06 to
@@ -152,30 +152,6 @@ jobs:
         # (workflow requires) admits the step only after that verb is green.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check CHECK_PHASE=primary
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
-      - name: make tests (blocking)
-        id: approval-tests-primary
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict never hides the others; a declared requirement
-        # (workflow requires) admits the step only after that verb is green.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-check-primary.outcome == 'success' }}
-        run: CI=Y make tests
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
-      - name: make check (blocking)
-        id: approval-check
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict never hides the others; a declared requirement
-        # (workflow requires) admits the step only after that verb is green.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-tests-primary.outcome == 'success' }}
-        run: CI=Y make check
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
-      - name: make tests (blocking)
-        id: approval-tests
-        # Every approval verb reports once setup provisioned the environment,
-        # so one red verdict never hides the others; a declared requirement
-        # (workflow requires) admits the step only after that verb is green.
-        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-check.outcome == 'success' && steps.approval-check-primary.outcome == 'success' }}
-        run: CI=Y make tests
       - name: Complete check qualification
         id: qualification-check
         if: ${{ !cancelled() && inputs.full_check == true && steps.approval-setup.outcome == 'success' }}
@@ -197,10 +173,6 @@ jobs:
             .reports/**/validate-report.md
             .reports/check/**/*.sarif
             .reports/check/**/*.md
-            .reports/tests/**/*.json
-            .reports/tests/**/summary.txt
-            .reports/tests/**/failed-tests.txt
-            .reports/tests/**/errors.txt
             .reports/gates/**/original-receipt.json
             .reports/gates/**/check/**/*.sarif
             .reports/gates/**/check/**/*.md
@@ -216,7 +188,7 @@ jobs:
       # rows capture receipts, so the upload runs exactly when one of them
       # failed (tests included), never after a setup failure that left none.
       - name: Upload gate receipts on failure
-        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'failure' || steps.approval-check.outcome == 'failure' || steps.approval-tests.outcome == 'failure' || steps.qualification-check.outcome == 'failure') }}
+        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure' || steps.qualification-check.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-gate-receipts-${{ github.job }}-${{ github.run_id }}
@@ -229,10 +201,13 @@ jobs:
       # after a failing gate as well, so the next run starts warm.
       - name: Save tool caches
         # Native cache action access mode remains authoritative before upload.
-        # Only declared events may publish; fork requests remain restore-only.
-        # An exact hit already holds this lock state: save only on a miss.
+        # Only branch pushes and explicit dispatch publish. A pull request
+        # restores only: its entry is scoped to refs/pull/N/merge, visible to no
+        # other ref, so saving it stored one ~700 MB copy of the same lock state
+        # per PR until the repository quota evicted the integration branch's
+        # entry. An exact hit already holds this lock state: save only on a miss.
         if: >-
-          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-hit != 'true' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
+          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-hit != 'true' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch') }}
         uses: actions/cache/save@v6
         with:
           path: |

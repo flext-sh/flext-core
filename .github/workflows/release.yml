@@ -117,7 +117,7 @@ jobs:
       # one warning per tool); Mise regenerates the shims from mise.lock.
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
-      # saving never evicts the testmon cache with duplicate generations.
+      # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
       # the entry grew with every lock change (algar-oud-mig: 3.06 to
@@ -194,7 +194,7 @@ jobs:
       # one warning per tool); Mise regenerates the shims from mise.lock.
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
-      # saving never evicts the testmon cache with duplicate generations.
+      # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
       # the entry grew with every lock change (algar-oud-mig: 3.06 to

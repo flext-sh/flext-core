@@ -55,7 +55,7 @@ jobs:
       # one warning per tool); Mise regenerates the shims from mise.lock.
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
-      # saving never evicts the testmon cache with duplicate generations.
+      # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
       # the entry grew with every lock change (algar-oud-mig: 3.06 to
@@ -87,8 +87,11 @@ jobs:
       # starts warm. Only written when the restore missed.
       - name: Save tool caches
         # Native cache action access mode remains authoritative before upload.
-        # Only declared events may publish; fork requests remain restore-only.
-        # An exact hit already holds this lock state: save only on a miss.
+        # Only branch pushes and explicit dispatch publish. A pull request
+        # restores only: its entry is scoped to refs/pull/N/merge, visible to no
+        # other ref, so saving it stored one ~700 MB copy of the same lock state
+        # per PR until the repository quota evicted the integration branch's
+        # entry. An exact hit already holds this lock state: save only on a miss.
         if: >-
           ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-hit != 'true' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch') }}
         uses: actions/cache/save@v6
@@ -185,7 +188,7 @@ jobs:
       # one warning per tool); Mise regenerates the shims from mise.lock.
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
-      # saving never evicts the testmon cache with duplicate generations.
+      # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
       # the entry grew with every lock change (algar-oud-mig: 3.06 to
@@ -214,8 +217,11 @@ jobs:
         run: make setup
       - name: Save tool caches
         # Native cache action access mode remains authoritative before upload.
-        # Only declared events may publish; fork requests remain restore-only.
-        # An exact hit already holds this lock state: save only on a miss.
+        # Only branch pushes and explicit dispatch publish. A pull request
+        # restores only: its entry is scoped to refs/pull/N/merge, visible to no
+        # other ref, so saving it stored one ~700 MB copy of the same lock state
+        # per PR until the repository quota evicted the integration branch's
+        # entry. An exact hit already holds this lock state: save only on a miss.
         if: >-
           ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-hit != 'true' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch') }}
         uses: actions/cache/save@v6

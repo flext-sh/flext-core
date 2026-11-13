@@ -37,8 +37,7 @@ if TYPE_CHECKING:
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
     from flext_core.flextlazy_exports import FlextLazyExports
-    from flext_core.flextlazy_instance import FlextLazyInstance
-    from flext_core.flextlazy_member import FlextLazyMember
+    from flext_core.flextlazy_member import FlextLazyMember, FlextLazyStandIn
     from flext_core.flextlazy_native_export import FlextTypingNativeExport
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
@@ -79,6 +78,7 @@ __all__: tuple[str, ...] = (
     "FlextLazyExports",
     "FlextLazyInstance",
     "FlextLazyMember",
+    "FlextLazyStandIn",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -146,6 +146,7 @@ install_lazy_exports(
         "FlextLazyExports": ".flextlazy_exports",
         "FlextLazyInstance": ".flextlazy_instance",
         "FlextLazyMember": ".flextlazy_member",
+        "FlextLazyStandIn": ".flextlazy_member",
         "FlextMixins": ".mixins",
         "FlextModels": ".models",
         "FlextProtocols": ".protocols",
