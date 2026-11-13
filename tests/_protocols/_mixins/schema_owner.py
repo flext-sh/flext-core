@@ -8,9 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
 
 from flext_tests import FlextTestsProtocols
+
+if TYPE_CHECKING:
+    pass
 
 
 class TestsFlextProtocolsMixinsSchemaOwner:

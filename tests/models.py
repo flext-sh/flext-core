@@ -17,12 +17,12 @@ from __future__ import annotations
 
 from typing import override
 
-from flext_tests import m as flext_tests_m
+from flext_tests import FlextTestsModels
 
 from tests._models import TestsFlextModelsMixins, TestsFlextModelsNamespace
 
 
-class TestsFlextModels(flext_tests_m):
+class TestsFlextModels(FlextTestsModels):
     """Models for flext-core tests - uses composition with TestsFlextModels.
 
     Architecture: Uses composition (not inheritance) with TestsFlextModels
@@ -42,7 +42,7 @@ class TestsFlextModels(flext_tests_m):
 
     @override
     class Tests(
-        flext_tests_m.Tests,
+        FlextTestsModels.Tests,
         TestsFlextModelsMixins.TestsFlextModelsMixins,
         TestsFlextModelsNamespace,
     ):

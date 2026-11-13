@@ -22,10 +22,6 @@ name: Release
         description: "Existing release tag to build and publish again (example: v0.12.0)"
         required: false
         type: string
-      checkpoint_ref:
-        description: "Existing retained, published and integrated checkpoint for versioning only"
-        required: false
-        type: string
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -55,22 +51,17 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           RELEASE_TAG: ${{ inputs.tag }}
-          LANE_CHECKPOINT_REF: ${{ inputs.checkpoint_ref }}
         shell: bash
         run: |
           set -euo pipefail
           subject="$(git log -1 --format=%s)"
           echo "ref=$(git rev-parse HEAD^{commit})" >> "${GITHUB_OUTPUT}"
           if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
-            if [ -n "${RELEASE_TAG}" ] && [ -z "${LANE_CHECKPOINT_REF}" ]; then
+            if [ -n "${RELEASE_TAG}" ]; then
               git check-ref-format "refs/tags/${RELEASE_TAG}"
               echo "release_commit=true" >> "${GITHUB_OUTPUT}"
-            elif [ -z "${RELEASE_TAG}" ] && [ -n "${LANE_CHECKPOINT_REF}" ]; then
-              git check-ref-format "${LANE_CHECKPOINT_REF}"
-              echo "release_commit=false" >> "${GITHUB_OUTPUT}"
             else
-              printf '%s\n' 'dispatch requires exactly one tag or checkpoint_ref' >&2
-              exit 2
+              echo "release_commit=false" >> "${GITHUB_OUTPUT}"
             fi
           else
             case "${subject}" in
@@ -108,36 +99,14 @@ jobs:
       # the release pull request. version-ci validates its resulting HEAD
       # directly: this token does not trigger pull-request or push workflows.
       GH_TOKEN: ${{ github.token }}
-      LANE_CHECKPOINT_REF: ${{ github.event_name == 'workflow_dispatch' && inputs.checkpoint_ref || vars.LANE_CHECKPOINT_REF }}
-    defaults:
-      run:
-        working-directory: flext-core
     steps:
-      - name: Checkout workspace flext-sh/flext
+      - name: Checkout
         uses: actions/checkout@v7
         with:
-          repository: flext-sh/flext
-          ref: 0.12.0-dev
-          submodules: recursive
-          persist-credentials: false
           fetch-depth: 0
-      - name: Pin flext-core at the tested commit
-        working-directory: .
-        run: |
-          set -eu
-          git -C "flext-core" fetch --no-tags origin "${{ needs.identity.outputs.ref }}"
-          git -C "flext-core" checkout --detach FETCH_HEAD
-      - name: Authorize release pushes to flext-core
-        working-directory: .
-        env:
-          PUSH_TOKEN: ${{ github.token }}
-        run: |
-          set -eu
-          header="$(printf 'x-access-token:%s' "${PUSH_TOKEN}" | base64 -w0)"
-          printf '::add-mask::%s\n' "${header}"
-          git -C "flext-core" config --local \
-            "http.https://github.com/${GITHUB_REPOSITORY}/.extraheader" \
-            "AUTHORIZATION: basic ${header}"
+          ref: ${{ needs.identity.outputs.ref }}
+          submodules: recursive
+          token: ${{ github.token }}
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"
@@ -208,35 +177,13 @@ jobs:
     env:
       CI: Y
       GH_TOKEN: ${{ github.token }}
-    defaults:
-      run:
-        working-directory: flext-core
     steps:
-      - name: Checkout workspace flext-sh/flext
+      - name: Checkout release commit
         uses: actions/checkout@v7
         with:
-          repository: flext-sh/flext
-          ref: 0.12.0-dev
-          submodules: recursive
-          persist-credentials: false
           fetch-depth: 0
-      - name: Pin flext-core at the tested commit
-        working-directory: .
-        run: |
-          set -eu
-          git -C "flext-core" fetch --no-tags origin "${{ needs.identity.outputs.ref }}"
-          git -C "flext-core" checkout --detach FETCH_HEAD
-      - name: Authorize release pushes to flext-core
-        working-directory: .
-        env:
-          PUSH_TOKEN: ${{ github.token }}
-        run: |
-          set -eu
-          header="$(printf 'x-access-token:%s' "${PUSH_TOKEN}" | base64 -w0)"
-          printf '::add-mask::%s\n' "${header}"
-          git -C "flext-core" config --local \
-            "http.https://github.com/${GITHUB_REPOSITORY}/.extraheader" \
-            "AUTHORIZATION: basic ${header}"
+          ref: ${{ needs.identity.outputs.ref }}
+          submodules: recursive
       - name: Release identity
         run: |
           git config user.name "github-actions[bot]"

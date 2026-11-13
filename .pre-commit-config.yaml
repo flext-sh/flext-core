@@ -9,6 +9,17 @@ repos:
 
 
 
+      - id: flext-pre-commit-setup
+        name: make setup
+        language: system
+
+        entry: >-
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; CI=C make setup'
+        pass_filenames: false
+        always_run: true
+
+        stages: [pre-commit]
+
       - id: flext-pre-commit-check
         name: make check
         language: system
@@ -27,3 +38,5 @@ repos:
         # hook's native filter keeps them out instead of a gate refusing an
         # excluded path.
         exclude: '(^|/)(tests/fixtures)/'
+
+        stages: [pre-commit]

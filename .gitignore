@@ -37,6 +37,7 @@
 .claude/*.agents-governance.json
 .gemini/*.agents-governance.json
 .claude/settings.local.json
+.claude/scheduled_tasks.lock
 
 # Private local config layers
 /config/*.local.yaml

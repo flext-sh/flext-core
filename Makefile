@@ -95,7 +95,7 @@ unexport GITHUB_API_TOKEN
 # === SECTION: project identity (managed) ===
 # Source: config:dist / config:make_profile / config:repository_root_rel / config:uv_link_mode
 PROJECT_NAME := flext-core
-MAKE_PROFILE := workspace
+MAKE_PROFILE := standalone
 REPOSITORY_ROOT_REL := .
 # === SECTION: workspace subprojects (managed) ===
 # Source: config:workspace_subprojects (list), config:workspace_repositories (list)
@@ -304,7 +304,7 @@ ifneq ($(.SHELLSTATUS),0)
 $(error Failed to inspect custom Make targets in $(CUSTOM_MAKEFILE))
 endif
 ifeq ($(APPROVAL_CONTEXT),Y)
-ifneq ($(filter setup check,$(CUSTOM_DECLARED_TARGETS)),)
+ifneq ($(filter setup check tests,$(CUSTOM_DECLARED_TARGETS)),)
 $(error Approval stages cannot be replaced by custom targets)
 endif
 
@@ -325,6 +325,16 @@ $(error Failed to inspect custom approval reference in $(CUSTOM_MAKEFILE))
 endif
 ifeq ($(CUSTOM_WRAPPER_REFERENCE_COUNT),0)
 $(error Approval stage _custom-check must chain _builtin-check (wrapper parity; replacements are forbidden))
+endif
+endif
+
+ifneq ($(filter _custom-tests,$(CUSTOM_DECLARED_TARGETS)),)
+override CUSTOM_WRAPPER_REFERENCE_COUNT := $(shell awk -v reference="_builtin-tests" 'index($$0, reference) { count++ } END { print count + 0 }' "$(CUSTOM_MAKEFILE)")
+ifneq ($(.SHELLSTATUS),0)
+$(error Failed to inspect custom approval reference in $(CUSTOM_MAKEFILE))
+endif
+ifeq ($(CUSTOM_WRAPPER_REFERENCE_COUNT),0)
+$(error Approval stage _custom-tests must chain _builtin-tests (wrapper parity; replacements are forbidden))
 endif
 endif
 
@@ -512,7 +522,7 @@ _bootstrap_setup_tools:
 	esac; \
 	fi; \
 	export MISE_SHIMS_DIR="$(PROJECT_ROOT)/.bin/shims"; \
-	export MISE_LOCKED=1; \
+	export MISE_LOCKED=0; \
 	bootstrap_stage=tool-install; \
 	"$(BOOTSTRAP_MISE)" -C "$(PROJECT_ROOT)" install --yes "python" "github:jdx/mise" "uv" "github:direnv/direnv" "taplo" "aqua:ast-grep/ast-grep" "gitleaks" "aqua:boyter/scc" "node" "github:qltysh/qlty" "github:kucherenko/jscpd" "github:microsoft/waza" "aqua:j178/prek"; \
 	mise_active="$$("$(BOOTSTRAP_MISE)" -C "$(PROJECT_ROOT)" tool "github:jdx/mise" --active)"; \
@@ -531,7 +541,7 @@ _bootstrap_setup_tools: _builtin_require_workspace
 # process the root and every governed member together in one checker run
 # (operator ruling 2026-10-25: never member by member); each multi-root tool
 # runs once over their union.
-GATE_SCOPE := $(if $(filter Y,$(CI)),self,all)
+GATE_SCOPE := self
 # Local and CI consume the same native project/workspace declarations and lock.
 # Setup always bootstraps: `uv sync --frozen` installs exactly the committed
 # uv.lock without re-resolving or rewriting it, so manifest drift never blocks
@@ -749,10 +759,10 @@ SYNC_UPGRADE_EXECUTOR_RECIPE = $(call PREPARE_ENVIRONMENT,$(FLEXT_INFRA_EXECUTOR
 # every member's declared extras and groups, without copying dependency graphs.
 
 
-override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone --all-packages
+override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone
 
 ifeq ($(CI),Y)
-override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone --all-packages --no-editable
+override SETUP_SYNC_ARGS := --all-extras --all-groups --link-mode clone --no-editable
 endif
 
 # Custom hooks are declared in CI too; load their selected physical Makefile.
@@ -794,10 +804,10 @@ VERB_DESCRIPTION_upg := Resolve declared dependency and tool updates and publish
 VERB_ARGUMENTS_upg :=
 
 VERB_DESCRIPTION_gen := Materialize explicitly declared new projects and publish every applicable generated projection.
-VERB_ARGUMENTS_gen :=
+VERB_ARGUMENTS_gen := ROOT
 
 VERB_DESCRIPTION_gen-scope := Run the focal generation surface (WHAT, MODULE for facades, SCOPE) through the same engine, lock and budget as gen.
-VERB_ARGUMENTS_gen-scope := WHAT MODULE SCOPE
+VERB_ARGUMENTS_gen-scope := ROOT WHAT MODULE SCOPE
 
 VERB_DESCRIPTION_mod := Refactor declared source structure through the shared pipeline and publish the complete coherent change; LAWS (ENFORCE ids) or RULES (rule ids) diagnose or repair one law (ADR-028 Decision 18 item 2).
 VERB_ARGUMENTS_mod := LAWS RULES
@@ -830,7 +840,7 @@ VERB_DESCRIPTION_release-plan := Execute the declared release plan phase.
 VERB_ARGUMENTS_release-plan := PR_TITLE
 
 VERB_DESCRIPTION_release-version := Execute the declared release version phase.
-VERB_ARGUMENTS_release-version := LANE_CHECKPOINT_REF
+VERB_ARGUMENTS_release-version :=
 
 VERB_DESCRIPTION_release-tag := Execute the declared release tag phase.
 VERB_ARGUMENTS_release-tag :=
@@ -854,7 +864,7 @@ PROFILE_VERBS_DIRECT := $(filter-out $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INT
 PROFILE_VERBS_ROUTED := $(PROFILE_VERBS_HOOKED) $(PROFILE_VERBS_INTERPRETER)
 
 $(PROFILE_VERBS_PLAIN): %: _builtin_require_workspace _builtin_require_interpreter
-	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'workspace'
+	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'standalone'
 	$(call RUN_PUBLIC,$@)
 
 
@@ -863,8 +873,8 @@ $(PROFILE_VERBS_DISPATCH):
 
 
 $(PROFILE_VERBS_ACTIVATED): %: _builtin_require_workspace
-	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'workspace'
-	+@$(if $(filter Y,$(CI)),$(MISE) -C "$(RUNTIME_ROOT)" exec -- $(SELF_MAKE) _activated-$@,direnv exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-$@)
+	@printf '==> %s | project=%s | profile=%s\n' '$@' "$(PROJECT_ROOT)" 'standalone'
+	+@$(if $(filter Y,$(CI)),$(MISE) -C "$(RUNTIME_ROOT)" exec -- $(SELF_MAKE) _activated-$@,$(DIRENV) exec "$(PROJECT_ROOT)" $(SELF_MAKE) _activated-$@)
 .PHONY: $(addprefix _activated-,$(PROFILE_VERBS_ACTIVATED))
 ifneq ($(strip $(PROFILE_VERBS_DIRECT)),)
 $(addprefix _activated-,$(PROFILE_VERBS_DIRECT)): _activated-%: _builtin-%
@@ -989,9 +999,9 @@ _setup_lifecycle: _builtin_require_workspace
 	$(if $(filter Y,$(CI)),,$(DIRENV) allow "$(PROJECT_ROOT)";) \
 	$(if $(filter Y,$(CI)),$(SELF_MAKE) _setup_activated,$(DIRENV) exec "$(PROJECT_ROOT)" $(SELF_MAKE) _setup_activated)
 
-# Setup installs the committed locks as they are and never rewrites them.
-# Required input and native installation failures terminate immediately;
-# generation and explicit upgrade own their respective repairs. Quality gates
+# Setup installs UV's frozen resolution; Mise completes missing native tool
+# pins during provisioning. Required input and installation failures terminate
+# immediately. Generation and upgrade own their respective repairs. Quality gates
 # remain separate operations and no failure selects another producer or source.
 .PHONY: _setup_activated
 # Check owns quality verdicts after provisioning.
@@ -1005,7 +1015,7 @@ ifneq ($(CI),Y)
 endif
 
 _builtin-help:
-	@printf '%s\n' 'flext-core [workspace]' ''
+	@printf '%s\n' 'flext-core [standalone]' ''
 	@$(foreach verb,$(PUBLIC_VERBS),$(call VERB_HELP_LINE,$(verb));)
 
 # A project owns the sources declared by its manifest. Generated setup
@@ -1142,7 +1152,7 @@ _builtin_require_environment: _builtin_require_interpreter
 # Source: computed (MAKE_PROFILE routing)
 # Setup provisions tooling and the native project's declared dependencies.
 # It never generates or mutates project source; `make gen` owns source generation.
-# The lifecycle above owns the single native locked installation.
+# The lifecycle above owns the single native toolchain installation.
 # Attached members delegate publicly before entering it; there is no second
 # private installer or alternative source-selection pipeline.
 # End SECTION: setup environment
@@ -1350,24 +1360,31 @@ _builtin_clean_generated: _builtin_require_interpreter
 GEN_BUDGET_SECONDS ?= 900
 GEN_KILL_RESERVE_SECONDS ?= 30
 GEN_PROFILE ?=
+# Modification is a budgeted operation too: a stuck catalog run is killed
+# inside the declared budget, and MOD_PROFILE=1 captures its cProfile.
+MOD_BUDGET_SECONDS ?= 120
+MOD_KILL_RESERVE_SECONDS ?= 10
+MOD_PROFILE ?=
 # Check profiling is opt-in like generation (CHECK_PROFILE=1 make check).
 CHECK_PROFILE ?=
 
 _builtin_gen_all: _builtin_require_interpreter
 	@set -eu; \
+	root="$(abspath $(or $(strip $(ROOT)),$(PROJECT_ROOT)))"; \
 	scope=all; \
-	if [ "$(strip $(CI))" = "Y" ]; then scope=self; fi; \
-	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/codegen/gen.pstats" timeout --signal=TERM --kill-after=$(GEN_KILL_RESERVE_SECONDS)s $(GEN_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --scope "$$scope"; \
-	$(if $(filter Y,$(CI)),:,$(DIRENV) allow "$(PROJECT_ROOT)")
+	if [ "$$root" != "$(PROJECT_ROOT)" ] || [ "$(strip $(CI))" = "Y" ]; then scope=self; fi; \
+	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen.pstats" timeout --signal=TERM --kill-after=$(GEN_KILL_RESERVE_SECONDS)s $(GEN_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --scope "$$scope"; \
+	$(if $(filter Y,$(CI)),:,$(DIRENV) allow "$$root")
 
 # Focal generation is the bounded diagnosis vehicle: one surface (and, for
 # facades, one module) through the identical engine, lock and budget.
 _builtin_gen_scope_all: _builtin_require_interpreter
 	@set -eu; \
+	root="$(abspath $(or $(strip $(ROOT)),$(PROJECT_ROOT)))"; \
 	scope="$(or $(strip $(SCOPE)),self)"; \
 	module_args=""; \
 	if [ -n "$(strip $(MODULE))" ]; then module_args=" --module $(strip $(MODULE))"; fi; \
-	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(basename $(PROJECT_ROOT)/.reports/codegen/gen.pstats)-scope.pstats" timeout --signal=TERM --kill-after=$(GEN_KILL_RESERVE_SECONDS)s $(GEN_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) codegen generate --root "$(PROJECT_ROOT)" --what "$(strip $(WHAT))" --scope "$$scope"$$module_args
+	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen-scope.pstats" timeout --signal=TERM --kill-after=$(GEN_KILL_RESERVE_SECONDS)s $(GEN_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --what "$(strip $(WHAT))" --scope "$$scope"$$module_args
 
 # Structural rewrites run one theme at a time (ADR-028 Decision 18 item 2):
 # LAWS selects ENFORCE law ids, RULES selects exact rule ids; the engine refuses
@@ -1377,7 +1394,7 @@ _builtin_mod_apply: _builtin_require_environment
 	selection=""; \
 	for law in $(strip $(LAWS)); do selection="$$selection --laws $$law"; done; \
 	for rule in $(strip $(RULES)); do selection="$$selection --rule-ids $$rule"; done; \
-	FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/refactor/mod.pstats" $(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)"$$selection
+	$(if $(MOD_PROFILE),FLEXT_INFRA_PROFILE=$(MOD_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/refactor/mod.pstats" timeout --signal=TERM --kill-after=$(MOD_KILL_RESERVE_SECONDS)s $(MOD_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)"$$selection
 
 # Public operations invoke only their own canonical implementation.
 _builtin-build: _builtin_build_artifacts
@@ -1401,8 +1418,6 @@ export FLEXT_RELEASE_PR_TITLE := $(value PR_TITLE)
 
 
 
-export FLEXT_RELEASE_LANE_CHECKPOINT_REF := $(value LANE_CHECKPOINT_REF)
-
 
 
 
@@ -1420,7 +1435,6 @@ _builtin-release-plan: _builtin_require_environment
 
 _builtin-release-version: _builtin_require_environment
 	@set -eu; set --; \
-	if [ -n "$$FLEXT_RELEASE_LANE_CHECKPOINT_REF" ]; then set -- --checkpoint-ref "$$FLEXT_RELEASE_LANE_CHECKPOINT_REF"; fi; \
 	$(PROJECT_FLEXT_INFRA) release run --repository-root "$(PROJECT_ROOT)" --phase version --apply "$$@"
 
 _builtin-release-tag: _builtin_require_environment
