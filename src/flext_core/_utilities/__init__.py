@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from flext_core._utilities.model import FlextUtilitiesModel
     from flext_core._utilities.model_options import FlextUtilitiesModelOptions
     from flext_core._utilities.model_runtime import FlextUtilitiesModelRuntime
+    from flext_core._utilities.package_version import FlextUtilitiesPackageVersion
     from flext_core._utilities.parser import FlextUtilitiesParser
     from flext_core._utilities.parser_coerce import FlextUtilitiesParserCoerce
     from flext_core._utilities.parser_targets import FlextUtilitiesParserTargets
@@ -93,6 +94,7 @@ __all__: tuple[str, ...] = (
     "FlextUtilitiesModel",
     "FlextUtilitiesModelOptions",
     "FlextUtilitiesModelRuntime",
+    "FlextUtilitiesPackageVersion",
     "FlextUtilitiesParser",
     "FlextUtilitiesParserCoerce",
     "FlextUtilitiesParserTargets",
@@ -141,6 +143,7 @@ install_lazy_exports(
         "FlextUtilitiesModel": ".model",
         "FlextUtilitiesModelOptions": ".model_options",
         "FlextUtilitiesModelRuntime": ".model_runtime",
+        "FlextUtilitiesPackageVersion": ".package_version",
         "FlextUtilitiesParser": ".parser",
         "FlextUtilitiesParserCoerce": ".parser_coerce",
         "FlextUtilitiesParserTargets": ".parser_targets",
