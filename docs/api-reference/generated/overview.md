@@ -9,7 +9,7 @@
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
 - Package: `flext_core`
-- Version: `0.12.0`
+- Version: `0.12.1`
 - Description: Enterprise Foundation Framework - Modern Python 3.13 + Clean Architecture
 - Doc summary: Flext Core package.
 - Classifiers: Development Status :: 3 - Alpha, Framework :: Pydantic :: 2, Framework ::

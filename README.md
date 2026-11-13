@@ -14,7 +14,7 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-**Version**: `0.12.0` | **Python**: see `pyproject.toml` `requires-python` | **Project
+**Version**: `0.12.1` | **Python**: see `pyproject.toml` `requires-python` | **Project
 class**: `domain`
 
 > **Alpha (0.12.0).** This package is alpha quality. Every package in the workspace must
