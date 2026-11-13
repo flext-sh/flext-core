@@ -98,6 +98,11 @@ jobs:
       - name: Normalize checkout modes
         run: chmod -R go-w .
 
+      # The runner's own temporary directory, emptied at every job boundary,
+      # is TMPDIR for every later step, so pytest's basetemp never sits in /tmp.
+      - name: Runner temporary directory
+        run: printf 'TMPDIR=%s\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+
       # Why: every fresh runner paid a cold full-dependency Pyrefly and
       # Ruff analysis (Mypy is local-only and never runs here). The caches below are content-addressed by the
       # committed dependency locks, so a warm cache is always valid for the same
@@ -129,7 +134,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
-            .bin
+            ~/.local/bin/mise
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims
@@ -218,7 +223,7 @@ jobs:
             .pyrefly_cache
             .benchmarks
             .hypothesis
-            .bin
+            ~/.local/bin/mise
             ~/.cache/uv
             ~/.local/share/mise
             !~/.local/share/mise/shims

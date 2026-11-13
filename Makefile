@@ -12,6 +12,97 @@
 # End SECTION: header
 
 override SHELL := /bin/sh
+# === SECTION: host admission (managed) ===
+# Source: config:make.admission (ADR-032 host admission and run limits)
+# On the shared host (never on a CI runner) every recipe and $(shell) runs in
+# a cgroup scope of the user's systemd manager at idle CPU and IO weight,
+# bounded by MemoryMax and CPUQuota; children and nested Make inherit the
+# scope, and PYTHON_CPU_COUNT sizes Python worker pools to the same CPUs. A
+# verb refuses to start while the 5-minute load average exceeds its limit; a
+# mod without RULES or LAWS is the full form, named mod-full. Overrides apply
+# when the invocation names exactly one verb.
+ifeq ($(MAKELEVEL)$(filter Y,$(CI)),0)
+override ADMISSION_VERB := $(if $(word 2,$(MAKECMDGOALS)),,$(or $(MAKECMDGOALS),$(.DEFAULT_GOAL),help))
+override ADMISSION_VERB := $(if $(filter mod,$(ADMISSION_VERB)),$(if $(strip $(RULES)$(LAWS)),mod,mod-full),$(ADMISSION_VERB))
+override ADMISSION_MAX_LOAD5 := 20.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+ifeq ($(ADMISSION_VERB),setup)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),upg)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),gen)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),mod)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),fix)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),fmt)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),check)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),tests)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),help)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),build)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+ifeq ($(ADMISSION_VERB),clean)
+override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
+override ADMISSION_MAX_PROCESSES := 2
+endif
+override ADMISSION_LOAD5 := $(shell awk -v limit=$(ADMISSION_MAX_LOAD5) '$$2 > limit { print $$2 }' /proc/loadavg)
+ifneq ($(.SHELLSTATUS),0)
+$(error Cannot read the 5-minute load average from /proc/loadavg)
+endif
+ifneq ($(ADMISSION_LOAD5),)
+$(info Do not wait for the load to drop; run the lighter form now, it runs at idle priority.)
+$(info Prefer make tests (incremental Testmon) over make tests-full; run tests-full only occasionally.)
+$(info Prefer a narrow make mod RULES=<rule ids> over a full make mod, and make check CHECK_PHASE=primary over the full check.)
+$(info Use at most 2 workers and never run heavy verbs in parallel across lanes.)
+$(info A verb exception is a declared make.admission.overrides entry in the config SSOT, never a local edit or an environment bypass.)
+$(error Refused: 5-minute load average $(ADMISSION_LOAD5) exceeds the admission limit $(ADMISSION_MAX_LOAD5) of '$(or $(ADMISSION_VERB),$(MAKECMDGOALS))'; run its lighter form now, or declare make.admission.overrides.<verb>.max_load5 in flext-infra src/flext_infra/config/codegen.yaml)
+endif
+override ADMISSION_SYSTEMD_RUN := $(shell command -v systemd-run)
+ifeq ($(ADMISSION_SYSTEMD_RUN),)
+$(error The run limits require systemd-run and a cgroup v2 user manager)
+endif
+export PYTHON_CPU_COUNT := $(ADMISSION_MAX_PROCESSES)
+override SHELL := $(ADMISSION_SYSTEMD_RUN)
+override .SHELLFLAGS := --user --scope --quiet --collect --expand-environment=no -p CPUWeight=idle -p IOWeight=1 -p MemoryMax=$(ADMISSION_MEMORY_LIMIT_BYTES) -p CPUQuota=$(ADMISSION_MAX_PROCESSES)00% -- /bin/sh -c
+endif
+# End SECTION: host admission
 ifneq ($(strip $(MAKEFILES)),)
 $(error MAKEFILES makes the selected project Makefile ambiguous; invoke one project Makefile directly)
 endif
@@ -115,9 +206,6 @@ PYTEST_CACHE_HOME = $(if $(strip $(XDG_CACHE_HOME)),$(XDG_CACHE_HOME),$(if $(str
 # file checksum, so a new lane starts from the project's measured selection
 # instead of a cold full inventory.
 override FLEXT_PYTEST_TESTMON_DATABASE = $(if $(strip $(PYTEST_CACHE_HOME)),$(PYTEST_CACHE_HOME)/flext/infra/testmon/$(PROJECT_NAME)/.testmondata)
-# Storage law: the pytest scratch root sits under the user home, keyed by the
-# absolute checkout path, never under /tmp and never inside a versioned tree.
-override FLEXT_PYTEST_SCRATCH_ROOT = $(if $(strip $(HOME)),$(HOME)/.local/state/.flext-runtime$(PROJECT_ROOT)/scratch)
 override PYTEST_RUN_TIMEOUT_SECONDS := 240
 override PYTEST_TERMINATION_GRACE_SECONDS := 2
 override PYTEST_TIMEOUT_EXIT_CODE := 124
@@ -258,8 +346,7 @@ MISE_CEILING_PATHS="$$(dirname "$${reader_root}")"; \
 MISE_AUTO_INSTALL=0; \
 MISE_OVERRIDE_CONFIG_FILENAMES=".mise.toml"; \
 export MISE_CONFIG_DIR MISE_SYSTEM_CONFIG_DIR MISE_GLOBAL_CONFIG_FILE MISE_CEILING_PATHS MISE_AUTO_INSTALL MISE_OVERRIDE_CONFIG_FILENAMES; \
-case "$${OS:-}" in (Windows_NT) reader_mise="$${reader_root}/.bin/mise.exe" ;; (*) reader_mise="$${reader_root}/.bin/mise" ;; esac; \
-if [ -L "$${reader_root}/.bin" ] || [ -L "$${reader_mise}" ]; then printf 'ERROR: Mise acquisition must be physical: %s\n' "$${reader_mise}" >&2; exit 2; fi; \
+case "$${OS:-}" in (Windows_NT) reader_mise="$${HOME}/.local/bin/mise.exe" ;; (*) reader_mise="$${HOME}/.local/bin/mise" ;; esac; \
 reader_mise="$$(MISE_LOCKED=1 "$${reader_mise}" -C "$${reader_root}" which mise)"; \
 if [ "$${OS:-}" = Windows_NT ]; then reader_mise="$$(cygpath --unix "$${reader_mise}")"; fi; \
 if [ "$${reader_root}" != "$${project_root}" ]; then \
@@ -280,11 +367,12 @@ ifneq ($(.SHELLSTATUS),0)
 $(error Cannot resolve the physical workspace for $(MAKEFILE_ROOT))
 endif
 endif
-override SETUP_BIN := $(BOOTSTRAP_ROOT)/.bin
+# The acquisition Mise is the official installer's default executable, shared by
+# every checkout; the committed min_version makes Mise refuse an older one.
 ifeq ($(OS),Windows_NT)
-override BOOTSTRAP_MISE := $(SETUP_BIN)/mise.exe
+override BOOTSTRAP_MISE := $(HOME)/.local/bin/mise.exe
 else
-override BOOTSTRAP_MISE := $(SETUP_BIN)/mise
+override BOOTSTRAP_MISE := $(HOME)/.local/bin/mise
 endif
 # End SECTION: REPOSITORY_ROOT isolation
 # === SECTION: verb dispatch (managed) ===
@@ -467,6 +555,7 @@ _bootstrap_setup_tools:
 			if [ "$${bootstrap_status}" -eq 0 ]; then bootstrap_status=$${bootstrap_report_status}; fi; \
 		fi; \
 		exit "$${bootstrap_status}"' EXIT; \
+	trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM; \
 	if bootstrap_candidate="$$(git -C "$(PROJECT_ROOT)" rev-parse --verify HEAD)"; then \
 		bootstrap_git_status=0; \
 		case "$${bootstrap_candidate}" in \
@@ -489,24 +578,14 @@ _bootstrap_setup_tools:
 		fi; \
 	fi; \
 	bootstrap_stage=acquisition; \
-	if [ -L "$(PROJECT_ROOT)/.bin" ] && [ ! -e "$(PROJECT_ROOT)/.bin" ]; then rm -f "$(PROJECT_ROOT)/.bin"; fi; mkdir -p "$(PROJECT_ROOT)/.bin"; \
-	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_HELP=0; \
+	if [ ! -x "$(BOOTSTRAP_MISE)" ]; then \
+	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_HELP=0; \
 	export MISE_VERSION="2026.10.3"; \
-	mise_acquired=false; \
-	if [ -x "$(BOOTSTRAP_MISE)" ]; then \
-		mise_present="$$("$(BOOTSTRAP_MISE)" --version)"; \
-		if [ "$${mise_present%% *}" = "$${MISE_VERSION}" ]; then mise_acquired=true; fi; \
-	fi; \
-	if [ "$${mise_acquired}" = true ]; then \
-		printf 'setup: mise %s already acquired at %s\n' "$${MISE_VERSION}" "$(BOOTSTRAP_MISE)"; \
-	else \
 	case "$${OS:-}" in \
 		(Windows_NT) \
-			export MISE_INSTALL_PATH="$$(cygpath --windows "$(BOOTSTRAP_MISE)")"; \
 			powershell.exe -NoProfile -Command '$$ErrorActionPreference = "Stop"; Invoke-RestMethod https://mise.run/powershell | Invoke-Expression' ;; \
 		(*) \
-			export MISE_INSTALL_PATH="$(BOOTSTRAP_MISE)"; \
-			mise_stage="$$(mktemp -d "$(PROJECT_ROOT)/.bin/.mise-install.XXXXXXXX")"; \
+			mise_stage="$$(mktemp -d)"; \
 			curl --proto '=https' --tlsv1.2 -fsSL -o "$${mise_stage}/install.sh" https://mise.run; \
 			sh "$${mise_stage}/install.sh" ;; \
 	esac; \
@@ -543,78 +622,36 @@ RESOLVE_DESIRED_PYTHON = desired_python="$$($(MISE) -C "$(RUNTIME_ROOT)" which p
 		printf 'ERROR[setup] Mise-resolved Python is not executable: %s\n' "$$desired_python" >&2; \
 		exit 2; \
 	fi
-# Every installation is prepared under the existing ignored runtime state.
-# Its frozen packages, editable receipt and real consumers precede one atomic
-# publication; the displaced physical environment remains recoverable.
+# uv owns the environment: `uv sync --frozen` creates or updates the physical
+# environment in place from the shared uv cache (configured link mode) and is a
+# no-op when it already satisfies the lock, so no run stages, copies or exchanges
+# a second environment.
 TARGET_ENVIRONMENT = install_target="$(1)"; \
-	install_state="$$(dirname "$(FLEXT_INFRA_EXECUTOR_VENV)")"; \
+	install_state="$$(dirname "$$install_target")"; \
 	if [ -L "$$install_target" ] || [ -L "$$install_state" ]; then \
-		printf 'ERROR[setup] environment and its state directory must be physical paths\n' >&2; exit 2; \
+		printf 'ERROR[setup] environment and its parent directory must be physical paths\n' >&2; exit 2; \
 	fi; \
-	mkdir -p "$$install_state"
-PREPARE_ENVIRONMENT = install_stage=; install_candidate_origin=; \
-	mv --exchange --no-copy --help >/dev/null; \
-	install_origin=; \
-	if [ -e "$$install_target" ]; then install_origin="$$(stat -c '%d:%i' "$$install_target")"; fi; \
-	install_stage="$$(mktemp -d "$$install_state/setup.XXXXXXXX")"; \
-	install_environment="$$install_stage/.venv"; \
-	trap 'install_status=$$?; trap - EXIT; if [ -n "$$install_stage" ] && { [ -z "$$install_candidate_origin" ] || [ ! -e "$$install_environment" ] || [ "$$(stat -c "%d:%i" "$$install_environment")" = "$$install_candidate_origin" ]; }; then rm -rf -- "$$install_stage"; fi; exit "$$install_status"' EXIT; \
-	trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM; \
-	printf 'setup: preparing %s for %s\n' "$$install_environment" "$$install_target"; \
-	$(UV) venv --relocatable --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads "$$install_environment"; \
-	install_candidate_origin="$$(stat -c '%d:%i' "$$install_environment")"; \
+	mkdir -p "$$install_state"; \
+	install_environment="$$install_target"; \
 	install_python="$$install_environment/$(patsubst $(RUNTIME_VENV)/%,%,$(RUNTIME_PYTHON))"
-# The candidate's own flext-infra console script. Setup runs its workspace step
+# The environment's own flext-infra console script. Setup runs its workspace step
 # through it, so one process does the work and proves the entry point.
 INSTALL_FLEXT_INFRA = "$$install_environment/$(patsubst $(RUNTIME_VENV)/%,%,$(RUNTIME_BIN))/flext-infra$(if $(filter Windows_NT,$(OS)),.exe,)"
 VERIFY_ENVIRONMENT = test -f "$$install_environment/pyvenv.cfg"; \
-	"$$install_python" -I -c 'import pathlib, sys; sys.exit(0 if sys.prefix != sys.base_prefix and pathlib.Path(sys.prefix).resolve() == pathlib.Path(sys.argv[1]).resolve() else "candidate interpreter leaves its environment")' "$$install_environment"
-PUBLISH_ENVIRONMENT = $(VERIFY_ENVIRONMENT); \
-	if [ -n "$$install_origin" ]; then \
-		if [ -L "$$install_target" ] || [ "$$(stat -c '%d:%i' "$$install_target")" != "$$install_origin" ]; then \
-			printf 'ERROR[setup] environment changed during preparation: %s\n' "$$install_target" >&2; exit 2; \
-		fi; \
-		mv --exchange --no-copy -T "$$install_environment" "$$install_target"; \
-		rm -rf -- "$$install_stage"; \
-		printf 'setup: published %s; previous environment removed\n' "$$install_target"; \
-	else \
-		mv --no-copy --no-clobber -T "$$install_environment" "$$install_target"; \
-		if [ -e "$$install_environment" ]; then printf 'ERROR[setup] environment appeared before publication\n' >&2; exit 2; fi; \
-		rmdir "$$install_stage"; \
-	fi; \
-	install_stage=; trap - EXIT HUP INT TERM
-# An environment that already satisfies the frozen lock is kept: uv's own
-# --check is the proof, and the same receipt and interpreter verification as a
-# publication applies. Only a differing environment (or a local FLEXT editable
-# selection) is rebuilt and atomically exchanged, so a repeated setup costs a
-# check, not a full reinstall and deletion.
-# The check's exit status is its whole result: a non-zero status only selects
-# the rebuild, so uv's native "environment is outdated" report is held in
-# probe_report instead of surfacing as an error on a successful setup. A real
-# failure recurs in the rebuild's own `uv sync --frozen`, which runs unfiltered
-# and fails loud with uv's native output.
+	"$$install_python" -I -c 'import pathlib, sys; sys.exit(0 if sys.prefix != sys.base_prefix and pathlib.Path(sys.prefix).resolve() == pathlib.Path(sys.argv[1]).resolve() else "environment interpreter leaves its environment")' "$$install_environment"
 INSTALL_RUNTIME_RECIPE = set -eu; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
 	$(RESOLVE_DESIRED_PYTHON); \
 	$(call TARGET_ENVIRONMENT,$(RUNTIME_VENV)); \
-	sync_args="$(SETUP_SYNC_ARGS)"; \
-	if [ -z "$(strip $(FLEXT))" ] && [ -d "$$install_target" ] && probe_report="$$(env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_target" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --check --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $$sync_args 2>&1)"; then \
-		install_environment="$$install_target"; \
-		install_python="$$install_environment/$(patsubst $(RUNTIME_VENV)/%,%,$(RUNTIME_PYTHON))"; \
-		env -u MYPYPATH -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH $(INSTALL_FLEXT_INFRA) workspace flext-editable --repository-root "$(RUNTIME_ROOT)" --candidate-environment "$$install_environment"; \
-		$(VERIFY_ENVIRONMENT); \
-		printf 'setup: %s already satisfies uv.lock; kept\n' "$$install_target"; \
-	else \
-		$(PREPARE_ENVIRONMENT); \
-		env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $$sync_args; \
-		if [ -n "$(strip $(FLEXT))" ]; then \
-			if [ "$(CI)" = "Y" ]; then printf 'ERROR[setup] local editable sources are forbidden in CI\n' >&2; exit 2; fi; \
-			(cd "$(FLEXT)"; $(UV) pip install --no-config --python "$$install_python" --no-deps --requirement "requirements-infra.txt"); \
-			$(UV) pip install --python "$$install_python" --no-deps --editable "$(RUNTIME_ROOT)"; \
-		fi; \
-		env -u MYPYPATH -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH $(INSTALL_FLEXT_INFRA) workspace flext-editable --repository-root "$(RUNTIME_ROOT)" --candidate-environment "$$install_environment"$(if $(strip $(FLEXT)), --flext-root "$(FLEXT)"); \
-		$(PUBLISH_ENVIRONMENT); \
-	fi
+	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $(SETUP_SYNC_ARGS); \
+	if [ -n "$(strip $(FLEXT))" ]; then \
+		if [ "$(CI)" = "Y" ]; then printf 'ERROR[setup] local editable sources are forbidden in CI\n' >&2; exit 2; fi; \
+		(cd "$(FLEXT)"; $(UV) pip install --no-config --python "$$install_python" --no-deps --requirement "requirements-infra.txt"); \
+		$(UV) pip install --python "$$install_python" --no-deps --editable "$(RUNTIME_ROOT)"; \
+	fi; \
+	env -u MYPYPATH -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH $(INSTALL_FLEXT_INFRA) workspace flext-editable --repository-root "$(RUNTIME_ROOT)" --candidate-environment "$$install_environment"$(if $(strip $(FLEXT)), --flext-root "$(FLEXT)"); \
+	$(VERIFY_ENVIRONMENT); \
+	printf 'setup: %s synchronized with uv.lock\n' "$$install_target"
 
 # The governed checkouts of this repository: itself (`.`) and every
 # initialized gitlink its .gitmodules declares without flext-managed = false.
@@ -707,11 +744,13 @@ INSTALL_GIT_HOOKS_RECIPE = set -eu; \
 				printf '%s\n' '\#!/bin/sh' "\# BEGIN FLEXT-INFRA SETUP: Generated by make setup (flext-infra); rerun make setup to refresh."; \
 				if [ "$$stage" = pre-push ]; then \
 					printf '%s\n' \
-						'flext_hook_stdin="$$(mktemp "$$(git rev-parse --absolute-git-dir)/flext-pre-push.XXXXXX")"' \
-						'cat > "$$flext_hook_stdin"' \
-						"PREK=$$prek_binary $$validator $$stage \"\$$@\" < \"\$$flext_hook_stdin\" || { flext_hook_status=\$$?; rm -f \"\$$flext_hook_stdin\"; exit \"\$$flext_hook_status\"; }" \
-						'exec < "$$flext_hook_stdin"' \
-						'rm -f "$$flext_hook_stdin"'; \
+						'flext_hook_stdin="$$(cat)"' \
+						"printf '%s\\n' \"\$$flext_hook_stdin\" | PREK=$$prek_binary $$validator $$stage \"\$$@\" || exit \$$?" \
+						'if [ -n "$$flext_hook_stdin" ]; then' \
+						'exec <<FLEXT_PRE_PUSH_STDIN' \
+						'$$flext_hook_stdin' \
+						'FLEXT_PRE_PUSH_STDIN' \
+						'else exec </dev/null; fi'; \
 				else \
 					printf '%s\n' "PREK=$$prek_binary $$validator $$stage \"\$$@\" || exit \$$?"; \
 				fi; \
@@ -759,11 +798,12 @@ override EXECUTOR_FLEXT_INFRA = env -u MYPYPATH -u MISE_PYTHON_UV_VENV_AUTO -u U
 # project, so the executor never imports its source. A project in flext-infra's
 # own runtime closure (derived from the installed metadata) supplies part of the
 # executor, so its locked non-editable build is installed, never the editable
-# source; every lock is already written before it runs.
-SYNC_UPGRADE_EXECUTOR_RECIPE = $(call TARGET_ENVIRONMENT,$(FLEXT_INFRA_EXECUTOR_VENV)); $(PREPARE_ENVIRONMENT); \
+# source. upg forms it from the committed lock for the pre-resolution
+# cooldown admission and again from the written locks for the last repair.
+SYNC_UPGRADE_EXECUTOR_RECIPE = $(call TARGET_ENVIRONMENT,$(FLEXT_INFRA_EXECUTOR_VENV)); \
 	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads --no-default-groups --group "dev" --no-editable --link-mode clone; \
 	$(INSTALL_FLEXT_INFRA) --help >/dev/null; \
-	$(PUBLISH_ENVIRONMENT)
+	$(VERIFY_ENVIRONMENT)
 
 # Setup checks native lock freshness without writing the lock. Native uv selects
 # every member's declared extras and groups, without copying dependency graphs.
@@ -1142,13 +1182,21 @@ _builtin_require_environment: _builtin_require_interpreter
 #      lock previews every tool, so it is regenerated in full);
 #   4. the locked toolchain is installed from that lock, so a missing, bumped
 #      or newly declared tool (Python and uv included) is the one used next.
-# _upg_lifecycle then runs, in a fresh Make, the native `uv lock --upgrade`
-# with that Python once per project (ADR-030): each governed member in
-# .gitmodules order forms its own uv.lock, then this project, whose lock is
-# their composition; then the frozen installation, and last the isolated executor
-# (make.executor_environment) repairs the one gap Mise does not report: a
-# locked tool missing a declared platform. A project whose source no longer
-# imports still has every lock written. It generates no projection.
+# _upg_lifecycle then runs, in a fresh Make, the isolated executor
+# (make.executor_environment) formed from the committed uv.lock (a project
+# without one forms it first through the same native writer). Its cooldown
+# admission (ADR-030 release eligibility) asks native uv which requirements
+# the [tool.uv] exclude-newer window refuses, drops each refused
+# [tool.flext.upg]-owned floor or pin and reports every other refusal at
+# once, before any lock is written. Then the
+# native `uv lock --upgrade` runs with that Python once per project: each
+# governed member in .gitmodules order forms its own uv.lock, then this
+# project, whose lock is their composition. The executor writes the upg-owned
+# bounds from those locks, the locks record them without upgrading, the frozen
+# installation follows, and last the executor repairs the one gap Mise does
+# not report: a locked tool missing a declared platform. The executor never
+# imports the project, so a project whose source no longer imports still has
+# every lock written. It generates no projection.
 .PHONY: _upg_toolchain _upg_lifecycle
 _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 	+@set -eu; \
@@ -1162,6 +1210,7 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 			fi; \
 		fi; \
 		exit "$${bootstrap_status}"' EXIT; \
+	trap 'exit 129' HUP; trap 'exit 130' INT; trap 'exit 143' TERM; \
 	bootstrap_stage=network-auth; \
 	if git config --global --get-regexp '^url\.https?://[^ /]+:[^ /]+@.*\.insteadof$$' >/dev/null; then \
 		printf 'ERROR: Global Git URL rewrite configuration embeds credentials and shadows the fleet SSH route; correct that configuration at its owner\n' >&2; \
@@ -1177,24 +1226,14 @@ _upg_toolchain: _builtin_require_workspace _builtin_require_github_credential
 		*" pre-upg "*) $(SELF_MAKE) pre-upg ;; \
 	esac; \
 	bootstrap_stage=acquisition; \
-	if [ -L "$(PROJECT_ROOT)/.bin" ] && [ ! -e "$(PROJECT_ROOT)/.bin" ]; then rm -f "$(PROJECT_ROOT)/.bin"; fi; mkdir -p "$(PROJECT_ROOT)/.bin"; \
-	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_SKIP_IF_EXISTS=1 MISE_INSTALL_HELP=0; \
+	if [ ! -x "$(BOOTSTRAP_MISE)" ]; then \
+	export MISE_INSTALL_FROM_GITHUB=1 MISE_INSTALL_HELP=0; \
 	export MISE_VERSION="2026.10.3"; \
-	mise_acquired=false; \
-	if [ -x "$(BOOTSTRAP_MISE)" ]; then \
-		mise_present="$$("$(BOOTSTRAP_MISE)" --version)"; \
-		if [ "$${mise_present%% *}" = "$${MISE_VERSION}" ]; then mise_acquired=true; fi; \
-	fi; \
-	if [ "$${mise_acquired}" = true ]; then \
-		printf 'setup: mise %s already acquired at %s\n' "$${MISE_VERSION}" "$(BOOTSTRAP_MISE)"; \
-	else \
 	case "$${OS:-}" in \
 		(Windows_NT) \
-			export MISE_INSTALL_PATH="$$(cygpath --windows "$(BOOTSTRAP_MISE)")"; \
 			powershell.exe -NoProfile -Command '$$ErrorActionPreference = "Stop"; Invoke-RestMethod https://mise.run/powershell | Invoke-Expression' ;; \
 		(*) \
-			export MISE_INSTALL_PATH="$(BOOTSTRAP_MISE)"; \
-			mise_stage="$$(mktemp -d "$(PROJECT_ROOT)/.bin/.mise-install.XXXXXXXX")"; \
+			mise_stage="$$(mktemp -d)"; \
 			curl --proto '=https' --tlsv1.2 -fsSL -o "$${mise_stage}/install.sh" https://mise.run; \
 			sh "$${mise_stage}/install.sh" ;; \
 	esac; \
@@ -1265,6 +1304,22 @@ _upg_lifecycle:
 	fi; \
 	mise_bin="$(MISE)"; \
 	$(RESOLVE_DESIRED_PYTHON); \
+	[ -f "$(RUNTIME_ROOT)/uv.lock" ] || $(UV) lock --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads; \
+	$(SYNC_UPGRADE_EXECUTOR_RECIPE); \
+	PATH="$$(dirname "$$mise_bin"):$$PATH" $(EXECUTOR_FLEXT_INFRA) deps cooldown-admission --repository-root "$(RUNTIME_ROOT)"; \
+	bootstrap_stage=network-auth; \
+	if git config --global --get-regexp '^url\.https?://[^ /]+:[^ /]+@.*\.insteadof$$' >/dev/null; then \
+		printf 'ERROR: Global Git URL rewrite configuration embeds credentials and shadows the fleet SSH route; correct that configuration at its owner\n' >&2; \
+		exit 2; \
+	else \
+		rewrite_status=$$?; \
+		if [ "$$rewrite_status" -ne 1 ]; then \
+			printf 'ERROR: Cannot inspect the global Git URL rewrite configuration\n' >&2; \
+			exit "$$rewrite_status"; \
+		fi; \
+	fi; \
+	mise_bin="$(MISE)"; \
+	$(RESOLVE_DESIRED_PYTHON); \
 	set -f; \
 	$(GOVERNED_CHECKOUTS); \
 	for checkout in $$checkouts; do \
@@ -1274,9 +1329,33 @@ _upg_lifecycle:
 	done; \
 	set +f; \
 	$(UV) lock --upgrade --project "$(PROJECT_ROOT)" --python "$$desired_python" --no-python-downloads; \
+	PATH="$$(dirname "$$mise_bin"):$$PATH" $(EXECUTOR_FLEXT_INFRA) deps upg-bounds --repository-root "$(RUNTIME_ROOT)"; \
+	bootstrap_stage=network-auth; \
+	if git config --global --get-regexp '^url\.https?://[^ /]+:[^ /]+@.*\.insteadof$$' >/dev/null; then \
+		printf 'ERROR: Global Git URL rewrite configuration embeds credentials and shadows the fleet SSH route; correct that configuration at its owner\n' >&2; \
+		exit 2; \
+	else \
+		rewrite_status=$$?; \
+		if [ "$$rewrite_status" -ne 1 ]; then \
+			printf 'ERROR: Cannot inspect the global Git URL rewrite configuration\n' >&2; \
+			exit "$$rewrite_status"; \
+		fi; \
+	fi; \
+	mise_bin="$(MISE)"; \
+	$(RESOLVE_DESIRED_PYTHON); \
+	set -f; \
+	$(GOVERNED_CHECKOUTS); \
+	for checkout in $$checkouts; do \
+		case "$$checkout" in .) continue ;; esac; \
+		[ ! -f "$$root/$$checkout/pyproject.toml" ] || \
+			$(UV) lock --project "$$root/$$checkout" --python "$$desired_python" --no-python-downloads; \
+	done; \
+	set +f; \
+	$(UV) lock --project "$(PROJECT_ROOT)" --python "$$desired_python" --no-python-downloads; \
 	$(INSTALL_RUNTIME_RECIPE); \
 	$(SYNC_UPGRADE_EXECUTOR_RECIPE); \
 	PATH="$$(dirname "$$mise_bin"):$$PATH" $(EXECUTOR_FLEXT_INFRA) deps repair-mise-platforms --repository-root "$(RUNTIME_ROOT)"; \
+	$(UV) cache prune; \
 	case " $(CUSTOM_DECLARED_TARGETS) " in \
 		*" post-upg "*) $(SELF_MAKE) post-upg ;; \
 	esac; \
@@ -1327,7 +1406,7 @@ _builtin_build_artifacts:
 # make.pre_commit_check_gates, CI=N runs
 # make.check_gates_local, and an absent CI token runs every active gate.
 _builtin_check_all: _builtin_require_environment
-	@$(if $(CHECK_PROFILE),FLEXT_INFRA_PROFILE=$(CHECK_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/check/route.pstats" timeout --signal=TERM --kill-after=5s 605s $(PROJECT_FLEXT_INFRA) workspace check --repository-root "$(if $(filter Y,$(CI)),$(PROJECT_ROOT),$(if $(filter primary,$(CHECK_PHASE)),$(RUNTIME_ROOT),$(PROJECT_ROOT)))"$(if $(CHECK_PHASE), --phase "$$CHECK_PHASE")
+	@$(if $(CHECK_PROFILE),FLEXT_INFRA_PROFILE=$(CHECK_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/check/route.pstats" $(PROJECT_FLEXT_INFRA) workspace check --repository-root "$(if $(filter Y,$(CI)),$(PROJECT_ROOT),$(if $(filter primary,$(CHECK_PHASE)),$(RUNTIME_ROOT),$(PROJECT_ROOT)))"$(if $(CHECK_PHASE), --phase "$$CHECK_PHASE")
 
 _builtin_tests_all: _builtin_require_environment
 	@$(PROJECT_FLEXT_INFRA) workspace tests --repository-root "$(PROJECT_ROOT)" --scope "$(GATE_SCOPE)"
@@ -1349,17 +1428,11 @@ _builtin_fix_all: _builtin_require_environment
 _builtin_clean_generated: _builtin_require_interpreter
 	@$(PROJECT_FLEXT_INFRA) maintenance clean --repository-root "$(PROJECT_ROOT)" --apply
 
-# Generation is a fenced, budgeted operation: `codegen generate` holds the
-# tree's mutation lock for the whole run (a concurrent writer waits visibly,
-# bounded by config Infra.mutation_lock), terminated inside the declared budget
-# with its kill reserve (the profile checkpoint survives a budget kill).
-GEN_BUDGET_SECONDS ?= 900
-GEN_KILL_RESERVE_SECONDS ?= 30
+# Heavy verbs (check, tests, tests-full, gen, gen-scope, mod) admit themselves
+# into the per-host FIFO queue and arm their wall-time budget only once
+# admitted (FLEXT ADR-032, config Infra.gate_admission): queue time never
+# counts against a budget. GEN_PROFILE=1 / MOD_PROFILE=1 capture cProfile.
 GEN_PROFILE ?=
-# Modification is a budgeted operation too: a stuck catalog run is killed
-# inside the declared budget, and MOD_PROFILE=1 captures its cProfile.
-MOD_BUDGET_SECONDS ?= 120
-MOD_KILL_RESERVE_SECONDS ?= 10
 MOD_PROFILE ?=
 # Check profiling is opt-in like generation (CHECK_PROFILE=1 make check).
 CHECK_PROFILE ?=
@@ -1369,7 +1442,7 @@ _builtin_gen_all: _builtin_require_interpreter
 	root="$(abspath $(or $(strip $(ROOT)),$(PROJECT_ROOT)))"; \
 	scope=all; \
 	if [ "$$root" != "$(PROJECT_ROOT)" ] || [ "$(strip $(CI))" = "Y" ]; then scope=self; fi; \
-	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen.pstats" timeout --signal=TERM --kill-after=$(GEN_KILL_RESERVE_SECONDS)s $(GEN_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --scope "$$scope"
+	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen.pstats" $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --scope "$$scope"
 
 # Focal generation is the bounded diagnosis vehicle: one surface (and, for
 # facades, one module) through the identical engine, lock and budget.
@@ -1379,7 +1452,7 @@ _builtin_gen_scope_all: _builtin_require_interpreter
 	scope="$(or $(strip $(SCOPE)),self)"; \
 	module_args=""; \
 	if [ -n "$(strip $(MODULE))" ]; then module_args=" --module $(strip $(MODULE))"; fi; \
-	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen-scope.pstats" timeout --signal=TERM --kill-after=$(GEN_KILL_RESERVE_SECONDS)s $(GEN_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --what "$(strip $(WHAT))" --scope "$$scope"$$module_args
+	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen-scope.pstats" $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --what "$(strip $(WHAT))" --scope "$$scope"$$module_args
 
 # Structural rewrites run one theme at a time (ADR-028 Decision 18 item 2):
 # LAWS selects ENFORCE law ids, RULES selects exact rule ids; the engine refuses
@@ -1389,7 +1462,7 @@ _builtin_mod_apply: _builtin_require_environment
 	selection=""; \
 	for law in $(strip $(LAWS)); do selection="$$selection --laws $$law"; done; \
 	for rule in $(strip $(RULES)); do selection="$$selection --rule-ids $$rule"; done; \
-	$(if $(MOD_PROFILE),FLEXT_INFRA_PROFILE=$(MOD_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/refactor/mod.pstats" timeout --signal=TERM --kill-after=$(MOD_KILL_RESERVE_SECONDS)s $(MOD_BUDGET_SECONDS)s $(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)"$$selection
+	$(if $(MOD_PROFILE),FLEXT_INFRA_PROFILE=$(MOD_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$(PROJECT_ROOT)/.reports/refactor/mod.pstats" $(PROJECT_FLEXT_INFRA) refactor mod --repository-root "$(PROJECT_ROOT)"$$selection
 
 # Public operations invoke only their own canonical implementation.
 _builtin-build: _builtin_build_artifacts
