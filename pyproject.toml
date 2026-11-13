@@ -293,6 +293,7 @@ bad-index = "error"
 bad-instantiation = "error"
 bad-keyword-argument = "error"
 bad-match = "error"
+bad-override = "ignore"
 bad-param-name-override = "error"
 bad-raise = "error"
 bad-return = "error"
@@ -303,6 +304,7 @@ bad-unpacking = "error"
 deprecated = "error"
 implicit-abstract-class = "error"
 implicit-any = "error"
+implicit-any-type-argument = "ignore"
 implicit-import = "error"
 implicitly-defined-attribute = "error"
 inconsistent-inheritance = "error"
@@ -440,6 +442,7 @@ reportInconsistentConstructor = "error"
 reportInvalidTypeForm = "none"
 reportMissingImports = "error"
 reportMissingModuleSource = "error"
+reportMissingTypeArgument = "none"
 reportMissingTypeStubs = "none"
 reportPrivateUsage = "error"
 reportReturnType = "none"
@@ -598,7 +601,12 @@ skip-magic-trailing-comma = false
 [tool.ruff.lint]
 extend-safe-fixes = ["relative-imports", "camelcase-imported-as-lowercase"]
 extend-select = ["missing-blank-line-after-last-section"]
-ignore = ["TC", "missing-trailing-comma", "non-empty-init-module"]
+ignore = [
+  "TC",
+  "missing-trailing-comma",
+  "non-empty-init-module",
+  "non-pep695-type-alias",
+]
 select = ["ALL"]
 unfixable = [
   "multi-value-repeated-key-literal",
@@ -678,6 +686,7 @@ whitelines = 1
 [tool.uv]
 constraint-dependencies = [
   "pillow>=13.0.0",
+  "soupsieve>=4.0.0",
   "certifi>=2026.10.19",
   "setuptools>=84.1.0",
   "virtualenv>=21.14.13",
@@ -688,7 +697,7 @@ environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "P10D"
 link-mode = "clone"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@bc2b0450c2a05f955ad5eaa52e8571b17614c9a8",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@a6f233e157e59b137fce01692e49046e1648d112",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
@@ -711,6 +720,9 @@ dependencies = ["flext-core"]
 
 [tool.uv.exclude-dependencies.package]
 name = "flext-tests"
+
+[tool.uv.exclude-newer-package]
+soupsieve = false
 
 [tool.bandit]
 severity = "MEDIUM"
