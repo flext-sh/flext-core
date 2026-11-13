@@ -31,6 +31,7 @@ class FlextConstantsSettings:
 
     MODEL_USE_ENUM_VALUES: Final[bool] = False
     MODEL_VALIDATE_DEFAULT: Final[bool] = True
+    MODEL_DEFER_BUILD: Final[bool] = True
 
     DOMAIN_MODEL_CONFIG: Final = MappingProxyType(
         ConfigDict(
