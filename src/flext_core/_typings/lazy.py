@@ -8,8 +8,12 @@ from __future__ import annotations
 
 from collections.abc import Callable, MutableMapping, Sequence
 from types import ModuleType
+from typing import TYPE_CHECKING
 
 from flext_core._typings import FlextTypingBase
+
+if TYPE_CHECKING:
+    from flext_core import FlextLazyInstance
 
 
 class FlextTypesLazy:
@@ -21,6 +25,7 @@ class FlextTypesLazy:
         | Sequence[str]
         | ModuleType
         | type
+        | FlextLazyInstance
         | Callable[
             ...,
             FlextTypingBase.JsonValue | Sequence[str] | ModuleType | type | None,

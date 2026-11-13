@@ -37,12 +37,14 @@ if TYPE_CHECKING:
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
     from flext_core.flextlazy_exports import FlextLazyExports
+    from flext_core.flextlazy_instance import FlextLazyInstance
     from flext_core.flextlazy_member import FlextLazyMember, FlextLazyStandIn
     from flext_core.flextlazy_native_export import FlextTypingNativeExport
     from flext_core.handlers import FlextHandlers, h
     from flext_core.lazy import (
         FlextLazy,
         cleanup_submodule_namespace,
+        defer_lazy_instances,
         lazy,
         lazy_getattr,
         lazy_member,
@@ -75,6 +77,7 @@ __all__: tuple[str, ...] = (
     "FlextLazyAttribute",
     "FlextLazyBootstrap",
     "FlextLazyExports",
+    "FlextLazyInstance",
     "FlextLazyMember",
     "FlextLazyStandIn",
     "FlextMixins",
@@ -104,6 +107,7 @@ __all__: tuple[str, ...] = (
     "config",
     "core",
     "d",
+    "defer_lazy_instances",
     "e",
     "h",
     "install_lazy_exports",
@@ -141,6 +145,7 @@ install_lazy_exports(
         "FlextLazyAttribute": ".flextlazy_attribute",
         "FlextLazyBootstrap": ".flextlazy_bootstrap",
         "FlextLazyExports": ".flextlazy_exports",
+        "FlextLazyInstance": ".flextlazy_instance",
         "FlextLazyMember": ".flextlazy_member",
         "FlextLazyStandIn": ".flextlazy_member",
         "FlextMixins": ".mixins",
@@ -168,6 +173,7 @@ install_lazy_exports(
         "config": "._config",
         "core": ".api",
         "d": ".decorators",
+        "defer_lazy_instances": ".lazy",
         "e": ".exceptions",
         "h": ".handlers",
         "lazy": ".lazy",
