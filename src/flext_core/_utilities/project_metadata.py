@@ -25,10 +25,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 
-class FlextUtilitiesProjectMetadata(
-    m,
-    FlextUtilitiesPackageVersion,
-):
+class FlextUtilitiesProjectMetadata(FlextUtilitiesPackageVersion):
     """Project metadata ingress and canonical name derivation."""
 
     _DISTRIBUTION_SEPARATOR_RE: ClassVar[t.RegexPattern] = re.compile(

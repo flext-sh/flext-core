@@ -125,6 +125,7 @@ if TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
+    from tests.unit import TestsFlextCoreUtilitiesModelsFamily
     from tests.utilities import TestsFlextUtilities, u
 
 
@@ -178,6 +179,7 @@ __all__: tuple[str, ...] = (
     "TestsFlextConstantsOther",
     "TestsFlextConstantsResult",
     "TestsFlextConstantsServices",
+    "TestsFlextCoreUtilitiesModelsFamily",
     "TestsFlextDecoratorsLegacy",
     "TestsFlextFlextHandlers",
     "TestsFlextModels",
@@ -298,6 +300,7 @@ install_lazy_exports(
         "TestsFlextConstantsOther": "._constants",
         "TestsFlextConstantsResult": "._constants",
         "TestsFlextConstantsServices": "._constants",
+        "TestsFlextCoreUtilitiesModelsFamily": ".unit",
         "TestsFlextDecoratorsLegacy": "._utilities",
         "TestsFlextFlextHandlers": "._utilities",
         "TestsFlextModels": ".models",
