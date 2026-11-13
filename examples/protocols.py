@@ -23,11 +23,11 @@ from examples._protocols import (
     ExamplesFlextProtocolsHandle,
     ExamplesFlextProtocolsPerson,
 )
-from flext_core import p as flext_core_p
+from flext_core import FlextProtocols
 
 
 class ExamplesFlextProtocols(
-    flext_core_p,
+    FlextProtocols,
     ExamplesFlextProtocolsEx00,
     ExamplesFlextProtocolsEx01,
     ExamplesFlextProtocolsEx02,

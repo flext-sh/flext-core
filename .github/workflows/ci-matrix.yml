@@ -48,26 +48,18 @@ jobs:
       matrix:
         distro: [ubuntu, debian, fedora, alpine, arch]
     steps:
-      - name: Checkout workspace flext-sh/flext
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          repository: flext-sh/flext
-          ref: 0.12.0-dev
           submodules: recursive
+          # No step needs authenticated git after checkout; persisting the
+          # token into .git/config would expose it to every later command.
           persist-credentials: false
-          fetch-depth: 0
-      - name: Pin flext-core at the tested commit
-        working-directory: .
-        run: |
-          set -eu
-          git -C "flext-core" fetch --no-tags origin "${{ github.sha }}"
-          git -C "flext-core" checkout --detach FETCH_HEAD
       # An attached member builds from its workspace checkout, whose root lock
       # it installs, and runs its own verbs from its member directory.
       - name: Build ${{ matrix.distro }} image
         run: >-
           docker build
-          -f flext-core/tests/fixtures/ci/docker/${{ matrix.distro }}.Dockerfile
+          -f tests/fixtures/ci/docker/${{ matrix.distro }}.Dockerfile
           --build-context git=.git
           --secret id=github_token,env=GITHUB_TOKEN
           -t ci-matrix-${{ matrix.distro }}
@@ -79,7 +71,6 @@ jobs:
           docker run --rm
           -e CI=Y
           -e GITHUB_TOKEN
-          -w /workspace/flext-core
           ci-matrix-${{ matrix.distro }}
           bash -ec 'make setup && make check CHECK_PHASE=primary && make check CHECK_PHASE=primary'
   # End SECTION: distro-matrix
@@ -91,24 +82,15 @@ jobs:
     env:
       CI: Y
       GITHUB_TOKEN: ${{ github.token }}
-    defaults:
-      run:
-        working-directory: flext-core
     steps:
-      - name: Checkout workspace flext-sh/flext
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          repository: flext-sh/flext
-          ref: 0.12.0-dev
           submodules: recursive
+
+          # Dependency authentication uses the declared process configuration,
+          # never a persisted checkout credential.
           persist-credentials: false
-          fetch-depth: 0
-      - name: Pin flext-core at the tested commit
-        working-directory: .
-        run: |
-          set -eu
-          git -C "flext-core" fetch --no-tags origin "${{ github.sha }}"
-          git -C "flext-core" checkout --detach FETCH_HEAD
+
       # The ordered public acceptance steps (make.lifecycle_steps, ci
       # context): the matrix never keeps its own verb list.
       - name: Lifecycle acceptance
@@ -125,24 +107,15 @@ jobs:
     env:
       CI: Y
       GITHUB_TOKEN: ${{ github.token }}
-    defaults:
-      run:
-        working-directory: flext-core
     steps:
-      - name: Checkout workspace flext-sh/flext
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          repository: flext-sh/flext
-          ref: 0.12.0-dev
           submodules: recursive
+
+          # Dependency authentication uses the declared process configuration,
+          # never a persisted checkout credential.
           persist-credentials: false
-          fetch-depth: 0
-      - name: Pin flext-core at the tested commit
-        working-directory: .
-        run: |
-          set -eu
-          git -C "flext-core" fetch --no-tags origin "${{ github.sha }}"
-          git -C "flext-core" checkout --detach FETCH_HEAD
+
       # The ordered public acceptance steps (make.lifecycle_steps, ci
       # context): the matrix never keeps its own verb list.
       - name: Lifecycle acceptance

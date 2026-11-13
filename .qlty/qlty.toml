@@ -15,7 +15,6 @@ exclude_patterns = [
   "**/_models/**",
   "**/_protocols/**",
   "**/_typings/**",
-  "**/_utilities/**",
   "**/constants.py",
   "**/models.py",
   "**/protocols.py",
