@@ -288,6 +288,28 @@ class TestsFlextCoreLazyMembers:
             ):
                 getattr(namespace, unlisted[2])
 
+    def test_member_free_class_composes_without_loading_its_module(
+        self,
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """A part whose body binds nothing still defers its module to first use."""
+        module = self._deferred_capability(fixture_tree, tmp_path)
+        with tm.scope(python_paths=[str(tmp_path)]):
+            resolve, _ = install_lazy_exports(
+                "lazy_deferred_empty_consumer",
+                {},
+                {"Capability": (module, "Capability")},
+                deferred_members={"Capability": ()},
+            )
+            namespace = type("Namespace", (cast("type", resolve("Capability")),), {})
+            # No member is listed, so the read resolves by name, as a consumer
+            # of the generated stand-in reads it.
+            unlisted = ("twice",)
+            tm.fail(module in sys.modules)
+            tm.that(getattr(namespace, unlisted[0])(2), eq=4)
+            tm.ok(module in sys.modules)
+
     @staticmethod
     def test_deferred_name_without_class_export_fails_at_install() -> None:
         """Deferring a name the lazy map does not export is a generator defect."""

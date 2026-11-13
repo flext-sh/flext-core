@@ -117,13 +117,10 @@ class FlextLazyExports(FlextLazyBootstrap):
             ValueError: If a deferred name is not a class export in the map.
 
         """
-        for name, members in deferred_members.items():
+        for name in deferred_members:
             entry = lazy_imports.get(name)
             if entry is None or (not isinstance(entry, str) and not entry[1]):
                 msg = f"module {module_name!r} defers {name!r} without a class export"
-                raise ValueError(msg)
-            if not members:
-                msg = f"module {module_name!r} defers {name!r} with no members"
                 raise ValueError(msg)
 
     @staticmethod
