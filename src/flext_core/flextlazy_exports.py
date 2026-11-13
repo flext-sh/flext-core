@@ -7,13 +7,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from collections.abc import Mapping, MutableMapping, Sequence
+from collections.abc import Callable, Mapping, MutableMapping, Sequence
 from types import ModuleType
 from typing import TYPE_CHECKING
 
 from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
 from flext_core.flextlazy_instance import FlextLazyInstance
-from flext_core.flextlazy_member import FlextLazyMember
+from flext_core.flextlazy_member import FlextLazyMember, FlextLazyStandIn
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -45,12 +45,15 @@ class FlextLazyExports(FlextLazyBootstrap):
             A class named ``owner`` that defers each of ``members``.
 
         """
-        namespace: dict[str, str | FlextLazyMember] = {
+        namespace: dict[
+            str, str | FlextLazyMember | tuple[str, str, Callable[[str], ModuleType]]
+        ] = {
             "__module__": module,
             "__qualname__": owner,
+            "__flext_lazy_target__": (module, owner, self.load),
         }
         namespace.update({name: self.member(module, owner, name) for name in members})
-        return type(owner, (), namespace)
+        return FlextLazyStandIn(owner, (), namespace)
 
     def _deferred_export(
         self,
