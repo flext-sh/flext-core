@@ -191,11 +191,12 @@ class TestsFlextCoreLazyMembers:
         fixture_tree: p.Tests.FixtureTree,
         tmp_path: Path,
     ) -> None:
-        """A member the generated list omits still resolves on the stand-in itself.
+        """A member the generated list omits resolves on the stand-in and its facade.
 
-        A stale initializer lists fewer members than the source declares; a
-        direct read of the missing member loads the class, while a class
-        composed from the stand-in keeps the ordinary lookup.
+        A stale initializer lists fewer members than the source declares. A
+        read of the missing member, on the stand-in or on a facade composed
+        from it, loads the class, so a new helper runs before the initializer
+        that lists it is regenerated.
         """
         module = self._deferred_capability(fixture_tree, tmp_path)
         with tm.scope(python_paths=[str(tmp_path)]):
@@ -211,18 +212,21 @@ class TestsFlextCoreLazyMembers:
             # The behavior under test is resolution by name, as a stale
             # initializer's consumer reads it, so every read names its member.
             unlisted = ("twice", "who", "absent")
-            with u.Tests.raises(AttributeError, match=unlisted[0]):
-                getattr(namespace, unlisted[0])
             tm.fail(module in sys.modules)
-            tm.that(getattr(standin, unlisted[0])(3), eq=6)
-            tm.that(getattr(standin, unlisted[1])(), eq="Capability")
+            tm.that(getattr(namespace, unlisted[1])(), eq="Namespace")
             tm.ok(module in sys.modules)
             tm.ok(isinstance(vars(standin)[unlisted[1]], classmethod))
+            tm.that(getattr(standin, unlisted[1])(), eq="Capability")
+            tm.that(getattr(standin, unlisted[0])(3), eq=6)
             tm.that(getattr(namespace, unlisted[0])(4), eq=8)
             with u.Tests.raises(
                 AttributeError, match="'Capability' has no attribute 'absent'"
             ):
                 getattr(standin, unlisted[2])
+            with u.Tests.raises(
+                AttributeError, match="'Namespace' has no attribute 'absent'"
+            ):
+                getattr(namespace, unlisted[2])
 
     @staticmethod
     def test_deferred_name_without_class_export_fails_at_install() -> None:
