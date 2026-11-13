@@ -203,12 +203,13 @@ class TestsFlextCoreLazyMembers:
         module = self._package(tmp_path, self._ROOT_SOURCE)
         with tm.scope(python_paths=[str(tmp_path)]):
             package_globals: t.ModuleGlobals = {}
+            lazy_imports = {"root": (module, "root")}
             install_lazy_exports(
-                "lazy_instance_consumer",
-                package_globals,
-                {"root": (module, "root")},
+                "lazy_instance_consumer", package_globals, lazy_imports
             )
-            defer_lazy_instances("lazy_instance_consumer", package_globals, ("root",))
+            defer_lazy_instances(
+                "lazy_instance_consumer", package_globals, lazy_imports, ("root",)
+            )
             standin = package_globals["root"]
             tm.fail(module in sys.modules)
             tm.that(standin, attr_eq={"Infra": "first"})
@@ -225,12 +226,11 @@ class TestsFlextCoreLazyMembers:
         )
         with tm.scope(python_paths=[str(tmp_path)]):
             package_globals: t.ModuleGlobals = {}
-            install_lazy_exports(
-                "lazy_instance_broken",
-                package_globals,
-                {"root": (module, "root")},
+            lazy_imports = {"root": (module, "root")}
+            install_lazy_exports("lazy_instance_broken", package_globals, lazy_imports)
+            defer_lazy_instances(
+                "lazy_instance_broken", package_globals, lazy_imports, ("root",)
             )
-            defer_lazy_instances("lazy_instance_broken", package_globals, ("root",))
             with u.Tests.raises(ImportError, match="cannot load") as caught:
                 tm.that(package_globals["root"], attr_eq={"Infra": "first"})
             tm.that(isinstance(caught.value.__cause__, AttributeError), truth=True)
@@ -241,7 +241,10 @@ class TestsFlextCoreLazyMembers:
         package_globals: t.ModuleGlobals = {}
         install_lazy_exports("lazy_instance_invalid", package_globals, {})
         with u.Tests.raises(ValueError, match="does not export"):
-            defer_lazy_instances("lazy_instance_invalid", package_globals, ("root",))
+            defer_lazy_instances(
+                "lazy_instance_invalid", package_globals, {}, ("root",)
+            )
+        tm.fail("root" in package_globals)
 
     def test_stale_stand_in_reads_an_unlisted_member_from_its_class(
         self,

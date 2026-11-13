@@ -22,7 +22,9 @@ class FlextLazyInstance:
     declaring module through the lazy loader, which publishes the root, and
     keeps that root: never one of its members, so an in-place
     ``reset_for_testing`` of the root stays visible to every importer. A
-    failure raises with its cause and keeps nothing.
+    root that cannot be published raises ``ImportError`` with its cause and
+    keeps nothing: an ``AttributeError`` escaping ``__getattr__`` would read
+    as a missing attribute and hide the defect.
     """
 
     __slots__ = ("_attr", "_load", "_module", "_root")
@@ -54,7 +56,7 @@ class FlextLazyInstance:
             The root's attribute.
 
         Raises:
-            AttributeError: When the declaring module cannot publish the root.
+            ImportError: When the declaring module cannot publish the root.
 
         """
         root = self._root
@@ -64,7 +66,7 @@ class FlextLazyInstance:
                 root = getattr(self._load(self._module), self._attr)
             except AttributeError as exc:
                 msg = f"lazy instance cannot load {target!r}"
-                raise AttributeError(msg) from exc
+                raise ImportError(msg, name=self._module) from exc
             self._root = root
         value: t.ModuleGlobalValue = getattr(root, name)
         return value

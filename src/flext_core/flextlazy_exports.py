@@ -78,31 +78,30 @@ class FlextLazyExports(FlextLazyBootstrap):
         self,
         module_name: str,
         module_globals: t.ModuleGlobals,
+        lazy_imports: Mapping[str, str | tuple[str, str]],
         names: Sequence[str],
     ) -> None:
         """Publish each named configuration root as a ``FlextLazyInstance``.
 
-        Runs after ``install`` on the same globals. A published stand-in is a
-        plain global, so the lazy ``__getattr__`` never loads its module;
-        the first attribute read publishes the root through its module.
+        Runs after ``install`` on the same globals and map, because ``install``
+        clears every exported name. A published stand-in is a plain global, so
+        the lazy ``__getattr__`` never loads its module; the first attribute
+        read publishes the root through its module. Every root is validated
+        before any global changes.
 
         Raises:
-            TypeError: If the globals hold no installed lazy map.
-            ValueError: If a root is not an export of the installed lazy map.
+            ValueError: If a root is not an export of the lazy map.
 
         """
-        lazy_imports = module_globals.get("_LAZY_IMPORTS")
-        if not isinstance(lazy_imports, Mapping):
-            msg = f"module {module_name!r} defers instances before installing exports"
-            raise TypeError(msg)
+        normalized = self._norm_map(module_name, lazy_imports)
+        missing = [name for name in names if name not in normalized]
+        if missing:
+            msg = (
+                f"module {module_name!r} defers instances it does not export: {missing}"
+            )
+            raise ValueError(msg)
         for name in names:
-            entry = lazy_imports.get(name)
-            if entry is None:
-                msg = (
-                    f"module {module_name!r} defers instance {name!r} "
-                    "it does not export"
-                )
-                raise ValueError(msg)
+            entry = normalized[name]
             module_path, attr = (entry, name) if isinstance(entry, str) else entry
             module_globals[name] = FlextLazyInstance(module_path, attr, self.load)
 

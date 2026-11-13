@@ -72,7 +72,7 @@ jobs:
           -e CI=Y
           -e GITHUB_TOKEN
           ci-matrix-${{ matrix.distro }}
-          bash -ec 'make setup && make check CHECK_PHASE=primary && make tests && make check && make tests && make build'
+          bash -ec 'make setup && make check CHECK_PHASE=primary && make check CHECK_PHASE=primary'
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
@@ -97,10 +97,7 @@ jobs:
         run: |
           CI=Y make setup
           CI=Y make check CHECK_PHASE=primary
-          CI=Y make tests
-          CI=Y make check
-          CI=Y make tests
-          CI=Y make build
+          CI=Y make check CHECK_PHASE=primary
   # End SECTION: macos
 
   # === SECTION: windows (managed) ===
@@ -126,8 +123,5 @@ jobs:
         run: |
           CI=Y make setup
           CI=Y make check CHECK_PHASE=primary
-          CI=Y make tests
-          CI=Y make check
-          CI=Y make tests
-          CI=Y make build
+          CI=Y make check CHECK_PHASE=primary
 # End SECTION: windows

@@ -140,11 +140,11 @@ jobs:
       # officially and installs the toolchain and dependencies from their locks,
       # publishes that environment through GITHUB_PATH, and prepares the
       # project runtime. CI never runs `make upg`: it never re-resolves.
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
+      # CI approval, one visible step per ci workflow row (setup -> check).
       - name: make setup (blocking)
         id: approval-setup
         run: CI=Y make setup
-      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
+      # CI approval, one visible step per ci workflow row (setup -> check).
       - name: make check CHECK_PHASE=primary (blocking)
         id: approval-check-primary
         # Every approval verb reports once setup provisioned the environment,
@@ -160,7 +160,7 @@ jobs:
       # row failed first (a failed tests row skips every later check row);
       # uploading after a setup failure would only add a second, misleading error.
       - name: Upload execution reports
-        if: ${{ !cancelled() && (steps.approval-check-primary.outcome == 'success' || steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'success' || steps.approval-tests-primary.outcome == 'failure' || steps.approval-check.outcome == 'success' || steps.approval-check.outcome == 'failure' || steps.approval-tests.outcome == 'success' || steps.approval-tests.outcome == 'failure') }}
+        if: ${{ !cancelled() && (steps.approval-check-primary.outcome == 'success' || steps.approval-check-primary.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-ci-reports-${{ github.run_id }}

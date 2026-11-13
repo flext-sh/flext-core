@@ -37,6 +37,7 @@ if TYPE_CHECKING:
     from flext_core.flextlazy_attribute import FlextLazyAttribute
     from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
     from flext_core.flextlazy_exports import FlextLazyExports
+    from flext_core.flextlazy_instance import FlextLazyInstance
     from flext_core.flextlazy_member import FlextLazyMember, FlextLazyStandIn
     from flext_core.flextlazy_native_export import FlextTypingNativeExport
     from flext_core.handlers import FlextHandlers, h
