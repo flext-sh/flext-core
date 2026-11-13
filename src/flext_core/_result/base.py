@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import Self
+from typing import ClassVar, Self, Unpack, override
 
 from flext_core import p, t
 from flext_core._constants.errors import FlextConstantsErrors
@@ -54,6 +54,27 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
 
     _payload: T = FlextModelsPydantic.PrivateAttr()
     _exception: BaseException | None = FlextModelsPydantic.PrivateAttr(default=None)
+
+    _parametrizations: ClassVar[list[type[FlextModelsPydantic.BaseModel]]] = []
+    """Strong references to every parametrized result class Pydantic builds."""
+
+    @classmethod
+    @override
+    def __pydantic_init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
+        """Hold each parametrized result class for the life of the process.
+
+        Pydantic caches parametrized generic models weakly, so a transient
+        ``r[T]`` is collected between uses and rebuilt on the next one. Each
+        parametrization Pydantic completes is kept here once, so its weak
+        cache entry stays alive. Pydantic builds one per distinct parameter
+        set, and results are parametrized only by the type forms the source
+        declares (``r[bool]``, ``r[V]``, aliases and protocols), never by a
+        runtime-created type, so the list is bounded by the declared
+        parametrizations.
+        """
+        super().__pydantic_init_subclass__(**kwargs)
+        if cls.__pydantic_generic_metadata__["origin"] is not None:
+            FlextResultBase._parametrizations.append(cls)
 
     @classmethod
     def create_success(cls, value: T) -> Self:
