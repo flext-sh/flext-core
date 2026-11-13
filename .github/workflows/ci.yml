@@ -13,6 +13,12 @@ name: CI
 # cross-repo dependency-credential secret contract in workflow scope.
 "on":
   workflow_dispatch:
+    inputs:
+      full_check:
+        description: Run the complete native check in addition to required CI.
+        required: false
+        type: boolean
+        default: false
   push:
     branches:
       - main
@@ -26,6 +32,11 @@ name: CI
     types: [opened, synchronize, reopened, ready_for_review]
   workflow_call:
     inputs:
+      full_check:
+        description: Run the complete native check in addition to required CI.
+        required: false
+        type: boolean
+        default: false
       ref:
         description: Exact candidate commit to validate instead of the caller event SHA.
         required: false
@@ -69,35 +80,26 @@ jobs:
     env:
       CI: Y
       GITHUB_TOKEN: ${{ github.token }}
-    defaults:
-      run:
-        working-directory: flext-core
     steps:
-      - name: Checkout workspace flext-sh/flext
+      - name: Checkout
         uses: actions/checkout@v7
         with:
-          repository: flext-sh/flext
-          ref: 0.12.0-dev
           submodules: recursive
+
           persist-credentials: false
+
           fetch-depth: 0
-      - name: Pin flext-core at the tested commit
-        working-directory: .
-        run: |
-          set -eu
-          git -C "flext-core" fetch --no-tags origin "${{ inputs.ref || github.sha }}"
-          git -C "flext-core" checkout --detach FETCH_HEAD
+          ref: ${{ inputs.ref || github.sha }}
       # Why: GitHub runners expose umask 002, so git checkout materializes
       # group-writable modes (0664) for tracked files. Canonical Mise
       # artifacts demand exact modes (0o644) and the conform gate fails loud
       # on any drift, so checkout content is normalized to canonical modes
       # once, before any gate runs.
       - name: Normalize checkout modes
-        working-directory: .
         run: chmod -R go-w .
 
-      # Why: every fresh runner paid a cold full-dependency Mypy,
-      # Pyrefly and Ruff analysis. The caches below are content-addressed by the
+      # Why: every fresh runner paid a cold full-dependency Pyrefly and
+      # Ruff analysis (Mypy is local-only and never runs here). The caches below are content-addressed by the
       # committed dependency locks, so a warm cache is always valid for the same
       # lock and can never hide a finding; it only removes the cold recompute.
       # Why: the same pair keeps the locked Mise tool storage, so
@@ -109,7 +111,7 @@ jobs:
       # one warning per tool); Mise regenerates the shims from mise.lock.
       # The key is the content hash of the locks that decide what is
       # installed: one immutable entry per lock state, never one per run, so
-      # saving never evicts the testmon cache with duplicate generations.
+      # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
       # the entry grew with every lock change (algar-oud-mig: 3.06 to
@@ -150,6 +152,10 @@ jobs:
         # (workflow requires) admits the step only after that verb is green.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check CHECK_PHASE=primary
+      - name: Complete check qualification
+        id: qualification-check
+        if: ${{ !cancelled() && inputs.full_check == true && steps.approval-setup.outcome == 'success' }}
+        run: CI=N make check
       # Reports exist once any approval row after setup executed, whichever
       # row failed first (a failed tests row skips every later check row);
       # uploading after a setup failure would only add a second, misleading error.
@@ -161,26 +167,19 @@ jobs:
           # Structured reports only — omit raw pytest/tool logs that may carry
           # connection strings or env-derived secrets from integration fixtures.
           path: |
-            flext-core/.reports/**/junit.xml
-            flext-core/.reports/**/coverage.xml
-            flext-core/.reports/**/coverage.json
-            flext-core/.reports/**/audit-summary.json
-            flext-core/.reports/**/audit-report.md
-            flext-core/.reports/**/validate-summary.json
-            flext-core/.reports/**/validate-report.md
-            flext-core/.reports/check/**/*.sarif
-            flext-core/.reports/check/**/*.md
-            flext-core/.reports/gates/**/original-receipt.json
-            flext-core/.reports/gates/**/check/**/*.sarif
-            flext-core/.reports/gates/**/check/**/*.md
-            flext-core/.reports/codegen-plan.json
-            flext-core/.reports/codegen-publication.json
-            flext-core/.reports/codegen-publication/**/*.json
-            flext-core/.reports/setup-operations/*.json
-            flext-core/.reports/tests/**/*.json
-            flext-core/.reports/tests/**/summary.txt
-            flext-core/.reports/tests/**/failed-tests.txt
-            flext-core/.reports/tests/**/errors.txt
+            .reports/**/audit-summary.json
+            .reports/**/audit-report.md
+            .reports/**/validate-summary.json
+            .reports/**/validate-report.md
+            .reports/check/**/*.sarif
+            .reports/check/**/*.md
+            .reports/gates/**/original-receipt.json
+            .reports/gates/**/check/**/*.sarif
+            .reports/gates/**/check/**/*.md
+            .reports/codegen-plan.json
+            .reports/codegen-publication.json
+            .reports/codegen-publication/**/*.json
+            .reports/setup-operations/*.json
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -189,11 +188,11 @@ jobs:
       # rows capture receipts, so the upload runs exactly when one of them
       # failed (tests included), never after a setup failure that left none.
       - name: Upload gate receipts on failure
-        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure') }}
+        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure' || steps.qualification-check.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-gate-receipts-${{ github.job }}-${{ github.run_id }}
-          path: flext-core/.reports/gates/**
+          path: .reports/gates/**
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
@@ -202,10 +201,13 @@ jobs:
       # after a failing gate as well, so the next run starts warm.
       - name: Save tool caches
         # Native cache action access mode remains authoritative before upload.
-        # Only declared events may publish; fork requests remain restore-only.
-        # An exact hit already holds this lock state: save only on a miss.
+        # Only branch pushes and explicit dispatch publish. A pull request
+        # restores only: its entry is scoped to refs/pull/N/merge, visible to no
+        # other ref, so saving it stored one ~700 MB copy of the same lock state
+        # per PR until the repository quota evicted the integration branch's
+        # entry. An exact hit already holds this lock state: save only on a miss.
         if: >-
-          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-hit != 'true' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)) }}
+          ${{ always() && !cancelled() && steps.tool-cache.outcome == 'success' && steps.tool-cache.outputs.cache-hit != 'true' && steps.tool-cache.outputs.cache-primary-key != '' && ((github.event_name == 'push' && startsWith(github.ref, 'refs/heads/')) || github.event_name == 'workflow_dispatch') }}
         uses: actions/cache/save@v6
         with:
           path: |

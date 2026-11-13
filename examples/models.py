@@ -24,10 +24,10 @@ from examples._models import (
     ExamplesFlextModelsHandle,
     ExamplesFlextModelsPerson,
 )
-from flext_core import m as flext_core_m
+from flext_core import FlextModels
 
 
-class ExamplesFlextModels(flext_core_m):
+class ExamplesFlextModels(FlextModels):
     """Public examples model facade — composes all _models/* via MRO."""
 
     class Examples(

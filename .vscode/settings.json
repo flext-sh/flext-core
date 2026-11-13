@@ -116,14 +116,14 @@
   "markdownlint.configFile": ".markdownlint.json",
   "mypy-type-checker.cwd": "${nearestConfig}",
   "mypy-type-checker.interpreter": [
-    "${workspaceFolder}/../.venv/bin/python"
+    "${workspaceFolder}/.venv/bin/python"
   ],
   "mypy-type-checker.path": [
     "${interpreter}",
     "-m",
     "mypy"
   ],
-  "pyrefly.lspPath": "${workspaceFolder}/../.venv/bin/pyrefly",
+  "pyrefly.lspPath": "${workspaceFolder}/.venv/bin/pyrefly",
   "python-envs.workspaceSearchPaths": [
     "./.venv"
   ],
@@ -165,7 +165,7 @@
   "python.analysis.useNearestConfiguration": false,
   "python.analysis.usePerProjectEnvironments": false,
   "python.analysis.userFileIndexingLimit": -1,
-  "python.defaultInterpreterPath": "${workspaceFolder}/../.venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
   "python.languageServer": "Pylance",
   "python.pyrefly.diagnosticMode": "workspace",
   "python.pyrefly.disableLanguageServices": true,
@@ -180,11 +180,11 @@
   "ruff.format.preview": true,
   "ruff.importStrategy": "fromEnvironment",
   "ruff.interpreter": [
-    "${workspaceFolder}/../.venv/bin/python"
+    "${workspaceFolder}/.venv/bin/python"
   ],
   "ruff.lint.preview": true,
   "ruff.path": [
-    "${workspaceFolder}/../.venv/bin/ruff"
+    "${workspaceFolder}/.venv/bin/ruff"
   ],
   "search.exclude": {
     "**/*.bak": true,
@@ -240,8 +240,8 @@
   "shellcheck.useWorkspaceRootAsCwd": true,
   "telemetry.feedback.enabled": false,
   "terminal.integrated.env.linux": {
-    "PATH": "${workspaceFolder}/../.venv/bin:${env:PATH}",
-    "VIRTUAL_ENV": "${workspaceFolder}/../.venv"
+    "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
+    "VIRTUAL_ENV": "${workspaceFolder}/.venv"
   },
   "yaml.disableSchemaDetection": [
     "**/.github/workflows/*.yml",

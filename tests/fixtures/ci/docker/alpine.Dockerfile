@@ -39,6 +39,16 @@ RUN --mount=type=bind,source=.,target=/source,ro \
     && chown -R runner:runner /workspace
 COPY --from=git --chown=runner:runner . /workspace/.git/
 USER runner
+# Git metadata may arrive from a checkout or a committed bare snapshot.
+# Bind its machine-local worktree path to this container; only the bare
+# input needs an index and the files omitted by the Docker build context.
+RUN metadata_bare="$(git --git-dir=/workspace/.git rev-parse --is-bare-repository)" \
+    && git config --file /workspace/.git/config core.bare false \
+    && git config --file /workspace/.git/config core.worktree /workspace \
+    && if [ "$metadata_bare" = true ]; then \
+         git read-tree HEAD \
+         && git ls-files --deleted -z | git checkout-index -z --stdin; \
+       fi
 # End SECTION: native mise bootstrap
 
 # === SECTION: bootstrap proof (managed) ===

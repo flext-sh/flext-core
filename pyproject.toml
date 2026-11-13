@@ -183,22 +183,7 @@ optional_dependencies_dev_groups = []
 [tool.mypy]
 allow_redefinition = true
 check_untyped_defs = true
-disable_error_code = [
-  "call-arg",
-  "prop-decorator",
-  "arg-type",
-  "assignment",
-  "attr-defined",
-  "has-type",
-  "list-item",
-  "misc",
-  "name-defined",
-  "no-any-return",
-  "override",
-  "unreachable",
-  "valid-type",
-  "var-annotated",
-]
+disable_error_code = ["call-arg", "prop-decorator"]
 exclude = "(?s:(?:.+/)?[^/]*\\.bak)\\Z|(?s:(?:.+/)?[^/]*\\.egg\\-info/.*)\\Z|(?s:(?:.+/)?[^/]*\\.orig)\\Z|(?s:(?:.+/)?[^/]*\\.rej)\\Z|(?s:(?:.+/)?[^/]*\\.swp)\\Z|(?s:(?:.+/)?\\.agents\\-sync\\-home/.*)\\Z|(?s:(?:.+/)?\\.agents/.*)\\Z|(?s:(?:.+/)?\\.archive/.*)\\Z|(?s:(?:.+/)?\\.beads/.*)\\Z|(?s:(?:.+/)?\\.benchmarks/.*)\\Z|(?s:(?:.+/)?\\.bkp/.*)\\Z|(?s:(?:.+/)?\\.cache/.*)\\Z|(?s:(?:.+/)?\\.claude/.*)\\Z|(?s:(?:.+/)?\\.codex/.*)\\Z|(?s:(?:.+/)?\\.cursor/.*)\\Z|(?s:(?:.+/)?\\.gemini/.*)\\Z|(?s:(?:.+/)?\\.git/.*)\\Z|(?s:(?:.+/)?\\.hypothesis/.*)\\Z|(?s:(?:.+/)?\\.kilo/.*)\\Z|(?s:(?:.+/)?\\.mypy_cache/.*)\\Z|(?s:(?:.+/)?\\.omo/.*)\\Z|(?s:(?:.+/)?\\.opencode/.*)\\Z|(?s:(?:.+/)?\\.pylance_cache/.*)\\Z|(?s:(?:.+/)?\\.pyrefly_cache/.*)\\Z|(?s:(?:.+/)?\\.pytest_cache/.*)\\Z|(?s:(?:.+/)?\\.reports/.*)\\Z|(?s:(?:.+/)?\\.ruff_cache/.*)\\Z|(?s:(?:.+/)?\\.serena/.*)\\Z|(?s:(?:.+/)?\\.snapshots/.*)\\Z|(?s:(?:.+/)?\\.test\\-tmp/.*)\\Z|(?s:(?:.+/)?\\.tmp/.*)\\Z|(?s:(?:.+/)?\\.tox/.*)\\Z|(?s:(?:.+/)?\\.venv\\.[^/]*/.*)\\Z|(?s:(?:.+/)?\\.venv/.*)\\Z|(?s:(?:.+/)?\\.vscode/.*)\\Z|(?s:(?:.+/)?\\.worktrees/.*)\\Z|(?s:(?:.+/)?__pycache__/.*)\\Z|(?s:(?:.+/)?__pyrefly_virtual__/.*)\\Z|(?s:(?:.+/)?_tmp_[^/]*/.*)\\Z|(?s:(?:.+/)?build/.*)\\Z|(?s:(?:.+/)?dist\\-packages/.*)\\Z|(?s:(?:.+/)?dist/.*)\\Z|(?s:(?:.+/)?htmlcov/.*)\\Z|(?s:(?:.+/)?incoming/.*)\\Z|(?s:(?:.+/)?legado/.*)\\Z|(?s:(?:.+/)?node_modules/.*)\\Z|(?s:(?:.+/)?reports/.*)\\Z|(?s:(?:.+/)?site\\-packages/.*)\\Z|(?s:(?:.+/)?site/.*)\\Z|(?s:(?:.+/)?target/.*)\\Z|(?s:(?:.+/)?tests/fixtures/.*)\\Z|(?s:(?:.+/)?venv/.*)\\Z|(?s:\\.github/agents/.*)\\Z|(?s:\\.github/hooks/.*)\\Z|(?s:\\.github/instructions/.*)\\Z|(?s:\\.github/skills/.*)\\Z"
 explicit_package_bases = false
 extra_checks = true
@@ -475,7 +460,7 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 useLibraryCodeForTypes = true
 venv = ".venv"
-venvPath = ".."
+venvPath = "."
 
 [[tool.pyright.executionEnvironments]]
 extraPaths = ["src", "."]
@@ -520,6 +505,7 @@ markers = [
   "slow: slow-running tests",
   "docker: tests requiring Docker",
   "oracle: tests requiring the shared Oracle database",
+  "ldap: tests requiring the shared LDAP service",
   "remote: tests requiring remote/external network services",
   "e2e: end-to-end integration tests",
   "edge_cases: edge case tests",
@@ -651,8 +637,14 @@ known-first-party = ["flext_core"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/_protocols/**" = ["invalid-function-name"]
+"**/_protocols/**" = ["invalid-function-name", "too-many-public-methods"]
 "**/_protocols/pydantic.py" = ["too-many-arguments"]
+"scripts/**/*.py" = [
+  "commented-out-code",
+  "invalid-module-name",
+  "line-too-long",
+]
+"tests/**/*.py" = ["assert"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
@@ -693,9 +685,10 @@ constraint-dependencies = [
   "uv>=0.13.4",
 ]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
+exclude-newer = "P10D"
 link-mode = "clone"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@41b960329bb0c189be872f24ebe81bbeabfe5a66",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@bc2b0450c2a05f955ad5eaa52e8571b17614c9a8",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
