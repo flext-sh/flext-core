@@ -186,6 +186,44 @@ class TestsFlextCoreLazyMembers:
             tm.that(vars(standin)["VALUE"], eq=7)
             tm.ok(isinstance(vars(standin)["who"], classmethod))
 
+    def test_stale_stand_in_reads_an_unlisted_member_from_its_class(
+        self,
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """A member the generated list omits still resolves on the stand-in itself.
+
+        A stale initializer lists fewer members than the source declares; a
+        direct read of the missing member loads the class, while a class
+        composed from the stand-in keeps the ordinary lookup.
+        """
+        module = self._deferred_capability(fixture_tree, tmp_path)
+        with tm.scope(python_paths=[str(tmp_path)]):
+            package_globals: t.ModuleGlobals = {}
+            resolve, _ = install_lazy_exports(
+                "lazy_deferred_stale_consumer",
+                package_globals,
+                {"Capability": (module, "Capability")},
+                deferred_members={"Capability": ("VALUE",)},
+            )
+            standin = cast("type", resolve("Capability"))
+            namespace = type("Namespace", (standin,), {})
+            # The behavior under test is resolution by name, as a stale
+            # initializer's consumer reads it, so every read names its member.
+            unlisted = ("twice", "who", "absent")
+            with u.Tests.raises(AttributeError, match=unlisted[0]):
+                getattr(namespace, unlisted[0])
+            tm.fail(module in sys.modules)
+            tm.that(getattr(standin, unlisted[0])(3), eq=6)
+            tm.that(getattr(standin, unlisted[1])(), eq="Capability")
+            tm.ok(module in sys.modules)
+            tm.ok(isinstance(vars(standin)[unlisted[1]], classmethod))
+            tm.that(getattr(namespace, unlisted[0])(4), eq=8)
+            with u.Tests.raises(
+                AttributeError, match="'Capability' has no attribute 'absent'"
+            ):
+                getattr(standin, unlisted[2])
+
     @staticmethod
     def test_deferred_name_without_class_export_fails_at_install() -> None:
         """Deferring a name the lazy map does not export is a generator defect."""
