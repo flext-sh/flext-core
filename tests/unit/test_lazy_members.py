@@ -303,8 +303,11 @@ class TestsFlextCoreLazyMembers:
                 deferred_members={"Capability": ()},
             )
             namespace = type("Namespace", (cast("type", resolve("Capability")),), {})
+            # No member is listed, so the read resolves by name, as a consumer
+            # of the generated stand-in reads it.
+            unlisted = ("twice",)
             tm.fail(module in sys.modules)
-            tm.that(namespace.twice(2), eq=4)
+            tm.that(getattr(namespace, unlisted[0])(2), eq=4)
             tm.ok(module in sys.modules)
 
     @staticmethod
