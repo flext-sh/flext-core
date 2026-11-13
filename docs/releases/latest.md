@@ -12,6 +12,7 @@
 
 ## Pull requests since last release
 
+perf(result): hold each parametrized result class strongly (#778)
 feat(lazy): defer a configuration root to its first attribute read (#777)
 Merge branch '0.12.0-dev' into perf/lazy-instance-export-20261113
 fix(lazy): a facade composed from a stand-in resolves an unlisted member (#776)
