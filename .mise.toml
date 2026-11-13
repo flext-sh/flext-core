@@ -16,6 +16,9 @@
 # mise.lock. Setup always bootstraps: `mise install` honors every locked entry
 # and records any entry the lock is missing, so lock drift never blocks setup.
 
+# The pinned release is the floor of the shared acquisition executable.
+min_version = "2026.10.3"
+
 # === SECTION: settings (managed) ===
 # Source: config:codegen.toolchain.mise_lockfile / mise_activate_aggressive / mise_lockfile_platforms /
 #         dependency_cooldown_days (one fleet supply-chain cooldown, operator 2026-10-01)
