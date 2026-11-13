@@ -12,6 +12,7 @@ from types import ModuleType
 from typing import TYPE_CHECKING
 
 from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
+from flext_core.flextlazy_instance import FlextLazyInstance
 from flext_core.flextlazy_member import FlextLazyMember
 
 if TYPE_CHECKING:
@@ -69,6 +70,38 @@ class FlextLazyExports(FlextLazyBootstrap):
         standin = self.deferred(module_path, attr, members)
         module_globals[name] = standin
         return standin
+
+    def defer_instances(
+        self,
+        module_name: str,
+        module_globals: t.ModuleGlobals,
+        names: Sequence[str],
+    ) -> None:
+        """Publish each named configuration root as a ``FlextLazyInstance``.
+
+        Runs after ``install`` on the same globals. A published stand-in is a
+        plain global, so the lazy ``__getattr__`` never loads its module;
+        the first attribute read publishes the root through its module.
+
+        Raises:
+            TypeError: If the globals hold no installed lazy map.
+            ValueError: If a root is not an export of the installed lazy map.
+
+        """
+        lazy_imports = module_globals.get("_LAZY_IMPORTS")
+        if not isinstance(lazy_imports, Mapping):
+            msg = f"module {module_name!r} defers instances before installing exports"
+            raise TypeError(msg)
+        for name in names:
+            entry = lazy_imports.get(name)
+            if entry is None:
+                msg = (
+                    f"module {module_name!r} defers instance {name!r} "
+                    "it does not export"
+                )
+                raise ValueError(msg)
+            module_path, attr = (entry, name) if isinstance(entry, str) else entry
+            module_globals[name] = FlextLazyInstance(module_path, attr, self.load)
 
     @staticmethod
     def _require_deferred(

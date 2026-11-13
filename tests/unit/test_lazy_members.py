@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, cast
 
 from flext_core import (
     FlextLazyMember,
+    defer_lazy_instances,
     install_lazy_exports,
     lazy_member,
     resolve_lazy_members,
@@ -185,6 +186,62 @@ class TestsFlextCoreLazyMembers:
             tm.ok(module in sys.modules)
             tm.that(vars(standin)["VALUE"], eq=7)
             tm.ok(isinstance(vars(standin)["who"], classmethod))
+
+    _ROOT_SOURCE = (
+        "class Root:\n"
+        "    def __init__(self) -> None:\n"
+        "        self.Infra = 'first'\n"
+        "\n"
+        "root = Root()\n"
+    )
+
+    def test_deferred_instance_publishes_its_root_on_first_read(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """Importing the root builds nothing; reads forward to the live root."""
+        module = self._package(tmp_path, self._ROOT_SOURCE)
+        with tm.scope(python_paths=[str(tmp_path)]):
+            package_globals: t.ModuleGlobals = {}
+            install_lazy_exports(
+                "lazy_instance_consumer",
+                package_globals,
+                {"root": (module, "root")},
+            )
+            defer_lazy_instances("lazy_instance_consumer", package_globals, ("root",))
+            standin = package_globals["root"]
+            tm.fail(module in sys.modules)
+            tm.that(standin, attr_eq={"Infra": "first"})
+            tm.ok(module in sys.modules)
+            # An in-place reload of the root stays visible to the importer.
+            vars(sys.modules[module])["root"].Infra = "reloaded"
+            tm.that(standin, attr_eq={"Infra": "reloaded"})
+
+    def test_deferred_instance_failure_keeps_nothing(self, tmp_path: Path) -> None:
+        """A root module whose body fails propagates with its cause."""
+        module = self._package(
+            tmp_path,
+            'msg = "stale body"\nraise AttributeError(msg)\n',
+        )
+        with tm.scope(python_paths=[str(tmp_path)]):
+            package_globals: t.ModuleGlobals = {}
+            install_lazy_exports(
+                "lazy_instance_broken",
+                package_globals,
+                {"root": (module, "root")},
+            )
+            defer_lazy_instances("lazy_instance_broken", package_globals, ("root",))
+            with u.Tests.raises(ImportError, match="cannot load") as caught:
+                tm.that(package_globals["root"], attr_eq={"Infra": "first"})
+            tm.that(isinstance(caught.value.__cause__, AttributeError), truth=True)
+
+    @staticmethod
+    def test_deferred_instance_without_export_fails() -> None:
+        """Deferring a root the lazy map does not export is a generator defect."""
+        package_globals: t.ModuleGlobals = {}
+        install_lazy_exports("lazy_instance_invalid", package_globals, {})
+        with u.Tests.raises(ValueError, match="does not export"):
+            defer_lazy_instances("lazy_instance_invalid", package_globals, ("root",))
 
     @staticmethod
     def test_deferred_name_without_class_export_fails_at_install() -> None:
