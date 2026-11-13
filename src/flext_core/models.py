@@ -13,6 +13,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+from typing import TypeAlias
+
 from flext_core._models import (
     FlextModelsBase,
     FlextModelsBuilder,
@@ -80,6 +82,11 @@ class FlextModels(
     Pydantic v2 integration supplies BaseModel validation, computed fields,
     and JSON-ready serialization for all exported types.
     """
+
+    Base: TypeAlias = FlextModelsBuilder.Base
+    Identity: TypeAlias = FlextModelsBuilder.Identity
+    ParseOptions: TypeAlias = FlextModelsConfig.ParseOptions
+    RootModel: TypeAlias = FlextModelsPydantic.RootModel
 
 
 m = FlextModels

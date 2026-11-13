@@ -8,21 +8,45 @@ from __future__ import annotations
 
 from inspect import getattr_static
 from types import MethodType
+from typing import Annotated, ClassVar
+from warnings import deprecated
 
 from flext_core import c, m, p, r
 from flext_core._utilities import FlextUtilitiesModel, FlextUtilitiesModelOptions
 
 
-class FlextUtilitiesModelRuntime(
-    FlextUtilitiesModelOptions,
-    m,
-):
+class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     """Runtime DSL: registry comparison, plugin keys and settings election.
 
     Dispatcher, registry and service-runtime construction belong to their
     owner classes (``FlextDispatcher``, ``FlextRegistry.create``,
     ``FlextContainer.build_service_runtime``), never to this layer.
     """
+
+    # Utilities never carry the models family. These models were reachable
+    # as u.<Name> only while this part inherited m; each marked pass-through
+    # keeps such a read working, and the compat census reports and rewires
+    # it to m.<Name>. They stay until the census, external consumers
+    # included, reaches zero. A Pydantic model composing u sees them as
+    # class variables, never fields.
+    Project: Annotated[
+        ClassVar,
+        deprecated(
+            "compat: u.Project -> m.Project; fix: read through m",
+        ),
+    ] = m.Project
+    PyprojectDocument: Annotated[
+        ClassVar,
+        deprecated(
+            "compat: u.PyprojectDocument -> m.PyprojectDocument; fix: read through m",
+        ),
+    ] = m.PyprojectDocument
+    Value: Annotated[
+        ClassVar,
+        deprecated(
+            "compat: u.Value -> m.Value; fix: read through m",
+        ),
+    ] = m.Value
 
     @staticmethod
     def registry_same_value(
