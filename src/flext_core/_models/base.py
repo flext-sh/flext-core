@@ -31,6 +31,7 @@ class FlextModelsBase:
 
         model_config: ClassVar[ConfigDict] = ConfigDict(
             extra=c.EXTRA_CONFIG_FORBID,
+            defer_build=c.MODEL_DEFER_BUILD,
             use_enum_values=c.MODEL_USE_ENUM_VALUES,
             validate_default=c.MODEL_VALIDATE_DEFAULT,
         )
