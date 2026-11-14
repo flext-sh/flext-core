@@ -420,7 +420,7 @@ wheels = [
 [[package]]
 name = "flext-cli"
 version = "0.12.1"
-source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#7b13e7f62d70735312910c6302843becfe86a023" }
+source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#e57f58f47345ca0762cbc77ba207dac704834de2" }
 dependencies = [
     { name = "click" },
     { name = "defusedxml" },
@@ -602,7 +602,7 @@ dev = [
 [[package]]
 name = "flext-infra"
 version = "0.12.1"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#78cc77f2c0510a143dd85bb18748c28e787894ad" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#273569a2829c167a32b759f6d6002d5008d5cfc6" }
 dependencies = [
     { name = "defusedxml" },
     { name = "flext-cli" },
@@ -626,7 +626,7 @@ dependencies = [
 [[package]]
 name = "flext-tests"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#9f8d2c6b40bbfb28dfdc1c8c8ac1c9ee890c5d30" }
+source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#ae5ea8711a08c060f9a3df539c788fddcb437564" }
 dependencies = [
     { name = "docker" },
     { name = "flext-cli" },
