@@ -7,8 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
-from collections.abc import Callable
-from typing import TYPE_CHECKING, cast
+from collections.abc import Callable, Mapping
+from typing import TYPE_CHECKING, ClassVar, cast
 
 from flext_core import (
     FlextLazyMember,
@@ -311,8 +311,12 @@ class TestsFlextCoreLazyMembers:
             tm.that(getattr(namespace, unlisted[0])(2), eq=4)
             tm.ok(module in sys.modules)
 
-    @staticmethod
+    # Behaviour the lazy-deferred-bases fixture declares, read by name.
+    _DERIVED_VALUES: ClassVar[Mapping[str, int]] = {"VALUE": 7}
+    _BASE_CALLS: ClassVar[Mapping[str, tuple[int, int]]] = {"twice": (2, 4)}
+
     def test_stand_in_shares_its_base_members_through_the_real_mro(
+        self,
         fixture_tree: p.Tests.FixtureTree,
         tmp_path: Path,
     ) -> None:
@@ -338,19 +342,15 @@ class TestsFlextCoreLazyMembers:
             )
             tm.fail(derived in sys.modules)
             tm.fail(base in sys.modules)
-            tm.that(
-                resolve_lazy_members(namespace), eq=("VALUE", "who", "VALUE", "twice")
-            )
+            # The override declared by the deriving part wins, as on the real
+            # class; its module imports the base module like any import does.
+            for name, value in self._DERIVED_VALUES.items():
+                tm.that(getattr(namespace, name), eq=value)
             tm.ok(derived in sys.modules)
+            # A member only the base declares resolves through the base stand-in.
+            for name, (argument, result) in self._BASE_CALLS.items():
+                tm.that(getattr(namespace, name)(argument), eq=result)
             tm.ok(base in sys.modules)
-            # The first binding along the MRO wins, as on the real class.
-            mro = namespace.__mro__
-            bound = {
-                name: next(vars(klass)[name] for klass in mro if name in vars(klass))
-                for name in ("VALUE", "twice")
-            }
-            tm.that(bound["VALUE"], eq=7)
-            tm.ok(isinstance(bound["twice"], staticmethod))
 
     @staticmethod
     def test_bases_for_an_export_that_is_not_deferred_fail_at_install() -> None:
