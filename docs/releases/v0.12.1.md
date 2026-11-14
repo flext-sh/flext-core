@@ -1,5 +1,13 @@
 # Release v0.12.1
 
+<!-- TOC START -->
+
+- [Scope](#scope)
+- [Projects impacted](#projects-impacted)
+- [Pull requests since last release](#pull-requests-since-last-release)
+
+<!-- TOC END -->
+
 ## Scope
 
 - Release version: 0.12.1
@@ -255,7 +263,7 @@
 - fix(core): restore the keyword constructors and YAML source that #516 broke
   (flext-hbq7n) (#543)
 - fix(core): relock onto the current flext-cli (fixes the red tip) (#532)
-- Recovery/p0 20260927/fleet closure lanes  core regen  flext core (#515)
+- Recovery/p0 20260927/fleet closure lanes core regen flext core (#515)
 - fix(core): cure 19 runtime-census findings + strict pydantic JSON typing (flext-x8799)
   (#534)
 - Fix/exceptions root import cycle 20260929 (#537)
@@ -281,7 +289,7 @@
   (#525)
 - fix(enforcement): report every class past the ENFORCE-069 depth budget (flext-blgw9)
   (#523)
-- Recovery/p0 20260927/flext work  int  flext core (#524)
+- Recovery/p0 20260927/flext work int flext core (#524)
 - \[WIP\] preserve flext-core state from lane flext (#519)
 - fix(enforcement): preserve actual import provenance (#518)
 - docs(agents): render the concrete raw parent URL in the standalone mode header (#522)

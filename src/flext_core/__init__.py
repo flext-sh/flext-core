@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from flext_core.lazy import (
         FlextLazy,
         cleanup_submodule_namespace,
+        defer_lazy_bases,
         defer_lazy_instances,
         lazy,
         lazy_getattr,
@@ -107,6 +108,7 @@ __all__: tuple[str, ...] = (
     "config",
     "core",
     "d",
+    "defer_lazy_bases",
     "defer_lazy_instances",
     "e",
     "h",
@@ -173,6 +175,7 @@ install_lazy_exports(
         "config": "._config",
         "core": ".api",
         "d": ".decorators",
+        "defer_lazy_bases": ".lazy",
         "defer_lazy_instances": ".lazy",
         "e": ".exceptions",
         "h": ".handlers",

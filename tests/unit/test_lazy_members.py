@@ -338,10 +338,19 @@ class TestsFlextCoreLazyMembers:
             )
             tm.fail(derived in sys.modules)
             tm.fail(base in sys.modules)
-            tm.that(namespace.VALUE, eq=7)
+            tm.that(
+                resolve_lazy_members(namespace), eq=("VALUE", "who", "VALUE", "twice")
+            )
             tm.ok(derived in sys.modules)
-            tm.that(namespace.twice(2), eq=4)
             tm.ok(base in sys.modules)
+            # The first binding along the MRO wins, as on the real class.
+            mro = namespace.__mro__
+            bound = {
+                name: next(vars(klass)[name] for klass in mro if name in vars(klass))
+                for name in ("VALUE", "twice")
+            }
+            tm.that(bound["VALUE"], eq=7)
+            tm.ok(isinstance(bound["twice"], staticmethod))
 
     @staticmethod
     def test_bases_for_an_export_that_is_not_deferred_fail_at_install() -> None:
