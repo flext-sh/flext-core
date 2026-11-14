@@ -35,6 +35,8 @@ install_lazy_exports = lazy.install
 """Convenience alias for installing lazy exports into a module."""
 defer_lazy_instances = lazy.defer_instances
 """Publish configuration roots as stand-ins built on first attribute read."""
+defer_lazy_bases = lazy.defer_bases
+"""Give deferred exports the stand-ins of their real deferred bases."""
 
 __all__ = (
     "FlextLazy",
@@ -42,6 +44,7 @@ __all__ = (
     "FlextLazyMember",
     "build_lazy_import_map",
     "cleanup_submodule_namespace",
+    "defer_lazy_bases",
     "defer_lazy_instances",
     "install_lazy_exports",
     "lazy",

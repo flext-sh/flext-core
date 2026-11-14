@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from importlib.util import resolve_name
 from types import ModuleType
 from typing import TYPE_CHECKING
 
@@ -34,12 +35,20 @@ class FlextLazyExports(FlextLazyBootstrap):
         """
         return FlextLazyMember(module, owner, member, self.load)
 
-    def deferred(self, module: str, owner: str, members: Sequence[str]) -> type:
+    def deferred(
+        self,
+        module: str,
+        owner: str,
+        members: Sequence[str],
+        bases: tuple[type, ...] = (),
+    ) -> type:
         """Return a stand-in for ``module.owner`` whose members load on first use.
 
         Every member is a ``FlextLazyMember`` descriptor, so composing the
         stand-in by MRO imports nothing. The first member access loads
-        ``module`` and caches the real member on the stand-in.
+        ``module`` and caches the real member on the stand-in. ``bases`` are
+        the stand-ins of the real class's deferred bases, in its base order, so
+        the stand-in lists only its own members and C3 reproduces the real MRO.
 
         Returns:
             A class named ``owner`` that defers each of ``members``.
@@ -53,13 +62,14 @@ class FlextLazyExports(FlextLazyBootstrap):
             "__flext_lazy_target__": (module, owner, self.load),
         }
         namespace.update({name: self.member(module, owner, name) for name in members})
-        return FlextLazyStandIn(owner, (), namespace)
+        return FlextLazyStandIn(owner, bases, namespace)
 
     def _deferred_export(
         self,
         name: str,
         lazy_imports: Mapping[str, str | tuple[str, str]],
         members: Sequence[str],
+        bases: Sequence[type],
         module_globals: t.ModuleGlobals,
     ) -> type:
         """Publish the stand-in of one deferred export into its package globals.
@@ -70,9 +80,40 @@ class FlextLazyExports(FlextLazyBootstrap):
         """
         entry = lazy_imports[name]
         module_path, attr = (entry, name) if isinstance(entry, str) else entry
-        standin = self.deferred(module_path, attr, members)
+        standin = self.deferred(module_path, attr, members, tuple(bases))
         module_globals[name] = standin
         return standin
+
+    def _deferred_base(
+        self,
+        module_name: str,
+        base: tuple[str, str],
+        own_getattr: Callable[[str], t.ModuleGlobalValue],
+    ) -> type:
+        """Return the stand-in that the initializer exporting ``base`` publishes.
+
+        ``base`` is ``(package, name)``; ``"."`` names the installing package,
+        read through its own lazy hook so synthetic namespaces resolve too.
+        Another package loads through ``load``, whose hook publishes its
+        stand-in without loading the part module.
+
+        Returns:
+            The base stand-in class.
+
+        Raises:
+            TypeError: If the exporting initializer does not publish a class.
+
+        """
+        package, attr = base
+        value = (
+            own_getattr(attr)
+            if package == "."
+            else getattr(self.load(resolve_name(package, module_name)), attr)
+        )
+        if not isinstance(value, type):
+            msg = f"module {module_name!r} bases a stand-in on non-class {base!r}"
+            raise TypeError(msg)
+        return value
 
     def defer_instances(
         self,
@@ -104,6 +145,28 @@ class FlextLazyExports(FlextLazyBootstrap):
             entry = normalized[name]
             module_path, attr = (entry, name) if isinstance(entry, str) else entry
             module_globals[name] = FlextLazyInstance(module_path, attr, self.load)
+
+    def defer_bases(
+        self,
+        module_name: str,
+        bases: Mapping[str, Sequence[tuple[str, str]]],
+    ) -> None:
+        """Give deferred exports the stand-ins of their real deferred bases.
+
+        Runs after ``install`` of the same module. Each base is the
+        ``(package, name)`` export of a real base, in the real class's base
+        order, so the stand-in lists only its own members and C3 reproduces the
+        real MRO. Every name is validated before any effect.
+
+        Raises:
+            ValueError: If a name is not a deferred export of the module.
+
+        """
+        unknown = sorted(set(bases) - self.deferred_names.get(module_name, frozenset()))
+        if unknown:
+            msg = f"module {module_name!r} bases exports it does not defer: {unknown}"
+            raise ValueError(msg)
+        self.deferred_bases[module_name] = bases
 
     @staticmethod
     def _require_deferred(
@@ -287,6 +350,8 @@ class FlextLazyExports(FlextLazyBootstrap):
         ``deferred_members`` maps a class export to its member names. That
         export resolves to its ``deferred`` stand-in without loading its
         module, so a facade composing it loads no heavy capability.
+        ``defer_bases`` may then give a deferred export the stand-ins of its
+        real deferred bases.
 
         Returns:
             The installed PEP 562 hooks, reused for identical installation inputs.
@@ -305,6 +370,8 @@ class FlextLazyExports(FlextLazyBootstrap):
         normalized = self._norm_map(module_name, lazy_imports)
         deferred = {} if deferred_members is None else deferred_members
         self._require_deferred(module_name, normalized, deferred)
+        self.deferred_names[module_name] = frozenset(deferred)
+        self.deferred_bases.pop(module_name, None)
         for name in normalized:
             module_globals.pop(name, None)
         if public_exports is not None:
@@ -317,7 +384,18 @@ class FlextLazyExports(FlextLazyBootstrap):
         def _module_getattr(name: str) -> t.ModuleGlobalValue:
             members = deferred.get(name)
             if members is not None:
-                return self._deferred_export(name, normalized, members, module_globals)
+                return self._deferred_export(
+                    name,
+                    normalized,
+                    members,
+                    [
+                        self._deferred_base(module_name, base, _module_getattr)
+                        for base in self.deferred_bases.get(module_name, {}).get(
+                            name, ()
+                        )
+                    ],
+                    module_globals,
+                )
             return self.get(name, normalized, module_globals, module_name)
 
         def _module_dir() -> list[str]:
