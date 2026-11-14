@@ -90,18 +90,6 @@ class FlextModelsProjectMetadataFields:
                 ),
             ),
         ] = None
-        tests: Annotated[
-            t.JsonMapping | None,
-            Field(
-                default=None,
-                description=(
-                    "Project-owned test runner policy read by the flext-infra "
-                    "pytest runner from ``[tool.flext.project.tests]``, such as "
-                    "the measured ``parallel-workers`` ceiling, so a consumer "
-                    "declares its own value instead of the fleet config naming it."
-                ),
-            ),
-        ] = None
 
     class ProjectToolFlextReadmeSection(FlextModelsProjectMetadataContract):
         """One ordered project README section declaration."""
