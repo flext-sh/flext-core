@@ -24,7 +24,10 @@ class TestsFlextCoreUtilitiesModelsFamily:
     def test_model_composing_utilities_has_no_type_alias_fields() -> None:
         """``FlextContext`` builds and none of its fields is a ``TypeAlias``."""
         annotations = [field.annotation for field in FlextContext.model_fields.values()]
-        tm.that(TypeAlias in annotations, eq=False)
+        tm.that(
+            any(id(annotation) == id(TypeAlias) for annotation in annotations),
+            eq=False,
+        )
         tm.that("PyprojectDocument" in FlextContext.model_fields, eq=False)
 
 
