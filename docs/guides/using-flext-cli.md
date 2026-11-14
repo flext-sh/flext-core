@@ -124,9 +124,8 @@ directly. This independent example constructs and invokes a real model-backed co
 handlers return their value but do not automatically print it.
 
 ```python
-from tests import c, m, tm
-
 from flext_cli import FlextCliCli
+from tests import c, m, tm
 
 
 class GreetInput(m.BaseModel):

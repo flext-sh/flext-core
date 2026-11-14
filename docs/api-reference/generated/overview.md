@@ -23,7 +23,7 @@
 - Alias exports: `c`, `d`, `e`, `h`, `m`, `p`, `r`, `s`, `t`, `u`, `x`
 - Public symbol exports: `FlextCli`, `FlextConfig`, `FlextConstants`, `FlextContainer`,
   `FlextContext`, `FlextCore`, `FlextDecoratorsRuntime`, `FlextDispatcher`,
-  `FlextExceptions`, `FlextHandlers` (+32 more)
+  `FlextExceptions`, `FlextHandlers` (+33 more)
 - Exported module shortcuts: `lazy`
 - Generated module pages: `25`
 
