@@ -66,7 +66,7 @@ class FlextUtilitiesFamilySurface:
         A distribution's import name is the top-level package it ships, which
         diverges from the normalized distribution name whenever the project
         brands its distribution differently from the package inside it (e.g.
-        ``datacosmos-backup`` shipping ``dc_backup``). Importing the naive
+        ``acme-backup`` shipping ``acme_bkp``). Importing the naive
         normalized name crashes the whole family-surface derivation for such
         consumers, so the importlib.metadata package-to-distribution index is
         the authority and the normalized name is only the fallback.

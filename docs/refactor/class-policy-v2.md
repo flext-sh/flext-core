@@ -59,5 +59,5 @@
 
 - `expected_base_chain` deriva do classificador de projeto + classes reais
 - Exemplo de cadeia valida:
-  - `AlgarOudMigModels(FlextLdapModels, FlextCliModels)`
+  - `AcmeAppModels(FlextLdapModels, FlextCliModels)`
 - Validacao ocorre no post-check e deve bloquear mismatch de ordem
