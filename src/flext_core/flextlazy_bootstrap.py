@@ -34,6 +34,8 @@ class FlextLazyBootstrap:
         "_import_module",
         "child_lazy_cache",
         "child_merge_cache",
+        "deferred_bases",
+        "deferred_names",
         "install_cache",
         "module_cache",
         "normalized_map_cache",
@@ -65,6 +67,12 @@ class FlextLazyBootstrap:
         ] = {}
         self.install_cache: MutableMapping[
             str, tuple[tuple[int, int, int, int], t.LazyExportHooks]
+        ] = {}
+        # Deferred exports per installed module, and the stand-in bases that
+        # ``defer_bases`` declares for them after ``install``.
+        self.deferred_names: MutableMapping[str, frozenset[str]] = {}
+        self.deferred_bases: MutableMapping[
+            str, Mapping[str, Sequence[tuple[str, str]]]
         ] = {}
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
 

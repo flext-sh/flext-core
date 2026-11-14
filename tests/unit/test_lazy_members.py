@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING, cast
 
 from flext_core import (
     FlextLazyMember,
+    defer_lazy_bases,
     defer_lazy_instances,
     install_lazy_exports,
     lazy_member,
@@ -309,6 +310,49 @@ class TestsFlextCoreLazyMembers:
             tm.fail(module in sys.modules)
             tm.that(getattr(namespace, unlisted[0])(2), eq=4)
             tm.ok(module in sys.modules)
+
+    @staticmethod
+    def test_stand_in_shares_its_base_members_through_the_real_mro(
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """A stand-in lists its own members; its base stand-in supplies the rest."""
+        package = f"lazy_bases_{tmp_path.name.replace('-', '_')}"
+        fixture_tree("lazy-deferred-bases", destination=tmp_path / package)
+        derived, base = f"{package}.derived", f"{package}.bases.base"
+        with tm.scope(python_paths=[str(tmp_path)]):
+            resolve, _ = install_lazy_exports(
+                "lazy_bases_consumer",
+                {},
+                {"Mixin": (derived, "Mixin")},
+                deferred_members={"Mixin": ("VALUE", "who")},
+            )
+            defer_lazy_bases(
+                "lazy_bases_consumer",
+                {"Mixin": ((f"{package}.bases", "Base"),)},
+            )
+            namespace = type("Namespace", (cast("type", resolve("Mixin")),), {})
+            tm.that(
+                [klass.__name__ for klass in namespace.__mro__],
+                eq=["Namespace", "Mixin", "Base", "object"],
+            )
+            tm.fail(derived in sys.modules)
+            tm.fail(base in sys.modules)
+            tm.that(namespace.VALUE, eq=7)
+            tm.ok(derived in sys.modules)
+            tm.that(namespace.twice(2), eq=4)
+            tm.ok(base in sys.modules)
+
+    @staticmethod
+    def test_bases_for_an_export_that_is_not_deferred_fail_at_install() -> None:
+        """Declaring bases for a name the initializer does not defer is a defect."""
+        install_lazy_exports(
+            "lazy_bases_undeclared",
+            {},
+            {"Mixin": ("lazy_bases_undeclared.derived", "Mixin")},
+        )
+        with u.Tests.raises(ValueError, match="bases exports it does not defer"):
+            defer_lazy_bases("lazy_bases_undeclared", {"Mixin": ((".", "Base"),)})
 
     @staticmethod
     def test_deferred_name_without_class_export_fails_at_install() -> None:
