@@ -29,7 +29,7 @@ class TestsFlextCoreUtilitiesFamilySurface:
     def test_consumer_with_family_requirement_is_discovered() -> None:
         """A requirement on a family member makes the consumer a candidate."""
         candidate = u.distribution_in_family_discovery(
-            "cosmos_main",
+            "acme_consumer",
             ("pydantic", "flext_cli"),
         )
         tm.ok(candidate)
@@ -47,7 +47,7 @@ class TestsFlextCoreUtilitiesFamilySurface:
     def test_consumer_without_any_requirement_is_not_discovered() -> None:
         """A dependency-free dist joins only through its own family prefix."""
         candidate = u.distribution_in_family_discovery(
-            "cosmos_main",
+            "acme_consumer",
             (),
         )
         tm.fail(candidate)
