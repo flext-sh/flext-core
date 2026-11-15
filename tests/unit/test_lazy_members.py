@@ -7,8 +7,12 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import sys
+from abc import ABC, abstractmethod
 from collections.abc import Callable, Mapping
-from typing import TYPE_CHECKING, ClassVar, cast
+from dataclasses import dataclass
+from enum import Enum
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar, Protocol, cast, runtime_checkable
 
 from flext_core import (
     FlextLazyMember,
@@ -18,11 +22,9 @@ from flext_core import (
     lazy_member,
     resolve_lazy_members,
 )
-from tests import tm, u
+from tests import c, m, tm, u
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from tests import p, t
 
 
@@ -247,69 +249,287 @@ class TestsFlextCoreLazyMembers:
             )
         tm.fail("root" in package_globals)
 
-    def test_stale_stand_in_reads_an_unlisted_member_from_its_class(
+    def _standin(
         self,
         fixture_tree: p.Tests.FixtureTree,
         tmp_path: Path,
-    ) -> None:
-        """A member the generated list omits resolves on the stand-in and its facade.
+        consumer: str,
+    ) -> tuple[type, str]:
+        """Publish the capability stand-in through a fresh initializer.
 
-        A stale initializer lists fewer members than the source declares. A
-        read of the missing member, on the stand-in or on a facade composed
-        from it, loads the class, so a new helper runs before the initializer
-        that lists it is regenerated.
+        Returns:
+            The stand-in and the dotted path of the module it defers.
+
         """
         module = self._deferred_capability(fixture_tree, tmp_path)
-        with tm.scope(python_paths=[str(tmp_path)]):
-            package_globals: t.ModuleGlobals = {}
-            resolve, _ = install_lazy_exports(
-                "lazy_deferred_stale_consumer",
-                package_globals,
-                {"Capability": (module, "Capability")},
-                deferred_members={"Capability": ("VALUE",)},
-            )
-            standin = cast("type", resolve("Capability"))
-            namespace = type("Namespace", (standin,), {})
-            # The behavior under test is resolution by name, as a stale
-            # initializer's consumer reads it, so every read names its member.
-            unlisted = ("twice", "who", "absent")
-            tm.fail(module in sys.modules)
-            tm.that(getattr(namespace, unlisted[1])(), eq="Namespace")
-            tm.ok(module in sys.modules)
-            tm.ok(isinstance(vars(standin)[unlisted[1]], classmethod))
-            tm.that(getattr(standin, unlisted[1])(), eq="Capability")
-            tm.that(getattr(standin, unlisted[0])(3), eq=6)
-            tm.that(getattr(namespace, unlisted[0])(4), eq=8)
-            with u.Tests.raises(
-                AttributeError, match="'Capability' has no attribute 'absent'"
-            ):
-                getattr(standin, unlisted[2])
-            with u.Tests.raises(
-                AttributeError, match="'Namespace' has no attribute 'absent'"
-            ):
-                getattr(namespace, unlisted[2])
+        resolve, _ = install_lazy_exports(
+            consumer,
+            {},
+            {"Capability": (module, "Capability")},
+            deferred_members={"Capability": ("VALUE", "who")},
+        )
+        return cast("type", resolve("Capability")), module
 
-    def test_member_free_class_composes_without_loading_its_module(
+    @staticmethod
+    def _compose_model_first(standin: type) -> type:
+        class ModelFirst(m.BaseModel, standin):
+            name: str = "model"
+
+        return ModelFirst
+
+    @staticmethod
+    def _compose_model_last(standin: type) -> type:
+        class ModelLast(standin, m.BaseModel):
+            name: str = "model"
+
+        return ModelLast
+
+    @staticmethod
+    def _compose_protocol(standin: type) -> type:
+        @runtime_checkable
+        class Valued(Protocol):
+            VALUE: int
+
+        class Implementing(standin, Valued):
+            pass
+
+        return Implementing
+
+    @staticmethod
+    def _compose_abc(standin: type) -> type:
+        class Abstract(standin, ABC):
+            pass
+
+        return Abstract
+
+    @staticmethod
+    def _compose_metaclass(standin: type) -> type:
+        class Meta(type):
+            pass
+
+        class Authored(standin, metaclass=Meta):
+            pass
+
+        return Authored
+
+    @staticmethod
+    def _compose_generic(standin: type) -> type:
+        class Generic[T](standin):
+            item: T | None = None
+
+        return Generic
+
+    @staticmethod
+    def _compose_enum(standin: type) -> type:
+        class Kind(standin, Enum):
+            FIRST = 1
+
+        return Kind
+
+    @staticmethod
+    def _compose_dataclass(standin: type) -> type:
+        @dataclass
+        class Record(standin):
+            size: int = 0
+
+        return Record
+
+    @c.Tests.MARK.parametrize(
+        "kind",
+        [
+            "model_first",
+            "model_last",
+            "protocol",
+            "abc",
+            "metaclass",
+            "generic",
+            "enum",
+            "dataclass",
+        ],
+    )
+    def test_stand_in_composes_with_every_metaclass_without_loading(
+        self,
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+        kind: str,
+    ) -> None:
+        """A plain-type stand-in composes with any metaclass and loads nothing."""
+        with tm.scope(python_paths=[str(tmp_path)]):
+            standin, module = self._standin(
+                fixture_tree, tmp_path, f"lazy_matrix_{kind}"
+            )
+            tm.ok(type(standin) is type)
+            compose = cast("Callable[[type], type]", getattr(self, f"_compose_{kind}"))
+            derived = compose(standin)
+            tm.ok(issubclass(derived, standin))
+            tm.fail(module in sys.modules)
+            tm.that(vars(standin)["VALUE"], is_=FlextLazyMember)
+            tm.that(derived.VALUE, eq=7)
+            tm.ok(module in sys.modules)
+
+    @staticmethod
+    def _loading_part(
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+        consumer: str,
+        members: tuple[str, ...],
+    ) -> tuple[type, str]:
+        """Publish the stand-in of a part a deriving metaclass reads.
+
+        Returns:
+            The stand-in and the dotted path of the module it defers.
+
+        """
+        package = f"lazy_loads_{tmp_path.name.replace('-', '_')}"
+        fixture_tree("lazy-standin-loads", destination=tmp_path / package)
+        module = f"{package}.part"
+        resolve, _ = install_lazy_exports(
+            consumer, {}, {"Part": (module, "Part")}, deferred_members={"Part": members}
+        )
+        return cast("type", resolve("Part")), module
+
+    @staticmethod
+    def test_abc_resolving_an_abstract_member_loads_the_part(
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """ABCMeta reads the member that implements an abstract method."""
+        with tm.scope(python_paths=[str(tmp_path)]):
+            standin, module = TestsFlextCoreLazyMembers._loading_part(
+                fixture_tree, tmp_path, "lazy_loads_abc", ("who",)
+            )
+
+            class Contract(ABC):
+                @abstractmethod
+                def who(self) -> str: ...
+
+            tm.fail(module in sys.modules)
+
+            concrete = cast(
+                "Callable[[], Contract]", type("Concrete", (standin, Contract), {})
+            )
+            tm.ok(module in sys.modules)
+            tm.that(concrete().who(), eq="Concrete")
+
+    @staticmethod
+    def test_model_reading_model_config_loads_the_part(
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """Pydantic reads ``model_config`` from every base."""
+        with tm.scope(python_paths=[str(tmp_path)]):
+            standin, module = TestsFlextCoreLazyMembers._loading_part(
+                fixture_tree, tmp_path, "lazy_loads_config", ("model_config",)
+            )
+            tm.fail(module in sys.modules)
+
+            class Configured(m.BaseModel, standin):
+                name: str = "model"
+
+            tm.ok(module in sys.modules)
+            tm.that(Configured.model_config.get("frozen"), eq=True)
+
+    @staticmethod
+    def test_model_field_shadowing_a_member_loads_the_part(
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """Pydantic reads a base member that a field of the same name shadows."""
+        with tm.scope(python_paths=[str(tmp_path)]):
+            standin, module = TestsFlextCoreLazyMembers._loading_part(
+                fixture_tree, tmp_path, "lazy_loads_field", ("VALUE",)
+            )
+            tm.fail(module in sys.modules)
+            with u.Tests.warns(UserWarning, match="shadows an attribute"):
+
+                class Shadowing(m.BaseModel, standin):
+                    VALUE: int = 3
+
+            tm.ok(module in sys.modules)
+            tm.that(Shadowing().VALUE, eq=3)
+
+    def test_unlisted_member_is_an_attribute_error_and_loads_nothing(
         self,
         fixture_tree: p.Tests.FixtureTree,
         tmp_path: Path,
     ) -> None:
-        """A part whose body binds nothing still defers its module to first use."""
+        """A stale member index never falls back to the real class."""
+        with tm.scope(python_paths=[str(tmp_path)]):
+            standin, module = self._standin(fixture_tree, tmp_path, "lazy_unlisted")
+            namespace = type("Namespace", (standin,), {})
+            unlisted = "twice"
+            with u.Tests.raises(AttributeError, match=unlisted):
+                getattr(standin, unlisted)
+            with u.Tests.raises(AttributeError, match=unlisted):
+                getattr(namespace, unlisted)
+            tm.fail(module in sys.modules)
+
+    @staticmethod
+    def test_stand_in_without_members_or_bases_fails_when_built() -> None:
+        """A stand-in with neither members nor bases stands for nothing."""
+        resolve, _ = install_lazy_exports(
+            "lazy_deferred_empty",
+            {},
+            {"Capability": ("lazy_deferred_empty.part", "Capability")},
+            deferred_members={"Capability": ()},
+        )
+        with u.Tests.raises(ValueError, match="neither members nor bases"):
+            resolve("Capability")
+
+    def test_base_with_another_metaclass_fails_by_name(
+        self,
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+    ) -> None:
+        """A shared base whose metaclass is not ``type`` fails when resolved."""
         module = self._deferred_capability(fixture_tree, tmp_path)
         with tm.scope(python_paths=[str(tmp_path)]):
             resolve, _ = install_lazy_exports(
-                "lazy_deferred_empty_consumer",
+                "lazy_bad_base",
                 {},
-                {"Capability": (module, "Capability")},
-                deferred_members={"Capability": ()},
+                {"Capability": (module, "Capability"), "Abstract": ("abc", "ABC")},
+                deferred_members={"Capability": ("VALUE",)},
             )
-            namespace = type("Namespace", (cast("type", resolve("Capability")),), {})
-            # No member is listed, so the read resolves by name, as a consumer
-            # of the generated stand-in reads it.
-            unlisted = ("twice",)
-            tm.fail(module in sys.modules)
-            tm.that(getattr(namespace, unlisted[0])(2), eq=4)
-            tm.ok(module in sys.modules)
+            defer_lazy_bases("lazy_bad_base", {"Capability": ((".", "Abstract"),)})
+            with u.Tests.raises(TypeError, match="'Abstract'.*metaclass 'type'"):
+                resolve("Capability")
+
+    _PROBE = (
+        Path(__file__).resolve().parents[1] / "fixtures" / "lazy-eager" / "probe.py"
+    )
+
+    @c.Tests.MARK.parametrize(
+        ("mode", "stdout", "succeeds"),
+        [
+            ("never", "False FlextLazyMember\n", True),
+            ("early", "True int\n", True),
+            ("late", "False FlextLazyMember\n", False),
+        ],
+    )
+    def test_eager_flag_publishes_real_classes_only_when_set_first(
+        self,
+        fixture_tree: p.Tests.FixtureTree,
+        tmp_path: Path,
+        mode: str,
+        stdout: str,
+        *,
+        succeeds: bool,
+    ) -> None:
+        """Set first, the flag publishes real classes; set late, it fails."""
+        module = self._deferred_capability(fixture_tree, tmp_path)
+        result = u.Cli.run_raw(
+            [sys.executable, str(self._PROBE), mode, str(tmp_path), module],
+            cwd=tmp_path,
+        )
+        tm.that(result.success, truth=True, msg=result.error)
+        tm.that(result.value.stdout, eq=stdout)
+        tm.that(
+            result.value.outcome.raw_return_code == 0,
+            eq=succeeds,
+            msg=result.value.stderr,
+        )
+        if not succeeds:
+            tm.that(result.value.stderr, has="after a stand-in was published")
 
     # Behaviour the lazy-deferred-bases fixture declares, read by name.
     _DERIVED_VALUES: ClassVar[Mapping[str, int]] = {"VALUE": 7}

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING
 
 from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
 from flext_core.flextlazy_instance import FlextLazyInstance
-from flext_core.flextlazy_member import FlextLazyMember, FlextLazyStandIn
+from flext_core.flextlazy_member import FlextLazyMember
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -22,6 +22,24 @@ if TYPE_CHECKING:
 
 class FlextLazyExports(FlextLazyBootstrap):
     """Install and resolve exports without generated-package bootstrap imports."""
+
+    def run_eager(self) -> None:
+        """Publish real classes for every deferred export of this process.
+
+        A generator imports its own FLEXT packages, so a stale member index
+        must not block their repair (ADR-018 stand-in law rule 6). Its entry
+        calls this once, before the first facade read; the flag lives on the
+        process-wide ``lazy`` owner, never in an environment variable.
+
+        Raises:
+            RuntimeError: If a stand-in was already published, because a
+                process never mixes stand-ins and real classes.
+
+        """
+        if self.published_standin:
+            msg = "eager lazy exports requested after a stand-in was published"
+            raise RuntimeError(msg)
+        self.eager = True
 
     def member(self, module: str, owner: str, member: str) -> FlextLazyMember:
         """Return a descriptor deferring ``owner.member`` from ``module``.
@@ -44,8 +62,10 @@ class FlextLazyExports(FlextLazyBootstrap):
     ) -> type:
         """Return a stand-in for ``module.owner`` whose members load on first use.
 
-        Every member is a ``FlextLazyMember`` descriptor, so composing the
-        stand-in by MRO imports nothing. The first member access loads
+        The stand-in is a plain ``type`` with one ``FlextLazyMember``
+        descriptor per member and no metaclass or fallback, so it composes with
+        any metaclass and composing it by MRO imports nothing; an unlisted
+        member is a plain ``AttributeError``. The first member access loads
         ``module`` and caches the real member on the stand-in. ``bases`` are
         the stand-ins of the real class's deferred bases, in its base order, so
         the stand-in lists only its own members and C3 reproduces the real MRO.
@@ -54,15 +74,13 @@ class FlextLazyExports(FlextLazyBootstrap):
             A class named ``owner`` that defers each of ``members``.
 
         """
-        namespace: dict[
-            str, str | FlextLazyMember | tuple[str, str, Callable[[str], ModuleType]]
-        ] = {
+        namespace: dict[str, str | FlextLazyMember] = {
             "__module__": module,
             "__qualname__": owner,
-            "__flext_lazy_target__": (module, owner, self.load),
         }
         namespace.update({name: self.member(module, owner, name) for name in members})
-        return FlextLazyStandIn(owner, bases, namespace)
+        self.published_standin = True
+        return type(owner, bases, namespace)
 
     def _deferred_export(
         self,
@@ -77,7 +95,15 @@ class FlextLazyExports(FlextLazyBootstrap):
         Returns:
             The stand-in class, cached so every importer shares its identity.
 
+        Raises:
+            ValueError: If the stand-in has neither members nor bases.
+
         """
+        if not members and not bases:
+            # A composition part binds its members through its shared bases;
+            # a stand-in with neither members nor bases stands for nothing.
+            msg = f"stand-in {name!r} has neither members nor bases"
+            raise ValueError(msg)
         entry = lazy_imports[name]
         module_path, attr = (entry, name) if isinstance(entry, str) else entry
         standin = self.deferred(module_path, attr, members, tuple(bases))
@@ -101,17 +127,26 @@ class FlextLazyExports(FlextLazyBootstrap):
             The base stand-in class.
 
         Raises:
-            TypeError: If the exporting initializer does not publish a class.
+            TypeError: If the exporting initializer does not publish a class
+                whose metaclass is ``type``.
 
         """
         package, attr = base
+        # A base read through an attribute of the export (``Outer.Inner``) is
+        # resolved along that path after the export itself.
+        root, *path = attr.split(".")
         value = (
-            own_getattr(attr)
+            own_getattr(root)
             if package == "."
-            else getattr(self.load(resolve_name(package, module_name)), attr)
+            else getattr(self.load(resolve_name(package, module_name)), root)
         )
-        if not isinstance(value, type):
-            msg = f"module {module_name!r} bases a stand-in on non-class {base!r}"
+        for part in path:
+            value = getattr(value, part)
+        if type(value) is not type:
+            msg = (
+                f"module {module_name!r} bases a stand-in on {base!r}, "
+                "which is not a class with metaclass 'type'"
+            )
             raise TypeError(msg)
         return value
 
@@ -382,7 +417,7 @@ class FlextLazyExports(FlextLazyBootstrap):
         module_globals["_LAZY_IMPORTS"] = normalized
 
         def _module_getattr(name: str) -> t.ModuleGlobalValue:
-            members = deferred.get(name)
+            members = None if self.eager else deferred.get(name)
             if members is not None:
                 return self._deferred_export(
                     name,

@@ -36,9 +36,11 @@ class FlextLazyBootstrap:
         "child_merge_cache",
         "deferred_bases",
         "deferred_names",
+        "eager",
         "install_cache",
         "module_cache",
         "normalized_map_cache",
+        "published_standin",
     )
 
     err_relative_path_requires_module: str = (
@@ -74,6 +76,10 @@ class FlextLazyBootstrap:
         self.deferred_bases: MutableMapping[
             str, Mapping[str, Sequence[tuple[str, str]]]
         ] = {}
+        # The process eager flag (ADR-018 stand-in law rule 6) and whether
+        # any stand-in was published, so the flag can never be set late.
+        self.eager: bool = False
+        self.published_standin: bool = False
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
 
     @property
