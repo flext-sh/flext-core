@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
+from typing import TypeAlias, get_origin
 
 from flext_core import FlextContext, FlextUtilities, m
 from tests import tm
@@ -25,7 +25,10 @@ class TestsFlextCoreUtilitiesModelsFamily:
         """``FlextContext`` builds and none of its fields is a ``TypeAlias``."""
         annotations = [field.annotation for field in FlextContext.model_fields.values()]
         tm.that(
-            any(id(annotation) == id(TypeAlias) for annotation in annotations),
+            any(
+                isinstance(annotation, type) and get_origin(annotation) is TypeAlias
+                for annotation in annotations
+            ),
             eq=False,
         )
         tm.that("PyprojectDocument" in FlextContext.model_fields, eq=False)
