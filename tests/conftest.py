@@ -46,7 +46,7 @@ def flext_settings() -> FlextSettings:
 
 
 @pytest.fixture(scope="session")
-def flext_constants() -> FlextTestsConstants:
+def flext_constants() -> type[FlextTestsConstants]:
     """flext-core constants facade.
 
     Returns:
@@ -57,7 +57,7 @@ def flext_constants() -> FlextTestsConstants:
 
 
 @pytest.fixture(scope="session")
-def flext_types() -> FlextTestsTypes:
+def flext_types() -> type[FlextTestsTypes]:
     """flext-core types facade.
 
     Returns:
@@ -68,7 +68,7 @@ def flext_types() -> FlextTestsTypes:
 
 
 @pytest.fixture(scope="session")
-def flext_protocols() -> FlextTestsProtocols:
+def flext_protocols() -> type[FlextTestsProtocols]:
     """flext-core protocols facade.
 
     Returns:
@@ -79,7 +79,7 @@ def flext_protocols() -> FlextTestsProtocols:
 
 
 @pytest.fixture(scope="session")
-def flext_models() -> FlextTestsModels:
+def flext_models() -> type[FlextTestsModels]:
     """flext-core models facade.
 
     Returns:
@@ -90,7 +90,7 @@ def flext_models() -> FlextTestsModels:
 
 
 @pytest.fixture(scope="session")
-def flext_utilities() -> FlextTestsUtilities:
+def flext_utilities() -> type[FlextTestsUtilities]:
     """flext-core utilities facade.
 
     Returns:
