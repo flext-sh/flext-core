@@ -29,23 +29,30 @@ class FlextUtilitiesModelRuntime(FlextUtilitiesModelOptions):
     # it to m.<Name>. They stay until the census, external consumers
     # included, reaches zero. A Pydantic model composing u sees them as
     # class variables, never fields.
-    Project: Annotated[
-        ClassVar,
-        deprecated(
-            "compat: u.Project -> m.Project; fix: read through m",
-        ),
+    Project: ClassVar[
+        Annotated[
+            type[m.Project],
+            deprecated(
+                "compat: u.Project -> m.Project; fix: read through m",
+            ),
+        ]
     ] = m.Project
-    PyprojectDocument: Annotated[
-        ClassVar,
-        deprecated(
-            "compat: u.PyprojectDocument -> m.PyprojectDocument; fix: read through m",
-        ),
+    PyprojectDocument: ClassVar[
+        Annotated[
+            type[m.PyprojectDocument],
+            deprecated(
+                "compat: u.PyprojectDocument -> m.PyprojectDocument; "
+                "fix: read through m",
+            ),
+        ]
     ] = m.PyprojectDocument
-    Value: Annotated[
-        ClassVar,
-        deprecated(
-            "compat: u.Value -> m.Value; fix: read through m",
-        ),
+    Value: ClassVar[
+        Annotated[
+            type[m.Value],
+            deprecated(
+                "compat: u.Value -> m.Value; fix: read through m",
+            ),
+        ]
     ] = m.Value
 
     @staticmethod

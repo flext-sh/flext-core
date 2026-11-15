@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from flext_core import t
@@ -17,15 +17,15 @@ class FlextConstantsProjectMetadata:
 
     # NOTE (multi-agent, mro-wkii.17.23 / agent: uv_overlay_owner): immutable
     # pairs replace the model-less mapping while retaining the naming policy.
-    SPECIAL_NAME_OVERRIDES: Final[t.StrPairTuple] = (
+    SPECIAL_NAME_OVERRIDES: ClassVar[t.StrPairTuple] = (
         ("flext", "FlextRoot"),
         ("flext-core", "Flext"),
     )
-    PROJECT_VERSION_PLACEHOLDER: Final[str] = "0.0.0"
-    METADATA_SCHEMA_VERSION_DEFAULT: Final[str] = "1.0.0"
+    PROJECT_VERSION_PLACEHOLDER: ClassVar[str] = "0.0.0"
+    METADATA_SCHEMA_VERSION_DEFAULT: ClassVar[str] = "1.0.0"
 
     # Family surface: runtime facts the family-surface derivation consumes.
-    NAMESPACE_LAYER_NAMES: Final[tuple[str, ...]] = (
+    NAMESPACE_LAYER_NAMES: ClassVar[tuple[str, ...]] = (
         "Constants",
         "Models",
         "Protocols",
@@ -34,7 +34,7 @@ class FlextConstantsProjectMetadata:
     )
     """The five canonical facade layers (SSOT seed for every layer derivation)."""
 
-    NAMESPACE_FAMILY_PREFIX: Final[str] = "flext_"
+    NAMESPACE_FAMILY_PREFIX: ClassVar[str] = "flext_"
     """Declared family namespace prefix (import-name grammar).
 
     Discovery seed for runtime family-surface derivation: candidate
@@ -44,14 +44,14 @@ class FlextConstantsProjectMetadata:
     never by an enumerated roster.
     """
 
-    FAMILY_SURFACE_MIN_PUBLISHED: Final[int] = 1
+    FAMILY_SURFACE_MIN_PUBLISHED: ClassVar[int] = 1
     """Minimum family roots that must publish the lazy export contract.
 
     A runtime where no distribution publishes the contract is a broken
     installation and fails loud instead of deriving an empty surface.
     """
 
-    FAMILY_CANONICAL_ALIASES: Final[frozenset[str]] = frozenset({
+    FAMILY_CANONICAL_ALIASES: ClassVar[frozenset[str]] = frozenset({
         "c",
         "m",
         "p",

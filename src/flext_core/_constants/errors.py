@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from concurrent.futures import CancelledError
 from enum import StrEnum, unique
-from typing import ClassVar, Final, override
+from typing import ClassVar, override
 
 from pydantic import ValidationError as _PydanticValidationError
 
@@ -467,137 +467,139 @@ class FlextConstantsErrors:
     )
 
     # --- Container / Runtime ---
-    ERR_CONTAINER_REGISTRATION_FAILED: Final[str] = (
+    ERR_CONTAINER_REGISTRATION_FAILED: ClassVar[str] = (
         "Container registration of '{name}' failed: {reason}"
     )
-    ERR_CONTAINER_NAME_EMPTY: Final[str] = (
+    ERR_CONTAINER_NAME_EMPTY: ClassVar[str] = (
         "Container registration requires a non-empty name"
     )
-    ERR_CONTAINER_NAME_DUPLICATE: Final[str] = (
+    ERR_CONTAINER_NAME_DUPLICATE: ClassVar[str] = (
         "Container name '{name}' is already registered; drop it before rebinding"
     )
-    ERR_CONTAINER_NAME_RESERVED: Final[str] = (
+    ERR_CONTAINER_NAME_RESERVED: ClassVar[str] = (
         "Container name '{name}' is reserved for the core runtime services"
     )
-    ERR_CONTAINER_CALLER_UNRESOLVED: Final[str] = (
+    ERR_CONTAINER_CALLER_UNRESOLVED: ClassVar[str] = (
         "auto_register_factories requires a caller module imported in sys.modules"
     )
-    ERR_RUNTIME_METADATA_MODEL_NOT_BOUND: Final[str] = (
+    ERR_RUNTIME_METADATA_MODEL_NOT_BOUND: ClassVar[str] = (
         "u.Metadata is not bound to a concrete model"
     )
-    ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE: Final[str] = (
+    ERR_RUNTIME_ATTRIBUTES_MUST_BE_DICT_LIKE: ClassVar[str] = (
         "attributes must be dict-like"
     )
-    ERR_RUNTIME_MAPPING_INVALID_TYPE: Final[str] = (
+    ERR_RUNTIME_MAPPING_INVALID_TYPE: ClassVar[str] = (
         "Invalid type in Mapping: {type_name}"
     )
-    ERR_RUNTIME_SEQUENCE_INVALID_TYPE: Final[str] = (
+    ERR_RUNTIME_SEQUENCE_INVALID_TYPE: ClassVar[str] = (
         "Invalid type in Sequence: {type_name}"
     )
-    ERR_RUNTIME_CONTAINER_INVALID_TYPE: Final[str] = (
+    ERR_RUNTIME_CONTAINER_INVALID_TYPE: ClassVar[str] = (
         "Unsupported runtime container value: {type_name}"
     )
-    ERR_RUNTIME_BATCH_VALIDATION_FAILED: Final[str] = (
+    ERR_RUNTIME_BATCH_VALIDATION_FAILED: ClassVar[str] = (
         "Batch validation failed: {errors}"
     )
-    ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED: Final[str] = (
+    ERR_RUNTIME_KEYS_WITH_UNDERSCORE_RESERVED: ClassVar[str] = (
         "Keys starting with '_' are reserved: {key}"
     )
-    ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE: Final[str] = (
+    ERR_RUNTIME_SERVICE_MUST_BE_REGISTERABLE: ClassVar[str] = (
         "Service must be a RegisterableService type, got {type_name}"
     )
-    ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT: Final[str] = (
+    ERR_RUNTIME_RETRY_LOOP_ENDED_WITHOUT_RESULT: ClassVar[str] = (
         "Retry loop completed without success or exception"
     )
-    ERR_RUNTIME_UNSUPPORTED_GENERATOR_KIND: Final[str] = (
+    ERR_RUNTIME_UNSUPPORTED_GENERATOR_KIND: ClassVar[str] = (
         "Unsupported generator kind: {kind}"
     )
-    ERR_RUNTIME_CONTAINER_NOT_INITIALIZED: Final[str] = (
+    ERR_RUNTIME_CONTAINER_NOT_INITIALIZED: ClassVar[str] = (
         "Container not initialized. Call FlextContext.configure_container(container) "
         "before using resolve_container()."
     )
 
     # --- Exceptions / Error handling ---
-    ERR_EXCEPTIONS_PARAMS_CLS_MISSING: Final[str] = "{class_name} is missing params_cls"
-    ERR_EXCEPTIONS_UNKNOWN_ERROR_TYPE: Final[str] = "Unknown error type: {message}"
+    ERR_EXCEPTIONS_PARAMS_CLS_MISSING: ClassVar[str] = (
+        "{class_name} is missing params_cls"
+    )
+    ERR_EXCEPTIONS_UNKNOWN_ERROR_TYPE: ClassVar[str] = "Unknown error type: {message}"
 
     # --- Handlers ---
-    ERR_HANDLER_UNSUPPORTED_TYPE: Final[str] = (
+    ERR_HANDLER_UNSUPPORTED_TYPE: ClassVar[str] = (
         "Unsupported handler type: {handler_type}"
     )
 
     # --- Services ---
-    ERR_SERVICE_PORT_TYPE: Final[str] = (
+    ERR_SERVICE_PORT_TYPE: ClassVar[str] = (
         "{service}.{field}: port type {port_type!r} must be a plain "
         "@runtime_checkable Protocol class; isinstance cannot validate a "
         "subscripted generic, and a concrete class is not a port"
     )
-    ERR_SERVICE_OPERATION: Final[str] = (
+    ERR_SERVICE_OPERATION: ClassVar[str] = (
         "Service operation {service}.{operation} (module {module}, annotation "
         "{annotation}) {defect}"
     )
-    ERR_SERVICE_OPERATION_ASYNC: Final[str] = (
+    ERR_SERVICE_OPERATION_ASYNC: ClassVar[str] = (
         "must be synchronous. Fix: declare it with a plain def."
     )
-    ERR_SERVICE_OPERATION_GENERIC: Final[str] = (
+    ERR_SERVICE_OPERATION_GENERIC: ClassVar[str] = (
         "must not be generic. Fix: remove its type parameters."
     )
-    ERR_SERVICE_OPERATION_SIGNATURE: Final[str] = (
+    ERR_SERVICE_OPERATION_SIGNATURE: ClassVar[str] = (
         "must take self and at most one positional request parameter without "
         "default. Fix: accept one request Protocol or nothing."
     )
-    ERR_SERVICE_OPERATION_DOCSTRING: Final[str] = (
+    ERR_SERVICE_OPERATION_DOCSTRING: ClassVar[str] = (
         "must have a docstring. Fix: add a one-line summary docstring."
     )
-    ERR_SERVICE_OPERATION_REQUEST: Final[str] = (
+    ERR_SERVICE_OPERATION_REQUEST: ClassVar[str] = (
         "must take a request Protocol with a Pydantic model declared in operation "
         "metadata. Fix: annotate with p.Request and declare "
         "h.handler(command=m.Request)."
     )
-    ERR_SERVICE_OPERATION_RESULT: Final[str] = (
+    ERR_SERVICE_OPERATION_RESULT: ClassVar[str] = (
         "must return m.Result. Fix: annotate the return as p.Result[...]."
     )
-    ERR_SERVICE_OPERATION_COLLISION: Final[str] = (
+    ERR_SERVICE_OPERATION_COLLISION: ClassVar[str] = (
         "is declared by sibling classes {owners}. Fix: rename one of them."
     )
-    ERR_SERVICE_NO_OPERATIONS: Final[str] = (
+    ERR_SERVICE_NO_OPERATIONS: ClassVar[str] = (
         "{service} (module {module}) declares no operation. Fix: declare a "
         "public method below FlextService that returns p.Result."
     )
-    ERR_SERVICE_NOT_A_SERVICE: Final[str] = (
+    ERR_SERVICE_NOT_A_SERVICE: ClassVar[str] = (
         "{service} (module {module}) is not a service: no class of its MRO "
         "declares the service members {members}. Fix: derive it from FlextService."
     )
-    ERR_SERVICE_OPERATION_INPUTLESS_COMMAND: Final[str] = (
+    ERR_SERVICE_OPERATION_INPUTLESS_COMMAND: ClassVar[str] = (
         "takes no request and cannot declare a command model. Fix: remove the "
         "command from its handler metadata or accept a request Protocol."
     )
-    ERR_SERVICE_OPERATION_METADATA: Final[str] = (
+    ERR_SERVICE_OPERATION_METADATA: ClassVar[str] = (
         "takes a request but declares no handler metadata. Fix: declare "
         "h.handler(command=m.Request)."
     )
-    ERR_SERVICE_OPERATION_COMMAND_MODEL: Final[str] = (
+    ERR_SERVICE_OPERATION_COMMAND_MODEL: ClassVar[str] = (
         "declares a handler command that is not a Pydantic request model. Fix: "
         "declare h.handler(command=m.Request) with an m.* request model."
     )
-    ERR_SERVICE_OPERATION_PROTOCOL: Final[str] = (
+    ERR_SERVICE_OPERATION_PROTOCOL: ClassVar[str] = (
         "takes a request model that does not satisfy its Protocol members "
         "{missing}. Fix: declare those members on the request model."
     )
 
     # --- Lazy loading ---
-    ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE: Final[str] = (
+    ERR_LAZY_RELATIVE_PATH_REQUIRES_MODULE: ClassVar[str] = (
         "relative child module paths require module_name"
     )
 
     # --- Settings ---
-    ERR_SETTINGS_NAMESPACE_NOT_REGISTERED: Final[str] = (
+    ERR_SETTINGS_NAMESPACE_NOT_REGISTERED: ClassVar[str] = (
         "Namespace '{namespace}' not registered"
     )
-    ERR_SETTINGS_CLASS_REQUIRED_FOR_NON_DECORATOR: Final[str] = (
+    ERR_SETTINGS_CLASS_REQUIRED_FOR_NON_DECORATOR: ClassVar[str] = (
         "settings_class is required when decorator=False"
     )
-    ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH: Final[str] = (
+    ERR_SETTINGS_NAMESPACE_TYPE_MISMATCH: ClassVar[str] = (
         "Namespace '{namespace}' settings instance {instance_class} is not instance "
         "of {expected_type}"
     )
