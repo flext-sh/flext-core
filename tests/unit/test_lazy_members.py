@@ -465,15 +465,16 @@ class TestsFlextCoreLazyMembers:
             tm.fail(module in sys.modules)
 
     @staticmethod
-    def test_member_free_stand_in_fails_at_install() -> None:
-        """An empty stand-in is invalid; a class binding nothing is not deferred."""
-        with u.Tests.raises(ValueError, match="with no member"):
-            install_lazy_exports(
-                "lazy_deferred_empty",
-                {},
-                {"Capability": ("lazy_deferred_empty.part", "Capability")},
-                deferred_members={"Capability": ()},
-            )
+    def test_stand_in_without_members_or_bases_fails_when_built() -> None:
+        """A stand-in with neither members nor bases stands for nothing."""
+        resolve, _ = install_lazy_exports(
+            "lazy_deferred_empty",
+            {},
+            {"Capability": ("lazy_deferred_empty.part", "Capability")},
+            deferred_members={"Capability": ()},
+        )
+        with u.Tests.raises(ValueError, match="neither members nor bases"):
+            resolve("Capability")
 
     def test_base_with_another_metaclass_fails_by_name(
         self,

@@ -95,7 +95,15 @@ class FlextLazyExports(FlextLazyBootstrap):
         Returns:
             The stand-in class, cached so every importer shares its identity.
 
+        Raises:
+            ValueError: If the stand-in has neither members nor bases.
+
         """
+        if not members and not bases:
+            # A composition part binds its members through its shared bases;
+            # a stand-in with neither members nor bases stands for nothing.
+            msg = f"stand-in {name!r} has neither members nor bases"
+            raise ValueError(msg)
         entry = lazy_imports[name]
         module_path, attr = (entry, name) if isinstance(entry, str) else entry
         standin = self.deferred(module_path, attr, members, tuple(bases))
@@ -204,14 +212,10 @@ class FlextLazyExports(FlextLazyBootstrap):
         """Reject a deferred export that names no class export of the package.
 
         Raises:
-            ValueError: If a deferred name is not a class export in the map,
-                or lists no member (an empty stand-in is invalid).
+            ValueError: If a deferred name is not a class export in the map.
 
         """
-        for name, members in deferred_members.items():
-            if not members:
-                msg = f"module {module_name!r} defers {name!r} with no member"
-                raise ValueError(msg)
+        for name in deferred_members:
             entry = lazy_imports.get(name)
             if entry is None or (not isinstance(entry, str) and not entry[1]):
                 msg = f"module {module_name!r} defers {name!r} without a class export"
