@@ -63,32 +63,32 @@ url = "https://github.com/boyter/scc/releases/download/v4.1.0/scc_Windows_x86_64
 url_api = "https://api.github.com/repos/boyter/scc/releases/assets/549478880"
 
 [[tools."aqua:j178/prek"]]
-version = "0.5.9"
+version = "0.5.10"
 backend = "aqua:j178/prek"
 specifiers = ["latest"]
 
 [tools."aqua:j178/prek"."platforms.linux-x64"]
-checksum = "sha256:2fee13923018dd517c19dba032ddcae8010cadfb81bc47e742ad5e8981a3f126"
-url = "https://github.com/j178/prek/releases/download/v0.5.9/prek-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/j178/prek/releases/assets/691760524"
+checksum = "sha256:5c832a9ccd0855b7c054320d8921d90165a37459d3ac175923bdf121ff1aa9b1"
+url = "https://github.com/j178/prek/releases/download/v0.5.10/prek-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/j178/prek/releases/assets/707839458"
 provenance = "github-attestations"
 
 [tools."aqua:j178/prek"."platforms.linux-x64-musl"]
-checksum = "sha256:7b00ac6a6e4cbb5d1711cb759c1fc279281d1446317ebede513a4d03bf7a7e2c"
-url = "https://github.com/j178/prek/releases/download/v0.5.9/prek-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/j178/prek/releases/assets/691760529"
+checksum = "sha256:c70a639cb98c90feafa213c23fb487644af73c906c5a6cee757403090f253c30"
+url = "https://github.com/j178/prek/releases/download/v0.5.10/prek-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/j178/prek/releases/assets/707839467"
 provenance = "github-attestations"
 
 [tools."aqua:j178/prek"."platforms.macos-arm64"]
-checksum = "sha256:cc9020726b7c86cce420b75d70f48b9ffa161bb5095a99678c0a87218f48d493"
-url = "https://github.com/j178/prek/releases/download/v0.5.9/prek-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/j178/prek/releases/assets/691760404"
+checksum = "sha256:28186099374a3158e7b27e82fedb0bd20723658dc8ee24a841bdffe8a91b1ad9"
+url = "https://github.com/j178/prek/releases/download/v0.5.10/prek-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/j178/prek/releases/assets/707839320"
 provenance = "github-attestations"
 
 [tools."aqua:j178/prek"."platforms.windows-x64"]
-checksum = "sha256:b772063b6d9195c0647c0e73cfa258208d03b2b51abff115b76d24aefa189d0b"
-url = "https://github.com/j178/prek/releases/download/v0.5.9/prek-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/j178/prek/releases/assets/691760496"
+checksum = "sha256:4a506e19a95a1bbf40f304b245446c32078c7be4d5b7e4cb412ea93a0cf8b4e5"
+url = "https://github.com/j178/prek/releases/download/v0.5.10/prek-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/j178/prek/releases/assets/707839436"
 provenance = "github-attestations"
 
 [[tools."github:direnv/direnv"]]
@@ -203,7 +203,7 @@ url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/6598195
 provenance = "github-attestations"
 
 [[tools."github:microsoft/waza"]]
-version = "0.39.1"
+version = "0.40.0"
 backend = "github:microsoft/waza"
 specifiers = ["latest"]
 
@@ -211,24 +211,24 @@ specifiers = ["latest"]
 version_prefix = "v"
 
 [tools."github:microsoft/waza"."platforms.linux-x64"]
-checksum = "sha256:43fedb4405851021663d75309bd2b6f5df317239859c8c6e741da20565b55fc1"
-url = "https://github.com/microsoft/waza/releases/download/v0.39.1/waza-linux-amd64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/679305573"
+checksum = "sha256:d09117a3c631f44a00a6c362462c951aed83c87751e8c25f39916a77d1013802"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356784"
 
 [tools."github:microsoft/waza"."platforms.linux-x64-musl"]
-checksum = "sha256:43fedb4405851021663d75309bd2b6f5df317239859c8c6e741da20565b55fc1"
-url = "https://github.com/microsoft/waza/releases/download/v0.39.1/waza-linux-amd64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/679305573"
+checksum = "sha256:d09117a3c631f44a00a6c362462c951aed83c87751e8c25f39916a77d1013802"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356784"
 
 [tools."github:microsoft/waza"."platforms.macos-arm64"]
-checksum = "sha256:1f8407ee7c6d27fc042ee72c7d6e9c7c1babe6baf0d61e7403ad6ebbdc85eaa5"
-url = "https://github.com/microsoft/waza/releases/download/v0.39.1/waza-darwin-arm64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/679305578"
+checksum = "sha256:a0ccef914ed41a19394e7a01b60578cfd37d3cce0ef3aa785735ac39fa8872bc"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-darwin-arm64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356799"
 
 [tools."github:microsoft/waza"."platforms.windows-x64"]
-checksum = "sha256:719794d0986730c61fa0fbeedc01743d3c0973d953640db55c9d239a9be8c5bf"
-url = "https://github.com/microsoft/waza/releases/download/v0.39.1/waza-windows-amd64.exe"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/679305622"
+checksum = "sha256:a388f5577ecbf10d4edd775a5e2c37a7a5cbdd0758e66d8718992942687dd2e4"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-windows-amd64.exe"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356835"
 
 [[tools."github:qltysh/qlty"]]
 version = "0.667.0"
