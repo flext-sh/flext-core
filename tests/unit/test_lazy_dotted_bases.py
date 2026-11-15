@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_core import defer_lazy_bases, install_lazy_exports
+from flext_core import install_lazy_exports
 from tests import tm
 
 if TYPE_CHECKING:
@@ -35,11 +35,7 @@ class TestsFlextCoreLazyDottedBases:
                 "lazy_dotted_consumer",
                 {},
                 {"Part": (part, "Part")},
-                deferred_members={"Part": ("PART_VALUE",)},
-            )
-            defer_lazy_bases(
-                "lazy_dotted_consumer",
-                {"Part": ((f"{package}.outer", "Outer.Inner"),)},
+                deferred_members=("Part",),
             )
             standin = cast("type", resolve("Part"))
             outer = importlib.import_module(f"{package}.outer")

@@ -36,7 +36,7 @@ install_lazy_exports = lazy.install
 defer_lazy_instances = lazy.defer_instances
 """Publish configuration roots as stand-ins built on first attribute read."""
 defer_lazy_bases = lazy.defer_bases
-"""Give deferred exports the stand-ins of their real deferred bases."""
+"""Deprecated: stand-in bases are resolved at run time; regenerate callers."""
 
 __all__ = (
     "FlextLazy",

@@ -21,7 +21,7 @@ resolve, _ = install_lazy_exports(
     "lazy_eager_probe",
     {},
     {"Capability": (module, "Capability")},
-    deferred_members={"Capability": ("VALUE",)},
+    deferred_members=("Capability",),
 )
 value = resolve("Capability")
 sys.stdout.write(f"{module in sys.modules} {type(vars(value)['VALUE']).__name__}\n")
