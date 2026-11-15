@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from types import MappingProxyType
-from typing import ClassVar
+from typing import ClassVar, Literal
 
 from pydantic import ConfigDict
 
@@ -24,10 +24,10 @@ class FlextConstantsSettings:
 
     ENV_FILE_DEFAULT: ClassVar[str] = FlextSettings.ENV_FILE_DEFAULT
 
-    EXTRA_CONFIG_FORBID: ClassVar = "forbid"
-    EXTRA_CONFIG_IGNORE: ClassVar = "ignore"
-    SERIALIZATION_ISO8601: ClassVar = "iso8601"
-    SERIALIZATION_BASE64: ClassVar = "base64"
+    EXTRA_CONFIG_FORBID: ClassVar[Literal["forbid"]] = "forbid"
+    EXTRA_CONFIG_IGNORE: ClassVar[Literal["ignore"]] = "ignore"
+    SERIALIZATION_ISO8601: ClassVar[Literal["iso8601"]] = "iso8601"
+    SERIALIZATION_BASE64: ClassVar[Literal["base64"]] = "base64"
 
     MODEL_USE_ENUM_VALUES: ClassVar[bool] = False
     MODEL_VALIDATE_DEFAULT: ClassVar[bool] = True
