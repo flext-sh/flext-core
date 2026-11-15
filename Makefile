@@ -28,7 +28,7 @@ override ADMISSION_MAX_LOAD5 := 20.0
 override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
 override ADMISSION_MAX_PROCESSES := 2
 ifeq ($(ADMISSION_VERB),setup)
-override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MAX_LOAD5 := 160.0
 override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
 override ADMISSION_MAX_PROCESSES := 2
 endif
@@ -38,7 +38,7 @@ override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
 override ADMISSION_MAX_PROCESSES := 2
 endif
 ifeq ($(ADMISSION_VERB),gen)
-override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MAX_LOAD5 := 160.0
 override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
 override ADMISSION_MAX_PROCESSES := 2
 endif
@@ -58,7 +58,7 @@ override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
 override ADMISSION_MAX_PROCESSES := 2
 endif
 ifeq ($(ADMISSION_VERB),check)
-override ADMISSION_MAX_LOAD5 := 80.0
+override ADMISSION_MAX_LOAD5 := 160.0
 override ADMISSION_MEMORY_LIMIT_BYTES := 5368709120
 override ADMISSION_MAX_PROCESSES := 2
 endif
@@ -92,7 +92,7 @@ $(info Prefer make tests (incremental Testmon) over make tests-full; run tests-f
 $(info Prefer a narrow make mod RULES=<rule ids> over a full make mod, and make check CHECK_PHASE=primary over the full check.)
 $(info Use at most 2 workers and never run heavy verbs in parallel across lanes.)
 $(info A verb exception is a declared make.admission.overrides entry in the config SSOT, never a local edit or an environment bypass.)
-$(error Refused: 5-minute load average $(ADMISSION_LOAD5) exceeds the admission limit $(ADMISSION_MAX_LOAD5) of '$(or $(ADMISSION_VERB),$(MAKECMDGOALS))'; run its lighter form now, or declare make.admission.overrides.<verb>.max_load5 in flext-infra src/flext_infra/config/codegen.yaml)
+$(error Refused: 5-minute load average $(ADMISSION_LOAD5) exceeds the admission limit $(ADMISSION_MAX_LOAD5) of '$(or $(ADMISSION_VERB),$(MAKECMDGOALS))'; run its lighter form now, or declare make.admission.overrides.<verb>.max_load5 in config/codegen.yaml (flext-infra for canonical verbs, the project for its own extra_verbs))
 endif
 override ADMISSION_SYSTEMD_RUN := $(shell command -v systemd-run)
 ifeq ($(ADMISSION_SYSTEMD_RUN),)

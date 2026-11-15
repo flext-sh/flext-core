@@ -38,4 +38,32 @@ install_lazy_exports(
         "FlextProtocolsExceptionParamsServiceErrors": ".service_errors",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextProtocolsExceptionParamsBase": (
+            "ParamsModel",
+            "ExceptionFactoryOptions",
+            "ExceptionInitOptions",
+            "ResourceIdentityParams",
+            "ExpectedActualTypeParams",
+            "ValidationErrorParams",
+            "ConfigurationErrorParams",
+            "ConnectionErrorParams",
+        ),
+        "FlextProtocolsExceptionParamsOperationErrors": (
+            "OperationErrorParams",
+            "ServiceLookupParams",
+            "RegistryPluginParams",
+            "AttributeAccessErrorParams",
+        ),
+        "FlextProtocolsExceptionParamsServiceErrors": (
+            "TimeoutErrorParams",
+            "AuthenticationErrorParams",
+            "AuthorizationErrorParams",
+            "NotFoundErrorParams",
+            "ConflictErrorParams",
+            "RateLimitErrorParams",
+            "CircuitBreakerErrorParams",
+            "TypeErrorParams",
+        ),
+    },
 )

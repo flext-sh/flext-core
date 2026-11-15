@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 
 if TYPE_CHECKING:
     from tests._utilities.contracts import TestsFlextUtilitiesContracts
@@ -99,4 +99,114 @@ install_lazy_exports(
         "TestsFlextUtilitiesValidationUriScenarios": ".validation_uri",
     },
     public_exports=__all__,
+    deferred_members={
+        "TestsFlextUtilitiesContracts": (
+            "Contract",
+            "assert_safe_string_valid",
+            "assert_format_app_id",
+        ),
+        "TestsFlextUtilitiesDispatch": (
+            "handler_module",
+            "HandlerService",
+            "InheritedHandlerService",
+            "PrivateHandlerService",
+            "DescriptorHandlerService",
+            "CapabilityHandler",
+            "AutoSubscriber",
+            "Handler",
+            "Middleware",
+        ),
+        "TestsFlextUtilitiesParserReliability": (),
+        "TestsFlextUtilitiesParserScenarios": (
+            "PUBLIC_PARSE_CASES",
+            "LDIF_PARSE_SCENARIOS",
+        ),
+        "TestsFlextUtilitiesRailway": (),
+        "TestsFlextUtilitiesRailwayCases": (
+            "success_cases",
+            "failure_cases",
+            "railway_success_cases",
+            "multi_operation_cases",
+        ),
+        "TestsFlextUtilitiesRailwayPipelines": (
+            "_v1_email_view",
+            "_v1_send_email",
+            "_v1_identity_response",
+            "_v1_status_view",
+            "execute_v1_pipeline",
+            "execute_v2_pipeline",
+        ),
+        "TestsFlextUtilitiesRailwayServices": (
+            "GetUserService",
+            "SendEmailService",
+            "value_lt_100",
+            "make",
+            "create_user_service",
+        ),
+        "TestsFlextUtilitiesReliabilityScenarios": (
+            "_RETRY_BASE_SETTINGS",
+            "_RETRY_EXHAUSTED_SETTINGS",
+            "RETRY_SCENARIOS",
+            "CIRCUIT_BREAKER_SCENARIOS",
+        ),
+        "TestsFlextUtilitiesResultCombinators": (
+            "double",
+            "is_even",
+            "is_odd",
+            "increment",
+            "shout",
+            "forty_two",
+            "zero",
+        ),
+        "TestsFlextUtilitiesServices": (
+            "MemoryCounter",
+            "CountingService",
+            "ValidatingService",
+            "GetUserServiceAuto",
+            "ValidatingServiceAuto",
+        ),
+        "TestsFlextUtilitiesValidationFactories": (
+            "input_reader",
+            "validated_label",
+        ),
+        "TestsFlextUtilitiesValidationNetworkScenarios": (
+            "PORT_SCENARIOS",
+            "HOSTNAME_SCENARIOS",
+        ),
+        "TestsFlextUtilitiesValidationNumericScenarios": (
+            "NON_NEGATIVE_SCENARIOS",
+            "POSITIVE_SCENARIOS",
+            "RANGE_SCENARIOS",
+        ),
+        "TestsFlextUtilitiesValidationPatternScenarios": (
+            "LENGTH_SCENARIOS",
+            "PATTERN_SCENARIOS",
+        ),
+        "TestsFlextUtilitiesValidationStringScenarios": (
+            "REQUIRED_SCENARIOS",
+            "CHOICE_SCENARIOS",
+        ),
+        "TestsFlextUtilitiesValidationUriScenarios": ("URI_SCENARIOS",),
+    },
+)
+
+defer_lazy_bases(
+    __name__,
+    {
+        "TestsFlextUtilitiesParserReliability": (
+            (".", "TestsFlextUtilitiesParserScenarios"),
+            (".", "TestsFlextUtilitiesReliabilityScenarios"),
+        ),
+        "TestsFlextUtilitiesRailway": (
+            (".", "TestsFlextUtilitiesRailwayPipelines"),
+            (".", "TestsFlextUtilitiesRailwayServices"),
+            (".", "TestsFlextUtilitiesRailwayCases"),
+        ),
+        "TestsFlextUtilitiesRailwayPipelines": (
+            (".", "TestsFlextUtilitiesRailwayServices"),
+        ),
+        "TestsFlextUtilitiesValidationFactories": (
+            (".", "TestsFlextUtilitiesServices"),
+        ),
+    },
 )

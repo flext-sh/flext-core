@@ -25,6 +25,15 @@ exclude_patterns = [
 [smells]
 mode = "block"
 
+# The promoted-command framework mandates a PEP 723 `# /// script` block in
+# every executable script. That block is command metadata, not authored code,
+# and comments carry no executable behavior, so repetition among them is never
+# a code-duplication smell (operator axiom, 2026-11-14). Declaring
+# filter_patterns replaces qlty's default list, so the built-in Python import
+# filter is restated here.
+[language.python.smells.duplication]
+filter_patterns = ["(import_statement _)", "(comment)"]
+
 [[source]]
 name = "default"
 default = true

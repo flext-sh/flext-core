@@ -22,4 +22,10 @@ install_lazy_exports(
     globals(),
     {"TestsFlextModelsMixins": ".mixins", "TestsFlextModelsNamespace": ".mixins"},
     public_exports=__all__,
+    deferred_members={
+        "TestsFlextModelsNamespace": (
+            "TestsFlextModelsMixins",
+            "populate_container_scenarios",
+        ),
+    },
 )

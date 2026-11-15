@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from flext_core._protocols import (
     FlextProtocolsBase,
@@ -66,20 +66,21 @@ class FlextProtocols(
     implementations are checked structurally rather than by inheritance.
     """
 
-    HasDomainEvents: TypeAlias = FlextProtocolsBase.HasDomainEvents
-    ParseOptions: TypeAlias = FlextProtocolsConfig.ParseOptions
-    RootDict: TypeAlias = FlextProtocolsContainer.RootDict
-    MutableRootDict: TypeAlias = FlextProtocolsContainer.MutableRootDict
-    ContainerType: TypeAlias = FlextProtocolsContainer.ContainerType
-    ContextProxy: TypeAlias = FlextProtocolsContext.ContextProxy
-    Handler: TypeAlias = FlextProtocolsHandler.Handler
-    BaseModel: TypeAlias = FlextProtocolsPydantic.BaseModel
-    RootModel: TypeAlias = FlextProtocolsPydantic.RootModel
-    ResultState: TypeAlias = FlextProtocolsResult.ResultState
-    ResultOps: TypeAlias = FlextProtocolsResult.ResultOps
-    Result: TypeAlias = FlextProtocolsResult.Result
-    HasModelDump: TypeAlias = FlextProtocolsResult.HasModelDump
-    Service: TypeAlias = FlextProtocolsService.Service
+    if TYPE_CHECKING:
+        HasDomainEvents: TypeAlias = FlextProtocolsBase.HasDomainEvents
+        ParseOptions: TypeAlias = FlextProtocolsConfig.ParseOptions
+        RootDict: TypeAlias = FlextProtocolsContainer.RootDict
+        MutableRootDict: TypeAlias = FlextProtocolsContainer.MutableRootDict
+        ContainerType: TypeAlias = FlextProtocolsContainer.ContainerType
+        ContextProxy: TypeAlias = FlextProtocolsContext.ContextProxy
+        Handler: TypeAlias = FlextProtocolsHandler.Handler
+        BaseModel: TypeAlias = FlextProtocolsPydantic.BaseModel
+        RootModel: TypeAlias = FlextProtocolsPydantic.RootModel
+        ResultState: TypeAlias = FlextProtocolsResult.ResultState
+        ResultOps: TypeAlias = FlextProtocolsResult.ResultOps
+        Result: TypeAlias = FlextProtocolsResult.Result
+        HasModelDump: TypeAlias = FlextProtocolsResult.HasModelDump
+        Service: TypeAlias = FlextProtocolsService.Service
 
 
 p = FlextProtocols

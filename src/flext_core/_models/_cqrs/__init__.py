@@ -24,4 +24,7 @@ install_lazy_exports(
     globals(),
     {"FlextModelsCqrsPagination": ".flextmodelscqrs_pagination"},
     public_exports=__all__,
+    deferred_members={
+        "FlextModelsCqrsPagination": ("Pagination",),
+    },
 )

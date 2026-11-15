@@ -35,4 +35,17 @@ install_lazy_exports(
         "FlextProtocolsContextTokens": ".tokens",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextProtocolsContextData": ("ContextData",),
+        "FlextProtocolsContextExport": ("ContextExport",),
+        "FlextProtocolsContextScope": (
+            "ContextStatistics",
+            "ContextRuntimeState",
+            "ContextContainerState",
+        ),
+        "FlextProtocolsContextTokens": (
+            "StructlogProxyToken",
+            "Token",
+        ),
+    },
 )

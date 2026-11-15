@@ -33,4 +33,7 @@ install_lazy_exports(
         "FlextProtocolsCqrsFlextmodelscqrsPart01": ".flextmodelscqrs_part_01",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextProtocolsCqrsFlextmodelscqrsPagination": ("Pagination",),
+    },
 )

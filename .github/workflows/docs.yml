@@ -58,8 +58,8 @@ jobs:
       # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
-      # the entry grew with every lock change (algar-oud-mig: 3.06 to
-      # 3.65 GiB) until its restore filled the runner disk. A lock change
+      # the entry grew with every lock change until its restore filled the
+      # runner disk. A lock change
       # installs cold and saves exactly the new state.
       - name: Restore tool caches
         id: tool-cache
@@ -191,8 +191,8 @@ jobs:
       # duplicate generations never consume the repository cache quota.
       # Only that exact key restores. A prefix fallback restored the previous
       # lock state, whose superseded installs and wheels the next save kept:
-      # the entry grew with every lock change (algar-oud-mig: 3.06 to
-      # 3.65 GiB) until its restore filled the runner disk. A lock change
+      # the entry grew with every lock change until its restore filled the
+      # runner disk. A lock change
       # installs cold and saves exactly the new state.
       - name: Restore tool caches
         id: tool-cache

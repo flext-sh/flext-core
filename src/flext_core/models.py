@@ -13,7 +13,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TypeAlias
+from typing import TYPE_CHECKING, TypeAlias
 
 from flext_core._models import (
     FlextModelsBase,
@@ -83,10 +83,11 @@ class FlextModels(
     and JSON-ready serialization for all exported types.
     """
 
-    Base: TypeAlias = FlextModelsBuilder.Base
-    Identity: TypeAlias = FlextModelsBuilder.Identity
-    ParseOptions: TypeAlias = FlextModelsConfig.ParseOptions
-    RootModel: TypeAlias = FlextModelsPydantic.RootModel
+    if TYPE_CHECKING:
+        Base: TypeAlias = FlextModelsBuilder.Base
+        Identity: TypeAlias = FlextModelsBuilder.Identity
+        ParseOptions: TypeAlias = FlextModelsConfig.ParseOptions
+        RootModel: TypeAlias = FlextModelsPydantic.RootModel
 
 
 m = FlextModels
