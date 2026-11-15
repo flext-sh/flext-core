@@ -31,7 +31,7 @@ overrides = [
     { name = "flext-cli", git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev" },
     { name = "flext-infra", git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev" },
     { name = "flext-tests", git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev" },
-    { name = "rope", git = "https://github.com/marlon-costa-dc/rope.git?rev=4cb40a6fe564c6761dcb2f4e6c79d7fb7304f96f" },
+    { name = "rope", git = "https://github.com/marlon-costa-dc/rope.git?rev=394d91c0d9669a6de02b8b54f081d014f784fd52" },
 ]
 excludes = [
     { package = { name = "flext-cli" }, dependencies = ["flext-core"] },
@@ -465,7 +465,6 @@ dev = [
     { name = "flext-infra" },
     { name = "flext-tests" },
     { name = "hypothesis" },
-    { name = "mkdocs" },
     { name = "mkdocs-autorefs" },
     { name = "mkdocs-exclude" },
     { name = "mkdocs-git-revision-date-localized-plugin" },
@@ -479,6 +478,7 @@ dev = [
     { name = "msgpack-types" },
     { name = "mypy" },
     { name = "platformdirs" },
+    { name = "properdocs" },
     { name = "pymdown-extensions" },
     { name = "pyrefly" },
     { name = "pyright" },
@@ -543,7 +543,6 @@ dev = [
     { name = "flext-infra", git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev" },
     { name = "flext-tests", git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev" },
     { name = "hypothesis" },
-    { name = "mkdocs" },
     { name = "mkdocs-autorefs" },
     { name = "mkdocs-exclude", specifier = ">=1.0.2" },
     { name = "mkdocs-git-revision-date-localized-plugin", specifier = ">=1.5.4" },
@@ -557,6 +556,7 @@ dev = [
     { name = "msgpack-types" },
     { name = "mypy", specifier = ">=2.3.1" },
     { name = "platformdirs", specifier = ">=4.12.0" },
+    { name = "properdocs", specifier = ">=1.6.7" },
     { name = "pymdown-extensions" },
     { name = "pyrefly", specifier = ">=1.2.0" },
     { name = "pyright", specifier = ">=1.1.411" },
@@ -1769,8 +1769,8 @@ wheels = [
 
 [[package]]
 name = "rope"
-version = "1.15.2+dc.6"
-source = { git = "https://github.com/marlon-costa-dc/rope.git?rev=4cb40a6fe564c6761dcb2f4e6c79d7fb7304f96f#4cb40a6fe564c6761dcb2f4e6c79d7fb7304f96f" }
+version = "1.15.2+dc.7"
+source = { git = "https://github.com/marlon-costa-dc/rope.git?rev=394d91c0d9669a6de02b8b54f081d014f784fd52#394d91c0d9669a6de02b8b54f081d014f784fd52" }
 dependencies = [
     { name = "pytoolconfig", extra = ["global"] },
 ]
