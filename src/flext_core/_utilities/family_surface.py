@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import functools
 import importlib.metadata
+import inspect
 import sys
 from collections.abc import Mapping, MutableMapping, Sequence
 from types import MappingProxyType
@@ -59,30 +60,32 @@ class FlextUtilitiesFamilySurface:
         )
 
     @staticmethod
-    @functools.lru_cache(maxsize=1)
-    def _module_names_by_distribution() -> Mapping[str, str]:
-        """Map every installed distribution name to its importable root package.
-
-        A distribution's import name is the top-level package it ships, which
-        diverges from the normalized distribution name whenever the project
-        brands its distribution differently from the package inside it (e.g.
-        ``acme-backup`` shipping ``acme_bkp``). Importing the naive
-        normalized name crashes the whole family-surface derivation for such
-        consumers, so the importlib.metadata package-to-distribution index is
-        the authority and the normalized name is only the fallback.
+    def _distribution_import_root(
+        distribution: importlib.metadata.Distribution,
+        normalized_name: str,
+    ) -> str:
+        """Resolve an elected distribution from its own installed metadata.
 
         Returns:
-            The resulting ``Mapping[str, str]``.
+            The declared or inferred importable root for the distribution.
 
         """
-        module_names: t.MutableStrMapping = {}
-        for (
-            module_name,
-            distribution_names,
-        ) in importlib.metadata.packages_distributions().items():
-            for distribution_name in distribution_names:
-                module_names.setdefault(distribution_name.lower(), module_name)
-        return MappingProxyType(module_names)
+        declared = (distribution.read_text("top_level.txt") or "").split()
+        if declared:
+            return declared[0]
+        roots = {
+            root
+            for path in distribution.files or ()
+            if path.parts
+            and (
+                root := path.parts[0] if len(path.parts) > 1
+                else (inspect.getmodulename(path) or path.name)
+            ).isidentifier()
+        }
+        return (
+            normalized_name if normalized_name in roots
+            else min(roots, default=normalized_name)
+        )
 
     @staticmethod
     def family_discovery_candidates() -> tuple[tuple[str, str], ...]:
@@ -92,9 +95,6 @@ class FlextUtilitiesFamilySurface:
             Normalized distribution names paired with their native import names.
 
         """
-        module_by_distribution = (
-            FlextUtilitiesFamilySurface._module_names_by_distribution()
-        )
         candidates: list[tuple[str, str]] = []
         # Deferred: this module loads inside the package init chain; the
         # sibling is imported at call time to avoid a re-entrant cycle.
@@ -108,7 +108,7 @@ class FlextUtilitiesFamilySurface:
             ):
                 candidates.append((
                     name,
-                    module_by_distribution.get(raw_name.lower(), name),
+                    FlextUtilitiesFamilySurface._distribution_import_root(dist, name),
                 ))
         return tuple(candidates)
 
