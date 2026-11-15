@@ -401,7 +401,8 @@ class TestsFlextCoreLazyMembers:
 
             class Contract(ABC):
                 @abstractmethod
-                def who(self) -> str: ...
+                def who(self) -> str:
+                    """Name the concrete class."""
 
             tm.fail(module in sys.modules)
 

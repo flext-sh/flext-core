@@ -33,4 +33,22 @@ install_lazy_exports(
         "FlextUtilitiesGuardsTypeProtocolString": ".type_protocol_string",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextUtilitiesGuardsTypeProtocolSpecs": (
+            "_get_protocol_specs",
+            "_get_protocol_type_map",
+            "context",
+            "result_like",
+            "result_view",
+            "_check_protocol",
+        ),
+        "FlextUtilitiesGuardsTypeProtocolString": (
+            "_has_len",
+            "_is_none",
+            "_is_non_empty_mapping",
+            "_is_non_empty_sequence",
+            "_string_predicates",
+            "_run_string_type_check",
+        ),
+    },
 )

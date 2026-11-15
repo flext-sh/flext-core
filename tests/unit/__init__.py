@@ -12,16 +12,28 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
+    from tests.unit.test_lazy_composition_parts import (
+        TestsFlextCoreLazyCompositionParts,
+    )
+    from tests.unit.test_lazy_dotted_bases import TestsFlextCoreLazyDottedBases
     from tests.unit.test_utilities_models_family import (
         TestsFlextCoreUtilitiesModelsFamily,
     )
 
 
-__all__: tuple[str, ...] = ("TestsFlextCoreUtilitiesModelsFamily",)
+__all__: tuple[str, ...] = (
+    "TestsFlextCoreLazyCompositionParts",
+    "TestsFlextCoreLazyDottedBases",
+    "TestsFlextCoreUtilitiesModelsFamily",
+)
 
 install_lazy_exports(
     __name__,
     globals(),
-    {"TestsFlextCoreUtilitiesModelsFamily": ".test_utilities_models_family"},
+    {
+        "TestsFlextCoreLazyCompositionParts": ".test_lazy_composition_parts",
+        "TestsFlextCoreLazyDottedBases": ".test_lazy_dotted_bases",
+        "TestsFlextCoreUtilitiesModelsFamily": ".test_utilities_models_family",
+    },
     public_exports=__all__,
 )

@@ -48,4 +48,23 @@ install_lazy_exports(
         "FlextProtocolsProjectMetadataPyprojectIngress": ".pyproject_ingress",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextProtocolsProjectMetadataAggregates": (
+            "Project",
+            "ProjectToolFlext",
+        ),
+        "FlextProtocolsProjectMetadataDocument": (
+            "PyprojectTool",
+            "ProjectMetadata",
+        ),
+        "FlextProtocolsProjectMetadataFields": (
+            "ProjectAuthor",
+            "ProjectUrls",
+            "ProjectToolFlextProject",
+            "ProjectToolFlextReadmeSection",
+            "ProjectToolFlextDocs",
+            "ProjectToolFlextWorkspace",
+            "ProjectToolFlextNamespace",
+        ),
+    },
 )

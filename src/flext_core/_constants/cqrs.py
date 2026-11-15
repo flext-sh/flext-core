@@ -49,7 +49,7 @@ class FlextConstantsCqrs:
         HISTOGRAM = "histogram"
         SUMMARY = "summary"
 
-    DEFAULT_HANDLER_TYPE: HandlerType = HandlerType.COMMAND
+    DEFAULT_HANDLER_TYPE: ClassVar[HandlerType] = HandlerType.COMMAND
 
     @unique
     class ProcessingMode(StrEnum):

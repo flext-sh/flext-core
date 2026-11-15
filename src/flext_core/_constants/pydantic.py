@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from types import MappingProxyType
-from typing import Final
+from typing import ClassVar
 
 from pydantic.errors import (
     PydanticErrorCodes,
@@ -106,9 +106,9 @@ class FlextConstantsPydantic:
     # schema ``type`` selects the empty JSON document pydantic validates into
     # the contract's canonical empty value, so a field default always equals
     # what the same contract yields from a real empty input.
-    JSON_SCHEMA_TYPE_KEY: Final[str] = "type"
-    JSON_SCHEMA_PROPERTIES_KEY: Final[str] = "properties"
-    EMPTY_COLLECTION_JSON_SEEDS: Final[Mapping[str, bytes]] = MappingProxyType({
+    JSON_SCHEMA_TYPE_KEY: ClassVar[str] = "type"
+    JSON_SCHEMA_PROPERTIES_KEY: ClassVar[str] = "properties"
+    EMPTY_COLLECTION_JSON_SEEDS: ClassVar[Mapping[str, bytes]] = MappingProxyType({
         "object": b"{}",
         "array": b"[]",
     })

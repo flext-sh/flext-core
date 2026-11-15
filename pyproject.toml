@@ -64,6 +64,7 @@ Repository = "https://github.com/flext-sh/flext-core"
 
 [dependency-groups]
 dev = [
+  "properdocs>=1.6.7",
   "types-networkx",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "mkdocstrings-python>=2.0.9",
@@ -73,7 +74,6 @@ dev = [
   "editables>=0.6",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis",
-  "mkdocs",
   "mkdocs-autorefs",
   "mkdocs-exclude>=1.0.2",
   "mkdocs-git-revision-date-localized-plugin>=1.5.4",
@@ -206,7 +206,7 @@ follow_imports = "normal"
 follow_untyped_imports = true
 local_partial_types = true
 mypy_path = ["src"]
-namespace_packages = false
+namespace_packages = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
 python_version = "3.13"
@@ -712,7 +712,7 @@ environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "P10D"
 link-mode = "clone"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@4cb40a6fe564c6761dcb2f4e6c79d7fb7304f96f",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@394d91c0d9669a6de02b8b54f081d014f784fd52",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",

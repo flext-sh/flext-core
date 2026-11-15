@@ -46,7 +46,6 @@ if TYPE_CHECKING:
         FlextLazyExports,
         FlextLazyInstance,
         FlextLazyMember,
-        FlextLazyStandIn,
         FlextMixins,
         FlextModels,
         FlextProtocols,
@@ -126,7 +125,11 @@ if TYPE_CHECKING:
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
     from tests.typings import TestsFlextTypes, t
-    from tests.unit import TestsFlextCoreUtilitiesModelsFamily
+    from tests.unit import (
+        TestsFlextCoreLazyCompositionParts,
+        TestsFlextCoreLazyDottedBases,
+        TestsFlextCoreUtilitiesModelsFamily,
+    )
     from tests.utilities import TestsFlextUtilities, u
 
 
@@ -153,7 +156,6 @@ __all__: tuple[str, ...] = (
     "FlextLazyExports",
     "FlextLazyInstance",
     "FlextLazyMember",
-    "FlextLazyStandIn",
     "FlextMixins",
     "FlextModels",
     "FlextProtocols",
@@ -180,6 +182,8 @@ __all__: tuple[str, ...] = (
     "TestsFlextConstantsOther",
     "TestsFlextConstantsResult",
     "TestsFlextConstantsServices",
+    "TestsFlextCoreLazyCompositionParts",
+    "TestsFlextCoreLazyDottedBases",
     "TestsFlextCoreUtilitiesModelsFamily",
     "TestsFlextDecoratorsLegacy",
     "TestsFlextFlextHandlers",
@@ -275,7 +279,6 @@ install_lazy_exports(
         "FlextLazyExports": "flext_core",
         "FlextLazyInstance": "flext_core",
         "FlextLazyMember": "flext_core",
-        "FlextLazyStandIn": "flext_core",
         "FlextMixins": "flext_core",
         "FlextModels": "flext_core",
         "FlextProtocols": "flext_core",
@@ -302,6 +305,8 @@ install_lazy_exports(
         "TestsFlextConstantsOther": "._constants",
         "TestsFlextConstantsResult": "._constants",
         "TestsFlextConstantsServices": "._constants",
+        "TestsFlextCoreLazyCompositionParts": ".unit",
+        "TestsFlextCoreLazyDottedBases": ".unit",
         "TestsFlextCoreUtilitiesModelsFamily": ".unit",
         "TestsFlextDecoratorsLegacy": "._utilities",
         "TestsFlextFlextHandlers": "._utilities",

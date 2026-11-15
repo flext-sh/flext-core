@@ -16,7 +16,7 @@ from flext_core._exceptions import FlextExceptionsBase
 class FlextExceptionsTypes(FlextExceptionsBase):
     """All typed FLEXT exception subclasses."""
 
-    PydanticValidationError: type[t.ValidationError] = m.ValidationError
+    PydanticValidationError: ClassVar[type[t.ValidationError]] = m.ValidationError
 
     class ValidationError(FlextExceptionsBase.BaseError):
         """Exception raised for input validation failures."""

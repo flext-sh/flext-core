@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import install_lazy_exports
+from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._models._project_metadata.aggregates import (
@@ -48,4 +48,35 @@ install_lazy_exports(
         "FlextModelsPyprojectIngressContract": ".pyproject_ingress",
     },
     public_exports=__all__,
+    deferred_members={
+        "FlextModelsProjectMetadataAggregates": (
+            "Project",
+            "ProjectToolFlext",
+        ),
+        "FlextModelsProjectMetadataDocument": (
+            "PyprojectTool",
+            "ProjectMetadata",
+        ),
+        "FlextModelsProjectMetadataFields": (
+            "ProjectAuthor",
+            "ProjectUrls",
+            "ProjectToolFlextProject",
+            "ProjectToolFlextReadmeSection",
+            "ProjectToolFlextDocs",
+            "ProjectToolFlextWorkspace",
+            "ProjectToolFlextNamespace",
+        ),
+    },
+)
+
+defer_lazy_bases(
+    __name__,
+    {
+        "FlextModelsProjectMetadataAggregates": (
+            (".", "FlextModelsProjectMetadataFields"),
+        ),
+        "FlextModelsProjectMetadataDocument": (
+            (".", "FlextModelsProjectMetadataAggregates"),
+        ),
+    },
 )
