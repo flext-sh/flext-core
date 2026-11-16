@@ -14,7 +14,7 @@ from types import ModuleType
 from typing import cast
 
 import flext_core
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
+from flext_core import build_lazy_import_map, install_lazy_exports, lazy
 from tests import c, t, tm, u
 
 
@@ -126,7 +126,7 @@ class TestsFlextCoreLazyExports:
         script = (
             "import sys\n"
             f"sys.path.insert(0, {str(tmp_path)!r})\n"
-            "from flext_core.lazy import install_lazy_exports\n"
+            "from flext_core import install_lazy_exports\n"
             "namespace = {}\n"
             "install_lazy_exports('bootstrap_probe', namespace, {}, "
             "public_exports=())\n"
@@ -471,7 +471,7 @@ class TestsFlextCoreLazyExportCaching:
         package = tmp_path / "lazy_class_identity_probe"
         package.mkdir()
         (package / "__init__.py").write_text(
-            "from flext_core.lazy import install_lazy_exports\n"
+            "from flext_core import install_lazy_exports\n"
             "install_lazy_exports(__name__, globals(), {'Export': '.provider'})\n",
             encoding=c.DEFAULT_ENCODING,
         )
@@ -488,7 +488,7 @@ class TestsFlextCoreLazyExportCaching:
                 "-c",
                 (
                     "import lazy_class_identity_probe as package\n"
-                    "from flext_core.lazy import lazy\n"
+                    "from flext_core import lazy\n"
                     "export = package.Export\n"
                     "provider = lazy.load('lazy_class_identity_probe.provider')\n"
                     "assert export is provider.Export is provider.DURING\n"
@@ -521,7 +521,7 @@ class TestsFlextCoreLazyExportCaching:
         package_dir = tmp_path / package_name
         package_dir.mkdir()
         (package_dir / "__init__.py").write_text(
-            "from flext_core.lazy import install_lazy_exports\n"
+            "from flext_core import install_lazy_exports\n"
             "install_lazy_exports(__name__, globals(), {'u': '.child'})\n",
             encoding="utf-8",
         )

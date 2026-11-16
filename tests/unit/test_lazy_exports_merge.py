@@ -18,7 +18,7 @@ from collections.abc import Callable
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from flext_core.lazy import (
+from flext_core import (
     install_lazy_exports,
     lazy,
     merge_lazy_imports,
@@ -71,7 +71,7 @@ class TestsFlextCoreLazyExportsMerge:
     ) -> None:
         """The entry contract accepts strings/pairs and rejects malformed maps."""
         script = (
-            "from flext_core.lazy import normalize_lazy_imports\n"
+            "from flext_core import normalize_lazy_imports\n"
             "try:\n"
             f"    normalized = normalize_lazy_imports('pkg', {raw_literal})\n"
             "except ValueError as exc:\n"

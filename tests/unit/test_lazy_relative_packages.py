@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from types import ModuleType
 
-from flext_core.lazy import lazy, merge_lazy_imports, normalize_lazy_imports
+from flext_core import lazy, merge_lazy_imports, normalize_lazy_imports
 from tests import c, tm, u
 
 

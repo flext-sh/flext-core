@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core.lazy import lazy_getattr
+from flext_core import lazy_getattr
 from tests import tm, u
 
 if TYPE_CHECKING:
