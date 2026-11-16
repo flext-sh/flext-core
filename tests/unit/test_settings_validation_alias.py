@@ -20,8 +20,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from flext_core import FlextSettings
-from tests import c, m, t, tm, u
+from tests import FlextSettings, c, m, t, tm, u
 
 
 class TestsFlextCoreSettingsValidationAlias:

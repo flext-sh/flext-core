@@ -11,10 +11,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import c, p, tm, u
-from tests.integration.service_lifecycle_cases import (
-    TestsFlextFlextServiceLifecycleCases,
-)
+from tests import TestsFlextFlextServiceLifecycleCases, c, p, tm, u
 
 _FETCH_CALL_COUNT = 2
 

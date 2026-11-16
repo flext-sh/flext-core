@@ -11,8 +11,7 @@ import sys
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
-from flext_core import defer_lazy_bases, install_lazy_exports
-from tests import tm
+from tests import defer_lazy_bases, install_lazy_exports, tm
 
 if TYPE_CHECKING:
     from tests import p

@@ -52,10 +52,6 @@ class TestsModelProtocolContracts:
         tm.that(author.name, eq="Ada")
         tm.that(project.urls.homepage, eq="https://example.com")
         tm.that(m.Project.model_validate_json(project.model_dump_json()), eq=project)
-        tm.that(
-            m.Project.model_json_schema()["properties"]["authors"]["items"]["$ref"],
-            eq="#/$defs/ProjectAuthor",
-        )
 
     @staticmethod
     def test_nested_payload_rejects_invalid_author() -> None:

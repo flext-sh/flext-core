@@ -14,8 +14,7 @@ from __future__ import annotations
 from importlib.metadata import PackageMetadata, PathDistribution
 from pathlib import Path
 
-from flext_core.__version__ import FlextVersion, __version__, __version_info__
-from tests import c, tm, u
+from tests import FlextVersion, __version__, __version_info__, c, tm, u
 
 
 def _write_version_metadata(tmp_path: Path, version: str) -> Path:

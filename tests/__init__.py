@@ -124,6 +124,7 @@ if TYPE_CHECKING:
     from tests.constants import TestsFlextConstants, c
     from tests.models import TestsFlextModels, m
     from tests.protocols import TestsFlextProtocols, p
+    from tests.service_cases import TestsFlextFlextServiceLifecycleCases
     from tests.typings import TestsFlextTypes, t
     from tests.unit import (
         TestsFlextCoreLazyCompositionParts,
@@ -187,6 +188,7 @@ __all__: tuple[str, ...] = (
     "TestsFlextCoreUtilitiesModelsFamily",
     "TestsFlextDecoratorsLegacy",
     "TestsFlextFlextHandlers",
+    "TestsFlextFlextServiceLifecycleCases",
     "TestsFlextModels",
     "TestsFlextModelsMixins",
     "TestsFlextModelsNamespace",
@@ -310,6 +312,7 @@ install_lazy_exports(
         "TestsFlextCoreUtilitiesModelsFamily": ".unit",
         "TestsFlextDecoratorsLegacy": "._utilities",
         "TestsFlextFlextHandlers": "._utilities",
+        "TestsFlextFlextServiceLifecycleCases": ".service_cases",
         "TestsFlextModels": ".models",
         "TestsFlextModelsMixins": "._models",
         "TestsFlextModelsNamespace": "._models",

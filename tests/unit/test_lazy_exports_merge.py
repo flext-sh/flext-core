@@ -18,18 +18,19 @@ from collections.abc import Callable
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
 
-from flext_core.lazy import (
+from tests import (
+    c,
     install_lazy_exports,
     lazy,
     merge_lazy_imports,
     normalize_lazy_imports,
+    t,
+    tm,
+    u,
 )
-from tests import c, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-from tests import t
 
 
 def _register_alpha_child(child_package_name: str, alpha_module_name: str) -> None:
@@ -71,7 +72,7 @@ class TestsFlextCoreLazyExportsMerge:
     ) -> None:
         """The entry contract accepts strings/pairs and rejects malformed maps."""
         script = (
-            "from flext_core.lazy import normalize_lazy_imports\n"
+            "from flext_core import normalize_lazy_imports\n"
             "try:\n"
             f"    normalized = normalize_lazy_imports('pkg', {raw_literal})\n"
             "except ValueError as exc:\n"

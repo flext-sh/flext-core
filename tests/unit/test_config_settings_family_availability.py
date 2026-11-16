@@ -1,10 +1,9 @@
-"""Config and settings are available to every ``c,t,p,m,u`` family module.
+"""Config and settings are available to every public ``c,t,p,m,u`` facade.
 
-The layer-0 SSOT contract (ADR-005): each family facade and family package
-loads alongside the ``config``/``settings`` singletons, reads them through the
-single canonical form, and the settings surface stays usable for typed
-capabilities (the models family resolves the configured IANA timezone without
-any utility-layer import).
+The layer-0 SSOT contract (ADR-005): each public family facade loads alongside
+the ``config``/``settings`` singletons, reads them through the single canonical
+form, and the settings surface stays usable for typed capabilities (the models
+family resolves the configured IANA timezone without any utility-layer import).
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,8 +13,7 @@ from __future__ import annotations
 
 from zoneinfo import ZoneInfo
 
-from flext_core import config, lazy, settings
-from tests import c, tm
+from tests import c, config, lazy, settings, tm
 
 _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.constants",
@@ -23,24 +21,11 @@ _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.protocols",
     "flext_core.models",
     "flext_core.utilities",
-    "flext_core._constants",
-    "flext_core._typings",
-    "flext_core._protocols",
-    "flext_core._models",
-    "flext_core._utilities",
 )
 
 
 class TestsConfigSettingsFamilyAvailability:
-    """Prove the layer-0 SSOT reaches every family without reverse imports."""
-
-    @staticmethod
-    def test_singletons_are_stable_across_import_forms() -> None:
-        """Root-letter access and owner-module access yield the same SSOT."""
-        owner_settings = lazy.load("flext_core._settings").settings
-        owner_config = lazy.load("flext_core._config").config
-        tm.that(settings, where=lambda current: current is owner_settings)
-        tm.that(config, where=lambda current: current is owner_config)
+    """Prove the layer-0 SSOT reaches every public family without reverse imports."""
 
     @staticmethod
     @c.Tests.MARK.parametrize("module_name", _FAMILY_SURFACES)

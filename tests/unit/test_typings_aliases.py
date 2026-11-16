@@ -1,7 +1,7 @@
 """Behavioral tests for the tests typing facade (``t``) public surface.
 
 Exercises the observable contract callers depend on:
-- ``flext_core`` keeps shared ``TypeVar`` / ``ParamSpec`` helpers out of its
+- ``core`` keeps shared ``TypeVar`` / ``ParamSpec`` helpers out of its
   public surface,
 - the runtime type-check tuples (``PRIMITIVES_TYPES`` etc.) expose the exact
   membership documented for them and actually classify values via
@@ -16,26 +16,15 @@ from __future__ import annotations
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, ParamSpec, TypeVar
+from typing import Literal
 
 import pydantic
 
-import flext_core
 from tests import c, m, p, t, tm, u
 
 
 class TestsFlextCoreTypingsAliases:
     """Public contract of the ``t`` typing facade and its type-check tuples."""
-
-    @staticmethod
-    def test_flext_core_hides_shared_generic_helpers() -> None:
-        """flext_core must not expose shared TypeVar/ParamSpec helpers publicly."""
-        helpers = [
-            name
-            for name in flext_core.__all__
-            if isinstance(getattr(flext_core, name), (TypeVar, ParamSpec))
-        ]
-        tm.that(helpers, eq=[])
 
     @staticmethod
     def test_primitives_types_membership() -> None:

@@ -16,8 +16,7 @@ import types
 from datetime import UTC, datetime
 from pathlib import Path
 
-from flext_core import FlextContainer
-from tests import c, d, e, m, p, t, tm, u
+from tests import FlextContainer, c, d, e, m, p, t, tm, u
 
 
 class TestsFlextCoreContainerTruthful:

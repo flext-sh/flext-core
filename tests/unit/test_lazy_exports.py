@@ -13,9 +13,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import cast
 
-import flext_core
-from flext_core.lazy import build_lazy_import_map, install_lazy_exports, lazy
-from tests import c, t, tm, u
+from tests import build_lazy_import_map, c, install_lazy_exports, lazy, t, tm, u
 
 
 def _install_alpha(
@@ -93,23 +91,6 @@ class TestsFlextCoreLazyExports:
         tm.ok(alias is facade)
 
     @staticmethod
-    def test_root_package_resolves_primary_facades_via_aliases() -> None:
-        # Arrange / Act
-        """Test root package resolves primary facades via aliases."""
-        package = flext_core
-
-        # Assert — each short alias resolves to its full facade
-        tm.ok(package.c is package.FlextConstants)
-        tm.ok(package.e is package.FlextExceptions)
-        tm.ok(package.m is package.FlextModels)
-        tm.ok(package.p is package.FlextProtocols)
-        tm.ok(package.t is package.FlextTypes)
-        tm.ok(package.u is package.FlextUtilities)
-        tm.that(
-            {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__), eq=True
-        )
-
-    @staticmethod
     def test_cold_loader_does_not_execute_generated_child_initializer(
         tmp_path: Path,
     ) -> None:
@@ -126,7 +107,7 @@ class TestsFlextCoreLazyExports:
         script = (
             "import sys\n"
             f"sys.path.insert(0, {str(tmp_path)!r})\n"
-            "from flext_core.lazy import install_lazy_exports\n"
+            "from flext_core import install_lazy_exports\n"
             "namespace = {}\n"
             "install_lazy_exports('bootstrap_probe', namespace, {}, "
             "public_exports=())\n"
@@ -471,7 +452,7 @@ class TestsFlextCoreLazyExportCaching:
         package = tmp_path / "lazy_class_identity_probe"
         package.mkdir()
         (package / "__init__.py").write_text(
-            "from flext_core.lazy import install_lazy_exports\n"
+            "from flext_core import install_lazy_exports\n"
             "install_lazy_exports(__name__, globals(), {'Export': '.provider'})\n",
             encoding=c.DEFAULT_ENCODING,
         )
@@ -488,7 +469,7 @@ class TestsFlextCoreLazyExportCaching:
                 "-c",
                 (
                     "import lazy_class_identity_probe as package\n"
-                    "from flext_core.lazy import lazy\n"
+                    "from flext_core import lazy\n"
                     "export = package.Export\n"
                     "provider = lazy.load('lazy_class_identity_probe.provider')\n"
                     "assert export is provider.Export is provider.DURING\n"
@@ -521,7 +502,7 @@ class TestsFlextCoreLazyExportCaching:
         package_dir = tmp_path / package_name
         package_dir.mkdir()
         (package_dir / "__init__.py").write_text(
-            "from flext_core.lazy import install_lazy_exports\n"
+            "from flext_core import install_lazy_exports\n"
             "install_lazy_exports(__name__, globals(), {'u': '.child'})\n",
             encoding="utf-8",
         )

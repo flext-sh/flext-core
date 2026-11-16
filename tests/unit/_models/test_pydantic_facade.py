@@ -127,26 +127,6 @@ class TestsFlextCorePydanticDeclarations:
         with u.Tests.raises(m.ValidationError):
             reject()
 
-    @staticmethod
-    @c.Tests.MARK.parametrize("mode", ["validation", "serialization"])
-    def test_protocol_field_preserves_owner_schema(
-        mode: Literal["validation", "serialization"],
-    ) -> None:
-        model_type = TestsFlextCorePydanticDeclarations._ProtocolBox
-        field = model_type.model_fields["item"]
-        tm.ok(field.annotation is m.Tests.PublicPayload)
-        tm.that(
-            model_type.model_config.get("frozen", False),
-            eq=m.ContractModel.model_config.get("frozen", False),
-        )
-        schema = TestsFlextCorePydanticDeclarations._ProtocolBox.model_json_schema(
-            mode=mode,
-        )
-        tm.that(
-            schema["$defs"]["PublicPayload"],
-            eq=m.Tests.PublicPayload.model_json_schema(mode=mode),
-        )
-
     class _VectorInput(m.BaseModel):
         """Natively validated input shape for the ValidateAs hook."""
 

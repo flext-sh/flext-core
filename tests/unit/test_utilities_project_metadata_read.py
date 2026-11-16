@@ -12,10 +12,23 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
+from textwrap import dedent
 from typing import cast
 
 from tests import c, m, p, r, tm, u
-from tests.unit._project_metadata_support import write_pyproject
+
+
+def write_pyproject(tmp_path: Path, body: str) -> Path:
+    """Write a pyproject document under the test root.
+
+    Returns:
+        The test root path.
+
+    """
+    (tmp_path / c.PYPROJECT_FILENAME).write_text(
+        dedent(body).lstrip(), encoding="utf-8"
+    )
+    return tmp_path
 
 
 def _read(root: Path) -> p.ResultView[p.ProjectMetadata]:

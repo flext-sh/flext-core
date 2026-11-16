@@ -11,14 +11,39 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from typing import override
 
-from flext_core import FlextContainer, FlextDispatcher, FlextRegistry, FlextService
-from tests import c, m, p, r, t, tm, u
-from tests.integration.migration_validation_cases import capture_output
+from tests import (
+    FlextContainer,
+    FlextDispatcher,
+    FlextRegistry,
+    FlextService,
+    c,
+    m,
+    p,
+    r,
+    t,
+    tm,
+    u,
+)
 
 _OBSERVED_VALUE = 5
+
+
+def capture_output[T](
+    emit: Callable[[], T], capture: p.Tests.OutputCapture, *, contains: str
+) -> T:
+    """Check native captured output without assuming a configured logging sink.
+
+    Returns:
+        The resulting ``T``.
+
+    """
+    result = emit()
+    captured = capture.readouterr()
+    tm.that(captured.out + captured.err, has=contains)
+    return result
 
 
 class TestsFlextCoreMigrationValidation:

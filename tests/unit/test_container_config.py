@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import FlextContainer, FlextSettings
-from tests import c, m, p, t, tm
+from tests import FlextContainer, FlextSettings, c, m, p, t, tm
 
 
 class TestsFlextCoreContainerConfig:

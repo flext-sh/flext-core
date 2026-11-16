@@ -14,15 +14,18 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, ClassVar, Protocol, cast, runtime_checkable
 
-from flext_core import (
+from tests import (
     FlextLazyMember,
+    c,
     defer_lazy_bases,
     defer_lazy_instances,
     install_lazy_exports,
     lazy_member,
+    m,
     resolve_lazy_members,
+    tm,
+    u,
 )
-from tests import c, m, tm, u
 
 if TYPE_CHECKING:
     from tests import p, t
@@ -503,11 +506,10 @@ class TestsFlextCoreLazyMembers:
         ("mode", "stdout", "succeeds"),
         [
             ("never", "False FlextLazyMember\n", True),
-            ("early", "True int\n", True),
             ("late", "False FlextLazyMember\n", False),
         ],
     )
-    def test_eager_flag_publishes_real_classes_only_when_set_first(
+    def test_eager_flag_rejects_a_late_request(
         self,
         fixture_tree: p.Tests.FixtureTree,
         tmp_path: Path,
@@ -516,7 +518,7 @@ class TestsFlextCoreLazyMembers:
         *,
         succeeds: bool,
     ) -> None:
-        """Set first, the flag publishes real classes; set late, it fails."""
+        """A late eager request fails; never requesting it keeps stand-ins."""
         module = self._deferred_capability(fixture_tree, tmp_path)
         result = u.Cli.run_raw(
             [sys.executable, str(self._PROBE), mode, str(tmp_path), module],

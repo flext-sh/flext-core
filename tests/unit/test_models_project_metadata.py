@@ -311,5 +311,11 @@ class TestsFlextModelsProjectMetadata:
         tm.that(language_schema["default"], eq="en")
         tm.that(schema["additionalProperties"], eq=False)
         tm.that("documentation_language" in schema.get("required", []), truth=False)
-        tm.that(schema["$defs"]["DocumentationLanguage"]["type"], eq="string")
-        tm.that(schema["$defs"]["DocumentationLanguage"]["enum"], eq=["en", "pt-BR"])
+        tm.that(
+            m.ProjectToolFlextDocs.model_validate(
+                {"documentation_language": "pt-BR"},
+            ).documentation_language,
+            eq="pt-BR",
+        )
+        with u.Tests.raises(m.ValidationError):
+            m.ProjectToolFlextDocs.model_validate({"documentation_language": "fr"})

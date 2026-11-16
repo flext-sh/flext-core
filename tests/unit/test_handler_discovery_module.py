@@ -13,8 +13,7 @@ from types import ModuleType
 
 import pytest
 
-from flext_core import FlextDispatcher
-from tests import c, h, m, p, r, t, tm, u
+from tests import FlextDispatcher, c, h, m, p, r, t, tm, u
 
 
 class TestsFlextHandlerDiscovery:

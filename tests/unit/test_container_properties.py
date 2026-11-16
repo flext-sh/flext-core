@@ -10,8 +10,7 @@ from collections.abc import Iterator
 
 from hypothesis import assume, given, settings, strategies as st
 
-from flext_core import FlextContainer
-from tests import c, tm, u
+from tests import FlextContainer, c, tm, u
 
 
 class TestsFlextCoreContainerProperties:
