@@ -7,6 +7,7 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import io
+import logging
 import sys
 from typing import TextIO, override
 
@@ -15,6 +16,19 @@ from flext_core import t
 
 class FlextUtilitiesLoggingStream:
     """Own the minimal native stream contract the logging writer consumes."""
+
+    class StreamHandler(logging.StreamHandler[t.TextStream]):
+        """Retain native rendering/locking while surfacing the native sink error."""
+
+        include_callsite: bool = True
+
+        @override
+        def handleError(self, record: t.LoggingNativeRecord) -> None:
+            error = sys.exception()
+            if error is not None:
+                raise error
+            msg = "Logging handler failed without an active exception"
+            raise RuntimeError(msg)
 
     class TextStream(io.TextIOBase, TextIO):
         """Delegate the consumed write lifecycle to a caller-owned stream."""

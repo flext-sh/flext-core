@@ -1095,6 +1095,7 @@ class TestsFlextLoggingNativeEmission:
         finally:
             os.close(read_fd)
 
+    @c.Tests.MARK.slow
     @c.Tests.MARK.parametrize("scenario", ["stream_failure", "blocked_pipe"])
     def test_async_public_failure_and_shutdown(self, scenario: str) -> None:
         """Original failures and bounded shutdown cross public boundaries.

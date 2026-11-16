@@ -6,14 +6,10 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._logging.composition import FlextUtilitiesLoggingComposition
-from flext_core._utilities._logging.performance import FlextUtilitiesLoggingPerformance
+from flext_core._utilities._logging import FlextUtilitiesLoggingComposition
 
 
-class FlextUtilitiesLoggingConfig(
-    FlextUtilitiesLoggingComposition,
-    FlextUtilitiesLoggingPerformance,
-):
+class FlextUtilitiesLoggingConfig(FlextUtilitiesLoggingComposition):
     """Compose logging configuration through its single-responsibility parts."""
 
 

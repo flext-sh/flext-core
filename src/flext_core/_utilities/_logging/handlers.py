@@ -15,6 +15,7 @@ from structlog.typing import Processor
 
 from flext_core import c, p, t
 from flext_core._utilities._logging.processors import FlextUtilitiesLoggingProcessors
+from flext_core._utilities._logging.stream import FlextUtilitiesLoggingStream
 
 
 class FlextUtilitiesLoggingHandlers(FlextUtilitiesLoggingProcessors):
@@ -27,9 +28,34 @@ class FlextUtilitiesLoggingHandlers(FlextUtilitiesLoggingProcessors):
         Returns:
             The factory bound to that graph's native manager.
 
+        Raises:
+            TypeError: If a handler or formatter has an incompatible type.
+            ValueError: If factories conflict or sink failures are not propagated.
+
         """
+        if options.handlers and options.logger_factory is not None:
+            msg = "Select native handlers or a logger factory, not both"
+            raise ValueError(msg)
+        admitted: t.LoggingNativeHandlers = []
+        for handler in options.handlers:
+            if not isinstance(handler, logging.Handler):
+                msg = (
+                    "Selected handlers must implement the native "
+                    "logging.Handler boundary"
+                )
+                raise TypeError(msg)
+            if not isinstance(handler.formatter, structlog.stdlib.ProcessorFormatter):
+                msg = "Selected handlers require a native ProcessorFormatter"
+                raise TypeError(msg)
+            if type(handler).handleError is logging.Handler.handleError:
+                msg = (
+                    "Selected handlers must propagate sink failures; "
+                    "use create_logging_handler"
+                )
+                raise ValueError(msg)
+            admitted.append(handler)
         root = logging.RootLogger(logging.NOTSET)
-        root.handlers = cls._validated_native_handlers(options)
+        root.handlers = admitted
         manager = logging.Manager(root)
 
         def factory(*names: str) -> p.OutputLogger:
@@ -52,7 +78,7 @@ class FlextUtilitiesLoggingHandlers(FlextUtilitiesLoggingProcessors):
             The configured native handler.
 
         """
-        handler = cls._StreamHandler(stream)
+        handler = FlextUtilitiesLoggingStream.StreamHandler(stream)
         handler.include_callsite = not console_renderer
         processors: MutableSequence[Processor] = [
             structlog.stdlib.ProcessorFormatter.remove_processors_meta,
@@ -74,43 +100,6 @@ class FlextUtilitiesLoggingHandlers(FlextUtilitiesLoggingProcessors):
         if log_level is not None:
             handler.setLevel(cls.level_number(log_level))
         return handler
-
-    @staticmethod
-    def _validated_native_handlers(
-        options: p.StructlogOptions,
-    ) -> t.LoggingNativeHandlers:
-        """Validate native sink contracts before replacing the active composition.
-
-        Returns:
-            The admitted native handlers.
-
-        Raises:
-            TypeError: If a handler or formatter has an incompatible type.
-            ValueError: If factories conflict or sink failures are not propagated.
-
-        """
-        if options.handlers and options.logger_factory is not None:
-            msg = "Select native handlers or a logger factory, not both"
-            raise ValueError(msg)
-        handlers: t.LoggingNativeHandlers = []
-        for handler in options.handlers:
-            if not isinstance(handler, logging.Handler):
-                msg = (
-                    "Selected handlers must implement the native "
-                    "logging.Handler boundary"
-                )
-                raise TypeError(msg)
-            if not isinstance(handler.formatter, structlog.stdlib.ProcessorFormatter):
-                msg = "Selected handlers require a native ProcessorFormatter"
-                raise TypeError(msg)
-            if type(handler).handleError is logging.Handler.handleError:
-                msg = (
-                    "Selected handlers must propagate sink failures; "
-                    "use create_logging_handler"
-                )
-                raise ValueError(msg)
-            handlers.append(handler)
-        return handlers
 
 
 __all__: list[str] = ["FlextUtilitiesLoggingHandlers"]

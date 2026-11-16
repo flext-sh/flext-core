@@ -6,7 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core._utilities._logging.context import FlextUtilitiesLoggingContextBinding
+from flext_core._utilities._logging import FlextUtilitiesLoggingContextBinding
 
 
 class FlextUtilitiesLoggingContext(FlextUtilitiesLoggingContextBinding):

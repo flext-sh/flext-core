@@ -16,8 +16,7 @@ import structlog
 from typing_extensions import TypeForm
 
 from flext_core import c, e, m, p, r, t
-from flext_core._utilities.base import FlextUtilitiesBase
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core._utilities import FlextUtilitiesBase, FlextUtilitiesPydantic
 
 
 class FlextUtilitiesLoggingContextBinding:

@@ -133,7 +133,7 @@ class FlextUtilitiesLoggingComposition(FlextUtilitiesLoggingHandlers):
         """
         owner = FlextUtilitiesLoggingState
         if (
-            owner.selected_logging_options() is not None
+            owner.current().options is not None
             and settings is None
             and runtime_settings is None
         ):
@@ -195,7 +195,7 @@ class FlextUtilitiesLoggingComposition(FlextUtilitiesLoggingHandlers):
     @classmethod
     def ensure_structlog_configured(cls) -> None:
         """Ensure structlog is configured (called automatically on first use)."""
-        if cls.selected_logging_options() is None:
+        if FlextUtilitiesLoggingState.current().options is None:
             cls.configure_structlog()
 
     @classmethod
