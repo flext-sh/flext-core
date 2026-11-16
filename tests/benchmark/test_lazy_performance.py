@@ -12,7 +12,7 @@ import time
 from types import ModuleType
 
 import flext_core
-from flext_core.lazy import install_lazy_exports, lazy
+from flext_core import install_lazy_exports, lazy
 from tests import c, tm
 
 

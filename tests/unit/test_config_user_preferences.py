@@ -22,8 +22,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from types import ModuleType
 
-from flext_core import lazy
-from flext_core.config_sources import FlextStrictYamlConfigSource
+from flext_core import FlextStrictYamlConfigSource, lazy
 from tests import c, tm, u
 
 _SUBCLASS_SOURCE = '''
