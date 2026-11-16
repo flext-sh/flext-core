@@ -6,15 +6,8 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import MutableSequence, Sequence
-    from datetime import datetime
-
-
 from collections.abc import Callable, Iterable
-from typing import Literal, Protocol, overload, runtime_checkable
+from typing import TYPE_CHECKING, Literal, Protocol, overload, runtime_checkable
 
 from typing_extensions import TypeForm
 
@@ -22,6 +15,8 @@ from flext_core import t
 from flext_core._protocols import FlextProtocolsPydantic
 
 if TYPE_CHECKING:
+    from collections.abc import MutableSequence, Sequence
+    from datetime import datetime
     from types import TracebackType
 
     from pydantic.config import JsonDict
