@@ -3,7 +3,7 @@
 ``FlextVersion`` is a metadata facade whose public surface is the derived
 attributes (``__version__``, ``__version_info__``, ``__title__`` …) recomputed
 per subclass through MRO from the installed package metadata. Tests assert the
-observable attribute contract and its parity with the module-level exports.
+observable attribute contract of the facade.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
 SPDX-License-Identifier: MIT
@@ -14,7 +14,7 @@ from __future__ import annotations
 from importlib.metadata import PackageMetadata, PathDistribution
 from pathlib import Path
 
-from tests import FlextVersion, __version__, __version_info__, c, tm, u
+from tests import FlextVersion, c, tm, u
 
 
 def _write_version_metadata(tmp_path: Path, version: str) -> Path:
@@ -39,7 +39,7 @@ def _write_version_metadata(tmp_path: Path, version: str) -> Path:
 
 
 class TestsFlextCoreVersion:
-    """Behavior contract for FlextVersion public attributes and module exports."""
+    """Behavior contract for FlextVersion public attributes."""
 
     @staticmethod
     def test_version_attribute_is_semver_formatted_string() -> None:
@@ -121,9 +121,3 @@ class TestsFlextCoreVersion:
             tm.that(value, is_=str)
         tm.that(FlextVersion.__title__, eq=c.Tests.CORE_PACKAGE_NAME)
         tm.that(FlextVersion.__version__, match=c.PATTERN_SEMVER_RE)
-
-    @staticmethod
-    def test_module_level_exports_match_class_accessors() -> None:
-        """Module exports preserve exact parity with the metadata facade."""
-        tm.that(__version__, eq=FlextVersion.__version__)
-        tm.that(__version_info__, eq=FlextVersion.__version_info__)

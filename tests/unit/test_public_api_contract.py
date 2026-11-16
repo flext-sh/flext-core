@@ -23,7 +23,7 @@ from typing import cast
 from tests import (
     FlextCore,
     FlextSettings,
-    __version__,
+    FlextVersion,
     build_lazy_import_map,
     c,
     e,
@@ -211,9 +211,9 @@ class TestsFlextCoreFacadeLifecycle:
 
     @staticmethod
     def test_version_metadata_is_usable_string() -> None:
-        """The package publishes a non-empty ``__version__`` string."""
+        """The metadata facade publishes a non-empty ``__version__`` string."""
         # Arrange / Act
-        version = __version__
+        version = FlextVersion.__version__
         # Assert
         tm.that(version, is_=str)
         tm.that(version, truth=True)
