@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from typing import TypeAlias
 
-from flext_core import FlextContext, FlextUtilities, m
-from tests import tm
+from tests import FlextContext, FlextUtilities, m, tm
 
 
 class TestsFlextCoreUtilitiesModelsFamily:

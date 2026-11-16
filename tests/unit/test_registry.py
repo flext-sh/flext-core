@@ -8,8 +8,19 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
-from flext_core import FlextContainer, FlextDispatcher, FlextRegistry
-from tests import c, h, m, p, r, t, tm, u
+from tests import (
+    FlextContainer,
+    FlextDispatcher,
+    FlextRegistry,
+    c,
+    h,
+    m,
+    p,
+    r,
+    t,
+    tm,
+    u,
+)
 
 
 def _is_same(expected: object) -> Callable[[object], bool]:

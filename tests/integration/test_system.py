@@ -16,8 +16,7 @@ from __future__ import annotations
 import uuid
 from collections.abc import Mapping
 
-from flext_core import FlextContainer
-from tests import c, e, p, r, t, tm, u
+from tests import FlextContainer, c, e, p, r, t, tm, u
 
 
 class TestsFlextCoreSystem:

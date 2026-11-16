@@ -27,8 +27,7 @@ import pytest
 import structlog
 from pydantic import ValidationError
 
-from flext_core import FlextContainer, FlextSettings
-from tests import c, m, p, t, tm, u
+from tests import FlextContainer, FlextSettings, c, m, p, t, tm, u
 
 if TYPE_CHECKING:
     from typing import Never

@@ -17,8 +17,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from flext_core import FlextContext
-from tests import c, m, p, t, tm, u, x
+from tests import FlextContext, c, m, p, t, tm, u, x
 
 
 class TestsFlextMixins:

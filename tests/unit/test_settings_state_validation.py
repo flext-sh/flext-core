@@ -10,8 +10,7 @@ from collections.abc import MutableMapping
 from typing import TYPE_CHECKING, ClassVar
 from uuid import UUID
 
-from flext_core import FlextSettings
-from tests import c, m, t, tm, u
+from tests import FlextSettings, c, m, t, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path

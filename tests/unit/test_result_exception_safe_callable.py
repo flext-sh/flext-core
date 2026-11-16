@@ -12,8 +12,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import c, p, r, tm, u
-from tests.utilities import TestsFlextUtilities
+from tests import TestsFlextUtilities, c, p, r, tm, u
 
 
 class TestsFlextCoreResultExceptionSafeCallable(

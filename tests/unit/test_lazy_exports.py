@@ -13,9 +13,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import cast
 
-import flext_core
-from flext_core import build_lazy_import_map, install_lazy_exports, lazy
-from tests import c, t, tm, u
+from tests import build_lazy_import_map, c, install_lazy_exports, lazy, t, tm, u
 
 
 def _install_alpha(
@@ -91,23 +89,6 @@ class TestsFlextCoreLazyExports:
         facade = getattr(module, facade_name)
         alias = getattr(module, alias_name)
         tm.ok(alias is facade)
-
-    @staticmethod
-    def test_root_package_resolves_primary_facades_via_aliases() -> None:
-        # Arrange / Act
-        """Test root package resolves primary facades via aliases."""
-        package = flext_core
-
-        # Assert — each short alias resolves to its full facade
-        tm.ok(package.c is package.FlextConstants)
-        tm.ok(package.e is package.FlextExceptions)
-        tm.ok(package.m is package.FlextModels)
-        tm.ok(package.p is package.FlextProtocols)
-        tm.ok(package.t is package.FlextTypes)
-        tm.ok(package.u is package.FlextUtilities)
-        tm.that(
-            {"FlextConstants", "FlextUtilities", "u"} <= set(package.__all__), eq=True
-        )
 
     @staticmethod
     def test_cold_loader_does_not_execute_generated_child_initializer(

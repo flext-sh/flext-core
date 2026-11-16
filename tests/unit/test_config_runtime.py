@@ -12,8 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from flext_core import FlextConfig, FlextCore, FlextSettings, config, settings
-from tests import c, m, tm, u
+from tests import FlextConfig, FlextCore, FlextSettings, c, config, m, settings, tm, u
 
 if TYPE_CHECKING:
     from pathlib import Path
