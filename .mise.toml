@@ -55,7 +55,6 @@ python = "3.13"
 "aqua:ast-grep/ast-grep" = "latest"
 "gitleaks" = "latest"
 "aqua:boyter/scc" = "latest"
-"node" = "latest"
 "github:qltysh/qlty" = { version = "latest" }
 "github:kucherenko/jscpd" = { version = "latest" }
 "github:microsoft/waza" = { version = "latest", version_prefix = "v" }

@@ -65,9 +65,8 @@ above are not declared with `autouse=True`.
 ```python
 from __future__ import annotations
 
-from flext_tests import FlextTestsSettings, tm
-
 from flext_core import FlextSettings
+from flext_tests import FlextTestsSettings, tm
 
 
 def test_settings_isolation(settings: FlextTestsSettings) -> None:
@@ -82,9 +81,8 @@ def test_settings_isolation(settings: FlextTestsSettings) -> None:
 When a fixture is not enough:
 
 ```python
-from flext_tests import FlextTestsSettings
-
 from flext_core import FlextContainer, FlextSettings
+from flext_tests import FlextTestsSettings
 
 FlextSettings.reset_for_testing()
 FlextTestsSettings.reset_for_testing()
@@ -151,15 +149,16 @@ standalone packages. `flext-tests` owns matcher behavior; the universal
 facades may reexport the canonical `tm`, but never implement a competing matcher
 or a project-specific assertion rewrite.
 
-| Intent                                          | Public pattern                                                                   | Required invariant                                                                               |
-| ----------------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Successful or failed Result                     | `tm.ok(result)` / `tm.fail(result)`                                              | State is independent of payload truthiness; success returns the original payload.                |
-| Native equality or inequality                   | `tm.that(value, eq=expected)` / `ne=expected`                                    | Operators are independent; operands stay native and successful checks do not render them.        |
-| General truth                                   | `tm.that(value, truth=True)` / `truth=False`                                     | The supplied subject is observed without payload normalization.                                  |
-| Typed local value                               | `value = tm.not_none(value)` / `tm.instance(value, Expected)`                    | Return the same object; rebind only when that local binding is intended.                         |
-| Guard, short-circuit condition, or lazy message | Native conditional branch with `tm.reject()` / `tm.reject(message)`              | Preserve conditional evaluation, narrowing, name scope, exception arguments, and message timing. |
-| Structured input                                | Validate once with the canonical Pydantic model, then assert its public behavior | Do not scatter casts, dictionary narrowing, or schema copies through consumers.                  |
-| Configured expectations                         | Read the same typed config/settings owner as production                          | A valid configuration change must not invalidate a hardcoded expectation.                        |
+| Intent                                    | Public pattern                                                                   | Required invariant                                                                                                                 |
+| ----------------------------------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Successful or failed Result               | `tm.ok(result)` / `tm.fail(result)`                                              | State is independent of payload truthiness; success returns the original payload.                                                  |
+| Native equality or inequality             | `tm.that(value, eq=expected)` / `ne=expected`                                    | Operators are independent; operands stay native and successful checks do not render them.                                          |
+| General truth                             | `tm.that(value, truth=True)` / `truth=False`                                     | The supplied subject is observed without payload normalization.                                                                    |
+| Typed local value                         | `value = tm.not_none(value)` / `tm.instance(value, Expected)`                    | Return the same object; rebind only when that local binding is intended.                                                           |
+| Truth with the original assertion message | `tm.that(condition, truth=True, assertion_message=message)`                      | One expression, no branch; the message is evaluated once, before the truth check, and the AssertionError carries that same object. |
+| Guard or short-circuit condition          | One negated branch: `if not (condition): tm.reject()` / `tm.reject(message)`     | Preserve narrowing, single truth conversion, name scope, and a lazy message; never an empty `if condition: pass` branch.           |
+| Structured input                          | Validate once with the canonical Pydantic model, then assert its public behavior | Do not scatter casts, dictionary narrowing, or schema copies through consumers.                                                    |
+| Configured expectations                   | Read the same typed config/settings owner as production                          | A valid configuration change must not invalidate a hardcoded expectation.                                                          |
 
 The automation retains native control flow when a matcher call alone cannot prove
 the original semantics. It does not rebind globals, reinterpret a callable message
@@ -193,9 +192,17 @@ unresolved or unadmitted findings remain open rather than being classified green
   object identity instead of eagerly formatting it.
 - Matcher arguments are ordinary Python arguments: a matcher cannot recover
   short-circuit evaluation or narrowing already lost before its call. Automated
-  conversion therefore retains complex conditions in native control flow and
-  uses `tm.reject()` for the failing branch. It must not introduce assignments
-  that change the election of global, nonlocal, or local names.
+  conversion therefore writes a plain condition as one `tm.that(..., truth=...)`
+  expression (adding no branch to the test), and keeps a narrowing condition
+  (None, isinstance, a bare name or attribute) or a short-circuit one (`and`,
+  `or`, conditional expression) in one negated branch that calls `tm.reject()`.
+  It must not introduce assignments that change the election of global,
+  nonlocal, or local names.
+- Convert existing asserts with the owner catalog, never by hand:
+  `make mod RULES=<rewire-test-assert-* id>`; the generated import header binds
+  `tm` (`make mod RULES=import-header--tests` when a selection leaves it
+  unbound), and `rewire-test-reject-pass-branch*` folds an empty-branch shape
+  written by an older rewrite.
 - Use `settings_factory` when a project-specific settings subclass is required.
 - Use `tm.ok(result)` and `tm.fail(result)` for result assertions; inspect state
   properties directly only when that state query is the behavior under test.
@@ -225,9 +232,8 @@ For a standalone test without the settings plugin, keep the reset on both sides 
 mutation, including assertion failure:
 
 ```python
-from flext_tests import tm
-
 from flext_core import FlextSettings
+from flext_tests import tm
 
 
 def test_settings_override() -> None:

@@ -11,7 +11,7 @@
 - [Connect configuration to domain models](#connect-configuration-to-domain-models)
 - [Public exports manifest](#public-exports-manifest)
 - [Documentation configuration](#documentation-configuration)
-  - [Build API documentation with MkDocs and mkdocstrings](#build-api-documentation-with-mkdocs-and-mkdocstrings)
+  - [Build API documentation with ProperDocs and mkdocstrings](#build-api-documentation-with-properdocs-and-mkdocstrings)
 - [Apply and validate](#apply-and-validate)
 - [Related guides](#related-guides)
 
@@ -137,9 +137,9 @@ Docs-only policy exists only when it cannot be derived from a typed owner.
 Root files under `docs/guides/` own generated member guides. Change the root source,
 never the member projection.
 
-### Build API documentation with MkDocs and mkdocstrings
+### Build API documentation with ProperDocs and mkdocstrings
 
-The Infra dependency catalog already declares MkDocs and its Python docstring
+The Infra dependency catalog already declares ProperDocs and its Python docstring
 handler. Provision them through the physical environment elected by `make setup`;
 do not install a separate documentation environment with `pip`. Dependency changes
 belong to the existing catalog and `make upg`, subject to ADR-030's lock guard.
@@ -153,7 +153,7 @@ belong to the existing catalog and `make upg`, subject to ADR-030's lock guard.
    `mkdocs_macros.j2` template. Root/member templates consume that macro; never edit
    generated `mkdocs.yml` or duplicate the plugin block in a member.
 4. Generate through the root `make gen`, complete the native validation cycle, and
-   build through `make build`. The build uses strict MkDocs configuration and
+   build through `make build`. The build runs ProperDocs in strict mode and
    publishes its local site under the generated `site_dir`.
 
 The approved plugin configuration places the docstring style under `options`:

@@ -288,7 +288,7 @@ install_lazy_exports(
         ),
         "FlextUtilitiesFamilySurface": (
             "distribution_in_family_discovery",
-            "_module_names_by_distribution",
+            "_distribution_import_root",
             "family_discovery_candidates",
             "_surface_snapshot",
             "project_alias_owners",
@@ -468,12 +468,6 @@ install_lazy_exports(
             "registry_registration_details",
             "resolve_runtime_settings",
         ),
-        "FlextUtilitiesPackageVersion": (
-            "package_author",
-            "package_homepage",
-            "package_version_info",
-            "PackageVersion",
-        ),
         "FlextUtilitiesParser": (
             "parse",
             "_dispatch",
@@ -504,6 +498,10 @@ install_lazy_exports(
             "installed_distributions",
             "distribution_requirement_names",
             "project_uses_distribution",
+            "package_author",
+            "package_homepage",
+            "package_version_info",
+            "PackageVersion",
         ),
         "FlextUtilitiesPydantic": (
             "validate_call",
@@ -598,7 +596,6 @@ defer_lazy_bases(
         "FlextUtilitiesModelRuntime": ((".", "FlextUtilitiesModelOptions"),),
         "FlextUtilitiesParser": ((".", "FlextUtilitiesParserTargets"),),
         "FlextUtilitiesParserTargets": ((".", "FlextUtilitiesParserCoerce"),),
-        "FlextUtilitiesProjectMetadata": ((".", "FlextUtilitiesPackageVersion"),),
         "FlextUtilitiesPydantic": (
             ("flext_core._models", "FlextModelsPydantic"),
             (".", "FlextUtilitiesTypingAdapterJson"),

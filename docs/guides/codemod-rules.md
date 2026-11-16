@@ -121,6 +121,15 @@ until no byte changes. Rendering emits the final import order; no Ruff stage dec
 or repairs imports. Each stage's staged `sgconfig.yml` lives under
 `.reports/codemod/native/<stage>`, so `ast-grep scan -c` reproduces the stage by hand.
 
+The `make check` codemod gate and `make mod` read findings through one native scan
+route, `FlextInfraModGateEngine.native_findings` (ADR-028 Decision 18). Each
+source's native records are a fragment of the ast-grep scan cache in the Infra work
+directory. A fragment's key authenticates the scanner release, every byte of the
+staged ruleset (configuration, rule bundle and utilities), the source's path and its
+content. An unchanged rescan therefore starts no scanner, and an edit rescans only
+the edited sources, in one invocation; the run logs `cache hit=<n> miss=<n>` for
+each ruleset.
+
 Machine-only native configurations use JSON-form YAML documents, serialized by
 the existing typed JSON owner. Elected scan rules share one multi-document YAML
 file; global utilities retain one document per file as ast-grep requires.
@@ -201,10 +210,13 @@ Its matcher owner is `flext-tests`; its patterns, native fixtures, and generated
 snapshots have one writable owner in `flext-infra`. Consumers reexport the same
 `tm` binding rather than copying matcher or transformation implementations.
 Rules must preserve Python's evaluation and scope semantics, not merely remove
-the `assert` token. In particular, narrowing and lazy-message guards use the
-terminating public matcher without rebinding a referenced name or changing the
-exception category. Runtime comparisons against the original snippets validate
-these properties; snapshot text alone does not prove them.
+the `assert` token. A plain condition becomes one `tm.that(..., truth=...)`
+expression, with `assertion_message` when the assert carried one; a condition
+that needs its branch (the `branch-condition` util: narrowing or short-circuit)
+keeps one negated branch with the terminating `tm.reject`, without rebinding a
+referenced name or changing the exception category. Runtime comparisons
+against the original snippets validate these properties; snapshot text alone
+does not prove them.
 
 ### Pyrefly strict-typing cures (campaign flext-osru9, census 2026-10-28)
 
