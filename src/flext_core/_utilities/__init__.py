@@ -358,6 +358,7 @@ install_lazy_exports(
             "record_metric",
             "push_context",
             "pop_context",
+            "PerformanceTracker",
         ),
         "FlextUtilitiesLogging": (
             "_direct_logger",
@@ -552,7 +553,6 @@ defer_lazy_bases(
         ),
         "FlextUtilitiesLoggingConfig": (
             ("flext_core._utilities._logging", "FlextUtilitiesLoggingComposition"),
-            ("flext_core._utilities._logging", "FlextUtilitiesLoggingPerformance"),
         ),
         "FlextUtilitiesLoggingContext": (
             ("flext_core._utilities._logging", "FlextUtilitiesLoggingContextBinding"),

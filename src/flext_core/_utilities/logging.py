@@ -16,9 +16,11 @@ from collections.abc import Mapping
 import structlog
 
 from flext_core import c, p, t
-from flext_core._utilities._logging.bound_logger import FlextUtilitiesLoggingBoundLogger
-from flext_core._utilities.logging_config import FlextUtilitiesLoggingConfig
-from flext_core._utilities.logging_context import FlextUtilitiesLoggingContext
+from flext_core._utilities import (
+    FlextUtilitiesLoggingConfig,
+    FlextUtilitiesLoggingContext,
+)
+from flext_core._utilities._logging import FlextUtilitiesLoggingBoundLogger
 
 
 class FlextUtilitiesLogging(

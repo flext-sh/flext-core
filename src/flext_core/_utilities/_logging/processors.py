@@ -24,20 +24,17 @@ from structlog.tracebacks import ExceptionDictTransformer
 from structlog.typing import Processor
 
 from flext_core import c, m, p
+from flext_core._utilities import FlextUtilitiesMetadata
 from flext_core._utilities._logging.exception_info import (
     FlextUtilitiesLoggingExceptionInfo,
 )
-from flext_core._utilities._logging.handler_stream import (
-    FlextUtilitiesLoggingHandlerStream,
-)
 from flext_core._utilities._logging.levels import FlextUtilitiesLoggingLevels
-from flext_core._utilities.metadata import FlextUtilitiesMetadata
+from flext_core._utilities._logging.stream import FlextUtilitiesLoggingStream
 
 
 class FlextUtilitiesLoggingProcessors(
     FlextUtilitiesLoggingLevels,
     FlextUtilitiesLoggingExceptionInfo,
-    FlextUtilitiesLoggingHandlerStream,
 ):
     """Own the shared event pipeline and its presentation-only stages."""
 
@@ -179,7 +176,8 @@ class FlextUtilitiesLoggingProcessors(
             trace,
             not console_renderer,
             any(
-                not isinstance(handler, cls._StreamHandler) or handler.include_callsite
+                not isinstance(handler, FlextUtilitiesLoggingStream.StreamHandler)
+                or handler.include_callsite
                 for handler in options.handlers
             ),
             options.observers,

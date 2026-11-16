@@ -44,18 +44,6 @@ class FlextUtilitiesLoggingState:
         return FlextUtilitiesLoggingState._current
 
     @classmethod
-    def selected_logging_settings(cls) -> p.LoggingSettings | None:
-        """Return the explicitly elected logging settings."""
-        _ = cls
-        return FlextUtilitiesLoggingState.current().runtime_settings
-
-    @classmethod
-    def selected_logging_options(cls) -> p.StructlogOptions | None:
-        """Return the elected composition, if configured."""
-        _ = cls
-        return FlextUtilitiesLoggingState.current().options
-
-    @classmethod
     def configure_logging_state(
         cls,
         settings: p.LoggingSettings,
@@ -72,13 +60,13 @@ class FlextUtilitiesLoggingState:
     @classmethod
     def logging_settings(cls) -> p.LoggingSettings:
         """Return the elected application provider, or the actual Core settings."""
-        selected = cls.selected_logging_settings()
+        selected = FlextUtilitiesLoggingState.current().runtime_settings
         return selected if selected is not None else FlextSettings.fetch_global()
 
     @classmethod
     def logging_options(cls) -> p.StructlogOptions:
         """Return the active composition for scoped lifecycle restoration."""
-        selected = cls.selected_logging_options()
+        selected = FlextUtilitiesLoggingState.current().options
         return selected if selected is not None else m.StructlogOptions()
 
 
