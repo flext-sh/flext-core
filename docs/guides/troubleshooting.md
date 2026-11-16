@@ -73,7 +73,7 @@ TODO followed by a colon while ordinary prose remains valid. A dated document th
 records a real machine path may be listed by its exact Markdown path under
 `docs_audit.historical_evidence_files`; a directory prefix does not exempt later
 documents. Add only files whose observed path is necessary to preserve the
-historical record, then run `make gen` and `make docs` to verify the projection.
+historical record, then run `make gen` and `make check` to verify the projection.
 
 ## Test failures
 

@@ -203,7 +203,7 @@ url_api = "https://api.github.com/repos/kucherenko/jscpd/releases/assets/6598195
 provenance = "github-attestations"
 
 [[tools."github:microsoft/waza"]]
-version = "0.40.0"
+version = "0.40.1"
 backend = "github:microsoft/waza"
 specifiers = ["latest"]
 
@@ -211,52 +211,52 @@ specifiers = ["latest"]
 version_prefix = "v"
 
 [tools."github:microsoft/waza"."platforms.linux-x64"]
-checksum = "sha256:d09117a3c631f44a00a6c362462c951aed83c87751e8c25f39916a77d1013802"
-url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-linux-amd64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356784"
+checksum = "sha256:44c26075e159b8d9e7253c9e45e47d2468c09f8180b8de8d522b4faf73767a5c"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.1/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/717842605"
 
 [tools."github:microsoft/waza"."platforms.linux-x64-musl"]
-checksum = "sha256:d09117a3c631f44a00a6c362462c951aed83c87751e8c25f39916a77d1013802"
-url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-linux-amd64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356784"
+checksum = "sha256:44c26075e159b8d9e7253c9e45e47d2468c09f8180b8de8d522b4faf73767a5c"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.1/waza-linux-amd64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/717842605"
 
 [tools."github:microsoft/waza"."platforms.macos-arm64"]
-checksum = "sha256:a0ccef914ed41a19394e7a01b60578cfd37d3cce0ef3aa785735ac39fa8872bc"
-url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-darwin-arm64"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356799"
+checksum = "sha256:f612eb93738b42cdebdf0ddc07d2fe9f39a6ae8e2a478d09b7c96fedbf7b6d26"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.1/waza-darwin-arm64"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/717842616"
 
 [tools."github:microsoft/waza"."platforms.windows-x64"]
-checksum = "sha256:a388f5577ecbf10d4edd775a5e2c37a7a5cbdd0758e66d8718992942687dd2e4"
-url = "https://github.com/microsoft/waza/releases/download/v0.40.0/waza-windows-amd64.exe"
-url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/709356835"
+checksum = "sha256:3dddc02642ff92916a3c9d03a793e170c5af6d3a17f9a23ed3fe4fa70918608e"
+url = "https://github.com/microsoft/waza/releases/download/v0.40.1/waza-windows-amd64.exe"
+url_api = "https://api.github.com/repos/microsoft/waza/releases/assets/717842651"
 
 [[tools."github:qltysh/qlty"]]
-version = "0.667.0"
+version = "0.668.0"
 backend = "github:qltysh/qlty"
 specifiers = ["latest"]
 
 [tools."github:qltysh/qlty"."platforms.linux-x64"]
-checksum = "sha256:ed85387153e75ef18631b8cc187daac9368ba2ef19fc8a9dbd972206fc6b326c"
-url = "https://github.com/qltysh/qlty/releases/download/v0.667.0/qlty-x86_64-unknown-linux-gnu.tar.xz"
-url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/706559297"
+checksum = "sha256:59318df9b8d264c9544ae426007867fcbf62417f68bdac28f1e2799b73d6ebfc"
+url = "https://github.com/qltysh/qlty/releases/download/v0.668.0/qlty-x86_64-unknown-linux-gnu.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/718244731"
 provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.linux-x64-musl"]
-checksum = "sha256:ea55b6359bf01c80557cd17df42b54a9c478c6d6738f26e9178bd9bc8cf96d75"
-url = "https://github.com/qltysh/qlty/releases/download/v0.667.0/qlty-x86_64-unknown-linux-musl.tar.xz"
-url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/706559305"
+checksum = "sha256:a275a616f5362985f5c316fd4676480cb73ae9e7a75d58f29529ce953bbfa134"
+url = "https://github.com/qltysh/qlty/releases/download/v0.668.0/qlty-x86_64-unknown-linux-musl.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/718244780"
 provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.macos-arm64"]
-checksum = "sha256:aba6c72624ed071971b4f0f8b99410bf60d0aadd1f4572e68d0ad7faa5b1970d"
-url = "https://github.com/qltysh/qlty/releases/download/v0.667.0/qlty-aarch64-apple-darwin.tar.xz"
-url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/706559221"
+checksum = "sha256:ed936ec361a0b5ba13483cddf2252864b77005cb7cca979adc956b22b2bbad42"
+url = "https://github.com/qltysh/qlty/releases/download/v0.668.0/qlty-aarch64-apple-darwin.tar.xz"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/718244636"
 provenance = "github-attestations"
 
 [tools."github:qltysh/qlty"."platforms.windows-x64"]
-checksum = "sha256:663770af30b129330ee025c5cc83c2359871a40f5eda9295b4295035afd6318f"
-url = "https://github.com/qltysh/qlty/releases/download/v0.667.0/qlty-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/706559281"
+checksum = "sha256:2b866ead0ba5ff547bd3ddbb01dfcb4879aeb3a4f0b2dc8e3ac190c028260e44"
+url = "https://github.com/qltysh/qlty/releases/download/v0.668.0/qlty-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/qltysh/qlty/releases/assets/718244690"
 provenance = "github-attestations"
 
 [[tools.gitleaks]]
@@ -293,27 +293,6 @@ url_api = "https://api.github.com/repos/gitleaks/gitleaks/releases/assets/378332
 checksum = "sha256:d29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e"
 url = "https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_windows_x64.zip"
 url_api = "https://api.github.com/repos/gitleaks/gitleaks/releases/assets/378333178"
-
-[[tools.node]]
-version = "26.13.0"
-backend = "core:node"
-specifiers = ["latest"]
-
-[tools.node."platforms.linux-x64"]
-checksum = "sha256:5848553868b402d3fabb5b09270649977780a390f832155721025a08b5104455"
-url = "https://nodejs.org/dist/v26.13.0/node-v26.13.0-linux-x64.tar.gz"
-
-[tools.node."platforms.linux-x64-musl"]
-checksum = "sha256:c6c738fe564c3eb053172bfd4ca1166eec8bc076f84231a2ea70165e316f5809"
-url = "https://unofficial-builds.nodejs.org/download/release/v26.13.0/node-v26.13.0-linux-x64-musl.tar.gz"
-
-[tools.node."platforms.macos-arm64"]
-checksum = "sha256:d38bd5e5a2ddce6bbb5ce45e46e208337da4d51fffe611e567fd32073d6439f6"
-url = "https://nodejs.org/dist/v26.13.0/node-v26.13.0-darwin-arm64.tar.gz"
-
-[tools.node."platforms.windows-x64"]
-checksum = "sha256:dcc60d59a0746999f99064a01c020445d54d84228c691cdbf25b49ac3b59150a"
-url = "https://nodejs.org/dist/v26.13.0/node-v26.13.0-win-x64.zip"
 
 [[tools.python]]
 version = "3.13.17"
