@@ -14,7 +14,7 @@ from __future__ import annotations
 from importlib.metadata import PackageMetadata, PathDistribution
 from pathlib import Path
 
-from flext_core.__version__ import FlextVersion, __version__, __version_info__
+from flext_core import FlextVersion, __version__, __version_info__
 from tests import c, tm, u
 
 
