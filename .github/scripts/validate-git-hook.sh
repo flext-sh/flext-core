@@ -16,7 +16,7 @@ esac
 # namespace carries WIP and runs no gate matrix; any other ref, including a
 # deletion outside those namespaces, selects the full matrix.
 if [[ "${stage}" = pre-push ]]; then
-  preservation_namespaces=('refs/heads/preserve/' 'refs/heads/wip/sweep-preserve/' 'refs/ai-hub/wip/' )
+  preservation_namespaces=('refs/heads/preserve/' 'refs/heads/wip/sweep-preserve/' 'refs/wip/checkpoint/' )
   preservation_only=0
   while read -r _local_ref _local_sha remote_ref _remote_sha; do
     in_namespace=0
