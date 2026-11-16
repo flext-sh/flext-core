@@ -28,7 +28,6 @@
     "**/.git": true,
     "**/.hypothesis": true,
     "**/.mimosa": true,
-    "**/.mypy_cache": true,
     "**/.omo": true,
     "**/.pylance_cache": true,
     "**/.pyrefly_cache": true,
@@ -75,7 +74,6 @@
     "**/.git/**": true,
     "**/.hypothesis/**": true,
     "**/.mimosa/**": true,
-    "**/.mypy_cache/**": true,
     "**/.omo/**": true,
     "**/.pylance_cache/**": true,
     "**/.pyrefly_cache/**": true,
@@ -123,7 +121,7 @@
     "-m",
     "mypy"
   ],
-  "pyrefly.lspPath": "${workspaceFolder}/.venv/bin/pyrefly",
+  "pyrefly.lspPath": "${workspaceFolder}/../.venv/bin/pyrefly",
   "python-envs.workspaceSearchPaths": [
     "./.venv"
   ],
@@ -132,7 +130,7 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.completeFunctionParens": true,
   "python.analysis.diagnosticMode": "workspace",
-  "python.analysis.diagnosticsSource": "Pylance + Pyright",
+  "python.analysis.diagnosticsSource": "Pylance + Pyrefly",
   "python.analysis.displayEnglishDiagnostics": true,
   "python.analysis.enableAsyncProgram": false,
   "python.analysis.enableExternalTypeServer": false,
@@ -165,7 +163,7 @@
   "python.analysis.useNearestConfiguration": false,
   "python.analysis.usePerProjectEnvironments": false,
   "python.analysis.userFileIndexingLimit": -1,
-  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.defaultInterpreterPath": "${workspaceFolder}/../.venv/bin/python",
   "python.languageServer": "Pylance",
   "python.pyrefly.diagnosticMode": "workspace",
   "python.pyrefly.disableLanguageServices": true,
@@ -180,11 +178,11 @@
   "ruff.format.preview": true,
   "ruff.importStrategy": "fromEnvironment",
   "ruff.interpreter": [
-    "${workspaceFolder}/.venv/bin/python"
+    "${workspaceFolder}/../.venv/bin/python"
   ],
   "ruff.lint.preview": true,
   "ruff.path": [
-    "${workspaceFolder}/.venv/bin/ruff"
+    "${workspaceFolder}/../.venv/bin/ruff"
   ],
   "search.exclude": {
     "**/*.bak": true,
@@ -203,7 +201,6 @@
     "**/.git": true,
     "**/.hypothesis": true,
     "**/.mimosa": true,
-    "**/.mypy_cache": true,
     "**/.omo": true,
     "**/.pylance_cache": true,
     "**/.pyrefly_cache": true,
@@ -240,8 +237,8 @@
   "shellcheck.useWorkspaceRootAsCwd": true,
   "telemetry.feedback.enabled": false,
   "terminal.integrated.env.linux": {
-    "PATH": "${workspaceFolder}/.venv/bin:${env:PATH}",
-    "VIRTUAL_ENV": "${workspaceFolder}/.venv"
+    "PATH": "${workspaceFolder}/../.venv/bin:${env:PATH}",
+    "VIRTUAL_ENV": "${workspaceFolder}/../.venv"
   },
   "yaml.disableSchemaDetection": [
     "**/.github/workflows/*.yml",
