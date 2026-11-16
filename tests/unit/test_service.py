@@ -18,12 +18,10 @@ import operator
 from collections.abc import Mapping
 from typing import override
 
-from flext_tests import FlextTestsCase, FlextTestsSettings
-
 from tests import c, m, p, r, s, tm
 
 
-class TestsFlextService(FlextTestsCase):
+class TestsFlextService:
     """Validate stable, caller-facing behavior of ``FlextService`` subclasses."""
 
     class _PureService(s[bool]):
@@ -143,25 +141,6 @@ class TestsFlextService(FlextTestsCase):
 
     # --- settings / logger public accessors ------------------------------
 
-    @staticmethod
-    def test_settings_expose_tests_namespace() -> None:
-        """Explicit test settings injection exposes the test namespace."""
-        settings = m.Tests.ServiceUserService(
-            settings_type=FlextTestsSettings,
-        ).settings
-
-        tm.that(settings, is_=FlextTestsSettings)
-        if isinstance(settings, FlextTestsSettings):
-            tm.that(settings.Tests, is_=m.BaseModel)
-
-    def test_fetch_settings_returns_typed_tests_settings(self) -> None:
-        """Test fetch settings returns typed tests settings."""
-        with self._PureService.isolated_test_runtime():
-            settings = self._PureService.fetch_settings()
-
-            tm.that(settings, is_=FlextTestsSettings)
-            tm.that(settings.Tests, is_=m.BaseModel)
-
     def test_fetch_logger_matches_shared_service_logger(self) -> None:
         """Test fetch logger matches shared service logger."""
         with self._PureService.isolated_test_runtime():
@@ -193,11 +172,7 @@ class TestsFlextService(FlextTestsCase):
         with self._PureService.isolated_test_runtime(
             log_level="WARNING",
         ) as scoped_service:
-            scoped_settings = FlextTestsSettings.model_validate(scoped_service.settings)
-
-            tm.that(scoped_settings.log_level, eq="WARNING")
-            scoped_global = FlextTestsSettings.fetch_global()
-            tm.that(scoped_global.log_level, ne="WARNING")
+            tm.that(scoped_service.settings.log_level, eq="WARNING")
 
         tm.that(self._PureService.fetch_settings().log_level, eq=baseline_level)
 

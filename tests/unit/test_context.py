@@ -17,8 +17,7 @@ from typing import override
 
 import structlog.contextvars
 
-from flext_core import FlextContext
-from tests import c, h, m, p, r, t, tm, u
+from tests import FlextContext, c, h, m, p, r, t, tm, u
 
 pytestmark = c.Tests.MARK.usefixtures("isolate_process_context")
 

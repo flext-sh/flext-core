@@ -15,8 +15,7 @@ from typing import override
 
 import pytest
 
-from flext_core import FlextContainer, FlextContext, FlextSettings
-from tests import c, m, p, r, s, t, tm, u
+from tests import FlextContainer, FlextContext, FlextSettings, c, m, p, r, s, t, tm, u
 
 
 class TestsFlextCoreServiceBootstrap:

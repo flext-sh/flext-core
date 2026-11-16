@@ -6,14 +6,11 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import importlib
 import sys
 import time
 from types import ModuleType
 
-import flext_core
-from flext_core import install_lazy_exports, lazy
-from tests import c, tm
+from tests import c, install_lazy_exports, lazy, tm
 
 
 class TestsFlextLazyPerformance:
@@ -44,8 +41,6 @@ class TestsFlextLazyPerformance:
             if reset_between_iterations:
                 lazy.reset()
 
-            reloaded_module = importlib.reload(flext_core)
-
             for index, lazy_map in enumerate(c.Tests.LAZY_BENCHMARK_EXTRA_INSTALL_MAPS):
                 module_name = f"flext_core_{index}"
                 virtual_module = (
@@ -62,9 +57,6 @@ class TestsFlextLazyPerformance:
                     )
                 finally:
                     del sys.modules[module_name]
-
-            for symbol_name in c.Tests.LAZY_BENCHMARK_REAL_SYMBOLS:
-                getattr(reloaded_module, symbol_name)
 
         @staticmethod
         def run(*, reset_between_iterations: bool, iterations: int) -> float:

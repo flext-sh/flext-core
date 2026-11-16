@@ -13,8 +13,7 @@ from __future__ import annotations
 
 from zoneinfo import ZoneInfo
 
-from flext_core import config, lazy, settings
-from tests import c, tm
+from tests import c, config, lazy, settings, tm
 
 _FAMILY_SURFACES: tuple[str, ...] = (
     "flext_core.constants",

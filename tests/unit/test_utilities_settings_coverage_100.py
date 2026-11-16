@@ -11,8 +11,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from flext_core import FlextContainer, FlextSettings
-from tests import c, m, tm, u
+from tests import FlextContainer, FlextSettings, c, m, tm, u
 
 
 class TestsFlextCoreUtilitiesSettings:

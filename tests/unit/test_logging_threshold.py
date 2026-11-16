@@ -10,8 +10,7 @@ import io
 from contextlib import redirect_stderr
 from typing import TYPE_CHECKING
 
-from flext_core import FlextSettings
-from tests import c, m, p, tm, u
+from tests import FlextSettings, c, m, p, tm, u
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Generator

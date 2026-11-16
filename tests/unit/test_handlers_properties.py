@@ -14,8 +14,7 @@ from typing import cast
 
 from hypothesis import given, strategies as st
 
-from tests import c, h, r, t, tm, u
-from tests.utilities import TestsFlextUtilities
+from tests import TestsFlextUtilities, c, h, r, t, tm, u
 
 _TOKENS: st.SearchStrategy[str] = st.text(
     alphabet=st.characters(min_codepoint=33, max_codepoint=126),

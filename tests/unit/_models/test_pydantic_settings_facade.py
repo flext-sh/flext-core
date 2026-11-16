@@ -14,8 +14,7 @@ from typing import override
 
 from typing_extensions import TypeForm
 
-from flext_core import FlextModels
-from tests import m, t, tm, u
+from tests import FlextModels, m, t, tm, u
 
 
 class TestsFlextCorePydanticSettingsFacade:

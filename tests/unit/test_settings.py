@@ -16,8 +16,7 @@ import sys
 from pathlib import Path
 from typing import Self
 
-from flext_core import FlextSettings, settings
-from tests import c, m, t, tm, u
+from tests import FlextSettings, c, m, settings, t, tm, u
 
 
 class TestsFlextCoreSettings:

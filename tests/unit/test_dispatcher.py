@@ -9,8 +9,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence, Sequence
 from concurrent.futures import ThreadPoolExecutor
 
-from flext_core import FlextDispatcher
-from tests import c, h, m, p, r, t, tm, u
+from tests import FlextDispatcher, c, h, m, p, r, t, tm, u
 
 
 class TestsFlextCoreDispatcher:

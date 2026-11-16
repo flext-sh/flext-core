@@ -6,8 +6,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from flext_core import FlextContainer
-from tests import c, e, m, p, tm, u
+from tests import FlextContainer, c, e, m, p, tm, u
 
 
 def _factory() -> str:

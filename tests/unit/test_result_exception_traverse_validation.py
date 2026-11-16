@@ -10,8 +10,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from tests import c, p, r, t, tm
-from tests.utilities import TestsFlextUtilities
+from tests import TestsFlextUtilities, c, p, r, t, tm
 
 
 class TestsFlextCoreResultExceptionTraverseValidation(

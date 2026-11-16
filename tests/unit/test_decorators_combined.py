@@ -8,8 +8,7 @@ from __future__ import annotations
 
 from hypothesis import given, settings, strategies as st
 
-from flext_core import FlextContainer
-from tests import c, d, p, r, tm
+from tests import FlextContainer, c, d, p, r, tm
 
 
 class TestsFlextCoreDecoratorsCombined:

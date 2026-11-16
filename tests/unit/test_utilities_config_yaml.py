@@ -16,8 +16,7 @@ from pathlib import Path
 
 from typing_extensions import TypeForm
 
-from flext_core import FlextConfig, FlextStrictYamlConfigSource
-from tests import c, m, t, tm, u
+from tests import FlextConfig, FlextStrictYamlConfigSource, c, m, t, tm, u
 
 
 class TestsFlextCoreUtilitiesYaml:

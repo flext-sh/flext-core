@@ -12,8 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from flext_core import FlextResult
-from tests import c, e, m, p, r, tm, u
+from tests import FlextResult, c, e, m, p, r, tm, u
 
 
 class TestsFlextCoreResultFactoryDip:

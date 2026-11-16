@@ -17,8 +17,7 @@ import gc
 import sys
 from typing import TYPE_CHECKING
 
-from flext_core import FlextContainer
-from tests import c, tm
+from tests import FlextContainer, c, tm
 
 if TYPE_CHECKING:
     from collections.abc import Callable

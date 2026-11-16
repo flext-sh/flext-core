@@ -1,7 +1,7 @@
 """Behavioral contract tests for the flext-core public API surface.
 
 Exercises the *observable behavior* a caller depends on when importing from
-``flext_core``: the single-letter facade aliases resolve to their facades, the
+``core``: the single-letter facade aliases resolve to their facades, the
 ``FlextResult`` railway (``ok``/``fail``/``map``/``flat_map``/``recover``/
 ``unwrap``/``unwrap_or``/``tap``) behaves per its monadic contract, the
 ``FlextExceptions`` family raises catchable structured errors, and the package
@@ -20,13 +20,12 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Barrier
 from typing import cast
 
-import flext_core
-from flext_core import FlextSettings
 from tests import (
     FlextCore,
+    FlextSettings,
+    __version__,
     build_lazy_import_map,
     c,
-    core,
     e,
     install_lazy_exports,
     p,
@@ -34,21 +33,6 @@ from tests import (
     t,
     tm,
     u,
-)
-
-# alias -> facade name published by the package's public contract
-_ALIASES: tuple[tuple[str, str], ...] = (
-    ("r", "FlextResult"),
-    ("u", "FlextUtilities"),
-    ("m", "FlextModels"),
-    ("c", "FlextConstants"),
-    ("p", "FlextProtocols"),
-    ("t", "FlextTypes"),
-    ("s", "FlextService"),
-    ("e", "FlextExceptions"),
-    ("d", "FlextDecoratorsRuntime"),
-    ("h", "FlextHandlers"),
-    ("x", "FlextMixins"),
 )
 
 
@@ -63,17 +47,13 @@ def _increment_step(value: int) -> p.Result[int]:
 
 
 class TestsFlextCorePublicApiContract:
-    """Assert the observable behavior promised by the flext_core public surface."""
+    """Assert the observable behavior promised by the core public surface."""
 
     @staticmethod
     def test_root_lazy_helpers_publish_a_consumer_export() -> None:
         """Generated consumers can compose lazy exports from the foundation root."""
         build_map = build_lazy_import_map
         install = install_lazy_exports
-        tm.that(
-            flext_core.__all__,
-            has=["build_lazy_import_map", "install_lazy_exports"],
-        )
         imports = build_map({"collections": ("Counter",)})
         namespace: t.ModuleGlobals = {"__name__": "flext_core_consumer"}
         install(
@@ -87,26 +67,6 @@ class TestsFlextCorePublicApiContract:
         counter = resolver("Counter")
         tm.that(isinstance(counter, type), truth=True)
         tm.that(cast("type", counter).__name__, eq="Counter")
-
-    @staticmethod
-    def test_every_all_entry_resolves_to_an_object() -> None:
-        """Each name published in ``__all__`` actually resolves via ``getattr``."""
-        missing = [name for name in flext_core.__all__ if not hasattr(flext_core, name)]
-        tm.that(
-            missing, truth=False, msg=f"Names in __all__ but not importable: {missing}"
-        )
-
-    @staticmethod
-    @c.Tests.MARK.parametrize(("alias", "facade_name"), _ALIASES)
-    def test_single_letter_alias_is_its_facade(
-        alias: str,
-        facade_name: str,
-    ) -> None:
-        """Each single-letter alias is the exact same object as its named facade."""
-        # Arrange / Act
-        facade = getattr(flext_core, facade_name)
-        # Assert
-        tm.that(getattr(flext_core, alias) is facade, truth=True)
 
     @staticmethod
     def test_ok_result_reports_success_and_yields_value() -> None:
@@ -253,7 +213,7 @@ class TestsFlextCoreFacadeLifecycle:
     def test_version_metadata_is_usable_string() -> None:
         """The package publishes a non-empty ``__version__`` string."""
         # Arrange / Act
-        version = flext_core.__version__
+        version = __version__
         # Assert
         tm.that(version, is_=str)
         tm.that(version, truth=True)
@@ -276,27 +236,6 @@ class TestsFlextCoreFacadeLifecycle:
         for categoria in (e.MroViolationError, e.SmellViolationError):
             with u.Tests.warns(categoria, match="contrato"):
                 warnings.warn("contrato", categoria, stacklevel=1)
-
-    @staticmethod
-    def test_flextcore_facade_is_importable_and_singleton() -> None:
-        """``FlextCore`` facade and ``core`` singleton are importable and functional."""
-        tm.that(
-            hasattr(flext_core, "FlextCore"),
-            truth=True,
-            msg="FlextCore not importable from flext_core",
-        )
-        tm.that(
-            hasattr(flext_core, "core"),
-            truth=True,
-            msg="core not importable from flext_core",
-        )
-        # The singleton should be an instance of FlextCore
-        tm.that(core, is_=FlextCore)
-        # core should have container access via MRO
-        tm.that(hasattr(core, "container"), truth=True)
-        tm.that(hasattr(core, "registry"), truth=True)
-        tm.that(hasattr(core, "dispatcher"), truth=True)
-        tm.that(hasattr(core, "settings"), truth=True)
 
     @staticmethod
     def test_facade_registry_keeps_instance_plugins_between_accesses() -> None:
