@@ -91,11 +91,8 @@ class TestsFlextCoreEnumValueContracts:
             model.model_validate_json(payload.model_dump_json()).model_dump()["kind"]
             is member
         )
-        schema = model.model_json_schema()
-        tm.that(
-            set(schema["$defs"]["HandlerType"]["enum"]),
-            eq={member.value for member in c.HandlerType},
-        )
+        with u.Tests.raises(m.ValidationError):
+            model.model_validate_json('{"kind":"not-a-handler-type"}')
         with u.Tests.raises(m.ValidationError):
             model.model_validate_json('{"kind":null}')
 
