@@ -62,7 +62,7 @@ class TestsFlextLoggingStages:
         u.create_module_logger(__name__).info(
             "logging.presentation", run_id="operation"
         )
-        payload = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(structured.getvalue())))
+        payload = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(structured.getvalue())))
         tm.that(console.getvalue(), has="logging.presentation", lacks="func_name")
         tm.that(console.getvalue(), has="operation", lacks="pathname")
         tm.that(console.getvalue(), lacks="\x1b[")
@@ -192,7 +192,7 @@ class TestsFlextLoggingStages:
         tm.ok(u.Cli.process_succeeded(executed.outcome))
         tm.fail(executed.outcome.timed_out)
         emitted = tuple(
-            u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(line)))[c.HandlerType.EVENT]
+            u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(line)))[c.HandlerType.EVENT]
             for line in executed.stderr.splitlines()
         )
         tm.that(emitted, eq=events)
@@ -414,7 +414,7 @@ class TestsFlextLoggingStages:
         tm.ok(info[0] is saved[0])
         tm.ok(info[1] is saved[1])
         tm.ok(info[2] is saved[2])
-        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(stream.getvalue())))
         tm.that(rendered["payload"], eq=payload.model_dump(mode="json"))
         tm.that(rendered["sequence"], eq=[1, "two", False, None])
         tm.that(rendered["source"], eq=str(source))
@@ -583,7 +583,7 @@ class TestsFlextLoggingNativeEmission:
             )
         tm.that(len(observed), eq=1)
         record = observed[0]
-        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(structured.getvalue())))
+        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(structured.getvalue())))
         tm.that(record.message, eq="delivered once")
         tm.that(
             rendered[c.ContextKey.CORRELATION_ID],
@@ -631,7 +631,7 @@ class TestsFlextLoggingNativeEmission:
             eq="test_ordinary_event_is_filtered_without_relabeling_or_changing_caller",
         )
         for stream in (first, second):
-            event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+            event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(stream.getvalue())))
             tm.that(event[c.HandlerType.EVENT], eq=record.message)
             tm.that(
                 event[c.ContextKey.LOGGER_NAME],
@@ -717,7 +717,7 @@ class TestsFlextLoggingNativeEmission:
         tm.ok(cached.info("after replacement"))
         tm.that(len(observed), eq=1)
         tm.that(old.getvalue(), lacks="after replacement")
-        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(current.getvalue())))
+        rendered = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(current.getvalue())))
         tm.that(rendered[c.ContextScope.OPERATION], eq="bound")
         tm.that(rendered[c.HandlerType.EVENT], eq="after replacement")
 
@@ -974,7 +974,7 @@ class TestsFlextLoggingNativeEmission:
         tm.ok(logger.debug("filtered invalid %d", "not an integer"))
         tm.that(stream.getvalue(), eq="")
         tm.ok(logger.info("named %(actor)s", {"actor": "sam"}))
-        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(stream.getvalue())))
         tm.that(event[c.HandlerType.EVENT], eq="named sam")
         tm.fail("positional_args" in event)
 
@@ -983,7 +983,7 @@ class TestsFlextLoggingNativeEmission:
         arguments: Mapping[str, t.Scalar] = {"actor": b"sam"}
         error_data: t.JsonMapping = {"source": "native"}
         tm.ok(logger.info("named %(actor)s", arguments, error_data=error_data))
-        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(stream.getvalue())))
         tm.that(event[c.HandlerType.EVENT], eq="named b'sam'")
         tm.that(event["error_data"], eq=error_data)
 
@@ -993,7 +993,7 @@ class TestsFlextLoggingNativeEmission:
             (c.ProcessingMode.STREAM, {"replication_key": None}),
         ]
         tm.ok(logger.info("rows %s", rows))
-        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_parse(stream.getvalue())))
+        event = u.Cli.json_as_mapping(tm.ok(u.Cli.json_loads(stream.getvalue())))
         tm.that(event[c.HandlerType.EVENT], eq=f"rows {rows}")
         with u.Tests.raises(TypeError):
             logger.info("invalid numeric %d", rows)
