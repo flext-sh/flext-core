@@ -11,26 +11,27 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Self
 
 from flext_core import c, p, r, t
-from flext_core._utilities import (
-    FlextUtilitiesLoggingConfig,
-    FlextUtilitiesLoggingContext,
+from flext_core._utilities._logging.context import FlextUtilitiesLoggingContextBinding
+from flext_core._utilities._logging.exception_info import (
+    FlextUtilitiesLoggingExceptionInfo,
 )
+from flext_core._utilities._logging.levels import FlextUtilitiesLoggingLevels
 
 if TYPE_CHECKING:
     from flext_core._utilities import FlextUtilitiesLogging
 
 
 class FlextUtilitiesLoggingBoundLogger(
-    FlextUtilitiesLoggingContext,
-    FlextUtilitiesLoggingConfig,
+    FlextUtilitiesLoggingContextBinding,
+    FlextUtilitiesLoggingExceptionInfo,
+    FlextUtilitiesLoggingLevels,
 ):
     """Context-aware bound logger instance handed out by the logging facade.
 
-    Composed via MRO from ``FlextUtilitiesLoggingContext`` (context binding,
-    value normalization, source paths) and ``FlextUtilitiesLoggingConfig``
-    (exception-info resolution, structlog configuration); each instance owns
-    one logger name and its structlog binding. The owning facade is injected
-    (ADR-028 D1: a family module never imports its own root facade).
+    Composed via MRO from the context binding and the level/exception parts it
+    calls. Each instance owns one logger name and its structlog binding. The
+    owning facade is injected (ADR-028 D1: a family module never imports its
+    own root facade).
     """
 
     def __init__(
@@ -332,7 +333,7 @@ class FlextUtilitiesLoggingBoundLogger(
             The logging result, including disabled-trace success.
 
         """
-        selected = self._scoped_settings or self.logging_settings()
+        selected = self._scoped_settings or self._owner.logging_settings()
         if selected.trace:
             return self._log(c.LogLevel.DEBUG, message, *args, **kwargs)
         return r[bool].ok(value=True)
