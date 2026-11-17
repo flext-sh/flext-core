@@ -14,7 +14,6 @@ from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 if TYPE_CHECKING:
     from flext_core._models.base import FlextModelsBase
     from flext_core._models.builder import FlextModelsBuilder
-    from flext_core._models.models import FlextModelsCollections
     from flext_core._models.config import FlextModelsConfig
     from flext_core._models.container import FlextModelsContainer
     from flext_core._models.containers import FlextModelsContainers
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
     from flext_core._models.flext_context import FlextModelsContextState
     from flext_core._models.flext_mixins import FlextModelsServiceState
     from flext_core._models.handler import FlextModelsHandler
+    from flext_core._models.models import FlextModelsCollections
     from flext_core._models.namespace import FlextModelsNamespace
     from flext_core._models.options import FlextModelsOptions
     from flext_core._models.project_metadata import FlextModelsProjectMetadata
