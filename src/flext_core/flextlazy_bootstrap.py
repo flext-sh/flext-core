@@ -39,12 +39,10 @@ class FlextLazyBootstrap:
         "child_merge_cache",
         "class_cache",
         "code_cache",
-        "eager",
         "import_cache",
         "install_cache",
         "module_cache",
         "normalized_map_cache",
-        "published_standin",
         "standins",
     )
 
@@ -87,10 +85,6 @@ class FlextLazyBootstrap:
         ] = {}
         self.import_cache: MutableMapping[str, Mapping[str, tuple[str, str]]] = {}
         self.standins: MutableMapping[tuple[str, str], type] = {}
-        # The process eager flag (ADR-018 stand-in law rule 6) and whether
-        # any stand-in was published, so the flag can never be set late.
-        self.eager: bool = False
-        self.published_standin: bool = False
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
 
     @property

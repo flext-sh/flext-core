@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import MutableSequence
 from typing import ClassVar
 
-from flext_core import p, t
+from flext_core import c, p, t
 from flext_core._models import FlextModelsBase, FlextModelsPydantic
 
 
@@ -129,11 +129,34 @@ class FlextModelsService:
         name: str = FlextModelsPydantic.Field(
             description="Method name that implements the operation.",
         )
+        public_name: str = FlextModelsPydantic.Field(
+            description="Transport-facing name of the operation.",
+        )
         summary: str = FlextModelsPydantic.Field(
             description="First docstring line of the operation.",
         )
+        kind: c.HandlerType = FlextModelsPydantic.Field(
+            description="CQRS kind: query for reads, command for writes.",
+        )
+        default: bool = FlextModelsPydantic.Field(
+            description="Whether this operation is the service default.",
+        )
+        scope: str = FlextModelsPydantic.Field(
+            pattern="^(read|write|admin)$",
+            description="Access scope required to invoke the operation.",
+        )
+        execution_mode: str = FlextModelsPydantic.Field(
+            pattern="^(inline|job)$",
+            description="Whether the operation runs inline or as a job.",
+        )
+        requires_ticket: bool = FlextModelsPydantic.Field(
+            description="Whether the operation requires a change ticket.",
+        )
         request: t.ModelClass[t.BaseModelType] | None = FlextModelsPydantic.Field(
             description="Pydantic request model, or None for an input-less operation.",
+        )
+        output: type | None = FlextModelsPydantic.Field(
+            description="Output type carried by the operation's result, or None.",
         )
         handler: t.Port[p.ServiceOperationHandler] = FlextModelsPydantic.Field(
             exclude=True,

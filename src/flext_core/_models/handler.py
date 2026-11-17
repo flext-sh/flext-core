@@ -212,11 +212,49 @@ class FlextModelsHandler:
             )
         )
         command: Annotated[
-            type,
+            type | None,
             FlextModelsPydantic.Field(
-                description="Command type this handler processes",
+                default=None,
+                description="Request model this handler processes, or None.",
             ),
-        ]
+        ] = None
+        handler_type: Annotated[
+            c.HandlerType,
+            FlextModelsPydantic.Field(
+                default=c.HandlerType.COMMAND,
+                description="CQRS handler type: command or query.",
+            ),
+        ] = c.HandlerType.COMMAND
+        default: Annotated[
+            bool,
+            FlextModelsPydantic.Field(
+                default=False,
+                description="Whether this operation is the service default.",
+            ),
+        ] = False
+        scope: Annotated[
+            str,
+            FlextModelsPydantic.Field(
+                default="read",
+                pattern="^(read|write|admin)$",
+                description="Access scope required to invoke this operation.",
+            ),
+        ] = "read"
+        execution_mode: Annotated[
+            str,
+            FlextModelsPydantic.Field(
+                default="inline",
+                pattern="^(inline|job)$",
+                description="Where the operation runs: inline or as a job.",
+            ),
+        ] = "inline"
+        requires_ticket: Annotated[
+            bool,
+            FlextModelsPydantic.Field(
+                default=False,
+                description="Whether the operation requires a change ticket.",
+            ),
+        ] = False
         priority: Annotated[
             t.NonNegativeInt,
             FlextModelsPydantic.Field(

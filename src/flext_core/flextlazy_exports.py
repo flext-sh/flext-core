@@ -33,24 +33,6 @@ if TYPE_CHECKING:
 class FlextLazyExports(FlextLazyBootstrap):
     """Install and resolve exports without generated-package bootstrap imports."""
 
-    def run_eager(self) -> None:
-        """Publish real classes for every deferred export of this process.
-
-        A generator imports its own FLEXT packages, so a stale initializer
-        must not block their repair (ADR-018 stand-in law rule 6). Its entry
-        calls this once, before the first facade read; the flag lives on the
-        process-wide ``lazy`` owner, never in an environment variable.
-
-        Raises:
-            RuntimeError: If a stand-in was already published, because a
-                process never mixes stand-ins and real classes.
-
-        """
-        if self.published_standin:
-            msg = "eager lazy exports requested after a stand-in was published"
-            raise RuntimeError(msg)
-        self.eager = True
-
     def member(self, module: str, owner: str, member: str) -> FlextLazyMember:
         """Return a descriptor deferring ``owner.member`` from ``module``.
 
@@ -137,7 +119,6 @@ class FlextLazyExports(FlextLazyBootstrap):
         if type_params:
             namespace["__type_params__"] = type_params
         namespace.update({name: self.member(module, owner, name) for name in members})
-        self.published_standin = True
         return types.new_class(
             owner.rpartition(".")[2], bases, {}, lambda body: body.update(namespace)
         )
@@ -598,7 +579,7 @@ class FlextLazyExports(FlextLazyBootstrap):
         module_globals["_LAZY_IMPORTS"] = normalized
 
         def _module_getattr(name: str) -> t.ModuleGlobalValue:
-            if not self.eager and name in deferred:
+            if name in deferred:
                 entry = normalized[name]
                 module_path, attr = (entry, name) if isinstance(entry, str) else entry
                 standin = self.standin(module_path, attr)

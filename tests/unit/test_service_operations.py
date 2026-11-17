@@ -347,6 +347,66 @@ class TestsFlextCoreServiceOperations:
             """
             return r[str].ok(self.response_prefix + "ready")
 
+    class QueryOnlyService(OperationService):
+        """A read-only operation declared with ``@h.query`` and no request."""
+
+        @h.query(options=m.DecoratorConfig(default=True, scope="read"))
+        def health(self) -> p.Result[bool]:
+            """Report health.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
+            return r[bool].ok(self.ready)
+
+    class WriteService(OperationService):
+        """A command operation carrying the full metadata contract."""
+
+        @h.handler(
+            command=m.Tests.DispatchRequest,
+            options=m.DecoratorConfig(
+                default=True,
+                scope="write",
+                execution_mode="job",
+                requires_ticket=True,
+            ),
+        )
+        def apply(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+            """Apply one command by name.
+
+            Returns:
+                The resulting ``p.Result[str]``.
+
+            """
+            return r[str].ok(self.response_prefix + request.command_name)
+
+    class QueryRequestService(OperationService):
+        """A read operation that still consumes a request model."""
+
+        @h.query(command=m.Tests.DispatchRequest)
+        def lookup(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
+            """Look up one command by name.
+
+            Returns:
+                The resulting ``p.Result[str]``.
+
+            """
+            return r[str].ok(self.response_prefix + request.command_name)
+
+    class PublicNameService(OperationService):
+        """An operation whose public transport name is hyphenated."""
+
+        @h.query()
+        def job_listar(self) -> p.Result[bool]:
+            """List jobs.
+
+            Returns:
+                The resulting ``p.Result[bool]``.
+
+            """
+            return r[bool].ok(self.ready)
+
     # --- Discovery -------------------------------------------------------
 
     def test_discovers_request_and_input_less_operations(self) -> None:
@@ -420,6 +480,57 @@ class TestsFlextCoreServiceOperations:
         """Discovery is lazy: class creation never checks operation shape."""
         service = self.UndocumentedService()
         tm.ok(self.UndocumentedService.status(service).unwrap())
+
+    def test_query_metadata_is_projected(self) -> None:
+        """``@h.query`` without a request reports a read operation."""
+        (operation,) = u.service_operations(self.QueryOnlyService)
+
+        tm.that(operation.kind, eq=c.HandlerType.QUERY)
+        tm.that(operation.default, eq=True)
+        tm.that(operation.scope, eq="read")
+        tm.that(operation.execution_mode, eq="inline")
+        tm.that(operation.requires_ticket, eq=False)
+        tm.ok(operation.request is None)
+        tm.that(operation.output, eq=bool)
+
+    def test_command_metadata_is_projected(self) -> None:
+        """``@h.handler`` carries kind, scope, execution mode and ticket policy."""
+        (operation,) = u.service_operations(self.WriteService)
+
+        tm.that(operation.kind, eq=c.HandlerType.COMMAND)
+        tm.that(operation.default, eq=True)
+        tm.that(operation.scope, eq="write")
+        tm.that(operation.execution_mode, eq="job")
+        tm.that(operation.requires_ticket, eq=True)
+        tm.ok(operation.request is m.Tests.DispatchRequest)
+        tm.that(operation.output, eq=str)
+
+    def test_query_with_request_is_projected(self) -> None:
+        """``@h.query`` keeps the request model while reporting a read kind."""
+        (operation,) = u.service_operations(self.QueryRequestService)
+
+        tm.that(operation.kind, eq=c.HandlerType.QUERY)
+        tm.ok(operation.request is m.Tests.DispatchRequest)
+
+    def test_public_name_is_hyphenated(self) -> None:
+        """The transport-facing name uses the CLI spelling."""
+        (operation,) = u.service_operations(self.PublicNameService)
+
+        tm.that(operation.public_name, eq="job-listar")
+
+    def test_decorated_operations_keep_working(self) -> None:
+        """The decorators return the original callable, so behavior is unchanged."""
+        service = self.WriteService()
+        command = m.Tests.DispatchRequest(
+            command_name="x", tenant="tenant-a", environment="prod"
+        )
+
+        tm.that(
+            self.WriteService.apply(service, command).unwrap(),
+            eq="x",
+        )
+        query_service = self.QueryOnlyService()
+        tm.that(self.QueryOnlyService.health(query_service).unwrap(), eq=True)
 
     # --- Failures --------------------------------------------------------
 

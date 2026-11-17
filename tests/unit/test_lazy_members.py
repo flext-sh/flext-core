@@ -508,42 +508,6 @@ class TestsFlextCoreLazyMembers:
                 resolve("Capability")
             tm.fail(f"{package}.part" in sys.modules)
 
-    _PROBE = (
-        Path(__file__).resolve().parents[1] / "fixtures" / "lazy-eager" / "probe.py"
-    )
-
-    @c.Tests.MARK.parametrize(
-        ("mode", "stdout", "succeeds"),
-        [
-            ("never", "False FlextLazyMember\n", True),
-            ("late", "False FlextLazyMember\n", False),
-        ],
-    )
-    def test_eager_flag_rejects_a_late_request(
-        self,
-        fixture_tree: p.Tests.FixtureTree,
-        tmp_path: Path,
-        mode: str,
-        stdout: str,
-        *,
-        succeeds: bool,
-    ) -> None:
-        """A late eager request fails; never requesting it keeps stand-ins."""
-        module = self._deferred_capability(fixture_tree, tmp_path)
-        result = u.Cli.run_raw(
-            [sys.executable, str(self._PROBE), mode, str(tmp_path), module],
-            cwd=tmp_path,
-        )
-        tm.that(result.success, truth=True, msg=result.error)
-        tm.that(result.value.stdout, eq=stdout)
-        tm.that(
-            result.value.outcome.raw_return_code == 0,
-            eq=succeeds,
-            msg=result.value.stderr,
-        )
-        if not succeeds:
-            tm.that(result.value.stderr, has="after a stand-in was published")
-
     # Behaviour the lazy-deferred-bases fixture declares, read by name.
     _DERIVED_VALUES: ClassVar[Mapping[str, int]] = {"VALUE": 7}
     _BASE_CALLS: ClassVar[Mapping[str, tuple[int, int]]] = {"twice": (2, 4)}

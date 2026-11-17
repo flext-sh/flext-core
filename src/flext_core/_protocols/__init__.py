@@ -13,7 +13,6 @@ from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_core._protocols.base import FlextProtocolsBase
-    from flext_core._protocols.collection_models import FlextProtocolsCollectionModels
     from flext_core._protocols.config import FlextProtocolsConfig
     from flext_core._protocols.container import FlextProtocolsContainer
     from flext_core._protocols.containers import FlextProtocolsContainers
@@ -27,6 +26,7 @@ if TYPE_CHECKING:
     from flext_core._protocols.flext_mixins import FlextProtocolsFlextMixins
     from flext_core._protocols.handler import FlextProtocolsHandler
     from flext_core._protocols.loggings import FlextProtocolsLogging
+    from flext_core._protocols.models import FlextProtocolsCollectionModels
     from flext_core._protocols.options import FlextProtocolsOptions
     from flext_core._protocols.project_metadata import FlextProtocolsProjectMetadata
     from flext_core._protocols.pydantic import FlextProtocolsPydantic
@@ -66,7 +66,7 @@ install_lazy_exports(
     globals(),
     {
         "FlextProtocolsBase": ".base",
-        "FlextProtocolsCollectionModels": ".collection_models",
+        "FlextProtocolsCollectionModels": ".models",
         "FlextProtocolsConfig": ".config",
         "FlextProtocolsContainer": ".container",
         "FlextProtocolsContainers": ".containers",

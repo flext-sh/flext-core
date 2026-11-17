@@ -14,7 +14,7 @@ from flext_core.lazy import defer_lazy_bases, install_lazy_exports
 if TYPE_CHECKING:
     from flext_core._models.base import FlextModelsBase
     from flext_core._models.builder import FlextModelsBuilder
-    from flext_core._models.collection_models import FlextModelsCollections
+    from flext_core._models.models import FlextModelsCollections
     from flext_core._models.config import FlextModelsConfig
     from flext_core._models.container import FlextModelsContainer
     from flext_core._models.containers import FlextModelsContainers
@@ -67,7 +67,7 @@ install_lazy_exports(
     {
         "FlextModelsBase": ".base",
         "FlextModelsBuilder": ".builder",
-        "FlextModelsCollections": ".collection_models",
+        "FlextModelsCollections": ".models",
         "FlextModelsConfig": ".config",
         "FlextModelsContainer": ".container",
         "FlextModelsContainers": ".containers",
