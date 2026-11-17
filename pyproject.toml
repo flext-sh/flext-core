@@ -66,13 +66,11 @@ Repository = "https://github.com/flext-sh/flext-core"
 dev = [
   "properdocs>=1.6.7",
   "types-networkx",
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "mkdocstrings-python>=2.0.9",
   "actionlint-py>=1.7.12.24",
   "bandit>=1.9.4",
   "deptry",
   "editables>=0.6",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "hypothesis",
   "mkdocs-autorefs",
   "mkdocs-exclude>=1.0.2",
@@ -124,9 +122,7 @@ dev = [
   "vulture>=2.16",
   "yamlfix>=1.19.1",
 ]
-codegen = [
-  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-]
+codegen = []
 
 [tool.flext.docs]
 package_name = "flext_core"
@@ -734,7 +730,6 @@ name = "flext-cli"
 [tool.uv.exclude-newer-package]
 soupsieve = false
 
-[tool.uv.sources]
 
 [tool.bandit]
 severity = "MEDIUM"
