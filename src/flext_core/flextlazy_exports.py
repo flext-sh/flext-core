@@ -20,7 +20,6 @@ from collections.abc import (
 from importlib.machinery import PathFinder
 from types import ModuleType
 from typing import TYPE_CHECKING, cast
-from warnings import deprecated
 
 from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
 from flext_core.flextlazy_instance import FlextLazyInstance
@@ -338,11 +337,6 @@ class FlextLazyExports(FlextLazyBootstrap):
             module_path, attr = (entry, name) if isinstance(entry, str) else entry
             module_globals[name] = FlextLazyInstance(module_path, attr, self.load)
 
-    @deprecated(
-        "compat: defer_lazy_bases -> FlextLazyExports.standin (bases resolved at "
-        "run time); fix: regenerate the initializer with make gen",
-        category=None,
-    )
     @staticmethod
     def defer_bases(
         module_name: str,
@@ -352,8 +346,8 @@ class FlextLazyExports(FlextLazyBootstrap):
 
         Stand-in bases now come from the part's class statement (ADR-018
         stand-in law rule 4), so the declared bases carry nothing to forward.
-        Kept only until every generated initializer is regenerated; marked
-        for static checkers, silent at run time, deleted at zero uses.
+        Kept inert only until every generated initializer is regenerated: the
+        generator no longer emits the call, and it is deleted at zero uses.
         """
         del module_name, bases
 
