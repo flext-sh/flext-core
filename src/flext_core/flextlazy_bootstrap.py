@@ -6,11 +6,14 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import dis
 import importlib
 import inspect
 from collections.abc import Callable, Mapping, MutableMapping, Sequence
+from importlib.abc import InspectLoader
+from importlib.machinery import PathFinder
 from importlib.util import resolve_name
-from types import ModuleType
+from types import CodeType, ModuleType
 from typing import TYPE_CHECKING
 
 from pydantic import RootModel
@@ -34,14 +37,17 @@ class FlextLazyBootstrap:
         "_import_module",
         "child_lazy_cache",
         "child_merge_cache",
-        "deferred_bases",
-        "deferred_names",
-        "eager",
+        "class_cache",
+        "code_cache",
+        "import_cache",
         "install_cache",
         "module_cache",
         "normalized_map_cache",
-        "published_standin",
+        "standins",
     )
+
+    generic_scope_prefix: str = "<generic parameters of "
+    """Name prefix of the code that holds a PEP 695 class statement."""
 
     err_relative_path_requires_module: str = (
         "relative lazy-import paths require a parent module name"
@@ -70,16 +76,15 @@ class FlextLazyBootstrap:
         self.install_cache: MutableMapping[
             str, tuple[tuple[int, int, int, int], t.LazyExportHooks]
         ] = {}
-        # Deferred exports per installed module, and the stand-in bases that
-        # ``defer_bases`` declares for them after ``install``.
-        self.deferred_names: MutableMapping[str, frozenset[str]] = {}
-        self.deferred_bases: MutableMapping[
-            str, Mapping[str, Sequence[tuple[str, str]]]
+        # Compiled code, classes and imports read for stand-ins, and every
+        # stand-in built by ``(module, qualname)``: run time only, in memory,
+        # reused and grown by each discovery, never discarded.
+        self.code_cache: MutableMapping[str, CodeType] = {}
+        self.class_cache: MutableMapping[
+            str, Mapping[str, tuple[CodeType, CodeType]]
         ] = {}
-        # The process eager flag (ADR-018 stand-in law rule 6) and whether
-        # any stand-in was published, so the flag can never be set late.
-        self.eager: bool = False
-        self.published_standin: bool = False
+        self.import_cache: MutableMapping[str, Mapping[str, tuple[str, str]]] = {}
+        self.standins: MutableMapping[tuple[str, str], type] = {}
         self._import_module: Callable[[str], ModuleType] = importlib.import_module
 
     @property
@@ -196,6 +201,222 @@ class FlextLazyBootstrap:
         if not self._module_is_initializing(mod):
             self.module_cache[module_path] = mod
         return mod
+
+    def _module_code(self, module_path: str) -> CodeType:
+        """Return the compiled code of ``module_path`` without importing it.
+
+        The code is read once per process by the standard path-based finder's
+        own loader, so an import hook (assertion rewriting, a type-checking
+        claw) neither hides nor alters it, and is kept in memory for every
+        later stand-in of the same module.
+
+        Returns:
+            The module's code object.
+
+        Raises:
+            ModuleNotFoundError: If ``module_path`` does not exist.
+            ImportError: If its loader exposes no code to read.
+
+        """
+        cached = self.code_cache.get(module_path)
+        if cached is not None:
+            return cached
+        parent = module_path.rpartition(".")[0]
+        spec = PathFinder.find_spec(
+            module_path, self.load(parent).__path__ if parent else None
+        )
+        if spec is None:
+            msg = f"no module named {module_path!r}"
+            raise ModuleNotFoundError(msg, name=module_path)
+        loader = spec.loader
+        code = (
+            loader.get_code(module_path) if isinstance(loader, InspectLoader) else None
+        )
+        if code is None:
+            msg = f"module {module_path!r} exposes no code to read"
+            raise ImportError(msg, name=module_path)
+        self.code_cache[module_path] = code
+        return code
+
+    def _module_classes(
+        self, module_path: str
+    ) -> Mapping[str, tuple[CodeType, CodeType]]:
+        """Return every class of ``module_path``: its body and its statement scope.
+
+        Class statements live in a module, a class body or the type-parameter
+        scope of a PEP 695 class, never in a function, so only those code
+        objects are walked and nothing is decoded. The result is kept in
+        memory for every later stand-in of the module.
+
+        Returns:
+            ``{qualname: (body, scope holding its statement)}``.
+
+        """
+        cached = self.class_cache.get(module_path)
+        if cached is not None:
+            return cached
+        classes: dict[str, tuple[CodeType, CodeType]] = {}
+        pending = [self._module_code(module_path)]
+        while pending:
+            scope = pending.pop()
+            for const in scope.co_consts:
+                if not isinstance(const, CodeType):
+                    continue
+                if not const.co_flags & inspect.CO_OPTIMIZED:
+                    classes[const.co_qualname] = (const, scope)
+                    pending.append(const)
+                elif const.co_name.startswith(self.generic_scope_prefix):
+                    pending.append(const)
+        self.class_cache[module_path] = classes
+        return classes
+
+    def _class_statement(
+        self, module_path: str, qualname: str
+    ) -> tuple[CodeType, CodeType]:
+        """Return the class body of ``qualname`` and the scope of its statement.
+
+        Returns:
+            ``(body, scope)``.
+
+        Raises:
+            AttributeError: If the code declares no class ``qualname``.
+
+        """
+        found = self._module_classes(module_path).get(qualname)
+        if found is None:
+            msg = f"module {module_path!r} declares no class {qualname!r}"
+            raise AttributeError(msg, name=qualname)
+        return found
+
+    def _class_bases(
+        self, module_path: str, qualname: str
+    ) -> tuple[tuple[str, ...], ...]:
+        """Return each base of a plain class statement as a dotted path.
+
+        Only the statement is decoded: the units that follow the body
+        constant, up to the call that builds the class.
+
+        Returns:
+            One tuple of names per base, in base order (``Outer.Inner`` is
+            ``("Outer", "Inner")``).
+
+        Raises:
+            TypeError: If a base is not a dotted name or the statement passes
+                keywords (a metaclass), which no stand-in represents.
+
+        """
+        body, scope = self._class_statement(module_path, qualname)
+        op = dis.opmap
+        units = self._units(scope)
+        index = next(
+            position
+            for position, (opcode, argument) in enumerate(units)
+            if opcode == op["LOAD_CONST"] and scope.co_consts[argument] is body
+        )
+        packing = {op["BUILD_LIST"], op["LIST_APPEND"], op["CALL_INTRINSIC_1"]}
+        bases: list[tuple[str, ...]] = []
+        # MAKE_FUNCTION, then the class name, then one load chain per base;
+        # a long base list is packed into a list and called with ``*args``.
+        for opcode, argument in units[index + 3 :]:
+            if opcode in {op["CALL"], op["CALL_FUNCTION_EX"]}:
+                return tuple(bases)
+            if opcode in packing:
+                continue
+            if opcode == op["LOAD_NAME"]:
+                bases.append((scope.co_names[argument],))
+            elif opcode == op["LOAD_ATTR"] and bases:
+                # ``LOAD_ATTR`` keeps a method-load flag in its lowest bit.
+                bases[-1] = (*bases[-1], scope.co_names[argument >> 1])
+            else:
+                break
+        msg = (
+            f"class {module_path}.{qualname} has a base or keyword that is not "
+            "a dotted name; no stand-in represents it"
+        )
+        raise TypeError(msg)
+
+    def _class_members(self, module_path: str, qualname: str) -> tuple[str, ...]:
+        """Return the names the class body stores, mangled as the class stores them.
+
+        Returns:
+            The non-dunder member names in binding order.
+
+        """
+        body, _ = self._class_statement(module_path, qualname)
+        store, extend = dis.opmap["STORE_NAME"], dis.opmap["EXTENDED_ARG"]
+        raw, names, stored, prefix = body.co_code, body.co_names, dict[str, None](), 0
+        # Inline ``CACHE`` units never carry ``STORE_NAME``; ``EXTENDED_ARG``
+        # prefixes fold into the argument.
+        for index in range(0, len(raw), 2):
+            opcode, argument = raw[index], prefix | raw[index + 1]
+            prefix = argument << 8 if opcode == extend else 0
+            if opcode == store:
+                stored[names[argument]] = None
+        return tuple(
+            name
+            for name in stored
+            if not (name.startswith("__") and name.endswith("__"))
+        )
+
+    def _import_route(self, module_path: str, name: str) -> tuple[str, str] | None:
+        """Return the ``(module, attribute)`` a ``from`` import binds to ``name``.
+
+        The module's ``from`` imports are decoded once and kept in memory.
+
+        Returns:
+            The absolute source module and imported attribute, or ``None``
+            when the module binds ``name`` by no ``from`` import.
+
+        """
+        routes = self.import_cache.get(module_path)
+        if routes is None:
+            routes = {}
+            code = self._module_code(module_path)
+            units = self._units(code)
+            package = module_path.rpartition(".")[0]
+            op = dis.opmap
+            for index, (opcode, argument) in enumerate(units):
+                if opcode != op["IMPORT_NAME"]:
+                    continue
+                level = code.co_consts[units[index - 2][1]]
+                source = code.co_names[argument]
+                absolute = (
+                    resolve_name("." * level + source, package)
+                    if isinstance(level, int) and level
+                    else source
+                )
+                for (imported, origin), (stored, alias) in zip(
+                    units[index + 1 :: 2], units[index + 2 :: 2], strict=False
+                ):
+                    if imported != op["IMPORT_FROM"] or stored != op["STORE_NAME"]:
+                        break
+                    routes[code.co_names[alias]] = (absolute, code.co_names[origin])
+            self.import_cache[module_path] = routes
+        return routes.get(name)
+
+    @staticmethod
+    def _units(code: CodeType) -> Sequence[tuple[int, int]]:
+        """Return ``code``'s instructions as ``(opcode, argument)`` pairs.
+
+        The wordcode is read directly, two bytes per unit: ``EXTENDED_ARG``
+        prefixes fold into the argument and inline ``CACHE`` units are
+        skipped. ``dis.get_instructions`` builds an object per instruction
+        and measured 65 times slower over the 660 parts of flext-infra and
+        flext-cli (377 ms against 5.7 ms). Only statement scopes and module
+        code are decoded, never class bodies.
+
+        Returns:
+            The decoded instructions in order.
+
+        """
+        extend, cache = dis.opmap["EXTENDED_ARG"], dis.opmap["CACHE"]
+        raw, units, prefix = code.co_code, list[tuple[int, int]](), 0
+        for index in range(0, len(raw), 2):
+            opcode, argument = raw[index], prefix | raw[index + 1]
+            prefix = argument << 8 if opcode == extend else 0
+            if opcode not in {extend, cache}:
+                units.append((opcode, argument))
+        return units
 
     def _child_map(
         self, module_path: str
