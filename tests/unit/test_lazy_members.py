@@ -383,9 +383,9 @@ class TestsFlextCoreLazyMembers:
                 # Pydantic warns for a generic base before BaseModel, exactly
                 # as it does for the real generic class.
                 with u.Tests.warns(Warning, match="before generic classes"):
-                    derived = compose(cast("type", base))
+                    derived = compose(base)
             else:
-                derived = compose(cast("type", base))
+                derived = compose(base)
             tm.ok(issubclass(derived, standin))
             tm.fail(module in sys.modules)
             tm.that(vars(standin)["VALUE"], is_=FlextLazyMember)
