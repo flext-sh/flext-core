@@ -139,11 +139,20 @@ class TestsFlextHandlerDiscovery:
         tm.that(received[0] is request)
 
     @staticmethod
-    @c.Tests.MARK.parametrize("timeout", [0.0, 1.0, 30.0])
+    @c.Tests.MARK.parametrize("timeout", [1.0, 30.0])
     def test_unsupported_timeout_fails_before_application(timeout: float) -> None:
         """The executor never accepts a policy it cannot implement."""
         with u.Tests.raises(ValueError, match=c.ERR_HANDLER_POLICY_UNSUPPORTED):
             h.handler(command=m.Command, options=m.DecoratorConfig(timeout=timeout))
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("timeout", [0.0, -1.0])
+    def test_nonpositive_timeout_fails_at_the_pydantic_boundary(
+        timeout: float,
+    ) -> None:
+        """The model validates the declared positive timeout invariant."""
+        with u.Tests.raises(c.ValidationError):
+            m.DecoratorConfig(timeout=timeout)
 
     @staticmethod
     def test_unsupported_middleware_fails_before_application() -> None:
