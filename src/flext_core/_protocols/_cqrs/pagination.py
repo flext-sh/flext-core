@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextProtocolsCqrsFlextmodelscqrsPagination:
+class FlextProtocolsCqrsPagination:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
@@ -38,5 +38,5 @@ class FlextProtocolsCqrsFlextmodelscqrsPagination:
 
 
 __all__: list[str] = [
-    "FlextProtocolsCqrsFlextmodelscqrsPagination",
+    "FlextProtocolsCqrsPagination",
 ]

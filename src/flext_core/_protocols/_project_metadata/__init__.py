@@ -25,7 +25,7 @@ if TYPE_CHECKING:
         FlextProtocolsProjectMetadataFields,
     )
     from flext_core._protocols._project_metadata.ingress import (
-        FlextProtocolsProjectMetadataPyprojectIngress,
+        FlextProtocolsProjectMetadataIngress,
     )
 
 
@@ -34,7 +34,7 @@ __all__: tuple[str, ...] = (
     "FlextProtocolsProjectMetadataContract",
     "FlextProtocolsProjectMetadataDocument",
     "FlextProtocolsProjectMetadataFields",
-    "FlextProtocolsProjectMetadataPyprojectIngress",
+    "FlextProtocolsProjectMetadataIngress",
 )
 
 install_lazy_exports(
@@ -45,26 +45,12 @@ install_lazy_exports(
         "FlextProtocolsProjectMetadataContract": ".contract",
         "FlextProtocolsProjectMetadataDocument": ".document",
         "FlextProtocolsProjectMetadataFields": ".fields",
-        "FlextProtocolsProjectMetadataPyprojectIngress": ".ingress",
+        "FlextProtocolsProjectMetadataIngress": ".ingress",
     },
     public_exports=__all__,
-    deferred_members={
-        "FlextProtocolsProjectMetadataAggregates": (
-            "Project",
-            "ProjectToolFlext",
-        ),
-        "FlextProtocolsProjectMetadataDocument": (
-            "PyprojectTool",
-            "ProjectMetadata",
-        ),
-        "FlextProtocolsProjectMetadataFields": (
-            "ProjectAuthor",
-            "ProjectUrls",
-            "ProjectToolFlextProject",
-            "ProjectToolFlextReadmeSection",
-            "ProjectToolFlextDocs",
-            "ProjectToolFlextWorkspace",
-            "ProjectToolFlextNamespace",
-        ),
-    },
+    deferred_members=(
+        "FlextProtocolsProjectMetadataAggregates",
+        "FlextProtocolsProjectMetadataDocument",
+        "FlextProtocolsProjectMetadataFields",
+    ),
 )

@@ -12,28 +12,24 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._protocols._cqrs.pagination import (
-        FlextProtocolsCqrsFlextmodelscqrsPagination,
-    )
+    from flext_core._protocols._cqrs.pagination import FlextProtocolsCqrsPagination
     from flext_core._protocols._cqrs.part_01 import (
         FlextProtocolsCqrsFlextmodelscqrsPart01,
     )
 
 
 __all__: tuple[str, ...] = (
-    "FlextProtocolsCqrsFlextmodelscqrsPagination",
     "FlextProtocolsCqrsFlextmodelscqrsPart01",
+    "FlextProtocolsCqrsPagination",
 )
 
 install_lazy_exports(
     __name__,
     globals(),
     {
-        "FlextProtocolsCqrsFlextmodelscqrsPagination": ".pagination",
         "FlextProtocolsCqrsFlextmodelscqrsPart01": ".part_01",
+        "FlextProtocolsCqrsPagination": ".pagination",
     },
     public_exports=__all__,
-    deferred_members={
-        "FlextProtocolsCqrsFlextmodelscqrsPagination": ("Pagination",),
-    },
+    deferred_members=("FlextProtocolsCqrsPagination",),
 )
