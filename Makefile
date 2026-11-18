@@ -454,14 +454,13 @@ CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 # Source: repository topology. workspace has .gitmodules; standalone does not.
 # Native UV membership and Git attachment elect the physical runtime.
 override RUNTIME_ROOT := $(REPOSITORY_ROOT)
-override export GIT_CEILING_DIRECTORIES := $(shell cd "$(GIT_DISCOVERY_ROOT)/.." && pwd -P)
+# Git and Mise discovery share the runtime boundary: an attached member's
+# verbs read workspace paths through the workspace runtime.
+override export GIT_CEILING_DIRECTORIES := $(shell cd "$(RUNTIME_ROOT)/.." && pwd -P)
 ifneq ($(.SHELLSTATUS),0)
-$(error Cannot resolve Git ceiling for $(GIT_DISCOVERY_ROOT))
+$(error Cannot resolve the discovery ceiling for $(RUNTIME_ROOT))
 endif
-override export MISE_CEILING_PATHS := $(shell cd "$(RUNTIME_ROOT)/.." && pwd -P)
-ifneq ($(.SHELLSTATUS),0)
-$(error Cannot resolve Mise ceiling for $(RUNTIME_ROOT))
-endif
+override export MISE_CEILING_PATHS := $(GIT_CEILING_DIRECTORIES)
 # The locked install reads only the declared project config: a machine-local
 # override (mise.local.toml and siblings) never selects a tool outside the lock.
 override export MISE_OVERRIDE_CONFIG_FILENAMES := .mise.toml
