@@ -40,9 +40,21 @@ fi
 # runner never removes unstaged work: --all-files validates the working tree
 # as it is (a superset of the candidate) instead of hiding changes from it.
 unset SKIP PRE_COMMIT_ALLOW_NO_CONFIG
-if [[ "${stage}" = pre-commit ]]; then
-  # A commit validates exactly what it commits; pre-push keeps the full tree.
-  "${PREK:?PREK must name the prek runner that make setup installed}" run --hook-stage "${stage}"
-else
-  "${PREK:?PREK must name the prek runner that make setup installed}" run --all-files --hook-stage "${stage}"
-fi
+pre_commit_hooks=1
+pre_push_hooks=0
+case "${stage}" in
+  pre-commit|pre-merge-commit)
+    if [[ "${pre_commit_hooks}" = 1 ]]; then
+      "${PREK:?PREK must name the prek runner that make setup installed}" run --hook-stage "${stage}"
+    else
+      printf '%s: no configured hooks for this stage\n' "${stage}" >&2
+    fi
+    ;;
+  pre-push)
+    if [[ "${pre_push_hooks}" = 1 ]]; then
+      "${PREK:?PREK must name the prek runner that make setup installed}" run --all-files --hook-stage "${stage}"
+    else
+      printf '%s: no configured hooks for this stage\n' "${stage}" >&2
+    fi
+    ;;
+esac
