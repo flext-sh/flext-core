@@ -7,6 +7,8 @@
 
 <!-- TOC START -->
 
+- [Reuse surface and ownership](#reuse-surface-and-ownership)
+- [Execution budgets](#execution-budgets)
 - [Aliases](#aliases)
 - [Essential fixtures](#essential-fixtures)
 - [Resetting singletons manually](#resetting-singletons-manually)
@@ -23,6 +25,33 @@
 
 `flext_tests` is the shared test toolkit. It provides fixtures, matchers, file helpers,
 and a test runtime that binds the canonical aliases.
+
+## Reuse surface and ownership
+
+Every project consumes the shared owners; a local copy is a defect. Tests import only
+the generated `tests` namespace (`from tests import ...`), never `flext_*` or a test
+submodule.
+
+| Capability         | Owner                                         | Use                                                                                                              |
+| ------------------ | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| matchers           | `tm`                                          | `tm.ok` / `tm.that` / `tm.fail`                                                                                  |
+| files              | `tf`                                          | temporary trees and file helpers                                                                                 |
+| docker             | `tk`                                          | containers and compose                                                                                           |
+| domains            | `td`                                          | domain builders                                                                                                  |
+| in-process CLI     | `u.Tests.cli_in_process`                      | stream capture, environment scope and SIGTERM/SIGINT restoration; the caller keeps only its domain configuration |
+| fixtures           | pytest11 plugin (`conftest_plugin`)           | settings, session runtime, scratch storage, project metadata, connectivity                                       |
+| scenario templates | `tests/fixtures/**` + `u.Cli.template_render` | long or embedded scenario sources                                                                                |
+
+## Execution budgets
+
+Budgets are configuration-owned by `flext-infra/src/flext_infra/config/tooling.yaml`:
+`ordinary-timeout-seconds` (2 s) measures the test call, `slow-timeout-seconds`
+(20 s) applies to `slow` and the heavy capability markers, and
+`run-timeout-seconds` (240 s) is the fleet-wide suite clock — one invocation owns one
+budget across every member suite. Collection, session setup, fixture teardown and
+plugin bookkeeping belong to the suite deadline. A test that starts a child process is
+a process-boundary test and carries the `slow` marker instead of straining the ordinary
+budget.
 
 ## Aliases
 

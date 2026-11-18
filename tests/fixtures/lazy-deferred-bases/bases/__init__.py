@@ -12,5 +12,5 @@ install_lazy_exports(
     __name__,
     globals(),
     {"Base": ".base"},
-    deferred_members={"Base": ("VALUE", "twice")},
+    deferred_members=("Base",),
 )
