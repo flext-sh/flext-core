@@ -109,6 +109,9 @@ class FlextConstantsErrors:
         "Plugin category and name must be nonempty and cannot contain '{separator}'"
     )
     ERR_HANDLER_METADATA_INVALID: ClassVar[str] = "Invalid handler metadata for {name}"
+    ERR_HANDLER_METADATA_DUPLICATE: ClassVar[str] = (
+        "Handler metadata is already declared on this callable"
+    )
     ERR_HANDLER_POLICY_UNSUPPORTED: ClassVar[str] = (
         "Handler timeout and middleware are unsupported"
     )

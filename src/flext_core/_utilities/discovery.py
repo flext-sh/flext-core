@@ -19,6 +19,7 @@ from types import FunctionType
 from typing import (
     TYPE_CHECKING,
     TypeAliasType,
+    get_args,
     get_origin,
     get_protocol_members,
     get_type_hints,
@@ -196,15 +197,28 @@ class FlextUtilitiesDiscovery:
             where,
             signature,
         )
+        metadata = FlextUtilitiesDiscovery._inherited_handler_metadata(func, where)
         request = FlextUtilitiesDiscovery._resolve_operation_request(
             func,
+            metadata,
             where,
             signature,
         )
         return m.ServiceOperation(
             name=name,
+            public_name=name.replace("_", "-"),
             summary=doc.strip().splitlines()[0],
+            kind=metadata.handler_type if metadata is not None else c.HandlerType.QUERY,
+            default=metadata.default if metadata is not None else False,
+            scope=metadata.scope if metadata is not None else "read",
+            execution_mode=(
+                metadata.execution_mode if metadata is not None else "inline"
+            ),
+            requires_ticket=(
+                metadata.requires_ticket if metadata is not None else False
+            ),
             request=request,
+            output=FlextUtilitiesDiscovery._resolve_operation_output(func),
             handler=func,
         )
 
@@ -292,6 +306,7 @@ class FlextUtilitiesDiscovery:
     @staticmethod
     def _resolve_operation_request(
         func: FunctionType,
+        metadata: p.DecoratorConfig | None,
         where: tuple[type, str, str],
         signature: inspect.Signature,
     ) -> t.ModelClass[t.BaseModelType] | None:
@@ -309,10 +324,9 @@ class FlextUtilitiesDiscovery:
         returned = hints["return"]
         if get_origin(returned) is not p.Result:
             raise error(where, annotations["return"], c.ERR_SERVICE_OPERATION_RESULT)
-        metadata = FlextUtilitiesDiscovery._inherited_handler_metadata(func, where)
         params = tuple(signature.parameters.values())[1:]
         if not params:
-            if metadata is not None:
+            if metadata is not None and metadata.command is not None:
                 raise error(
                     where,
                     signature,
@@ -329,7 +343,7 @@ class FlextUtilitiesDiscovery:
         if metadata is None:
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_METADATA)
         request = metadata.command
-        if not issubclass(request, BaseModel):
+        if request is None or not issubclass(request, BaseModel):
             raise error(where, annotation, c.ERR_SERVICE_OPERATION_COMMAND_MODEL)
         missing = get_protocol_members(contract) - (
             request.model_fields.keys() | set(dir(request))
@@ -340,6 +354,24 @@ class FlextUtilitiesDiscovery:
             )
             raise error(where, annotation, defect)
         return request
+
+    @staticmethod
+    def _resolve_operation_output(
+        func: FunctionType,
+    ) -> type | None:
+        """Return the type carried by the operation's ``p.Result`` annotation.
+
+        Returns:
+            The declared output class, or None when the result carries a
+            non-class annotation.
+
+        """
+        returned = get_type_hints(func).get("return")
+        if get_origin(returned) is not p.Result:
+            return None
+        arguments = get_args(returned)
+        output = arguments[0] if arguments else None
+        return output if isinstance(output, type) else None
 
     @staticmethod
     def _error(

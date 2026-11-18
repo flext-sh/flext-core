@@ -11,10 +11,9 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from typing import TYPE_CHECKING
 
-from flext_core import c, m, p
+from flext_core import c, m
 from flext_core._handlers import FlextHandlersSettings
 
 if TYPE_CHECKING:
@@ -29,13 +28,11 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
         **PHandler,
         TResult,
     ](
-        command: type,
+        command: type | None = None,
         *,
-        priority: int = c.DEFAULT_MAX_COMMAND_RETRIES,
-        timeout: float | None = None,
-        middleware: Sequence[type[p.Middleware]] | None = None,
+        options: m.DecoratorConfig | None = None,
     ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
-        """Mark methods as handlers for commands.
+        """Mark methods as command handlers.
 
         Stores handler configuration as metadata on the decorated method,
         enabling auto-discovery by FlextService and handler registries.
@@ -43,55 +40,93 @@ class FlextHandlersDispatch[MessageT_contra, ResultT](
         or output; each consuming executor owns its result contract.
 
         Args:
-            command: The command type this handler processes
-            priority: Higher priorities are discovered first; the model owns
-                the default.
-            timeout: Non-None policies are rejected until the executor supports them.
-            middleware: Nonempty policies are rejected until the executor supports them.
+            command: Request model this handler processes, or None when the
+                operation takes no request.
+            options: Validated declaration metadata (priority, scope,
+                execution mode, ticket policy and default flag).
+
+        Returns:
+            A declaration decorator that returns the original callable unchanged.
+
+        """
+        return FlextHandlersDispatch._declare(
+            (options or m.DecoratorConfig()).model_copy(
+                update={
+                    "command": command,
+                    "handler_type": c.HandlerType.COMMAND,
+                }
+            )
+        )
+
+    @staticmethod
+    def query[
+        **PHandler,
+        TResult,
+    ](
+        command: type | None = None,
+        *,
+        options: m.DecoratorConfig | None = None,
+    ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
+        """Mark methods as read-only query handlers.
+
+        Uses the same declaration contract as :meth:`handler`, recorded as
+        ``c.HandlerType.QUERY`` so a CLI or transport can project the operation
+        as a read instead of a command.
+
+        Args:
+            command: Request model this handler processes, or None when the
+                operation takes no request.
+            options: Validated declaration metadata (priority, scope,
+                execution mode, ticket policy and default flag).
+
+        Returns:
+            A declaration decorator that returns the original callable unchanged.
+
+        """
+        return FlextHandlersDispatch._declare(
+            (options or m.DecoratorConfig()).model_copy(
+                update={
+                    "command": command,
+                    "handler_type": c.HandlerType.QUERY,
+                }
+            )
+        )
+
+    @staticmethod
+    def _declare[
+        **PHandler,
+        TResult,
+    ](
+        declaration: m.DecoratorConfig,
+    ) -> Callable[[Callable[PHandler, TResult]], Callable[PHandler, TResult]]:
+        """Build the declaration decorator shared by handler and query.
 
         Returns:
             A declaration decorator that returns the original callable unchanged.
 
         Raises:
-            ValueError: If timeout or middleware execution is requested.
-
-        Example:
-            >>> @FlextHandlers.handler(command=m.Command)
-            ... def handle_command(
-            ...     request: p.CommandRoutable,
-            ... ) -> p.Result[str]:
-            ...     return r[str].ok(request.command_type)
+            ValueError: If the declaration requests an unsupported timeout or
+                middleware policy, or the callable already declares metadata.
 
         """
-        if timeout is not None:
-            msg = "Handler timeout execution is not supported"
-            raise ValueError(msg)
-        if middleware:
-            msg = "Handler middleware execution is not supported"
-            raise ValueError(msg)
+        if declaration.timeout is not None or declaration.middleware:
+            raise ValueError(c.ERR_HANDLER_POLICY_UNSUPPORTED)
 
         def decorator(func: Callable[PHandler, TResult]) -> Callable[PHandler, TResult]:
-            """Apply handler configuration metadata to function.
+            """Apply handler configuration metadata to the function.
 
             A callable has one declaration; stacked declarations are rejected.
 
             Returns:
-                The resulting ``Callable[PHandler, TResult]``.
+                The original callable, unchanged.
 
             Raises:
                 ValueError: If the callable already declares handler metadata.
 
             """
             if hasattr(func, c.HANDLER_ATTR):
-                msg = "Handler metadata is already declared on this callable"
-                raise ValueError(msg)
-            settings = m.DecoratorConfig(
-                command=command,
-                priority=priority,
-                timeout=timeout,
-                middleware=(),
-            )
-            setattr(func, c.HANDLER_ATTR, settings)
+                raise ValueError(c.ERR_HANDLER_METADATA_DUPLICATE)
+            setattr(func, c.HANDLER_ATTR, declaration)
             return func
 
         return decorator

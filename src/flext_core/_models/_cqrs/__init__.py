@@ -12,9 +12,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_core._models._cqrs.flextmodelscqrs_pagination import (
-        FlextModelsCqrsPagination,
-    )
+    from flext_core._models._cqrs.pagination import FlextModelsCqrsPagination
 
 
 __all__: tuple[str, ...] = ("FlextModelsCqrsPagination",)
@@ -22,7 +20,7 @@ __all__: tuple[str, ...] = ("FlextModelsCqrsPagination",)
 install_lazy_exports(
     __name__,
     globals(),
-    {"FlextModelsCqrsPagination": ".flextmodelscqrs_pagination"},
+    {"FlextModelsCqrsPagination": ".pagination"},
     public_exports=__all__,
     deferred_members={
         "FlextModelsCqrsPagination": ("Pagination",),

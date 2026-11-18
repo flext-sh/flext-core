@@ -6,10 +6,6 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping, Sequence
-from typing import Annotated
-from warnings import deprecated
-
 from flext_core.flextlazy_attribute import FlextLazyAttribute
 from flext_core.flextlazy_exports import FlextLazyExports
 from flext_core.flextlazy_member import FlextLazyMember
@@ -39,13 +35,7 @@ install_lazy_exports = lazy.install
 """Convenience alias for installing lazy exports into a module."""
 defer_lazy_instances = lazy.defer_instances
 """Publish configuration roots as stand-ins built on first attribute read."""
-defer_lazy_bases: Annotated[
-    Callable[[str, Mapping[str, Sequence[tuple[str, str]]]], None],
-    deprecated(
-        "compat: defer_lazy_bases -> install_lazy_exports deferred_members "
-        "(bases resolved at run time); fix: regenerate the initializer with make gen",
-    ),
-] = lazy.defer_bases
+defer_lazy_bases = lazy.defer_bases
 """Deprecated: stand-in bases are resolved at run time; regenerate callers."""
 
 __all__ = (

@@ -14,7 +14,7 @@ from collections.abc import Mapping
 from contextlib import AbstractContextManager
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
-from flext_core import t
+from flext_core import c, t
 from flext_core._protocols import (
     FlextProtocolsBase,
     FlextProtocolsPydantic,
@@ -56,13 +56,48 @@ class FlextProtocolsService:
             ...
 
         @property
+        def public_name(self) -> str:
+            """Transport-facing name of the operation."""
+            ...
+
+        @property
         def summary(self) -> str:
             """First docstring line of the operation."""
             ...
 
         @property
+        def kind(self) -> c.HandlerType:
+            """CQRS kind: query for reads, command for writes."""
+            ...
+
+        @property
+        def default(self) -> bool:
+            """Whether this operation is the service default."""
+            ...
+
+        @property
+        def scope(self) -> str:
+            """Access scope required to invoke the operation."""
+            ...
+
+        @property
+        def execution_mode(self) -> str:
+            """Whether the operation runs inline or as a job."""
+            ...
+
+        @property
+        def requires_ticket(self) -> bool:
+            """Whether the operation requires a change ticket."""
+            ...
+
+        @property
         def request(self) -> t.ModelClass[t.BaseModelType] | None:
             """Pydantic request model, or None for an input-less operation."""
+            ...
+
+        @property
+        def output(self) -> type | None:
+            """Output type carried by the operation's result, or None."""
             ...
 
         @property
