@@ -44,7 +44,6 @@ from flext_core._models import (
 class FlextModels(
     FlextModelsBase,
     FlextModelsBuilder,
-    FlextModelsCollections,
     FlextModelsConfig,
     FlextModelsContainer,
     FlextModelsContainers,
@@ -57,6 +56,7 @@ class FlextModels(
     FlextModelsContextState,
     FlextModelsServiceState,
     FlextModelsHandler,
+    FlextModelsCollections,
     FlextModelsNamespace,
     FlextModelsOptions,
     FlextModelsProjectMetadata,

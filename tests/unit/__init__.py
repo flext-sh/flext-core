@@ -16,6 +16,7 @@ if TYPE_CHECKING:
         TestsFlextCoreLazyCompositionParts,
     )
     from tests.unit.test_lazy_dotted_bases import TestsFlextCoreLazyDottedBases
+    from tests.unit.test_lazy_dynamic_members import TestsFlextCoreLazyDynamicMembers
     from tests.unit.test_utilities_models_family import (
         TestsFlextCoreUtilitiesModelsFamily,
     )
@@ -24,6 +25,7 @@ if TYPE_CHECKING:
 __all__: tuple[str, ...] = (
     "TestsFlextCoreLazyCompositionParts",
     "TestsFlextCoreLazyDottedBases",
+    "TestsFlextCoreLazyDynamicMembers",
     "TestsFlextCoreUtilitiesModelsFamily",
 )
 
@@ -33,6 +35,7 @@ install_lazy_exports(
     {
         "TestsFlextCoreLazyCompositionParts": ".test_lazy_composition_parts",
         "TestsFlextCoreLazyDottedBases": ".test_lazy_dotted_bases",
+        "TestsFlextCoreLazyDynamicMembers": ".test_lazy_dynamic_members",
         "TestsFlextCoreUtilitiesModelsFamily": ".test_utilities_models_family",
     },
     public_exports=__all__,

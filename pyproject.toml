@@ -730,6 +730,7 @@ name = "flext-cli"
 [tool.uv.exclude-newer-package]
 soupsieve = false
 
+[tool.uv.sources]
 
 [tool.bandit]
 severity = "MEDIUM"

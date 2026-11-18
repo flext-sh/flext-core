@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextProtocolsCollectionModels:
+class FlextProtocolsModels:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
@@ -53,5 +53,5 @@ class FlextProtocolsCollectionModels:
 
 
 __all__: list[str] = [
-    "FlextProtocolsCollectionModels",
+    "FlextProtocolsModels",
 ]

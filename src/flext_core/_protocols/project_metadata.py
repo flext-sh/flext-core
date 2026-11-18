@@ -13,7 +13,7 @@ from flext_core._protocols._project_metadata import (
     FlextProtocolsProjectMetadataAggregates,
     FlextProtocolsProjectMetadataDocument,
     FlextProtocolsProjectMetadataFields,
-    FlextProtocolsProjectMetadataPyprojectIngress,
+    FlextProtocolsProjectMetadataIngress,
 )
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ class FlextProtocolsProjectMetadata(
 
     @runtime_checkable
     class PyprojectDocument(
-        FlextProtocolsProjectMetadataPyprojectIngress.FlextModelsPyprojectIngressContract,
+        FlextProtocolsProjectMetadataIngress.FlextModelsPyprojectIngressContract,
         Protocol,
     ):
         """Structural data contract projected from the owning model."""

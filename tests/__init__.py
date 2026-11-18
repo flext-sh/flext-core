@@ -121,6 +121,7 @@ if TYPE_CHECKING:
     from tests.unit import (
         TestsFlextCoreLazyCompositionParts,
         TestsFlextCoreLazyDottedBases,
+        TestsFlextCoreLazyDynamicMembers,
         TestsFlextCoreUtilitiesModelsFamily,
     )
     from tests.utilities import TestsFlextUtilities, u
@@ -177,6 +178,7 @@ __all__: tuple[str, ...] = (
     "TestsFlextConstantsServices",
     "TestsFlextCoreLazyCompositionParts",
     "TestsFlextCoreLazyDottedBases",
+    "TestsFlextCoreLazyDynamicMembers",
     "TestsFlextCoreUtilitiesModelsFamily",
     "TestsFlextDecoratorsLegacy",
     "TestsFlextFlextHandlers",
@@ -293,6 +295,7 @@ install_lazy_exports(
         "TestsFlextConstantsServices": "._constants",
         "TestsFlextCoreLazyCompositionParts": ".unit",
         "TestsFlextCoreLazyDottedBases": ".unit",
+        "TestsFlextCoreLazyDynamicMembers": ".unit",
         "TestsFlextCoreUtilitiesModelsFamily": ".unit",
         "TestsFlextDecoratorsLegacy": "._utilities",
         "TestsFlextFlextHandlers": "._utilities",
