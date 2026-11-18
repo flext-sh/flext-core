@@ -2,7 +2,7 @@
 """Source-derived structural model contracts.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_core/_protocols/collection_models
+src/flext_core/_protocols/models
 SPDX-License-Identifier: MIT
 """
 

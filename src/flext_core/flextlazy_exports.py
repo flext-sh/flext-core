@@ -6,11 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import builtins
 import sys
-from collections.abc import Callable, Mapping, MutableMapping, Sequence
-from importlib.util import resolve_name
+import types
+from collections.abc import (
+    Callable,
+    Collection,
+    Iterator,
+    Mapping,
+    MutableMapping,
+    Sequence,
+)
+from importlib.machinery import PathFinder
 from types import ModuleType
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from flext_core.flextlazy_bootstrap import FlextLazyBootstrap
 from flext_core.flextlazy_instance import FlextLazyInstance
@@ -22,24 +31,6 @@ if TYPE_CHECKING:
 
 class FlextLazyExports(FlextLazyBootstrap):
     """Install and resolve exports without generated-package bootstrap imports."""
-
-    def run_eager(self) -> None:
-        """Publish real classes for every deferred export of this process.
-
-        A generator imports its own FLEXT packages, so a stale member index
-        must not block their repair (ADR-018 stand-in law rule 6). Its entry
-        calls this once, before the first facade read; the flag lives on the
-        process-wide ``lazy`` owner, never in an environment variable.
-
-        Raises:
-            RuntimeError: If a stand-in was already published, because a
-                process never mixes stand-ins and real classes.
-
-        """
-        if self.published_standin:
-            msg = "eager lazy exports requested after a stand-in was published"
-            raise RuntimeError(msg)
-        self.eager = True
 
     def member(self, module: str, owner: str, member: str) -> FlextLazyMember:
         """Return a descriptor deferring ``owner.member`` from ``module``.
@@ -53,102 +44,267 @@ class FlextLazyExports(FlextLazyBootstrap):
         """
         return FlextLazyMember(module, owner, member, self.load)
 
+    class _PartBuiltins(Mapping[str, "t.ModuleGlobalValue"]):
+        """Builtins a PEP 695 class statement runs with, resolved on demand.
+
+        CPython reads a missing global, ``__build_class__`` and ``__import__``
+        from a function's builtins, which may be any mapping: while the
+        statement runs, a name resolves as a stand-in base does; afterwards
+        (a lazily evaluated bound, constraint or default) it is read from the
+        loaded part module. Anything else is a real builtin.
+        """
+
+        __slots__ = ("resolve",)
+        __import__ = staticmethod(builtins.__import__)
+
+        def __init__(self, resolve: Callable[[str], t.ModuleGlobalValue]) -> None:
+            """Bind the resolver of the statement's names."""
+            self.resolve = resolve
+
+        def __getitem__(self, key: str) -> t.ModuleGlobalValue:
+            """Resolve a name the statement or an evaluator reads.
+
+            Returns:
+                The resolved value.
+
+            """
+            return self.resolve(key)
+
+        def __iter__(self) -> Iterator[str]:
+            """Iterate the real builtins.
+
+            Returns:
+                An iterator over the builtin names.
+
+            """
+            return iter(vars(builtins))
+
+        def __len__(self) -> int:
+            """Count the real builtins.
+
+            Returns:
+                The number of builtin names.
+
+            """
+            return len(vars(builtins))
+
     def deferred(
         self,
         module: str,
         owner: str,
         members: Sequence[str],
-        bases: tuple[type, ...] = (),
+        bases: tuple[t.ModuleGlobalValue, ...] = (),
+        type_params: tuple[t.ModuleGlobalValue, ...] = (),
     ) -> type:
         """Return a stand-in for ``module.owner`` whose members load on first use.
 
-        The stand-in is a plain ``type`` with one ``FlextLazyMember``
-        descriptor per member and no metaclass or fallback, so it composes with
-        any metaclass and composing it by MRO imports nothing; an unlisted
-        member is a plain ``AttributeError``. The first member access loads
-        ``module`` and caches the real member on the stand-in. ``bases`` are
-        the stand-ins of the real class's deferred bases, in its base order, so
-        the stand-in lists only its own members and C3 reproduces the real MRO.
+        The stand-in is a class of metaclass ``type`` with one
+        ``FlextLazyMember`` descriptor per member and no fallback, so it
+        composes with any metaclass and composing it by MRO imports nothing;
+        a name the part does not bind is a plain ``AttributeError``. The first
+        member access loads ``module`` and caches the real member on the
+        stand-in. ``bases`` are the real class's bases, as stand-ins or real
+        exports, so C3 reproduces the real MRO; a PEP 695 part passes its
+        ``Generic`` base and its ``type_params``, so the stand-in is generic
+        exactly like the real class.
 
         Returns:
             A class named ``owner`` that defers each of ``members``.
 
         """
-        namespace: dict[str, str | FlextLazyMember] = {
-            "__module__": module,
-            "__qualname__": owner,
-        }
+        namespace: dict[
+            str, t.ModuleGlobalValue | FlextLazyMember | tuple[t.ModuleGlobalValue, ...]
+        ] = {"__module__": module, "__qualname__": owner}
+        if type_params:
+            namespace["__type_params__"] = type_params
         namespace.update({name: self.member(module, owner, name) for name in members})
-        self.published_standin = True
-        return type(owner, bases, namespace)
+        return types.new_class(
+            owner.rpartition(".")[2], bases, {}, lambda body: body.update(namespace)
+        )
 
-    def _deferred_export(
-        self,
-        name: str,
-        lazy_imports: Mapping[str, str | tuple[str, str]],
-        members: Sequence[str],
-        bases: Sequence[type],
-        module_globals: t.ModuleGlobals,
-    ) -> type:
-        """Publish the stand-in of one deferred export into its package globals.
+    def standin(self, module_path: str, qualname: str) -> type:
+        """Return the stand-in of class ``qualname`` of ``module_path``.
+
+        Built once per process and kept in memory: its members are the names
+        its class body stores and its bases are resolved from its class
+        statement and its module's import bindings, all read from the code
+        without loading it. A base imported from a package resolves through
+        that package's export (its stand-in or its real class); a base defined
+        in the same module or imported by module path becomes its own
+        stand-in. C3 reproduces the real MRO; nothing is flattened. A PEP 695
+        statement runs in its own scope with ``__build_class__`` captured:
+        the class body never runs, and the type parameters and bases are the
+        ones the real statement creates.
 
         Returns:
-            The stand-in class, cached so every importer shares its identity.
+            The stand-in class, shared by every route that reaches it.
 
         Raises:
-            ValueError: If the stand-in has neither members nor bases.
+            ValueError: If the class binds no member and names no base.
+            TypeError: If a base is not a class with metaclass ``type``.
 
         """
+        key = (module_path, qualname)
+        cached = self.standins.get(key)
+        if cached is not None:
+            return cached
+        members = self._class_members(module_path, qualname)
+        _, scope = self._class_statement(module_path, qualname)
+        if scope.co_name.startswith(self.generic_scope_prefix):
+            bases, type_params = self._generic_statement(module_path, qualname, scope)
+        else:
+            bases = tuple(
+                self._base_value(module_path, qualname, base)
+                for base in self._class_bases(module_path, qualname)
+            )
+            type_params = ()
         if not members and not bases:
-            # A composition part binds its members through its shared bases;
-            # a stand-in with neither members nor bases stands for nothing.
-            msg = f"stand-in {name!r} has neither members nor bases"
+            msg = f"stand-in {qualname!r} has neither members nor bases"
             raise ValueError(msg)
-        entry = lazy_imports[name]
-        module_path, attr = (entry, name) if isinstance(entry, str) else entry
-        standin = self.deferred(module_path, attr, members, tuple(bases))
-        module_globals[name] = standin
+        for base in types.resolve_bases(bases):
+            if type(base) is not type:
+                msg = (
+                    f"class {module_path}.{qualname} has the base "
+                    f"{getattr(base, '__qualname__', base)!r}, "
+                    "which is not a class with metaclass 'type'"
+                )
+                raise TypeError(msg)
+        standin = self.deferred(module_path, qualname, members, bases, type_params)
+        self.standins[key] = standin
         return standin
 
-    def _deferred_base(
-        self,
-        module_name: str,
-        base: tuple[str, str],
-        own_getattr: Callable[[str], t.ModuleGlobalValue],
-    ) -> type:
-        """Return the stand-in that the initializer exporting ``base`` publishes.
+    def _generic_statement(
+        self, module_path: str, qualname: str, scope: types.CodeType
+    ) -> tuple[tuple[t.ModuleGlobalValue, ...], tuple[t.ModuleGlobalValue, ...]]:
+        """Run a PEP 695 class statement without its body; return its bases.
 
-        ``base`` is ``(package, name)``; ``"."`` names the installing package,
-        read through its own lazy hook so synthetic namespaces resolve too.
-        Another package loads through ``load``, whose hook publishes its
-        stand-in without loading the part module.
+        The statement's scope runs with its own globals: a base name resolves
+        as a stand-in base, and ``__build_class__`` only captures its
+        arguments, so the class body never runs. The type parameters it
+        creates are the real ones, with their bounds, constraints and
+        defaults still evaluated lazily, from the loaded part, on first use.
 
         Returns:
-            The base stand-in class.
+            The bases (the ``Generic`` alias included) and the type parameters.
 
         Raises:
-            TypeError: If the exporting initializer does not publish a class
-                whose metaclass is ``type``.
+            TypeError: If the statement passes keywords (a metaclass), which no
+                stand-in represents, or its scope closes over another name.
 
         """
-        package, attr = base
-        # A base read through an attribute of the export (``Outer.Inner``) is
-        # resolved along that path after the export itself.
-        root, *path = attr.split(".")
-        value = (
-            own_getattr(root)
-            if package == "."
-            else getattr(self.load(resolve_name(package, module_name)), root)
-        )
-        for part in path:
-            value = getattr(value, part)
-        if type(value) is not type:
+        loaded = False
+
+        def capture(
+            body: t.ModuleGlobalValue,
+            _name: str,
+            *bases: t.ModuleGlobalValue,
+            **keywords: t.ModuleGlobalValue,
+        ) -> tuple[t.ModuleGlobalValue, tuple[t.ModuleGlobalValue, ...]]:
+            if keywords:
+                msg = (
+                    f"class {module_path}.{qualname} passes {sorted(keywords)}; "
+                    "no stand-in represents a class keyword"
+                )
+                raise TypeError(msg)
+            return body, bases
+
+        def resolve(name: str) -> t.ModuleGlobalValue:
+            if name == "__build_class__" and not loaded:
+                return cast("t.ModuleGlobalValue", capture)
+            if loaded:
+                found = vars(self.load(module_path)).get(name)
+                if found is not None:
+                    return cast("t.ModuleGlobalValue", found)
+            else:
+                try:
+                    return self._base_value(module_path, qualname, (name,))
+                except NameError:
+                    pass
+            if name in vars(builtins):
+                return cast("t.ModuleGlobalValue", vars(builtins)[name])
+            raise KeyError(name)
+
+        if scope.co_freevars:
             msg = (
-                f"module {module_name!r} bases a stand-in on {base!r}, "
-                "which is not a class with metaclass 'type'"
+                f"class {module_path}.{qualname} is a PEP 695 class closing over "
+                f"{scope.co_freevars}, which only its enclosing scope binds"
             )
             raise TypeError(msg)
+        namespace = {
+            "__name__": module_path,
+            "__builtins__": self._PartBuiltins(resolve),
+        }
+        body, bases = cast(
+            "tuple[types.FunctionType, tuple[t.ModuleGlobalValue, ...]]",
+            types.FunctionType(scope, namespace)(),
+        )
+        loaded = True
+        cells = dict(
+            zip(body.__code__.co_freevars, body.__closure__ or (), strict=True)
+        )
+        type_params = cast(
+            "tuple[t.ModuleGlobalValue, ...]", cells[".type_params"].cell_contents
+        )
+        return bases, type_params
+
+    def _base_value(
+        self, module_path: str, qualname: str, base: tuple[str, ...]
+    ) -> t.ModuleGlobalValue:
+        """Resolve one base expression of a class statement to its value.
+
+        Returns:
+            The base: a stand-in, a package's export, or a builtin.
+
+        Raises:
+            NameError: If the module binds the base name by no class
+                statement, no ``from`` import and no builtin.
+
+        """
+        head, *path = base
+        scope = qualname.rpartition(".")[0]
+        classes = self._module_classes(module_path)
+        local = next(
+            (
+                name
+                for name in (f"{scope}.{head}" if scope else "", head)
+                if name in classes
+            ),
+            None,
+        )
+        value: t.ModuleGlobalValue
+        route = None if local is not None else self._import_route(module_path, head)
+        if local is not None:
+            value = self.standin(module_path, ".".join((local, *path)))
+            path.clear()
+        elif route is None:
+            value = getattr(builtins, head, None)
+            if value is None:
+                msg = f"class {module_path}.{qualname} names an unbound base {head}"
+                raise NameError(msg)
+        elif self._is_package(route[0]):
+            value = getattr(self.load(route[0]), route[1])
+        else:
+            value = self.standin(route[0], ".".join((route[1], *path)))
+            path.clear()
+        for part in path:
+            value = getattr(value, part)
         return value
+
+    def _is_package(self, module_path: str) -> bool:
+        """Return whether ``module_path`` names a package, without loading it.
+
+        Returns:
+            ``True`` for a package (its spec has a search path).
+
+        """
+        cached = sys.modules.get(module_path)
+        if cached is not None:
+            return hasattr(cached, "__path__")
+        parent = module_path.rpartition(".")[0]
+        spec = PathFinder.find_spec(
+            module_path, self.load(parent).__path__ if parent else None
+        )
+        return spec is not None and spec.submodule_search_locations is not None
 
     def defer_instances(
         self,
@@ -181,33 +337,25 @@ class FlextLazyExports(FlextLazyBootstrap):
             module_path, attr = (entry, name) if isinstance(entry, str) else entry
             module_globals[name] = FlextLazyInstance(module_path, attr, self.load)
 
+    @staticmethod
     def defer_bases(
-        self,
         module_name: str,
         bases: Mapping[str, Sequence[tuple[str, str]]],
     ) -> None:
-        """Give deferred exports the stand-ins of their real deferred bases.
+        """Accept an initializer generated before bases were resolved at run time.
 
-        Runs after ``install`` of the same module. Each base is the
-        ``(package, name)`` export of a real base, in the real class's base
-        order, so the stand-in lists only its own members and C3 reproduces the
-        real MRO. Every name is validated before any effect.
-
-        Raises:
-            ValueError: If a name is not a deferred export of the module.
-
+        Stand-in bases now come from the part's class statement (ADR-018
+        stand-in law rule 4), so the declared bases carry nothing to forward.
+        Kept inert only until every generated initializer is regenerated: the
+        generator no longer emits the call, and it is deleted at zero uses.
         """
-        unknown = sorted(set(bases) - self.deferred_names.get(module_name, frozenset()))
-        if unknown:
-            msg = f"module {module_name!r} bases exports it does not defer: {unknown}"
-            raise ValueError(msg)
-        self.deferred_bases[module_name] = bases
+        del module_name, bases
 
     @staticmethod
     def _require_deferred(
         module_name: str,
         lazy_imports: Mapping[str, str | tuple[str, str]],
-        deferred_members: Mapping[str, Sequence[str]],
+        deferred_members: Collection[str],
     ) -> None:
         """Reject a deferred export that names no class export of the package.
 
@@ -231,16 +379,27 @@ class FlextLazyExports(FlextLazyBootstrap):
         Returns:
             The names of the members that were still deferred, in MRO order.
 
+        Raises:
+            AttributeError: If a member its own class binds fails to resolve.
+
         """
         pending = tuple(
-            (name, value)
+            (klass, name, value)
             for klass in target.__mro__
             for name, value in tuple(vars(klass).items())
             if isinstance(value, FlextLazyMember)
         )
-        for _, member in pending:
-            member.resolve()
-        return tuple(name for name, _ in pending)
+        resolved: list[str] = []
+        for klass, name, member in pending:
+            try:
+                member.resolve()
+            except AttributeError:
+                # A name only a never-run branch stores leaves the stand-in.
+                if name in vars(klass):
+                    raise
+                continue
+            resolved.append(name)
+        return tuple(resolved)
 
     def get(
         self,
@@ -370,7 +529,7 @@ class FlextLazyExports(FlextLazyBootstrap):
         lazy_imports: Mapping[str, str | tuple[str, str]],
         *,
         public_exports: Sequence[str] | None = None,
-        deferred_members: Mapping[str, Sequence[str]] | None = None,
+        deferred_members: Collection[str] | None = None,
     ) -> t.LazyExportHooks:
         """Install __getattr__/__dir__/__all__ and publish _LAZY_IMPORTS.
 
@@ -382,11 +541,10 @@ class FlextLazyExports(FlextLazyBootstrap):
         module-level literal or inline call — satisfy that contract from
         the single owner.
 
-        ``deferred_members`` maps a class export to its member names. That
-        export resolves to its ``deferred`` stand-in without loading its
-        module, so a facade composing it loads no heavy capability.
-        ``defer_bases`` may then give a deferred export the stand-ins of its
-        real deferred bases.
+        ``deferred_members`` names the class exports published as stand-ins.
+        Each resolves to its ``deferred`` stand-in without loading its module,
+        so a facade composing it loads no heavy capability; its members are
+        resolved at run time from the part's own code (``standin``).
 
         Returns:
             The installed PEP 562 hooks, reused for identical installation inputs.
@@ -403,10 +561,8 @@ class FlextLazyExports(FlextLazyBootstrap):
             return cached[1]
 
         normalized = self._norm_map(module_name, lazy_imports)
-        deferred = {} if deferred_members is None else deferred_members
+        deferred = frozenset(() if deferred_members is None else deferred_members)
         self._require_deferred(module_name, normalized, deferred)
-        self.deferred_names[module_name] = frozenset(deferred)
-        self.deferred_bases.pop(module_name, None)
         for name in normalized:
             module_globals.pop(name, None)
         if public_exports is not None:
@@ -417,20 +573,12 @@ class FlextLazyExports(FlextLazyBootstrap):
         module_globals["_LAZY_IMPORTS"] = normalized
 
         def _module_getattr(name: str) -> t.ModuleGlobalValue:
-            members = None if self.eager else deferred.get(name)
-            if members is not None:
-                return self._deferred_export(
-                    name,
-                    normalized,
-                    members,
-                    [
-                        self._deferred_base(module_name, base, _module_getattr)
-                        for base in self.deferred_bases.get(module_name, {}).get(
-                            name, ()
-                        )
-                    ],
-                    module_globals,
-                )
+            if name in deferred:
+                entry = normalized[name]
+                module_path, attr = (entry, name) if isinstance(entry, str) else entry
+                standin = self.standin(module_path, attr)
+                module_globals[name] = standin
+                return standin
             return self.get(name, normalized, module_globals, module_name)
 
         def _module_dir() -> list[str]:

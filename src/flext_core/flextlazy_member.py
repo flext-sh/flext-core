@@ -22,8 +22,10 @@ class FlextLazyMember:
     mixin. The first access imports the mixin module, takes the member's raw
     value from the mixin's MRO (so a staticmethod or classmethod keeps its
     binding semantics) and replaces the descriptor on its host, making every
-    later lookup a plain class attribute. A failure raises with its cause and
-    caches nothing.
+    later lookup a plain class attribute. A mixin that cannot load raises
+    with its cause and caches nothing. A name the code stores that the loaded
+    class does not bind leaves the stand-in, and the lookup continues along
+    the MRO; with nothing after it, it is an ``AttributeError``.
     """
 
     __slots__ = ("_host", "_load", "_member", "_module", "_owner")
@@ -81,8 +83,29 @@ class FlextLazyMember:
         Returns:
             The member, bound to ``instance``/``owner`` when it is a descriptor.
 
+        Raises:
+            AttributeError: When neither the part nor the MRO after it binds
+                the member.
+
         """
-        raw = self.resolve()
+        host = self._host
+        try:
+            raw = self.resolve()
+        except AttributeError:
+            if host is None or self._member in vars(host):
+                raise
+            # The code stores the name only on a path the class never runs
+            # (an ``if TYPE_CHECKING:`` block): the lookup goes on along the
+            # MRO after the stand-in, exactly as on the real class.
+            klass = owner or host if instance is None else type(instance)
+            mro = klass.__mro__
+            for following in mro[mro.index(host) + 1 :]:
+                namespace = cast("t.ModuleGlobals", vars(following))
+                if self._member in namespace:
+                    raw = cast("t.ModuleGlobalValue", namespace[self._member])
+                    break
+            else:
+                raise
         binder = getattr(type(raw), "__get__", None)
         if binder is None:
             return raw
@@ -97,7 +120,9 @@ class FlextLazyMember:
 
         Raises:
             TypeError: When the descriptor was never bound to a class.
-            ImportError: When the mixin cannot load or lacks the member.
+            ImportError: When the mixin cannot load.
+            AttributeError: When the loaded mixin does not bind the member,
+                which this descriptor then leaves its host.
 
         """
         host = self._host
@@ -122,8 +147,9 @@ class FlextLazyMember:
                 )
                 setattr(host, self._member, raw)
                 return raw
+        delattr(host, self._member)
         msg = f"{target!r} declares no member {self._member!r}"
-        raise ImportError(msg, name=self._module)
+        raise AttributeError(msg, name=self._member, obj=source)
 
 
 __all__: list[str] = ["FlextLazyMember"]

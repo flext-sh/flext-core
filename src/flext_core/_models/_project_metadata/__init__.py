@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from flext_core._models._project_metadata.fields import (
         FlextModelsProjectMetadataFields,
     )
-    from flext_core._models._project_metadata.pyproject_ingress import (
+    from flext_core._models._project_metadata.ingress import (
         FlextModelsPyprojectIngressContract,
     )
 
@@ -45,7 +45,7 @@ install_lazy_exports(
         "FlextModelsProjectMetadataContract": ".contract",
         "FlextModelsProjectMetadataDocument": ".document",
         "FlextModelsProjectMetadataFields": ".fields",
-        "FlextModelsPyprojectIngressContract": ".pyproject_ingress",
+        "FlextModelsPyprojectIngressContract": ".ingress",
     },
     public_exports=__all__,
     deferred_members={

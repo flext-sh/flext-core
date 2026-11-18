@@ -100,8 +100,33 @@ class FlextProtocolsHandler:
         """Structural data contract projected from the owning model."""
 
         @property
-        def command(self) -> type:
-            """Command type this handler processes."""
+        def command(self) -> type | None:
+            """Request model this handler processes, or None."""
+            ...
+
+        @property
+        def handler_type(self) -> c.HandlerType:
+            """CQRS handler type: command or query."""
+            ...
+
+        @property
+        def default(self) -> bool:
+            """Whether this operation is the service default."""
+            ...
+
+        @property
+        def scope(self) -> str:
+            """Access scope required to invoke this operation."""
+            ...
+
+        @property
+        def execution_mode(self) -> str:
+            """Where the operation runs: inline or as a job."""
+            ...
+
+        @property
+        def requires_ticket(self) -> bool:
+            """Whether the operation requires a change ticket."""
             ...
 
         @property

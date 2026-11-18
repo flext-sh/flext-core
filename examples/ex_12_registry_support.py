@@ -11,7 +11,7 @@ from typing import override
 from examples import h, m, p, r, s, t
 
 
-@h.handler(command=m.Examples.CommandA, priority=3)
+@h.handler(command=m.Examples.CommandA, options=m.DecoratorConfig(priority=3))
 def discovered_handler(message: p.Routable) -> t.JsonPayload:
     """Return the original owned payload without serializing it.
 

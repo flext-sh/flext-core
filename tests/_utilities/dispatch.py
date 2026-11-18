@@ -42,15 +42,17 @@ class TestsFlextUtilitiesDispatch:
 
         response_prefix: str = ""
 
-        @h.handler(command=m.Command, priority=100)
+        @h.handler(command=m.Command, options=m.DecoratorConfig(priority=100))
         def create(self, request: p.CommandRoutable) -> p.Result[str]:
             return r[str].ok(self.response_prefix + request.command_type)
 
-        @h.handler(command=m.Event, priority=50)
+        @h.handler(command=m.Event, options=m.DecoratorConfig(priority=50))
         def delete(self, _request: p.Routable) -> p.Result[str]:
             return r[str].ok(self.response_prefix + "deleted")
 
-        @h.handler(command=m.Tests.RegistryQuery, priority=10)
+        @h.handler(
+            command=m.Tests.RegistryQuery, options=m.DecoratorConfig(priority=10)
+        )
         def query(self, _request: p.Routable) -> p.Result[str]:
             return r[str].ok(self.response_prefix + "queried")
 
@@ -61,7 +63,7 @@ class TestsFlextUtilitiesDispatch:
         """An inherited API changes only the explicitly overridden operation."""
 
         @override
-        @h.handler(command=m.Command, priority=200)
+        @h.handler(command=m.Command, options=m.DecoratorConfig(priority=200))
         def create(self, request: p.CommandRoutable) -> p.Result[str]:
             _ = request
             return r[str].ok("overridden")
