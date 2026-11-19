@@ -185,13 +185,16 @@ unexport GITHUB_API_TOKEN
 
 # Git 2.38+ refuses the local file protocol uv uses to materialize its cached
 # git checkouts (`git clone --no-hardlinks <uv cache db> <checkout>`). Admit it
-# for this process tree only; global Git configuration stays untouched.
-ifeq ($(strip $(GIT_CONFIG_COUNT)),)
-GIT_CONFIG_COUNT := 1
-GIT_CONFIG_KEY_0 := protocol.file.allow
-GIT_CONFIG_VALUE_0 := always
-endif
-export GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+# for this process tree only; global Git configuration stays untouched. Append
+# to any caller-declared GIT_CONFIG_COUNT so an inherited policy can never hide
+# the uv cache transport.
+GIT_CONFIG_ALLOW_INDEX := $(if $(strip $(GIT_CONFIG_COUNT)),$(strip $(GIT_CONFIG_COUNT)),0)
+GIT_CONFIG_KEY_$(GIT_CONFIG_ALLOW_INDEX) := protocol.file.allow
+GIT_CONFIG_VALUE_$(GIT_CONFIG_ALLOW_INDEX) := always
+GIT_CONFIG_COUNT := $(shell expr $(GIT_CONFIG_ALLOW_INDEX) + 1)
+export GIT_CONFIG_COUNT
+$(eval export GIT_CONFIG_KEY_$(GIT_CONFIG_ALLOW_INDEX))
+$(eval export GIT_CONFIG_VALUE_$(GIT_CONFIG_ALLOW_INDEX))
 
 # === SECTION: project identity (managed) ===
 # Source: config:dist / config:make_profile / config:repository_root_rel / config:uv_link_mode
@@ -348,7 +351,7 @@ project_root="$(MAKEFILE_ROOT)"; \
 reader_root="$(BOOTSTRAP_ROOT)"; \
 scope="$$(git -C "$${reader_root}" rev-parse --show-toplevel)"; \
 scope="$$(cd "$${scope}" && pwd -P)"; \
-unset MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_ENV_FILE MISE_PYTHON_UV_VENV_AUTO UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH; \
+unset MISE_SYSTEM_CONFIG_FILE MISE_ENV MISE_ENV_FILE MISE_PYTHON_UV_VENV_AUTO UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH PYTHONDONTWRITEBYTECODE; \
 MISE_CONFIG_DIR="$${reader_root}/.mise"; \
 MISE_SYSTEM_CONFIG_DIR="$${MISE_CONFIG_DIR}"; \
 MISE_GLOBAL_CONFIG_FILE="$${MISE_CONFIG_DIR}/config.toml"; \
@@ -451,14 +454,13 @@ CALLER_VIRTUAL_ENV := $(patsubst %/,%,$(VIRTUAL_ENV))
 # Source: repository topology. workspace has .gitmodules; standalone does not.
 # Native UV membership and Git attachment elect the physical runtime.
 override RUNTIME_ROOT := $(REPOSITORY_ROOT)
-override export GIT_CEILING_DIRECTORIES := $(shell cd "$(GIT_DISCOVERY_ROOT)/.." && pwd -P)
+# Git and Mise discovery share the runtime boundary: an attached member's
+# verbs read workspace paths through the workspace runtime.
+override export GIT_CEILING_DIRECTORIES := $(shell cd "$(RUNTIME_ROOT)/.." && pwd -P)
 ifneq ($(.SHELLSTATUS),0)
-$(error Cannot resolve Git ceiling for $(GIT_DISCOVERY_ROOT))
+$(error Cannot resolve the discovery ceiling for $(RUNTIME_ROOT))
 endif
-override export MISE_CEILING_PATHS := $(shell cd "$(RUNTIME_ROOT)/.." && pwd -P)
-ifneq ($(.SHELLSTATUS),0)
-$(error Cannot resolve Mise ceiling for $(RUNTIME_ROOT))
-endif
+override export MISE_CEILING_PATHS := $(GIT_CEILING_DIRECTORIES)
 # The locked install reads only the declared project config: a machine-local
 # override (mise.local.toml and siblings) never selects a tool outside the lock.
 override export MISE_OVERRIDE_CONFIG_FILENAMES := .mise.toml
@@ -525,7 +527,7 @@ override FLEXT_INFRA_PYTHON := $(RUNTIME_PYTHON)
 override UV_PROJECT_ENVIRONMENT := $(RUNTIME_VENV)
 override VIRTUAL_ENV := $(RUNTIME_VENV)
 override PATH := $(RUNTIME_BIN):$(SANITIZED_CALLER_PATH)
-unexport UV MISE_PYTHON_UV_VENV_AUTO UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH
+unexport UV MISE_PYTHON_UV_VENV_AUTO UV_PROJECT UV_WORKING_DIR UV_CONFIG_FILE UV_PROJECT_ENVIRONMENT UV_PYTHON UV_PYTHON_DOWNLOADS UV_NO_CONFIG UV_NO_SOURCES UV_FROZEN UV_LOCKED VIRTUAL_ENV PYTHONHOME PYTHONPATH PYTHONDONTWRITEBYTECODE
 export FLEXT_INFRA_PYTHON UV_PROJECT_ENVIRONMENT VIRTUAL_ENV PATH RUNTIME_ROOT
 
 # Tool provisioning belongs to setup and upgrade, never to generation: upgrade
@@ -652,13 +654,13 @@ INSTALL_RUNTIME_RECIPE = set -eu; \
 	$(REQUIRE_WORKSPACE_ENVIRONMENT); \
 	$(RESOLVE_DESIRED_PYTHON); \
 	$(call TARGET_ENVIRONMENT,$(RUNTIME_VENV)); \
-	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $(SETUP_SYNC_ARGS); \
+	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH -u PYTHONDONTWRITEBYTECODE UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync --frozen --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads $(SETUP_SYNC_ARGS); \
 	if [ -n "$(strip $(FLEXT))" ]; then \
 		if [ "$(CI)" = "Y" ]; then printf 'ERROR[setup] local editable sources are forbidden in CI\n' >&2; exit 2; fi; \
 		(cd "$(FLEXT)"; $(UV) pip install --no-config --python "$$install_python" --no-deps --requirement "requirements-infra.txt"); \
 		$(UV) pip install --python "$$install_python" --no-deps --editable "$(RUNTIME_ROOT)"; \
 	fi; \
-	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH $(INSTALL_FLEXT_INFRA) workspace flext-editable --repository-root "$(RUNTIME_ROOT)" --candidate-environment "$$install_environment"$(if $(strip $(FLEXT)), --flext-root "$(FLEXT)"); \
+	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH -u PYTHONDONTWRITEBYTECODE $(INSTALL_FLEXT_INFRA) workspace flext-editable --repository-root "$(RUNTIME_ROOT)" --candidate-environment "$$install_environment"$(if $(strip $(FLEXT)), --flext-root "$(FLEXT)"); \
 	$(VERIFY_ENVIRONMENT); \
 	printf 'setup: %s synchronized with uv.lock\n' "$$install_target"
 
@@ -799,13 +801,13 @@ _builtin_require_workspace:
 # workspace or creating a dependency-resolution file during a runtime command.
 override UV_RUN = env -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PATH="$(RUNTIME_BIN):$$PATH" PYTHONPATH="$(PROJECT_ROOT)/src" $(UV) run --directory "$(PROJECT_ROOT)" --no-project --python "$(RUNTIME_PYTHON)"
 # Native locked workspace membership owns control imports, never caller overlays.
-override PROJECT_INFRA_RUN = env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH "$(FLEXT_INFRA_PYTHON)"
+override PROJECT_INFRA_RUN = env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH -u PYTHONDONTWRITEBYTECODE "$(FLEXT_INFRA_PYTHON)"
 override PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 # The upgrade executor (make.executor_environment) runs isolated (-I: no working
 # directory, PYTHONPATH or user site on sys.path) from its own environment, so
 # `make upg`'s residual flext-infra step imports neither the project's source nor
 # the runtime environment.
-override EXECUTOR_FLEXT_INFRA = env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH "$(FLEXT_INFRA_EXECUTOR_PYTHON)" -I -m flext_infra
+override EXECUTOR_FLEXT_INFRA = env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH -u PYTHONDONTWRITEBYTECODE "$(FLEXT_INFRA_EXECUTOR_PYTHON)" -I -m flext_infra
 # Native uv syncs the executor from the dependency group that pins flext-infra,
 # without editable installs, into its own environment (recreated first when it
 # is not a uv environment, and refreshed, so a sync never targets a Mise base
@@ -819,7 +821,7 @@ override EXECUTOR_FLEXT_INFRA = env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u
 SYNC_UPGRADE_EXECUTOR_RECIPE = $(call SYNC_UPGRADE_EXECUTOR_WITH,--frozen)
 SYNC_UPGRADE_EXECUTOR_PRE_RESOLUTION_RECIPE = $(call SYNC_UPGRADE_EXECUTOR_WITH,--no-frozen --upgrade)
 SYNC_UPGRADE_EXECUTOR_WITH = $(call TARGET_ENVIRONMENT,$(FLEXT_INFRA_EXECUTOR_VENV)); \
-	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync $(1) --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads --no-default-groups --group "dev" --no-editable --link-mode clone; \
+	env -u MISE_PYTHON_UV_VENV_AUTO -u UV_PROJECT -u UV_WORKING_DIR -u UV_CONFIG_FILE -u UV_PROJECT_ENVIRONMENT -u UV_PYTHON -u UV_PYTHON_DOWNLOADS -u UV_NO_CONFIG -u UV_NO_SOURCES -u UV_FROZEN -u UV_LOCKED -u VIRTUAL_ENV -u PYTHONHOME -u PYTHONPATH -u PYTHONDONTWRITEBYTECODE UV_PROJECT_ENVIRONMENT="$$install_environment" timeout --signal=TERM --kill-after=5s 118s $(UV) sync $(1) --project "$(RUNTIME_ROOT)" --python "$$desired_python" --no-python-downloads --no-default-groups --group "dev" --no-editable --link-mode clone; \
 	$(INSTALL_FLEXT_INFRA) --help >/dev/null; \
 	$(VERIFY_ENVIRONMENT)
 
@@ -1473,9 +1475,17 @@ CHECK_PROFILE ?=
 _builtin_gen_all: _builtin_require_interpreter
 	@set -eu; \
 	root="$(abspath $(or $(strip $(ROOT)),$(PROJECT_ROOT)))"; \
-	scope=all; \
-	if [ "$$root" != "$(PROJECT_ROOT)" ] || [ "$(strip $(CI))" = "Y" ]; then scope=self; fi; \
-	$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen.pstats" $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --scope "$$scope"
+	what="$(strip $(WHAT))"; \
+	if [ -n "$$what" ] && [ "$$what" != "ALL" ]; then \
+		scope="$(or $(strip $(SCOPE)),self)"; \
+		module_args=""; \
+		if [ -n "$(strip $(MODULE))" ]; then module_args=" --module $(strip $(MODULE))"; fi; \
+		$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen-scope.pstats" $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --what "$$what" --scope "$$scope"$$module_args; \
+	else \
+		scope=all; \
+		if [ "$$root" != "$(PROJECT_ROOT)" ] || [ "$(strip $(CI))" = "Y" ]; then scope=self; fi; \
+		$(if $(GEN_PROFILE),FLEXT_INFRA_PROFILE=$(GEN_PROFILE) ,)FLEXT_INFRA_PROFILE_OUTPUT="$$root/.reports/codegen/gen.pstats" $(PROJECT_FLEXT_INFRA) codegen generate --root "$$root" --scope "$$scope"; \
+	fi
 
 # Focal generation is the bounded diagnosis vehicle: one surface (and, for
 # facades, one module) through the identical engine, lock and budget.

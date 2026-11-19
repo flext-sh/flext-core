@@ -2,7 +2,7 @@
 """Source-derived structural model contracts.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_core/_protocols/_project_metadata/pyproject_ingress
+src/flext_core/_protocols/_project_metadata/ingress
 SPDX-License-Identifier: MIT
 """
 
@@ -15,7 +15,7 @@ from flext_core._protocols._project_metadata import (
 )
 
 
-class FlextProtocolsProjectMetadataPyprojectIngress:
+class FlextProtocolsProjectMetadataIngress:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
@@ -27,5 +27,5 @@ class FlextProtocolsProjectMetadataPyprojectIngress:
 
 
 __all__: list[str] = [
-    "FlextProtocolsProjectMetadataPyprojectIngress",
+    "FlextProtocolsProjectMetadataIngress",
 ]

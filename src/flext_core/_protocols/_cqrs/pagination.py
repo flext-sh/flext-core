@@ -2,7 +2,7 @@
 """Source-derived structural model contracts.
 
 Copyright (c) 2026 FLEXT Team. All rights reserved.
-src/flext_core/_protocols/_cqrs/flextmodelscqrs_pagination
+src/flext_core/_protocols/_cqrs/pagination
 SPDX-License-Identifier: MIT
 """
 
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from flext_core import t
 
 
-class FlextProtocolsCqrsFlextmodelscqrsPagination:
+class FlextProtocolsCqrsPagination:
     """Own the structural contracts declared by its model source."""
 
     @runtime_checkable
@@ -38,5 +38,5 @@ class FlextProtocolsCqrsFlextmodelscqrsPagination:
 
 
 __all__: list[str] = [
-    "FlextProtocolsCqrsFlextmodelscqrsPagination",
+    "FlextProtocolsCqrsPagination",
 ]

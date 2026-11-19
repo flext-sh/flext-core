@@ -24,8 +24,8 @@ if TYPE_CHECKING:
     from flext_core._protocols._project_metadata.fields import (
         FlextProtocolsProjectMetadataFields,
     )
-    from flext_core._protocols._project_metadata.pyproject_ingress import (
-        FlextProtocolsProjectMetadataPyprojectIngress,
+    from flext_core._protocols._project_metadata.ingress import (
+        FlextProtocolsProjectMetadataIngress,
     )
 
 
@@ -34,7 +34,7 @@ __all__: tuple[str, ...] = (
     "FlextProtocolsProjectMetadataContract",
     "FlextProtocolsProjectMetadataDocument",
     "FlextProtocolsProjectMetadataFields",
-    "FlextProtocolsProjectMetadataPyprojectIngress",
+    "FlextProtocolsProjectMetadataIngress",
 )
 
 install_lazy_exports(
@@ -45,7 +45,7 @@ install_lazy_exports(
         "FlextProtocolsProjectMetadataContract": ".contract",
         "FlextProtocolsProjectMetadataDocument": ".document",
         "FlextProtocolsProjectMetadataFields": ".fields",
-        "FlextProtocolsProjectMetadataPyprojectIngress": ".pyproject_ingress",
+        "FlextProtocolsProjectMetadataIngress": ".ingress",
     },
     public_exports=__all__,
     deferred_members=(

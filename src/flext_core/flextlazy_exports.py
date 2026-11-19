@@ -346,9 +346,8 @@ class FlextLazyExports(FlextLazyBootstrap):
 
         Stand-in bases now come from the part's class statement (ADR-018
         stand-in law rule 4), so the declared bases carry nothing to forward.
-        Kept only until every generated initializer is regenerated and deleted
-        at zero uses; the public ``defer_lazy_bases`` alias carries the
-        deprecation marker.
+        Kept inert only until every generated initializer is regenerated: the
+        generator no longer emits the call, and it is deleted at zero uses.
         """
         del module_name, bases
 

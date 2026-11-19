@@ -11,7 +11,6 @@ from typing import TYPE_CHECKING, TypeAlias
 
 from flext_core._protocols import (
     FlextProtocolsBase,
-    FlextProtocolsCollectionModels,
     FlextProtocolsConfig,
     FlextProtocolsContainer,
     FlextProtocolsContainers,
@@ -25,6 +24,7 @@ from flext_core._protocols import (
     FlextProtocolsFlextMixins,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
+    FlextProtocolsModels,
     FlextProtocolsOptions,
     FlextProtocolsProjectMetadata,
     FlextProtocolsPydantic,
@@ -37,7 +37,6 @@ from flext_core._protocols import (
 
 class FlextProtocols(
     FlextProtocolsBase,
-    FlextProtocolsCollectionModels,
     FlextProtocolsConfig,
     FlextProtocolsContainer,
     FlextProtocolsContainers,
@@ -51,6 +50,7 @@ class FlextProtocols(
     FlextProtocolsFlextMixins,
     FlextProtocolsHandler,
     FlextProtocolsLogging,
+    FlextProtocolsModels,
     FlextProtocolsOptions,
     FlextProtocolsProjectMetadata,
     FlextProtocolsPydantic,

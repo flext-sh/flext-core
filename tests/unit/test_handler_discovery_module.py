@@ -28,7 +28,9 @@ class TestsFlextHandlerDiscovery:
         def operation(_request: p.Routable) -> p.Result[str]:
             return outcome
 
-        decorated = h.handler(command=m.Command, priority=priority)(operation)
+        decorated = h.handler(
+            command=m.Command, options=m.DecoratorConfig(priority=priority)
+        )(operation)
         module = u.Tests.handler_module("declared_handlers", operation=decorated)
         name, found, metadata = h.Discovery.scan_module(module)[0]
         tm.that(name, eq=c.ContextScope.OPERATION)
@@ -49,7 +51,7 @@ class TestsFlextHandlerDiscovery:
             return r[str].ok("created")
 
         decorator = (
-            h.handler(command=m.Command, timeout=None, middleware=())
+            h.handler(command=m.Command, options=m.DecoratorConfig())
             if explicit_empty
             else h.handler(command=m.Command)
         )
@@ -137,17 +139,29 @@ class TestsFlextHandlerDiscovery:
         tm.that(received[0] is request)
 
     @staticmethod
-    @c.Tests.MARK.parametrize("timeout", [0.0, 1.0, 30.0])
+    @c.Tests.MARK.parametrize("timeout", [1.0, 30.0])
     def test_unsupported_timeout_fails_before_application(timeout: float) -> None:
         """The executor never accepts a policy it cannot implement."""
-        with u.Tests.raises(ValueError, match="timeout execution is not supported"):
-            h.handler(command=m.Command, timeout=timeout)
+        with u.Tests.raises(ValueError, match=c.ERR_HANDLER_POLICY_UNSUPPORTED):
+            h.handler(command=m.Command, options=m.DecoratorConfig(timeout=timeout))
+
+    @staticmethod
+    @c.Tests.MARK.parametrize("timeout", [0.0, -1.0])
+    def test_nonpositive_timeout_fails_at_the_pydantic_boundary(
+        timeout: float,
+    ) -> None:
+        """The model validates the declared positive timeout invariant."""
+        with u.Tests.raises(c.ValidationError):
+            m.DecoratorConfig(timeout=timeout)
 
     @staticmethod
     def test_unsupported_middleware_fails_before_application() -> None:
         """Requested middleware requires an actual executor capability."""
-        with u.Tests.raises(ValueError, match="middleware execution is not supported"):
-            h.handler(command=m.Command, middleware=(u.Tests.Middleware,))
+        with u.Tests.raises(ValueError, match=c.ERR_HANDLER_POLICY_UNSUPPORTED):
+            h.handler(
+                command=m.Command,
+                options=m.DecoratorConfig(middleware=(u.Tests.Middleware,)),
+            )
 
     @staticmethod
     def test_negative_priority_fails_at_the_pydantic_boundary() -> None:
@@ -157,7 +171,9 @@ class TestsFlextHandlerDiscovery:
             return r[str].ok("created")
 
         with u.Tests.raises(c.ValidationError):
-            h.handler(command=m.Command, priority=-1)(operation)
+            h.handler(command=m.Command, options=m.DecoratorConfig(priority=-1))(
+                operation
+            )
 
     @staticmethod
     @c.Tests.MARK.parametrize(c.HandlerMode.COMMAND, [p.Command, m.Event])
@@ -203,11 +219,11 @@ class TestsFlextHandlerDiscovery:
     def test_module_priority_and_alias_name_order_are_deterministic() -> None:
         """Declared priority then export name determine discovery order."""
 
-        @h.handler(command=m.Command, priority=10)
+        @h.handler(command=m.Command, options=m.DecoratorConfig(priority=10))
         def tied(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("tied")
 
-        @h.handler(command=m.Event, priority=100)
+        @h.handler(command=m.Event, options=m.DecoratorConfig(priority=100))
         def high(_request: p.Routable) -> p.Result[str]:
             return r[str].ok("high")
 

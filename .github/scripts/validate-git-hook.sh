@@ -7,10 +7,6 @@ stage="${1:?Git hook stage is required}"
 # git failure; inside `cd "$(...)"` it would be lost and `cd ""` would succeed.
 toplevel="$(git rev-parse --show-toplevel)"
 cd "${toplevel}"
-case "${stage}" in
-  pre-commit|pre-merge-commit|pre-push) ;;
-  *) printf 'Unsupported Git hook stage: %s\n' "${stage}" >&2; exit 2 ;;
-esac
 # pre-push receives "<local ref> <local sha> <remote ref> <remote sha>" per ref
 # on stdin. A push whose every remote ref is inside a declared preservation
 # namespace carries WIP and runs no gate matrix; any other ref, including a
