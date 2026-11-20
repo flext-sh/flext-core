@@ -9,12 +9,13 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p
+    from flext_core._constants.loggings import FlextConstantsLogging
 
 
 class ExamplesFlextProtocolsEx11:
@@ -36,7 +37,7 @@ class ExamplesFlextProtocolsEx11:
         debug: bool
         trace: bool
         log_level: str
-        logging_profile: Literal["console", "json"]
+        logging_profile: FlextConstantsLogging.LoggingProfile
         timezone: str
         async_logging: bool
 
