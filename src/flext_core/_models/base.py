@@ -268,7 +268,10 @@ class FlextModelsBase:
         beyond the consumed subset are ignored, never stored.
         """
 
-        model_config: ClassVar[ConfigDict] = ConfigDict(extra="ignore")
+        model_config: ClassVar[ConfigDict] = ConfigDict(
+            extra="ignore",
+            defer_build=False,
+        )
 
     class FrozenValueModel(ContractModel, Hashable):
         """Value model with equality/hash by value."""

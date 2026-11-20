@@ -95,6 +95,7 @@ class FlextTypesServices:
     type ModelClass[T: FlextTypesPydantic.BaseModelType] = type[T]
 
     type LogLevel = c.LogLevel
+    type LoggingProfile = c.LoggingProfile
     type LoggingTraceback = TracebackType
     type LoggingExceptionInfo = tuple[
         type[BaseException], BaseException, LoggingTraceback | None
