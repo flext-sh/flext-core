@@ -17,7 +17,7 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import ClassVar, Self, Unpack, override
+from typing import ClassVar, Self, override
 
 from flext_core import p, t
 from flext_core._constants.errors import FlextConstantsErrors
@@ -60,7 +60,7 @@ class FlextResultBase[T](FlextModelsPydantic.BaseModel):
 
     @classmethod
     @override
-    def __pydantic_init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
+    def __pydantic_init_subclass__(cls, **kwargs: t.ConfigDict) -> None:
         """Hold each parametrized result class for the life of the process.
 
         Pydantic caches parametrized generic models weakly, so a transient

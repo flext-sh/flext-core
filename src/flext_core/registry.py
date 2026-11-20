@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
 from functools import partial
-from typing import TYPE_CHECKING, Self, Unpack, override
+from typing import TYPE_CHECKING, Self, override
 
 from flext_core import FlextContainer, FlextDispatcher, c, e, h, m, p, r, s, t, u
 
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 class FlextRegistry(s[bool], m.RegistryOptions):
     """Coordinate the injected runtime without another dispatch or storage engine."""
 
-    def __init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: t.ConfigDict) -> None:
         """Keep explicitly selected class-scope plugins local to each subclass."""
         super().__init_subclass__(**kwargs)
         cls._class_plugin_storage = {}

@@ -39,7 +39,7 @@ from __future__ import annotations
 import threading
 from collections.abc import MutableSequence
 from types import NoneType, UnionType
-from typing import ClassVar, Self, Unpack, get_args, get_origin, is_protocol, override
+from typing import ClassVar, Self, get_args, get_origin, is_protocol, override
 
 from flext_core import c, m, p, t, x
 
@@ -63,7 +63,7 @@ class FlextService[TDomainResult = p.Base](x):
     _lock: ClassVar[threading.RLock] = threading.RLock()
     _instance: ClassVar[p.Base | None] = None
 
-    def __init_subclass__(cls, **kwargs: Unpack[t.ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: t.ConfigDict) -> None:
         """Inject a per-class singleton slot for every concrete subclass."""
         super().__init_subclass__(**kwargs)
         cls._instance = None
