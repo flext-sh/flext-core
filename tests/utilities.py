@@ -18,6 +18,9 @@ from flext_tests import FlextTestsUtilities
 
 from tests import c, h, m, p, r, t
 from tests._utilities import (
+    TestsFlextDecoratorsLegacy,
+    TestsFlextFlextHandlers,
+    TestsFlextResultExceptionCarrying,
     TestsFlextUtilitiesContracts,
     TestsFlextUtilitiesDispatch,
     TestsFlextUtilitiesParserReliability,
@@ -30,9 +33,6 @@ from tests._utilities import (
     TestsFlextUtilitiesValidationStringScenarios,
     TestsFlextUtilitiesValidationUriScenarios,
 )
-from tests._utilities.decorators import TestsFlextDecoratorsLegacy
-from tests._utilities.handlers import TestsFlextFlextHandlers
-from tests._utilities.result_exception_carrying import TestsFlextResultExceptionCarrying
 
 
 class TestsFlextUtilities(FlextTestsUtilities):
