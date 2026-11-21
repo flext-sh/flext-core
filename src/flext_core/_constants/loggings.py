@@ -37,6 +37,13 @@ class FlextConstantsLogging:
         GET_CALLER_SOURCE = "get_caller_source_path"
         SHOULD_INCLUDE_STACK = "should_include_stack_trace"
 
+    @unique
+    class LoggingProfile(StrEnum):
+        """Diagnostic output presentation profiles."""
+
+        CONSOLE = "console"
+        JSON = "json"
+
     ASYNC_ENABLED: ClassVar[bool] = True
     ASYNC_BLOCK_ON_FULL: ClassVar[bool] = False
 

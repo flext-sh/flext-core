@@ -11,12 +11,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Unpack
-
-from flext_core import c, e, m, p, u, x
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from pydantic import ConfigDict
+
+from flext_core import c, e, m, p, u, x
 
 
 class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
@@ -75,7 +75,7 @@ class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
             handler_mode=handler_mode_literal,
         )
 
-    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
+    def __init_subclass__(cls, **kwargs: ConfigDict) -> None:
         """Validate non-abstract subclasses implement a handle() method.
 
         Chains with FlextMixins.__init_subclass__ via super() to preserve

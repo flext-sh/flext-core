@@ -40,7 +40,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import Annotated, ClassVar, Literal, Protocol, Self, Unpack
+from typing import Annotated, ClassVar, Protocol, Self, Unpack
 
 from pydantic import (
     AliasChoices,
@@ -61,6 +61,8 @@ from pydantic_settings import (
     PydanticBaseSettingsSource as _PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
+
+from flext_core._constants.loggings import FlextConstantsLogging
 
 PydanticBaseSettingsSource = _PydanticBaseSettingsSource
 """Source interface for Pydantic custom settings loaders.
@@ -145,8 +147,9 @@ class FlextSettings(BaseSettings):
         bool, Field(description="Enable detailed stacks and high-volume diagnostics")
     ] = False
     log_level: str = Field(default="INFO", description="Log level")
-    logging_profile: Literal["console", "json"] = Field(
-        default="console", description="Diagnostic output presentation"
+    logging_profile: FlextConstantsLogging.LoggingProfile = Field(
+        default=FlextConstantsLogging.LoggingProfile.CONSOLE,
+        description="Diagnostic output presentation",
     )
     timezone: Annotated[
         str,

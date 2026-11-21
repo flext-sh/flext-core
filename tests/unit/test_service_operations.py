@@ -285,7 +285,7 @@ class TestsFlextCoreServiceOperations:
         """A quoted t alias resolves to the same Protocol without eval."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self, request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: m.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:

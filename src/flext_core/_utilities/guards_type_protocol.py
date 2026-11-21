@@ -7,10 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 from flext_core import c, m, p, t
-from flext_core._utilities._guards.type_protocol_specs import (
+from flext_core._utilities._guards import (
     FlextUtilitiesGuardsTypeProtocolSpecs,
-)
-from flext_core._utilities._guards.type_protocol_string import (
     FlextUtilitiesGuardsTypeProtocolString,
 )
 
