@@ -17,8 +17,6 @@ from collections.abc import Mapping, MutableSequence
 
 from flext_tests import FlextTestsTypes
 
-from flext_core import p
-
 
 class TestsFlextTypes(FlextTestsTypes):
     """Type system foundation for flext-core tests - extends TestsFlextTypes.
@@ -34,7 +32,6 @@ class TestsFlextTypes(FlextTestsTypes):
 
     class Tests(FlextTestsTypes.Tests):
         """flext-core test types namespace."""
-
 
         type ServiceConfigMapping = Mapping[
             str,
