@@ -19,64 +19,55 @@ from tests import m, p, r, t, u
 class TestsFlextCleanModels:
     """Namespace holder with proper prefix and well-formed inner models."""
 
-    class Core:
-        """Core test-model namespace."""
-
-        class Tests:
-            """Clean model declarations used by enforcement probes."""
-
-            class GoodEntity(m.ArbitraryTypesModel):
-                """Well-formed entity."""
-
-                model_config: ClassVar[t.ConfigDict] = m.ConfigDict(extra="forbid")
-
-                name: Annotated[str, m.Field(description="Entity display name.")] = ""
-                tags: Annotated[
-                    Sequence[str],
-                    m.Field(description="Tag collection."),
-                ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
-                metadata: Annotated[
-                    Mapping[str, str],
-                    m.Field(description="Attribute map."),
-                ] = m.Field(default_factory=u.empty(TypeForm(Mapping[str, str])))
-                aliased_value: Annotated[
-                    t.Core.Tests.CentralizedUnion,
-                    m.Field(description="Value declared through a t.* alias."),
-                ] = None
-
-            class GoodFrozenValue(m.FrozenValueModel):
-                """Frozen value object."""
-
-                model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
-                    frozen=True,
-                    extra="forbid",
-                )
-
-                id: Annotated[str, m.Field(description="Opaque value identifier.")]
+    class Tests:
+        """Clean model declarations used by enforcement probes."""
+    
+        class GoodEntity(m.ArbitraryTypesModel):
+            """Well-formed entity."""
+    
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(extra="forbid")
+    
+            name: Annotated[str, m.Field(description="Entity display name.")] = ""
+            tags: Annotated[
+                Sequence[str],
+                m.Field(description="Tag collection."),
+            ] = m.Field(default_factory=u.empty(TypeForm(Sequence[str])))
+            metadata: Annotated[
+                Mapping[str, str],
+                m.Field(description="Attribute map."),
+            ] = m.Field(default_factory=u.empty(TypeForm(Mapping[str, str])))
+            aliased_value: Annotated[
+                t.Tests.CentralizedUnion,
+                m.Field(description="Value declared through a t.* alias."),
+            ] = None
+    
+        class GoodFrozenValue(m.FrozenValueModel):
+            """Frozen value object."""
+    
+            model_config: ClassVar[t.ConfigDict] = m.ConfigDict(
+                frozen=True,
+                extra="forbid",
+            )
+    
+            id: Annotated[str, m.Field(description="Opaque value identifier.")]
 
 
 class TestsFlextCleanConstants:
     """Constants facade — UPPER_CASE names, frozen values."""
 
-    class Core:
-        """Core constants namespace."""
-
-        class Tests:
-            """Clean immutable constants used by enforcement probes."""
-
-            MAX_RETRIES: Final[int] = 3
-            ALLOWED_TAGS: Final[frozenset[str]] = frozenset({"a", "b"})
-            BANNER: Final[str] = "clean"
+    class Tests:
+        """Clean immutable constants used by enforcement probes."""
+    
+        MAX_RETRIES: Final[int] = 3
+        ALLOWED_TAGS: Final[frozenset[str]] = frozenset({"a", "b"})
+        BANNER: Final[str] = "clean"
 
 
 class TestsFlextCleanProtocols:
     """Protocols facade with @runtime_checkable inner protocols."""
 
-    class Core:
-        """Core protocols namespace."""
-
-        class Tests(p.Tests):
-            """Clean protocol declarations used by enforcement probes."""
+    class Tests(p.Tests):
+        """Clean protocol declarations used by enforcement probes."""
 
 
 class TestsFlextCleanServiceBase:
