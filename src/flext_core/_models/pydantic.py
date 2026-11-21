@@ -39,7 +39,7 @@ from pydantic import (
 from pydantic.fields import FieldInfo
 from pydantic_core import PydanticOmit, core_schema
 
-from flext_core.flextlazy_native_export import FlextTypingNativeExport
+from flext_core import FlextTypingNativeExport
 
 
 class FlextModelsPydantic:
