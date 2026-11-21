@@ -35,7 +35,6 @@ class TestsFlextTypes(FlextTestsTypes):
     class Tests(FlextTestsTypes.Tests):
         """flext-core test types namespace."""
 
-        type DispatchRequest = p.Tests.DispatchRequest
 
         type ServiceConfigMapping = Mapping[
             str,
