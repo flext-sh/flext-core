@@ -19,7 +19,7 @@ from types import TracebackType
 from typing import Self
 
 from flext_core import c, m, p, r, t
-from flext_core._utilities.pydantic import FlextUtilitiesPydantic
+from flext_core._utilities import FlextUtilitiesPydantic
 
 
 class FlextUtilitiesHandler:

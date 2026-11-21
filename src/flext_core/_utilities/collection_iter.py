@@ -12,7 +12,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from typing import overload
 
-from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
+from flext_core._utilities import FlextUtilitiesCollectionMerge
 
 
 class FlextUtilitiesCollectionIter(FlextUtilitiesCollectionMerge):

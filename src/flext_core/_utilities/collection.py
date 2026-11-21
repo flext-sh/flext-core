@@ -15,8 +15,10 @@ from collections.abc import Callable, Mapping, MutableSequence, Sequence
 from functools import partial
 
 from flext_core import c, p, r
-from flext_core._utilities.collection_iter import FlextUtilitiesCollectionIter
-from flext_core._utilities.collection_merge import FlextUtilitiesCollectionMerge
+from flext_core._utilities import (
+    FlextUtilitiesCollectionIter,
+    FlextUtilitiesCollectionMerge,
+)
 
 
 class FlextUtilitiesCollection(
