@@ -42,8 +42,7 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
-from flext_core._settings import FlextSettings
-from flext_core.config_sources import FlextStrictYamlConfigSource
+from flext_core import FlextSettings, FlextStrictYamlConfigSource
 
 
 class FlextConfig(BaseSettings):

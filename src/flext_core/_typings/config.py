@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 from typing import Literal
 
-from flext_core._typings.base import FlextTypingBase
+from flext_core._typings import FlextTypingBase
 
 
 class FlextTypingConfig:
