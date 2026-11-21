@@ -19,7 +19,7 @@ from importlib.metadata import Distribution, DistributionFinder
 from typing import TYPE_CHECKING, ClassVar
 
 from flext_core import c, m, p, t
-from flext_core._utilities.package_version import FlextUtilitiesPackageVersion
+from flext_core._utilities import FlextUtilitiesPackageVersion
 
 if TYPE_CHECKING:
     from pathlib import Path

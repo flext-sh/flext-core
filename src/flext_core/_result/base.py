@@ -20,8 +20,8 @@ from __future__ import annotations
 from typing import ClassVar, Self, override
 
 from flext_core import p, t
-from flext_core._constants.errors import FlextConstantsErrors
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core._constants import FlextConstantsErrors
+from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesPydantic,
     FlextUtilitiesTypingAdapterJson,

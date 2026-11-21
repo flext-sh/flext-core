@@ -19,14 +19,13 @@ from pydantic import BaseModel, validate_call, with_config
 from pydantic_core import from_json, to_json, to_jsonable_python
 from typing_extensions import TypeForm
 
-from flext_core import c, m, p, t
-from flext_core._models.pydantic import FlextModelsPydantic
+from flext_core import FlextTypingNativeExport, c, m, p, t
+from flext_core._models import FlextModelsPydantic
 from flext_core._utilities import (
     FlextUtilitiesBase,
     FlextUtilitiesTypingAdapterJson,
     FlextUtilitiesTypingAdapterScalars,
 )
-from flext_core.flextlazy_native_export import FlextTypingNativeExport
 
 
 class FlextUtilitiesPydantic(
