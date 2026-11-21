@@ -40,7 +40,7 @@ from copy import deepcopy
 from datetime import datetime
 from functools import singledispatchmethod
 from pathlib import Path
-from typing import Annotated, ClassVar, Protocol, Self
+from typing import Annotated, ClassVar, Protocol, Self, Unpack
 
 from pydantic import (
     AliasChoices,
@@ -199,7 +199,7 @@ class FlextSettings(BaseSettings):
         FlextSettings._FieldValue | FlextSettings._ModelValue | Sequence[JsonValue]
     )
 
-    def __init_subclass__(cls, **kwargs: ConfigDict) -> None:
+    def __init_subclass__(cls, **kwargs: Unpack[ConfigDict]) -> None:
         """Give every concrete subclass its own isolated singleton slot."""
         super().__init_subclass__(**kwargs)
         cls._instance = None

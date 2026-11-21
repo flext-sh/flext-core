@@ -19,7 +19,6 @@ if TYPE_CHECKING:
 from flext_core import c, e, m, p, u, x
 
 
-
 class FlextHandlersCqrsBase[MessageT_contra, ResultT](x):
     """Abstract CQRS handler with validation and railway-style execution.
 
