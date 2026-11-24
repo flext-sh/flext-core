@@ -15,7 +15,6 @@ from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p
-    from flext_core._constants.loggings import FlextConstantsLogging
 
 
 class ExamplesFlextProtocolsEx11:

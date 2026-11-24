@@ -2,7 +2,7 @@
 # @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
 # @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
 # @flext-regenerate: make gen
-# @flext-rendered-by: flext-infra 0.12.1
+# @flext-rendered-by: flext-infra 0.12.3
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
@@ -706,7 +706,7 @@ environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
 exclude-newer = "P10D"
 link-mode = "clone"
 override-dependencies = [
-  "rope @ git+https://github.com/marlon-costa-dc/rope.git@3a0cb69024fb5f17ba32064bf6c294d016c7d9d8",
+  "rope @ git+https://github.com/marlon-costa-dc/rope.git@ecdee0efcbfa1bbdbd070218de3c39716b0299aa",
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
 ]
 [[tool.uv.cache-keys]]
