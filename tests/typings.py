@@ -17,8 +17,6 @@ from collections.abc import Mapping, MutableSequence
 
 from flext_tests import FlextTestsTypes
 
-from tests import p
-
 
 class TestsFlextTypes(FlextTestsTypes):
     """Type system foundation for flext-core tests - extends TestsFlextTypes.
@@ -32,41 +30,32 @@ class TestsFlextTypes(FlextTestsTypes):
     - All generic types come from TestsFlextTypes
     """
 
-    class Core:
-        """Flext-core-specific type definitions for testing.
+    class Tests(FlextTestsTypes.Tests):
+        """flext-core test types namespace."""
 
-        Uses composition of TestsFlextTypes for type safety and consistency.
-        Only defines types that are truly flext-core-specific.
-        """
+        type ServiceConfigMapping = Mapping[
+            str,
+            FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
+        ]
+        "Service configuration mapping specific to flext-core services."
+        type HandlerConfigMapping = Mapping[
+            str,
+            FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
+        ]
+        "Handler configuration mapping specific to flext-core handlers."
 
-        class Tests(FlextTestsTypes.Tests):
-            """flext-core test types namespace."""
+        type TestCaseMap = Mapping[
+            str,
+            FlextTestsTypes.Tests.TestobjectSerializable,
+        ]
 
-            type DispatchRequest = p.Tests.DispatchRequest
+        type InputPayloadMap = Mapping[
+            str,
+            FlextTestsTypes.Tests.TestobjectSerializable,
+        ]
 
-            type ServiceConfigMapping = Mapping[
-                str,
-                FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
-            ]
-            "Service configuration mapping specific to flext-core services."
-            type HandlerConfigMapping = Mapping[
-                str,
-                FlextTestsTypes.Tests.TestobjectSerializable | MutableSequence[str],
-            ]
-            "Handler configuration mapping specific to flext-core handlers."
-
-            type TestCaseMap = Mapping[
-                str,
-                FlextTestsTypes.Tests.TestobjectSerializable,
-            ]
-
-            type InputPayloadMap = Mapping[
-                str,
-                FlextTestsTypes.Tests.TestobjectSerializable,
-            ]
-
-            type CentralizedUnion = str | int | float | None
-            "Centralized multi-arm alias used by enforcement regression fixtures."
+        type CentralizedUnion = str | int | float | None
+        "Centralized multi-arm alias used by enforcement regression fixtures."
 
 
 t = TestsFlextTypes

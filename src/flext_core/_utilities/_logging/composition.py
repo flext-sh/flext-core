@@ -13,10 +13,12 @@ from typing import TYPE_CHECKING
 import structlog
 
 from flext_core import c, m, p
-from flext_core._utilities._logging.async_writer import FlextUtilitiesLoggingAsyncWriter
-from flext_core._utilities._logging.handlers import FlextUtilitiesLoggingHandlers
-from flext_core._utilities._logging.state import FlextUtilitiesLoggingState
-from flext_core._utilities._logging.stream import FlextUtilitiesLoggingStream
+from flext_core._utilities._logging import (
+    FlextUtilitiesLoggingAsyncWriter,
+    FlextUtilitiesLoggingHandlers,
+    FlextUtilitiesLoggingState,
+    FlextUtilitiesLoggingStream,
+)
 
 if TYPE_CHECKING:
     import types

@@ -10,10 +10,8 @@ from __future__ import annotations
 
 from flext_core._protocols._exception_params import (
     FlextProtocolsExceptionParamsBase,
-    FlextProtocolsExceptionParamsServiceErrors,
-)
-from flext_core._protocols._exception_params.operation_errors import (
     FlextProtocolsExceptionParamsOperationErrors,
+    FlextProtocolsExceptionParamsServiceErrors,
 )
 
 

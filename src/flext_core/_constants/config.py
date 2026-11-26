@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from flext_core._config import FlextConfig
+from flext_core import FlextConfig
 
 
 class FlextConstantsConfig:
