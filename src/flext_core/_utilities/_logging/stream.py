@@ -56,10 +56,7 @@ class FlextUtilitiesLoggingStream:
 
         @override
         def close(self) -> None:
-            """Finish owned work without closing the caller's output stream."""
-            if self.closed:
-                return
-            self.flush()
+            """Stop accepting writes without touching the caller's output stream."""
             self._closed = True
 
         @override
