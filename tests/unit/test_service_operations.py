@@ -282,10 +282,10 @@ class TestsFlextCoreServiceOperations:
             return r[str].ok(self.response_prefix + request.command_name)
 
     class AliasedRequestService(OperationService):
-        """A quoted t alias resolves to the same Protocol without eval."""
+        """A quoted Protocol annotation resolves without eval."""
 
         @h.handler(command=m.Tests.DispatchRequest)
-        def send(self, request: t.Core.Tests.DispatchRequest) -> p.Result[str]:
+        def send(self, request: p.Tests.DispatchRequest) -> p.Result[str]:
             """Send the requested command.
 
             Returns:
@@ -456,7 +456,7 @@ class TestsFlextCoreServiceOperations:
             setattr(operation, field_name, operation.summary)
 
     def test_quoted_protocol_alias_uses_explicit_model_metadata(self) -> None:
-        """Quoted aliases do not turn the annotation into a model lookup route."""
+        """A quoted Protocol annotation never becomes a model lookup route."""
         (operation,) = u.service_operations(self.AliasedRequestService)
         tm.ok(operation.request is m.Tests.DispatchRequest)
         tm.ok(operation.handler is self.AliasedRequestService.send)

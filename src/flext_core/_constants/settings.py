@@ -11,7 +11,7 @@ from typing import ClassVar, Literal
 
 from pydantic import ConfigDict
 
-from flext_core._settings import FlextSettings
+from flext_core import FlextSettings
 
 
 class FlextConstantsSettings:

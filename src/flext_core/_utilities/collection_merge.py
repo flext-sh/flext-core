@@ -48,10 +48,10 @@ class FlextUtilitiesCollectionMerge:
         if FlextUtilitiesCollectionMerge._is_json_mapping(
             current_val,
         ) and FlextUtilitiesCollectionMerge._is_json_mapping(value):
-            result[key] = FlextUtilitiesPydantic.normalize_to_json_value({
-                **current_val,
-                **value,
-            })
+            nested = FlextUtilitiesCollectionMerge._merge_deep(current_val, value)
+            if nested.failure:
+                return r[bool].from_failure(nested)
+            result[key] = FlextUtilitiesPydantic.normalize_to_json_value(nested.value)
             return r[bool].ok(value=True)
         result[key] = value
         return r[bool].ok(value=True)

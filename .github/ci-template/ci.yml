@@ -30,3 +30,6 @@ jobs:
 
       - name: make check CHECK_PHASE=primary
         run: make check CHECK_PHASE=primary
+
+      - name: make tests
+        run: make tests

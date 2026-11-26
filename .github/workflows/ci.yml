@@ -153,11 +153,11 @@ jobs:
       # officially and installs the toolchain and dependencies from their locks,
       # publishes that environment through GITHUB_PATH, and prepares the
       # project runtime. CI never runs `make upg`: it never re-resolves.
-      # CI approval, one visible step per ci workflow row (setup -> check).
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
       - name: make setup (blocking)
         id: approval-setup
         run: CI=Y make setup
-      # CI approval, one visible step per ci workflow row (setup -> check).
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
       - name: make check CHECK_PHASE=primary (blocking)
         id: approval-check-primary
         # Every approval verb reports once setup provisioned the environment,
@@ -165,6 +165,14 @@ jobs:
         # (workflow requires) admits the step only after that verb is green.
         if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' }}
         run: CI=Y make check CHECK_PHASE=primary
+      # CI approval, one visible step per ci workflow row (setup -> check -> tests).
+      - name: make tests (blocking)
+        id: approval-tests-primary
+        # Every approval verb reports once setup provisioned the environment,
+        # so one red verdict never hides the others; a declared requirement
+        # (workflow requires) admits the step only after that verb is green.
+        if: ${{ !cancelled() && steps.approval-setup.outcome == 'success' && steps.approval-check-primary.outcome == 'success' }}
+        run: CI=Y make tests
       - name: Complete check qualification
         id: qualification-check
         if: ${{ !cancelled() && inputs.full_check == true && steps.approval-setup.outcome == 'success' }}
@@ -173,7 +181,7 @@ jobs:
       # row failed first (a failed tests row skips every later check row);
       # uploading after a setup failure would only add a second, misleading error.
       - name: Upload execution reports
-        if: ${{ !cancelled() && (steps.approval-check-primary.outcome == 'success' || steps.approval-check-primary.outcome == 'failure') }}
+        if: ${{ !cancelled() && (steps.approval-check-primary.outcome == 'success' || steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'success' || steps.approval-tests-primary.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-ci-reports-${{ github.run_id }}
@@ -201,7 +209,7 @@ jobs:
       # rows capture receipts, so the upload runs exactly when one of them
       # failed (tests included), never after a setup failure that left none.
       - name: Upload gate receipts on failure
-        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure' || steps.qualification-check.outcome == 'failure') }}
+        if: ${{ failure() && (steps.approval-check-primary.outcome == 'failure' || steps.approval-tests-primary.outcome == 'failure' || steps.qualification-check.outcome == 'failure') }}
         uses: actions/upload-artifact@v7
         with:
           name: flext-gate-receipts-${{ github.job }}-${{ github.run_id }}

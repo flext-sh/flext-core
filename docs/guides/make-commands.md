@@ -231,22 +231,23 @@ Each verb enters its existing domain owner. Generation and conformance share the
 same projection planner and transaction publisher; they do not share permission
 to repair authored declarations.
 
-| Verb         | Owned operation                                                                                                                                                                                             | Inputs                    |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
-| `setup`      | Install the declared frozen locks, synchronize the physical environment and configure local integrations; FLEXT=<path> reinstalls the FLEXT distributions that workspace provides as editable (local only). | FLEXT, RECREATE           |
-| `upg`        | Resolve declared dependency and tool updates and publish their resolution metadata and locks.                                                                                                               | —                         |
-| `lock`       | Resolve newly declared dependencies into the locks and keep every existing pin; only upg moves pins.                                                                                                        | —                         |
-| `gen`        | Materialize explicitly declared new projects and publish every applicable generated projection.                                                                                                             | ROOT                      |
-| `gen-scope`  | Run the focal generation surface (WHAT, MODULE for facades, SCOPE) through the same engine, lock and budget as gen.                                                                                         | ROOT, WHAT, MODULE, SCOPE |
-| `mod`        | Refactor declared source structure through the shared pipeline and publish the complete coherent change; LAWS (ENFORCE ids) or RULES (rule ids) diagnose or repair one law (ADR-028 Decision 18 item 2).    | LAWS, RULES               |
-| `fix`        | Apply declared repairs to authored inputs through their canonical owners.                                                                                                                                   | —                         |
-| `fmt`        | Format authored content through the configured formatters.                                                                                                                                                  | —                         |
-| `check`      | Validate declarations, projections, environment, documentation and configured gates without repairs or publication.                                                                                         | CHECK_PHASE               |
-| `tests`      | Run native incremental tests through the persistent Testmon selection.                                                                                                                                      | —                         |
-| `tests-full` | Run the complete selected inventory once without Testmon.                                                                                                                                                   | —                         |
-| `help`       | Discover the declared public interface without effects.                                                                                                                                                     | —                         |
-| `build`      | Build local distribution and documentation artifacts without publishing them.                                                                                                                               | —                         |
-| `clean`      | Remove only declared disposable resources owned by the selected target.                                                                                                                                     | —                         |
+| Verb            | Owned operation                                                                                                                                                                                                                         | Inputs                    |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- |
+| `setup`         | Install the declared frozen locks, synchronize the physical environment and configure local integrations; FLEXT=<path> reinstalls the FLEXT distributions that workspace provides as editable (local only).                             | FLEXT, RECREATE           |
+| `upg`           | Resolve declared dependency and tool updates and publish their resolution metadata and locks.                                                                                                                                           | —                         |
+| `lock`          | Resolve newly declared dependencies into the locks and keep every existing pin; only upg moves pins.                                                                                                                                    | —                         |
+| `gen`           | Materialize explicitly declared new projects and publish every applicable generated projection.                                                                                                                                         | ROOT                      |
+| `gen-scope`     | Run the focal generation surface (WHAT, MODULE for facades, SCOPE) through the same engine, lock and budget as gen.                                                                                                                     | ROOT, WHAT, MODULE, SCOPE |
+| `mod`           | Refactor declared source structure through the shared pipeline and publish the complete coherent change; LAWS (ENFORCE ids) or RULES (rule ids) diagnose or repair one law (ADR-028 Decision 18 item 2).                                | LAWS, RULES               |
+| `fix`           | Apply declared repairs to authored inputs through their canonical owners; in a workspace root ALL=Y includes every governed member.                                                                                                     | ALL                       |
+| `fmt`           | Format authored content through the configured formatters; in a workspace root ALL=Y includes every governed member.                                                                                                                    | ALL                       |
+| `check`         | Validate declarations, projections, environment, documentation and configured gates without repairs or publication.                                                                                                                     | CHECK_PHASE               |
+| `tests`         | Run native incremental tests through the persistent Testmon selection; in a workspace root ALL=Y includes every governed member.                                                                                                        | ALL                       |
+| `tests-full`    | Run the complete selected inventory once and record it in Testmon; in a workspace root ALL=Y includes every governed member.                                                                                                            | ALL                       |
+| `tests-harness` | Run only the harness gate tests, through the persistent Testmon selection, under the harness that provides their inputs; MARKER=<harness gate marker> narrows the run to one; in a workspace root ALL=Y includes every governed member. | ALL, MARKER               |
+| `help`          | Discover the declared public interface without effects.                                                                                                                                                                                 | —                         |
+| `build`         | Build local distribution and documentation artifacts without publishing them.                                                                                                                                                           | —                         |
+| `clean`         | Remove only declared disposable resources owned by the selected target.                                                                                                                                                                 | —                         |
 
 ### Profiling and Semantic Publication Boundaries
 
@@ -545,7 +546,7 @@ consume their declared operation.
 The execution receipt preserves the collected inventory, applicability decisions,
 executed counts and original subprocess outcomes. Zero collection and an absent
 manifest remain failures. An empty incremental selection is accepted only as a typed
-Testmon cache hit with database integrity and complete inventory/deselection
+Testmon cache hit with native database integrity and complete inventory/deselection
 accounting; it is never reported as tests passed. The native inventory and manifest
 must agree; neither may silently expand into another target. Warnings remain visible
 in the native result.
@@ -615,9 +616,11 @@ The source template
 `flext-infra/src/flext_infra/templates/project/base/Makefile.j2`, in its derived-paths
 and repository-root sections, binds `PROJECT_ROOT` to the selected Makefile's
 checkout rather than CWD. Attached members share the containing workspace's runtime
-environment. Standalone checkouts and member worktrees without a containing
-superproject own their runtime environment and run `make <verb>` from their own
-root.
+environment. A standalone checkout owns its runtime environment and runs
+`make <verb>` from its own root. A workspace member's dev group never declares
+`flext-infra`, so a member worktree without a containing superproject has no
+runtime supplier: its `setup`, `upg` and `lock` refuse before any effect with
+exit 2 and point to a workspace-shaped lane that attaches the member.
 Manifest exclusions remain authoritative. Generated Make surfaces and documentation
 are changed at their template or configuration owner, then regenerated with `make gen`.
 
