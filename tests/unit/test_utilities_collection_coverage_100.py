@@ -234,6 +234,15 @@ class TestsFlextCoreUtilitiesCollection:
         tm.that(result.value["b"], is_=dict)
 
     @staticmethod
+    def test_merge_mappings_deep_recurses_into_every_nested_level() -> None:
+        """Deep merge keeps sibling keys at every depth; the second mapping wins."""
+        base: Mapping[str, t.JsonValue] = {"a": {"b": {"kept": 1, "x": 1}}}
+        other: Mapping[str, t.JsonValue] = {"a": {"b": {"x": 2}}}
+        result = u.merge_mappings(base, other)
+        tm.ok(result)
+        tm.that(result.value["a"], eq={"b": {"kept": 1, "x": 2}})
+
+    @staticmethod
     def test_merge_mappings_override_replaces_values() -> None:
         """Test merge mappings override replaces values."""
         base: Mapping[str, t.JsonValue] = {"a": 1, "b": {"x": 1}}
