@@ -10,20 +10,11 @@ repos:
 
 
 
-      - id: flext-pre-commit-setup
-        name: make setup
+      - id: flext-pre-commit-check-primary
+        name: make check CHECK_PHASE=primary
         language: system
         entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; CI=C make setup'
-        pass_filenames: false
-        always_run: true
-        stages: [pre-commit]
-
-      - id: flext-pre-commit-check
-        name: make check
-        language: system
-        entry: >-
-          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; CI=C make check'
+          bash -eu -o pipefail -c 'unset $(git rev-parse --local-env-vars); unset MAKEFLAGS; make check CHECK_PHASE=primary'
         pass_filenames: false
         always_run: true
         stages: [pre-commit]
