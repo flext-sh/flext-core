@@ -12,11 +12,13 @@ from typing import TYPE_CHECKING
 
 import structlog
 
-from flext_core import m, p
-from flext_core._utilities._logging.async_writer import FlextUtilitiesLoggingAsyncWriter
-from flext_core._utilities._logging.handlers import FlextUtilitiesLoggingHandlers
-from flext_core._utilities._logging.state import FlextUtilitiesLoggingState
-from flext_core._utilities._logging.stream import FlextUtilitiesLoggingStream
+from flext_core import c, m, p
+from flext_core._utilities._logging import (
+    FlextUtilitiesLoggingAsyncWriter,
+    FlextUtilitiesLoggingHandlers,
+    FlextUtilitiesLoggingState,
+    FlextUtilitiesLoggingStream,
+)
 
 if TYPE_CHECKING:
     import types
@@ -86,7 +88,7 @@ class FlextUtilitiesLoggingComposition(FlextUtilitiesLoggingHandlers):
         console = (
             options.console_renderer
             if options.console_renderer is not None
-            else runtime_settings.logging_profile == "console"
+            else runtime_settings.logging_profile == c.LoggingProfile.CONSOLE
         )
         wrapper = (
             options.wrapper_class_factory()
@@ -156,7 +158,7 @@ class FlextUtilitiesLoggingComposition(FlextUtilitiesLoggingHandlers):
             console_renderer=(
                 options.console_renderer
                 if options.console_renderer is not None
-                else selected.logging_profile == "console"
+                else selected.logging_profile == c.LoggingProfile.CONSOLE
             ),
             options=options,
             trace=selected.trace,

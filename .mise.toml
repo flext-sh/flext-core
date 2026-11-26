@@ -7,17 +7,17 @@
 # Free: no
 # End SECTION: header
 # NOTE: mise carries itself, the Python runtime and the native tools from the
-# config SSOT. The official installer supplies the acquisition executable; native
-# `mise install` provisions the declared self entry and tools.
-# Later execution resolves that entry through native Mise. Python dependency
-# declarations remain owned by pyproject.toml. Tools are declared `latest`;
-# only `make upg` bumps them: native `mise lock --bump --dry-run --json` names
-# the tools whose version changed, and only those are locked into the committed
-# mise.lock. Setup always bootstraps: `mise install` honors every locked entry
-# and records any entry the lock is missing, so lock drift never blocks setup.
+# config SSOT. The official installer supplies the acquisition executable; the
+# declared self entry is provisioned from the committed lock before anything
+# else runs. Later execution resolves that entry through native Mise. Python
+# dependency declarations remain owned by pyproject.toml. Tools are declared
+# `latest`; only `make upg` bumps them: native `mise lock --bump --dry-run
+# --json` names the tools whose version changed, and only those are locked into
+# the committed mise.lock. Setup installs the committed locks and never writes
+# them; a lock whose self entry is missing stops setup with the upgrade remedy.
 
 # The pinned release is the floor of the shared acquisition executable.
-min_version = "2026.10.3"
+min_version = "2026.11.11"
 
 # === SECTION: settings (managed) ===
 # Source: config:codegen.toolchain.mise_lockfile / mise_activate_aggressive / mise_lockfile_platforms /
@@ -47,7 +47,7 @@ compile = false
 [tools]
 python = "3.13"
 # Mise interprets the self entry and its lock; Make never parses release assets.
-"github:jdx/mise" = "2026.10.3"
+"github:jdx/mise" = "2026.11.11"
 # Native toolchain (single source: Infra.codegen.toolchain.tools in codegen.yaml).
 "uv" = "latest"
 "github:direnv/direnv" = { version = "latest", bin = "direnv" }
@@ -59,4 +59,5 @@ python = "3.13"
 "github:kucherenko/jscpd" = { version = "latest" }
 "github:microsoft/waza" = { version = "latest", version_prefix = "v" }
 "aqua:j178/prek" = "latest"
+"gh" = "latest"
 # End SECTION: tools

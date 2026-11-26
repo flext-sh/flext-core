@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from examples import p
-from flext_core import FlextSettings, m, r
+from flext_core import m, r
 
 
 class ExamplesFlextModelsEx11:
@@ -18,7 +18,7 @@ class ExamplesFlextModelsEx11:
     class Payload(m.Value):
         text: Annotated[str, m.Field(description="Payload text content")]
 
-    class ServiceHandlerConfig(FlextSettings):
+    class ServiceHandlerConfig(m.BaseModel):
         enabled: Annotated[
             bool,
             m.Field(description="Whether the service is enabled"),

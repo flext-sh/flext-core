@@ -16,8 +16,8 @@ from flext_core._exceptions import (
     FlextExceptionsMetrics,
     FlextExceptionsTemplate,
     FlextExceptionsTypes,
+    FlextExceptionsViolations,
 )
-from flext_core._exceptions.violations import FlextExceptionsViolations
 
 
 class FlextExceptions(

@@ -23,6 +23,7 @@
 .claude/shell-snapshots/
 .claude/worktrees/
 .claude/settings.local.json.bak
+.trigger-tree/
 
 # WHITELIST: Governed agent projections (every repository role)
 !.agents/
@@ -41,6 +42,9 @@
 
 # Private local config layers
 /config/*.local.yaml
+
+# Host command policy projection (runtime state, never source)
+/.moat/policy.yaml
 
 # Gas City skill projections (runtime state, never source)
 .agents/skills/.gc-skill-ownership.json
@@ -67,6 +71,13 @@
 # RESIDUE: never track backups or repo-local policy copies
 *.bak
 config/build-constraints.txt
+
+# Local runtime and transient state (never source)
+/.build/
+/.runtime/
+/.test-tmp/
+/.zcode/
+/.mise-lock-transaction.lock
 
 # Aider AI data
 .aider/
