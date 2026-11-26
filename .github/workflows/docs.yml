@@ -22,8 +22,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     # Why: a newer push to the same branch makes this proof obsolete, so it is
-    # cancelled. The group holds only this job: a deploy that already started
-    # sits in its own non-cancelling group and always finishes.
+    # cancelled. The group holds only this job: a started deploy, when the site
+    # is published, sits in its own non-cancelling group and always finishes.
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true

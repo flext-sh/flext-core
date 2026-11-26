@@ -81,7 +81,7 @@ jobs:
           -e GITHUB_TOKEN
           -w /workspace/flext-core
           ci-matrix-${{ matrix.distro }}
-          bash -ec 'make setup && make check CHECK_PHASE=primary && make check CHECK_PHASE=primary'
+          bash -ec 'make setup && make check CHECK_PHASE=primary'
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
@@ -114,7 +114,6 @@ jobs:
       - name: Lifecycle acceptance
         run: |
           CI=Y make setup
-          CI=Y make check CHECK_PHASE=primary
           CI=Y make check CHECK_PHASE=primary
   # End SECTION: macos
 
@@ -149,6 +148,5 @@ jobs:
         shell: bash
         run: |
           CI=Y make setup
-          CI=Y make check CHECK_PHASE=primary
           CI=Y make check CHECK_PHASE=primary
 # End SECTION: windows

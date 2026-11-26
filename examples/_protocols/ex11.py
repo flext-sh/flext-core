@@ -8,14 +8,12 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from flext_core import FlextProtocols
 
 if TYPE_CHECKING:
     from flext_core import p
-    from flext_core._constants.loggings import FlextConstantsLogging
 
 
 class ExamplesFlextProtocolsEx11:
@@ -33,43 +31,6 @@ class ExamplesFlextProtocolsEx11:
     @runtime_checkable
     class ServiceHandlerConfig(FlextProtocols.BaseModel, Protocol):
         """Structural data contract projected from the owning model."""
-
-        debug: bool
-        trace: bool
-        log_level: str
-        logging_profile: FlextConstantsLogging.LoggingProfile
-        timezone: str
-        async_logging: bool
-
-        @property
-        def cache_dir(self) -> Path:
-            """Consuming application's cache directory."""
-            ...
-
-        @property
-        def work_dir(self) -> Path:
-            """Consuming application's scratch/work directory."""
-            ...
-
-        @property
-        def data_dir(self) -> Path:
-            """Consuming application's durable data directory."""
-            ...
-
-        @property
-        def state_dir(self) -> Path:
-            """Consuming application's persistent state directory."""
-            ...
-
-        @property
-        def config_dir(self) -> Path:
-            """Consuming application's user configuration directory."""
-            ...
-
-        @property
-        def runtime_dir(self) -> Path:
-            """Consuming application's ephemeral runtime directory."""
-            ...
 
         enabled: bool
 
