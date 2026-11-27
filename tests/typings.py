@@ -17,6 +17,8 @@ from collections.abc import Mapping, MutableSequence
 
 from flext_tests import FlextTestsTypes
 
+from flext_core import p
+
 
 class TestsFlextTypes(FlextTestsTypes):
     """Type system foundation for flext-core tests - extends TestsFlextTypes.
